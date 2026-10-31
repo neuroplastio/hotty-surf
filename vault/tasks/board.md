@@ -214,7 +214,7 @@ The order is the maintainer's, via gov (2026-10-30):
     13 failures at the story's own width are known, in
     `scripts/gate/legible-known.tsv`: foot-hint's long title, and the
     palette's footer in dense and roomy. That list is to be empty.
-- [ ] **The public prep:** a README, docs that stand alone, Apache-2.0,
+- [x] **The public prep:** a README, docs that stand alone, Apache-2.0,
   CI on GitHub-hosted runners, a tidy go.mod, surflua importable;
   v0.1.0 after review and the maintainer's yes.
   - **The yes** (the maintainer, 2026-10-31, via gov), on "hotty-surf
@@ -230,10 +230,17 @@ The order is the maintainer's, via gov (2026-10-30):
     machine's own Makefile settings (CAP, the CPUs, HOTTY) are in its
     `$XDG_CONFIG_HOME/hotty-surf/make.mk`; the repository's defaults are
     neutral.
-  - [ ] The cut and v0.1.0 (gov).
+  - [x] The cut and v0.1.0 (gov, 2026-10-31): main starts at c29f1f2,
+    tagged v0.1.0 (annotated, d882f90), and the module is on
+    proxy.golang.org. The first public CI run, on GitHub's runners,
+    is green.
   - **The history** (the maintainer, 2026-10-31): GitHub's main starts
     as one squashed commit of the cleaned tree, a departure from gov P-1
-    rule 8 by the maintainer's choice, as for myelin (NEIO-13).
+    rule 8 by the maintainer's choice, as for myelin (NEIO-13). The
+    work before it is in the private repository
+    neuroplastio/hotty-surf-history (branch `pre-public`). The two
+    histories are never merged: an old commit comes over by
+    cherry-pick.
   - Out of the public tree: everything private, the R-23 spike once the
     screens ran on `internal/screens/demodata`, and machine-specific
     paths. Gov ids stay as citations.
