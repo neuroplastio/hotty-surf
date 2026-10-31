@@ -1,0 +1,7 @@
+<!-- The palette's rows, from its commands: a click selects one, a second
+     runs it. -->
+<stories of="palette-row" cols="60" in="list">
+  <story name="selected" :row="rows[0]" i="0"/>
+  <story name="not selected" :row="rows[1]" i="1"/>
+  <story name="a shifted key" :row="rows[2]" i="2"/>
+</stories>

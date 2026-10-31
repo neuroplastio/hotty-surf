@@ -1,0 +1,9 @@
+<props title="string" n="int" extra="dyn" first="Note"/>
+<box key="card">
+  <heading>{{ title }} {{ n }} of {{ self.title }}</heading>
+  <slot><text muted>no body</text></slot>
+  <row key="actions"><slot name="actions"><text muted>no actions</text></slot></row>
+  <text :if="extra != null" key="extra">{{ extra }}</text>
+  <text key="first">{{ first.text }}</text>
+  <text :if="extra != null" key="tone">{{ toneOf(extra) }} {{ toneOf(dyn('warn')) }}</text>
+</box>

@@ -1,0 +1,17 @@
+$value and $event are whole arguments of a handler's call: inside an
+expression, even in parentheses or as an argument of another call, each
+is a load error at its $. A '$value' in a string literal is a string,
+and loads.
+-- form.surf --
+<surface>
+  <field @input="typed($value + '!')"/>
+  <field @input="typed(($value))"/>
+  <field @input="typed([$value][0])"/>
+  <field @change="commit(string($event), $value)"/>
+  <field @change="commit('$value', $value)"/>
+</surface>
+-- load --
+form.surf:2:24: $value is a whole argument, not part of an expression
+form.surf:3:25: $value is a whole argument, not part of an expression
+form.surf:4:25: $value is a whole argument, not part of an expression
+form.surf:5:33: $event is a whole argument, not part of an expression

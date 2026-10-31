@@ -1,0 +1,6 @@
+<!-- A key sequence's caps, as the palette labels them. -->
+<stories of="key-caps" cols="30">
+  <story name="one key" keys="enter"/>
+  <story name="a sequence" keys="ctrl+b p shift+x"/>
+  <story name="no keys" keys="" about="No keys: the caps draw nothing."/>
+</stories>

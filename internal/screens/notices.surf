@@ -1,0 +1,22 @@
+<!-- The notices are dense, not Compact. -->
+<surface density="dense">
+  <row gap="1" pad="1 0" key="head">
+    <heading>Notices</heading>
+    <spacer/>
+    <badge :if="unread() > 0" fill="accent" key="unread">{{ unread() }} unread</badge>
+    <badge :else fill="muted" key="unread">All read</badge>
+    <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter"/>
+  </row>
+  <list focusable autofocus key="list">
+    <bind key="arrow_down" label="Next" do="move(1)"/>
+    <bind key="j" label="Next" do="move(1)"/>
+    <bind key="arrow_up" label="Previous" do="move(-1)"/>
+    <bind key="k" label="Previous" do="move(-1)"/>
+    <bind key="enter" label="Open" do="open(selected())"/>
+    <bind key="d" label="Dismiss" do="dismiss(selected())"/>
+    <bind key="f" label="Filter" do="nextFilter"/>
+    <notice-row :each="(i, n) in shown()" :key="n.id" :notice="n" :sel="i == cur()"/>
+    <item :if="size(shown()) == 0" key="none"><text muted>Nothing to show.</text></item>
+  </list>
+  <text muted pad="1 0" key="status">{{ status }}</text>
+</surface>

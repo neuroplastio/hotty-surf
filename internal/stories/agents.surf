@@ -1,0 +1,8 @@
+<!-- The agents tool's entries, each story with its own (gallery's Go
+     state for agents): an entry's dot, emoji, name, badges and lines. -->
+<stories of="agents" cols="60">
+  <story name="working"/>
+  <story name="attention and offline"/>
+  <story name="no agents"/>
+  <story name="refused"/>
+</stories>

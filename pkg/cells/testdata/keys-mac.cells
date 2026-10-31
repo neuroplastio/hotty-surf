@@ -1,0 +1,18 @@
+cells 44x6
+text
+> ctrl+shift+t   [Ctrl-Shift-T]
+> ctrl+b v       [Ctrl-B] > [V]
+> mod+enter      [Meta-Enter]
+> alt+arrow_up   [Alt-↑]
+> ctrl+b p +     [Ctrl-B] > [P] > [+]
+> super+l        [Meta-L]
+style
+= ...............a............a
+= ...............a......a.a.a.a
+= ...............a..........a
+= ...............a.....a
+= ...............a......a.a.a.a.a.a.a
+= ...............a......a
+. fg/bg
+a muted/bg
+hits

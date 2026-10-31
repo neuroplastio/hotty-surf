@@ -1,0 +1,5 @@
+<!-- The notices, newest first. -->
+<stories of="notices" cols="90">
+  <story name="all"/>
+  <story name="errors"/>
+</stories>

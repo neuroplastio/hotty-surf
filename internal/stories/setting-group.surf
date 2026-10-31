@@ -1,0 +1,5 @@
+<!-- A group of settings under its caption, as a section lists it. -->
+<stories of="setting-group" cols="80">
+  <story name="terminal" :g="groups()[0]"/>
+  <story name="content" :g="secs[1].groups[2]"/>
+</stories>

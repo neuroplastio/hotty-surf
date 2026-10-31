@@ -1,0 +1,614 @@
+The lab part: what the compiled mode says in Go and what it leaves to a
+program (an index, `in`, dyn), a :else-if chain, && and || with a side
+that fails, an int that overflows, a partial with props, a dyn prop and
+slots, given and not, and handlers whose arguments are evaluated at
+render, from Go and from a program.
+-- state.json --
+{"Title": "Lab ✓", "Count": 0, "Ratio": 0.25, "Panel": {"Open": false, "Title": "P"},
+ "Notes": [{"ID": "n1", "Text": "Ünïcode", "Level": "warn", "Unread": true, "Tags": ["x", "y"]},
+           {"ID": "n2", "Text": "two", "Level": "info"}]}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1 u-px1 u-py0"><div id="r.khead.0" class="u-heading">Lab ✓</div><span id="r.khead.1" class="u-grow"></span><span id="r.khead.kcount" class="u-badge u-fill-accent">1 unread</span><button id="r.khead.kfilter" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:6" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.khead.kfilter.0" class="u-select-value"></span><span id="r.khead.kfilter.1" class="u-select-chevron">󰅀</span></button></div><div id="r.klist" class="u-list" role="listbox" tabindex="0" data-keys="arrow_down=program j=scroll-down"><div id="r.klist.kn1" class="u-item" role="option" data-on="click"><div id="r.klist.kn1.0" class="u-row u-grow u-gap1"><span id="r.klist.kn1.0.0" class="u-glyph u-tone-accent">●</span><span id="r.klist.kn1.0.1" class="u-badge u-fill-warn u-width" style="--u-w:6">warn</span><span id="r.klist.kn1.0.2" class="u-text u-bold u-grow">Ünïcode</span><span id="r.klist.kn1.0.kx" class="u-badge u-tone-muted">1:x</span><span id="r.klist.kn1.0.ky" class="u-badge u-tone-muted">2:y</span><button id="r.klist.kn1.0.5" class="u-btn u-reveal" type="button">Dismiss</button></div></div><div id="r.klist.kn2" class="u-item" role="option" data-on="click"><div id="r.klist.kn2.0" class="u-row u-grow u-gap1"><span id="r.klist.kn2.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn2.0.1" class="u-badge u-fill-muted u-width" style="--u-w:6">info</span><span id="r.klist.kn2.0.2" class="u-text u-grow">two</span><button id="r.klist.kn2.0.3" class="u-btn u-reveal" type="button">Dismiss</button></div></div></div><div id="r.kpanel" class="u-box"><div id="r.kpanel.0" class="u-row u-gap1"><button id="r.kpanel.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kpanel.0.0.0" class="u-knob"></span></button><span id="r.kpanel.0.1" class="u-text">closed</span></div></div><span id="r.kpanelnull" class="u-text">false false</span><span id="r.kstatus" class="u-text u-tone-muted">0 · 0.25 · 0 done</span><div id="r.klab" class="u-stack"><span id="r.klab.ksum" class="u-text">9223372036854775807</span><span id="r.klab.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kmath" class="u-text">0.5 -0.25 5 Lab ✓!</span><span id="r.klab.kin" class="u-badge">in</span><span id="r.klab.kchain" class="u-text">else</span><span id="r.klab.klogic" class="u-text u-tone-muted">logic</span><div id="r.klab.kc1" class="u-box"><div id="r.klab.kc1.0" class="u-heading">Card 0 of Lab ✓</div><span id="r.klab.kc1.1" class="u-text">default Lab ✓</span><div id="r.klab.kc1.kactions" class="u-row"><button id="r.klab.kc1.kactions.0" class="u-btn" type="button">Bump 2</button></div><span id="r.klab.kc1.kextra" class="u-text">2</span><span id="r.klab.kc1.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kc1.ktone" class="u-text"> warn</span></div><div id="r.klab.kc2" class="u-box"><div id="r.klab.kc2.0" class="u-heading">Empty 1 of Lab ✓</div><span id="r.klab.kc2.1" class="u-text u-tone-muted">no body</span><div id="r.klab.kc2.kactions" class="u-row"><span id="r.klab.kc2.kactions.0" class="u-text u-tone-muted">no actions</span></div><span id="r.klab.kc2.kfirst" class="u-text"></span></div><div id="r.klab.kn1" class="u-row"><span id="r.klab.kn1.0" class="u-text">0=n1</span><button id="r.klab.kn1.1" class="u-btn is-disabled" type="button" disabled="">Pick</button></div><div id="r.klab.kn2" class="u-row"><span id="r.klab.kn2.0" class="u-text">1=n2</span><button id="r.klab.kn2.1" class="u-btn" type="button">Pick</button></div><span id="r.klab.kall" class="u-badge">all</span><span id="r.klab.kunread" class="u-badge">unread</span><button id="r.klab.kopenfirst" class="u-btn" type="button">first</button><button id="r.klab.kdynbad" class="u-btn" type="button">dyn 1</button><button id="r.klab.kdynok" class="u-btn" type="button">dyn n2</button></div></div></body></html>
+-- cells --
+cells 64x32
+text
+>  Lab ✓                                     1 unread          ▾
+>  ●  warn  Ünïcode                          1:x   2:y
+>  ●  info  two
+> [off] closed
+> false false
+> 0 · 0.25 · 0 done
+> 9223372036854775807
+> Ünïcode
+> 0.5 -0.25 5 Lab ✓!
+>  in
+> else
+> logic
+> Card 0 of Lab ✓
+> default Lab ✓
+>  Bump 2
+> 2
+> Ünïcode
+>  warn
+> Empty 1 of Lab ✓
+> no body
+> no actions
+>
+> 0=n1 Pick
+> 1=n2 Pick
+>  all
+>  unread
+>                              first
+>                              dyn 1
+>                              dyn n2
+style
+= .aaaaa....................................bbbbbbbbbb.ccccccccdc
+= .e.ffffff.aaaaaaa.........................ghhhg.ghhhg
+= .i.ghhhhg
+= hhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+=
+= iiiiiiiiiiiiiiiii
+=
+=
+=
+= ghhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+=
+= iiiii
+= jjjjjjjjjjjjjjjggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= jjjjjjjjjjjjjjjjgggggggggggggggggggggggggggggggggggggggggggggggg
+= hhhhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= hhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= ....kllllk
+= ....gggggg
+= ghhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= ghhhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+. fg/bg
+a fg/bg bold
+b fg/accent
+c fg/field
+d muted/field
+e accent/bg
+f fg/warn
+g fg/tonal
+h muted/tonal
+i muted/bg
+j fg/tonal bold
+k fg/surface
+l faint/surface
+hits
+@ 53,0 10x1 r.khead.kfilter
+@ 0,1 64x2 r.klist
+@ 0,1 64x1 r.klist.kn1
+@ 54,1 9x1 r.klist.kn1.0.5
+@ 0,2 64x1 r.klist.kn2
+@ 54,2 9x1 r.klist.kn2.0.3
+@ 0,3 5x1 r.kpanel.0.0
+@ 0,14 8x1 r.klab.kc1.kactions.0
+@ 4,23 6x1 r.klab.kn2.1
+@ 0,26 64x1 r.klab.kopenfirst
+@ 0,27 64x1 r.klab.kdynbad
+@ 0,28 64x1 r.klab.kdynok
+-- 1.event --
+click r.klab.kc1.kactions.0
+-- 1.log --
+bump
+-- 1.ops --
+text r.kstatus "2 · 0.25 · 1 done"
+text r.klab.ksum ""
+text r.klab.kchain "many"
+attr r.klab.klogic class "u-text"
+text r.klab.kc1.0 "Card 2 of Lab ✓"
+text r.klab.kc2.0 "Empty 3 of Lab ✓"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1 u-px1 u-py0"><div id="r.khead.0" class="u-heading">Lab ✓</div><span id="r.khead.1" class="u-grow"></span><span id="r.khead.kcount" class="u-badge u-fill-accent">1 unread</span><button id="r.khead.kfilter" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:6" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.khead.kfilter.0" class="u-select-value"></span><span id="r.khead.kfilter.1" class="u-select-chevron">󰅀</span></button></div><div id="r.klist" class="u-list" role="listbox" tabindex="0" data-keys="arrow_down=program j=scroll-down"><div id="r.klist.kn1" class="u-item" role="option" data-on="click"><div id="r.klist.kn1.0" class="u-row u-grow u-gap1"><span id="r.klist.kn1.0.0" class="u-glyph u-tone-accent">●</span><span id="r.klist.kn1.0.1" class="u-badge u-fill-warn u-width" style="--u-w:6">warn</span><span id="r.klist.kn1.0.2" class="u-text u-bold u-grow">Ünïcode</span><span id="r.klist.kn1.0.kx" class="u-badge u-tone-muted">1:x</span><span id="r.klist.kn1.0.ky" class="u-badge u-tone-muted">2:y</span><button id="r.klist.kn1.0.5" class="u-btn u-reveal" type="button">Dismiss</button></div></div><div id="r.klist.kn2" class="u-item" role="option" data-on="click"><div id="r.klist.kn2.0" class="u-row u-grow u-gap1"><span id="r.klist.kn2.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn2.0.1" class="u-badge u-fill-muted u-width" style="--u-w:6">info</span><span id="r.klist.kn2.0.2" class="u-text u-grow">two</span><button id="r.klist.kn2.0.3" class="u-btn u-reveal" type="button">Dismiss</button></div></div></div><div id="r.kpanel" class="u-box"><div id="r.kpanel.0" class="u-row u-gap1"><button id="r.kpanel.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kpanel.0.0.0" class="u-knob"></span></button><span id="r.kpanel.0.1" class="u-text">closed</span></div></div><span id="r.kpanelnull" class="u-text">false false</span><span id="r.kstatus" class="u-text u-tone-muted">2 · 0.25 · 1 done</span><div id="r.klab" class="u-stack"><span id="r.klab.ksum" class="u-text"></span><span id="r.klab.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kmath" class="u-text">0.5 -0.25 5 Lab ✓!</span><span id="r.klab.kin" class="u-badge">in</span><span id="r.klab.kchain" class="u-text">many</span><span id="r.klab.klogic" class="u-text">logic</span><div id="r.klab.kc1" class="u-box"><div id="r.klab.kc1.0" class="u-heading">Card 2 of Lab ✓</div><span id="r.klab.kc1.1" class="u-text">default Lab ✓</span><div id="r.klab.kc1.kactions" class="u-row"><button id="r.klab.kc1.kactions.0" class="u-btn" type="button">Bump 2</button></div><span id="r.klab.kc1.kextra" class="u-text">2</span><span id="r.klab.kc1.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kc1.ktone" class="u-text"> warn</span></div><div id="r.klab.kc2" class="u-box"><div id="r.klab.kc2.0" class="u-heading">Empty 3 of Lab ✓</div><span id="r.klab.kc2.1" class="u-text u-tone-muted">no body</span><div id="r.klab.kc2.kactions" class="u-row"><span id="r.klab.kc2.kactions.0" class="u-text u-tone-muted">no actions</span></div><span id="r.klab.kc2.kfirst" class="u-text"></span></div><div id="r.klab.kn1" class="u-row"><span id="r.klab.kn1.0" class="u-text">0=n1</span><button id="r.klab.kn1.1" class="u-btn is-disabled" type="button" disabled="">Pick</button></div><div id="r.klab.kn2" class="u-row"><span id="r.klab.kn2.0" class="u-text">1=n2</span><button id="r.klab.kn2.1" class="u-btn" type="button">Pick</button></div><span id="r.klab.kall" class="u-badge">all</span><span id="r.klab.kunread" class="u-badge">unread</span><button id="r.klab.kopenfirst" class="u-btn" type="button">first</button><button id="r.klab.kdynbad" class="u-btn" type="button">dyn 1</button><button id="r.klab.kdynok" class="u-btn" type="button">dyn n2</button></div></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+>  Lab ✓                                     1 unread          ▾
+>  ●  warn  Ünïcode                          1:x   2:y
+>  ●  info  two
+> [off] closed
+> false false
+> 2 · 0.25 · 1 done
+>
+> Ünïcode
+> 0.5 -0.25 5 Lab ✓!
+>  in
+> many
+> logic
+> Card 2 of Lab ✓
+> default Lab ✓
+>  Bump 2
+> 2
+> Ünïcode
+>  warn
+> Empty 3 of Lab ✓
+> no body
+> no actions
+>
+> 0=n1 Pick
+> 1=n2 Pick
+>  all
+>  unread
+>                              first
+>                              dyn 1
+>                              dyn n2
+style
+= .aaaaa....................................bbbbbbbbbb.ccccccccdc
+= .e.ffffff.aaaaaaa.........................ghhhg.ghhhg
+= .i.ghhhhg
+= hhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+=
+= iiiiiiiiiiiiiiiii
+=
+=
+=
+= ghhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+=
+=
+= jjjjjjjjjjjjjjjggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= bkkkkkkbgggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= jjjjjjjjjjjjjjjjgggggggggggggggggggggggggggggggggggggggggggggggg
+= hhhhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= hhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= ....lmmmml
+= ....gggggg
+= ghhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= ghhhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+. fg/bg
+a fg/bg bold
+b fg/accent
+c fg/field
+d muted/field
+e accent/bg
+f fg/warn
+g fg/tonal
+h muted/tonal
+i muted/bg
+j fg/tonal bold
+k on-accent/accent
+l fg/surface
+m faint/surface
+hits
+@ 53,0 10x1 r.khead.kfilter
+@ 0,1 64x2 r.klist
+@ 0,1 64x1 r.klist.kn1
+@ 54,1 9x1 r.klist.kn1.0.5
+@ 0,2 64x1 r.klist.kn2
+@ 54,2 9x1 r.klist.kn2.0.3
+@ 0,3 5x1 r.kpanel.0.0
+@ 0,14 8x1 r.klab.kc1.kactions.0
+@ 4,23 6x1 r.klab.kn2.1
+@ 0,26 64x1 r.klab.kopenfirst
+@ 0,27 64x1 r.klab.kdynbad
+@ 0,28 64x1 r.klab.kdynok
+-- 2.event --
+click r.klab.kn2.1
+-- 2.log --
+open n2
+-- 2.ops --
+attr r.klist.kn2 class "u-item is-sel"
+attr r.klist.kn2 aria-selected "true"
+text r.kstatus "2 · 0.25 · 2 done"
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1 u-px1 u-py0"><div id="r.khead.0" class="u-heading">Lab ✓</div><span id="r.khead.1" class="u-grow"></span><span id="r.khead.kcount" class="u-badge u-fill-accent">1 unread</span><button id="r.khead.kfilter" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:6" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.khead.kfilter.0" class="u-select-value"></span><span id="r.khead.kfilter.1" class="u-select-chevron">󰅀</span></button></div><div id="r.klist" class="u-list" role="listbox" tabindex="0" data-keys="arrow_down=program j=scroll-down"><div id="r.klist.kn1" class="u-item" role="option" data-on="click"><div id="r.klist.kn1.0" class="u-row u-grow u-gap1"><span id="r.klist.kn1.0.0" class="u-glyph u-tone-accent">●</span><span id="r.klist.kn1.0.1" class="u-badge u-fill-warn u-width" style="--u-w:6">warn</span><span id="r.klist.kn1.0.2" class="u-text u-bold u-grow">Ünïcode</span><span id="r.klist.kn1.0.kx" class="u-badge u-tone-muted">1:x</span><span id="r.klist.kn1.0.ky" class="u-badge u-tone-muted">2:y</span><button id="r.klist.kn1.0.5" class="u-btn u-reveal" type="button">Dismiss</button></div></div><div id="r.klist.kn2" class="u-item is-sel" role="option" data-on="click" aria-selected="true"><div id="r.klist.kn2.0" class="u-row u-grow u-gap1"><span id="r.klist.kn2.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn2.0.1" class="u-badge u-fill-muted u-width" style="--u-w:6">info</span><span id="r.klist.kn2.0.2" class="u-text u-grow">two</span><button id="r.klist.kn2.0.3" class="u-btn u-reveal" type="button">Dismiss</button></div></div></div><div id="r.kpanel" class="u-box"><div id="r.kpanel.0" class="u-row u-gap1"><button id="r.kpanel.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kpanel.0.0.0" class="u-knob"></span></button><span id="r.kpanel.0.1" class="u-text">closed</span></div></div><span id="r.kpanelnull" class="u-text">false false</span><span id="r.kstatus" class="u-text u-tone-muted">2 · 0.25 · 2 done</span><div id="r.klab" class="u-stack"><span id="r.klab.ksum" class="u-text"></span><span id="r.klab.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kmath" class="u-text">0.5 -0.25 5 Lab ✓!</span><span id="r.klab.kin" class="u-badge">in</span><span id="r.klab.kchain" class="u-text">many</span><span id="r.klab.klogic" class="u-text">logic</span><div id="r.klab.kc1" class="u-box"><div id="r.klab.kc1.0" class="u-heading">Card 2 of Lab ✓</div><span id="r.klab.kc1.1" class="u-text">default Lab ✓</span><div id="r.klab.kc1.kactions" class="u-row"><button id="r.klab.kc1.kactions.0" class="u-btn" type="button">Bump 2</button></div><span id="r.klab.kc1.kextra" class="u-text">2</span><span id="r.klab.kc1.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kc1.ktone" class="u-text"> warn</span></div><div id="r.klab.kc2" class="u-box"><div id="r.klab.kc2.0" class="u-heading">Empty 3 of Lab ✓</div><span id="r.klab.kc2.1" class="u-text u-tone-muted">no body</span><div id="r.klab.kc2.kactions" class="u-row"><span id="r.klab.kc2.kactions.0" class="u-text u-tone-muted">no actions</span></div><span id="r.klab.kc2.kfirst" class="u-text"></span></div><div id="r.klab.kn1" class="u-row"><span id="r.klab.kn1.0" class="u-text">0=n1</span><button id="r.klab.kn1.1" class="u-btn is-disabled" type="button" disabled="">Pick</button></div><div id="r.klab.kn2" class="u-row"><span id="r.klab.kn2.0" class="u-text">1=n2</span><button id="r.klab.kn2.1" class="u-btn" type="button">Pick</button></div><span id="r.klab.kall" class="u-badge">all</span><span id="r.klab.kunread" class="u-badge">unread</span><button id="r.klab.kopenfirst" class="u-btn" type="button">first</button><button id="r.klab.kdynbad" class="u-btn" type="button">dyn 1</button><button id="r.klab.kdynok" class="u-btn" type="button">dyn n2</button></div></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+>  Lab ✓                                     1 unread          ▾
+>  ●  warn  Ünïcode                          1:x   2:y
+> ▎●  info  two                                          Dismiss
+> [off] closed
+> false false
+> 2 · 0.25 · 2 done
+>
+> Ünïcode
+> 0.5 -0.25 5 Lab ✓!
+>  in
+> many
+> logic
+> Card 2 of Lab ✓
+> default Lab ✓
+>  Bump 2
+> 2
+> Ünïcode
+>  warn
+> Empty 3 of Lab ✓
+> no body
+> no actions
+>
+> 0=n1 Pick
+> 1=n2 Pick
+>  all
+>  unread
+>                              first
+>                              dyn 1
+>                              dyn n2
+style
+= .aaaaa....................................bbbbbbbbbb.ccccccccdc
+= .e.ffffff.aaaaaaa.........................ghhhg.ghhhg
+= ijkghhhhgkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkgggggggggk
+= hhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+=
+= lllllllllllllllll
+=
+=
+=
+= ghhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+=
+=
+= mmmmmmmmmmmmmmmggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= mmmmmmmmmmmmmmmmgggggggggggggggggggggggggggggggggggggggggggggggg
+= hhhhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= hhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= ....noooon
+= ....bppppb
+= ghhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= ghhhhhhggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+= gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+. fg/bg
+a fg/bg bold
+b fg/accent
+c fg/field
+d muted/field
+e accent/bg
+f fg/warn
+g fg/tonal
+h muted/tonal
+i accent/selected
+j muted/selected
+k fg/selected
+l muted/bg
+m fg/tonal bold
+n fg/surface
+o faint/surface
+p on-accent/accent
+hits
+@ 53,0 10x1 r.khead.kfilter
+@ 0,1 64x2 r.klist
+@ 0,1 64x1 r.klist.kn1
+@ 54,1 9x1 r.klist.kn1.0.5
+@ 0,2 64x1 r.klist.kn2
+@ 54,2 9x1 r.klist.kn2.0.3
+@ 0,3 5x1 r.kpanel.0.0
+@ 0,14 8x1 r.klab.kc1.kactions.0
+@ 4,23 6x1 r.klab.kn2.1
+@ 0,26 64x1 r.klab.kopenfirst
+@ 0,27 64x1 r.klab.kdynbad
+@ 0,28 64x1 r.klab.kdynok
+-- 3.event --
+click r.klab.kopenfirst
+-- 3.log --
+open n1
+-- 3.ops --
+attr r.khead.kcount class "u-badge u-fill-muted"
+text r.khead.kcount "All read"
+attr r.klist.kn1 class "u-item is-sel"
+attr r.klist.kn1 aria-selected "true"
+attr r.klist.kn1.0.0 class "u-glyph u-tone-muted"
+attr r.klist.kn1.0.2 class "u-text u-grow"
+attr r.klist.kn2 class "u-item"
+unattr r.klist.kn2 aria-selected
+text r.kstatus "2 · 0.25 · 3 done"
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1 u-px1 u-py0"><div id="r.khead.0" class="u-heading">Lab ✓</div><span id="r.khead.1" class="u-grow"></span><span id="r.khead.kcount" class="u-badge u-fill-muted">All read</span><button id="r.khead.kfilter" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:6" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.khead.kfilter.0" class="u-select-value"></span><span id="r.khead.kfilter.1" class="u-select-chevron">󰅀</span></button></div><div id="r.klist" class="u-list" role="listbox" tabindex="0" data-keys="arrow_down=program j=scroll-down"><div id="r.klist.kn1" class="u-item is-sel" role="option" data-on="click" aria-selected="true"><div id="r.klist.kn1.0" class="u-row u-grow u-gap1"><span id="r.klist.kn1.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn1.0.1" class="u-badge u-fill-warn u-width" style="--u-w:6">warn</span><span id="r.klist.kn1.0.2" class="u-text u-grow">Ünïcode</span><span id="r.klist.kn1.0.kx" class="u-badge u-tone-muted">1:x</span><span id="r.klist.kn1.0.ky" class="u-badge u-tone-muted">2:y</span><button id="r.klist.kn1.0.5" class="u-btn u-reveal" type="button">Dismiss</button></div></div><div id="r.klist.kn2" class="u-item" role="option" data-on="click"><div id="r.klist.kn2.0" class="u-row u-grow u-gap1"><span id="r.klist.kn2.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn2.0.1" class="u-badge u-fill-muted u-width" style="--u-w:6">info</span><span id="r.klist.kn2.0.2" class="u-text u-grow">two</span><button id="r.klist.kn2.0.3" class="u-btn u-reveal" type="button">Dismiss</button></div></div></div><div id="r.kpanel" class="u-box"><div id="r.kpanel.0" class="u-row u-gap1"><button id="r.kpanel.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kpanel.0.0.0" class="u-knob"></span></button><span id="r.kpanel.0.1" class="u-text">closed</span></div></div><span id="r.kpanelnull" class="u-text">false false</span><span id="r.kstatus" class="u-text u-tone-muted">2 · 0.25 · 3 done</span><div id="r.klab" class="u-stack"><span id="r.klab.ksum" class="u-text"></span><span id="r.klab.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kmath" class="u-text">0.5 -0.25 5 Lab ✓!</span><span id="r.klab.kin" class="u-badge">in</span><span id="r.klab.kchain" class="u-text">many</span><span id="r.klab.klogic" class="u-text">logic</span><div id="r.klab.kc1" class="u-box"><div id="r.klab.kc1.0" class="u-heading">Card 2 of Lab ✓</div><span id="r.klab.kc1.1" class="u-text">default Lab ✓</span><div id="r.klab.kc1.kactions" class="u-row"><button id="r.klab.kc1.kactions.0" class="u-btn" type="button">Bump 2</button></div><span id="r.klab.kc1.kextra" class="u-text">2</span><span id="r.klab.kc1.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kc1.ktone" class="u-text"> warn</span></div><div id="r.klab.kc2" class="u-box"><div id="r.klab.kc2.0" class="u-heading">Empty 3 of Lab ✓</div><span id="r.klab.kc2.1" class="u-text u-tone-muted">no body</span><div id="r.klab.kc2.kactions" class="u-row"><span id="r.klab.kc2.kactions.0" class="u-text u-tone-muted">no actions</span></div><span id="r.klab.kc2.kfirst" class="u-text"></span></div><div id="r.klab.kn1" class="u-row"><span id="r.klab.kn1.0" class="u-text">0=n1</span><button id="r.klab.kn1.1" class="u-btn is-disabled" type="button" disabled="">Pick</button></div><div id="r.klab.kn2" class="u-row"><span id="r.klab.kn2.0" class="u-text">1=n2</span><button id="r.klab.kn2.1" class="u-btn" type="button">Pick</button></div><span id="r.klab.kall" class="u-badge">all</span><span id="r.klab.kunread" class="u-badge">unread</span><button id="r.klab.kopenfirst" class="u-btn" type="button">first</button><button id="r.klab.kdynbad" class="u-btn" type="button">dyn 1</button><button id="r.klab.kdynok" class="u-btn" type="button">dyn n2</button></div></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+>  Lab ✓                                     All read          ▾
+> ▎●  warn  Ünïcode                          1:x   2:y   Dismiss
+>  ●  info  two
+> [off] closed
+> false false
+> 2 · 0.25 · 3 done
+>
+> Ünïcode
+> 0.5 -0.25 5 Lab ✓!
+>  in
+> many
+> logic
+> Card 2 of Lab ✓
+> default Lab ✓
+>  Bump 2
+> 2
+> Ünïcode
+>  warn
+> Empty 3 of Lab ✓
+> no body
+> no actions
+>
+> 0=n1 Pick
+> 1=n2 Pick
+>  all
+>  unread
+>                              first
+>                              dyn 1
+>                              dyn n2
+style
+= .aaaaa....................................bccccccccb.dddddddded
+= fghiiiiiihhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhbcccbhbcccbhbbbbbbbbbh
+= .j.bccccb
+= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+= jjjjjjjjjjjjjjjjj
+=
+=
+=
+= bccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+=
+= kkkkkkkkkkkkkkkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= kkkkkkkkkkkkkkkkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= cccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ....lmmmml
+= ....bbbbbb
+= bcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= nnnnnnnnnnnnnnnnnnnnnnnnnnnnnooooonnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c muted/tonal
+d fg/field
+e muted/field
+f accent/selected
+g muted/selected
+h fg/selected
+i fg/warn
+j muted/bg
+k fg/tonal bold
+l fg/surface
+m faint/surface
+n fg/accent
+o on-accent/accent
+hits
+@ 53,0 10x1 r.khead.kfilter
+@ 0,1 64x2 r.klist
+@ 0,1 64x1 r.klist.kn1
+@ 54,1 9x1 r.klist.kn1.0.5
+@ 0,2 64x1 r.klist.kn2
+@ 54,2 9x1 r.klist.kn2.0.3
+@ 0,3 5x1 r.kpanel.0.0
+@ 0,14 8x1 r.klab.kc1.kactions.0
+@ 4,23 6x1 r.klab.kn2.1
+@ 0,26 64x1 r.klab.kopenfirst
+@ 0,27 64x1 r.klab.kdynbad
+@ 0,28 64x1 r.klab.kdynok
+-- 4.event --
+click r.klab.kc1.kactions.0
+-- 4.log --
+bump
+-- 4.ops --
+text r.kstatus "4 · 0.25 · 4 done"
+text r.klab.kc1.0 "Card 4 of Lab ✓"
+text r.klab.kc2.0 "Empty 5 of Lab ✓"
+-- 4.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1 u-px1 u-py0"><div id="r.khead.0" class="u-heading">Lab ✓</div><span id="r.khead.1" class="u-grow"></span><span id="r.khead.kcount" class="u-badge u-fill-muted">All read</span><button id="r.khead.kfilter" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:6" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.khead.kfilter.0" class="u-select-value"></span><span id="r.khead.kfilter.1" class="u-select-chevron">󰅀</span></button></div><div id="r.klist" class="u-list" role="listbox" tabindex="0" data-keys="arrow_down=program j=scroll-down"><div id="r.klist.kn1" class="u-item is-sel" role="option" data-on="click" aria-selected="true"><div id="r.klist.kn1.0" class="u-row u-grow u-gap1"><span id="r.klist.kn1.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn1.0.1" class="u-badge u-fill-warn u-width" style="--u-w:6">warn</span><span id="r.klist.kn1.0.2" class="u-text u-grow">Ünïcode</span><span id="r.klist.kn1.0.kx" class="u-badge u-tone-muted">1:x</span><span id="r.klist.kn1.0.ky" class="u-badge u-tone-muted">2:y</span><button id="r.klist.kn1.0.5" class="u-btn u-reveal" type="button">Dismiss</button></div></div><div id="r.klist.kn2" class="u-item" role="option" data-on="click"><div id="r.klist.kn2.0" class="u-row u-grow u-gap1"><span id="r.klist.kn2.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn2.0.1" class="u-badge u-fill-muted u-width" style="--u-w:6">info</span><span id="r.klist.kn2.0.2" class="u-text u-grow">two</span><button id="r.klist.kn2.0.3" class="u-btn u-reveal" type="button">Dismiss</button></div></div></div><div id="r.kpanel" class="u-box"><div id="r.kpanel.0" class="u-row u-gap1"><button id="r.kpanel.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kpanel.0.0.0" class="u-knob"></span></button><span id="r.kpanel.0.1" class="u-text">closed</span></div></div><span id="r.kpanelnull" class="u-text">false false</span><span id="r.kstatus" class="u-text u-tone-muted">4 · 0.25 · 4 done</span><div id="r.klab" class="u-stack"><span id="r.klab.ksum" class="u-text"></span><span id="r.klab.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kmath" class="u-text">0.5 -0.25 5 Lab ✓!</span><span id="r.klab.kin" class="u-badge">in</span><span id="r.klab.kchain" class="u-text">many</span><span id="r.klab.klogic" class="u-text">logic</span><div id="r.klab.kc1" class="u-box"><div id="r.klab.kc1.0" class="u-heading">Card 4 of Lab ✓</div><span id="r.klab.kc1.1" class="u-text">default Lab ✓</span><div id="r.klab.kc1.kactions" class="u-row"><button id="r.klab.kc1.kactions.0" class="u-btn" type="button">Bump 2</button></div><span id="r.klab.kc1.kextra" class="u-text">2</span><span id="r.klab.kc1.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kc1.ktone" class="u-text"> warn</span></div><div id="r.klab.kc2" class="u-box"><div id="r.klab.kc2.0" class="u-heading">Empty 5 of Lab ✓</div><span id="r.klab.kc2.1" class="u-text u-tone-muted">no body</span><div id="r.klab.kc2.kactions" class="u-row"><span id="r.klab.kc2.kactions.0" class="u-text u-tone-muted">no actions</span></div><span id="r.klab.kc2.kfirst" class="u-text"></span></div><div id="r.klab.kn1" class="u-row"><span id="r.klab.kn1.0" class="u-text">0=n1</span><button id="r.klab.kn1.1" class="u-btn is-disabled" type="button" disabled="">Pick</button></div><div id="r.klab.kn2" class="u-row"><span id="r.klab.kn2.0" class="u-text">1=n2</span><button id="r.klab.kn2.1" class="u-btn" type="button">Pick</button></div><span id="r.klab.kall" class="u-badge">all</span><span id="r.klab.kunread" class="u-badge">unread</span><button id="r.klab.kopenfirst" class="u-btn" type="button">first</button><button id="r.klab.kdynbad" class="u-btn" type="button">dyn 1</button><button id="r.klab.kdynok" class="u-btn" type="button">dyn n2</button></div></div></body></html>
+-- 4.cells --
+cells 64x32
+text
+>  Lab ✓                                     All read          ▾
+> ▎●  warn  Ünïcode                          1:x   2:y   Dismiss
+>  ●  info  two
+> [off] closed
+> false false
+> 4 · 0.25 · 4 done
+>
+> Ünïcode
+> 0.5 -0.25 5 Lab ✓!
+>  in
+> many
+> logic
+> Card 4 of Lab ✓
+> default Lab ✓
+>  Bump 2
+> 2
+> Ünïcode
+>  warn
+> Empty 5 of Lab ✓
+> no body
+> no actions
+>
+> 0=n1 Pick
+> 1=n2 Pick
+>  all
+>  unread
+>                              first
+>                              dyn 1
+>                              dyn n2
+style
+= .aaaaa....................................bccccccccb.dddddddded
+= fghiiiiiihhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhbcccbhbcccbhbbbbbbbbbh
+= .j.bccccb
+= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+= jjjjjjjjjjjjjjjjj
+=
+=
+=
+= bccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+=
+= kkkkkkkkkkkkkkkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= lmmmmmmlbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= kkkkkkkkkkkkkkkkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= cccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ....noooon
+= ....bbbbbb
+= bcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c muted/tonal
+d fg/field
+e muted/field
+f accent/selected
+g muted/selected
+h fg/selected
+i fg/warn
+j muted/bg
+k fg/tonal bold
+l fg/accent
+m on-accent/accent
+n fg/surface
+o faint/surface
+hits
+@ 53,0 10x1 r.khead.kfilter
+@ 0,1 64x2 r.klist
+@ 0,1 64x1 r.klist.kn1
+@ 54,1 9x1 r.klist.kn1.0.5
+@ 0,2 64x1 r.klist.kn2
+@ 54,2 9x1 r.klist.kn2.0.3
+@ 0,3 5x1 r.kpanel.0.0
+@ 0,14 8x1 r.klab.kc1.kactions.0
+@ 4,23 6x1 r.klab.kn2.1
+@ 0,26 64x1 r.klab.kopenfirst
+@ 0,27 64x1 r.klab.kdynbad
+@ 0,28 64x1 r.klab.kdynok
+-- 5.event --
+click r.klab.kdynok
+-- 5.log --
+open n2
+-- 5.ops --
+attr r.klist.kn1 class "u-item"
+unattr r.klist.kn1 aria-selected
+attr r.klist.kn2 class "u-item is-sel"
+attr r.klist.kn2 aria-selected "true"
+text r.kstatus "4 · 0.25 · 5 done"
+-- 5.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1 u-px1 u-py0"><div id="r.khead.0" class="u-heading">Lab ✓</div><span id="r.khead.1" class="u-grow"></span><span id="r.khead.kcount" class="u-badge u-fill-muted">All read</span><button id="r.khead.kfilter" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:6" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.khead.kfilter.0" class="u-select-value"></span><span id="r.khead.kfilter.1" class="u-select-chevron">󰅀</span></button></div><div id="r.klist" class="u-list" role="listbox" tabindex="0" data-keys="arrow_down=program j=scroll-down"><div id="r.klist.kn1" class="u-item" role="option" data-on="click"><div id="r.klist.kn1.0" class="u-row u-grow u-gap1"><span id="r.klist.kn1.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn1.0.1" class="u-badge u-fill-warn u-width" style="--u-w:6">warn</span><span id="r.klist.kn1.0.2" class="u-text u-grow">Ünïcode</span><span id="r.klist.kn1.0.kx" class="u-badge u-tone-muted">1:x</span><span id="r.klist.kn1.0.ky" class="u-badge u-tone-muted">2:y</span><button id="r.klist.kn1.0.5" class="u-btn u-reveal" type="button">Dismiss</button></div></div><div id="r.klist.kn2" class="u-item is-sel" role="option" data-on="click" aria-selected="true"><div id="r.klist.kn2.0" class="u-row u-grow u-gap1"><span id="r.klist.kn2.0.0" class="u-glyph u-tone-muted">●</span><span id="r.klist.kn2.0.1" class="u-badge u-fill-muted u-width" style="--u-w:6">info</span><span id="r.klist.kn2.0.2" class="u-text u-grow">two</span><button id="r.klist.kn2.0.3" class="u-btn u-reveal" type="button">Dismiss</button></div></div></div><div id="r.kpanel" class="u-box"><div id="r.kpanel.0" class="u-row u-gap1"><button id="r.kpanel.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kpanel.0.0.0" class="u-knob"></span></button><span id="r.kpanel.0.1" class="u-text">closed</span></div></div><span id="r.kpanelnull" class="u-text">false false</span><span id="r.kstatus" class="u-text u-tone-muted">4 · 0.25 · 5 done</span><div id="r.klab" class="u-stack"><span id="r.klab.ksum" class="u-text"></span><span id="r.klab.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kmath" class="u-text">0.5 -0.25 5 Lab ✓!</span><span id="r.klab.kin" class="u-badge">in</span><span id="r.klab.kchain" class="u-text">many</span><span id="r.klab.klogic" class="u-text">logic</span><div id="r.klab.kc1" class="u-box"><div id="r.klab.kc1.0" class="u-heading">Card 4 of Lab ✓</div><span id="r.klab.kc1.1" class="u-text">default Lab ✓</span><div id="r.klab.kc1.kactions" class="u-row"><button id="r.klab.kc1.kactions.0" class="u-btn" type="button">Bump 2</button></div><span id="r.klab.kc1.kextra" class="u-text">2</span><span id="r.klab.kc1.kfirst" class="u-text">Ünïcode</span><span id="r.klab.kc1.ktone" class="u-text"> warn</span></div><div id="r.klab.kc2" class="u-box"><div id="r.klab.kc2.0" class="u-heading">Empty 5 of Lab ✓</div><span id="r.klab.kc2.1" class="u-text u-tone-muted">no body</span><div id="r.klab.kc2.kactions" class="u-row"><span id="r.klab.kc2.kactions.0" class="u-text u-tone-muted">no actions</span></div><span id="r.klab.kc2.kfirst" class="u-text"></span></div><div id="r.klab.kn1" class="u-row"><span id="r.klab.kn1.0" class="u-text">0=n1</span><button id="r.klab.kn1.1" class="u-btn is-disabled" type="button" disabled="">Pick</button></div><div id="r.klab.kn2" class="u-row"><span id="r.klab.kn2.0" class="u-text">1=n2</span><button id="r.klab.kn2.1" class="u-btn" type="button">Pick</button></div><span id="r.klab.kall" class="u-badge">all</span><span id="r.klab.kunread" class="u-badge">unread</span><button id="r.klab.kopenfirst" class="u-btn" type="button">first</button><button id="r.klab.kdynbad" class="u-btn" type="button">dyn 1</button><button id="r.klab.kdynok" class="u-btn" type="button">dyn n2</button></div></div></body></html>
+-- 5.cells --
+cells 64x32
+text
+>  Lab ✓                                     All read          ▾
+>  ●  warn  Ünïcode                          1:x   2:y
+> ▎●  info  two                                          Dismiss
+> [off] closed
+> false false
+> 4 · 0.25 · 5 done
+>
+> Ünïcode
+> 0.5 -0.25 5 Lab ✓!
+>  in
+> many
+> logic
+> Card 4 of Lab ✓
+> default Lab ✓
+>  Bump 2
+> 2
+> Ünïcode
+>  warn
+> Empty 5 of Lab ✓
+> no body
+> no actions
+>
+> 0=n1 Pick
+> 1=n2 Pick
+>  all
+>  unread
+>                              first
+>                              dyn 1
+>                              dyn n2
+style
+= .aaaaa....................................bccccccccb.dddddddded
+= .f.gggggg.................................bcccb.bcccb
+= hijbccccbjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjbbbbbbbbbj
+= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+= fffffffffffffffff
+=
+=
+=
+= bccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+=
+= kkkkkkkkkkkkkkkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= kkkkkkkkkkkkkkkkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= cccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ....lmmmml
+= ....bbbbbb
+= bcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= nnnnnnnnnnnnnnnnnnnnnnnnnnnnnoooooonnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c muted/tonal
+d fg/field
+e muted/field
+f muted/bg
+g fg/warn
+h accent/selected
+i muted/selected
+j fg/selected
+k fg/tonal bold
+l fg/surface
+m faint/surface
+n fg/accent
+o on-accent/accent
+hits
+@ 53,0 10x1 r.khead.kfilter
+@ 0,1 64x2 r.klist
+@ 0,1 64x1 r.klist.kn1
+@ 54,1 9x1 r.klist.kn1.0.5
+@ 0,2 64x1 r.klist.kn2
+@ 54,2 9x1 r.klist.kn2.0.3
+@ 0,3 5x1 r.kpanel.0.0
+@ 0,14 8x1 r.klab.kc1.kactions.0
+@ 4,23 6x1 r.klab.kn2.1
+@ 0,26 64x1 r.klab.kopenfirst
+@ 0,27 64x1 r.klab.kdynbad
+@ 0,28 64x1 r.klab.kdynok

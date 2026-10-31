@@ -1,0 +1,47 @@
+A host whose language has one number type (Lua, JavaScript) reads
+state.json as its own values, and a number it gives CEL is an int where
+it is whole and within int64, a double otherwise. Given to a prop
+declared double, a number takes it as a double (1.0, 3); given to one
+declared int, a whole number within int64 takes it as an int (2.0),
+and any other is refused by the prop's name, the prop taking its zero
+(1.5, 2^63). A dyn prop takes the guess (1.0, an int). An expression's
+arithmetic is CEL's: double(one) is how a whole number becomes one.
+-- one-number.surf --
+<surface>
+  <as-double key="d1" :d="one"/>
+  <as-double key="d3" :d="three"/>
+  <as-int key="i2" :n="two"/>
+  <as-int key="ihalf" :n="half"/>
+  <as-int key="ibig" :n="big"/>
+  <as-dyn key="x1" :x="one"/>
+  <text key="twice">{{ double(one) * 2.0 }}</text>
+</surface>
+-- as-double.surf --
+<props d="double"/>
+<text>{{ d + 0.5 }}</text>
+-- as-int.surf --
+<props n="int"/>
+<text>{{ n }} {{ n + 1 }}</text>
+-- as-dyn.surf --
+<props x="dyn"/>
+<text>{{ x + 1 }}</text>
+-- state.json --
+{"one": 1.0, "three": 3, "two": 2.0, "half": 1.5, "big": 9223372036854775808}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><span id="r.kd1" class="u-text">1.5</span><span id="r.kd3" class="u-text">3.5</span><span id="r.ki2" class="u-text">2 3</span><span id="r.kihalf" class="u-text">0 1</span><span id="r.kibig" class="u-text">0 1</span><span id="r.kx1" class="u-text">2</span><span id="r.ktwice" class="u-text">2</span></div></body></html>
+-- cells --
+cells 64x32
+text
+> 1.5
+> 3.5
+> 2 3
+> 0 1
+> 0 1
+> 2
+> 2
+style
+. fg/bg
+hits
+-- errors --
+one-number.surf:5:3: prop n: 1.5 is not an int
+one-number.surf:6:3: prop n: 9.223372036854776e+18 is not an int

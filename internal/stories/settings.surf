@@ -1,0 +1,5 @@
+<!-- The settings page, on demodata's made-up settings. -->
+<stories of="settings" cols="100">
+  <story name="general"/>
+  <story name="a search"/>
+</stories>

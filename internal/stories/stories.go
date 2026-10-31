@@ -1,0 +1,451 @@
+// Package stories holds a story for every primitive of the vocabulary
+// and each of its states: what F5's gate renders in hotty-blitz and in
+// Chromium, at 1.6× and 2×, and diffs.
+//
+// The gate renders still documents: nothing has the keyboard or the
+// pointer. A story shows a focused or hovered look by forcing it (Force):
+// its document's stylesheet reads `:focus`, `:focus-visible`,
+// `:focus-within` and `:hover` as attribute selectors, which the story's
+// nodes carry, in both engines alike. That shows the look draws the same;
+// whether the pseudo-class matches is Blitz's element state, which
+// hotty-blitz's own tests pin.
+package stories
+
+import (
+	"strings"
+
+	"github.com/neuroplastio/hotty-surf/surfkeys"
+	"github.com/neuroplastio/hotty-surf/surfui"
+)
+
+// Story is one state of one component, at a width in cells.
+type Story struct {
+	Name string
+	Cols int
+	Tree func() *surfui.Node
+}
+
+// Force draws n as if in states, space-separated: "focus" (`:focus` and
+// `:focus-visible`), "within" (`:focus-within`), "hover" (`:hover`).
+func Force(n *surfui.Node, states string) *surfui.Node { return n.Attr("data-force", states) }
+
+var forced = strings.NewReplacer(
+	":focus-visible", "[data-force~=focus]",
+	":focus-within", "[data-force~=within]",
+	":focus", "[data-force~=focus]",
+	":hover", "[data-force~=hover]",
+)
+
+// CSS is surfui.CSS with its states forced: each of the pseudo-classes Force
+// names written as the attribute it sets.
+func CSS() string { return forced.Replace(surfui.CSS) }
+
+// Beside is css with each rule that reads a pseudo-class Force names
+// followed by its forced copy: a node Force marks looks focused or
+// hovered, and every other node keeps its real :focus and :hover. The
+// gallery's states matrix draws so, beside live stories. A copy comes
+// right after its rule, so the cascade's order is the rule's.
+func Beside(css string) string {
+	var b strings.Builder
+	for css != "" {
+		open := strings.IndexByte(css, '{')
+		if open < 0 {
+			b.WriteString(css)
+			break
+		}
+		sel := css[:open]
+		if strings.HasPrefix(strings.TrimSpace(sel), "@") {
+			// A group rule (@media): its rules, each with its copy.
+			depth, end := 1, open+1
+			for ; end < len(css) && depth > 0; end++ {
+				switch css[end] {
+				case '{':
+					depth++
+				case '}':
+					depth--
+				}
+			}
+			b.WriteString(sel + "{" + Beside(css[open+1:end-1]) + "}")
+			css = css[end:]
+			continue
+		}
+		end := strings.IndexByte(css[open:], '}')
+		if end < 0 {
+			b.WriteString(css)
+			break
+		}
+		rule := css[:open+end+1]
+		b.WriteString(rule)
+		if f := forced.Replace(sel); f != sel {
+			b.WriteString("\n" + strings.TrimLeft(f, "\n") + css[open:open+end+1])
+		}
+		css = css[open+end+1:]
+	}
+	return b.String()
+}
+
+// Document is a resolved root as a document that `hotty render` and a
+// browser open, with the stylesheet inline, its states forced (CSS).
+func Document(root *surfui.Node) string {
+	return `<!doctype html><html><head><meta charset="utf-8"><style>` + CSS() + `</style></head><body>` +
+		surfui.HTML(root) + `</body></html>`
+}
+
+// KeyStyle is the style the stories draw their keys in (package surfkeys),
+// in the gallery and in the gate's documents: plx's seed keys.style,
+// glyph caps in lower case, glued, a gap between a sequence's chords, as
+// the look's screens draw them.
+var KeyStyle = surfkeys.Style{Caps: "glyphs", Case: "lower", Then: "space", Glue: "on"}
+
+// All are the stories, in the order the gate and the book show them.
+var All = []Story{
+	{"text/tones", 60, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Text("Plain text, the terminal's colour"),
+			surfui.Text("Muted, for what is secondary").Muted(),
+			surfui.Row(surfui.Text("accent").Tone(surfui.Accent), surfui.Text("ok").Tone(surfui.OK), surfui.Text("warn").Tone(surfui.Warn),
+				surfui.Text("error").Tone(surfui.Error), surfui.Text("info").Tone(surfui.Info)).Gap(1),
+			surfui.Text("Bold").Bold(),
+			surfui.Text("A long line that does not fit its box is cut with an ellipsis at its end, never wrapped"),
+			surfui.Text("A long line that wraps goes on to the next row, at its box's edge, as prose does").Wrap(),
+		)
+	}},
+	{"text/type", 50, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Heading("Settings"),
+			surfui.Text("Pane border kind").Bold(),
+			surfui.Text("The kind of border a pane has: line rings each pane, gap is a blank gutter").Small().Muted().Wrap(),
+			surfui.Row(surfui.Text("set here (config.overlay.kdl)").Small().Muted(), surfui.Text("0 items").Small()).Gap(2),
+		)
+	}},
+	{"text/path", 30, func() *surfui.Node {
+		// A program's files, as its About page lists them: a path breaks
+		// after a "/", on a host and in cells, not inside a name.
+		return surfui.Stack(
+			surfui.Text("Files").Bold(),
+			surfui.Text("log /home/me/.cache/app/agents-shots/logs/program.log").Small().Muted().Wrap(),
+			surfui.Text("state /srv/apps/1000/app.x1/cells-17/state/agents").Small().Muted().Wrap(),
+		)
+	}},
+	{"line/runs", 30, func() *surfui.Node {
+		// A palette's rows: each label one line of runs, its group muted
+		// and its matches in the accent at weight 600, cut once, at its
+		// end, beside keys that keep whole (text: a badge is a pixel wider
+		// in Blitz, roomy, a gap of its own). The first fits, its detail
+		// two cells on; the others are cut in their titles.
+		row := func(sel bool, keys string, runs ...*surfui.Node) *surfui.Node {
+			return surfui.Item(surfui.Line(runs...).Grow(), surfui.Text(keys).Muted().Keep()).Selected(sel)
+		}
+		return surfui.List(
+			row(true, "ctrl+b s", surfui.Text("Pane").Muted(), surfui.Text(": ").Muted(), surfui.Text("Sp").Tone(surfui.Accent).Semibold(),
+				surfui.Text("lit"), surfui.Text("p-1").Muted().Indent(2)),
+			row(false, "ctrl+b p x", surfui.Text("S").Tone(surfui.Accent).Semibold(), surfui.Text("etting").Muted(), surfui.Text(": ").Muted(),
+				surfui.Text("Pa").Tone(surfui.Accent).Semibold(), surfui.Text("lette position on the screen")),
+			row(false, "w", surfui.Text("Workspace").Muted(), surfui.Text(": ").Muted(), surfui.Text("Close every pane but this one")),
+		)
+	}},
+	{"line/paragraph", 40, func() *surfui.Node {
+		// Prose with keys in it, as plx's onboarding writes it: its runs
+		// and keys one paragraph, broken at its spaces, each key's caps
+		// whole; a run in its own tone and weight across a break.
+		return surfui.Stack(
+			surfui.Line(surfui.Text("Press "), surfui.Key("ctrl+b"), surfui.Text(" and a hint shows what each next key does: "),
+				surfui.Key("ctrl+b v"), surfui.Text(" splits right, "), surfui.Key("ctrl+b s"), surfui.Text(" below.")).Wrap(),
+			surfui.Line(surfui.Text("What this does: ").Muted(), surfui.Text("it runs the command in the pane you picked").Bold(),
+				surfui.Text(", and "), surfui.Key("escape"), surfui.Text(" closes the palette.")).Wrap(),
+		).Gap(1)
+	}},
+	{"row/fit", 40, func() *surfui.Node {
+		// A footer: its note, then flush right the actions that fit, each
+		// whole, the most significant rightmost; those there is no room
+		// for are left out. A long note leaves less room.
+		act := func(title, key string) *surfui.Node { return surfui.Row(surfui.Text(title), surfui.Badge(key)).Gap(2) }
+		foot := func(note string) *surfui.Node {
+			return surfui.Row(surfui.Text(note).Muted(),
+				surfui.Row(act("Run", "enter"), act("Stay", "mod+enter"), act("Copy", "alt+enter")).Fit().Gap(5)).Gap(5).Pad(3, 0)
+		}
+		return surfui.Stack(foot("pane.new"), foot("workspace.close-others"))
+	}},
+	{"badge/fills", 60, func() *surfui.Node {
+		return surfui.Row(surfui.Badge("devbox"), surfui.Badge("ok").Fill(surfui.OK), surfui.Badge("warn").Fill(surfui.Warn),
+			surfui.Badge("error").Fill(surfui.Error), surfui.Badge("info").Fill(surfui.Info), surfui.Badge("accent").Fill(surfui.Accent)).Gap(1)
+	}},
+	{"glyph/column", 40, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(surfui.Glyph("●").Tone(surfui.Warn), surfui.Glyph("🦀"), surfui.Text("alpha").Bold().Indent(1)),
+			surfui.Row(surfui.Glyph("○").Tone(surfui.Muted), surfui.Glyph("🐙"), surfui.Text("beta").Bold().Indent(1)),
+			surfui.Row(surfui.Glyph("◉").Tone(surfui.Error), surfui.Glyph(""), surfui.Text("codex-1").Bold().Indent(1)),
+		)
+	}},
+	{"dot/shapes", 40, func() *surfui.Node {
+		// A state told by its shape as well as its tone, as plx's agents
+		// roster: working a dot, needs-you a target, idle a ring. A host
+		// has no shape for offline (◌) until a dashed ring is proven
+		// (blitz-gaps), so offline is a ring in the error's tone, its
+		// name muted and its row saying so. On a sidebar's ground and a
+		// selected row, the gap in a target is their fill.
+		agent := func(dot, name *surfui.Node, state string, sel bool) *surfui.Node {
+			return surfui.Item(dot, name.Grow(), surfui.Text(state).Small().Muted()).Gap(1).Selected(sel)
+		}
+		return surfui.List(
+			agent(surfui.Dot().Tone(surfui.Info), surfui.Text("claude-1").Bold(), "working", false),
+			agent(surfui.Dot().Tone(surfui.Error).Target(), surfui.Text("claude-2").Bold(), "needs you", true),
+			agent(surfui.Dot().Tone(surfui.Muted).Ring(), surfui.Text("pi-1").Bold(), "idle", false),
+			agent(surfui.Dot().Tone(surfui.Error).Ring(), surfui.Text("codex-1").Muted(), "offline", false),
+		).Chrome()
+	}},
+	{"key/caps", 50, func() *surfui.Node {
+		row := func(group, title string, sel bool, seq string) *surfui.Node {
+			return surfui.Item(surfui.Text(group).Muted(), surfui.Text(title).Grow(), surfui.Key(seq)).Selected(sel)
+		}
+		hint := func(title, seq string) *surfui.Node { return surfui.Row(surfui.Text(title), surfui.Key(seq)).Gap(2) }
+		return surfui.Stack(
+			surfui.List(
+				row("Pane: ", "New", true, "ctrl+b p n"),
+				row("Pane: ", "Close now", false, "ctrl+b p shift+x"),
+				row("Tab: ", "Toggle zoom", false, "ctrl+b z"),
+			),
+			surfui.Row(surfui.Text("pane.new").Muted(),
+				surfui.Row(hint("Run", "enter"), hint("Run and stay", "mod+enter")).Fit().Gap(5)).Gap(5).Pad(3, 0),
+		)
+	}},
+	{"key/styles", 80, func() *surfui.Node {
+		// The same keys in each of plx's keys.style looks, as its
+		// onboarding shows them while the person picks one: each drawn
+		// in its own style (surfkeys.Node), whatever the gallery's.
+		styles := []struct {
+			name string
+			st   surfkeys.Style
+		}{
+			{"defaults", surfkeys.Style{}},
+			{"seed", KeyStyle},
+			{"text", surfkeys.Style{Caps: "text", Case: "title"}},
+			{"lower", surfkeys.Style{Caps: "text", Case: "lower", Sep: "-"}},
+			{"shifted", surfkeys.Style{Caps: "text", Case: "shifted", Then: "then"}},
+			{"mac", surfkeys.Style{OS: "mac"}},
+		}
+		st := surfui.Stack().Gap(1)
+		for _, s := range styles {
+			row := surfui.Row(surfui.Text(s.name).Muted().Width(10)).Gap(3)
+			for _, seq := range []string{"ctrl+shift+t", "ctrl+b v", "mod+enter", "super+l"} {
+				row.Add(surfkeys.Node(s.st, true, seq))
+			}
+			st.Add(row)
+		}
+		return st
+	}},
+	{"button/states", 60, func() *surfui.Node {
+		return surfui.Row(surfui.Button("Restart"), surfui.Button("Focus").Fill(surfui.Accent), surfui.Button("Disabled").Disabled(true)).Gap(1)
+	}},
+	{"button/bare", 60, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(surfui.Text("set here (config.overlay.kdl)").Small().Muted(), surfui.Button("Reset").Bare()).Gap(2),
+			surfui.Row(Force(surfui.Button("Focused"), "focus"), Force(surfui.Button("Hovered"), "hover"),
+				Force(surfui.Button("Reset").Bare(), "focus"), Force(surfui.Button("Reset").Bare(), "hover")).Gap(2),
+		).Gap(1)
+	}},
+	{"field/states", 60, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(surfui.Text("Name").Width(10), surfui.Field().Value("alpha").Grow()),
+			surfui.Row(surfui.Text("Empty").Width(10), surfui.Field().Placeholder("Type a name").Grow()),
+			surfui.Row(surfui.Text("Invalid").Width(10), surfui.Field().Value("1200").Invalid(true).Grow()),
+			surfui.Text("0 to 1000").Tone(surfui.Error).Indent(10),
+			surfui.Row(surfui.Text("Disabled").Width(10), surfui.Field().Value("top").Disabled(true).Grow()),
+		)
+	}},
+	{"field/focus", 50, func() *surfui.Node {
+		// The labels' column is as wide as "Bare, focused" and a cell, so
+		// that no label is cut and none touches its field's ring.
+		return surfui.Stack(
+			surfui.Row(surfui.Text("Focused").Width(14), Force(surfui.Field().Placeholder("Search settings"), "focus").Grow()),
+			surfui.Row(surfui.Text("Hovered").Width(14), Force(surfui.Field().Value("80"), "hover").Grow()),
+			surfui.Row(surfui.Text("Bare").Width(14), surfui.Field().Bare().Value("split").Grow()),
+			surfui.Row(surfui.Text("Bare, focused").Width(14), Force(surfui.Field().Bare(), "focus").Grow()),
+		)
+	}},
+	{"switch/states", 40, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(surfui.Switch(true), surfui.Text("On")).Gap(1),
+			surfui.Row(surfui.Switch(false), surfui.Text("Off")).Gap(1),
+			surfui.Row(surfui.Switch(true).Disabled(true), surfui.Text("Disabled").Muted()).Gap(1),
+		)
+	}},
+	{"switch/focus", 40, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(Force(surfui.Switch(true), "focus"), surfui.Text("On, focused")).Gap(2),
+			surfui.Row(Force(surfui.Switch(false), "focus"), surfui.Text("Off, focused")).Gap(2),
+			surfui.Row(Force(surfui.Switch(false), "hover"), surfui.Text("Off, hovered")).Gap(2),
+		).Gap(1)
+	}},
+	{"select/closed", 40, func() *surfui.Node {
+		row := func(label string, s *surfui.Node) *surfui.Node { return surfui.Row(surfui.Text(label).Width(10), s) }
+		pos := func() *surfui.Node { return surfui.Select("top", "top", "center", "bottom") }
+		return surfui.Stack(
+			row("Position", pos()),
+			row("Focused", Force(pos(), "focus")),
+			row("Hovered", Force(pos(), "hover")),
+			row("Disabled", pos().Disabled(true)),
+		).Gap(1)
+	}},
+	// The list is a surface of its own over the Select's (run's
+	// showList), here drawn under it: its first option hovered, the
+	// picked one on its fill, the keys on the last.
+	{"select/open", 40, func() *surfui.Node {
+		options := []string{"top", "center", "bottom"}
+		s := surfui.Select("center", options...)
+		surfui.OpenSelect(s)
+		list := surfui.Kids(surfui.SelectList(surfui.Surface(), "center", options, 2))[0]
+		Force(surfui.Kids(list)[0], "hover")
+		return surfui.Stack(
+			surfui.Row(surfui.Text("Position").Width(10), s),
+			surfui.Row(surfui.Box().Width(10), surfui.Box(list).Width(14)),
+		)
+	}},
+	{"cycle/states", 50, func() *surfui.Node {
+		row := func(label string, c *surfui.Node) *surfui.Node {
+			return surfui.Row(surfui.Text(label).Bold().Grow(), c)
+		}
+		return surfui.Stack(
+			row("Pane border kind", surfui.Cycle("line", "line", "gap")),
+			row("Pane render", Force(surfui.Cycle("auto", "auto", "cells", "hotty"), "focus")),
+			row("Pane gap", surfui.Cycle("1", "0", "1")),
+			row("Keys case", Force(surfui.Cycle("lower", "auto", "title", "lower", "shifted"), "hover")),
+		)
+	}},
+	{"list/selection", 50, func() *surfui.Node {
+		return surfui.List(
+			surfui.Item(surfui.Text("pane.split").Grow(), surfui.Badge("ctrl+b %")),
+			surfui.Item(surfui.Text("pane.close").Grow(), surfui.Badge("ctrl+b x")).Selected(true),
+			surfui.Item(surfui.Text("workspace.new").Grow()),
+		)
+	}},
+	{"list/keyboard", 50, func() *surfui.Node {
+		// A palette's rows: in Compact, the selection is the accent band
+		// while the List's container has the keyboard (the Field that
+		// filters it), and the tonal band without.
+		rows := func(query string) *surfui.Node {
+			return surfui.Stack(
+				surfui.Field().Bare().Value(query),
+				surfui.List(
+					surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Sp").Bold().Tone(surfui.Accent), surfui.Text("lit"),
+						surfui.Text("p-1").Muted().Indent(2)).Selected(true),
+					surfui.Item(surfui.Text("Setting: ").Muted(), surfui.Text("S").Bold().Tone(surfui.Accent), surfui.Text("crollback "),
+						surfui.Text("p").Bold().Tone(surfui.Accent), surfui.Text("ages")),
+				),
+			)
+		}
+		return surfui.Stack(Force(rows("sp"), "within"), rows("sp")).Gap(1)
+	}},
+	{"list/two-line", 50, func() *surfui.Node {
+		row := func(dot string, tone surfui.Tone, icon, name, topic string, sel bool) *surfui.Node {
+			return surfui.Item(surfui.Stack(
+				surfui.Row(surfui.Glyph(dot).Tone(tone), surfui.Glyph(icon), surfui.Text(name).Bold().Indent(1).Grow()),
+				surfui.Text(topic).Muted().Indent(5),
+			).Grow()).Selected(sel)
+		}
+		return surfui.List(
+			row("●", surfui.Warn, "🦀", "alpha", "Agents toolbar redesign", false),
+			row("○", surfui.Muted, "🐙", "beta", "Fix the flaky parser test", true),
+			row("◉", surfui.Error, "", "codex-1", "Refactor session index", false),
+		)
+	}},
+	// Wide enough for "Docks and tools" in each of the three navs at every
+	// density (dense takes the most): a nav is as wide as its widest item.
+	{"list/nav", 64, func() *surfui.Node {
+		nav := func(sel int) *surfui.Node {
+			l := surfui.List().Nav()
+			for i, s := range []string{"General", "Panes", "Docks and tools", "Keys"} {
+				l.Add(surfui.Item(surfui.Text(s)).Selected(i == sel))
+			}
+			return l
+		}
+		return surfui.Row(nav(0), Force(nav(1), "within"), Force(nav(3), "hover")).Gap(4).Top()
+	}},
+	{"list/entries", 30, func() *surfui.Node {
+		entry := func(dot string, tone surfui.Tone, emoji, name string, hand bool, lines ...string) *surfui.Node {
+			head := surfui.Row(surfui.Text(name).Bold().Grow())
+			if hand {
+				head.Add(surfui.Text("✋"))
+			}
+			text := surfui.Stack(head)
+			for _, l := range lines {
+				text.Add(surfui.Text(l).Small().Muted().Wrap())
+			}
+			return surfui.Item(surfui.Row(surfui.Glyph(dot).Tone(tone), surfui.Glyph(emoji), text.Grow()).Gap(2).Top().Grow())
+		}
+		return surfui.List(
+			Force(entry("●", surfui.Warn, "🦀", "claude-1", false, "Fix the flaky parser test", "working"), "focus"),
+			entry("●", surfui.Info, "🦊", "pi-1", true, "Write the release notes for 26.10.29", "done"),
+			Force(entry("○", surfui.Muted, "　", "opencode-1", false, "idle"), "hover"),
+		).Entries()
+	}},
+	{"section/nested", 50, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Section("Keys",
+				surfui.Row(surfui.Text("Base").Width(12), surfui.Text("neuroplastio").Muted()),
+				surfui.Section("Style",
+					surfui.Row(surfui.Text("Caps").Width(10), surfui.Text("auto").Muted()),
+					surfui.Row(surfui.Text("Case").Width(10), surfui.Text("title").Muted()),
+				),
+			),
+		)
+	}},
+	// A box has no room of its own: its user pads it, here as a card, a
+	// palette's query row's room (Pad(3, 1)) round its lines.
+	{"box/rule", 50, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Box(surfui.Stack(surfui.Heading("A box"), surfui.Text("Raised, for a card or a dialog").Muted())).Pad(3, 1),
+			surfui.Rule(),
+			surfui.Text("After a rule"),
+		).Gap(1)
+	}},
+	{"box/scroll", 50, func() *surfui.Node {
+		nav := surfui.List().Nav()
+		for i, s := range []string{"General", "Panes", "Docks and tools", "Keys", "Windows", "Agents"} {
+			nav.Add(surfui.Item(surfui.Text(s)).Selected(i == 1))
+		}
+		body := surfui.Stack()
+		for _, s := range []string{"Pane border kind", "Pane render", "Pane gap", "Pane top-left badges",
+			"Pane top-right badges", "Lone pane header", "Lone pane footer", "Pane tint"} {
+			body.Add(surfui.Text(s).Bold(), surfui.Text("What it does, in a line").Small().Muted(), surfui.Rule())
+		}
+		return surfui.Row(nav, surfui.Stack(surfui.Heading("Panes"), Force(surfui.Box(body).Pad(2, 0).Scroll(), "focus")).Grow()).Gap(2).Top()
+	}},
+	{"dialog/box", 50, func() *surfui.Node {
+		// Without caps, whose borders are a gap of their own (key/caps).
+		// Its height in rows, as a palette counts its lines, the least it
+		// takes on a host: a row more than Dense's eleven lines, which it
+		// keeps, where Compact's rows, with air, grow past it.
+		row := func(group, title, detail string, sel bool) *surfui.Node {
+			return surfui.Item(surfui.Text(group).Muted(), surfui.Text(title), surfui.Text(detail).Muted().Indent(2).Grow()).Selected(sel)
+		}
+		return surfui.Dialog(surfui.Stack(
+			surfui.Row(surfui.Text("❯").Tone(surfui.Accent).Bold(), surfui.Field().Bare().Grow()).Gap(1).Pad(3, 1),
+			surfui.Rule(),
+			surfui.List(
+				row("Pane: ", "New", "", true),
+				row("Pane: ", "Split", "p-1", false),
+				row("Tab: ", "Toggle zoom", "p-1", false),
+			),
+			surfui.Rule(),
+			surfui.Row(surfui.Text("pane.new").Muted().Grow(), surfui.Text("Run")).Gap(2).Pad(3, 0),
+		).Pad(1, 0)).Height(12)
+	}},
+	{"scale/zoom", 50, func() *surfui.Node {
+		part := func() *surfui.Node {
+			return surfui.Stack(
+				surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Split").Bold().Tone(surfui.Accent), surfui.Spacer(), surfui.Badge("p-1")).Selected(true),
+				surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Focus"), surfui.Spacer(), surfui.Badge("p-2").Fill(surfui.Accent)),
+			).Width(40)
+		}
+		return surfui.Stack(part(), part().Scale(80))
+	}},
+}
+
+// Surface is a story's tree in a surface of the theme and density, its
+// keys drawn in KeyStyle, as the gallery draws them.
+func Surface(s Story, theme string, d surfui.Density) *surfui.Node {
+	root := surfui.Surface(s.Tree().Pad(1, 0)).Theme(theme).Density(d)
+	surfkeys.Expand(root, KeyStyle, true)
+	return root
+}

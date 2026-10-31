@@ -1,0 +1,29 @@
+<!-- Until the source answers, nothing is drawn. An entry: its dot and its
+     pane's emoji (a blank where it has none), each in a glyph's slot, so
+     that the names line up whatever the marks, and its lines: the name in
+     bold with the first line's badges, its host and ✋ after it, then a
+     small muted line for each further line of the item that shows
+     something, as the look's entries have them (R-24). -->
+<surface pad="1 0">
+  <text :if="loaded &amp;&amp; size(agents) == 0" small muted wrap key="empty">No agents yet. An agent appears when its harness reports from its pane.</text>
+  <list :if="loaded &amp;&amp; size(agents) > 0" entries label="Agents" key="list">
+    <bind key="enter" label="Go to the agent" do="enter"/>
+    <bind key="space" label="Go to the agent" do="enter"/>
+    <item :each="(i, a) in agents" :key="a.address" :autofocus="i == 0" @click="goTo(a)" @focus="focus(i)">
+      <row top gap="2" grow>
+        <glyph :tone="tone(a)">{{ dot(a) }}</glyph>
+        <glyph>{{ a.icon != '' ? a.icon : '　' }}</glyph>
+        <stack grow>
+          <row gap="2" key="name">
+            <text bold :muted="a.offline" wrap grow>{{ a.name }}</text>
+            <badge :each="b in badges(a)">{{ b }}</badge>
+            <badge :if="a.host != ''" key="host">{{ a.host }}</badge>
+            <text :if="a.attention" key="hand">✋</text>
+          </row>
+          <text :each="(n, line) in lines(a)" :if="line != ''" small muted wrap :key="'l' + string(n)">{{ line }}</text>
+        </stack>
+      </row>
+    </item>
+  </list>
+  <text :if="refused != ''" tone="error" wrap key="refused">{{ refused }}</text>
+</surface>

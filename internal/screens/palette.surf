@@ -1,0 +1,68 @@
+<!-- The palette's keys are its root's, so the query gives them to the
+     program. -->
+<surface>
+  <bind key="arrow_up" label="Previous" do="move(-1)"/>
+  <bind key="ctrl+p" label="Previous" do="move(-1)"/>
+  <bind key="arrow_down" label="Next" do="move(1)"/>
+  <bind key="ctrl+n" label="Next" do="move(1)"/>
+  <bind key="page_up" label="Page up" do="page(-1)"/>
+  <bind key="page_down" label="Page down" do="page(1)"/>
+  <bind key="enter" label="Run" do="enter"/>
+  <bind key="mod+enter" label="Run and stay" do="doKey('mod+enter')"/>
+  <bind key="alt+enter" label="Copy command" do="doKey('alt+enter')"/>
+  <bind key="shift+delete" label="Remove from used" do="doKey('shift+delete')"/>
+  <bind key="ctrl+k" label="Actions" do="togglePanel"/>
+  <bind key="ctrl+space" label="Complete" do="complete"/>
+  <bind key="tab" label="Complete" do="complete"/>
+  <bind key="escape" label="Close" do="escape"/>
+  <bind key="ctrl+c" label="Close" do="escape"/>
+  <stack :height="above()" key="above"/>
+  <row pad="0 1" key="box">
+    <spacer/>
+    <dialog :height="boxHeight()">
+      <stack :width="inner()" pad="1 0" :scale="scale()" key="pick">
+        <row gap="2" pad="3 1" key="query">
+          <text tone="accent" semibold>❯</text>
+          <field bare :value="query" label="Command" autofocus grow @input="setQuery($value)"/>
+        </row>
+        <rule key="rule"/>
+        <row :if="status() != ''" pad="3 1" key="status">
+          <text :if="failed" small tone="error">✗ {{ status() }}</text>
+          <text :else small muted>{{ status() }}</text>
+        </row>
+        <rule :if="status() != ''" key="status-rule"/>
+        <!-- The actions panel in the rows' place; else the rows, or what
+             the list says with none. -->
+        <row :if="showPanel()" pad="3 0" key="head">
+          <text small semibold muted>Actions: {{ current().title }}</text>
+        </row>
+        <list :if="showPanel()" key="acts">
+          <item :each="(i, a) in current().actions" :key="a.id" :selected="i == act" @click="clickAct(i, $event)">
+            <text>{{ a.title }}</text>
+            <spacer/>
+            <key-caps :keys="i == 0 ? 'enter' : a.key"/>
+          </item>
+        </list>
+        <row :else-if="size(rows) == 0" pad="3 0" height="1" key="empty">
+          <text muted>{{ empty }}</text>
+        </row>
+        <list :else key="rows">
+          <palette-row :each="(j, r) in shown()" :key="rowKey(j)" :row="r" :i="top + j"/>
+        </list>
+        <rule key="foot-rule"/>
+        <!-- The selected row's id, Actions and its key, and flush right
+             its other actions with keys, Enter's rightmost: those there
+             is no room for go, the least significant first, then the id
+             is cut. -->
+        <row gap="5" pad="3 0" height="1" key="foot">
+          <text :if="footNote() != ''" muted>{{ footNote() }}</text>
+          <foot-hint :if="actionsHint()" key="ctrl+k" title="Actions" keys="ctrl+k"/>
+          <row :if="size(hints()) > 0" fit gap="5" key="hints">
+            <foot-hint :each="h in hints()" :key="h.key" :title="h.title" :keys="h.key"/>
+          </row>
+        </row>
+      </stack>
+    </dialog>
+    <spacer/>
+  </row>
+</surface>

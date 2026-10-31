@@ -1,0 +1,10 @@
+{
+  "name": "hotty-surf-gate",
+  "private": true,
+  "description": "F5's fidelity gate: every story in hotty-blitz and in Chromium, diffed (make gate)",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "1.63.0",
+    "pngjs": "7.0.0"
+  }
+}

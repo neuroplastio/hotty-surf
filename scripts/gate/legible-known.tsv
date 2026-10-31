@@ -1,0 +1,7 @@
+# The legible gate's known failures (scripts/gate/legible.cjs --known):
+# `<story id> <density> <kind> <element> <reason>`, the element's id from
+# the story's canvas on, as the report gives it; each line matches both
+# modes. Each is a story that fails at its own width today: the fix of
+# one takes its lines off, and the gate fails until it does. The list is
+# to be empty, and is since 2026-10-31, when the look's narrower key caps
+# gave the roomy palette's footer room for Actions.

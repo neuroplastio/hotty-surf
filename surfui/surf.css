@@ -1,0 +1,603 @@
+/* hotty-surf's look (gov R-24): components name roles, never levels, and
+   a theme sets the roles. The host's --hotty-* are the inputs (hotty SPEC
+   §8): the ground, the tones and the accent are the terminal's.
+
+   The roles, as Herdr derives them from a terminal's palette (dark):
+   - layers: the content on the terminal's ground (bg); chrome (a sidebar)
+     and canvas a step toward black, so the terminal stays the brightest
+     dark layer; popover (a dialog) and raised (a menu) a step toward
+     white;
+   - states, translucent so that they are right on any layer: hover,
+     selected, border and input, white at 5.5, 9, 9.4 and 14%; a field
+     sunk below the layer it is on;
+   - ink: neutral, not the terminal's foreground, which stays for
+     terminals; muted 60% and dim 38% of the way to it from the ground;
+   - the accent only for the checked choice, a focused list's marker and
+     links; solid (the primary button) ink on paper, at full strength in
+     every state: the pointer over it a hair further from the ground
+     (solid-hover), the keyboard on it a hairline of the ground;
+   - focus: never a ring. A control shows the pointer over it with a
+     hairline of the ink at 30% (hover-line), and the keyboard on it with
+     one at 58% (focus-line), inset on its own edge, so that nothing
+     moves; on a solid or accent fill, a hairline of the ground.
+   On a light terminal (or paper) the states are black and the ink dark. */
+.u-surface {
+  --u-bg: var(--hotty-bg);
+  --u-accent: var(--hotty-accent);
+  --u-ok: var(--hotty-ansi-10);
+  --u-warn: var(--hotty-ansi-11);
+  --u-error: var(--hotty-ansi-9);
+  --u-info: var(--hotty-ansi-14);
+  --u-ink: #eeeeef;
+  --u-hover: rgb(255 255 255 / 0.055);
+  --u-selected: rgb(255 255 255 / 0.09);
+  --u-border: rgb(255 255 255 / 0.094);
+  --u-input: rgb(255 255 255 / 0.14);
+  --u-field: rgb(0 0 0 / 0.22);
+  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4);
+  --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+.u-surface.u-theme-neuroplastio {
+  --u-accent: #9d90ff;
+  --u-ok: var(--hotty-ansi-2);
+  --u-warn: var(--hotty-ansi-3);
+  --u-error: var(--hotty-ansi-1);
+  --u-info: var(--hotty-ansi-6);
+}
+@media (prefers-color-scheme: light) {
+  .u-surface {
+    --u-ok: var(--hotty-ansi-2);
+    --u-warn: var(--hotty-ansi-3);
+    --u-error: var(--hotty-ansi-1);
+    --u-info: var(--hotty-ansi-6);
+    --u-ink: #1b1b1e;
+    --u-hover: rgb(0 0 0 / 0.04);
+    --u-selected: rgb(0 0 0 / 0.07);
+    --u-border: rgb(0 0 0 / 0.1);
+    --u-input: rgb(0 0 0 / 0.16);
+    --u-field: #ffffff;
+    --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
+    --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.2);
+    color-scheme: light;
+  }
+  .u-surface.u-theme-neuroplastio { --u-accent: #5b4bd6; }
+}
+.u-surface.u-theme-paper {
+  --u-bg: #fbfbfd;
+  --u-accent: #5b4bd6;
+  --u-ok: #1a7f37;
+  --u-warn: #9a6700;
+  --u-error: #cf222e;
+  --u-info: #0b6e99;
+  --u-ink: #1b1b1e;
+  --u-hover: rgb(0 0 0 / 0.04);
+  --u-selected: rgb(0 0 0 / 0.07);
+  --u-border: rgb(0 0 0 / 0.1);
+  --u-input: rgb(0 0 0 / 0.16);
+  --u-field: #ffffff;
+  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
+  --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.2);
+  color-scheme: light;
+}
+/* The layers, from the ground. On light, chrome and canvas are still a
+   step darker than the content, and popover and raised are white. */
+.u-surface {
+  --u-chrome: color-mix(in srgb, var(--u-bg) 76%, black);
+  --u-canvas: color-mix(in srgb, var(--u-bg) 88%, black);
+  --u-popover: color-mix(in srgb, var(--u-bg) 90%, white);
+  --u-raised: color-mix(in srgb, var(--u-bg) 93%, white);
+  --u-solid: var(--u-ink);
+  --u-solid-hover: white;
+  --u-on-solid: var(--u-chrome);
+}
+@media (prefers-color-scheme: light) {
+  .u-surface {
+    --u-chrome: color-mix(in srgb, var(--u-bg) 94%, black);
+    --u-canvas: color-mix(in srgb, var(--u-bg) 97%, black);
+    --u-popover: #ffffff;
+    --u-raised: #ffffff;
+    --u-solid-hover: black;
+    --u-on-solid: #ffffff;
+  }
+}
+.u-surface.u-theme-paper {
+  --u-chrome: color-mix(in srgb, var(--u-bg) 94%, black);
+  --u-canvas: color-mix(in srgb, var(--u-bg) 97%, black);
+  --u-popover: #ffffff;
+  --u-raised: #ffffff;
+  --u-solid-hover: black;
+  --u-on-solid: #ffffff;
+}
+/* What is mixed with the ground is mixed again where a layer sets its
+   own (a dialog, a menu). */
+.u-surface, .u-dialog, .u-options, .u-card {
+  --u-muted: color-mix(in srgb, var(--u-ink) 60%, var(--u-bg));
+  --u-dim: color-mix(in srgb, var(--u-ink) 38%, var(--u-bg));
+  --u-hover-line: color-mix(in srgb, var(--u-ink) 30%, transparent);
+  --u-focus-line: color-mix(in srgb, var(--u-ink) 58%, transparent);
+  --u-ground-line: color-mix(in srgb, var(--u-on-solid) 85%, transparent);
+}
+.u-surface {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--u-ink);
+  background: var(--u-bg);
+}
+.u-surface * { box-sizing: border-box; }
+
+/* Focus is never a ring: not round a surface, a pane, a scroll area or a
+   list as a whole, nor round a control, which shows it as its
+   focus-line. The host's default sheet rings what is :focus-visible
+   (hotty SPEC §8), so a surface takes that ring back. */
+.u-surface:focus, .u-surface:focus-visible, .u-surface :focus, .u-surface :focus-visible { outline: 0; }
+
+/* The densities set the units: a row, a gap across and down, a cell's
+   width for widths in cells, padding across, a list row's padding down
+   (a nav's) and the gap between rows, a control's height, the radii, and
+   the type. Dense is the terminal's grid and font, its rows whole cells;
+   Compact proportional type on the terminal's lines, and Roomy a page's,
+   their rows with air above, below and between them, so that a
+   selection is a rounded block, as the mock's (R-24's item 7, whole
+   cells, withdrawn). The cells keep a row a cell: their layout is their
+   own. */
+.u-dense {
+  --u-row: var(--hotty-cell-h);
+  --u-gx: var(--hotty-cell-w);
+  --u-gy: var(--hotty-cell-h);
+  --u-cw: var(--hotty-cell-w);
+  --u-px: var(--hotty-cell-w);
+  --u-iy: 0px;
+  --u-ny: 0px;
+  --u-ig: 0px;
+  --u-ctl: var(--hotty-cell-h);
+  --u-radius: 4px;
+  --u-r: 4px;
+  font-family: var(--hotty-font);
+  line-height: var(--hotty-cell-h);
+}
+.u-compact {
+  --u-row: var(--hotty-cell-h);
+  --u-gx: 4px;
+  --u-gy: calc(0.5 * var(--hotty-cell-h));
+  --u-cw: var(--hotty-cell-w);
+  --u-px: 8px;
+  --u-iy: 4px;
+  --u-ny: 6px;
+  --u-ig: 2px;
+  --u-ctl: 28px;
+  --u-radius: 4px;
+  --u-r: 6px;
+  font-family: "IBM Plex Sans", Inter, "Noto Sans", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: var(--hotty-cell-h);
+}
+.u-roomy {
+  --u-row: 1.6em;
+  --u-gx: 0.5rem;
+  --u-gy: 0.5rem;
+  --u-cw: 0.5rem;
+  --u-px: 10px;
+  --u-iy: 4px;
+  --u-ny: 6px;
+  --u-ig: 2px;
+  --u-ctl: 32px;
+  --u-radius: 4px;
+  --u-r: 6px;
+  font-family: "IBM Plex Sans", Inter, "Noto Sans", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.u-stack { display: flex; flex-direction: column; min-width: 0; }
+.u-row { display: flex; flex-direction: row; align-items: center; min-width: 0; }
+.u-row.u-top, .u-item.u-top { align-items: flex-start; }
+.u-row.u-top > .u-stack { align-self: stretch; }
+.u-grow { flex: 1 1 0; min-width: 0; }
+.u-keep { flex: 0 0 auto; }
+.u-row.u-fit {
+  flex: 1 1 0;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  min-width: auto;
+  height: var(--u-row);
+  overflow: clip;
+}
+.u-width { flex: 0 0 auto; width: calc(var(--u-w) * var(--u-cw)); }
+.u-height { flex: 0 0 auto; height: calc(var(--u-h) * var(--u-row)); }
+.u-row.u-gap1, .u-item.u-gap1 { gap: var(--u-gx); }
+.u-row.u-gap2, .u-item.u-gap2 { gap: calc(2 * var(--u-gx)); }
+.u-row.u-gap3, .u-item.u-gap3 { gap: calc(3 * var(--u-gx)); }
+.u-row.u-gap4, .u-item.u-gap4 { gap: calc(4 * var(--u-gx)); }
+.u-row.u-gap5, .u-item.u-gap5 { gap: calc(5 * var(--u-gx)); }
+.u-row.u-gap6, .u-item.u-gap6 { gap: calc(6 * var(--u-gx)); }
+.u-stack.u-gap1 { gap: var(--u-gy); }
+.u-stack.u-gap2 { gap: calc(2 * var(--u-gy)); }
+.u-stack.u-gap3 { gap: calc(3 * var(--u-gy)); }
+.u-stack.u-gap4 { gap: calc(4 * var(--u-gy)); }
+.u-stack.u-gap5 { gap: calc(5 * var(--u-gy)); }
+.u-stack.u-gap6 { gap: calc(6 * var(--u-gy)); }
+.u-px1 { padding-left: var(--u-gx); padding-right: var(--u-gx); }
+.u-px2 { padding-left: calc(2 * var(--u-gx)); padding-right: calc(2 * var(--u-gx)); }
+.u-px3 { padding-left: calc(3 * var(--u-gx)); padding-right: calc(3 * var(--u-gx)); }
+.u-px4 { padding-left: calc(4 * var(--u-gx)); padding-right: calc(4 * var(--u-gx)); }
+.u-px5 { padding-left: calc(5 * var(--u-gx)); padding-right: calc(5 * var(--u-gx)); }
+.u-px6 { padding-left: calc(6 * var(--u-gx)); padding-right: calc(6 * var(--u-gx)); }
+.u-py1 { padding-top: var(--u-gy); padding-bottom: var(--u-gy); }
+.u-py2 { padding-top: calc(2 * var(--u-gy)); padding-bottom: calc(2 * var(--u-gy)); }
+.u-py3 { padding-top: calc(3 * var(--u-gy)); padding-bottom: calc(3 * var(--u-gy)); }
+.u-py4 { padding-top: calc(4 * var(--u-gy)); padding-bottom: calc(4 * var(--u-gy)); }
+.u-py5 { padding-top: calc(5 * var(--u-gy)); padding-bottom: calc(5 * var(--u-gy)); }
+.u-py6 { padding-top: calc(6 * var(--u-gy)); padding-bottom: calc(6 * var(--u-gy)); }
+.u-indent { margin-left: calc(var(--u-in) * var(--u-cw)); }
+.u-down { margin-top: calc(var(--u-dn) * var(--u-row)); }
+
+/* Type: the terminal's face in Dense; one proportional face at small
+   sizes in Compact and Roomy, the chrome's a step smaller; captions small
+   and dim. */
+.u-text, .u-line { white-space: pre; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.u-wrap { white-space: normal; overflow-wrap: anywhere; }
+/* A Line that wraps is a paragraph: its runs wrap at their spaces too,
+   and its keys sit in its lines whole. */
+.u-line.u-wrap > .u-text { white-space: normal; }
+.u-bold { font-weight: 700; }
+.u-semi { font-weight: 600; }
+.u-compact .u-bold, .u-roomy .u-bold { font-weight: 500; }
+.u-compact .u-small { font-size: 12.5px; }
+.u-roomy .u-small { font-size: 13px; }
+.u-heading { font-weight: 700; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.u-compact .u-heading { font-size: 15px; font-weight: 600; }
+.u-roomy .u-heading { font-size: 17px; font-weight: 600; line-height: var(--u-row); }
+.u-caption { color: var(--u-dim); }
+.u-compact .u-caption { font-size: 12px; padding: 6px 0 2px; }
+.u-roomy .u-caption { font-size: 12.5px; padding: 6px 0 2px; }
+.u-compact .u-chrome { font-size: 13px; }
+.u-roomy .u-chrome { font-size: 14px; }
+/* Small text that wraps (a setting's description, an agent's task) on
+   GPUI's tight leading, not the row's. */
+.u-compact .u-small.u-wrap, .u-roomy .u-small.u-wrap { line-height: 1.5; }
+.u-tone-accent { color: var(--u-accent); }
+.u-tone-ok { color: var(--u-ok); }
+.u-tone-warn { color: var(--u-warn); }
+.u-tone-error { color: var(--u-error); }
+.u-tone-info { color: var(--u-info); }
+.u-tone-muted { color: var(--u-muted); }
+
+/* Marks: a glyph in a slot of its own; an icon, an MDI glyph from the
+   hosts' Nerd Font (HOST.md §2.1) beside a label, muted; a state's dot. */
+.u-glyph { flex: 0 0 auto; display: inline-block; width: calc(2 * var(--u-cw)); text-align: center; white-space: pre; }
+.u-roomy .u-glyph { width: 1.5em; }
+.u-compact .u-glyph { min-width: 1.25em; }
+.u-roomy .u-glyph, .u-compact .u-glyph { font-family: "DejaVu Sans", "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); }
+.u-icon {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: calc(2 * var(--u-cw));
+  text-align: center;
+  white-space: pre;
+  font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace);
+  color: var(--u-muted);
+}
+.u-compact .u-icon { width: 18px; font-size: 16px; }
+.u-roomy .u-icon { width: 20px; font-size: 17px; }
+.u-item.is-sel .u-icon { color: var(--u-ink); }
+.u-dot {
+  --u-dw: 6px;
+  flex: 0 0 auto;
+  display: inline-block;
+  width: var(--u-dw);
+  min-width: 0;
+  height: var(--u-dw);
+  margin: 0 calc(var(--u-cw) - 0.5 * var(--u-dw));
+  border-radius: 50%;
+  font-size: 0;
+  background: currentColor;
+}
+/* A dot's size over a Glyph's em widths, which its font-size of 0 makes
+   0 (in Roomy, until 2026-10-31, no dot showed). */
+.u-compact .u-dot, .u-roomy .u-dot { width: var(--u-dw); margin: 0 calc(8px - 0.5 * var(--u-dw)); }
+.u-row.u-top > .u-dot { margin-top: calc((var(--u-row) - var(--u-dw)) / 2); }
+/* A state told by its shape as well as its tone: a Ring hollow (○), a
+   Target a dot in a ring (◉), a step larger in the same slot. The ring
+   is an inset shadow, and the gap inside a Target's is clear (its fill
+   clipped to its content), so a sidebar's or a selected row's fill
+   shows through. */
+.u-dot.u-ring { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+.u-dot.u-target { --u-dw: 10px; padding: 3px; background-clip: content-box; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+/* A badge and a key cap: outlined, their text muted, no fill; a badge
+   in a tone's fill keeps that. A cap is in the hosts' Nerd Font, which
+   has the modifiers' symbols (⌃ ⇧ ⌥ ⌘). A badge a row tall but in
+   Compact, where Blitz places a shorter one's text as Chromium does. */
+.u-badge {
+  flex: 0 0 auto;
+  display: inline-block;
+  white-space: pre;
+  padding: 0 0.5ch;
+  border-radius: var(--u-radius);
+  color: var(--u-muted);
+  box-shadow: inset 0 0 0 1px var(--u-border);
+}
+.u-compact .u-badge { padding: 0 6px; font-size: 11.5px; line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px)); }
+.u-roomy .u-badge { padding: 0 6px; font-size: 12.5px; }
+.u-fill-accent { background: color-mix(in srgb, var(--u-accent) 26%, var(--u-bg)); color: var(--u-ink); }
+.u-fill-ok { background: color-mix(in srgb, var(--u-ok) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-fill-warn { background: color-mix(in srgb, var(--u-warn) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-fill-error { background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-fill-info { background: color-mix(in srgb, var(--u-info) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-fill-muted { background: var(--u-selected); color: var(--u-muted); }
+.u-badge[class*="u-fill-"] { box-shadow: none; }
+.u-key {
+  flex: 0 0 auto;
+  display: inline-block;
+  min-width: 2.4em;
+  padding: 0 0.4em;
+  text-align: center;
+  white-space: pre;
+  font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace);
+  line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px));
+  color: var(--u-muted);
+  border-radius: var(--u-radius);
+  box-shadow: inset 0 0 0 1px var(--u-input);
+}
+.u-key + .u-key { margin-left: 0.4em; }
+.u-compact .u-key { min-width: 18px; padding: 0 5px; font-size: 11.5px; }
+.u-compact .u-key + .u-key { margin-left: 3px; }
+.u-roomy .u-key { min-width: 20px; padding: 0 6px; font-size: 12.5px; line-height: 1.5; }
+.u-roomy .u-key + .u-key { margin-left: 4px; }
+/* A key, a chord or a sequence drawn in a key style (package keys): its
+   caps side by side, kept whole, and what stands between a sequence's
+   chords (u-then), dim, in the caps' font. */
+.u-keys { flex: 0 0 auto; display: inline-flex; align-items: center; }
+.u-keys + .u-keys { margin-left: 0.4em; }
+.u-then { margin: 0 0.4em; color: var(--u-dim); white-space: pre; font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); }
+.u-compact .u-keys + .u-keys { margin-left: 3px; }
+.u-compact .u-then { margin: 0 3px; font-size: 11.5px; }
+.u-roomy .u-keys + .u-keys { margin-left: 4px; }
+.u-roomy .u-then { margin: 0 4px; font-size: 12.5px; }
+
+/* Controls: a field, a select and a cycle sunk, with the input's
+   hairline; a button a step up with the border's, the primary (Fill
+   Accent) solid ink on paper, a bare one only its text; a switch a track
+   in the input, in the accent when on. A control is a row tall in Dense,
+   --u-ctl in Compact and Roomy. */
+.u-btn, .u-field, .u-select, .u-switch, .u-cycle {
+  font: inherit;
+  color: var(--u-ink);
+  margin: 0;
+  border: 0;
+  border-radius: var(--u-r);
+  height: var(--u-ctl);
+  line-height: var(--u-ctl);
+}
+.u-field, .u-select, .u-cycle {
+  padding: 0 var(--u-px);
+  background: var(--u-field);
+  box-shadow: inset 0 0 0 1px var(--u-input);
+}
+.u-field { min-width: 0; }
+.u-field::placeholder { color: var(--u-dim); }
+.u-compact .u-field::placeholder, .u-roomy .u-field::placeholder { color: var(--u-muted); }
+.u-field.is-invalid { box-shadow: inset 0 0 0 1px var(--u-error); }
+.u-compact .u-field, .u-compact .u-select { padding: 0 10px; }
+.u-select {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  column-gap: var(--u-gx);
+  white-space: pre;
+  text-align: start;
+}
+.u-compact .u-select, .u-roomy .u-select { column-gap: 8px; }
+.u-select-value { display: inline-block; min-width: calc(var(--u-chars) * 1ch); }
+.u-select-chevron { font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); color: var(--u-muted); }
+.u-compact .u-select-chevron { font-size: 1.25em; line-height: 1; }
+.u-cycle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  column-gap: var(--u-gx);
+  white-space: pre;
+}
+.u-dense .u-cycle { padding: 0 calc(0.5 * var(--u-gx)); }
+.u-compact .u-cycle, .u-roomy .u-cycle { padding: 0 4px; column-gap: 4px; }
+.u-cycle-step { font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); color: var(--u-muted); }
+.u-compact .u-cycle-step { font-size: 1.25em; }
+.u-cycle-value { display: inline-block; min-width: calc(var(--u-chars) * 1ch); text-align: center; }
+.u-btn {
+  flex: 0 0 auto;
+  padding: 0 var(--u-px);
+  white-space: pre;
+  background: var(--u-hover);
+  box-shadow: inset 0 0 0 1px var(--u-border);
+}
+.u-compact .u-btn, .u-roomy .u-btn { padding: 0 calc(1.5 * var(--u-px)); font-weight: 500; }
+.u-btn.u-fill-accent { color: var(--u-on-solid); background: var(--u-solid); box-shadow: none; }
+/* A button in the error's fill is destructive: the error's tint, its
+   text in the error, no hairline. */
+.u-btn.u-fill-error { color: var(--u-error); background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); box-shadow: none; }
+.u-btn.u-bare { color: var(--u-muted); background: transparent; box-shadow: none; }
+.u-compact .u-btn.u-bare, .u-roomy .u-btn.u-bare { padding: 0 6px; }
+.u-compact .u-btn.u-bare { height: 22px; line-height: 22px; }
+.u-switch {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 28px;
+  height: 16px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: var(--u-input);
+}
+.u-dense .u-switch { width: calc(3 * var(--u-cw)); }
+.u-roomy .u-switch { width: 32px; height: 18px; }
+.u-switch.is-on { justify-content: flex-end; background: var(--u-accent); }
+.u-knob { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--u-muted); }
+.u-roomy .u-knob { width: 14px; height: 14px; }
+.u-switch.is-on .u-knob { background: #ffffff; }
+/* A bare field draws nothing, hovered or focused: what holds it (a
+   search, a query) shows both, as a field does. In Compact and Roomy, 3px
+   of padding under its text raise it, for its capitals' middle to be the
+   row's and an icon's beside it, where the face's line box puts it 2
+   device pixels low. */
+.u-field.u-bare, .u-field.u-bare:hover, .u-field.u-bare:focus {
+  height: var(--u-row);
+  min-height: 0;
+  padding: 0 0 3px;
+  line-height: calc(var(--u-row) - 3px);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.u-dense .u-field.u-bare, .u-dense .u-field.u-bare:hover, .u-dense .u-field.u-bare:focus { padding: 0; line-height: var(--u-row); }
+.u-search, .u-query {
+  height: var(--u-ctl);
+  padding: 0 var(--u-px);
+  border-radius: var(--u-r);
+  background: var(--u-field);
+  box-shadow: inset 0 0 0 1px var(--u-input);
+}
+.u-compact .u-query { height: 32px; border-radius: 8px; }
+.u-roomy .u-query { height: 36px; border-radius: 8px; }
+
+/* The pointer over a control shows its hover-line (a button also steps
+   up a fill), the keyboard on it its focus-line. */
+.u-field:hover, .u-select:hover, .u-cycle:hover, .u-search:hover, .u-query:hover { box-shadow: inset 0 0 0 1px var(--u-hover-line); }
+.u-field:focus, .u-select:focus, .u-cycle:focus, .u-search:focus-within, .u-query:focus-within { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-cycle-step:hover, .u-cycle:focus .u-cycle-step { color: var(--u-ink); }
+.u-btn:hover { background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-hover-line); }
+.u-btn:focus { background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-btn.u-fill-accent:hover { background: var(--u-solid-hover); box-shadow: none; }
+.u-btn.u-fill-accent:focus { background: var(--u-solid); box-shadow: inset 0 0 0 1px var(--u-ground-line); }
+.u-btn.u-fill-accent:focus:hover { background: var(--u-solid-hover); }
+.u-btn.u-fill-error:hover, .u-btn.u-fill-error:focus { background: color-mix(in srgb, var(--u-error) 34%, var(--u-bg)); box-shadow: none; }
+.u-btn.u-fill-error:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-btn.u-bare:hover { color: var(--u-ink); background: var(--u-hover); box-shadow: none; }
+.u-btn.u-bare:focus { color: var(--u-ink); background: var(--u-hover); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-switch:hover { box-shadow: inset 0 0 0 1px var(--u-hover-line); }
+.u-switch:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-switch.is-on:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-on-solid) 45%, transparent); }
+.u-switch.is-on:focus { box-shadow: inset 0 0 0 1px var(--u-ground-line); }
+
+.u-surface { cursor: default; }
+.u-btn, .u-switch, .u-select, .u-cycle, [data-on~="click"], .u-nav > .u-item, .u-entries > .u-item, .u-surface a[href], .u-surface summary { cursor: pointer; }
+.u-field { cursor: text; }
+.u-surface [disabled], .u-surface .is-disabled { cursor: default; }
+
+[disabled], .is-disabled { color: var(--u-dim); }
+.u-btn[disabled], .u-field[disabled], .u-select[disabled] { background: transparent; box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-btn.u-fill-accent[disabled] { color: var(--u-dim); background: var(--u-selected); }
+.u-btn.u-fill-error[disabled] { color: var(--u-dim); background: transparent; box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-switch[disabled] { background: var(--u-hover); box-shadow: none; }
+.u-switch[disabled] .u-knob { background: var(--u-dim); }
+.u-select[disabled] .u-select-chevron { color: var(--u-dim); }
+
+/* Rows: the pointer and the selection each a translucent step up; a
+   focused list's selection keeps that fill with a 2px accent marker at
+   its start, never a solid accent fill. The marker is a layer of the
+   row's background, so that it moves nothing: a straight bar inside the
+   row's start, half its radius in and a radius short of either end,
+   which the radius doesn't bend into a "(". In Compact and Roomy a
+   selected row is a block, a hairline round its fill (herdr UI's), the
+   accent's faint tint where its list has the keyboard (the mock's). A
+   nav's rows are muted but the selected one, and the one the pointer
+   is on. */
+.u-list { display: flex; flex-direction: column; min-width: 0; }
+.u-item { display: flex; flex-direction: row; align-items: center; min-width: 0; padding: var(--u-iy) var(--u-px); border-radius: var(--u-r); }
+.u-item + .u-item { margin-top: var(--u-ig); }
+.u-item:hover { background: var(--u-hover); }
+.u-item.is-sel { background: var(--u-selected); color: var(--u-ink); }
+.u-compact .u-item.is-sel, .u-roomy .u-item.is-sel { box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-list:focus-within > .u-item.is-sel, :focus-within > .u-list > .u-item.is-sel {
+  background: linear-gradient(var(--u-accent), var(--u-accent)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-selected);
+}
+.u-compact .u-list:focus-within > .u-item.is-sel, .u-compact :focus-within > .u-list > .u-item.is-sel,
+.u-roomy .u-list:focus-within > .u-item.is-sel, .u-roomy :focus-within > .u-list > .u-item.is-sel {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-accent) 20%, transparent);
+}
+.u-nav > .u-item { padding-top: var(--u-ny); padding-bottom: var(--u-ny); color: var(--u-muted); }
+.u-nav > .u-item.is-sel { color: var(--u-ink); }
+.u-compact .u-nav > .u-item:hover, .u-roomy .u-nav > .u-item:hover { color: var(--u-ink); }
+.u-compact .u-item:hover .u-icon, .u-roomy .u-item:hover .u-icon { color: var(--u-ink); }
+.u-compact .u-nav > .u-item { font-size: 14px; }
+.u-entries > .u-item:focus-visible { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-compact .u-entries > .u-item.is-sel:focus-visible, .u-roomy .u-entries > .u-item.is-sel:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--u-focus-line);
+}
+/* A Scroll box takes the keyboard (Tab, to scroll by keys): it shows it
+   as an entry does, by the focus line inset on its edge, the keyboard's
+   only (a click on a page draws none). */
+.u-scroll:focus-visible { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+
+/* A Select's open list: a menu, raised, an option a cell tall, as the
+   cells place its surface (rows: the options and one); the keys' option
+   the selected fill, the picked one in the accent. */
+.u-options {
+  --u-bg: var(--u-raised);
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: calc(0.5 * var(--hotty-cell-h)) 0;
+  border-radius: calc(2 * var(--u-radius));
+  background: var(--u-raised);
+  box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-raised);
+}
+.u-compact .u-options, .u-roomy .u-options { padding-left: 4px; padding-right: 4px; }
+.u-options > .u-item { flex: 0 0 auto; height: var(--hotty-cell-h); padding-top: 0; padding-bottom: 0; line-height: var(--hotty-cell-h); white-space: pre; border-radius: var(--u-radius); }
+.u-options > .u-item + .u-item { margin-top: 0; }
+.u-options > .u-item.is-picked { color: var(--u-accent); font-weight: 500; }
+.u-options > .u-item.is-hi { background: var(--u-selected); }
+
+.u-reveal { visibility: hidden; }
+.u-item:hover .u-reveal, .u-item.is-sel .u-reveal, .u-reveal:focus { visibility: visible; }
+
+.u-section { display: flex; flex-direction: column; min-width: 0; }
+.u-section .u-section { margin-left: calc(2 * var(--u-cw)); }
+
+/* Layers: a rule a hairline; a box a hairline round flat content; the
+   chrome (a sidebar) darker than the content, with a hairline at its
+   end; a dialog a popover, modal, a half row and a cell and a half
+   inside in Dense, the scale's 8px in Compact and Roomy. */
+.u-rule { flex: 0 0 auto; height: 1px; background: var(--u-border); }
+.u-compact .u-rule { margin: 4px 0; }
+.u-box { border-radius: calc(2 * var(--u-radius)); box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-chrome { background: var(--u-chrome); box-shadow: inset -1px 0 0 var(--u-border); }
+/* A card: a group's panel, a step lighter than the page (raised), with
+   no hairline round it and room across inside it, its rows split by
+   rules that end at that room. A note under it has a little air over
+   it. */
+.u-card { --u-bg: var(--u-raised); background: var(--u-bg); box-shadow: none; padding: 0 var(--u-px); }
+.u-card > .u-rule, .u-card > * > .u-rule { margin: 0; }
+.u-compact .u-card + .u-small, .u-roomy .u-card + .u-small { padding-top: 6px; }
+.u-dialog {
+  --u-bg: var(--u-popover);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: calc(0.5 * var(--hotty-cell-h)) calc(1.5 * var(--hotty-cell-w));
+  border-radius: 12px;
+  color: var(--u-ink);
+  background: var(--u-popover);
+  box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-modal);
+}
+.u-compact .u-dialog, .u-roomy .u-dialog { padding: 8px; }
+.u-dialog .u-rule { margin: 0; }
+.u-compact .u-dialog .u-caption, .u-roomy .u-dialog .u-caption { padding-left: var(--u-px); }
+/* A dialog's height in rows is the least it takes: where its rows have
+   air, it grows round them, as a palette that counts its lines does (its
+   surface fits, or has room); the cells keep it exact. */
+.u-dialog.u-height { height: auto; min-height: calc(var(--u-h) * var(--u-row)); }
+
+.u-scale { zoom: var(--u-zoom); }
+.u-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--u-input) transparent;
+}

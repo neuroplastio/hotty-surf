@@ -1,0 +1,11 @@
+<!-- A component chosen as the frame runs, drawn by its own Render: shown
+     keyed, and gone while hidden. -->
+<surface>
+  <row gap="1" key="head">
+    <heading>{{ title }}</heading>
+    <button @click="hide" key="hide">{{ hidden ? 'Show' : 'Hide' }}</button>
+  </row>
+  <embed :of="inset()" key="inset"/>
+  <embed :if="hidden" :of="inset()" key="never"/>
+  <text muted key="count">{{ count }} added</text>
+</surface>

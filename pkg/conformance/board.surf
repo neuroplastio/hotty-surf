@@ -1,0 +1,23 @@
+<surface>
+  <bind key="j" label="Bump" do="bump(1)"/>
+  <row gap="1" pad="1 0" key="head">
+    <heading>{{ title }}</heading>
+    <spacer/>
+    <badge :if="unread() > 0" fill="accent" key="count">{{ unread() }} unread</badge>
+    <badge :else fill="muted" key="count">All read</badge>
+    <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter"/>
+  </row>
+  <list focusable autofocus key="list">
+    <bind key="enter" label="Open" do="open(sel)"/>
+    <bind key="arrow_down" label="Next" do="open(next())"/>
+    <bind key="+" label="Bump" do="bump(1)"/>
+    <bind key="j" label="Scroll down" scroll="down"/>
+    <note-row :each="n in shown()" :key="n.id" :note="n" :sel="n.id == sel"/>
+    <item :if="size(shown()) == 0" key="none"><text muted>Nothing to show.</text></item>
+  </list>
+  <info-panel :state="panel"/>
+  <text key="panelnull">{{ panel == null }} {{ panel != null && panel.title == 'Details' }}</text>
+  <text muted key="status">{{ count }} · {{ ratio }} · {{ size(log) }} done</text>
+  <lab-part :big="9223372036854775807"/>
+  <lab-tree :each="t in trees" :key="t.id" :b="t"/>
+</surface>

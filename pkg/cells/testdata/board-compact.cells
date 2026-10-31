@@ -1,0 +1,59 @@
+cells 40x16
+text
+>  Board                         3 unread
+>  Filter:  …   all    ▾  ‹ dark  › [on]
+> ────────────────────────────────────────
+>  ●alpha                          0
+> ▎●beta 日本                      1  Go
+>  ●gamma                          2
+> Keys
+> [Ctrl+K] open [Ctrl+B] > [V] split
+>  More
+>  indented
+> A long line of text that wraps over a
+> few lines when it is too long for the
+> screen
+>  ok   warn  err
+style
+= .aaaaa.........................bbbbbbbb
+= .........cdc.ccccccccdc.dcccccccd.eeee
+= ffffffffffffffffffffffffffffffffffffffff
+= .g..............................hih
+= jkllllllllllllllllllllllllllllllhihhhhhl
+= .g..............................hih
+= aaaa
+= b......b......b......b.b.b.b
+= .aaaa
+=
+=
+=
+=
+= mmmm.nnnnnn.ooo
+. fg/bg
+a fg/bg bold
+b muted/bg
+c fg/field
+d muted/field
+e accent/bg
+f line/bg
+g ok/bg
+h fg/tonal
+i muted/tonal
+j accent/selected
+k ok/selected
+l fg/selected
+m fg/ok
+n fg/warn
+o error/bg bold
+hits
+@ 9,1 3x1 r.1.1
+@ 13,1 10x1 r.1.2
+@ 24,1 9x1 r.1.3
+@ 24,1 2x1 r.1.3.0
+@ 26,1 5x1 r.1.3.1
+@ 31,1 2x1 r.1.3.2
+@ 34,1 5x1 r.1.4
+@ 0,3 40x3 r.3
+@ 35,3 4x1 r.3.kalpha.4
+@ 35,4 4x1 r.3.kbeta_20_e6_97_a5_e6_9c_ac.4
+@ 35,5 4x1 r.3.kgamma.4

@@ -1,0 +1,84 @@
+<!-- The gallery: its toolbar across the top; the stories at the left,
+     under a filter; the picked story drawn live in the middle (or in
+     each of its states: States), with the calls its handlers make under
+     it; its controls at the right. The canvas is drawn at its width
+     whatever the window's; the frame gives way round it (frame.go): the
+     toolbar takes as many rows as its groups need, and the side columns
+     narrow, then are left out, which the line under the toolbar says.
+     The bar's labels are frame.go's barGroups': change them together.
+     The stories, the canvas and the controls each scroll by the wheel.
+     The stories' list is its own scroll box, so Tab gives the keyboard
+     to the list, and the arrows its bindings hear move the story. The
+     page is dense whatever the canvas is: a compact page's rules reach
+     every element inside it, the canvas's too. -->
+<surface density="dense">
+  <stack grow key="page">
+    <stack key="bar">
+      <row :each="(i, r) in bar()" :key="'r' + string(i)" gap="2" pad="1 0">
+        <heading :if="r.name" key="name">Gallery</heading>
+        <spacer key="sp"/>
+        <row :if="r.canvas" gap="1" key="canvas">
+          <text muted>Theme</text>
+          <select :value="theme" :options="themes()" @change="setTheme($value)" label="Theme" key="theme"/>
+          <text muted indent="1">Density</text>
+          <select :value="density" :options="densities()" @change="setDensity($value)" label="Density" key="density"/>
+          <text muted indent="1">Width</text>
+          <cycle :value="string(width)" :options="widths()" @change="setWidth($value)" label="Width" key="width"/>
+        </row>
+        <row :if="r.views" gap="1" key="views">
+          <text muted>Cells</text>
+          <switch :on="cells" :disabled="!hasCells()" @click="flipCells" label="Cells" key="cells"/>
+          <text muted indent="1">States</text>
+          <switch :on="states" :disabled="!hasStates()" @click="flipStates" label="States" key="states"/>
+          <text muted indent="1">Reference</text>
+          <switch :on="reference" :disabled="!hasReference()" @click="flipReference" label="Reference" key="reference"/>
+        </row>
+        <row :if="r.panes" gap="1" key="panes">
+          <text muted>Stories</text>
+          <switch :on="showStories()" :disabled="!canShowStories()" @click="flipStories" label="Stories" key="stories"/>
+          <text muted indent="1">Controls</text>
+          <switch :on="showControls()" :disabled="!canShowControls()" @click="flipControls" label="Controls" key="controls"/>
+        </row>
+      </row>
+      <row :if="fit() != ''" top gap="1" pad="1 0" key="fit">
+        <badge fill="warn" key="tag">Window too narrow</badge>
+        <text tone="warn" wrap grow key="why">{{ fit() }}</text>
+      </row>
+    </stack>
+    <row top gap="1" pad="1 0" grow key="main">
+      <stack :if="showStories()" :width="sideWidth()" key="side">
+        <field placeholder="Filter" label="Filter the stories" :value="filter" autofocus @input="setFilter($value)" key="filter"/>
+        <list :if="size(shown()) > 0" nav scroll label="Stories" key="list">
+          <bind key="arrow_up" label="Previous story" do="move(-1)"/>
+          <bind key="arrow_down" label="Next story" do="move(1)"/>
+          <item :each="e in shown()" :key="e.id" :selected="e.id == sel" @click="pick(e.id)">
+            <text :if="e.kind == 'section'" bold>{{ e.label }}</text>
+            <text :else-if="e.kind == 'group'" indent="1">{{ e.label }}</text>
+            <text :else muted indent="3">{{ e.label }}</text>
+          </item>
+        </list>
+        <text :else muted wrap key="none">No story has "{{ filter }}" in its name.</text>
+      </stack>
+      <stack grow key="mid">
+        <heading key="title">{{ title() }}</heading>
+        <embed :of="canvas()" :key="'c-' + sel"/>
+        <row gap="2" key="loghead">
+          <text bold grow>Actions</text>
+          <text small muted>{{ size(log) }} calls</text>
+          <button bare @click="clearLog" key="clear">Clear</button>
+        </row>
+        <stack height="8" key="log">
+          <text :each="(i, l) in tail()" :key="'l' + string(i)" small>{{ l }}</text>
+          <text :if="size(log) == 0" small muted wrap key="quiet">{{ quiet() }}</text>
+        </stack>
+      </stack>
+      <stack :if="showControls()" :width="asideWidth()" key="aside">
+        <text bold key="head">Controls</text>
+        <stack scroll :key="'p-' + sel">
+          <control-row :each="(i, c) in controls" :key="c.key" :c="c" :i="i"/>
+          <text :if="size(controls) == 0" small muted wrap key="none">{{ uncontrolled() }}</text>
+        </stack>
+      </stack>
+    </row>
+  </stack>
+</surface>

@@ -1,0 +1,5 @@
+<props task="Task" sel="bool"/>
+<item :selected="sel" @click="select(task.id)">
+  <switch :on="task.done" @click="toggle(task)" label="Done"/>
+  <text grow :muted="task.done">{{ task.text }}</text>
+</item>

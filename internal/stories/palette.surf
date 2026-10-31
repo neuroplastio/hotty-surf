@@ -1,0 +1,6 @@
+<!-- The palette, on demodata's commands. -->
+<stories of="palette" cols="80">
+  <story name="empty query"/>
+  <story name="a query"/>
+  <story name="no match"/>
+</stories>

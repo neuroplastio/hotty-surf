@@ -1,0 +1,12 @@
+<!-- One of the story's controls: its name, in a column as wide as the
+     controls' column leaves beside a field (nameWidth()), and what
+     changes it, so that the controls start in a line whatever their
+     widths. A field is frame.go's fieldCols wide. -->
+<props c="Control" i="int"/>
+<row gap="1">
+  <text small :width="nameWidth()">{{ c.name }}</text>
+  <switch :if="c.kind == 'switch'" :on="c.on" @click="flip(i)" :label="c.name" key="control"/>
+  <select :else-if="c.kind == 'select'" :value="c.value" :options="c.options" @change="choose(i, $value)" :label="c.name" key="control"/>
+  <cycle :else-if="c.kind == 'cycle'" :value="c.value" :options="c.options" @change="choose(i, $value)" :label="c.name" key="control"/>
+  <field :else :value="c.value" :invalid="c.invalid" @input="choose(i, $value)" :label="c.name" width="18" key="control"/>
+</row>

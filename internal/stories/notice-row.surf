@@ -1,0 +1,8 @@
+<!-- A notice's row: a click selects it, its Dismiss takes it away. Its
+     error is its level's. -->
+<stories of="notice-row" cols="70" in="list">
+  <state name="error" notice.level="error"/>
+  <story name="unread error" :notice="rows[0]" sel/>
+  <story name="read" :notice="rows[2]"/>
+  <story name="warning" :notice="rows[1]"/>
+</stories>

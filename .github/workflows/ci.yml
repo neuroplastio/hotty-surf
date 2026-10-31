@@ -1,0 +1,100 @@
+# CI: hotty-surf's gate, `make check`, without the two steps that need a
+# local build: the fidelity gate and the legible gate draw every story in
+# hotty-blitz and in Chromium, so they run on a machine with hotty-blitz
+# built (`make gate legible`). On every push to main and every pull
+# request, it runs gofmt, go mod tidy (which must change nothing), the
+# generated files, vet, staticcheck and the tests with the race detector;
+# the framework under Go's js/wasm and TinyGo's wasm, with a 32-bit build;
+# TinyGo's stack budget; the framework at go.mod's floor; and a module
+# outside the tree that imports surf and surflua.
+#
+# It runs on GitHub's runners only, and only while the repository is
+# public: a public repository's CI runs on GitHub's runners, never a
+# self-hosted one (gov NEIO-2).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      # Go and TinyGo at the versions mise.toml pins.
+      - uses: jdx/mise-action@v4
+
+      # The Node the Makefile runs wasm in.
+      - name: Node
+        run: mise install node@26.10.0
+
+      # CAP= : the Makefile caps each step with systemd-run --user, which
+      # a runner has no session for, and the runner is the job's alone.
+      - run: make CAP= fmt tidy gen vet lint test
+
+      - run: make CAP= wasm stack
+
+      # The oldest Go an importer may build with: go.mod's go directive.
+      - name: Go at go.mod's floor
+        run: |
+          export GOTOOLCHAIN=go$(go list -m -f '{{.GoVersion}}')
+          go vet . ./pkg/markup ./surflive ./surfrun ./surfui ./pkg/cells ./surflua
+          go test . ./pkg/markup ./surflua
+
+      # surf and surflua as a program outside the module builds them: its
+      # dependencies from the proxy alone, this checkout in hotty-surf's
+      # place.
+      - name: Importable
+        run: |
+          dir=$(mktemp -d)
+          cd "$dir"
+          go mod init example.com/importer
+          go mod edit -require=github.com/neuroplastio/hotty-surf@v0.0.0 \
+            -replace=github.com/neuroplastio/hotty-surf="$GITHUB_WORKSPACE"
+          cat >main.go <<'GO'
+          package main
+
+          import (
+          	"fmt"
+          	"testing/fstest"
+
+          	surf "github.com/neuroplastio/hotty-surf"
+          	"github.com/neuroplastio/hotty-surf/surflua"
+          	lua "github.com/yuin/gopher-lua"
+          )
+
+          func main() {
+          	L := lua.NewState()
+          	defer L.Close()
+          	surflua.PreloadFS(L, fstest.MapFS{"counter.surf": {Data: []byte(
+          		`<surface><text key="n">{{ count }}</text></surface>`)}})
+          	fn, err := L.LoadString(`
+          		local surf = require("surf")
+          		local app = { count = 1 }
+          		html = surf.load():view("counter", app):html()`)
+          	if err == nil {
+          		L.Push(fn)
+          		err = L.PCall(0, 0, nil)
+          	}
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(surf.MaxDepth, L.GetGlobal("html"))
+          }
+          GO
+          GOFLAGS=-mod=mod GOPROXY=https://proxy.golang.org go mod tidy
+          go run .

@@ -1,0 +1,14 @@
+$event goes to a parameter of the event's type only (Go's surfrun.Event),
+and $value, a string, to a string parameter (or a dyn one): given to
+another, each is a load error at its $ that names the parameter.
+-- typed --
+A host whose parameters are all dyn, as surflua's Lua functions' are,
+takes $event and $value at any parameter: it has none to refuse them.
+-- form.surf --
+<surface>
+  <button @click="typed($event)">a</button>
+  <button @click="add($value)">b</button>
+</surface>
+-- load --
+form.surf:2:25: typed's argument 1 is string, not $event, which goes to a surfrun.Event parameter only
+form.surf:3:23: add's argument 1 is int, not $value, which is a string

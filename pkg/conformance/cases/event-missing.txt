@@ -1,0 +1,21 @@
+A method that takes the event (Go's surfrun.Event) is given it only by
+$event, at that parameter's place: called without it, or given anything
+else there, $value and null too, it is a load error. A <bind>'s do,
+which may not use $event, can't call it.
+-- typed --
+A host whose parameters are all dyn, as surflua's Lua functions' are,
+has no parameter of the event's type.
+-- form.surf --
+<surface>
+  <button @click="saw('go')">a</button>
+  <button @click="saw($value, 'go')">b</button>
+  <button @click="saw(null, 'go')">c</button>
+  <list>
+    <bind key="x" do="saw('k')"/>
+  </list>
+</surface>
+-- load --
+form.surf:2:19: saw takes 2 arguments, not 1: its argument 1 is a surfrun.Event, which only $event gives
+form.surf:3:23: saw's argument 1 is a surfrun.Event, which only $event gives
+form.surf:4:23: saw's argument 1 is a surfrun.Event, which only $event gives
+form.surf:6:23: saw takes 2 arguments, not 1: its argument 1 is a surfrun.Event, which only $event gives, in an @ handler

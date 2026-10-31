@@ -1,0 +1,30 @@
+<surface>
+  <bind key="escape" label="Quit" do="quit"/>
+  <stack gap="1" pad="1">
+    <row gap="1" key="head">
+      <heading>Tasks</heading>
+      <spacer/>
+      <badge :if="left() > 0" fill="accent" key="left">{{ left() }} left</badge>
+      <badge :else fill="ok" key="left">All done</badge>
+      <select :value="filter" :options="filters()"
+              @change="setFilter($value)" key="filter"/>
+    </row>
+    <field :value="draft" placeholder="A new task"
+           @input="setDraft($value)" key="draft">
+      <bind key="enter" label="Add" do="addDraft"/>
+    </field>
+    <list focusable autofocus key="list">
+      <bind key="arrow_down" label="Next" do="next"/>
+      <bind key="arrow_up" label="Previous" do="prev"/>
+      <bind key="enter" label="Done" do="toggleSel"/>
+      <task-row :each="t in shown()" :key="t.id" :task="t" :sel="t.id == sel"/>
+      <item :if="size(shown()) == 0" key="none">
+        <text muted>Nothing to show.</text>
+      </item>
+    </list>
+    <titled-box title="Help" key="help">
+      <button slot="actions" bare @click="clearDone">Clear done</button>
+      <help-panel :state="help"/>
+    </titled-box>
+  </stack>
+</surface>

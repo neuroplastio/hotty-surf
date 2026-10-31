@@ -1,0 +1,12 @@
+<!-- A notice's row. A click selects it; its Dismiss takes it away. -->
+<props notice="Notice" sel="bool"/>
+<item :selected="sel" @click="select(notice.id)">
+  <row gap="1" grow>
+    <glyph :tone="notice.unread ? 'accent' : 'muted'">{{ notice.unread ? '●' : '○' }}</glyph>
+    <badge :fill="notice.level" width="6">{{ notice.level }}</badge>
+    <text muted width="8">{{ notice.source }}</text>
+    <text grow :bold="notice.unread">{{ notice.text }}</text>
+    <text muted>{{ age(notice.age) }}</text>
+    <button reveal @click="dismiss(notice)">Dismiss</button>
+  </row>
+</item>

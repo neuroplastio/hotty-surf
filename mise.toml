@@ -1,0 +1,4 @@
+[tools]
+go = "1.26.8"
+# TinyGo, for make wasm and make stack.
+tinygo = "0.43.0"

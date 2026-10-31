@@ -1,0 +1,10 @@
+<props note="Note" sel="bool"/>
+<item :selected="sel" @click="open(note.id)">
+  <row gap="1" grow>
+    <glyph :tone="note.unread ? 'accent' : 'muted'">●</glyph>
+    <badge :fill="toneOf(note.level)" width="6">{{ note.level }}</badge>
+    <text grow :bold="note.unread">{{ note.text }}</text>
+    <badge :each="(i, t) in note.tags" :key="t" muted>{{ i + 1 }}:{{ t }}</badge>
+    <button reveal @click="dismiss(note)">Dismiss</button>
+  </row>
+</item>

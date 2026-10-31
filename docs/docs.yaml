@@ -1,0 +1,11 @@
+# hotty-surf's docs as a website shows them (gov NEIO-14). On a site of
+# its own, the README is the overview. Among hotty's protocol and SDKs,
+# the README is the framework's page, and the pages in this directory sit
+# under it, where their front matter puts them.
+name: hotty-surf
+description: "A framework for hotty apps in Go: components as structs, layout in .surf templates, and a surface kept current with deltas."
+readme:
+  group: Guides
+  order: 50
+  nav: hotty-surf
+  path: hotty-surf

@@ -1,0 +1,18 @@
+<!-- Row i: its icon where the rows have icons; its label, one line of
+     its group muted and its title, the query's matches in the accent at
+     weight 600, and its detail muted two cells on; and its keys at the
+     right. The label takes the room the keys leave, and is cut once, at
+     its end: the detail goes first, then the title's end. A palette too
+     narrow for a label beside its keys shows no keys (keyed). The three
+     stand a gap apart, so that a cut label's … never meets a cap. -->
+<props row="Row" i="int"/>
+<item :selected="i == sel" gap="2" @click="click(i, $event)">
+  <glyph :if="icons()">{{ row.icon != '' ? row.icon : '　' }}</glyph>
+  <line grow>
+    <text :each="m in groupMarks(row)" :tone="m.tone" :semibold="m.hit">{{ m.text }}</text>
+    <text :if="row.group != ''" muted>:{{ ' ' }}</text>
+    <text :each="m in titleMarks(row)" :tone="m.tone" :semibold="m.hit">{{ m.text }}</text>
+    <text :if="detail(row) != ''" muted indent="2">{{ detail(row) }}</text>
+  </line>
+  <key-caps :if="keyed()" :keys="row.keys"/>
+</item>

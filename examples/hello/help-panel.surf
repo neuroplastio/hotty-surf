@@ -1,0 +1,7 @@
+<row gap="1">
+  <switch :on="open" @click="flip" label="Show the keys"/>
+  <text :if="open" key="keys">
+    Arrows move, Enter marks done, Enter in the field adds.
+  </text>
+  <text :else muted key="keys">Keys hidden</text>
+</row>

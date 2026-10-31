@@ -1,0 +1,8 @@
+<props b="Branch"/>
+<stack>
+  <text>{{ b.name }}</text>
+  <lab-tree :each="k in b.kids" :key="k.id" :b="k"/>
+  <lab-tree :if="b.via == 'if'" :b="b.next"/>
+  <lab-box :if="b.via == 'slot'"><lab-tree :b="b.next"/></lab-box>
+  <lab-nest :if="b.via == 'widgets'" :b="b.next"/>
+</stack>

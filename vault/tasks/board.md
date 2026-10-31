@@ -1,0 +1,449 @@
+# Board
+
+Last updated: 2026-10-31
+
+**Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
+2026-10-30): candidate A (Live) with layout in `.surf` templates and
+expressions in cel-lite, interpreted and compiled from the same files.
+R-23's spike, below, is the record.
+
+## v0.1.0, the first public tag
+
+What a host that paints its own cells and diffs its own trees (plx) needs
+before it can drop A2UI and draw with hotty-surf, then the public prep.
+The order is the maintainer's, via gov (2026-10-30):
+
+- [x] **The wheel** (merge 5fd1d0e):
+  - the keys a scroll would take go to the program where an element
+    binds them (SPEC §10.2);
+  - in a run that scrolls, a newly selected item is revealed (`reveal`,
+    §6.1);
+  - `<bind scroll="down">` gives a key to the host's scroll;
+  - examples/preview's panes scroll by the host (branch `preview`).
+  - The runtime turns the terminal's alternate scroll (1007) off while a
+    scrolling document is up, so a wheel no box can take doesn't become
+    arrow keys (merge f31e8bc).
+  - What the protocol lacked is hotty 0.6's V6-04 (scroll snapping) and
+    V6-05 (`key=default`), both accepted.
+- [x] **Lua components** (merge 8ec9d70):
+  - `surf.component(name, proto)`, with `:state` on a table as on a Go
+    struct;
+  - a dyn `:state` is checked at render, in every mode (case
+    `dyn-state`).
+- [ ] **Automatic cells.** A cells renderer for the whole vocabulary,
+  drawing any tree at a size, with focus, selection, scroll and keys as
+  a host has them. DrawCells stays as an override. Conformance goldens,
+  with the preview and the four screens as proof. It takes, for a host
+  that paints its own cells:
+  - the tree and its index from a view, Lua or Go, after a render;
+  - styled runs per row: theme roles, never RGB; grapheme clusters
+    with widths; hit rects by element id; the caret; a generation
+    number;
+  - input by myelin key name, the mouse and wheel at a cell, paste,
+    focus; each says whether it was taken and whether to redraw;
+  - [x] run's routing exported, with no terminal (merge 14d76f2):
+    `surfrun.Surface` routes an event to its handler, a key up the focus
+    chain, a field's Enter, a cycle's and a select's steps, and hands the
+    select's list over as a tree and an anchor rect, which the host
+    places. surfrun.Runtime is built on it; Attach takes a `surfrun.Runner`;
+    `surfui.Document` links a host's own sheets. Every conformance case is
+    played on a second host too (`conformance.PlayHosted`);
+  - [x] a Lua view on surfrun.Surface (merge cb0f38f): `surflua.ViewOf`
+    gives a host in Go the script's view as a surfrun.Model; `view:key`
+    routes keys; each conformance case is played on the View too;
+  - [x] plx's asks of surfrun.Surface (2026-10-30, 2026-10-31), in from
+    `surface-asks`: `Lend`, the keyboard lent to the host and given back
+    with no OnFocus, to the home or the first element that takes focus
+    where none is left (`surfui.TakesFocus`); `Theme`, as `Density`; `NoQuit`,
+    a binding to Quit as if unbound; `Keys`, the keys Key would take now,
+    in its order, own keys marked, and what the focused element does with
+    characters (`surfrun.Chars`), held to Key by a test of every state and
+    key. Many events, then one Update, now leave the model and the host as
+    an Update after each does (a test on `surftest.NewRelay`, a host that
+    draws in frames): until then a second ↓ on a Select or a Cycle
+    between two Updates stepped from the tree before the first, and a
+    binding the model had just drawn was not there;
+  - [x] the cells renderer (H1), in from `cells`: any tree drawn in a
+    terminal's cells, and hosted there as a hotty host hosts it
+    (`cells.Renderer`), by the runtime where there is no host and by a
+    host that paints its own cells (plx) over a `surfrun.Surface`. Every
+    conformance case is played in cells too; the screens' flows hold
+    from their trees alone; `make stack` holds it to 10 KB at the limit.
+    The spec's Cells; `vault/knowledge/cells.md`, with its limits (a
+    scale draws at 100%; the runtime's sixteen colours make a Compact
+    box's `tonal` a slab);
+  - [ ] the look's pieces in Go: Icon, Caption, Chrome and Dot, which
+    internal/stories/look.go builds from classes, and internal/screens/settings in
+    look/settings' layout (chrome sidebar, icons, section captions), so
+    that plx's settings page comes out as look/settings (gov, 2026-10-31);
+  - [x] the look's air back (gov, 2026-10-31, after the maintainer on
+    plx's settings: "the prototype had rounded blocks as menu items, but
+    the screenshot has a rectangular area / ribbon"):
+    - R-24's item 7 (whole-cell rows) is withdrawn. On a host, Compact's
+      and Roomy's rows have the mock's padding and gaps, and a selected
+      row is a rounded block with a hairline round its fill.
+    - The cells keep a row a cell. Every story's cells screen is the
+      same but dialog/box's, whose Height is now 12, a minimum on a host.
+    - The audit against the mock, R-24's GPUI references and Rex is
+      `vault/knowledge/look.md`, with what's left and whose call each is;
+    - shots: look/settings and look/agents at 1.6, a full and a half
+      window wide (1796 and 897), before, mock and after, with the
+      sidebar at 1:1, and the cells before and after (the same to the
+      pixel);
+  - [x] settings in cards (gov, 2026-10-31: what plx's settings page
+    needs from hotty-surf, from the maintainer's reference shots (Rex),
+    on R-24's quiet look, which the maintainer keeps):
+    - a card (`<box card>`, `Box().Card()`), with a semibold title in
+      sentence case over it (the maintainer) and a small muted note
+      under it;
+    - a destructive button (`fill="error"`): the error's tint, its text
+      in the error;
+    - a nav row's status, a small muted line under its label
+      (`demodata.Section.Status`: "2 working");
+    - internal/screens/settings in cards, with `Group.Note`; look/settings shows
+      all three, in the cells too;
+    - a dot's shape (gov, from plx-agents' roster, which tells a state
+      by its shape as well as its tone): `<dot ring>` ○ and
+      `<dot target>` ◉, in dot/shapes. A host has no shape for ◌
+      (offline) until a dashed ring is proven (blitz-gaps, a later
+      leg), so a row whose dot is offline says so in its text;
+  - [ ] a dashed ring for ◌, a host's offline, to prove in a later leg
+    (gov, 2026-10-31; blitz-gaps, "Settings in cards and a dot's
+    shapes"); a Ring until then;
+  - [ ] `<dot dashed>` (`Dot().Dashed()`), in a later leg (gov,
+    2026-10-31): offline as a dot, ◌ in the cells and a Ring on a host
+    until the dashed ring above is proven, then the dashed ring. Until
+    then an app that wants ◌ asks which renderer draws it and swaps in a
+    `<glyph>◌</glyph>`, because `<dot ring>` is ○ in the cells; an app
+    shouldn't have to know;
+  - [x] hotty-blitz's hotty-0.6 takes the inset ring (2026-10-31: mod
+    0047, out in hotty-blitz 0.5.10, and 0048; hotty-0.6 at 44aacb6);
+  - [ ] a card's room inside it, a look item to weigh later (gov,
+    2026-10-31): in Compact a card's rows are about 8 CSS px in,
+    tighter than Rex's or Zed's;
+  - [ ] a progress widget, for a later leg (gov, 2026-10-31, from
+    look.md's needs, item 9): plx's toast draws its countdown in block
+    glyphs ("████░ 95%") on a host. It needs a thin rounded track and
+    fill on a host, and the glyphs only in the cells;
+  - [x] a key style (H5), for the HTML and the cells: plx draws every key
+    in the person's style, keys.os (mac, linux, windows), keys.style.caps
+    (glyphs or text), keys.style.case, keys.style.sep (what joins a
+    chord), keys.style.then (what goes between a sequence's chords),
+    keys.style.glue (glyphs tight against the key) and keys.labels (a
+    label per key, super→󰌽), which the A2UI kit draws today from
+    view.Keycaps (HottyKeys). surfrun.Surface and cells.Renderer take such a
+    style, and `<key>` takes a key by its myelin name, a chord or a
+    sequence ("ctrl+shift+t", "ctrl+b v"), and draws it in that style,
+    caps per chord, in both renderers. Cells goldens beside the host's.
+    plx's onboarding has a slide that shows sample keys in each look as
+    the person picks it (2026-10-31). Done: package keys
+    (Style, Caps, Text, Words, Node, Expand). `<key>` holds the sequence,
+    and the surface draws it in the model's style (surfrun.KeyStyler), else
+    Options.KeyStyle; the cells renderer draws it again from data-seq,
+    in words by default. A slide's samples are surfkeys.Node, in a style of
+    their own. Goldens per style in pkg/cells/testdata/keys-*, the host's
+    beside the cells'; the story key/styles;
+  - [x] a paragraph with key caps in it (H8), for the HTML and the cells:
+    prose that wraps with inline caps, its text runs and `<key>`s flowing
+    and wrapping as one paragraph. plx's onboarding writes its prose as
+    sentences with keys in them, which the kit draws from markdown code
+    spans. `wrap` on `line` if that holds in the cells as on a host,
+    else a widget. Cells goldens beside the host's (2026-10-31). Done as
+    `wrap` on `line`: it holds in both. On a host the runs wrap at their
+    spaces (white-space: normal, proven) round the keys' inline-flex
+    caps. In cells a wrapping line is a flow: words and whole caps,
+    broken greedily, each run's look kept across a break. A .surf line's
+    texts keep a space at their ends, so
+    `<line wrap>Press <key>ctrl+b</key> and …</line>` reads as written.
+    Goldens in pkg/cells/testdata/paragraph-*; the story line/paragraph.
+  - [x] plx's palette as a dialog of surf's on a host (2026-10-31): the
+    keys of plx's keymap context from its query field, with no `<bind>`
+    copies, and Tab onto a stop that completes the line and gives the
+    field the keyboard back. Done:
+    `surfrun.Surface.Program`, keys the root gives the host program
+    (`surfui.Node.Give`). They go into data-keys as a parent's bindings do,
+    a field keeping a letter, Backspace and the arrows across (SPEC
+    §10.2), and Key and Keys leave them to the program, in the cells too.
+    `Runner.Focus` and `Surface.Focus` give the keyboard to an element by
+    its key at the next Update, from a handler mid-Event, with no focus
+    event, as a host sends none (SPEC §10.1). In 0.6, V6-02's
+    `tab=program` does without the stop. Tests in surfrun/program_test.go and
+    pkg/cells/program_test.go;
+- [ ] **The gallery fixed** (the maintainer: "completely unusable",
+  2026-10-30). A run follows its window's size (merge d7e3742). Blitz
+  kept a flex item's old size when its own style changed it (the
+  canvas's width): mods/blitz 0047. A 1 px border drew 0 or 1 CSS px
+  by position at 1.25, 1.5 and 1.6×: mods/blitz 0048.
+  Both are in the gallery's lib (hotty-blitz 941ece2).
+  - In from `gallery-fix`:
+    - `legible`: `make legible` in check. It runs every story in the
+      gallery at its width, in Chromium. Nothing may overflow its box,
+      and no text may show fewer than 4 characters.
+    - `frame`: the canvas keeps its Width. The side columns narrow, then
+      hide, and the frame says so. The toolbar wraps.
+    - `widgets`: widgets placed as the screens place them, and glyphs
+      one size in a fixed slot.
+    - `fit`: the palette reads from 80 cells to 20, with the vocabulary
+      words `line`, `keep` and `fit`.
+  - Left:
+    - Roomy's palette footer cuts Actions (legible-known.tsv).
+    - For the maintainer: the new words, DejaVu Sans for glyph marks, a
+      story's `about`, and `.u-box` as a column.
+- [x] **The gallery** (merge 20f8f7a), alongside: the live story
+  browser, `cmd/surfgallery`, `sh scripts/gallery.sh [--web]`.
+  - Its sidebar has stories.All, a generated story for every widget,
+    and stories files (`internal/stories/<component>.surf`), with a filter. The
+    canvas draws a story live, with its calls in a log. Its controls
+    come from the props. The toolbar has the theme, density, width,
+    cells, a states matrix and the reference (Blitz beside Chromium,
+    with the diff).
+  - `-dev` reloads templates, stories and the stylesheet in place.
+  - Framework fixes on the way:
+    - `Attr.Values`, `Set.Props`, `<embed :of>` and `surfgen -export`;
+    - the stylesheet as a file (`surfui/surf.css`), with `Runtime.SetCSS`,
+      `SetResource` and `Surface.Unhandled`;
+    - surfgen's `Field.Go`;
+    - a Compact field's ring inside a Dense surface.
+  - [ ] The legible gate (branch `legible`, in `make check` after the
+    gate). The gallery kept its canvas at 20 cells, the palette was
+    unreadable, and no check saw it. `make legible` draws every story of
+    the gallery's catalog as the gallery does, at its own width, in both
+    modes and every density (`stories -gallery`). Headless Chromium
+    measures each one (`scripts/gate/legible.cjs`). The gate fails on
+    what runs past its box, and on a text cut to under 4 characters.
+    13 failures at the story's own width are known, in
+    `scripts/gate/legible-known.tsv`: foot-hint's long title, and the
+    palette's footer in dense and roomy. That list is to be empty.
+- [ ] **The public prep:** a README, docs that stand alone, Apache-2.0,
+  CI on GitHub-hosted runners, a tidy go.mod, surflua importable;
+  v0.1.0 after review and the maintainer's yes.
+  - **The yes** (the maintainer, 2026-10-31, via gov), on "hotty-surf
+    goes public as v0.1.0, then plx drops A2UI and gets its surf docs, as
+    one dated build": "already decided, yes, go for publishing when you
+    get to it". The cut, the visibility and the tag are gov's, after its
+    review.
+  - [x] The prep's items (2026-10-31): the README (what it is, hello,
+    the gallery, the docs' map), docs that read without the vault,
+    LICENSE alone as cel-lite and myelin have it, CI on GitHub's runners
+    only, go.mod tidy, and surflua and the app packages built and run
+    from a module outside. The tree is scrubbed, vault/ included, and a
+    machine's own Makefile settings (CAP, the CPUs, HOTTY) are in its
+    `$XDG_CONFIG_HOME/hotty-surf/make.mk`; the repository's defaults are
+    neutral.
+  - [ ] The cut and v0.1.0 (gov).
+  - **The history** (the maintainer, 2026-10-31): GitHub's main starts
+    as one squashed commit of the cleaned tree, a departure from gov P-1
+    rule 8 by the maintainer's choice, as for myelin (NEIO-13).
+  - Out of the public tree: everything private, the R-23 spike once the
+    screens ran on `internal/screens/demodata`, and machine-specific
+    paths. Gov ids stay as citations.
+  - [x] Every screen on `internal/screens/demodata` (2026-10-31):
+    settings in its current look, then the palette, the agents list and
+    the notices, the gallery's states, and `cmd/surfdemo`, which shows
+    the screens alone. Nothing outside `spike/` imports it, and the parity test
+    with spike/a went with it. The sample host is devbox.
+  - [x] TinyGo 0.43.0, the release, from mise.toml, locally and in CI:
+    `make wasm stack` gives the dev build's numbers on it.
+  - [x] `spike/` is gone (2026-10-31), with the msgp tool in mise.toml
+    and the bench's spike/cost. msgp stays in go.mod as hotty-go's.
+  - [x] Packages by who imports them (the maintainer, 2026-10-31): what
+    an app imports is surf-prefixed at the top (surfui, surfrun,
+    surflive, surfkeys, surftest; surf and surflua as they were), what
+    a host, a tool or another runtime needs is under pkg/ (cells,
+    markup, conformance), and what nobody outside imports is under
+    internal/ (gallery, screens, stories, cmd/stories). cmd/gallery is
+    cmd/surfgallery. An app's tests draw its cells with `surftest.Draw`,
+    not pkg/cells.
+
+## v0
+
+- [x] **The rename** to hotty-surf, package `surf` (8c89236, 1a4310d):
+  B and C out of the tree.
+- [x] **The interpreted mode** on cel-lite (1a0ae0e), surfgen and the
+  conformance suite (1cb3bea), the `.surf` reference, `docs/surf.md`
+  (679ceaa).
+- [x] **The compiled mode** (c2d5ba8, 27d282a): surfgen writes a Go
+  function per template and owner; what Go can't say exactly runs its
+  program. The suite runs both modes, and their errors must match. A
+  method given a `dyn` runs its program too (868e456).
+  `make bench` (df3046d): a 50-note board renders in 161 µs compiled,
+  315 µs interpreted, the tree's allocations the most of both.
+- [x] **The verdicts' fixes** (merge 33eaea0): `cursor: pointer` on what
+  acts and the arrow over text; a Select that opens, its list drawn by
+  the runtime; a Field that commits on Enter and on leaving it.
+  - plx: a tool's menu lists every key, and its settings field applies
+    only on Enter, as feedback.
+  - hotty: V6-03, Enter commits a lone text field (hotty d2bf086), for
+    the maintainer.
+- [x] **WebAssembly in check** (merge 7f250f2): `make wasm`
+  builds and tests FRAMEWORK under Go's js/wasm and TinyGo's, and a
+  32-bit build; `vault/knowledge/wasm.md`.
+- [x] **TinyGo's stack, measured and bounded** (branches `stack` and
+  `depth`): the recursions in small frames, a render 32 levels deep at
+  most in both modes (`surf.MaxDepth`) and a file 32 elements deep;
+  every path at 32 within 32 KB with cel-lite v0.1.1's most at its
+  leaves, which `make stack` holds it to in check, and the deep cases
+  and their walks run on TinyGo's own 64 KB stack.
+  `vault/knowledge/wasm.md`, "Stack". Load through templates used one in
+  another is unbounded: spec question 26.
+- [x] **The four screens in `.surf`** (merge 00c3245): notices,
+  settings, palette, agents in `internal/screens/`, spike/a's 31 tests ported and
+  run in both modes, a parity test against spike/a, `surfdemo -surf` and
+  `-surf=compiled`. Lines and what `.surf` lacks:
+  `vault/knowledge/screens.md`. Two core bugs it found: an int prop
+  given a sum didn't build compiled (fixed, 9991785); surfgen left an
+  embedded struct's fields out without listing them (fixed, adab760).
+- [x] **The runaway of 2026-10-30** (51 GB, uncapped): a lone `:if` whose
+  condition didn't compile made Load loop (978c1bb). cel-lite came
+  from a pin (2c2468b) until v0.1.1 was public, every Makefile step can
+  run under a memory cap (cddffbf), and surfgen stops itself past 2 GiB
+  (5cc9e54).
+- [x] **A handler's dyn argument** is checked as a function's is: the
+  wrong kind binds nothing, in both modes (6d48104).
+- [x] **surfgen lists an embedded field** with what it leaves out
+  (adab760); reading its fields as the struct's own is for after v0.
+- [x] **Numbers from a one-number host** (merge 552a6a2): a Lua number
+  given to an int or double prop takes its type (`Shape.OneNumber`), or
+  is refused by the prop's name; arithmetic stays CEL's, `double(x)`.
+  The case `one-number` brings its own templates, and surflua runs it.
+- [x] **The guide and the spec** (merge, after c79e85e): `docs/guide.md`
+  from a first screen to its tests, every code block a file of
+  `examples/hello` (TestGuide); `docs/spec.md` for other runtimes, its
+  tables written from the vocabulary (spec_test.go). Its open points
+  are `vault/questions/spec.md`: 3, 4, 7–14, 16–23 for the maintainer or
+  later, 25 for the stack leg (closed on `depth`, which raised 26).
+- [x] **A plx-script Lua tool** drawn from a `.surf` template through
+  the Go interpreter (merge ef843d2): `surflua`, `require("surf")`, a Lua
+  table as an instance.
+  - A typed prop stays as strict as CEL: a whole Lua number is an int,
+    so a `double` prop refuses `1.0`, and `{}` is a list, not a map. A
+    prop given a Lua value is declared `dyn` (the package doc).
+- [x] **Measured** (branch `measure`), in `vault/knowledge/measures.md`:
+  lines per screen against A's Go builders (a line count); render
+  cost, interpreted against compiled against builders
+  (`internal/screens/bench_test.go`, `make bench`); F9 again, a fresh agent
+  adding a screen from the docs alone (branch `f9`, 058f121); WASM sizes
+  of a `.surf` app under TinyGo and Go, in each mode
+  (`examples/wasm-surf`, `make wasm-sizes`). spike/cost's wall-time test
+  left `check` for `bench` (4d980b9). The two faults it found in the
+  core are fixed (1a05371): a compiled build links no loader, under Go
+  too, and no build links `crypto/sha256`; a compiled `.surf` module is
+  now the builders' size within 0.03 MiB. F9 came out slower than A's
+  run, and measures.md says so, with the docs' 13 gaps as the likely
+  reason.
+- [x] **The spec's open points for v0** (merge 7cea88d, `spec-fixes`):
+  3, 4, 7–9, 11–13, 16, 18–21 fixed, as the docs or as load errors; F9's
+  13 doc gaps, and surfgen reading an unexported component from source.
+- [x] **`$value` and `$event`** (merge b7c75a6, spec point 10, the
+  maintainer's answer via gov): an @ handler's arguments may be the
+  event's value or the event, whole; no implicit `surfrun.Event`, in Go or
+  surflua; the screens' wrappers gone; six conformance cases.
+- [x] **cel-lite v0.1.1** from the proxy (86a0a7e): a struct against
+  `null` is surf's presence test (spec point 17, 93b2c4f, `panelnull` in
+  both modes); a surflua key named for a CEL type is a field.
+- [x] **A wait's deadline** in the tests is 30 s (b3f527d): 3 s failed
+  under load, though nothing was slow but the machine.
+
+## R-23: the spike (done)
+
+The record as it was. The spike and its comparison tooling left the
+tree in the public prep (2026-10-31).
+
+- [x] **M1. Stories** (`vault/stories/README.md`): S1–S12, sent to gov.
+- [x] **M2. Survey and candidates** (`vault/knowledge/survey.md`): A Live,
+  B Signals, C Elm (the control); approved by gov.
+- [x] **M3. The spike:** every candidate in full on the three screens
+  (`spike/DESIGN.md`).
+  - [x] The floor: `ui`, `run`, `stories`, `docs/guide.md`.
+  - [x] Mock data for the three screens; `cmd/surfdemo` with the
+    switcher; the scripts that look (`scripts/render.sh`,
+    `scripts/shot.sh`).
+  - [x] A (Live): `surflive/`, `spike/a/`, `docs/live.md`, and F7's cells UIs.
+  - [x] B (Signals): `signal/`, `spike/b/`, `docs/signals.md`.
+  - [x] C (Elm): `elm/`, `spike/c/`, `docs/elm.md`.
+  - [x] The three draw alike: DESIGN settled what they differed on.
+  - [x] **The pairs differ only in the framework** (gov, 2026-10-29):
+    - [x] What plx drew then: the A2UI kit's look, Inter 15 px on
+      one-cell rows, the kit's tokens.
+    - [x] `spike/DESIGN.md` rewritten to it (bb02c59).
+    - [x] The floor's `surfui.Compact` (13c402f): the kit's look, tokens and
+      the controls plx uses (Cycle, Key, Nav, Entries, Dialog, Scale,
+      Scroll, Semibold), each with a gate story; what Blitz draws wrong
+      is on the gap list (thin borders at 1.6×, a shadow's spread, the
+      underline's and zoomed text's offsets, the ❯ fallback).
+    - [x] (a) The three screens rebuilt in A, B and C to the new DESIGN
+      (de57158, 2747b2e, 80738dc), each run live with one act checked;
+      DESIGN fixed where it differed from plx (2de396c). With them: the
+      floor's Down, Height and the first a=field fix; elm.Quit; a Live
+      root as surfrun.Attacher.
+    - [x] (b) Hosting as plx today (e05cc63): the agents list a tool in
+      a dock, the palette a program in a pane (every key reaches it, on
+      plx's palette key), settings a tab.
+    - [x] The density comparison (S11): A's agents list at Compact
+      against Dense (`surfrun.Options.Density`, `surfdemo -density`).
+- [ ] **M4. Judging** on the stories:
+  - [x] F5's gate (`make gate`, `scripts/gate/`), with
+    `vault/knowledge/blitz-gaps.md` and `css-subset.md`: 30 of 132
+    cases fail, on 3 Blitz gaps; C found 3 more live. Into `check` once
+    the fixes land.
+  - [x] The first Blitz batch, on hotty-blitz's `r23/blitz-gaps` branch:
+    0042 inline svg with the document's CSS, 0043 `:focus-within`, 0044
+    Tab past what isn't rendered (`blitz-gaps.md`).
+  - [x] The batch in hotty-blitz (f2774c9, its `make check` passed), and
+    the gate in `check` (44f2b6e): 414 cases against a baseline of the
+    147 known failures (`scripts/gate/baseline.tsv`), none the floor's
+    CSS. A new failure, a known one worse by the threshold, or a fixed
+    one still listed fails `check`. The 1.6× hairline and the roomy
+    badge are hotty-blitz's, after R-22; `make gate-baseline` then.
+  - [x] Render cost (F10): `spike/cost`, and `hotty replay` for the
+    host's side. Measured again on the rebuilt screens (792fd90): three
+    runs and two replays on a quiet machine; the settings session now
+    walks the sections and saves a field on Enter.
+  - [x] Lines written, per candidate (R-23).
+  - [x] F9: a fresh agent per candidate added the fourth screen from
+    the docs alone (6.6, 7.3, 8.2 min); what they missed is fixed in the
+    floor and docs (4cb7582, `uitest`).
+  - [x] Looks: the three side by side, per screen
+    (`.shots/looks-*.png`): settings and agents the same to the pixel,
+    the palette a few pixels apart.
+- [x] **M5. The pairs**: the candidates side by side on the three
+  screens and the density story, for the maintainer's pick (R-23,
+  NEIO-15).
+
+## Parked for the maintainer
+
+- hotty V6-02, a text field may give the program `tab` (hotty's
+  `vault/tasks/0.6.md`): plx's palette completes on Tab, a host keeps it.
+  The spike completes on `ctrl+space` meanwhile, and plx's palette with
+  a stop after its field (`Runner.Focus`).
+- hotty V6-03, Enter commits a text field in a form or not (the same
+  file): hotty-blitz does, hottytest doesn't. The floor commits on Enter
+  itself meanwhile.
+- `vector-effect: non-scaling-stroke` (gov R-23 question 4): new mod sets
+  for usvg and anyrender_svg. Lean: not until a screen plx ships needs a
+  hairline; no scaled-stroke sparklines in the screens meanwhile.
+
+## After v0
+
+- What the screens found `.surf` lacks (`vault/knowledge/screens.md`):
+  embedded fields, a data struct's methods and a named type's
+  constants, one `:if` over a group, `:let`, `OnError` with a cells
+  view. (`&&` in an attribute, the event's value as an argument, and
+  the runtime's methods out of templates are done in v0.) The spec's
+  open points, 14, 22, 23 and 26: `vault/questions/spec.md`.
+
+- What a Lua host (surflua) lacks of the core:
+  - ~~a router outside the runtime, so a `<bind>` key, a select's list
+    and a field's Enter work there too~~: branch `luaseam`, through
+    surfrun.Surface (`view:key`, the list from `view:html`), and a script's
+    view a surfrun.Model that a host in Go shows (`surflua.View`, for plx);
+  - `Instance.Call` with an error, so a method that fails fails its
+    expression (surflua gives null and lists the error);
+  - ~~a `dyn` `:state`, checked at render against the tag's shape~~:
+    branch `luastate`, with `surf.component` and the case `dyn-state`;
+  - cel-lite's reserved, type and standard names exported (surflua
+    copies them), and `equal` ending early on the same list or map.
+
+- plx's adoption plan.
+- F8: A2UI as a catalog on top.
+- A TypeScript and a Rust runtime of the spec.

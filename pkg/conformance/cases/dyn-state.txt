@@ -1,0 +1,230 @@
+A shelf of panels, each a stateful child its template gives as a dyn
+(dyn()), as a host whose fields are all dyn gives every one: drawn
+with its own template, each keeping its own state; a click on one's
+switch is that child's handler, and the shelf's buttons are the
+shelf's. A dyn :state that is no instance of the tag's component is a
+render error, and draws nothing; once the shelf drops its panel, the
+panel's null draws nothing either.
+-- root --
+Shelf
+-- state.json --
+{"Title": "Shelf", "Panel": {"Open": true, "Title": "Main"}, "Panels": [{"Open": false, "Title": "a"}, {"Open": true, "Title": "b"}]}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">Main</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">closed</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
+-- cells --
+cells 64x32
+text
+> Shelf                                                Add   Drop
+> [on]  Main
+> [off] closed
+> [on]  b
+> 2 panels
+style
+= aaaaa...............................................bbbbb.bbbbbb
+= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= dddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeeeeee
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c accent/tonal
+d muted/tonal
+e muted/bg
+hits
+@ 52,0 5x1 r.khead.kadd
+@ 58,0 6x1 r.khead.kdrop
+@ 0,1 5x1 r.kmain.0.0
+@ 0,2 5x1 r.ka.0.0
+@ 0,3 5x1 r.kb.0.0
+-- 1.event --
+click r.ka.0.0
+-- 1.log --
+
+-- 1.ops --
+attr r.ka.0.0 class "u-switch is-on"
+attr r.ka.0.0 aria-checked "true"
+text r.ka.0.1 "a"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">Main</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+> Shelf                                                Add   Drop
+> [on]  Main
+> [on]  a
+> [on]  b
+> 2 panels
+style
+= aaaaa...............................................bbbbb.bbbbbb
+= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ddddebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ffffffff
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c accent/tonal
+d accent/sel
+e fg/sel
+f muted/bg
+hits
+@ 52,0 5x1 r.khead.kadd
+@ 58,0 6x1 r.khead.kdrop
+@ 0,1 5x1 r.kmain.0.0
+@ 0,2 5x1 r.ka.0.0
+@ 0,3 5x1 r.kb.0.0
+-- 2.event --
+click r.kmain.0.0
+-- 2.log --
+
+-- 2.ops --
+attr r.kmain.0.0 class "u-switch"
+attr r.kmain.0.0 aria-checked "false"
+text r.kmain.0.1 "closed"
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+> Shelf                                                Add   Drop
+> [off] closed
+> [on]  a
+> [on]  b
+> 2 panels
+style
+= aaaaa...............................................bbbbb.bbbbbb
+= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeeeeee
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c muted/sel
+d accent/tonal
+e muted/bg
+hits
+@ 52,0 5x1 r.khead.kadd
+@ 58,0 6x1 r.khead.kdrop
+@ 0,1 5x1 r.kmain.0.0
+@ 0,2 5x1 r.ka.0.0
+@ 0,3 5x1 r.kb.0.0
+-- 3.event --
+click r.khead.kadd
+-- 3.log --
+add
+-- 3.ops --
+after r.kb "<div id=\"r.kp3\" class=\"u-box\"><div id=\"r.kp3.0\" class=\"u-row u-gap1\"><button id=\"r.kp3.0.0\" class=\"u-switch\" type=\"button\" role=\"switch\" aria-checked=\"false\" aria-label=\"Open\"><span id=\"r.kp3.0.0.0\" class=\"u-knob\"></span></button><span id=\"r.kp3.0.1\" class=\"u-text\">closed</span></div></div>"
+text r.kstatus "3 panels"
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">closed</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+> Shelf                                                Add   Drop
+> [off] closed
+> [on]  a
+> [on]  b
+> [off] closed
+> 3 panels
+style
+= aaaaa...............................................bcccb.dddddd
+= eeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+= ffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+= ffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+= eeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+= gggggggg
+. fg/bg
+a fg/bg bold
+b fg/accent
+c on-accent/accent
+d fg/tonal
+e muted/tonal
+f accent/tonal
+g muted/bg
+hits
+@ 52,0 5x1 r.khead.kadd
+@ 58,0 6x1 r.khead.kdrop
+@ 0,1 5x1 r.kmain.0.0
+@ 0,2 5x1 r.ka.0.0
+@ 0,3 5x1 r.kb.0.0
+@ 0,4 5x1 r.kp3.0.0
+-- 4.event --
+click r.kp3.0.0
+-- 4.log --
+
+-- 4.ops --
+attr r.kp3.0.0 class "u-switch is-on"
+attr r.kp3.0.0 aria-checked "true"
+text r.kp3.0.1 "p3"
+-- 4.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">p3</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
+-- 4.cells --
+cells 64x32
+text
+> Shelf                                                Add   Drop
+> [off] closed
+> [on]  a
+> [on]  b
+> [on]  p3
+> 3 panels
+style
+= aaaaa...............................................bbbbb.bbbbbb
+= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeefbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= gggggggg
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c muted/tonal
+d accent/tonal
+e accent/sel
+f fg/sel
+g muted/bg
+hits
+@ 52,0 5x1 r.khead.kadd
+@ 58,0 6x1 r.khead.kdrop
+@ 0,1 5x1 r.kmain.0.0
+@ 0,2 5x1 r.ka.0.0
+@ 0,3 5x1 r.kb.0.0
+@ 0,4 5x1 r.kp3.0.0
+-- 5.event --
+click r.khead.kdrop
+-- 5.log --
+drop
+-- 5.ops --
+remove r.kmain
+-- 5.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">p3</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
+-- 5.cells --
+cells 64x32
+text
+> Shelf                                                Add   Drop
+> [on]  a
+> [on]  b
+> [on]  p3
+> 3 panels
+style
+= aaaaa...............................................bbbbb.cddddc
+= eeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ffffffff
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c fg/accent
+d on-accent/accent
+e accent/tonal
+f muted/bg
+hits
+@ 52,0 5x1 r.khead.kadd
+@ 58,0 6x1 r.khead.kdrop
+@ 0,1 5x1 r.ka.0.0
+@ 0,2 5x1 r.kb.0.0
+@ 0,3 5x1 r.kp3.0.0
+-- errors --
+shelf.surf:10:3: :state is a string, not <info-panel>'s component

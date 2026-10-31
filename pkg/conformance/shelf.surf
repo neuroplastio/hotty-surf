@@ -1,0 +1,12 @@
+<surface>
+  <row gap="1" key="head">
+    <heading>{{ title }}</heading>
+    <spacer/>
+    <button key="add" @click="add">Add</button>
+    <button key="drop" @click="drop">Drop</button>
+  </row>
+  <info-panel key="main" :state="dyn(panel)"/>
+  <info-panel :each="p in panels" :key="p.title" :state="dyn(p)"/>
+  <info-panel key="wrong" :state="dyn(title)"/>
+  <text muted key="status">{{ size(panels) }} panels</text>
+</surface>

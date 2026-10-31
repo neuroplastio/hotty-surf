@@ -1,0 +1,19 @@
+cells 20x6
+text
+> Log
+> row 0              ▕
+> row 1              ▕
+>                    ▕
+>                    ▕
+> foot
+style
+= aaa
+= ...................b
+= ...................b
+= ...................b
+= ...................b
+. fg/bg
+a fg/bg bold
+b accent/bg
+hits
+@ 0,1 20x4 r.1

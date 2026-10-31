@@ -1,0 +1,9 @@
+<props title="string"/>
+<box>
+  <row gap="1">
+    <heading>{{ title }}</heading>
+    <spacer/>
+    <slot name="actions"/>
+  </row>
+  <slot><text muted>Nothing here.</text></slot>
+</box>

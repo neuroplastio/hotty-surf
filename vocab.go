@@ -1,0 +1,345 @@
+package surf
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/neuroplastio/hotty-surf/surfui"
+)
+
+// The vocabulary: what each tag of a template is, and each attribute it
+// takes. It is one table for the interpreter, the generator (whose code
+// calls the same functions) and the spec (docs/spec.md, "Widgets", which
+// a test checks against it), so the two modes build a tag alike.
+
+// Form is the shape of a widget's constructor: what it is built from.
+type Form uint8
+
+// The forms.
+const (
+	// FormKids takes its element children.
+	FormKids Form = iota + 1
+	// FormText takes its text: literal text and {{ }}, no elements.
+	FormText
+	// FormNone takes neither.
+	FormNone
+	// FormSwitch is a switch: its `on`.
+	FormSwitch
+	// FormChoice is a select or a cycle: its `value` and `options`.
+	FormChoice
+	// FormSection is a section: its `title`, then its element children.
+	FormSection
+)
+
+// Widget is one tag of the floor's vocabulary.
+type Widget struct {
+	Tag  string
+	Doc  string
+	Form Form
+	// Func is the constructor in this package, which both modes call.
+	Func string
+	// Events are the events a handler may be bound to on it (@click …).
+	Events []string
+}
+
+// Type is what an attribute takes.
+type Type uint8
+
+// The attribute types.
+const (
+	TypeString Type = iota + 1
+	TypeBool
+	TypeInt
+	// TypeStrings is a list of strings: a choice's options.
+	TypeStrings
+	// TypePad is padding: "x y", or "n" for both; bound, a list of one or
+	// two ints.
+	TypePad
+)
+
+// Attr is one attribute: a constructor's argument (Arg), or a modifier,
+// applied after the widget is built, in this table's order whatever the
+// template's.
+type Attr struct {
+	Name string
+	Type Type
+	Doc  string
+	// Tags are the tags it is on; none, every widget.
+	Tags []string
+	// Arg is a constructor's argument, not a modifier.
+	Arg bool
+	// Func is the function in this package that applies a modifier:
+	// func(*surfui.Node, T), T the Go type of Type (string, bool, int64,
+	// [2]int64), or func(*surfui.Node, T) error where Fails says so.
+	Func  string
+	Fails bool
+	// Values are the values a string attribute takes, where it takes only
+	// some (tone, fill, theme, density): a literal of another is a load
+	// error, and a bound one a render error. Nil for any string.
+	Values []string
+}
+
+// The values of the attributes that take only some.
+var (
+	themes    = []string{"neuroplastio", "terminal", "paper"}
+	densities = []string{"compact", "dense", "roomy"}
+	tones     = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
+)
+
+var events = []string{"click", "focus"}
+
+// Widgets are the tags, by name.
+var Widgets = []Widget{
+	{"surface", "a surface's root: its theme and density, Compact unless it says", FormKids, "NewSurface", events},
+	{"stack", "its children top to bottom", FormKids, "surfui.Stack", events},
+	{"row", "its children left to right, centred on the line", FormKids, "surfui.Row", events},
+	{"spacer", "the room left in its row or stack", FormNone, "surfui.Spacer", nil},
+	{"text", "a line of text, cut with … where it doesn't fit (wrap lets it wrap)", FormText, "surfui.Text", events},
+	{"line", "one line of texts side by side, each in its own tone and weight, cut once with … at its end where they don't fit; with wrap, a paragraph of its texts and keys", FormKids, "surfui.Line", events},
+	{"heading", "a section's or a screen's title", FormText, "surfui.Heading", events},
+	{"caption", "a group's title over its rows, small and dim", FormText, "surfui.Caption", events},
+	{"badge", "a short label on a fill", FormText, "surfui.Badge", events},
+	{"glyph", "one symbol in a fixed slot: a status's dot", FormText, "surfui.Glyph", events},
+	{"icon", "a mark beside a label: an MDI symbol of the hosts' Nerd Font, muted", FormText, "surfui.Icon", events},
+	{"dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil},
+	{"key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events},
+	{"button", "a button, its text its label", FormText, "surfui.Button", events},
+	{"field", "a one-line text field", FormNone, "surfui.Field", []string{"click", "focus", "change", "input"}},
+	{"switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events},
+	{"select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}},
+	{"cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}},
+	{"list", "a column of items with a selection", FormKids, "surfui.List", events},
+	{"item", "a row of a list", FormKids, "surfui.Item", events},
+	{"section", "a titled group", FormSection, "surfui.Section", events},
+	{"rule", "a line across", FormNone, "surfui.Rule", nil},
+	{"box", "a raised panel", FormKids, "surfui.Box", events},
+	{"dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events},
+}
+
+// Attrs are the attributes, constructors' arguments first.
+var Attrs = []Attr{
+	{Name: "on", Type: TypeBool, Doc: "whether the switch is on", Tags: []string{"switch"}, Arg: true},
+	{Name: "value", Type: TypeString, Doc: "the option picked", Tags: []string{"select", "cycle"}, Arg: true},
+	{Name: "options", Type: TypeStrings, Doc: "the options, in order", Tags: []string{"select", "cycle"}, Arg: true},
+	{Name: "title", Type: TypeString, Doc: "the section's title", Tags: []string{"section"}, Arg: true},
+
+	{Name: "theme", Type: TypeString, Doc: "neuroplastio, terminal or paper", Tags: []string{"surface"}, Func: "ModTheme", Fails: true, Values: themes},
+	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},
+	{Name: "key", Type: TypeString, Doc: "the node's key among its siblings, which the diff follows", Func: "ModKey"},
+	{Name: "tone", Type: TypeString, Doc: "the text's colour: accent, ok, warn, error, info, muted or plain", Func: "ModTone", Fails: true, Values: tones},
+	{Name: "fill", Type: TypeString, Doc: "a fill in a tone's colour: accent, ok, warn, error, info, muted or plain", Func: "ModFill", Fails: true, Values: tones},
+	{Name: "bold", Type: TypeBool, Doc: "bold text", Func: "ModBold"},
+	{Name: "semibold", Type: TypeBool, Doc: "text at weight 600", Func: "ModSemibold"},
+	{Name: "muted", Type: TypeBool, Doc: "the muted colour", Func: "ModMuted"},
+	{Name: "small", Type: TypeBool, Doc: "smaller text", Func: "ModSmall"},
+	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph", Func: "ModWrap"},
+	{Name: "grow", Type: TypeBool, Doc: "takes the room left in its row or stack", Func: "ModGrow"},
+	{Name: "keep", Type: TypeBool, Doc: "keeps it whole in its row or stack: what is beside it gives way first", Func: "ModKeep"},
+	{Name: "fit", Type: TypeBool, Doc: "shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFit"},
+	{Name: "gap", Type: TypeInt, Doc: "steps of room between its children, 0 to 6", Func: "ModGap"},
+	{Name: "pad", Type: TypePad, Doc: "steps of room inside it, across and down", Func: "ModPad"},
+	{Name: "indent", Type: TypeInt, Doc: "moves it in by cells", Func: "ModIndent"},
+	{Name: "down", Type: TypeInt, Doc: "moves it down by rows", Func: "ModDown"},
+	{Name: "top", Type: TypeBool, Doc: "aligns a row's children to its top", Func: "ModTop"},
+	{Name: "width", Type: TypeInt, Doc: "its width in cells", Func: "ModWidth"},
+	{Name: "height", Type: TypeInt, Doc: "its height in rows", Func: "ModHeight"},
+	{Name: "selected", Type: TypeBool, Doc: "an item that is its list's selection, kept in view where the document scrolls", Func: "ModSelected"},
+	{Name: "checked", Type: TypeBool, Doc: "a switch's state, set in place", Func: "ModChecked"},
+	{Name: "disabled", Type: TypeBool, Doc: "a control that can't be used", Func: "ModDisabled"},
+	{Name: "invalid", Type: TypeBool, Doc: "a field whose value isn't taken", Func: "ModInvalid"},
+	{Name: "value", Type: TypeString, Doc: "a field's value", Tags: []string{"field"}, Func: "ModValue"},
+	{Name: "placeholder", Type: TypeString, Doc: "a field's placeholder", Tags: []string{"field"}, Func: "ModPlaceholder"},
+	{Name: "name", Type: TypeString, Doc: "a control's name", Func: "ModName"},
+	{Name: "label", Type: TypeString, Doc: "its accessible label", Func: "ModLabel"},
+	{Name: "reveal", Type: TypeBool, Doc: "shown only while its item is pointed at, selected or focused", Func: "ModReveal"},
+	{Name: "focusable", Type: TypeBool, Doc: "takes the keyboard on a click and by Tab", Func: "ModFocusable"},
+	{Name: "bare", Type: TypeBool, Doc: "a field or a button with no border and no fill", Func: "ModBare"},
+	{Name: "chrome", Type: TypeBool, Doc: "a sidebar's ground: a darker fill with a hairline at its end", Func: "ModChrome"},
+	{Name: "card", Type: TypeBool, Doc: "a group's panel: a fill a step lighter than the page, its rows split by rules", Tags: []string{"box"}, Func: "ModCard"},
+	{Name: "ring", Type: TypeBool, Doc: "a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven", Tags: []string{"dot"}, Func: "ModRing"},
+	{Name: "target", Type: TypeBool, Doc: "a dot in a ring (◉), a state that asks for someone", Tags: []string{"dot"}, Func: "ModTarget"},
+	{Name: "search", Type: TypeBool, Doc: "a row drawn as a search field: its icon and a bare field in one field's box", Tags: []string{"row"}, Func: "ModSearch"},
+	{Name: "nav", Type: TypeBool, Doc: "a sidebar's list", Tags: []string{"list"}, Func: "ModNav"},
+	{Name: "entries", Type: TypeBool, Doc: "a list whose items are entries, each taking the keyboard", Tags: []string{"list"}, Func: "ModEntries"},
+	{Name: "scale", Type: TypeInt, Doc: "drawn at a percentage of its size", Func: "ModScale"},
+	{Name: "scroll", Type: TypeBool, Doc: "takes the room left and scrolls what doesn't fit", Func: "ModScroll"},
+	{Name: "autofocus", Type: TypeBool, Doc: "takes the keyboard when the surface is shown", Func: "ModAutofocus"},
+}
+
+// widget is the tag's entry, if it is a widget's.
+func widget(tag string) (*Widget, bool) {
+	for i := range Widgets {
+		if Widgets[i].Tag == tag {
+			return &Widgets[i], true
+		}
+	}
+	return nil, false
+}
+
+// attrOf is the attribute name on tag: an argument of its constructor
+// first, then a modifier.
+func attrOf(tag, name string) (*Attr, int, bool) {
+	for i := range Attrs {
+		a := &Attrs[i]
+		if a.Name == name && (len(a.Tags) == 0 || contains(a.Tags, tag)) {
+			return a, i, true
+		}
+	}
+	return nil, 0, false
+}
+
+func contains(s []string, x string) bool {
+	for _, v := range s {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
+// The constructors that aren't the floor's as they are.
+
+// NewSurface is a surface's root at Compact, the default density.
+func NewSurface(kids ...*surfui.Node) *surfui.Node {
+	return surfui.Surface(kids...).Density(surfui.Compact)
+}
+
+// NewSelect is a select of options, value picked.
+func NewSelect(value string, options []string) *surfui.Node { return surfui.Select(value, options...) }
+
+// NewCycle is a cycle through options, value showing.
+func NewCycle(value string, options []string) *surfui.Node { return surfui.Cycle(value, options...) }
+
+// The modifiers, as both modes apply them.
+
+// ModTheme sets a surface's theme.
+func ModTheme(n *surfui.Node, v string) error {
+	switch v {
+	case "neuroplastio", "terminal", "paper":
+		n.Theme(v)
+		return nil
+	}
+	return fmt.Errorf("theme is neuroplastio, terminal or paper, not %q", v)
+}
+
+// ModDensity sets a surface's density.
+func ModDensity(n *surfui.Node, v string) error {
+	switch d := surfui.Density(v); d {
+	case surfui.Compact, surfui.Dense, surfui.Roomy:
+		n.Density(d)
+		return nil
+	}
+	return fmt.Errorf("density is compact, dense or roomy, not %q", v)
+}
+
+// ModKey sets a node's key.
+func ModKey(n *surfui.Node, v string) { n.Key(v) }
+
+// tone is the tone v names.
+func tone(v string) (surfui.Tone, error) {
+	switch t := surfui.Tone(v); t {
+	case surfui.Accent, surfui.OK, surfui.Warn, surfui.Error, surfui.Info, surfui.Muted, surfui.Plain:
+		return t, nil
+	case "plain":
+		return surfui.Plain, nil
+	}
+	return "", fmt.Errorf("a tone is accent, ok, warn, error, info, muted or plain, not %q", v)
+}
+
+// ModTone colours a node's text.
+func ModTone(n *surfui.Node, v string) error {
+	t, err := tone(v)
+	if err == nil {
+		n.Tone(t)
+	}
+	return err
+}
+
+// ModFill gives a node a fill.
+func ModFill(n *surfui.Node, v string) error {
+	t, err := tone(v)
+	if err == nil {
+		n.Fill(t)
+	}
+	return err
+}
+
+// flag is a bool modifier: m, where v is set.
+func flag(n *surfui.Node, v bool, m func() *surfui.Node) {
+	if v {
+		m()
+	}
+}
+
+// The flags.
+func ModBold(n *surfui.Node, v bool)      { flag(n, v, n.Bold) }
+func ModSemibold(n *surfui.Node, v bool)  { flag(n, v, n.Semibold) }
+func ModMuted(n *surfui.Node, v bool)     { flag(n, v, n.Muted) }
+func ModSmall(n *surfui.Node, v bool)     { flag(n, v, n.Small) }
+func ModWrap(n *surfui.Node, v bool)      { flag(n, v, n.Wrap) }
+func ModGrow(n *surfui.Node, v bool)      { flag(n, v, n.Grow) }
+func ModKeep(n *surfui.Node, v bool)      { flag(n, v, n.Keep) }
+func ModFit(n *surfui.Node, v bool)       { flag(n, v, n.Fit) }
+func ModTop(n *surfui.Node, v bool)       { flag(n, v, n.Top) }
+func ModReveal(n *surfui.Node, v bool)    { flag(n, v, n.Reveal) }
+func ModFocusable(n *surfui.Node, v bool) { flag(n, v, n.Focusable) }
+func ModBare(n *surfui.Node, v bool)      { flag(n, v, n.Bare) }
+func ModChrome(n *surfui.Node, v bool)    { flag(n, v, n.Chrome) }
+func ModCard(n *surfui.Node, v bool)      { flag(n, v, n.Card) }
+func ModRing(n *surfui.Node, v bool)      { flag(n, v, n.Ring) }
+func ModTarget(n *surfui.Node, v bool)    { flag(n, v, n.Target) }
+func ModSearch(n *surfui.Node, v bool)    { flag(n, v, n.Search) }
+func ModNav(n *surfui.Node, v bool)       { flag(n, v, n.Nav) }
+func ModEntries(n *surfui.Node, v bool)   { flag(n, v, n.Entries) }
+func ModScroll(n *surfui.Node, v bool)    { flag(n, v, n.Scroll) }
+func ModAutofocus(n *surfui.Node, v bool) { flag(n, v, n.Autofocus) }
+
+// The states, which draw only when set.
+func ModSelected(n *surfui.Node, v bool) { n.Selected(v) }
+func ModChecked(n *surfui.Node, v bool)  { n.Checked(v) }
+func ModDisabled(n *surfui.Node, v bool) { n.Disabled(v) }
+func ModInvalid(n *surfui.Node, v bool)  { n.Invalid(v) }
+
+// The sizes, in the floor's steps; the floor clamps them.
+func ModGap(n *surfui.Node, v int64)    { n.Gap(clampInt(v)) }
+func ModIndent(n *surfui.Node, v int64) { n.Indent(clampInt(v)) }
+func ModDown(n *surfui.Node, v int64)   { n.Down(clampInt(v)) }
+func ModWidth(n *surfui.Node, v int64)  { n.Width(clampInt(v)) }
+func ModHeight(n *surfui.Node, v int64) { n.Height(clampInt(v)) }
+func ModScale(n *surfui.Node, v int64)  { n.Scale(clampInt(v)) }
+
+// ModPad puts room inside a node.
+func ModPad(n *surfui.Node, v [2]int64) { n.Pad(clampInt(v[0]), clampInt(v[1])) }
+
+// The strings.
+func ModValue(n *surfui.Node, v string)       { n.Value(v) }
+func ModPlaceholder(n *surfui.Node, v string) { n.Placeholder(v) }
+func ModName(n *surfui.Node, v string)        { n.Name(v) }
+func ModLabel(n *surfui.Node, v string)       { n.Label(v) }
+
+// clampInt is v as an int, within what a 32-bit int holds (TinyGo's).
+func clampInt(v int64) int {
+	const lim = 1<<31 - 1
+	return int(max(-lim, min(v, lim)))
+}
+
+// staticPad reads a pad's literal: "x y", or "n" for both.
+func staticPad(s string) ([2]int64, error) {
+	f := strings.Fields(s)
+	if len(f) < 1 || len(f) > 2 {
+		return [2]int64{}, fmt.Errorf("pad is \"x y\" or \"n\", not %q", s)
+	}
+	var v [2]int64
+	for i, w := range f {
+		n, err := strconv.ParseInt(w, 10, 64)
+		if err != nil {
+			return [2]int64{}, fmt.Errorf("pad is \"x y\" or \"n\", not %q", s)
+		}
+		v[i] = n
+	}
+	if len(f) == 1 {
+		v[1] = v[0]
+	}
+	return v, nil
+}

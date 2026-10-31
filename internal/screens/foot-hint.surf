@@ -1,0 +1,6 @@
+<!-- One of the palette's footer actions: its title and its key's caps. -->
+<props title="string" keys="string"/>
+<row gap="2">
+  <text>{{ title }}</text>
+  <key-caps :keys="keys"/>
+</row>

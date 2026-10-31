@@ -1,0 +1,27 @@
+cells 22x14
+text
+> Press [Ctrl+B] and a
+> hint shows what each
+> next key does:
+> [Ctrl+B] > [V] splits
+> right.
+>
+> What this does: it
+> runs the command, and
+> [Esc] closes it:
+> supercalifragilisticex
+> pialidocious.
+style
+= ......a......a
+=
+=
+= a......a.a.a.a
+=
+=
+= aaaa.aaaa.aaaaa.bb
+= bbbb.bbb.bbbbbbb
+= a...a
+. fg/bg
+a muted/bg
+b fg/bg bold
+hits

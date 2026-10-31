@@ -1,0 +1,6 @@
+<!-- The palette's footer actions: a title and its key's caps. -->
+<stories of="foot-hint" cols="40">
+  <story name="one key" title="Run" keys="enter"/>
+  <story name="a chord" title="Run and stay" keys="ctrl+enter"/>
+  <story name="long title" title="Remove the selected entry from the recently used list" keys="shift+delete"/>
+</stories>

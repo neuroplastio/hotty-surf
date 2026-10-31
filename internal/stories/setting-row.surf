@@ -1,0 +1,10 @@
+<!-- A setting's block, by each kind of control it takes. -->
+<stories of="setting-row" cols="60">
+  <story name="switch" :st="secs[0].groups[0].settings[0]"/>
+  <story name="select" :st="secs[0].groups[0].settings[1]"/>
+  <story name="cycle" :st="secs[0].groups[1].settings[0]"/>
+  <story name="text" :st="secs[1].groups[0].settings[1]"/>
+  <story name="number" :st="secs[1].groups[2].settings[2]"/>
+  <story name="caption" :st="secs[1].groups[1].settings[0]"/>
+  <story name="overlay" :st="secs[4].groups[0].settings[0]"/>
+</stories>

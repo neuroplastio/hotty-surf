@@ -1,0 +1,12 @@
+<!-- A group of a section's settings, as a card: its title over it, where
+     it has one, semibold and in sentence case; its settings in the card,
+     a rule between each and the next; and its note under it, small and
+     muted, where it has one. -->
+<props g="Group"/>
+<stack down="1">
+  <text :if="g.title != ''" semibold key="title">{{ g.title }}</text>
+  <box card key="card">
+    <setting-row :each="(i, st) in g.settings" :key="st.name" :st="st" :first="i == 0"/>
+  </box>
+  <text :if="g.note != ''" small muted wrap key="note">{{ g.note }}</text>
+</stack>

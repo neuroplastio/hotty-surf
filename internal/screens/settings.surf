@@ -1,0 +1,48 @@
+<!-- The settings page as the look draws it (look/settings): the
+     sections in a sidebar on the chrome, each with its icon and its
+     status under its label where it has one; the section's title, what
+     the last save did and the search; and its groups' cards, in one
+     stack that scrolls. -->
+<surface>
+  <row top grow key="split">
+    <stack chrome width="30" pad="1 1" key="side">
+      <row gap="2" pad="2 0" key="head">
+        <icon>&#xF08BB;</icon> <!-- cog-outline -->
+        <text bold>Settings</text>
+      </row>
+      <list nav label="Sections" down="1" key="nav">
+        <bind key="arrow_up" label="Previous" do="move(-1)"/>
+        <bind key="k" label="Previous" do="move(-1)"/>
+        <bind key="arrow_down" label="Next" do="move(1)"/>
+        <bind key="j" label="Next" do="move(1)"/>
+        <bind key="home" label="First" do="move(-size(secs))"/>
+        <bind key="g" label="First" do="move(-size(secs))"/>
+        <bind key="end" label="Last" do="move(size(secs))"/>
+        <bind key="shift+g" label="Last" do="move(size(secs))"/>
+        <bind key="page_up" label="Page up" do="move(-size(secs))"/>
+        <bind key="page_down" label="Page down" do="move(size(secs))"/>
+        <item :each="(i, section) in secs" :key="section.id" gap="2" :selected="!searching() &amp;&amp; i == sec" @click="pick(i)">
+          <icon>{{ section.icon }}</icon>
+          <stack key="label">
+            <text key="title">{{ section.title }}</text>
+            <text :if="section.status != ''" small muted key="status">{{ section.status }}</text>
+          </stack>
+        </item>
+      </list>
+    </stack>
+    <stack grow pad="4 1" key="main">
+      <row gap="2" key="top">
+        <heading grow>{{ title() }}</heading>
+        <text small muted>{{ status }}</text>
+        <row search gap="2" key="search">
+          <icon>&#xF0349;</icon> <!-- magnify -->
+          <field bare width="24" placeholder="Search settings" label="Search settings" :value="query" autofocus @input="search($value)" key="query"/>
+        </row>
+      </row>
+      <stack scroll grow :key="box()">
+        <setting-group :each="(i, g) in groups()" :key="i" :g="g"/>
+        <text :if="searching() &amp;&amp; size(shown()) == 0" key="none">No setting has "{{ searched() }}" in it.</text>
+      </stack>
+    </stack>
+  </row>
+</surface>

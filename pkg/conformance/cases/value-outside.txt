@@ -1,0 +1,23 @@
+$value and $event are an @ handler's arguments only. Anywhere else each
+is a load error at its $: a {{ }}, a bound attribute, a :if, a prop
+(of form-tag, a partial the case brings), and a <bind>'s do, whose key
+brings no value.
+-- form.surf --
+<surface>
+  <text>{{ $value }}</text>
+  <text :tone="$value">x</text>
+  <text :if="$event">y</text>
+  <form-tag :t="$value"/>
+  <list>
+    <bind key="enter" do="typed($value)"/>
+  </list>
+</surface>
+-- form-tag.surf --
+<props t="string"/>
+<text>{{ t }}</text>
+-- load --
+form.surf:2:12: $value is an @ handler's argument only
+form.surf:3:16: $value is an @ handler's argument only
+form.surf:4:14: $event is an @ handler's argument only
+form.surf:5:17: $value is an @ handler's argument only
+form.surf:7:33: $value is an @ handler's argument only

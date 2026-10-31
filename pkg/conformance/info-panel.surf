@@ -1,0 +1,6 @@
+<box key="panel">
+  <row gap="1">
+    <switch :on="open" @click="toggle" label="Open"/>
+    <text>{{ open ? title : 'closed' }}</text>
+  </row>
+</box>

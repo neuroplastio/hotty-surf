@@ -1,0 +1,7 @@
+<!-- A key sequence's caps, side by side: nothing for no keys. It holds
+     the sequence in myelin's names; the surface draws it in the
+     palette's style (Palette.KeyStyle), a cap a chord. The caps keep
+     whole: where a row is short of room, the label beside them is cut
+     instead. -->
+<props keys="string"/>
+<key :if="keys != ''">{{ keys }}</key>

@@ -1,0 +1,24 @@
+<props big="int"/>
+<stack key="lab">
+  <text key="sum">{{ count + big }}</text>
+  <text key="first">{{ notes[0].text }}</text>
+  <text key="math">{{ ratio * 2.0 }} {{ -ratio }} {{ size(title) }} {{ title + '!' }}</text>
+  <badge :if="'unread' in filters()" key="in">in</badge>
+  <text :if="panel.open" key="chain">open</text>
+  <text :else-if="count > 1" key="chain">many</text>
+  <text :else key="chain">else</text>
+  <text key="logic" :bold="count > 0 &amp;&amp; panel.open" :muted="count == 0 || panel.open">logic</text>
+  <lab-card key="c1" title="Card" :n="count" :extra="size(notes)" :first="notes[0]">
+    <text>default {{ title }}</text>
+    <button slot="actions" @click="bump(2)">Bump 2</button>
+  </lab-card>
+  <lab-card key="c2" title="Empty" :n="count + 1"/>
+  <row :each="(i, n) in notes" :key="n.id">
+    <text>{{ i }}={{ n.id }}</text>
+    <button :disabled="i == 0" @click="open(n.id)">Pick</button>
+  </row>
+  <badge :each="t in dyn(filters())" :key="t">{{ t }}</badge>
+  <button key="openfirst" @click="open(notes[0].id)">first</button>
+  <button key="dynbad" @click="open(dyn(1))">dyn 1</button>
+  <button key="dynok" @click="open(dyn('n2'))">dyn n2</button>
+</stack>

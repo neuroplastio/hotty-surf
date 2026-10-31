@@ -1,0 +1,7 @@
+<surface>
+  <field key="draft" :value="draft" @input="typed($value)" @change="commit('$value', $value)"/>
+  <select key="level" :value="level" :options="levels()" @change="pick($value)"/>
+  <field key="seen" @input="saw($event, 'seen')" @change="saw($event, 'seen')"/>
+  <button key="go" @click="saw($event, 'go')">Go</button>
+  <text key="status">{{ draft }} · {{ level }}</text>
+</surface>

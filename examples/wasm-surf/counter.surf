@@ -1,0 +1,8 @@
+<!-- examples/wasm's counter: its count, and a button that adds one. Dense,
+     as surfui.Surface is, so that the two write the same document. -->
+<surface density="dense">
+  <row>
+    <text key="count">{{ count }}</text>
+    <button @click="add" key="add">Add</button>
+  </row>
+</surface>

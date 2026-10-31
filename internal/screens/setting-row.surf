@@ -1,0 +1,24 @@
+<!-- One setting's row in its group's card, as the look draws it: a rule
+     over it but the first; its label in bold, its description, and where
+     its value comes from (with Reset where the overlay holds it) while it
+     isn't the default, beside its control at the right, with half a row
+     of room above and below them. -->
+<props st="Setting" first="bool"/>
+<stack>
+  <rule :if="!first" key="rule"/>
+  <row gap="4" pad="0 1" key="label">
+    <stack grow key="text">
+      <text bold>{{ st.label }}</text>
+      <text small muted wrap key="about">{{ st.description }}</text>
+      <row :if="st.source != ''" gap="2" key="from">
+        <text small muted>{{ st.source }}</text>
+        <button :if="st.reset" bare @click="reset(st)" key="reset">Reset</button>
+      </row>
+    </stack>
+    <switch :if="control(st) == 'switch'" :on="st.value == 'true'" @click="flip(st)" :label="st.label" key="control"/>
+    <cycle :else-if="control(st) == 'cycle'" :value="st.value" :options="st.choices" @change="choose(st, $value)" :label="st.label" key="control"/>
+    <select :else-if="control(st) == 'select'" :value="st.value" :options="st.choices" @change="choose(st, $value)" :label="st.label" key="control"/>
+    <field :else-if="control(st) in ['number', 'text']" :value="draft(st)" :placeholder="st.placeholder" @input="edit(st, $value)" @change="commit(st, $value)" :label="st.label" key="control"/>
+    <text :else small muted key="control">{{ st.value }}</text>
+  </row>
+</stack>

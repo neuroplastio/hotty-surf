@@ -1,0 +1,11 @@
+<surface>
+  <stack gap="1" pad="1">
+    <heading>Hello, {{ name }}!</heading>
+    <row gap="1">
+      <field :value="name" placeholder="Your name"
+             @input="rename($value)" key="name"/>
+      <button @click="add" key="add">Add one</button>
+    </row>
+    <text muted key="count">{{ count }} clicks</text>
+  </stack>
+</surface>
