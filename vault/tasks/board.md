@@ -262,6 +262,20 @@ The order is the maintainer's, via gov (2026-10-30):
     cmd/surfgallery. An app's tests draw its cells with `surftest.Draw`,
     not pkg/cells.
 
+## After v0.1.0
+
+- [x] **A dialog's Escape** (gov, 2026-11-01, for plx's boxes): in a
+  box, the first Escape only blurred the focused control, and the
+  second closed the box. A browser's modal dialog closes on Escape
+  whatever has the focus, and the maintainer's rule for surf is the
+  browser's model by default, with the app able to override it
+  (NEIO-15). v0.1.0 already has it, with no new option: a dialog's host
+  gives itself `escape` (`Surface.Program`). Then `Key` leaves an
+  Escape that would only blur to the host, `Keys` doesn't list it, and
+  an open list's Escape and a `<bind key="escape">` inside the dialog
+  keep theirs, in the cells too. `TestEscapeGivenToTheHost` pins each
+  case, and the guide and `Program`'s doc say it.
+
 ## v0
 
 - [x] **The rename** to hotty-surf, package `surf` (8c89236, 1a4310d):

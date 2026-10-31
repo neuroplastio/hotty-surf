@@ -472,7 +472,9 @@ a handler, as `@click`'s. `:key` and `:label` bind, and a `<bind>` takes
   back and →/↓, Space and Enter on; Home and End go to the ends; a letter
   goes to the next option that starts with it.
 - **Tab and Shift+Tab** move the focus: the host's, never the program's.
-  **Escape** blurs the focused element unless something binds it.
+  **Escape** blurs the focused element unless something binds it, or
+  the host gives itself Escape, as a modal dialog's does
+  (`surfrun.Surface.Program`).
   **ctrl+c** ends the program unless something binds it.
 - **Showing a key:** `<key>` holds a key, a chord or a sequence by
   myelin's names, as a `<bind>` does (`<key>ctrl+b v</key>`), never its
@@ -1052,7 +1054,12 @@ What the host calls, and what it gets back:
   to the host (`surfui.Node.Give`), a text field keeping those it can't do
   without (a letter, Backspace, the arrows across, SPEC §10.2), and
   `Key` reports each not taken, in the cells too, where no binding
-  nearer the focus has it. A model that is a `surfrun.Sizer` the host resizes
+  nearer the focus has it. A modal dialog's host gives itself `escape`
+  with them, as a browser's dialog closes on Escape whatever has the
+  focus: where the focused element would only blur, `Key` leaves Escape
+  to the host, which closes the dialog, and `Keys` doesn't list it. An
+  open list's Escape, and a `<bind key="escape">` inside the dialog,
+  keep theirs. A model that is a `surfrun.Sizer` the host resizes
   itself, with its surface's size, before Show and as the size changes.
 - **`Show()`** renders a new document. The host sends surf's stylesheet
   once a session (`hotty.Res(surfui.StyleID, "text/css", []byte(surfui.CSS))`),

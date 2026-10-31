@@ -61,6 +61,10 @@ type Surface struct {
 	// each not taken where no binding nearer the focus has it, on a host
 	// and in the cells. Set again, they are the next Update's; a Fine
 	// model renders no tree after Show, so for one they are Show's.
+	// A modal dialog's host gives itself "escape": Key then leaves an
+	// Escape that would only blur to the host, which closes the dialog,
+	// while an open list's Escape and a binding of it nearer the focus
+	// keep theirs.
 	Program []string
 	// Unhandled, if set, hears each event the host sends on an element
 	// with no handler for it, which the surface otherwise drops: a click
