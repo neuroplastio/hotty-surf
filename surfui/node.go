@@ -64,6 +64,7 @@ type Node struct {
 	focus bool       // autofocus
 	drag  bool       // a drag handle (Drag)
 	drop  DropMode   // a place to drop on (Drop)
+	hue   string     // the name of the hue its text is drawn in (Hue)
 
 	cycle   *cycle  // a Cycle's value and options
 	choice  *choice // a Select's value and options
