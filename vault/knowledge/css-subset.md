@@ -93,6 +93,7 @@ Gone with the look (2026-10-31), and so no longer shown here: a 1px
 | `::placeholder` | proven | field/states ("Type a name") |
 | `:hover`, `:focus`, `:focus-visible`, `:focus-within` | the looks proven, forced | button/bare, field/focus, switch/focus, cycle/states, list/nav, list/entries, list/keyboard, box/scroll. `:focus-within` matches in Blitz from fork patch 0043 (R-23's build), not before |
 | `@media (prefers-color-scheme: light)` | unknown | the gate's host is dark |
+| `[data-on~="click"]` with `:hover`, `:focus-visible` (what acts on a click shows it) | the looks proven, forced | text/clickable |
 
 ## Elements
 

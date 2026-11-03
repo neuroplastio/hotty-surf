@@ -498,6 +498,23 @@
 .u-switch.is-on:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-on-solid) 45%, transparent); }
 .u-switch.is-on:focus { box-shadow: inset 0 0 0 1px var(--u-ground-line); }
 
+/* What acts on a click and has no look of its own under the pointer says
+   so there, and where the keyboard is on it, the same: a text, a line, a
+   heading or an icon in the accent, as a link is; a badge or a key cap
+   with a control's hover-line (focus-line); a box likewise, round its
+   panel; a row or a stack on the hover fill, as a list's row is, with
+   the focus-line too where the keyboard is. A dot and a glyph keep their
+   tone, which is a state; a control and an item have looks of their
+   own. */
+.u-text[data-on~="click"]:hover, .u-line[data-on~="click"]:hover, .u-line[data-on~="click"]:hover > .u-text,
+.u-heading[data-on~="click"]:hover, .u-icon[data-on~="click"]:hover,
+.u-text[data-on~="click"]:focus-visible, .u-line[data-on~="click"]:focus-visible, .u-line[data-on~="click"]:focus-visible > .u-text,
+.u-heading[data-on~="click"]:focus-visible, .u-icon[data-on~="click"]:focus-visible { color: var(--u-accent); }
+.u-badge[data-on~="click"]:hover, .u-key[data-on~="click"]:hover, .u-box[data-on~="click"]:hover { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-hover-line); }
+.u-badge[data-on~="click"]:focus-visible, .u-key[data-on~="click"]:focus-visible, .u-box[data-on~="click"]:focus-visible { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-row[data-on~="click"]:hover, .u-stack[data-on~="click"]:hover { border-radius: var(--u-r); background: var(--u-hover); }
+.u-row[data-on~="click"]:focus-visible, .u-stack[data-on~="click"]:focus-visible { border-radius: var(--u-r); background: var(--u-hover); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+
 .u-surface { cursor: default; }
 .u-btn, .u-switch, .u-select, .u-cycle, [data-on~="click"], .u-nav > .u-item, .u-entries > .u-item, .u-surface a[href], .u-surface summary { cursor: pointer; }
 .u-field { cursor: text; }

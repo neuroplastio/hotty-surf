@@ -278,6 +278,21 @@ var All = []Story{
 		return surfui.Row(surfui.Icon(mdCogOutline).Tone(surfui.OK), hexagon().Tone(surfui.Warn),
 			surfui.Icon(mdCogOutline).Tone(surfui.Error), hexagon().Tone(surfui.Accent)).Gap(2)
 	}},
+	{"text/clickable", 50, func() *surfui.Node {
+		// What acts on a click with no look of its own says so under the
+		// pointer and with the keyboard: a text and an icon in the accent,
+		// a badge with a control's hover-line, a row on the hover fill.
+		// Each is at rest, then the same hovered or focused.
+		click := func(n *surfui.Node) *surfui.Node { return n.On("click", nil) }
+		return surfui.Stack(
+			surfui.Row(click(surfui.Text("Fix the parser")), Force(click(surfui.Text("Fix the parser")), "hover")).Gap(2),
+			surfui.Row(click(surfui.Text("#4182").Muted()), Force(click(surfui.Text("#4182").Muted().Focusable()), "focus"),
+				click(surfui.Icon(mdContentCopy)), Force(click(surfui.Icon(mdContentCopy)), "hover"),
+				click(hexagon()), Force(click(hexagon()), "hover"),
+				click(surfui.Badge("devbox")), Force(click(surfui.Badge("devbox")), "hover")).Gap(2),
+			Force(click(surfui.Row(surfui.Icon(mdSourceBranch), surfui.Text("main"), surfui.Text("3 ahead").Small().Muted()).Gap(1)), "hover"),
+		).Gap(1)
+	}},
 	{"field/states", 60, func() *surfui.Node {
 		return surfui.Stack(
 			surfui.Row(surfui.Text("Name").Width(10), surfui.Field().Value("alpha").Grow()),

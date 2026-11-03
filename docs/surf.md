@@ -336,6 +336,13 @@ component or a partial.
     ([Scrolling](guide.md#scrolling)).
 - **A field's `@change` runs when the user commits it:** on Enter, and
   when they leave it, once for each value.
+- **What has a `@click` looks it under the pointer:** the pointer is a
+  hand over it, and what has no hover look of its own shows one. A
+  `text`, a `line`, a `heading` or an `icon` turns to the accent, as a
+  link; a `badge`, a `key` or a `box` shows a control's hairline; a
+  `row` or a `stack` the hover fill, as a list's row. With `focusable`,
+  the keyboard on it shows the same. A `dot` and a `glyph` keep their
+  tone, which is a state. The cells show neither look.
 
 ## Keys
 
