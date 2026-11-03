@@ -653,3 +653,22 @@
   scrollbar-width: thin;
   scrollbar-color: var(--u-input) transparent;
 }
+
+[data-on~="drag"] { cursor: grab; }
+/* Drag and drop (surfui.Drag, Drop; surfrun keeps the drag): above, a
+   drag handle shows the hand that grabs. Where a drop would land, the runtime
+   marks the target (surfui.DropMark), the same for every app: before or
+   after it, a 2px line in the accent at its top or its bottom edge,
+   inside it, so that it takes no room and nothing under the pointer
+   moves; into it, an outline in the accent. The line is a background
+   layer, as a focused list's marker is, kept off the corners by the
+   radius; it and the outline win over a row's own fill layers and
+   hairline while they show (!important), the fill's colour staying. */
+.u-drop-before, .u-drop-after {
+  background-image: linear-gradient(var(--u-accent), var(--u-accent)) !important;
+  background-size: calc(100% - 2 * var(--u-r)) 2px !important;
+  background-repeat: no-repeat !important;
+}
+.u-drop-before { background-position: var(--u-r) 0 !important; }
+.u-drop-after { background-position: var(--u-r) 100% !important; }
+.u-drop-into { box-shadow: inset 0 0 0 2px var(--u-accent) !important; }

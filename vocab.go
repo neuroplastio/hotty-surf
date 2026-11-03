@@ -89,9 +89,28 @@ var (
 	themes    = []string{"neuroplastio", "terminal", "paper"}
 	densities = []string{"compact", "dense", "roomy"}
 	tones     = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
+	drops     = []string{"whole", "halves", "thirds"}
 )
 
 var events = []string{"click", "focus"}
+
+// The drag's events (docs/surf.md, "Drag"): a drag handle's (drag)
+// dragstart and dragend, and a place to drop on's (drop) drop. Every
+// widget with events takes them besides its Events, where it is a handle
+// or a target (pointed).
+var dragEvents = []string{"dragstart", "dragend", "drop"}
+
+// pointed are the widgets a pointer reaches, which take an id's events:
+// those with events. drag and drop go on them alone.
+var pointed = func() []string {
+	var out []string
+	for _, w := range Widgets {
+		if len(w.Events) > 0 {
+			out = append(out, w.Tag)
+		}
+	}
+	return out
+}()
 
 // Widgets are the tags, by name.
 var Widgets = []Widget{
@@ -173,6 +192,8 @@ var Attrs = []Attr{
 	{Name: "scale", Type: TypeInt, Doc: "drawn at a percentage of its size", Func: "ModScale"},
 	{Name: "scroll", Type: TypeBool, Doc: "takes the room left and scrolls what doesn't fit", Func: "ModScroll"},
 	{Name: "autofocus", Type: TypeBool, Doc: "takes the keyboard when the surface is shown", Func: "ModAutofocus"},
+	{Name: "drag", Type: TypeBool, Doc: "a drag handle: a press drags it, and its click waits for the release", Tags: pointed, Func: "ModDrag"},
+	{Name: "drop", Type: TypeString, Doc: "a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it", Tags: pointed, Func: "ModDrop", Fails: true, Values: drops},
 }
 
 // widget is the tag's entry, if it is a widget's.
@@ -363,6 +384,25 @@ func ModNav(n *surfui.Node, v bool)       { flag(n, v, n.Nav) }
 func ModEntries(n *surfui.Node, v bool)   { flag(n, v, n.Entries) }
 func ModScroll(n *surfui.Node, v bool)    { flag(n, v, n.Scroll) }
 func ModAutofocus(n *surfui.Node, v bool) { flag(n, v, n.Autofocus) }
+func ModDrag(n *surfui.Node, v bool)      { flag(n, v, n.Drag) }
+
+// ModDrop makes a node a place to drop on: "whole" (a bare drop), "halves"
+// or "thirds"; "" makes it none, as a bound :drop may.
+func ModDrop(n *surfui.Node, v string) error {
+	switch v {
+	case "":
+		n.Drop(surfui.DropNone)
+	case "whole":
+		n.Drop(surfui.DropWhole)
+	case "halves":
+		n.Drop(surfui.DropHalves)
+	case "thirds":
+		n.Drop(surfui.DropThirds)
+	default:
+		return fmt.Errorf("drop is bare, whole, halves or thirds, not %q", v)
+	}
+	return nil
+}
 
 // The states, which draw only when set.
 func ModSelected(n *surfui.Node, v bool) { n.Selected(v) }

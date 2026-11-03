@@ -69,8 +69,8 @@ func writeAttr(b *strings.Builder, k, v string) {
 }
 
 // attrsOf is every attribute n renders with but its id, in a fixed order:
-// class, the author's, the style that holds its vars, data-on and
-// data-keys.
+// class, the author's, the style that holds its vars, data-on,
+// data-steps and data-keys.
 func attrsOf(n *Node) []attr {
 	out := make([]attr, 0, len(n.attrs)+4)
 	if len(n.class) > 0 {
@@ -82,6 +82,9 @@ func attrsOf(n *Node) []attr {
 	}
 	if on := dataOn(n); on != "" {
 		out = append(out, attr{"data-on", on})
+	}
+	if steps := dataSteps(n); steps != "" {
+		out = append(out, attr{"data-steps", steps})
 	}
 	if keys := dataKeys(n); keys != "" {
 		out = append(out, attr{"data-keys", keys})
@@ -122,7 +125,8 @@ func DataKeys(n *Node) string { return dataKeys(n) }
 // by itself: a click on an element that isn't a button, every edit of a
 // field. A Cycle's parts report their clicks, which the runtime turns
 // into the Cycle's change. A field that commits (Commits) reports its
-// edits, so that the runtime has what Enter commits.
+// edits, so that the runtime has what Enter commits. A drag handle asks
+// for drags, and a place to drop on is one (Drag, Drop).
 func dataOn(n *Node) string {
 	var on []string
 	if n.part != 0 {
@@ -145,6 +149,12 @@ func dataOn(n *Node) string {
 		// Where it is (SPEC §9.5): a key that opens its list, which
 		// carries no area as a click does, places the list by it.
 		on = appendOnce(on, "view")
+	}
+	if n.drag {
+		on = append(on, "drag")
+	}
+	if n.drop != DropNone {
+		on = append(on, "drop")
 	}
 	// SECONDARY PRESS: waiting on hotty's spec (hotty 0.7 proposal
 	// V7-01, pending). An element with a menu (MenuOf) will opt in here

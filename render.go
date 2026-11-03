@@ -636,6 +636,8 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModName(n, v)
 	case "label":
 		ModLabel(n, v)
+	case "drop":
+		return ModDrop(n, v)
 	default:
 		panic("surf: no string modifier " + name)
 	}
@@ -696,6 +698,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModScroll(n, v)
 	case "autofocus":
 		ModAutofocus(n, v)
+	case "drag":
+		ModDrag(n, v)
 	default:
 		panic("surf: no bool modifier " + name)
 	}
@@ -847,7 +851,7 @@ func (f *frame) strs(e *elem, v value) ([]string, bool) {
 
 // action is a handler's closure: its arguments evaluated now, the method
 // called on the owner's instance when it runs, with the event's value
-// ($value) and the event ($event) where they go.
+// ($value), the event ($event) and its drag's ($drag.…) where they go.
 func (f *frame) action(e *elem, h handler) (surfui.Action, bool) {
 	args := make([]cellite.Value, len(h.args))
 	for i, p := range h.args {
@@ -877,6 +881,12 @@ func (f *frame) action(e *elem, h handler) (surfui.Action, bool) {
 					a[i] = cellite.StringValue(ev.Value)
 				case ArgEvent:
 					a[i] = EventValue(ev)
+				case ArgDragFrom:
+					a[i] = cellite.StringValue(ev.Drag.From)
+				case ArgDragWhere:
+					a[i] = cellite.StringValue(ev.Drag.Where)
+				case ArgDragCancel:
+					a[i] = cellite.BoolValue(ev.Drag.Cancel)
 				}
 			}
 			self.Call(m, a)

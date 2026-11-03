@@ -97,6 +97,9 @@ type Surface struct {
 	edits map[string]heard  // a committing field's value and rev, as typed
 	base  map[string]string // a committing field's value before the user's edits
 
+	drag    *dragging // the drag in progress, nil for none
+	noClick string    // the element whose click ends a drag Escape ended, which is dropped
+
 	list      *selectList           // a Select's open list
 	listPress bool                  // a press on the list, whose blur on the surface is no leaving
 	areas     map[string]hotty.Area // the Selects in view, where the host's last view put them
@@ -214,6 +217,7 @@ func (s *Surface) Show() Frame {
 	if s.DropList() {
 		f.List = &List{Closed: true}
 	}
+	s.drag, s.noClick = nil, ""
 	s.render()
 	// The document gives each control its value: what the host has, so
 	// that the model's first change to one goes as a=field too.
@@ -242,6 +246,7 @@ func (s *Surface) Show() Frame {
 func (s *Surface) Hide() (listShown bool) {
 	listShown = s.DropList()
 	s.shown, s.lent = false, false
+	s.drag, s.noClick = nil, ""
 	s.focused = ""
 	s.blur, s.focus, s.refocus = false, "", ""
 	return listShown
@@ -270,6 +275,7 @@ func (s *Surface) Update() Frame {
 		tree := s.tree()
 		ix := surfui.Resolve(tree, "r")
 		s.markList(ix)
+		s.markDrop(ix)
 		if s.Coarse {
 			f.Ops = surfui.Coarse(s.held, tree)
 		} else {
@@ -312,6 +318,12 @@ func (s *Surface) Event(e hotty.Event) (took, redraw bool) {
 func (s *Surface) event(e hotty.Event) bool {
 	press := s.listPress
 	s.listPress = false
+	if nc := s.noClick; nc != "" {
+		s.noClick = ""
+		if e.Kind == hotty.EventClick && e.Target == nc {
+			return true // the release of a drag Escape ended
+		}
+	}
 	took := false
 	switch e.Kind {
 	case hotty.EventView:
@@ -321,6 +333,8 @@ func (s *Surface) event(e hotty.Event) bool {
 			s.areas = e.View.Areas
 		}
 		return true
+	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
+		return s.dragEvent(e)
 	case hotty.EventFocus:
 		took = true
 		s.focused, s.lent = e.Target, false // the user came back: the loan is over
@@ -400,6 +414,10 @@ func (s *Surface) Key(name string) (took, redraw bool) {
 		return false, s.due
 	}
 	s.fresh()
+	if name == "escape" && s.Dragging() {
+		s.cancelDrag()
+		return true, true
+	}
 	took = s.fieldEnter(name)
 	if s.selectKey(name) || s.cycleKey(name) {
 		return true, s.due
@@ -546,6 +564,7 @@ func (s *Surface) fresh() {
 	s.prev = s.tree()
 	s.index = surfui.Resolve(s.prev, "r")
 	s.markList(s.index)
+	s.markDrop(s.index)
 	if s.shown {
 		s.rehome()
 	} else {

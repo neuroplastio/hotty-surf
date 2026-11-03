@@ -581,6 +581,8 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | 47 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
 | 48 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
 | 49 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
+| 50 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
+| 51 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
 <!-- end attributes table -->
 
 `autofocus` changes no HTML: the runtime gives the first element that
@@ -667,6 +669,9 @@ The events, by widget (the Widgets table's *events*):
 | `change` | `field` | the user commits it: on Enter, and on leaving it (hotty SPEC §9: Tab, a click elsewhere, the surface losing the keyboard); once for each value | the field's value |
 | `change` | `select` | a pick: in its open list, or by a key while it is closed | the option picked |
 | `change` | `cycle` | each step, by a key or a click on a part | the new value |
+| `dragstart` | a drag handle (`drag`) | a press on it starts its drag ([Drags](#drags)) | |
+| `dragend` | a drag handle (`drag`) | its drag ends: released anywhere, or Escape | |
+| `drop` | a place to drop on (`drop`) | a drag ends over it | |
 
 - **A click reaches the nearest element that has a click handler:** a
   button in an item runs the button's, never also the item's. The host
@@ -677,7 +682,8 @@ The events, by widget (the Widgets table's *events*):
   widget of the vocabulary makes), `Target` (the element's id), `Key`
   (a key's name), `Value`, `Checked`, `Mods` (the modifiers held, in a
   click) and `Count` (a click's place in its run of clicks: 2 for a
-  double click's second).
+  double click's second); a drag's handler's `Kind` is `dragstart`,
+  `dragend` or `drop`, and its `Drag` is what `$drag` names (below).
 - A handler runs on the runtime's goroutine. Then the runtime renders,
   and sends the ops.
 
@@ -728,6 +734,25 @@ may be (decided by the maintainer, 2026-10-30, via gov: an explicit
   place, which cel-lite parses as the argument, and knows that argument
   by its offset in the source, never by a name.
 
+A drag's handlers (`@dragstart`, `@dragend`, `@drop`: [Drags](#drags))
+have three names more, each a whole argument as `$value` is, and
+nowhere else (`$drag.from is a drag's handler's argument only:
+@dragstart's, @dragend's or @drop's`):
+
+- **`$drag.from`**, a string: the dragged element's key (its `key` or
+  `:key`: a `:each` row's), or its id where it has none.
+- **`$drag.where`**, a string: where in the target it was dropped,
+  `before`, `after` or `into` ([Drags](#drags)); `""` in `@dragstart`
+  and `@dragend`.
+- **`$drag.cancel`**, a bool: `true` in the `@dragend` of a drag Escape
+  ended.
+
+`$drag` with another name is a load error (`$drag.into is none of
+$drag.from, $drag.where and $drag.cancel`). They are `$`-names, not a
+value of the scope, because they are the event's: they are filled in
+when it runs, as `$value` is, and the rest of the call is evaluated at
+render (Go: `ev.Drag.From`, `ev.Drag.Where`, `ev.Drag.Cancel`).
+
 What each runtime does when the event runs:
 
 - **Go:** a handler with `$value` or `$event` is a `func(surfrun.Event)`,
@@ -753,7 +778,8 @@ What each runtime does when the event runs:
   of the event: `surflua` gives a Lua function the host's own event
   table where `view:event` routes the handler's own event (its kind, on
   its target), else a table of the event's `kind`, `target`, `key`,
-  `value` and `checked`.
+  `value` and `checked`, and a drag's handler's `drag`, `{ from, where,
+  cancel }`.
 
 ## Keys
 
@@ -868,6 +894,56 @@ sep    = "<sep/>" ;
   gone since, a separator or a disabled one runs nothing (Go:
   `surfrun.Surface.Menu` and `Pick`). No event of hotty's asks for a
   menu yet: an element with one asks the host for nothing.
+
+### Drags
+
+A widget the pointer reaches (one with events: not a `spacer`, a
+`rule` or a `dot`) may be a drag handle, `drag` (a bool), and a place
+to drop on, `drop`, or both, as a row a list reorders is:
+
+| `drop` | where a drag ends over it | `data-steps` |
+| --- | --- | --- |
+| bare, or `whole` | into it | none |
+| `halves` | before it (its top half) or after it | `0 1` |
+| `thirds` | before it (its top quarter), into it (its middle half) or after it | `0 2` |
+| `""` (bound only) | it is no place to drop on | |
+
+- **The document:** a handle's `data-on` has `drag`, and a target's
+  `drop`, after its other events; a split target has `data-steps`
+  (hotty SPEC §9.1), so that the host's `drag` and `dragend` say where
+  in it the pointer is (`ty`).
+- **The load refuses** `drop` with another literal value (`drop is
+  bare, whole, halves or thirds, not "sideways"`); `drag` or `drop` on
+  a widget without events, or on a component's or a partial's tag, as
+  any attribute it doesn't take; `@dragstart` or `@dragend` on an
+  element without `drag`, and `@drop` on one without `drop` (`@drop runs
+  on a place to drop on: give <item> drop`).
+- **The runtime keeps the drag**, from the host's `dragstart`, `drag`
+  and `dragend` (Go: `surfrun.Surface.Event`): a `dragstart` on a
+  handle runs its `@dragstart`; each `drag` finds the target, `t` where
+  it has `drop` and is not the dragged element itself, and where in it
+  by its `ty` (halves: 0 before, 1 after; thirds: 0 before, 1 into, 2
+  after; a whole target is into, with no step); a `dragend` over a
+  target runs its `@drop`, then the handle's `@dragend`. A drag that
+  ends over nothing, over the dragged element itself, or early (the
+  host's `dragend` with no `t`), runs `@dragend` alone.
+- **Escape** while a drag is on ends it at once: the handle's
+  `@dragend`, with `$drag.cancel` true, and no `@drop`. The host's
+  `dragend` after it changes nothing, and nor does the click its
+  release would be. The key is the drag's before any binding's.
+- **A press and a release on a handle is its click** (hotty SPEC
+  §9.1): the drag starts and ends on it, which runs `@dragstart` and
+  `@dragend`, then its `@click`.
+- **The drop indicator** is the runtime's, the same for every app: the
+  target under the pointer gets the class `u-drop-before`,
+  `u-drop-after` or `u-drop-into` ([Ops](#ops): an `attr` of its
+  `class`), and loses it when the pointer leaves it or the drag ends.
+  The stylesheet draws a line in the accent, 2 px, at the top or the
+  bottom edge inside the element, which takes no room; and an outline in
+  the accent round it for into. The cells draw a line in the accent
+  under the target's bottom row (after), under the bottom row of what is
+  drawn directly above it (before; an overline of its top row where
+  nothing is), and both of its own (into) ([Cells](#cells)).
 
 ## Components, partials, props, slots
 
@@ -1305,8 +1381,8 @@ and in cells on both: `surfrun.Runtime` on a terminal that is no host
 
 A case is a txtar archive. Its comment says what it shows. Its files:
 
-- **`root`**: the fixture the case draws, `Form` or `Shelf`; without
-  the file, a `Board`.
+- **`root`**: the fixture the case draws, `Form`, `Shelf`, `Frame` or
+  `Deck`; without the file, a `Board`.
 - **`scroll`**: the case runs where the document scrolls, down (Go:
   `surfrun.Options{Scroll: hotty.ScrollVertical}`), so that its steps show
   the `reveal`s that keep a selection in view ([Ops](#ops)). Its text is
@@ -1346,6 +1422,12 @@ A case is a txtar archive. Its comment says what it shows. Its files:
 | `choose ID VALUE` | the option labelled `VALUE` picked in the select `ID` as the user picks it: a click on the select opens its list, and a click on the option picks it (Go: uitest's `Pick`) |
 | `fill ID TEXT` | the field `ID` filled with `TEXT`, the rest of the line |
 | `key NAME` | the key `NAME` pressed, where the keyboard is |
+| `press ID` | a press that starts a drag of the handle `ID` (hottytest's `DragStart`) |
+| `over ID [STEP]` | the pointer of the drag onto the element `ID`, at step `STEP` of its `data-steps`' second count where it is split (`DragOver`; `DragMove` without) |
+| `release ID [STEP]` | the drag's button released there (`DragEndOver`, `DragEnd`) |
+
+Several acts split by `;` are one step: `release r.krows.kc 1; press
+r.krows.kb; release r.krows.kb`.
 
 A step ends when the root's `log` has grown or the document has
 changed, and the update it caused is written; a `choose` ends when its
@@ -1362,7 +1444,11 @@ handler has run and the list is closed. Then:
   where there is no host: a `click` is a press and its release on the
   element's cells, a `choose` a click on the select and one on its
   option, a `fill` a click on the field, Ctrl+A and a paste of the text
-  (Backspace for none), a `key` the key. Its `N.log` is the host's.
+  (Backspace for none), a `key` the key; a `press` a press on the
+  element's cells, an `over` the pointer moved onto a cell of the element
+  at the step, held, and a `release` its release there (Go:
+  `cells.Renderer.Press`, `Move`, `Release`, `WhereStep`). Its `N.log` is
+  the host's.
 
 A document is as the test host (`hottytest`) holds it: the runtime's
 document parsed as HTML5 and written back by `golang.org/x/net/html`.
@@ -1465,6 +1551,27 @@ component Frame                     // frame.surf: a component chosen as
                                     // click does count += 1;
                                     // log += "inset add"
   hide()                            // hidden = !hidden; log += "hide"
+
+struct Card                         // a data struct: a Deck's row or
+  id      string                    // folder
+  name    string
+
+component Deck                      // deck.surf: drags, a row a handle
+                                    // and a place to drop on in halves,
+                                    // a folder one in thirds
+  rows    list(Card)
+  folders list(Card)
+  log     list(string)
+
+  start(from string)                // log += "dragstart " + from
+  done(from string, cancel bool)    // log += "dragend " + from, and
+                                    // " cancelled" where cancel
+  move(from, to, where string)      // log += "move " + from + " " +
+                                    // where + " " + to; the row from
+                                    // moved before or after the row to
+  file(from, folder, where string)  // log += "file " + from + " " +
+                                    // where + " " + folder
+  open(id string)                   // log += "open " + id
 ```
 
 `event` is the runtime's event type (Go's `surfrun.Event`), whose parameter
@@ -1515,7 +1622,11 @@ The partials and their props:
 - a `dyn` `:state` drawn by the tag's template where it is an instance
   of the tag's component, nothing where it is `null`, and nothing, with
   the render error, where it is anything else ([Components](#components)):
-  the case `dyn-state`.
+  the case `dyn-state`;
+- drags ([Drags](#drags)): the cases `drag-halves`, `drag-thirds`,
+  `drag-cancel`, `drag-nothing` and `drag-click` on a host and in the
+  cells alike, the cells' press, moves and release making the host's
+  calls; and the load case `drag-refused`.
 
 A case a runtime can't pass because of an open point of this spec goes
 to `vault/questions/spec.md`, not into a runtime's own version of the

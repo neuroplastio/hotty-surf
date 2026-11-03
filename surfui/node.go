@@ -62,6 +62,8 @@ type Node struct {
 	keys  []Binding
 	menu  []MenuItem // its context menu, which the host draws, never the tree
 	focus bool       // autofocus
+	drag  bool       // a drag handle (Drag)
+	drop  DropMode   // a place to drop on (Drop)
 
 	cycle   *cycle  // a Cycle's value and options
 	choice  *choice // a Select's value and options

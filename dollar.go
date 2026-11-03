@@ -1,7 +1,12 @@
 package surf
 
+import "strings"
+
 // The event's names: $value, the event's value, and $event, the event,
-// which an @ handler's arguments may be (docs/spec.md, "Handlers"). `$` is
+// which an @ handler's arguments may be (docs/spec.md, "Handlers"); and a
+// drag's, which a drag's handlers' may be (@dragstart, @dragend, @drop):
+// $drag.from, the dragged element's key, $drag.where, where in the target
+// it was dropped, and $drag.cancel, whether Escape ended it. `$` is
 // no character of a CEL name, so cel-lite never sees them: the template
 // layer finds them in an expression's source, outside its strings and
 // comments, before cel-lite parses it. Anywhere but as a whole argument
@@ -64,6 +69,13 @@ func dollars(src string) []dollar {
 			j := i + 1
 			for j < len(src) && (letter(src[j]) || digit(src[j]) || src[j] == '_') {
 				j++
+			}
+			if src[i+1:j] == "drag" && j < len(src) && src[j] == '.' {
+				// $drag's member: $drag.from is one name.
+				j++
+				for j < len(src) && (letter(src[j]) || digit(src[j]) || src[j] == '_') {
+					j++
+				}
 			}
 			next := nextByte(src, j)
 			out = append(out, dollar{off: i, name: src[i+1 : j],
@@ -165,6 +177,15 @@ const (
 	ArgValue
 	// ArgEvent is $event: the event (EventValue).
 	ArgEvent
+	// ArgDragFrom is $drag.from: the dragged element's key, a string
+	// (surfrun.Drag's From).
+	ArgDragFrom
+	// ArgDragWhere is $drag.where: where in the target the drag was
+	// dropped, a string: "before", "after", "into" or "".
+	ArgDragWhere
+	// ArgDragCancel is $drag.cancel: whether Escape ended the drag, a
+	// bool.
+	ArgDragCancel
 )
 
 // eventArg is what the $name name is as a handler's argument, if it is
@@ -175,9 +196,18 @@ func eventArg(name string) (EventArg, bool) {
 		return ArgValue, true
 	case "event":
 		return ArgEvent, true
+	case "drag.from":
+		return ArgDragFrom, true
+	case "drag.where":
+		return ArgDragWhere, true
+	case "drag.cancel":
+		return ArgDragCancel, true
 	}
 	return ArgExpr, false
 }
+
+// isDragArg reports whether k is one of a drag's names, $drag.….
+func isDragArg(k EventArg) bool { return k == ArgDragFrom || k == ArgDragWhere || k == ArgDragCancel }
 
 // eventFill is one of the event's names in a handler's source: its
 // offset, and which.
@@ -189,8 +219,9 @@ type eventFill struct {
 // eventArgs is a handler's source with its $value and $event taken out,
 // each a null of its length, and each, in order; or the error at the
 // first that can't be an argument there, and its offset. In a <bind>'s
-// do (handler false) neither may be.
-func eventArgs(src string, handler bool) (string, []eventFill, int, string) {
+// do (handler false) neither may be. $drag's names may be only where drag
+// says: a drag's handler's.
+func eventArgs(src string, handler, drag bool) (string, []eventFill, int, string) {
 	ds := dollars(src)
 	if len(ds) == 0 {
 		return src, nil, 0, ""
@@ -202,10 +233,14 @@ func eventArgs(src string, handler bool) (string, []eventFill, int, string) {
 		switch {
 		case !ok && d.name == "":
 			continue // a $ alone: cel-lite's error
+		case !ok && (d.name == "drag" || strings.HasPrefix(d.name, "drag.")):
+			return "", nil, d.off, "$" + d.name + " is none of $drag.from, $drag.where and $drag.cancel"
 		case !ok:
 			return "", nil, d.off, "$" + d.name + " is neither $value nor $event"
 		case !handler:
 			return "", nil, d.off, "$" + d.name + " is an @ handler's argument only"
+		case isDragArg(k) && !drag:
+			return "", nil, d.off, "$" + d.name + " is a drag's handler's argument only: @dragstart's, @dragend's or @drop's"
 		case !d.whole:
 			return "", nil, d.off, "$" + d.name + " is a whole argument, not part of an expression"
 		}

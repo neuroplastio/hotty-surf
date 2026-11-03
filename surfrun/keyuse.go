@@ -38,7 +38,8 @@ const (
 // refuses. They are good after Show, Update, Event, ListEvent, Key or
 // Lend, as a Frame is, and until the model changes off them (Post).
 //
-// First are the focused element's own keys, then the bindings from it up
+// First, while a drag is on, the Escape that ends it (Dragging); then
+// the focused element's own keys, then the bindings from it up
 // (or from the keys' home, with none focused), each key once, as the
 // first binding of it has it; last the Escape that blurs. A field's Enter
 // goes on to a binding of Enter, which is listed after it. A key the
@@ -55,6 +56,10 @@ func (s *Surface) Keys() ([]KeyUse, Chars) {
 				keys = append(keys, KeyUse{Name: k, Own: true})
 			}
 		}
+	}
+	if s.Dragging() {
+		stops["escape"] = true
+		keys = append(keys, KeyUse{Name: "escape", Title: "Cancel the drag", Own: true}) // cancelDrag
 	}
 	if n := s.index[s.focused]; s.shown && n != nil {
 		if surfui.IsTextField(n) {

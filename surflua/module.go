@@ -521,7 +521,8 @@ func luaReload(L *lua.LState) int {
 
 // eventOf is a host's event table as hotty-go has it: its kind, target
 // and value, and where it has them checked, rev, mods, count and area
-// ({ col =, row =, w =, h = }, a click's cells).
+// ({ col =, row =, w =, h = }, a click's cells); a drag's, its detail as
+// the host sends it: c, r, and the steps x, y, tx and ty where it has them.
 func eventOf(t *lua.LTable) hotty.Event {
 	e := hotty.Event{Kind: str(t, "kind"), Target: str(t, "target"), Value: str(t, "value"),
 		Rev: num(t, "rev"), Mods: num(t, "mods"), Count: num(t, "count")}
@@ -532,7 +533,22 @@ func eventOf(t *lua.LTable) hotty.Event {
 	if a, ok := t.RawGetString("area").(*lua.LTable); ok {
 		e.Area = &hotty.Area{Col: num(a, "col"), Row: num(a, "row"), W: num(a, "w"), H: num(a, "h")}
 	}
+	switch e.Kind {
+	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
+		g := &hotty.Drag{Col: num(t, "c"), Row: num(t, "r")}
+		g.X, g.HasX = numOk(t, "x")
+		g.Y, g.HasY = numOk(t, "y")
+		g.TX, g.HasTX = numOk(t, "tx")
+		g.TY, g.HasTY = numOk(t, "ty")
+		e.Drag = g
+	}
 	return e
+}
+
+// numOk is t's number k, and whether t has one.
+func numOk(t *lua.LTable, k string) (int, bool) {
+	n, ok := t.RawGetString(k).(lua.LNumber)
+	return int(n), ok
 }
 
 // inList reports whether id is one of a Select's open list's.

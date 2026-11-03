@@ -61,6 +61,8 @@ var canonWidgets = map[string]string{
 // canonAttrs is each attribute in a canonical instance, by its name and,
 // where it is only on some tags, the first of them.
 var canonAttrs = map[string]string{
+	"drag/surface":      `<item drag/>`,
+	"drop/surface":      `<item drop="halves"/>`,
 	"on/switch":         `<switch on/>`,
 	"value/select":      `<select value="b" :options="['a', 'b']"/>`,
 	"options/select":    `<select :options="['a', 'b']"/>`,

@@ -833,6 +833,19 @@ func (w *fw) action(el *surf.Elem, sc *scope, h surf.Handler) ([]string, string)
 		case surf.ArgEvent:
 			args = append(args, "ev")
 			continue
+		case surf.ArgDragFrom, surf.ArgDragWhere, surf.ArgDragCancel: // the drag's
+			v, basic := "ev.Drag.From", types.Typ[types.String]
+			switch h.From(i) {
+			case surf.ArgDragWhere:
+				v = "ev.Drag.Where"
+			case surf.ArgDragCancel:
+				v, basic = "ev.Drag.Cancel", types.Typ[types.Bool]
+			}
+			if !types.Identical(m.params[i], basic) {
+				v = w.c.g.goType(m.params[i]) + "(" + v + ")"
+			}
+			args = append(args, v)
+			continue
 		}
 		if p.Type().Kind == cellite.DynKind {
 			// A dyn's kind is checked against the parameter, as cel-lite

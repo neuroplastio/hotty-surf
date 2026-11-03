@@ -908,6 +908,7 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 			vals[i] = v
 		}
 	}
+	s.dragNeeds(n, vals)
 	for i := range Attrs {
 		at := &Attrs[i]
 		if at.Arg {
@@ -922,6 +923,29 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 		}
 	}
 	return e
+}
+
+// dragNeeds fails where n has a drag's handler and not what it runs on:
+// @dragstart and @dragend a drag handle's (drag), @drop a place to drop
+// on's (drop). vals are n's attributes, by their place in Attrs.
+func (s *scope) dragNeeds(n *markup.Node, vals map[int]value) {
+	has := func(name string) bool {
+		_, i, ok := attrOf(n.Tag, name)
+		_, given := vals[i]
+		return ok && given
+	}
+	for _, a := range n.Attrs {
+		switch a.Name {
+		case "@dragstart", "@dragend":
+			if !has("drag") {
+				s.c.fail(s.t.file, a.Pos, "%s runs on a drag handle: give <%s> drag", a.Name, n.Tag)
+			}
+		case "@drop":
+			if !has("drop") {
+				s.c.fail(s.t.file, a.Pos, "@drop runs on a place to drop on: give <%s> drop", n.Tag)
+			}
+		}
+	}
 }
 
 // leafKids compiles the children of a widget that holds no widgets: a
@@ -1191,7 +1215,7 @@ func (s *scope) actionEl(n *markup.Node) *elem {
 				s.c.fail(s.t.file, a.Pos, "do is a handler: do=\"method(args)\"")
 				continue
 			}
-			if h, ok := s.handler(a.Value, a.ValuePos, false); ok {
+			if h, ok := s.handler(a.Value, a.ValuePos, false, false); ok {
 				e.do, e.hasHandler = h, true
 			}
 		case name == "icon":
@@ -1309,6 +1333,10 @@ func (s *scope) value(at *Attr, a markup.Attr, bound bool) (value, bool) {
 		s.c.fail(s.t.file, a.Pos, "%s is a list: bind it, :%s=\"['a', 'b']\"", at.Name, at.Name)
 		return value{}, false
 	default:
+		if a.Bare && at.Name == "drop" {
+			v.lit = cellite.StringValue("whole") // drop alone: the whole element
+			break
+		}
 		if a.Bare {
 			s.c.fail(s.t.file, a.Pos, "%s takes a value", at.Name)
 			return value{}, false
@@ -1335,6 +1363,11 @@ func checkLiteral(at *Attr, v string) error {
 		return ModTheme(NewSurface(), v)
 	case "density":
 		return ModDensity(NewSurface(), v)
+	case "drop":
+		if v == "" {
+			return fmt.Errorf("drop is bare, whole, halves or thirds, not %q", v)
+		}
+		return ModDrop(NewSurface(), v)
 	}
 	return nil
 }
@@ -1362,11 +1395,11 @@ func (s *scope) parts(ps []markup.Part) []part {
 // event compiles @kind="method(args)" on e.
 func (s *scope) event(e *elem, n *markup.Node, a markup.Attr) {
 	kind := a.Name[1:]
-	if !contains(e.w.Events, kind) {
+	if !contains(e.w.Events, kind) && !(contains(dragEvents, kind) && contains(pointed, n.Tag)) {
 		s.c.fail(s.t.file, a.Pos, "<%s> has no %s event", n.Tag, kind)
 		return
 	}
-	if h, ok := s.handler(a.Value, a.ValuePos, true); ok {
+	if h, ok := s.handler(a.Value, a.ValuePos, true, contains(dragEvents, kind)); ok {
 		e.evs = append(e.evs, event{kind, h})
 	}
 }
@@ -1375,8 +1408,9 @@ func (s *scope) event(e *elem, n *markup.Node, a markup.Attr) {
 // owner's methods. An @ handler's arguments (onEvent) may be $value and
 // $event, each a whole argument: it takes them out of the source, and
 // knows the null left in each's place by its offset. A <bind>'s may not.
-func (s *scope) handler(src string, at markup.Pos, onEvent bool) (handler, bool) {
-	parsed, fills, off, msg := eventArgs(src, onEvent)
+// A drag's handler's (drag) may be $drag's names too.
+func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool) (handler, bool) {
+	parsed, fills, off, msg := eventArgs(src, onEvent, drag)
 	if msg != "" {
 		s.c.fail(s.t.file, at0(at, src, off), "%s", msg)
 		return handler{}, false
@@ -1440,11 +1474,14 @@ func (s *scope) handler(src string, at markup.Pos, onEvent bool) (handler, bool)
 		want := md.Args[i]
 		pos := at0(at, src, ax.Pos)
 		switch {
-		case from[i] == ArgValue && isEventType(want), from[i] == ArgExpr && isEventType(want):
+		case from[i] != ArgEvent && isEventType(want):
 			s.c.fail(s.t.file, pos, "%s's argument %d is a surfrun.Event, which only $event gives", name, i+1)
 			return handler{}, false
-		case from[i] == ArgValue && want.Kind != cellite.StringKind && want.Kind != cellite.DynKind:
-			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $value, which is a string", name, i+1, cellite.FormatType(want))
+		case (from[i] == ArgValue || from[i] == ArgDragFrom || from[i] == ArgDragWhere) && want.Kind != cellite.StringKind && want.Kind != cellite.DynKind:
+			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $%s, which is a string", name, i+1, cellite.FormatType(want), eventName(from[i]))
+			return handler{}, false
+		case from[i] == ArgDragCancel && want.Kind != cellite.BoolKind && want.Kind != cellite.DynKind:
+			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $drag.cancel, which is a bool", name, i+1, cellite.FormatType(want))
 			return handler{}, false
 		case from[i] == ArgEvent && !isEventType(want) && want.Kind != cellite.DynKind:
 			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $event, which goes to a surfrun.Event parameter only", name, i+1, cellite.FormatType(want))
@@ -1481,8 +1518,15 @@ func (s *scope) handler(src string, at markup.Pos, onEvent bool) (handler, bool)
 
 // eventName is k's name, without its $.
 func eventName(k EventArg) string {
-	if k == ArgEvent {
+	switch k {
+	case ArgEvent:
 		return "event"
+	case ArgDragFrom:
+		return "drag.from"
+	case ArgDragWhere:
+		return "drag.where"
+	case ArgDragCancel:
+		return "drag.cancel"
 	}
 	return "value"
 }
@@ -1703,7 +1747,7 @@ func (s *scope) bind(n *markup.Node) *elem {
 				s.c.fail(s.t.file, a.Pos, "do is a handler: do=\"method(args)\"")
 				continue
 			}
-			if h, ok := s.handler(a.Value, a.ValuePos, false); ok {
+			if h, ok := s.handler(a.Value, a.ValuePos, false, false); ok {
 				e.bindDo, e.hasHandler = h, true
 			}
 		case "scroll":

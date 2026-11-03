@@ -30,7 +30,9 @@ import (
 // Event is what an action hears: a host's event, or a key.
 type Event struct {
 	// Kind is the host's ("click", "change", "input", "focus", or "submit",
-	// which no widget of the vocabulary makes) or "key".
+	// which no widget of the vocabulary makes), "key", a drag's
+	// ("dragstart", "dragend", "drop": Surface's, from the host's drag), or
+	// a menu's "pick".
 	Kind string
 	// Target is the element's id, "" for a key.
 	Target string
@@ -44,6 +46,9 @@ type Event struct {
 	Mods int
 	// Count is a click's place in its run of clicks.
 	Count int
+	// Drag is a drag's, in the events its handlers hear: "dragstart" and
+	// "dragend" on the dragged element, "drop" on the target.
+	Drag Drag
 }
 
 // Model is what a model gives the runtime.

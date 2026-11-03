@@ -49,6 +49,9 @@ func TestCursorOverTheVocabulary(t *testing.T) {
 		{"a key that acts", Key("^b").OnClick(click), nil, "pointer"},
 		{"anything with a click handler", Box(Text("tap")).OnClick(click), nil, "pointer"},
 		{"a link", El("a", Str("docs")).Attr("href", "https://example.com"), nil, "pointer"},
+		{"a drag handle", List(Item(Text("row")).Drag()), []int{0}, "grab"},
+		{"a drag handle with a click handler", List(Item(Text("row")).OnClick(click).Drag().Drop(DropHalves)), []int{0}, "grab"},
+		{"a place to drop on only", List(Item(Text("row")).Drop(DropWhole)), []int{0}, "default"},
 	}
 	rules := cursorRules(t)
 	for _, c := range cases {

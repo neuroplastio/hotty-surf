@@ -176,7 +176,8 @@ func (tb *Table) Call(m int, args []cellite.Value) cellite.Value {
 
 // event is what $event gives a handler: the host's own table while one
 // runs from view:event, else a table of surfrun.Event's fields (kind,
-// target, key where they are set; value and checked).
+// target, key where they are set; value and checked; and a drag's
+// handler's drag, { from =, where =, cancel = }, as $drag.… give them).
 func (h *host) event(ev surfrun.Event) *lua.LTable {
 	if h.ev != nil {
 		return h.ev
@@ -192,6 +193,13 @@ func (h *host) event(ev surfrun.Event) *lua.LTable {
 	set("key", ev.Key)
 	t.RawSetString("value", lua.LString(ev.Value))
 	t.RawSetString("checked", lua.LBool(ev.Checked))
+	if ev.Drag != (surfrun.Drag{}) {
+		d := h.L.NewTable()
+		d.RawSetString("from", lua.LString(ev.Drag.From))
+		d.RawSetString("where", lua.LString(ev.Drag.Where))
+		d.RawSetString("cancel", lua.LBool(ev.Drag.Cancel))
+		t.RawSetString("drag", d)
+	}
 	return t
 }
 
