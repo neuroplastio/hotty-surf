@@ -45,7 +45,8 @@ func loader(L *lua.LState, fsys fs.FS) int {
 		"load":      func(L *lua.LState) int { return luaLoad(L, fsys) },
 		"component": func(L *lua.LState) int { return luaComponent(L, r) },
 	})
-	mod.RawSetString("css", lua.LString(surfui.CSS))
+	mod.RawSetString("palette", L.NewClosure(func(L *lua.LState) int { return luaPalette(L, r, mod) }))
+	mod.RawSetString("css", lua.LString(surfui.CSS+r.palette.CSS()))
 	L.Push(mod)
 	return 1
 }
@@ -55,6 +56,10 @@ func loader(L *lua.LState, fsys fs.FS) int {
 // registry, where New finds it.
 type registry struct {
 	classes map[string]*lua.LTable
+	// palette is the hues surf.palette declared at run time, over those
+	// the templates' <palette>s declare.
+	palette surfui.Palette
+	warned  map[string]bool
 }
 
 const registryKey = "hotty-surf.components"
@@ -67,6 +72,89 @@ func registryOf(L *lua.LState) *registry {
 	}
 	r, _ := ud.Value.(*registry)
 	return r
+}
+
+// surf.palette{ coral = { dark = "#ff8e7a", light = "#b4321f", cells = 9 },
+// teal = { value = "#0f766e" } } declares hues at run time: a colour from a
+// user's configuration (docs/surf.md, "Colours from data"). Declared
+// again, it replaces the set the last call declared, and returns the
+// stylesheet to send again, as surfrun.Runtime.SetCSS sends one: the floor's
+// with the hues' rules, which surf.css is now too. A hue that is no hue (a
+// name that isn't a lower-case identifier, a colour that isn't #rgb or
+// #rrggbb, a cells past 15) raises an error and declares nothing; one whose
+// text can't be read on a ground (4.5:1 against the dark ground and paper's)
+// warns once on stderr, and draws its text in the ink there. A view of the
+// script's draws with them (View.Palette).
+func luaPalette(L *lua.LState, r *registry, mod *lua.LTable) int {
+	t := L.CheckTable(1)
+	p := surfui.Palette{}
+	var bad string
+	t.ForEach(func(k, v lua.LValue) {
+		name, ok := k.(lua.LString)
+		ht, isT := v.(*lua.LTable)
+		if !ok || !isT {
+			bad = fmt.Sprintf("a hue is name = { dark = …, light = … } or { value = … }, not %s = %s", k, v)
+			return
+		}
+		var h surfui.Hue
+		for _, f := range [...]struct {
+			key string
+			to  *string
+		}{{"dark", &h.Dark}, {"light", &h.Light}, {"value", &h.Value}} {
+			switch x := ht.RawGetString(f.key).(type) {
+			case lua.LString:
+				*f.to = string(x)
+			case *lua.LNilType:
+			default:
+				bad = fmt.Sprintf("hue %s: %s is a string, #rgb or #rrggbb, not %s", name, f.key, x.Type())
+			}
+		}
+		switch x := ht.RawGetString("cells").(type) {
+		case lua.LNumber:
+			if float64(x) != float64(int(x)) {
+				bad = fmt.Sprintf("hue %s: cells is a whole number, 0 to 15, not %v", name, float64(x))
+			}
+			h.Cells = surfui.Cell(int(x))
+		case *lua.LNilType:
+		default:
+			bad = fmt.Sprintf("hue %s: cells is a number, 0 to 15, not %s", name, x.Type())
+		}
+		p[string(name)] = h
+	})
+	if bad == "" {
+		if err := p.Check(); err != nil {
+			bad = err.Error()
+		}
+	}
+	if bad != "" {
+		L.ArgError(1, bad)
+	}
+	r.palette = p
+	for _, msg := range p.Faults() {
+		if r.warned == nil {
+			r.warned = map[string]bool{}
+		}
+		if !r.warned[msg] {
+			r.warned[msg] = true
+			fmt.Fprintln(surfrun.Stderr, "surf:", msg)
+		}
+	}
+	css := surfui.CSS + p.CSS()
+	mod.RawSetString("css", lua.LString(css))
+	L.Push(lua.LString(css))
+	return 1
+}
+
+// Palette is the hues the view draws with (surfrun.Palettist): its
+// templates' <palette>s, and those the script declared with surf.palette,
+// which win for a name both have. A host in Go that shows the view has them
+// sent as the stylesheet's rules, again where the script declares others.
+func (v *View) Palette() surfui.Palette {
+	p := v.set.Palette()
+	if r := registryOf(v.vm); r != nil {
+		p = p.Merge(r.palette)
+	}
+	return p
 }
 
 // surf.component(name, proto) makes proto (a new table for none) the
@@ -354,6 +442,10 @@ func (v *View) script() *script {
 	}
 	return v.own
 }
+
+// Palette is the view's (surfrun.Palettist), so that the script's own host
+// knows the hues the view draws with.
+func (m *script) Palette() surfui.Palette { return m.v.Palette() }
 
 // Render is the view's, its errors kept for view:html.
 func (m *script) Render() *surfui.Node {

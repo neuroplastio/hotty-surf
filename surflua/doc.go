@@ -166,7 +166,17 @@
 //     the view took it. A Lua error in a handler is raised.
 //   - view:reload() builds the shapes again, from t's keys and the
 //     classes' now, and loads the templates: true, or nil and why.
-//   - surf.css is the floor's stylesheet, which the markup is drawn with.
+//   - surf.palette(t) declares hues at run time, t = { coral = { dark =
+//     "#ff8e7a", light = "#b4321f", cells = 9 } } (or value = for one colour
+//     on both grounds), in place of those the last call declared: it
+//     returns the stylesheet to send again, and raises where a hue is no
+//     hue (a name that isn't lower-case, a colour that isn't #rgb or
+//     #rrggbb, cells past 15). A hue whose text can't be read on the dark
+//     ground or paper (4.5:1) warns once on stderr, and draws its text in
+//     the ink there. The view draws with these and its templates' own
+//     <palette>s (View.Palette).
+//   - surf.css is the floor's stylesheet, which the markup is drawn with,
+//     and the hues' rules once surf.palette has been called.
 //
 // view:html, view:event and view:key are the script's own host of the
 // view: a surfrun.Surface, which html shows and updates and the others route

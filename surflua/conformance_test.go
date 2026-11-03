@@ -96,11 +96,30 @@ return function(state)
 end
 `
 
+// crewLua is the Crew fixture in Lua: a component whose template declares
+// a palette (crew.surf) and draws each hand in the hue its data names.
+const crewLua = `
+local Crew = {}
+Crew.__index = Crew
+function Crew:recolour(name)
+  for _, h in ipairs(self.hands) do
+    if h.name == name then h.colour = "plum" end
+  end
+  table.insert(self.log, "recolour " .. name)
+end
+return function(state)
+  state.title = state.title or ""
+  state.hands = state.hands or {}
+  state.log = state.log or {}
+  return setmetatable(state, Crew)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
 // as Lua values, a table drawn by the first template; the Form's, the
-// Shelf's and the Deck's, their fixtures written in Lua (formLua,
-// shelfLua, deckLua) and drawn
+// Shelf's, the Deck's and the Crew's, their fixtures written in Lua
+// (formLua, shelfLua, deckLua, crewLua) and drawn
 // by the suite's templates; and the load cases but those only a host
 // with typed parameters runs (their typed file says why). Each plays on
 // two hosts (play), and its files and errors are the case's on both.
@@ -139,7 +158,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -147,6 +166,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = shelfLua, "shelf"
 			case "Deck":
 				src, tmpl = deckLua, "deck"
+			case "Crew":
+				src, tmpl = crewLua, "crew"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any
