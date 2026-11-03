@@ -156,4 +156,6 @@ Version 0.1.0. Below 1.0, a minor version may break the API.
 
 ## License
 
-[Apache-2.0](LICENSE).
+[Apache-2.0](LICENSE). [NOTICE](NOTICE) names the works it includes data
+from: the Material Design Icons' names (Apache-2.0), as Nerd Fonts lists
+them (MIT).

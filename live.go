@@ -154,7 +154,7 @@ func LoadDir(dir string, every time.Duration, shapes []*Shape, helpers ...Func) 
 	return s, nil
 }
 
-// Stale reports whether a .surf file of the Set's has changed since it
+// Stale reports whether a .surf or .svg file of the Set's has changed since it
 // was read, or one has come or gone.
 func (s *Set) Stale() bool {
 	s.mu.Lock()
@@ -166,7 +166,7 @@ func (s *Set) Stale() bool {
 	}
 	n := 0
 	for _, e := range ents {
-		if e.IsDir() || path.Ext(e.Name()) != ".surf" {
+		if e.IsDir() || path.Ext(e.Name()) != ".surf" && path.Ext(e.Name()) != ".svg" {
 			continue
 		}
 		n++

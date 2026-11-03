@@ -16,10 +16,11 @@ import (
 //go:embed cases/*.txt
 var Cases embed.FS
 
-// Templates are the fixtures' templates, the .surf files beside them,
-// for a host of the interpreter to draw its own fixtures with.
+// Templates are the fixtures' templates, the .surf files beside them
+// and the .svg files they name, for a host of the interpreter to draw
+// its own fixtures with.
 //
-//go:embed *.surf
+//go:embed *.surf *.svg
 var Templates embed.FS
 
 // File is the case's file name, if it has one.

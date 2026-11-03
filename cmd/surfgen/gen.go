@@ -28,6 +28,7 @@ type gen struct {
 	lists   []*listInfo
 	listOf  map[string]*listInfo // by the element's Go type
 	files   []string             // the .surf files
+	svgs    []string             // the .svg files, which the Set reads too
 	skipped []string
 	usesRun bool // the code names surfrun.Event: a handler takes the event
 	export  bool // -export: write SurfPackage
@@ -99,7 +100,11 @@ func generateFS(dir string, fsys fs.FS, export bool) ([]byte, error) {
 		if !e.IsDir() && filepath.Ext(e.Name()) == ".surf" {
 			g.files = append(g.files, e.Name())
 		}
+		if !e.IsDir() && filepath.Ext(e.Name()) == ".svg" {
+			g.svgs = append(g.svgs, e.Name())
+		}
 	}
+	sort.Strings(g.svgs)
 	if len(g.files) == 0 {
 		return nil, fmt.Errorf("%s: no .surf files", dir)
 	}
@@ -593,7 +598,7 @@ func (g *gen) write(set *surf.Set) ([]byte, error) {
 	var body bytes.Buffer
 	w := func(format string, args ...any) { fmt.Fprintf(&body, format, args...) }
 
-	w("// The templates, embedded.\n//\n//go:embed %s\nvar surfFiles embed.FS\n\n", strings.Join(g.files, " "))
+	w("// The templates, embedded.\n//\n//go:embed %s\nvar surfFiles embed.FS\n\n", strings.Join(append(g.files, g.svgs...), " "))
 	// A function over a sync.Once, not a sync.OnceValue: a variable's
 	// initializer keeps its closure, and the loader, linked into a program
 	// that only draws compiled.

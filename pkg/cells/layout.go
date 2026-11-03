@@ -201,8 +201,22 @@ func (b *box) capsOf(seq string, caps keyCaps) {
 // a step apart.
 func capLike(b *box) bool { return b.kind == keycap || b.f&fKeys != 0 }
 
-// textOf is the text n holds, or a Raw node's markup without its tags.
+// textOf is the text n holds, or a Raw node's markup without its tags;
+// what n has the cells draw in its place, where it says (an SVG icon's
+// glyph); and a button's icon, a space, then its label (IconButton).
 func textOf(n *surfui.Node) string {
+	if s, ok := surfui.CellsText(n); ok {
+		return s
+	}
+	if hasClass(n, "u-btn-icon") {
+		var parts []string
+		for _, k := range surfui.Kids(n) {
+			if t := textOf(k); t != "" {
+				parts = append(parts, t)
+			}
+		}
+		return strings.Join(parts, " ")
+	}
 	t := surfui.TextOf(n)
 	if t != "" || surfui.Tag(n) == "" || len(surfui.Kids(n)) > 0 {
 		return t

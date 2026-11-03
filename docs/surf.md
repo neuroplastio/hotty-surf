@@ -192,10 +192,10 @@ component or a partial.
 | `caption` | a group's title over its rows, small and dim | text |
 | `badge` | a short label on a fill | text |
 | `glyph` | one symbol in a fixed slot: a status's dot | text |
-| `icon` | a mark beside a label: an MDI symbol of the hosts' Nerd Font, muted | text |
+| `icon` | a mark beside a label, muted: an MDI symbol by its glyph or its `name`, or an SVG (`svg`, `path`) a host draws ("Icons") | text, or `name`; `svg` or `path` |
 | `dot` | a state's mark: a small dot in its `tone` | nothing |
 | `key` | a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style | text |
-| `button` | a button, its text its label | text |
+| `button` | a button, its text its label, with an `<icon>` before or after it ("Icons") | text, an `icon` |
 | `field` | a one-line text field | nothing |
 | `switch` | a boolean as a track with a knob: it shows `:on`, and its `@click` handler changes the state `:on` reads | nothing |
 | `select` | a pick of one of `:options`, `:value` picked | nothing |
@@ -229,6 +229,9 @@ component or a partial.
 | `value` | string | select, cycle | the option picked |
 | `options` | list(string) | select, cycle | the options (bound only: `:options="['a', 'b']"`) |
 | `title` | string | section | its title |
+| `name` | string | icon | an MDI symbol's name, as `cog-outline`: its glyph ("Icons") |
+| `svg` | string | icon | an SVG a host draws: the name of an `.svg` file beside the templates |
+| `path` | string | icon | an SVG a host draws: one path's data, filled, in a 24×24 box |
 | `theme` | string | surface | `neuroplastio`, `terminal` or `paper` |
 | `density` | string | surface | `compact` (the default), `dense` or `roomy` |
 | `key` | string | all | its key among its siblings, which the diff follows: give a `:each`'s items one. Bound, any value with a text (an int `1` is `k1`) |
@@ -239,7 +242,7 @@ component or a partial.
 | `pad` | `"x y"` or `"n"` | all | room inside, across and down; bound, a list of one or two ints |
 | `selected`, `checked`, `disabled`, `invalid` | bool | all | states |
 | `value`, `placeholder` | string | field | a field's value and placeholder |
-| `name`, `label` | string | all | a control's name, an accessible label |
+| `name`, `label` | string | all | a control's name (an `icon`'s is its symbol's), an accessible label |
 | `reveal`, `focusable`, `bare`, `scroll`, `autofocus` | bool | all | the floor's behaviours |
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
@@ -405,6 +408,76 @@ and a `:if` chain goes on past it.
   menu. It draws the items, and hands the one picked to
   `Surface.Pick`, which runs it as a click runs a handler. A pick of an
   item gone since (its row, or the item, or disabled now) runs nothing.
+
+## Icons
+
+An `<icon>` is a glyph of the hosts' Nerd Font, an MDI symbol: its
+text, or its symbol's name.
+
+```html
+<icon>&#xF08BB;</icon>
+<icon name="cog-outline"/>
+<icon :name="r.icon"/>
+```
+
+- **`name`** is MDI's name of the symbol (`cog-outline`), from the table
+  `pkg/mdi` keeps: Nerd Fonts 3.5.1's MDI glyphs, by their names. A
+  literal is looked up when the template loads, and one MDI hasn't is a
+  load error, `an icon's name is one of MDI's, as cog-outline, not
+  "cog_outline"`; so the compiled mode holds the glyph, and links no
+  table. A bound name is looked up at each render: one MDI hasn't draws
+  `help-box` (󰞋), and is the render's error.
+- **An icon is its text or its `name`**, not both.
+
+With `svg` or `path`, a host draws an SVG in the icon's place, at its
+size, filled in its colour; the cells draw its glyph.
+
+```html
+<icon svg="logo"/>
+<icon name="hexagon-outline" path="M12 2L21 7V17L12 22L3 17V7Z"/>
+```
+
+- **`svg="logo"` is `logo.svg`**, beside the templates, which the `Set`
+  reads with them (and `surfgen` embeds, and writes into the compiled
+  mode): an `<svg viewBox="0 0 24 24">` of one `<path d>`, with its
+  glyph for the cells in `data-glyph`, an MDI name. A `<title>` or a
+  `<desc>` may be in it, and an `<?xml?>` before it; anything else
+  (a second path, a `fill-rule`, a `style`) is a load error that says
+  what it takes.
+
+  ```html
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+       data-glyph="hexagon-outline">
+    <path d="M12 2L21 7V17L12 22L3 17V7Z"/>
+  </svg>
+  ```
+
+- **`path`** is one path's data in a 24×24 box, filled; its commands
+  and numbers only.
+- **The cells draw a glyph**: the element's `name`, else the asset's
+  `data-glyph`. With neither the template doesn't load: `an svg icon
+  needs a glyph for the cells: name=…`. A bound `:svg` names an asset at
+  render: one the `Set` hasn't draws `help-box` and is the render's
+  error, and one with no `data-glyph`, beside no `name`, draws
+  `help-box` in the cells.
+- **Raw `<svg>` in a template is no widget.** An SVG is an asset or a
+  `path`.
+
+A `<button>` holds one `<icon>`, before its text or after it.
+
+```html
+<button @click="restart"><icon name="restart"/>Restart</button>
+<button label="Close" @click="close"><icon name="close"/></button>
+```
+
+- A host draws the icon in the label's line, a step of room from it,
+  in the button's colour; the cells draw its glyph, a space, then the
+  text. The whole button is its click's target.
+- **A button of an icon alone takes `label`,** its `aria-label`, which
+  a host reads out and the cells don't draw; without one it doesn't
+  load.
+- A `:if` on the icon may leave it out; `:each` on it doesn't load, nor
+  a second icon, nor an icon between two texts.
 
 ## Components and partials
 

@@ -393,7 +393,13 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 	case FormKids:
 		n = build(e.w.Tag, kids)
 	case FormText:
+		if e.w.Tag == "button" {
+			n = ButtonNode(f.text(e, e.text), e.after, kids)
+			break
+		}
 		n = buildText(e.w.Tag, f.text(e, e.text))
+	case FormIcon:
+		n = f.icon(e)
 	case FormNone:
 		n = build(e.w.Tag, nil)
 	case FormSwitch:
@@ -428,6 +434,41 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 			f.menuItem(k, &items)
 		}
 		n.Menu(items...)
+	}
+	return n
+}
+
+// icon builds an <icon>: its glyph, its text or its bound name's; and
+// its path, or its bound svg's asset's.
+//
+//go:noinline
+func (f *frame) icon(e *elem) *surfui.Node {
+	glyph := f.text(e, e.text)
+	if v := e.args[iconName]; v.set {
+		glyph = helpBox
+		if name, ok := f.strOr(e, v, ""); ok {
+			g, err := IconGlyph(name)
+			if err != nil {
+				f.fail(e, err)
+			}
+			glyph = g
+		}
+	}
+	var n *surfui.Node
+	var err error
+	if v := e.args[iconSVG]; v.set {
+		name, ok := f.strOr(e, v, "")
+		if !ok {
+			return surfui.Icon(helpBox)
+		}
+		a, ok := f.t.svgs[name]
+		n, err = IconAsset(glyph, name, a, ok)
+	} else {
+		path, _ := f.strOr(e, e.args[iconPath], "")
+		n, err = IconNode(glyph, path)
+	}
+	if err != nil {
+		f.fail(e, err)
 	}
 	return n
 }

@@ -49,6 +49,7 @@ type Node struct {
 	text  string // a text node's text
 	raw   string // raw HTML, inside its element
 	isRaw bool
+	cells string // what the cells draw in its place: an SVG icon's glyph
 
 	key   string
 	id    string // given, or the key path once resolved
@@ -294,6 +295,11 @@ func Handler(n *Node, kind string) (Action, bool) {
 	}
 	return nil, false
 }
+
+// CellsText is what the cells draw in n's place, where n says (an
+// SVGIcon's glyph): ok is false for a node that has the cells draw what
+// it holds.
+func CellsText(n *Node) (s string, ok bool) { return n.cells, n.cells != "" }
 
 // KeyOf is n's key (Key), "" for none.
 func KeyOf(n *Node) string { return n.key }

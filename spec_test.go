@@ -65,6 +65,9 @@ var canonAttrs = map[string]string{
 	"value/select":      `<select value="b" :options="['a', 'b']"/>`,
 	"options/select":    `<select :options="['a', 'b']"/>`,
 	"title/section":     `<section title="Agents"/>`,
+	"name/icon":         `<icon name="cog-outline"/>`,
+	"svg/icon":          `<icon svg="spec"/>`,
+	"path/icon":         `<icon name="hexagon-outline" path="M12 2L21 7V17L12 22L3 17V7Z"/>`,
 	"theme/surface":     `<surface theme="paper"/>`,
 	"density/surface":   `<surface density="dense"/>`,
 	"key":               `<row><text key="a">x</text></row>`,
@@ -108,6 +111,9 @@ var canonAttrs = map[string]string{
 	"autofocus":         `<list autofocus/>`,
 }
 
+// specSVG is the asset svg="spec" names.
+const specSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" data-glyph="hexagon-outline"><path d="M12 2L21 7V17L12 22L3 17V7Z"/></svg>`
+
 func attrKey(a *Attr) string {
 	if len(a.Tags) > 0 {
 		return a.Name + "/" + a.Tags[0]
@@ -128,7 +134,10 @@ func (specCase) Call(int, []cellite.Value) cellite.Value { return cellite.NullVa
 // renderCanon is src's HTML, rendered as a template's root with its ids
 // resolved.
 func renderCanon(src string) (string, error) {
-	set, err := Load(fstest.MapFS{TemplateName(specShape.Name) + ".surf": {Data: []byte(src)}}, []*Shape{specShape})
+	set, err := Load(fstest.MapFS{
+		TemplateName(specShape.Name) + ".surf": {Data: []byte(src)},
+		"spec.svg":                             {Data: []byte(specSVG)},
+	}, []*Shape{specShape})
 	if err != nil {
 		return "", err
 	}
@@ -154,6 +163,8 @@ func formName(f Form) string {
 		return "choice"
 	case FormSection:
 		return "section"
+	case FormIcon:
+		return "icon"
 	}
 	return "?"
 }
@@ -199,6 +210,11 @@ func takes(w *Widget) string {
 		args = append(args, "children")
 	case FormText:
 		args = append(args, "text")
+		if w.Tag == "button" {
+			args = append(args, "an `<icon>`")
+		}
+	case FormIcon:
+		return "text or `name`, and `svg` or `path`"
 	}
 	if len(args) == 0 {
 		return "nothing"

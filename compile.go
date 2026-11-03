@@ -15,6 +15,7 @@ import (
 	cellite "github.com/neuroplastio/cel-lite"
 	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
 	"github.com/neuroplastio/hotty-surf/pkg/markup"
+	"github.com/neuroplastio/hotty-surf/pkg/mdi"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
 
@@ -33,6 +34,7 @@ type Set struct {
 	files map[string]*file
 	tmpls map[string]*tmpl // by template name and owner: name + "\x00" + owner
 	stamp map[string]stamp // what each file was when read, for Stale
+	svgs  map[string]SVGAsset
 }
 
 // file is a parsed template.
@@ -97,7 +99,11 @@ func (s *Set) load() error {
 	if err != nil {
 		return err
 	}
-	c := &compiler{set: s, files: files, tmpls: map[string]*tmpl{}}
+	svgs, err := readSVGs(s.fsys, stamps)
+	if err != nil {
+		return err
+	}
+	c := &compiler{set: s, files: files, tmpls: map[string]*tmpl{}, svgs: svgs}
 	names := make([]string, 0, len(s.shapes))
 	for n, sh := range s.shapes {
 		if sh.Component {
@@ -117,7 +123,7 @@ func (s *Set) load() error {
 		return errors.Join(c.errs...)
 	}
 	s.mu.Lock()
-	s.files, s.tmpls, s.stamp = files, c.tmpls, stamps
+	s.files, s.tmpls, s.stamp, s.svgs = files, c.tmpls, stamps, svgs
 	s.mu.Unlock()
 	return nil
 }
@@ -310,6 +316,7 @@ type compiler struct {
 	tmpls map[string]*tmpl
 	errs  []error
 	ords  map[*markup.Node]int // each <menu> item's place in its menu
+	svgs  map[string]SVGAsset  // the .svg files beside the templates
 }
 
 // tmpl is a template compiled for an owner: the component whose fields
@@ -334,6 +341,8 @@ type tmpl struct {
 	// sees its slots only then.
 	slots map[string]bool
 	done  bool
+	// svgs are the Set's assets, which a bound svg= finds at render.
+	svgs map[string]SVGAsset
 }
 
 type propSlot struct {
@@ -379,7 +388,7 @@ func (c *compiler) tmplOf(name string, owner *Shape) (*tmpl, *scope) {
 		return t, nil
 	}
 	f := c.files[name]
-	t := &tmpl{file: f, owner: owner, nfields: len(owner.Fields), slots: map[string]bool{}}
+	t := &tmpl{file: f, owner: owner, nfields: len(owner.Fields), slots: map[string]bool{}, svgs: c.svgs}
 	c.tmpls[key] = t // before its body, so that it may use itself
 	sc := &scope{c: c, t: t}
 	sc.vars = append(sc.vars, cellite.Var{Name: "self", Type: cellite.StructOf(owner.Name)})
@@ -637,6 +646,7 @@ type elem struct {
 	bindScroll string // the scroll action's name ("down"), for one with no do
 	hasHandler bool
 	dynState   bool // kComponent: its :state is dyn, checked at render
+	after      bool // a <button>'s: its <icon>, its kid, is after its text
 
 	// A widget's <menu> (kMenu), whose kids are its items: kAction, kSep,
 	// and kIf over them.
@@ -867,13 +877,34 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 //
 //go:noinline
 func (s *scope) leafKids(e *elem, tag string, kids []*markup.Node) {
-	if e.w.Form == FormText {
+	if e.w.Form == FormText || e.w.Form == FormIcon {
+		texts, icons, after := 0, 0, false // after: text came before the icon
 		for _, k := range kids {
 			if k.Kind != markup.Text {
-				s.c.fail(s.t.file, k.Pos, "<%s> holds text, not <%s>", tag, k.Tag)
+				if tag != "button" || k.Tag != "icon" {
+					s.c.fail(s.t.file, k.Pos, "<%s> holds text, not <%s>", tag, k.Tag)
+					continue
+				}
+				if icons++; icons > 1 {
+					s.c.fail(s.t.file, k.Pos, "a <button> has one <icon>; this is a second")
+					continue
+				}
+				after = texts > 0
+				s.buttonIcon(e, k)
 				continue
 			}
+			if icons > 0 && after {
+				s.c.fail(s.t.file, k.Pos, "a <button>'s <icon> goes before its text or after it, not in it")
+			}
+			texts++
 			e.text = append(e.text, s.run(k, s.parts(k.Parts))...)
+		}
+		e.after = after
+		switch {
+		case e.w.Form == FormIcon:
+			s.iconEl(e, texts > 0)
+		case icons > 0 && texts == 0 && !hasMod(e, "label"):
+			s.c.fail(s.t.file, e.pos, "a <button> of an <icon> alone takes label=, which a host reads out: <button label=\"Close\">")
 		}
 		return
 	}
@@ -883,6 +914,91 @@ func (s *scope) leafKids(e *elem, tag string, kids []*markup.Node) {
 			continue
 		}
 		s.c.fail(s.t.file, k.Pos, "<%s> has no children but <bind> and <menu>", tag)
+	}
+}
+
+// hasMod reports whether e is given the modifier name.
+func hasMod(e *elem, name string) bool {
+	for _, m := range e.mods {
+		if m.attr.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// buttonIcon compiles a <button>'s <icon>, one of its kids, which a :if
+// may leave out; :each, which would give it more than one, it may not.
+//
+//go:noinline
+func (s *scope) buttonIcon(e *elem, k *markup.Node) {
+	if a, ok := k.Attr(":each"); ok {
+		s.c.fail(s.t.file, a.Pos, "a <button> has one <icon>, not :each")
+		return
+	}
+	if ke := s.element(k, nil); ke != nil {
+		e.kids = append(e.kids, ke)
+	}
+}
+
+// The icon's arguments, in the table's order.
+const (
+	iconName = iota
+	iconSVG
+	iconPath
+)
+
+// iconEl checks an <icon> and settles what it draws, so that neither
+// mode looks up a literal at render: its text is its glyph, a literal
+// name's resolved; its name argument is left only where it is bound, and
+// its svg only where it is bound; its path is a literal svg's, or its
+// path=.
+//
+//go:noinline
+func (s *scope) iconEl(e *elem, hasText bool) {
+	name, svg, path := e.args[iconName], e.args[iconSVG], e.args[iconPath]
+	switch {
+	case hasText && (name.set || svg.set || path.set):
+		s.c.fail(s.t.file, e.pos, "an <icon> is its glyph, &#xF08BB;, or takes name=, svg= or path=, not both")
+		return
+	case svg.set && path.set:
+		s.c.fail(s.t.file, e.pos, "an <icon> takes svg= or path=, not both")
+		return
+	}
+	if name.set && name.prog == nil {
+		g, ok := mdi.Glyph(name.lit.String())
+		if !ok {
+			s.c.fail(s.t.file, e.pos, "an icon's name is one of MDI's, as cog-outline, not %q", name.lit.String())
+			return
+		}
+		e.text = []part{{lit: string(g)}}
+		e.args[iconName] = value{}
+	}
+	if path.set && path.prog == nil {
+		if err := CheckPath(path.lit.String()); err != nil {
+			s.c.fail(s.t.file, e.pos, "%v", err)
+			return
+		}
+	}
+	if svg.set && svg.prog == nil {
+		a, ok := s.c.svgs[svg.lit.String()]
+		if !ok {
+			s.c.fail(s.t.file, e.pos, "no svg icon %q: an svg is an .svg file beside the templates, %s.svg", svg.lit.String(), svg.lit.String())
+			return
+		}
+		e.args[iconSVG] = value{}
+		e.args[iconPath] = value{set: true, lit: cellite.StringValue(a.Path)}
+		if !name.set {
+			if a.Glyph == "" {
+				s.c.fail(s.t.file, e.pos, "an svg icon needs a glyph for the cells: name=…, or data-glyph in %s.svg", svg.lit.String())
+				return
+			}
+			e.text = []part{{lit: a.Glyph}}
+		}
+		return
+	}
+	if path.set && !name.set {
+		s.c.fail(s.t.file, e.pos, "an svg icon needs a glyph for the cells: name=…")
 	}
 }
 

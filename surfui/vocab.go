@@ -1,6 +1,7 @@
 package surfui
 
 import (
+	"html"
 	"slices"
 	"strconv"
 	"unicode/utf8"
@@ -185,6 +186,35 @@ func Key(s string) *Node { return El("kbd", Str(s)).Class("u-key") }
 // never its row's, as a click reaches the nearest element that has one.
 func Button(label string) *Node {
 	return El("button", Str(label)).Class("u-btn").Attr("type", "button")
+}
+
+// IconButton is a button with an icon (Icon, SVGIcon) beside its label,
+// before it, or after it where after is set. On a host the icon sits in
+// its face beside the label, centred on the line; in the cells it is its
+// glyph, a space, then the label. With no label it is the icon alone:
+// give it a Label, which a host reads out.
+func IconButton(icon *Node, label string, after bool) *Node {
+	n := El("button").Class("u-btn", "u-btn-icon").Attr("type", "button")
+	switch {
+	case label == "":
+		n.Add(icon)
+	case after:
+		n.Add(Str(label), icon)
+	default:
+		n.Add(icon, Str(label))
+	}
+	return n
+}
+
+// SVGIcon is an icon drawn from SVG path data in a 24×24 box, as an
+// Icon's glyph is drawn: on a host an inline svg a square of the icon's
+// size, filled in the text's colour; in the cells, glyph. path is one
+// path's data ("M12 2L2 22h20Z"), which it escapes.
+func SVGIcon(glyph, path string) *Node {
+	n := Raw(`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="`+
+		html.EscapeString(path)+`"></path></svg>`).Class("u-text", "u-icon", "u-svg")
+	n.cells = glyph
+	return n
 }
 
 // Field is a one-line text field.

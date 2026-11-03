@@ -31,6 +31,9 @@ const (
 	FormChoice
 	// FormSection is a section: its `title`, then its element children.
 	FormSection
+	// FormIcon is an icon: its glyph, as its text or by its `name`, and an
+	// SVG a host draws in its place, by its `svg` or its `path`.
+	FormIcon
 )
 
 // Widget is one tag of the floor's vocabulary.
@@ -102,10 +105,10 @@ var Widgets = []Widget{
 	{"caption", "a group's title over its rows, small and dim", FormText, "surfui.Caption", events},
 	{"badge", "a short label on a fill", FormText, "surfui.Badge", events},
 	{"glyph", "one symbol in a fixed slot: a status's dot", FormText, "surfui.Glyph", events},
-	{"icon", "a mark beside a label: an MDI symbol of the hosts' Nerd Font, muted", FormText, "surfui.Icon", events},
+	{"icon", "a mark beside a label, muted: an MDI symbol of the hosts' Nerd Font, its glyph or its name; or an SVG on a host, its glyph in the cells", FormIcon, "IconNode", events},
 	{"dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil},
 	{"key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events},
-	{"button", "a button, its text its label", FormText, "surfui.Button", events},
+	{"button", "a button, its text its label, with an icon before or after it", FormText, "surfui.Button", events},
 	{"field", "a one-line text field", FormNone, "surfui.Field", []string{"click", "focus", "change", "input"}},
 	{"switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events},
 	{"select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}},
@@ -124,6 +127,9 @@ var Attrs = []Attr{
 	{Name: "value", Type: TypeString, Doc: "the option picked", Tags: []string{"select", "cycle"}, Arg: true},
 	{Name: "options", Type: TypeStrings, Doc: "the options, in order", Tags: []string{"select", "cycle"}, Arg: true},
 	{Name: "title", Type: TypeString, Doc: "the section's title", Tags: []string{"section"}, Arg: true},
+	{Name: "name", Type: TypeString, Doc: "an MDI symbol's name, as cog-outline: the glyph it draws, in the cells beside an svg", Tags: []string{"icon"}, Arg: true},
+	{Name: "svg", Type: TypeString, Doc: "an SVG a host draws: the name of an .svg file beside the templates", Tags: []string{"icon"}, Arg: true},
+	{Name: "path", Type: TypeString, Doc: "an SVG a host draws: one path's data, filled, in a 24×24 box", Tags: []string{"icon"}, Arg: true},
 
 	{Name: "theme", Type: TypeString, Doc: "neuroplastio, terminal or paper", Tags: []string{"surface"}, Func: "ModTheme", Fails: true, Values: themes},
 	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},

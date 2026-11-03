@@ -244,6 +244,35 @@ var All = []Story{
 				Force(surfui.Button("Reset").Bare(), "focus"), Force(surfui.Button("Reset").Bare(), "hover")).Gap(2),
 		).Gap(1)
 	}},
+	{"button/icon", 60, func() *surfui.Node {
+		// An icon beside a button's label, before it or after it, centred
+		// on its line a step from it, in the button's colour; an icon
+		// alone, its label for a reader. An SVG icon is drawn as a glyph
+		// is, and the whole button is its target: hovered and focused.
+		icon := func(g string) *surfui.Node { return surfui.Icon(g) }
+		return surfui.Stack(
+			surfui.Row(surfui.IconButton(icon(mdRestart), "Restart", false), surfui.IconButton(icon(mdArrowRight), "Next", true),
+				surfui.IconButton(icon(mdClose), "", false).Label("Close"), surfui.IconButton(hexagon(), "Mark", false),
+				surfui.IconButton(icon(mdPlus), "Add", false).Fill(surfui.Accent)).Gap(1),
+			surfui.Row(Force(surfui.IconButton(icon(mdRestart), "Focused", false), "focus"),
+				Force(surfui.IconButton(hexagon(), "Hovered", false), "hover"),
+				Force(surfui.IconButton(icon(mdContentCopy), "Copy", false).Bare(), "hover"),
+				surfui.IconButton(icon(mdClose), "Off", false).Disabled(true)).Gap(1),
+		).Gap(1)
+	}},
+	{"icon/svg", 50, func() *surfui.Node {
+		// An SVG icon where a glyph would be: beside an item's label, the
+		// search row's, at the icon's size and in its colour, the ink where
+		// its item is selected.
+		item := func(i *surfui.Node, title string, sel bool) *surfui.Node {
+			return surfui.Item(i, surfui.Text(title)).Gap(2).Selected(sel)
+		}
+		return surfui.Stack(
+			surfui.List(item(surfui.Icon(mdCogOutline), "Glyph", false), item(hexagon(), "Path", false),
+				item(hexagon(), "Selected", true)).Nav(),
+			surfui.Row(hexagon(), surfui.Field().Bare().Placeholder("Search").Width(16)).Gap(2).Search(),
+		).Gap(1)
+	}},
 	{"field/states", 60, func() *surfui.Node {
 		return surfui.Stack(
 			surfui.Row(surfui.Text("Name").Width(10), surfui.Field().Value("alpha").Grow()),

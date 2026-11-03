@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf form.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf
+//go:embed board.surf form.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -790,17 +790,39 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 			}
 			// frame.surf:6:5 <button>
 			if e.Enter("frame.surf", 6, 5) {
-				var t6 string
-				{
-					var v5 string
-					if c.Hidden {
-						v5 = "Show"
-					} else {
-						v5 = "Hide"
+				var k4 []*surfui.Node
+				// frame.surf:6:38 <icon>
+				if e.Enter("frame.surf", 6, 38) {
+					var g6 string
+					{
+						var v7 string
+						if c.Hidden {
+							v7 = "eye-outline"
+						} else {
+							v7 = "eye-off-outline"
+						}
+						{
+							var err error
+							if g6, err = surf.IconGlyph(v7); err != nil {
+								e.Fail("frame.surf", 6, 38, err)
+							}
+						}
 					}
-					t6 += v5
+					n5 := surfui.Icon(g6)
+					k4 = append(k4, n5)
+					e.Leave()
 				}
-				n4 := surfui.Button(t6)
+				var t9 string
+				{
+					var v8 string
+					if c.Hidden {
+						v8 = "Show"
+					} else {
+						v8 = "Hide"
+					}
+					t9 += v8
+				}
+				n4 := surf.ButtonNode(t9, false, k4)
 				surf.ModKey(n4, "hide")
 				n4.On("click", func() { c.Hide() })
 				k2 = append(k2, n4)
@@ -814,9 +836,9 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 		}
 		// frame.surf:8:3 <embed>
 		if e.Enter("frame.surf", 8, 3) {
-			start7 := len(k1)
+			start10 := len(k1)
 			k1 = e.Embed("frame.surf", 8, 3, surf.ComponentValue(c.Inset()), k1)
-			for _, kn := range k1[start7:] {
+			for _, kn := range k1[start10:] {
 				kn.Key("inset")
 			}
 			e.Leave()
@@ -824,9 +846,9 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 		if c.Hidden {
 			// frame.surf:9:3 <embed>
 			if e.Enter("frame.surf", 9, 3) {
-				start8 := len(k1)
+				start11 := len(k1)
 				k1 = e.Embed("frame.surf", 9, 3, surf.ComponentValue(c.Inset()), k1)
-				for _, kn := range k1[start8:] {
+				for _, kn := range k1[start11:] {
 					kn.Key("never")
 				}
 				e.Leave()
@@ -834,10 +856,10 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 		}
 		// frame.surf:10:3 <text>
 		if e.Enter("frame.surf", 10, 3) {
-			n9 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " added")
-			surf.ModKey(n9, "count")
-			surf.ModMuted(n9, true)
-			k1 = append(k1, n9)
+			n12 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " added")
+			surf.ModKey(n12, "count")
+			surf.ModMuted(n12, true)
+			k1 = append(k1, n12)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)
@@ -877,6 +899,50 @@ func surfRenderInfoPanel(e *surf.Errs, out []*surfui.Node, c *InfoPanel, fill su
 				}
 				n4 := surfui.Text(t6)
 				k2 = append(k2, n4)
+				e.Leave()
+			}
+			// info-panel.surf:5:5 <icon>
+			if e.Enter("info-panel.surf", 5, 5) {
+				var n7 *surfui.Node
+				{
+					var err error
+					if n7, err = surf.IconNode("\U000f02d9", "M12 2L21 7V17L12 22L3 17V7Z"); err != nil {
+						e.Fail("info-panel.surf", 5, 5, err)
+					}
+				}
+				k2 = append(k2, n7)
+				e.Leave()
+			}
+			// info-panel.surf:6:5 <button>
+			if e.Enter("info-panel.surf", 6, 5) {
+				var k8 []*surfui.Node
+				// info-panel.surf:6:57 <icon>
+				if e.Enter("info-panel.surf", 6, 57) {
+					var n9 *surfui.Node
+					{
+						var v10 string
+						if c.Open {
+							v10 = "mark"
+						} else {
+							v10 = "ring"
+						}
+						{
+							name := v10
+							a, ok := surfSVG(name)
+							var err error
+							if n9, err = surf.IconAsset("", name, a, ok); err != nil {
+								e.Fail("info-panel.surf", 6, 57, err)
+							}
+						}
+					}
+					k8 = append(k8, n9)
+					e.Leave()
+				}
+				n8 := surf.ButtonNode("", false, k8)
+				surf.ModKey(n8, "toggle")
+				surf.ModLabel(n8, "Toggle")
+				n8.On("click", func() { c.Toggle() })
+				k2 = append(k2, n8)
 				e.Leave()
 			}
 			n2 := surfui.Row(k2...)
@@ -1836,15 +1902,45 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 					}
 				}
 			}
-			// note-row.surf:14:5 <button>
-			if e.Enter("note-row.surf", 14, 5) {
-				n19 := surfui.Button("Dismiss")
-				surf.ModReveal(n19, true)
-				{
-					a20 := prop10
-					n19.On("click", func() { c.Dismiss(a20) })
+			switch {
+			default:
+				p20 := prop10
+				if p20 == nil {
+					e.Null("note-row.surf", 14, 5)
+					break
 				}
-				k2 = append(k2, n19)
+				if int64(len(p20.Tags)) > int64(0) {
+					// note-row.surf:14:5 <icon>
+					if e.Enter("note-row.surf", 14, 5) {
+						var n19 *surfui.Node
+						{
+							var err error
+							if n19, err = surf.IconNode("\U000f04fc", "M3 3H11L21 13L13 21L3 11Z"); err != nil {
+								e.Fail("note-row.surf", 14, 5, err)
+							}
+						}
+						k2 = append(k2, n19)
+						e.Leave()
+					}
+					break
+				}
+			}
+			// note-row.surf:15:5 <button>
+			if e.Enter("note-row.surf", 15, 5) {
+				var k21 []*surfui.Node
+				// note-row.surf:15:43 <icon>
+				if e.Enter("note-row.surf", 15, 43) {
+					n22 := surfui.Icon("\U000f0156")
+					k21 = append(k21, n22)
+					e.Leave()
+				}
+				n21 := surf.ButtonNode("Dismiss", false, k21)
+				surf.ModReveal(n21, true)
+				{
+					a23 := prop10
+					n21.On("click", func() { c.Dismiss(a23) })
+				}
+				k2 = append(k2, n21)
 				e.Leave()
 			}
 			n2 := surfui.Row(k2...)
@@ -1857,36 +1953,36 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 		surf.ModSelected(n1, prop11)
 		switch {
 		default:
-			p21 := prop10
-			if p21 == nil {
+			p24 := prop10
+			if p24 == nil {
 				e.Null("note-row.surf", 2, 1)
 				break
 			}
-			a22 := p21.ID
-			n1.On("click", func() { c.Open(a22) })
+			a25 := p24.ID
+			n1.On("click", func() { c.Open(a25) })
 		}
 		var m1 []surfui.MenuItem
 		{
-			var t24 string
-			t24 += "Open "
+			var t27 string
+			t27 += "Open "
 			switch {
 			default:
-				p23 := prop10
-				if p23 == nil {
+				p26 := prop10
+				if p26 == nil {
 					e.Null("note-row.surf", 4, 5)
 					break
 				}
-				t24 += p23.ID
+				t27 += p26.ID
 			}
 			switch {
 			default:
-				p25 := prop10
-				if p25 == nil {
+				p28 := prop10
+				if p28 == nil {
 					e.Null("note-row.surf", 4, 5)
 					break
 				}
-				a26 := p25.ID
-				it, err := surf.MenuAction(0, t24, "email-open-outline", "enter", false, func() { c.Open(a26) })
+				a29 := p28.ID
+				it, err := surf.MenuAction(0, t27, "email-open-outline", "enter", false, func() { c.Open(a29) })
 				if err != nil {
 					e.Fail("note-row.surf", 4, 5, err)
 				}
@@ -1895,32 +1991,32 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 		}
 		switch {
 		default:
-			p31 := prop10
-			if p31 == nil {
+			p34 := prop10
+			if p34 == nil {
 				e.Null("note-row.surf", 5, 5)
 				break
 			}
-			if int64(len(p31.Tags)) > int64(0) {
+			if int64(len(p34.Tags)) > int64(0) {
 				{
-					var a28 string
+					var a31 string
 					switch {
 					default:
-						p27 := prop10
-						if p27 == nil {
+						p30 := prop10
+						if p30 == nil {
 							e.Null("note-row.surf", 5, 5)
 							break
 						}
-						a28 = strconv.FormatInt(int64(len(p27.Tags)), 10)
+						a31 = strconv.FormatInt(int64(len(p30.Tags)), 10)
 					}
 					switch {
 					default:
-						p29 := prop10
-						if p29 == nil {
+						p32 := prop10
+						if p32 == nil {
 							e.Null("note-row.surf", 5, 5)
 							break
 						}
-						a30 := int(int64(len(p29.Tags)))
-						it, err := surf.MenuAction(1, "Bump by its tags", "", a28, false, func() { c.Bump(a30) })
+						a33 := int(int64(len(p32.Tags)))
+						it, err := surf.MenuAction(1, "Bump by its tags", "", a31, false, func() { c.Bump(a33) })
 						if err != nil {
 							e.Fail("note-row.surf", 5, 5, err)
 						}
@@ -1932,19 +2028,19 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 		}
 		m1 = append(m1, surf.MenuSep(2))
 		{
-			var a33 bool
+			var a36 bool
 			switch {
 			default:
-				p32 := prop10
-				if p32 == nil {
+				p35 := prop10
+				if p35 == nil {
 					e.Null("note-row.surf", 7, 5)
 					break
 				}
-				a33 = !p32.Unread
+				a36 = !p35.Unread
 			}
 			{
-				a34 := prop10
-				it, err := surf.MenuAction(3, "Dismiss", "close", "", a33, func() { c.Dismiss(a34) })
+				a37 := prop10
+				it, err := surf.MenuAction(3, "Dismiss", "close", "", a36, func() { c.Dismiss(a37) })
 				if err != nil {
 					e.Fail("note-row.surf", 7, 5, err)
 				}
@@ -2119,6 +2215,17 @@ func surfRenderShelf(e *surf.Errs, out []*surfui.Node, c *Shelf, fill surf.Fill)
 		e.Leave()
 	}
 	return out
+}
+
+// surfSVG is the .svg file of that name beside the templates.
+func surfSVG(name string) (surf.SVGAsset, bool) {
+	switch name {
+	case "mark":
+		return surf.SVGAsset{Path: "M12 2L21 7V17L12 22L3 17V7Z", Glyph: "\U000f02d9"}, true
+	case "ring":
+		return surf.SVGAsset{Path: "M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z", Glyph: ""}, true
+	}
+	return surf.SVGAsset{}, false
 }
 
 // surfCompiledBoard is c drawn by its templates compiled into Go.

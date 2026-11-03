@@ -283,6 +283,16 @@
 .u-compact .u-icon { width: 18px; font-size: 16px; }
 .u-roomy .u-icon { width: 20px; font-size: 17px; }
 .u-item.is-sel .u-icon { color: var(--u-ink); }
+/* An SVG icon: its path in a square of the icon's size, centred in its
+   slot, filled in the text's colour (fill="currentColor" on the svg, a
+   presentation attribute, which Blitz draws without mod 0042). */
+.u-svg { display: inline-flex; align-items: center; justify-content: center; }
+.u-svg > svg { flex: 0 0 auto; width: 1em; height: 1em; }
+/* A button with an icon: the icon beside its label, both centred on the
+   line, a step apart, as a search row has its icon, in the button's
+   colour. */
+.u-btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: var(--u-gx); }
+.u-btn > .u-icon { color: inherit; }
 .u-dot {
   --u-dw: 6px;
   flex: 0 0 auto;

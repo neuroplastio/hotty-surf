@@ -293,6 +293,16 @@ The order is the maintainer's, via gov (2026-10-30):
   `surfui/html.go` (`dataOn`); then `Surface.Event` hands the host the
   menu of such a press's target, and the cells' renderer sends one on a
   right press.
+- [x] **Icons by name, SVG icons, icons in buttons**: `<icon
+  name="cog-outline"/>` and `:name`, MDI's names from Nerd Fonts
+  3.5.1's glyphnames.json (`pkg/mdi`, generated; NOTICE), a literal
+  resolved at load so the compiled mode links no table; `svg="logo"`, an
+  `.svg` file beside the templates, and `path="M…"`, an inline SVG on a
+  host and the glyph in the cells; `<button><icon/>Text</button>`, and
+  an icon alone with `label`. In both modes, the conformance fixtures,
+  docs/surf.md ("Icons") and the spec.
+- [ ] **Icons: MDI names as SVG on hosts** (out of the icon piece): a
+  host draws a `name`d icon by the font's glyph, not by MDI's SVG.
 
 ## v0
 

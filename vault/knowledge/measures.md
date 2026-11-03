@@ -276,6 +276,28 @@ What it says:
   MiB by Go, 2.03 MiB by TinyGo at `-no-debug -opt=z`): it writes 5259
   bytes now, not 4931.
 
+### MDI's names (the icon piece, 2026-11-03)
+
+`<icon name=…>` looks MDI's names up in `pkg/mdi`, a table of 6896
+(constant data, about 140 KiB of it). `examples/wasm-surf`'s button
+with no icon, then with `<icon name="plus"/>`, then with a bound
+`:name`, in bytes as built / gzipped at -9 (TinyGo 0.43.0
+`-no-debug -opt=z`; Go 1.26.8 `-trimpath -ldflags='-s -w'`); "before"
+is the same program before the piece:
+
+| Build | before | no icon | literal name | bound name |
+| --- | ---: | ---: | ---: | ---: |
+| TinyGo, compiled | 2534781 / 839686 | 2536248 / 839909 | 2536892 / 840362 | 2683004 / 893889 |
+| TinyGo, interpreted | 3004004 / 1001838 | 3173099 / 1063433 | 3173125 / 1063637 | 3173147 / 1063573 |
+| Go, compiled | 8381150 / 2198321 | 8384867 / 2199702 | 8390172 / 2200381 | 8538757 / 2251157 |
+| Go, interpreted | 9632907 / 2504830 | 9850997 / 2573206 | 9851051 / 2572567 | 9851074 / 2573252 |
+
+- **The compiled mode links the table only for a bound name:** a
+  literal compiles to its glyph (+0.6 KiB, the button's icon), a bound
+  one to `surf.IconGlyph` and the table (+143 KiB, +53 KiB gzipped).
+- **The interpreter always links it** (+165 KiB under TinyGo, +60 KiB
+  gzipped; +213 KiB under Go): its loader resolves a literal name.
+
 ## spike/cost's TestCost
 
 spike/cost left the tree with spike/ (2026-10-31); `make bench` runs

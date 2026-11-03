@@ -11,6 +11,7 @@ import (
 
 	cellite "github.com/neuroplastio/cel-lite"
 	surf "github.com/neuroplastio/hotty-surf"
+	"github.com/neuroplastio/hotty-surf/pkg/mdi"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
 
@@ -83,6 +84,7 @@ type cgen struct {
 	fns   map[string]*rfn // by the template's Key
 	order []*rfn
 	std   map[string]bool // the standard packages the code uses
+	svg   bool            // an <icon> binds svg=: the code has surfSVG
 }
 
 // compiled is the compiled mode's code for the templates of set.
@@ -134,6 +136,16 @@ func (g *gen) compiled(set *surf.Set) (string, []string, error) {
 		if err := c.write(&b, r); err != nil {
 			return "", nil, err
 		}
+	}
+	if c.svg {
+		// The assets, written in, as the templates are: a bound svg=
+		// finds them with no loader.
+		b.WriteString("// surfSVG is the .svg file of that name beside the templates.\nfunc surfSVG(name string) (surf.SVGAsset, bool) {\nswitch name {\n")
+		for _, name := range set.SVGs() {
+			a, _ := set.SVG(name)
+			fmt.Fprintf(&b, "case %q:\nreturn surf.SVGAsset{Path: %q, Glyph: %q}, true\n", name, a.Path, a.Glyph)
+		}
+		b.WriteString("}\nreturn surf.SVGAsset{}, false\n}\n\n")
 	}
 	for _, sh := range g.shapes {
 		if !sh.component {
@@ -440,8 +452,8 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	n := w.tmp("n")
 	k, bs := "k"+n[1:], "b"+n[1:]
 	ktg := target{binds: bs}
-	if wd.Form == surf.FormKids || wd.Form == surf.FormSection {
-		ktg.out = k
+	if wd.Form == surf.FormKids || wd.Form == surf.FormSection || wd.Tag == "button" {
+		ktg.out = k // a button's: its <icon>
 	}
 	var kids bytes.Buffer
 	for _, kid := range el.Kids() {
@@ -474,6 +486,11 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		pre, s := w.text(el, sc, el.Text())
 		b.WriteString(pre)
 		ctor = fn + "(" + s + ")"
+		if w.used[k] {
+			ctor = fmt.Sprintf("surf.ButtonNode(%s, %t, %s)", s, el.After(), k)
+		}
+	case surf.FormIcon:
+		w.icon(b, el, sc, n)
 	case surf.FormSwitch:
 		ctor = fn + "(" + w.arg(b, el, sc, el.Args()[0], ctx{k: cBool}, "bool") + ")"
 	case surf.FormChoice:
@@ -487,7 +504,9 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		}
 		ctor = fn + "(" + t + ")"
 	}
-	fmt.Fprintf(b, "%s := %s\n", n, ctor)
+	if ctor != "" {
+		fmt.Fprintf(b, "%s := %s\n", n, ctor)
+	}
 	for _, m := range el.Mods() {
 		w.mod(b, el, sc, n, m)
 	}
@@ -508,6 +527,51 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	}
 	w.used[tg.out] = true
 	fmt.Fprintf(b, "%s = append(%s, %s)\ne.Leave()\n}\n", tg.out, tg.out, n)
+}
+
+// icon writes an <icon>'s node, n, as the interpreter builds it: its
+// glyph, a literal the load resolved or its bound name's (surf.IconGlyph,
+// which links MDI's names only here); then its path, or its bound svg's
+// asset (surfSVG, which this package's .svg files are written into).
+func (w *fw) icon(b *bytes.Buffer, el *surf.Elem, sc *scope, n string) {
+	const (
+		argName = iota
+		argSVG
+		argPath
+	)
+	pos := w.pos(el)
+	help := strconv.Quote(string(mdi.HelpBox))
+	pre, glyph := w.text(el, sc, el.Text())
+	b.WriteString(pre)
+	args := el.Args()
+	if v := args[argName]; v.Given() {
+		g := w.tmp("g")
+		pre, code := w.compute(el, sc, v.Program(), ctx{k: cString})
+		if strings.Contains(strings.Join(pre, "\n"), "break") {
+			fmt.Fprintf(b, "%s := %s // where the name fails\n", g, help)
+		} else {
+			fmt.Fprintf(b, "var %s string\n", g)
+		}
+		b.WriteString(guard(pre, fmt.Sprintf("{\nvar err error\nif %s, err = surf.IconGlyph(%s); err != nil {\ne.Fail(%s, err)\n}\n}", g, code, pos)))
+		glyph = g
+	}
+	if v := args[argSVG]; v.Given() {
+		w.c.svg = true
+		pre, code := w.compute(el, sc, v.Program(), ctx{k: cString})
+		if strings.Contains(strings.Join(pre, "\n"), "break") {
+			fmt.Fprintf(b, "%s := surfui.Icon(%s) // where the name fails\n", n, help)
+		} else {
+			fmt.Fprintf(b, "var %s *surfui.Node\n", n)
+		}
+		b.WriteString(guard(pre, fmt.Sprintf("{\nname := %s\na, ok := surfSVG(name)\nvar err error\nif %s, err = surf.IconAsset(%s, name, a, ok); err != nil {\ne.Fail(%s, err)\n}\n}", code, n, glyph, pos)))
+		return
+	}
+	path := w.arg(b, el, sc, args[argPath], ctx{k: cString}, "string")
+	if !args[argPath].Given() {
+		fmt.Fprintf(b, "%s := surfui.Icon(%s)\n", n, glyph)
+		return
+	}
+	fmt.Fprintf(b, "var %s *surfui.Node\n{\nvar err error\nif %s, err = surf.IconNode(%s, %s); err != nil {\ne.Fail(%s, err)\n}\n}\n", n, n, glyph, path, pos)
 }
 
 // arg is a constructor's argument: v for c, its zero where it is unset or

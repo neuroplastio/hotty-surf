@@ -11,6 +11,7 @@
     <badge :fill="toneOf(note.level)" width="6">{{ note.level }}</badge>
     <text grow :bold="note.unread">{{ note.text }}</text>
     <badge :each="(i, t) in note.tags" :key="t" muted>{{ i + 1 }}:{{ t }}</badge>
-    <button reveal @click="dismiss(note)">Dismiss</button>
+    <icon :if="size(note.tags) > 0" name="tag-outline" path="M3 3H11L21 13L13 21L3 11Z"/>
+    <button reveal @click="dismiss(note)"><icon name="close"/>Dismiss</button>
   </row>
 </item>

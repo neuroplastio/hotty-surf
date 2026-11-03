@@ -2,5 +2,7 @@
   <row gap="1">
     <switch :on="open" @click="toggle" label="Open"/>
     <text>{{ open ? title : 'closed' }}</text>
+    <icon svg="mark"/>
+    <button label="Toggle" @click="toggle" key="toggle"><icon :svg="open ? 'mark' : 'ring'"/></button>
   </row>
 </box>

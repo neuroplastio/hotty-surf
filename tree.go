@@ -67,6 +67,9 @@ func (e *elem) KeyLabel() AttrValue { return e.keyLabel }
 func (e *elem) Disabled() AttrValue { return e.off }
 func (e *elem) Do() Handler         { return e.do }
 
+// After says a <button>'s <icon>, among its Kids, is after its text.
+func (e *elem) After() bool { return e.after }
+
 // Templates are the Set's compiled templates, by Key.
 func (s *Set) Templates() []*Template {
 	s.mu.Lock()

@@ -36,7 +36,16 @@ const (
 	mdSourceBranch   = "\U000F062C"
 	mdPlus           = "\U000F0415"
 	mdClose          = "\U000F0156"
+	mdRestart        = "\U000F0709"
+	mdArrowRight     = "\U000F0054"
+	mdHexagonOutline = "\U000F02D9"
 )
+
+// hexagon is an SVG icon: a hexagon's outline, its glyph in the cells
+// MDI's hexagon-outline.
+func hexagon() *surfui.Node {
+	return surfui.SVGIcon(mdHexagonOutline, "M12 2L21 7V17L12 22L3 17V7ZM12 4.3L5 8.2V15.8L12 19.7L19 15.8V8.2Z")
+}
 
 // mockKeys is the mock's key style: each key on a cap of its own, as a
 // word in lower case. The mock draws a key, not a sequence, so it draws

@@ -49,7 +49,7 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 		ws.by[c.Name] = c
 	}
 	switch w.Form {
-	case surf.FormText:
+	case surf.FormText, surf.FormIcon:
 		add(&Control{Name: "text", Kind: "field", Value: sampleText[w.Tag], text: true})
 	case surf.FormSwitch:
 		add(&Control{Name: "on", Kind: "switch", Value: "false"})
@@ -150,7 +150,7 @@ func (ws *widgetStory) source() string {
 	}
 	kids := ""
 	switch w.Form {
-	case surf.FormText:
+	case surf.FormText, surf.FormIcon:
 		kids = escape(ws.by["text"].Value, false)
 	case surf.FormKids, surf.FormSection:
 		n, _ := strconv.Atoi(ws.by["children (count)"].Value)

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- No data-glyph: the cells draw help-box for it, where the template
+       gives no name= beside it. -->
+  <path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"/>
+</svg>

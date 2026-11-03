@@ -257,11 +257,12 @@ func TestStackUse(t *testing.T) {
 	// each with a :if or a :each; and templates that use each other as
 	// deep, each a stack round the next one's use.
 	// The suite's templates, the components' and their partials', with
-	// board.surf given.
+	// board.surf given, and the .svg files they name.
 	files := func(board string) fstest.MapFS {
 		fsys := fstest.MapFS{}
 		names, _ := fs.Glob(surfFiles, "*.surf")
-		for _, n := range names {
+		svgs, _ := fs.Glob(surfFiles, "*.svg")
+		for _, n := range append(names, svgs...) {
 			src, _ := fs.ReadFile(surfFiles, n)
 			fsys[n] = &fstest.MapFile{Data: src}
 		}
