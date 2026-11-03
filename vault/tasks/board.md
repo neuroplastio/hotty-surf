@@ -303,6 +303,47 @@ The order is the maintainer's, via gov (2026-10-30):
   docs/surf.md ("Icons") and the spec.
 - [ ] **Icons: MDI names as SVG on hosts** (out of the icon piece): a
   host draws a `name`d icon by the font's glyph, not by MDI's SVG.
+- [ ] **Tooltips** (after drag; the maintainer, 2026-11-03: "tip ->
+  title, but make it a component, not plain text, so tooltip could be
+  complex. hotty-surf feature", and hotty's V7-02 withdrawn: "withdraw,
+  no spec changes"). A tooltip is a surface the host application places,
+  as it places a context menu, from hotty's `hover` (SPEC §9.4: the
+  element and the cell under the pointer). No hotty change. The shape,
+  whose two choices wait on the maintainer:
+  - **Markup.** `title="Plain text"` (and `:title`) is the shorthand. A
+    `<title>` child holds any surf elements: rows, text, dots, badges,
+    icons, a partial (a component of its own). SVG gives a tooltip the
+    same way. It reads the enclosing scope (an `:each` row's data), and
+    is never drawn in place, as `<menu>` isn't. Refused at load: both
+    forms on one element, two `<title>`s, and anything that acts inside
+    one (`@click`, a field, a button, `focusable`, a `<menu>`). A
+    tooltip vanishes when the pointer moves, so nothing in it can be
+    reached.
+  - **`section`'s heading becomes `heading`,** so that `title` is a
+    tooltip on every element. No `.surf` uses `section title=` today.
+    For one minor, a `section` with `title` and no `heading` is refused
+    with a hint, so an old template doesn't lose its heading quietly.
+  - **On a partial's use** its attributes stay its props. A partial
+    that wants a tooltip forwards its own `title` prop to its root.
+  - **On a host,** a surface whose view has a tooltip sets `v=1`. Each
+    element with one has an id. surf writes no HTML `title`, so a
+    browser host (the xterm addon) doesn't draw a second one.
+  - **API,** shaped as `Menu`/`Pick`: `surfrun.Surface.Tip(at TipAt)
+    (Tip, bool)`. `at` is a hover's `t` or a cell
+    (`cells.Renderer.At`). `Tip` renders as its own small view in surf's
+    look: a card, small text, at most about 48 cells wide and wrapped,
+    with HTML for a host, cells for the cells, and its size in cells.
+  - **The host application** (plx, surflua) owns the dwell (about
+    500 ms) and the placement: a row under the pointer, or above it
+    without room, clamped to the grid, at a `z` above, with
+    `pointer-events: none`. It hides the tip when the hovered element
+    changes, on `out`, a press or a key. A redraw while it shows draws
+    the tip again, so live data stays live. In the cells, plx draws
+    `Tip`'s cells where it draws a menu.
+  - **Out of the first cut:** keyboard (focus shows no tip), and touch.
+  - **Hosts:** hottyterm has `hover` and `passthrough`. The xterm addon
+    sends no `hover` yet (its own §9.4 gap), so it shows no tooltips
+    until it does.
 
 ## v0
 
