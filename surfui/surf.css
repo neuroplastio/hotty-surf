@@ -435,8 +435,15 @@
    text in the error, no hairline. */
 .u-btn.u-fill-error { color: var(--u-error); background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); box-shadow: none; }
 .u-btn.u-bare { color: var(--u-muted); background: transparent; box-shadow: none; }
+/* A small button fits its row: a line tall (the row's, in the button's
+   own small type in Roomy), never taller than the text beside it, so
+   that a row that shows one (a selected row's) is as tall as it was; a
+   step less room across (a bare one keeps its own). Small and bare, it
+   is a line tall too. */
+.u-compact .u-btn.u-small, .u-roomy .u-btn.u-small { padding: 0 var(--u-px); }
 .u-compact .u-btn.u-bare, .u-roomy .u-btn.u-bare { padding: 0 6px; }
 .u-compact .u-btn.u-bare { height: 22px; line-height: 22px; }
+.u-surface .u-btn.u-small { height: var(--u-row); line-height: var(--u-row); }
 .u-switch {
   flex: 0 0 auto;
   display: inline-flex;

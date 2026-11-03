@@ -486,7 +486,9 @@ func (n *Node) Semibold() *Node { return n.Class("u-semi") }
 func (n *Node) Muted() *Node { return n.Class("u-tone-muted") }
 
 // Small sets n's text smaller: on a roomy surface, and in Compact the
-// kit's caption size (0.8125rem); dense has one size.
+// kit's caption size (0.8125rem); dense has one size. A small Button fits
+// its row, a line tall, so that a row that holds one is as tall as it is
+// without it, at every density: a row's actions.
 func (n *Node) Small() *Node { return n.Class("u-small") }
 
 // Wrap lets a Text wrap at its box's edge.

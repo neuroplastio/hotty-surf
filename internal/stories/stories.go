@@ -244,6 +244,25 @@ var All = []Story{
 				Force(surfui.Button("Reset").Bare(), "focus"), Force(surfui.Button("Reset").Bare(), "hover")).Gap(2),
 		).Gap(1)
 	}},
+	{"button/small", 50, func() *surfui.Node {
+		// A small button fits its row: each row holding one is as tall
+		// as the first, which holds none, at every density. The gate
+		// measures it (data-same: the rows are one height in Chromium,
+		// and the diff holds Blitz to Chromium). Plain on the selected
+		// row, the primary, hovered, an icon alone, and bare.
+		row := func(name, state string, tail ...*surfui.Node) *surfui.Node {
+			kids := append([]*surfui.Node{surfui.Text(name).Grow(), surfui.Text(state).Small().Muted()}, tail...)
+			return surfui.Item(kids...).Gap(1).Attr("data-same", "row")
+		}
+		return surfui.List(
+			row("claude-1", "working"),
+			row("claude-2", "waiting", surfui.Button("Stop").Small()).Selected(true),
+			row("pi-1", "idle", surfui.Button("Start").Small().Fill(surfui.Accent)),
+			row("codex-1", "done", Force(surfui.Button("Retry").Small(), "hover"),
+				surfui.IconButton(surfui.Icon(mdClose), "", false).Label("Close").Small()),
+			row("opencode-1", "idle", surfui.Button("Reset").Small().Bare()),
+		)
+	}},
 	{"button/icon", 60, func() *surfui.Node {
 		// An icon beside a button's label, before it or after it, centred
 		// on its line a step from it, in the button's colour; an icon

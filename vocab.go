@@ -139,7 +139,7 @@ var Attrs = []Attr{
 	{Name: "bold", Type: TypeBool, Doc: "bold text", Func: "ModBold"},
 	{Name: "semibold", Type: TypeBool, Doc: "text at weight 600", Func: "ModSemibold"},
 	{Name: "muted", Type: TypeBool, Doc: "the muted colour", Func: "ModMuted"},
-	{Name: "small", Type: TypeBool, Doc: "smaller text", Func: "ModSmall"},
+	{Name: "small", Type: TypeBool, Doc: "smaller text; a button a line tall, to fit its row", Func: "ModSmall"},
 	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph", Func: "ModWrap"},
 	{Name: "grow", Type: TypeBool, Doc: "takes the room left in its row or stack", Func: "ModGrow"},
 	{Name: "keep", Type: TypeBool, Doc: "keeps it whole in its row or stack: what is beside it gives way first", Func: "ModKeep"},

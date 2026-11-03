@@ -547,7 +547,7 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | 13 | `bold` | bool | every widget | modifier | bold text | `<text bold>x</text>` | `<span id="r" class="u-text u-bold">x</span>` |
 | 14 | `semibold` | bool | every widget | modifier | text at weight 600 | `<text semibold>x</text>` | `<span id="r" class="u-text u-semi">x</span>` |
 | 15 | `muted` | bool | every widget | modifier | the muted colour | `<text muted>x</text>` | `<span id="r" class="u-text u-tone-muted">x</span>` |
-| 16 | `small` | bool | every widget | modifier | smaller text | `<text small>x</text>` | `<span id="r" class="u-text u-small">x</span>` |
+| 16 | `small` | bool | every widget | modifier | smaller text; a button a line tall, to fit its row | `<text small>x</text>` | `<span id="r" class="u-text u-small">x</span>` |
 | 17 | `wrap` | bool | every widget | modifier | a text that wraps; a line that is a paragraph | `<text wrap>x</text>` | `<span id="r" class="u-text u-wrap">x</span>` |
 | 18 | `grow` | bool | every widget | modifier | takes the room left in its row or stack | `<text grow>x</text>` | `<span id="r" class="u-text u-grow">x</span>` |
 | 19 | `keep` | bool | every widget | modifier | keeps it whole in its row or stack: what is beside it gives way first | `<row keep/>` | `<div id="r" class="u-row u-keep"></div>` |

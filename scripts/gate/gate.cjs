@@ -15,6 +15,12 @@
 // this run's failures as a baseline: when a Blitz fix lands, or a gap is
 // listed.
 //
+// A story may ask that some of its boxes be one height: each with the same
+// data-same="<name>" (button/small: a row holding a small button is as tall
+// as one without it). The gate measures them in Chromium, where a group
+// whose heights differ by more than 0.01 CSS px fails the run, baseline or
+// not; the diff holds Blitz to Chromium.
+//
 // --inject adds CSS to Chromium's side alone, after the document's: a
 // fault planted to see that the gate catches it (the calibration below).
 //
@@ -343,6 +349,13 @@ async function sheet(page, file, c, files) {
     const rows = Math.max(rowsB, rowsC);
     if (rows !== rowsB) await run(a.hotty, [...base, "--rows", String(rows)]);
     await chromiumShot(page, sc, c.cols, rows, chromePNG);
+    c.uneven = await page.evaluate(() => {
+      const groups = {};
+      for (const e of document.querySelectorAll("[data-same]")) (groups[e.dataset.same] ??= []).push(e.getBoundingClientRect().height);
+      return Object.entries(groups)
+        .filter(([, h]) => Math.max(...h) - Math.min(...h) > 0.01)
+        .map(([k, h]) => `${k}: ${h.map((x) => x.toFixed(2)).join(", ")} CSS px`);
+    });
     const d = await diffs.run(w, { blitz: blitzPNG, chromium: chromePNG, out: diffPNG, scale: c.scale }).catch((e) => {
       throw new Error(`${c.id}: ${e.message}`);
     });
@@ -356,6 +369,7 @@ async function sheet(page, file, c, files) {
   const secs = ((Date.now() - t0) / 1000).toFixed(0);
   const failed = cases.filter((c) => !c.pass);
   const known = cases.filter((c) => c.note);
+  const uneven = cases.filter((c) => c.uneven.length).map((c) => `uneven: ${c.id}: ${c.uneven.join("; ")}`);
   // Against the baseline: what it doesn't know, what got worse, and what
   // is to come off it.
   let against = null;
@@ -392,6 +406,7 @@ async function sheet(page, file, c, files) {
       "both are drawn at the taller). Moved: the share of the image that matched only moved. " +
       `Wrong in Chromium too (our CSS, not a Blitz gap): ${known.length ? known.map((c) => c.id).join(", ") : "none noted"}.`,
     "",
+    ...(uneven.length ? [`Boxes to be one height that aren't (data-same), in Chromium:`, ...uneven.map((x) => `- ${x}`), ""] : []),
     ...(against
       ? [
           `Against the baseline (\`${a.baseline}\`): ` +
@@ -415,12 +430,13 @@ async function sheet(page, file, c, files) {
   if (a["write-baseline"])
     writeBaseline(a["write-baseline"], failed, `hotty built ${hottyBuilt} UTC (checkout at ${hottyRev}), ${chromiumName}`);
   console.log(`${cases.length} cases, ${failed.length} failed, ${secs} s: ${path.join(a.out, "report.md")}`);
+  for (const x of uneven) console.log(x);
   if (against) {
     for (const x of against) console.log(x);
     console.log(`against the baseline: ${against.length ? `${against.length} to look at` : "as known"}`);
-    process.exit(against.length ? 1 : 0);
+    process.exit(against.length || uneven.length ? 1 : 0);
   }
-  process.exit(failed.length ? 1 : 0);
+  process.exit(failed.length || uneven.length ? 1 : 0);
 })().catch((e) => {
   console.error(e);
   process.exit(2);

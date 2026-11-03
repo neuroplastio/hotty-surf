@@ -260,6 +260,19 @@ component or a partial.
   it clips. A program brings a selection in it into view (below), and
   can't read where it is; a new key starts it at its top. The guide's
   [Scrolling](guide.md#scrolling) says more.
+- **`small` and `bare` on a `button`:** `small` makes a button fit its
+  row: a line tall, its text small, so that a row holding one is as tall
+  as the same row without it, at every density. Use it for a row's
+  actions. `bare` takes away its border and fill and leaves its text,
+  muted: a quiet action such as a setting's Reset. In Compact it is
+  shorter than a control, but still a pixel taller than a row; with
+  `small` too, it is a line tall. The cells draw every button a cell
+  tall.
+- **Row actions without the list jumping:** give every row its actions
+  with `reveal`, not only the selected one with `:if`. A revealed
+  action keeps its room while hidden, so no row changes height or width
+  as the selection moves, and it shows under the pointer too:
+  `<button small reveal @click="stop(a)">Stop</button>`.
 - **`selected`** marks an item as its list's selection. Where the run
   scrolls (`surfrun.Options.Scroll`), the runtime keeps it in view: an item
   that becomes selected is scrolled into view, by as little as it can.
