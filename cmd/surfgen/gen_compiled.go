@@ -343,6 +343,7 @@ type target struct {
 	out   string
 	binds string // a []surfui.Binding it appends to, or ""
 	ptr   bool   // binds is a *[]surfui.Binding that may be nil
+	menu  string // a <menu>'s []surfui.MenuItem its items append to
 }
 
 // bindsArg is t's binds as a *[]surfui.Binding.
@@ -407,7 +408,29 @@ func (w *fw) render(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		w.use(b, el, sc, tg)
 	case surf.ElemEmbed:
 		w.embed(b, el, sc, tg)
+	case surf.ElemAction, surf.ElemSep:
+		w.menuItem(b, el, sc, tg)
 	}
+}
+
+// menuItem writes a <menu>'s item, appended to tg.menu: a separator, or
+// an action, left out where its handler's arguments fail, as the
+// interpreter's.
+func (w *fw) menuItem(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
+	if el.Kind() == surf.ElemSep {
+		fmt.Fprintf(b, "%s = append(%s, surf.MenuSep(%d))\n", tg.menu, tg.menu, el.Ord())
+		return
+	}
+	b.WriteString("{\n")
+	pre, label := w.text(el, sc, el.Text())
+	b.WriteString(pre)
+	icon := w.arg(b, el, sc, el.Icon(), ctx{k: cString}, "string")
+	key := w.arg(b, el, sc, el.KeyLabel(), ctx{k: cText}, "string")
+	off := w.arg(b, el, sc, el.Disabled(), ctx{k: cBool}, "bool")
+	apre, act := w.action(el, sc, el.Do())
+	b.WriteString(guard(apre, fmt.Sprintf("it, err := surf.MenuAction(%d, %s, %s, %s, %s, %s)\nif err != nil {\ne.Fail(%s, err)\n}\n%s = append(%s, it)",
+		el.Ord(), label, icon, key, off, act, w.pos(el), tg.menu, tg.menu)))
+	b.WriteString("}\n")
 }
 
 // widget writes a widget's: its children, its constructor, its
@@ -474,6 +497,14 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	for _, ev := range el.Events() {
 		pre, act := w.action(el, sc, ev.Handler())
 		b.WriteString(guard(pre, fmt.Sprintf("%s.On(%q, %s)", n, ev.Kind(), act)))
+	}
+	if m := el.Menu(); m != nil {
+		ms := "m" + n[1:]
+		fmt.Fprintf(b, "var %s []surfui.MenuItem\n", ms)
+		for _, it := range m.Kids() {
+			w.render(b, it, sc, target{menu: ms})
+		}
+		fmt.Fprintf(b, "%s.Menu(%s...)\n", n, ms)
 	}
 	w.used[tg.out] = true
 	fmt.Fprintf(b, "%s = append(%s, %s)\ne.Leave()\n}\n", tg.out, tg.out, n)

@@ -49,7 +49,23 @@ const (
 	ElemIf        = kIf
 	ElemEach      = kEach
 	ElemEmbed     = kEmbed // its State is its :of, its Mods its key
+	ElemMenu      = kMenu  // a widget's Menu: its Kids are its items
+	ElemAction    = kAction
+	ElemSep       = kSep
 )
+
+// Menu is a widget's <menu>, nil for none.
+func (e *elem) Menu() *Elem { return e.menu }
+
+// Ord is an <action>'s or a <sep>'s place among its menu's items in the
+// source, from 0: its id (MenuAction, MenuSep).
+func (e *elem) Ord() int { return e.ord }
+
+// An <action>'s icon, key label, :disabled and do; its label is its Text.
+func (e *elem) Icon() AttrValue     { return e.icon }
+func (e *elem) KeyLabel() AttrValue { return e.keyLabel }
+func (e *elem) Disabled() AttrValue { return e.off }
+func (e *elem) Do() Handler         { return e.do }
 
 // Templates are the Set's compiled templates, by Key.
 func (s *Set) Templates() []*Template {

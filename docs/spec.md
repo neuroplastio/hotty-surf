@@ -219,6 +219,12 @@ What fails a load:
 - **keys:** a `<bind>` with no `key`, or with neither or both of `do`
   and `scroll`, an attribute it doesn't take, a bound `do` or `scroll`, a
   `scroll` that is no scroll action, children, or no widget around it;
+- **context menus:** a `<menu>` outside a widget, a second one, one
+  with attributes, with no item, or with anything but `<action>`s and
+  `<sep/>`s; an `<action>` or a `<sep/>` outside a `<menu>`, or with
+  `:each`; an `<action>` with no `do` or no label, an attribute it
+  doesn't take, a bound `do`, an element in it, or a literal `icon`
+  that is no MDI name; a `<sep/>` with attributes or children;
 - **components:** no template for a tag with a dash; a component's tag
   with no `:state`, or a `:state` of another type, or a `dyn` one on a
   tag whose template is no component's; a prop its template
@@ -781,6 +787,39 @@ widget it is drawn in.
   uses even then, and it does nothing.
 - Tab and Shift+Tab are the host's. Escape blurs the focused element
   unless a binding takes it; ctrl+c ends the run unless one does.
+
+### Context menus
+
+```ebnf
+menu   = "<menu>", { action | sep }, "</menu>" ;
+action = "<action", { attr }, ">", text, "</action>" ;
+sep    = "<sep/>" ;
+```
+
+- A widget's child `<menu>` is its context menu: at most one, never
+  drawn (no element, no cell, no room), and no break in a `:if` chain
+  of its siblings. A `<menu>` takes no attributes, holds `<action>`s and
+  `<sep/>`s only, and at least one; it goes in a widget only, not at a
+  root, in a partial's or a component's tag, or in a `<slot>`.
+- An `<action>` has a `do`, a handler as a `<bind>`'s is (no `$value` or
+  `$event`), evaluated at render in the scope of its widget; and a label,
+  its text, with `{{ }}`. It takes `icon` (an MDI symbol's name, lower
+  case words of letters and digits joined by dashes: a literal is
+  checked at load, a bound one at render, where one it refuses is left
+  out with a render error), `key` (a key's name shown beside the label,
+  any value's text bound; it binds nothing) and `disabled`, each bound
+  or literal, and `:if`, `:else-if` and `:else`. A `<sep/>` takes only
+  those three directives. Neither takes `:each`.
+- Each item's id is its place among its `<menu>`'s items in the source,
+  from 0, a `:if` chain's branches each their own; a menu's id is its
+  widget's ([Ids](#ids)). An action whose `do`'s arguments fail at
+  render is left out; a menu whose items are all left out is none.
+- The host finds the menu of the innermost element with one around
+  where the user asks for it, draws it, and hands back the item picked,
+  whose `do` then runs as a click's handler does; a pick of an item
+  gone since, a separator or a disabled one runs nothing (Go:
+  `surfrun.Surface.Menu` and `Pick`). No event of hotty's asks for a
+  menu yet: an element with one asks the host for nothing.
 
 ## Components, partials, props, slots
 
@@ -1408,7 +1447,11 @@ The partials and their props:
   button's click; and the load cases `value-outside`, `value-inside`,
   `event-to-string` and `event-missing`, which fail where the
   `load` file says (the last two only where parameters have types);
-- with its fixtures as above, and the templates unchanged;
+- with its fixtures as above, and the templates unchanged: their
+  `<menu>`s draw nothing, so each case's document and cells are as they
+  would be without them; and in Go, `TestMenus`: the fixtures' menus
+  found by an element, a cell and the focus, and picked, alike in each
+  mode;
 - every file of each case equal to the case's: `document`, each step's
   `N.log`, `N.ops` and `N.document`, and `errors` where the case has it;
   and, in a runtime that draws in cells, `cells` and each `N.cells`, its

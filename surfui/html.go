@@ -141,6 +141,13 @@ func dataOn(n *Node) string {
 	if Commits(n) {
 		on = appendOnce(on, "input")
 	}
+	// SECONDARY PRESS: waiting on hotty's spec (hotty 0.7 proposal
+	// V7-01, pending). An element with a menu (MenuOf) will opt in here
+	// to the host's press with the secondary button (a press whose
+	// detail has "button": 2, and the pointer's cell, "c" and "r"), by
+	// its token in data-on, once the spec names it; until then it asks
+	// for nothing, and its host finds the menu itself
+	// (surfrun.Surface.Menu). vault/tasks/board.md, "Context menus".
 	return strings.Join(on, " ")
 }
 

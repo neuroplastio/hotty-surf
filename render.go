@@ -422,7 +422,47 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 			n.On(ev.kind, act)
 		}
 	}
+	if e.menu != nil {
+		var items []surfui.MenuItem
+		for _, k := range e.menu.kids {
+			f.menuItem(k, &items)
+		}
+		n.Menu(items...)
+	}
 	return n
+}
+
+// menuItem adds a <menu>'s item to items: an action, a separator, or the
+// one a :if chain draws. An action whose handler's arguments fail is left
+// out, as a <bind>'s key is.
+//
+//go:noinline
+func (f *frame) menuItem(e *elem, items *[]surfui.MenuItem) {
+	switch e.kind {
+	case kIf:
+		if body := f.branch(e); body != nil {
+			f.menuItem(body, items)
+		}
+	case kSep:
+		*items = append(*items, MenuSep(e.ord))
+	case kAction:
+		label := f.text(e, e.text)
+		icon, _ := f.strOr(e, e.icon, "")
+		key := ""
+		if e.keyLabel.set {
+			key, _ = f.str(e, e.keyLabel)
+		}
+		off, _ := f.boolOf(e, e.off, false)
+		act, ok := f.action(e, e.do)
+		if !ok {
+			return
+		}
+		it, err := MenuAction(e.ord, label, icon, key, off, act)
+		if err != nil {
+			f.fail(e, err)
+		}
+		*items = append(*items, it)
+	}
 }
 
 // build is a FormKids or FormNone widget.

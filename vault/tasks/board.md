@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-10-31
+Last updated: 2026-11-03
 
 **Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
 2026-10-30): candidate A (Live) with layout in `.surf` templates and
@@ -275,6 +275,24 @@ The order is the maintainer's, via gov (2026-10-30):
   an open list's Escape and a `<bind key="escape">` inside the dialog
   keep theirs, in the cells too. `TestEscapeGivenToTheHost` pins each
   case, and the guide and `Program`'s doc say it.
+- [x] **Context menus** (for a host application that embeds views as
+  tools, and draws a row's menu itself at the pointer): `<menu>`,
+  `<action do= icon= key= :disabled=>` and `<sep/>` in a widget, never
+  drawn, in both modes and the conformance fixtures; the host finds the
+  innermost menu by an element, a cell (`cells.Renderer.At`) or the
+  focus (`surfrun.Surface.Menu`), and runs the item picked
+  (`Surface.Pick`), a stale pick running nothing. docs/surf.md and the
+  spec say it. `:each` in a `<menu>` is refused: an item's id is its
+  place in the source.
+- [ ] **Context menus: a secondary press** (hotty 0.7 proposal V7-01,
+  pending; the maintainer's call): a `press` whose detail has
+  `"button": 2` and the pointer's cell (`"c"`, `"r"`), on an element
+  that opts in by a token in its `data-on`, whose name the spec has not
+  settled. Until then no element asks for it, and the host finds the
+  menu itself. Where it goes is marked `SECONDARY PRESS` in
+  `surfui/html.go` (`dataOn`); then `Surface.Event` hands the host the
+  menu of such a press's target, and the cells' renderer sends one on a
+  right press.
 
 ## v0
 

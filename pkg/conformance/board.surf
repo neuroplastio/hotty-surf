@@ -4,6 +4,7 @@
     <heading>{{ title }}</heading>
     <spacer/>
     <badge :if="unread() > 0" fill="accent" key="count">{{ unread() }} unread</badge>
+    <menu><action do="setFilter('unread')">Unread only</action></menu>
     <badge :else fill="muted" key="count">All read</badge>
     <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter"/>
   </row>
@@ -12,6 +13,9 @@
     <bind key="arrow_down" label="Next" do="open(next())"/>
     <bind key="+" label="Bump" do="bump(1)"/>
     <bind key="j" label="Scroll down" scroll="down"/>
+    <menu>
+      <action :key="'+'" do="bump(1)">Bump</action>
+    </menu>
     <note-row :each="n in shown()" :key="n.id" :note="n" :sel="n.id == sel"/>
     <item :if="size(shown()) == 0" key="none"><text muted>Nothing to show.</text></item>
   </list>

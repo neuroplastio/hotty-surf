@@ -493,8 +493,8 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 					e.Leave()
 				}
 			} else {
-				// board.surf:7:5 <badge>
-				if e.Enter("board.surf", 7, 5) {
+				// board.surf:8:5 <badge>
+				if e.Enter("board.surf", 8, 5) {
 					n7 := surfui.Badge("All read")
 					surf.ModKey(n7, "count")
 					surf.ModFill(n7, "muted")
@@ -502,8 +502,8 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 					e.Leave()
 				}
 			}
-			// board.surf:8:5 <select>
-			if e.Enter("board.surf", 8, 5) {
+			// board.surf:9:5 <select>
+			if e.Enter("board.surf", 9, 5) {
 				n8 := surf.NewSelect(c.Filter, slices.Clone(c.Filters()))
 				surf.ModKey(n8, "filter")
 				n8.On("change", func(ev surfrun.Event) { c.SetFilter(ev.Value) })
@@ -514,52 +514,64 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 			surf.ModKey(n3, "head")
 			surf.ModGap(n3, 1)
 			surf.ModPad(n3, [2]int64{1, 0})
+			var m3 []surfui.MenuItem
+			{
+				{
+					a9 := "unread"
+					it, err := surf.MenuAction(0, "Unread only", "", "", false, func() { c.SetFilter(a9) })
+					if err != nil {
+						e.Fail("board.surf", 7, 11, err)
+					}
+					m3 = append(m3, it)
+				}
+			}
+			n3.Menu(m3...)
 			k1 = append(k1, n3)
 			e.Leave()
 		}
-		// board.surf:10:3 <list>
-		if e.Enter("board.surf", 10, 3) {
-			var k9 []*surfui.Node
-			var b9 []surfui.Binding
+		// board.surf:11:3 <list>
+		if e.Enter("board.surf", 11, 3) {
+			var k10 []*surfui.Node
+			var b10 []surfui.Binding
 			{
-				a10 := c.Sel
-				b9 = append(b9, surfui.Binding{Key: "enter", Title: "Open", Act: func() { c.Open(a10) }})
+				a11 := c.Sel
+				b10 = append(b10, surfui.Binding{Key: "enter", Title: "Open", Act: func() { c.Open(a11) }})
 			}
 			{
-				a11 := c.Next()
-				b9 = append(b9, surfui.Binding{Key: "arrow_down", Title: "Next", Act: func() { c.Open(a11) }})
+				a12 := c.Next()
+				b10 = append(b10, surfui.Binding{Key: "arrow_down", Title: "Next", Act: func() { c.Open(a12) }})
 			}
 			{
-				a12 := int(int64(1))
-				b9 = append(b9, surfui.Binding{Key: "+", Title: "Bump", Act: func() { c.Bump(a12) }})
+				a13 := int(int64(1))
+				b10 = append(b10, surfui.Binding{Key: "+", Title: "Bump", Act: func() { c.Bump(a13) }})
 			}
-			b9 = append(b9, surfui.Binding{Key: "j", Title: "Scroll down", Scroll: "scroll-down"})
-			for _, x13 := range c.Shown() {
-				// board.surf:15:5 <note-row>
-				if e.Enter("board.surf", 15, 5) {
+			b10 = append(b10, surfui.Binding{Key: "j", Title: "Scroll down", Scroll: "scroll-down"})
+			for _, x14 := range c.Shown() {
+				// board.surf:19:5 <note-row>
+				if e.Enter("board.surf", 19, 5) {
 					switch {
 					default:
-						var a15 bool
+						var a16 bool
 						switch {
 						default:
-							p14 := x13
-							if p14 == nil {
-								e.Null("board.surf", 15, 5)
+							p15 := x14
+							if p15 == nil {
+								e.Null("board.surf", 19, 5)
 								break
 							}
-							a15 = (p14.ID == c.Sel)
+							a16 = (p15.ID == c.Sel)
 						}
-						start16 := len(k9)
-						k9 = surfRenderBoard_NoteRow(e, k9, c, nil, x13, a15)
+						start17 := len(k10)
+						k10 = surfRenderBoard_NoteRow(e, k10, c, nil, x14, a16)
 						switch {
 						default:
-							p17 := x13
-							if p17 == nil {
-								e.Null("board.surf", 15, 5)
+							p18 := x14
+							if p18 == nil {
+								e.Null("board.surf", 19, 5)
 								break
 							}
-							for _, kn := range k9[start16:] {
-								kn.Key(p17.ID)
+							for _, kn := range k10[start17:] {
+								kn.Key(p18.ID)
 							}
 						}
 					}
@@ -567,108 +579,120 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 				}
 			}
 			if int64(len(c.Shown())) == int64(0) {
-				// board.surf:16:5 <item>
-				if e.Enter("board.surf", 16, 5) {
-					var k18 []*surfui.Node
-					// board.surf:16:47 <text>
-					if e.Enter("board.surf", 16, 47) {
-						n19 := surfui.Text("Nothing to show.")
-						surf.ModMuted(n19, true)
-						k18 = append(k18, n19)
+				// board.surf:20:5 <item>
+				if e.Enter("board.surf", 20, 5) {
+					var k19 []*surfui.Node
+					// board.surf:20:47 <text>
+					if e.Enter("board.surf", 20, 47) {
+						n20 := surfui.Text("Nothing to show.")
+						surf.ModMuted(n20, true)
+						k19 = append(k19, n20)
 						e.Leave()
 					}
-					n18 := surfui.Item(k18...)
-					surf.ModKey(n18, "none")
-					k9 = append(k9, n18)
+					n19 := surfui.Item(k19...)
+					surf.ModKey(n19, "none")
+					k10 = append(k10, n19)
 					e.Leave()
 				}
 			}
-			n9 := surfui.List(k9...)
-			surf.ModKey(n9, "list")
-			surf.ModFocusable(n9, true)
-			surf.ModAutofocus(n9, true)
-			for _, kb := range b9 {
-				n9.AddBinding(kb)
+			n10 := surfui.List(k10...)
+			surf.ModKey(n10, "list")
+			surf.ModFocusable(n10, true)
+			surf.ModAutofocus(n10, true)
+			for _, kb := range b10 {
+				n10.AddBinding(kb)
 			}
-			k1 = append(k1, n9)
+			var m10 []surfui.MenuItem
+			{
+				{
+					a21 := int(int64(1))
+					it, err := surf.MenuAction(0, "Bump", "", "+", false, func() { c.Bump(a21) })
+					if err != nil {
+						e.Fail("board.surf", 17, 7, err)
+					}
+					m10 = append(m10, it)
+				}
+			}
+			n10.Menu(m10...)
+			k1 = append(k1, n10)
 			e.Leave()
 		}
-		// board.surf:18:3 <info-panel>
-		if e.Enter("board.surf", 18, 3) {
+		// board.surf:22:3 <info-panel>
+		if e.Enter("board.surf", 22, 3) {
 			switch {
 			default:
-				s20 := c.Panel
-				if s20 == nil {
+				s22 := c.Panel
+				if s22 == nil {
 					break
 				}
-				k1 = surfRenderInfoPanel(e, k1, s20, nil)
+				k1 = surfRenderInfoPanel(e, k1, s22, nil)
 			}
 			e.Leave()
 		}
-		// board.surf:19:3 <text>
-		if e.Enter("board.surf", 19, 3) {
-			var t26 string
+		// board.surf:23:3 <text>
+		if e.Enter("board.surf", 23, 3) {
+			var t28 string
 			switch {
 			default:
-				v22, ok22 := e.Eval("board.surf", 19, 3, surfProgsBoard()[15], surf.Act(func(i int) cellite.Value {
-					return surfBoard{c}.Field(i - 1)
-				}))
-				if !ok22 {
-					break
-				}
-				v23, ok23 := e.AsText("board.surf", 19, 3, v22)
-				if !ok23 {
-					break
-				}
-				t26 += v23
-			}
-			t26 += " "
-			switch {
-			default:
-				v24, ok24 := e.Eval("board.surf", 19, 3, surfProgsBoard()[16], surf.Act(func(i int) cellite.Value {
+				v24, ok24 := e.Eval("board.surf", 23, 3, surfProgsBoard()[18], surf.Act(func(i int) cellite.Value {
 					return surfBoard{c}.Field(i - 1)
 				}))
 				if !ok24 {
 					break
 				}
-				v25, ok25 := e.AsText("board.surf", 19, 3, v24)
+				v25, ok25 := e.AsText("board.surf", 23, 3, v24)
 				if !ok25 {
 					break
 				}
-				t26 += v25
+				t28 += v25
 			}
-			n21 := surfui.Text(t26)
-			surf.ModKey(n21, "panelnull")
-			k1 = append(k1, n21)
+			t28 += " "
+			switch {
+			default:
+				v26, ok26 := e.Eval("board.surf", 23, 3, surfProgsBoard()[19], surf.Act(func(i int) cellite.Value {
+					return surfBoard{c}.Field(i - 1)
+				}))
+				if !ok26 {
+					break
+				}
+				v27, ok27 := e.AsText("board.surf", 23, 3, v26)
+				if !ok27 {
+					break
+				}
+				t28 += v27
+			}
+			n23 := surfui.Text(t28)
+			surf.ModKey(n23, "panelnull")
+			k1 = append(k1, n23)
 			e.Leave()
 		}
-		// board.surf:20:3 <text>
-		if e.Enter("board.surf", 20, 3) {
-			n27 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " · " + surf.DoubleText(c.Ratio) + " · " + strconv.FormatInt(int64(len(c.Log)), 10) + " done")
-			surf.ModKey(n27, "status")
-			surf.ModMuted(n27, true)
-			k1 = append(k1, n27)
+		// board.surf:24:3 <text>
+		if e.Enter("board.surf", 24, 3) {
+			n29 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " · " + surf.DoubleText(c.Ratio) + " · " + strconv.FormatInt(int64(len(c.Log)), 10) + " done")
+			surf.ModKey(n29, "status")
+			surf.ModMuted(n29, true)
+			k1 = append(k1, n29)
 			e.Leave()
 		}
-		// board.surf:21:3 <lab-part>
-		if e.Enter("board.surf", 21, 3) {
+		// board.surf:25:3 <lab-part>
+		if e.Enter("board.surf", 25, 3) {
 			k1 = surfRenderBoard_LabPart(e, k1, c, nil, int64(9223372036854775807))
 			e.Leave()
 		}
-		for _, x28 := range c.Trees {
-			// board.surf:22:3 <lab-tree>
-			if e.Enter("board.surf", 22, 3) {
-				start29 := len(k1)
-				k1 = surfRenderBoard_LabTree(e, k1, c, nil, x28)
+		for _, x30 := range c.Trees {
+			// board.surf:26:3 <lab-tree>
+			if e.Enter("board.surf", 26, 3) {
+				start31 := len(k1)
+				k1 = surfRenderBoard_LabTree(e, k1, c, nil, x30)
 				switch {
 				default:
-					p30 := x28
-					if p30 == nil {
-						e.Null("board.surf", 22, 3)
+					p32 := x30
+					if p32 == nil {
+						e.Null("board.surf", 26, 3)
 						break
 					}
-					for _, kn := range k1[start29:] {
-						kn.Key(p30.ID)
+					for _, kn := range k1[start31:] {
+						kn.Key(p32.ID)
 					}
 				}
 				e.Leave()
@@ -1702,17 +1726,17 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 	// note-row.surf:2:1 <item>
 	if e.Enter("note-row.surf", 2, 1) {
 		var k1 []*surfui.Node
-		// note-row.surf:3:3 <row>
-		if e.Enter("note-row.surf", 3, 3) {
+		// note-row.surf:9:3 <row>
+		if e.Enter("note-row.surf", 9, 3) {
 			var k2 []*surfui.Node
-			// note-row.surf:4:5 <glyph>
-			if e.Enter("note-row.surf", 4, 5) {
+			// note-row.surf:10:5 <glyph>
+			if e.Enter("note-row.surf", 10, 5) {
 				n3 := surfui.Glyph("●")
 				switch {
 				default:
 					p4 := prop10
 					if p4 == nil {
-						e.Null("note-row.surf", 4, 5)
+						e.Null("note-row.surf", 10, 5)
 						break
 					}
 					var v5 string
@@ -1722,20 +1746,20 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 						v5 = "muted"
 					}
 					if err := surf.ModTone(n3, v5); err != nil {
-						e.Fail("note-row.surf", 4, 5, err)
+						e.Fail("note-row.surf", 10, 5, err)
 					}
 				}
 				k2 = append(k2, n3)
 				e.Leave()
 			}
-			// note-row.surf:5:5 <badge>
-			if e.Enter("note-row.surf", 5, 5) {
+			// note-row.surf:11:5 <badge>
+			if e.Enter("note-row.surf", 11, 5) {
 				var t8 string
 				switch {
 				default:
 					p7 := prop10
 					if p7 == nil {
-						e.Null("note-row.surf", 5, 5)
+						e.Null("note-row.surf", 11, 5)
 						break
 					}
 					t8 += string(p7.Level)
@@ -1745,25 +1769,25 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 				default:
 					p9 := prop10
 					if p9 == nil {
-						e.Null("note-row.surf", 5, 5)
+						e.Null("note-row.surf", 11, 5)
 						break
 					}
 					if err := surf.ModFill(n6, c.ToneOf(Level(string(p9.Level)))); err != nil {
-						e.Fail("note-row.surf", 5, 5, err)
+						e.Fail("note-row.surf", 11, 5, err)
 					}
 				}
 				surf.ModWidth(n6, 6)
 				k2 = append(k2, n6)
 				e.Leave()
 			}
-			// note-row.surf:6:5 <text>
-			if e.Enter("note-row.surf", 6, 5) {
+			// note-row.surf:12:5 <text>
+			if e.Enter("note-row.surf", 12, 5) {
 				var t12 string
 				switch {
 				default:
 					p11 := prop10
 					if p11 == nil {
-						e.Null("note-row.surf", 6, 5)
+						e.Null("note-row.surf", 12, 5)
 						break
 					}
 					t12 += p11.Text
@@ -1773,7 +1797,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 				default:
 					p13 := prop10
 					if p13 == nil {
-						e.Null("note-row.surf", 6, 5)
+						e.Null("note-row.surf", 12, 5)
 						break
 					}
 					surf.ModBold(n10, p13.Unread)
@@ -1786,17 +1810,17 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 			default:
 				p14 := prop10
 				if p14 == nil {
-					e.Null("note-row.surf", 7, 5)
+					e.Null("note-row.surf", 13, 5)
 					break
 				}
 				l15 := p14.Tags
 				for i15, x15 := range l15 {
-					// note-row.surf:7:5 <badge>
-					if e.Enter("note-row.surf", 7, 5) {
+					// note-row.surf:13:5 <badge>
+					if e.Enter("note-row.surf", 13, 5) {
 						var t18 string
 						switch {
 						default:
-							v17, ok17 := e.AddInt("note-row.surf", 7, 5, int64(i15), int64(1))
+							v17, ok17 := e.AddInt("note-row.surf", 13, 5, int64(i15), int64(1))
 							if !ok17 {
 								break
 							}
@@ -1812,8 +1836,8 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 					}
 				}
 			}
-			// note-row.surf:8:5 <button>
-			if e.Enter("note-row.surf", 8, 5) {
+			// note-row.surf:14:5 <button>
+			if e.Enter("note-row.surf", 14, 5) {
 				n19 := surfui.Button("Dismiss")
 				surf.ModReveal(n19, true)
 				{
@@ -1841,6 +1865,93 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 			a22 := p21.ID
 			n1.On("click", func() { c.Open(a22) })
 		}
+		var m1 []surfui.MenuItem
+		{
+			var t24 string
+			t24 += "Open "
+			switch {
+			default:
+				p23 := prop10
+				if p23 == nil {
+					e.Null("note-row.surf", 4, 5)
+					break
+				}
+				t24 += p23.ID
+			}
+			switch {
+			default:
+				p25 := prop10
+				if p25 == nil {
+					e.Null("note-row.surf", 4, 5)
+					break
+				}
+				a26 := p25.ID
+				it, err := surf.MenuAction(0, t24, "email-open-outline", "enter", false, func() { c.Open(a26) })
+				if err != nil {
+					e.Fail("note-row.surf", 4, 5, err)
+				}
+				m1 = append(m1, it)
+			}
+		}
+		switch {
+		default:
+			p31 := prop10
+			if p31 == nil {
+				e.Null("note-row.surf", 5, 5)
+				break
+			}
+			if int64(len(p31.Tags)) > int64(0) {
+				{
+					var a28 string
+					switch {
+					default:
+						p27 := prop10
+						if p27 == nil {
+							e.Null("note-row.surf", 5, 5)
+							break
+						}
+						a28 = strconv.FormatInt(int64(len(p27.Tags)), 10)
+					}
+					switch {
+					default:
+						p29 := prop10
+						if p29 == nil {
+							e.Null("note-row.surf", 5, 5)
+							break
+						}
+						a30 := int(int64(len(p29.Tags)))
+						it, err := surf.MenuAction(1, "Bump by its tags", "", a28, false, func() { c.Bump(a30) })
+						if err != nil {
+							e.Fail("note-row.surf", 5, 5, err)
+						}
+						m1 = append(m1, it)
+					}
+				}
+				break
+			}
+		}
+		m1 = append(m1, surf.MenuSep(2))
+		{
+			var a33 bool
+			switch {
+			default:
+				p32 := prop10
+				if p32 == nil {
+					e.Null("note-row.surf", 7, 5)
+					break
+				}
+				a33 = !p32.Unread
+			}
+			{
+				a34 := prop10
+				it, err := surf.MenuAction(3, "Dismiss", "close", "", a33, func() { c.Dismiss(a34) })
+				if err != nil {
+					e.Fail("note-row.surf", 7, 5, err)
+				}
+				m1 = append(m1, it)
+			}
+		}
+		n1.Menu(m1...)
 		out = append(out, n1)
 		e.Leave()
 	}

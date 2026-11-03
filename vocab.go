@@ -245,6 +245,40 @@ func NewSelect(value string, options []string) *surfui.Node { return surfui.Sele
 // NewCycle is a cycle through options, value showing.
 func NewCycle(value string, options []string) *surfui.Node { return surfui.Cycle(value, options...) }
 
+// CheckIcon checks an <action>'s icon: an MDI symbol's name, as the
+// hosts' font names it ("content-copy"), lower-case words of letters and
+// digits joined by dashes. Which names the font has is the host's.
+func CheckIcon(name string) error {
+	ok := name != "" && name[0] != '-' && name[len(name)-1] != '-' && !strings.Contains(name, "--")
+	for _, c := range []byte(name) {
+		ok = ok && (c == '-' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9')
+	}
+	if !ok {
+		return fmt.Errorf("an icon is an MDI symbol's name, as content-copy, not %q", name)
+	}
+	return nil
+}
+
+// MenuAction is a menu's <action> as both modes build it: its id its
+// place among its menu's items in the source (ord), and what a pick of
+// it runs. An icon CheckIcon refuses is left out, and is the error.
+func MenuAction(ord int, label, icon, key string, disabled bool, act surfui.Action) (surfui.MenuItem, error) {
+	it := surfui.MenuItem{ID: strconv.Itoa(ord), Label: label, Key: key, Disabled: disabled, Act: act}
+	if icon == "" {
+		return it, nil
+	}
+	if err := CheckIcon(icon); err != nil {
+		return it, err
+	}
+	it.Icon = icon
+	return it, nil
+}
+
+// MenuSep is a menu's <sep/>, its id its place among its menu's items.
+func MenuSep(ord int) surfui.MenuItem {
+	return surfui.MenuItem{ID: strconv.Itoa(ord), Sep: true}
+}
+
 // The modifiers, as both modes apply them.
 
 // ModTheme sets a surface's theme.

@@ -1,5 +1,11 @@
 <props note="Note" sel="bool"/>
 <item :selected="sel" @click="open(note.id)">
+  <menu>
+    <action icon="email-open-outline" key="enter" do="open(note.id)">Open {{ note.id }}</action>
+    <action :if="size(note.tags) > 0" :key="size(note.tags)" do="bump(size(note.tags))">Bump by its tags</action>
+    <sep/>
+    <action icon="close" :disabled="!note.unread" do="dismiss(note)">Dismiss</action>
+  </menu>
   <row gap="1" grow>
     <glyph :tone="note.unread ? 'accent' : 'muted'">●</glyph>
     <badge :fill="toneOf(note.level)" width="6">{{ note.level }}</badge>

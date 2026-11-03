@@ -309,6 +309,7 @@ type compiler struct {
 	files map[string]*file
 	tmpls map[string]*tmpl
 	errs  []error
+	ords  map[*markup.Node]int // each <menu> item's place in its menu
 }
 
 // tmpl is a template compiled for an owner: the component whose fields
@@ -411,6 +412,8 @@ type scope struct {
 	// where white space was trimmed at its ends, as runs of a paragraph
 	// are apart.
 	inLine bool
+	// inMenu says what it compiles is a <menu>'s items.
+	inMenu bool
 }
 
 // with is s with locals added, in the next slots.
@@ -602,6 +605,9 @@ const (
 	kIf                 // :if, :else-if and :else: the first that holds
 	kEach               // :each: its body for each element of a list
 	kEmbed              // <embed>: a surflive.Component its :of holds
+	kMenu               // <menu>: a widget's context menu, never drawn
+	kAction             // <action>: an item of a menu
+	kSep                // <sep/>: a menu's separator
 )
 
 type elem struct {
@@ -631,6 +637,18 @@ type elem struct {
 	bindScroll string // the scroll action's name ("down"), for one with no do
 	hasHandler bool
 	dynState   bool // kComponent: its :state is dyn, checked at render
+
+	// A widget's <menu> (kMenu), whose kids are its items: kAction, kSep,
+	// and kIf over them.
+	menu *elem
+	// kAction and kSep: its place among its menu's items in the source,
+	// from 0, which is its id; kAction: its label is text, and do the
+	// handler a pick of it runs.
+	ord      int
+	icon     value
+	keyLabel value
+	off      value // :disabled
+	do       handler
 }
 
 // value is an attribute's value: a literal, or a program.
@@ -769,6 +787,8 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return s.bind(n)
 	case n.Tag == "embed":
 		return s.embedEl(n)
+	case n.Tag == "menu", n.Tag == "action", n.Tag == "sep":
+		return s.menuPart(n)
 	case strings.Contains(n.Tag, "-"):
 		return s.use(n)
 	}
@@ -776,14 +796,15 @@ func (s *scope) bare(n *markup.Node) *elem {
 	if e == nil {
 		return nil
 	}
+	ks := s.menuOf(e, n)
 	was, wasLine := s.around, s.inLine
 	s.around = true // a <bind> in it binds on it
 	if e.w.Form == FormKids || e.w.Form == FormSection {
 		s.inLine = e.w.Tag == "line"
-		e.kids = s.kids(n.Kids)
+		e.kids = s.kids(ks)
 	} else {
 		s.inLine = s.inLine && e.w.Tag == "text"
-		s.leafKids(e, n)
+		s.leafKids(e, n.Tag, ks)
 	}
 	s.around, s.inLine = was, wasLine
 	return e
@@ -845,24 +866,209 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 // text widget's text, or the <bind>s of one that has no children.
 //
 //go:noinline
-func (s *scope) leafKids(e *elem, n *markup.Node) {
+func (s *scope) leafKids(e *elem, tag string, kids []*markup.Node) {
 	if e.w.Form == FormText {
-		for _, k := range n.Kids {
+		for _, k := range kids {
 			if k.Kind != markup.Text {
-				s.c.fail(s.t.file, k.Pos, "<%s> holds text, not <%s>", n.Tag, k.Tag)
+				s.c.fail(s.t.file, k.Pos, "<%s> holds text, not <%s>", tag, k.Tag)
 				continue
 			}
 			e.text = append(e.text, s.run(k, s.parts(k.Parts))...)
 		}
 		return
 	}
-	for _, k := range n.Kids {
+	for _, k := range kids {
 		if k.Kind == markup.Element && k.Tag == "bind" {
 			e.kids = append(e.kids, s.element(k, nil))
 			continue
 		}
-		s.c.fail(s.t.file, k.Pos, "<%s> has no children but <bind>", n.Tag)
+		s.c.fail(s.t.file, k.Pos, "<%s> has no children but <bind> and <menu>", tag)
 	}
+}
+
+// The context menu: a widget's <menu>, of <action>s and <sep/>s, which
+// the tree never draws; its host draws it where the user asks for it
+// (surfrun.Surface.Menu), and a pick of an action runs its do as a click
+// runs a handler (surfrun.Surface.Pick).
+
+// actionAttrs are the attributes an <action> takes, besides :if,
+// :else-if and :else.
+var actionAttrs = []string{"disabled", "do", "icon", "key"}
+
+// menuOf compiles the <menu> among n's children as e's, and returns the
+// rest, which are drawn: a menu is no child of the tree, and a :if chain
+// goes on past it.
+//
+//go:noinline
+func (s *scope) menuOf(e *elem, n *markup.Node) []*markup.Node {
+	at := slices.IndexFunc(n.Kids, isMenu)
+	if at < 0 {
+		return n.Kids
+	}
+	var rest []*markup.Node
+	seen := false
+	for _, k := range n.Kids {
+		if !isMenu(k) {
+			rest = append(rest, k)
+			continue
+		}
+		if seen {
+			s.c.fail(s.t.file, k.Pos, "<%s> has one <menu>; this is a second", n.Tag)
+			continue
+		}
+		seen = true
+		e.menu = s.menuEl(k)
+	}
+	return rest
+}
+
+func isMenu(k *markup.Node) bool { return k.Kind == markup.Element && k.Tag == "menu" }
+
+// menuEl compiles a <menu>: its items, each with its place among them in
+// the source, which is its id, an :if's branches each their own.
+//
+//go:noinline
+func (s *scope) menuEl(n *markup.Node) *elem {
+	stackprobe.Probe()
+	for _, a := range n.Attrs {
+		s.c.fail(s.t.file, a.Pos, "%s", takesNo("menu", a.Name, nil))
+	}
+	var items []*markup.Node
+	for _, k := range n.Kids {
+		switch {
+		case k.Kind == markup.Text:
+			s.c.fail(s.t.file, k.Pos, "<menu> holds <action>s and <sep/>s, not text")
+			continue
+		case k.Tag != "action" && k.Tag != "sep":
+			s.c.fail(s.t.file, k.Pos, "<menu> holds <action>s and <sep/>s, not <%s>", k.Tag)
+			continue
+		}
+		if a, ok := k.Attr(":each"); ok {
+			s.c.fail(s.t.file, a.Pos, "<%s> takes no :each: each of a menu's items is one of its template's, whose place is its id", k.Tag)
+			continue
+		}
+		if s.c.ords == nil {
+			s.c.ords = map[*markup.Node]int{}
+		}
+		s.c.ords[k] = len(items)
+		items = append(items, k)
+	}
+	if len(items) == 0 {
+		if len(n.Kids) == 0 {
+			s.c.fail(s.t.file, n.Pos, "<menu> has an <action>")
+		}
+		return nil
+	}
+	was := s.inMenu
+	s.inMenu = true
+	kids := s.kids(items)
+	s.inMenu = was
+	if len(kids) == 0 {
+		return nil
+	}
+	return &elem{kind: kMenu, pos: n.Pos, kids: kids}
+}
+
+// menuPart compiles a <menu>, an <action> or a <sep> where n is: an item
+// in a <menu>'s, and none of them anywhere else.
+//
+//go:noinline
+func (s *scope) menuPart(n *markup.Node) *elem {
+	switch {
+	case n.Tag == "menu":
+		s.c.fail(s.t.file, n.Pos, "<menu> goes in a widget, whose context menu it is")
+		return nil
+	case !s.inMenu:
+		s.c.fail(s.t.file, n.Pos, "<%s> goes in a <menu>", n.Tag)
+		return nil
+	case n.Tag == "sep":
+		return s.sepEl(n)
+	}
+	return s.actionEl(n)
+}
+
+// sepEl compiles a <sep/>, which takes nothing.
+//
+//go:noinline
+func (s *scope) sepEl(n *markup.Node) *elem {
+	for _, a := range n.Attrs {
+		if !isCond(a.Name) {
+			s.c.fail(s.t.file, a.Pos, "%s", takesNo("sep", a.Name, nil))
+		}
+	}
+	if len(n.Kids) > 0 {
+		s.c.fail(s.t.file, n.Kids[0].Pos, "<sep> has no children")
+	}
+	return &elem{kind: kSep, pos: n.Pos, ord: s.c.ords[n]}
+}
+
+// isCond reports whether name is a :if chain's directive.
+func isCond(name string) bool { return name == ":if" || name == ":else-if" || name == ":else" }
+
+// actionEl compiles <action do="method(args)" icon= key= :disabled=>,
+// its text its label.
+//
+//go:noinline
+func (s *scope) actionEl(n *markup.Node) *elem {
+	e := &elem{kind: kAction, pos: n.Pos, ord: s.c.ords[n]}
+	hasDo := false
+	for _, a := range n.Attrs {
+		name, bound := strings.CutPrefix(a.Name, ":")
+		switch {
+		case isCond(a.Name):
+			// the caller's
+		case name == "do":
+			hasDo = true
+			if bound {
+				s.c.fail(s.t.file, a.Pos, "do is a handler: do=\"method(args)\"")
+				continue
+			}
+			if h, ok := s.handler(a.Value, a.ValuePos, false); ok {
+				e.do, e.hasHandler = h, true
+			}
+		case name == "icon":
+			v, ok := s.value(&Attr{Name: "icon", Type: TypeString}, a, bound)
+			if ok && !bound {
+				if err := CheckIcon(a.Value); err != nil {
+					s.c.fail(s.t.file, a.ValuePos, "%v", err)
+					ok = false
+				}
+			}
+			if ok {
+				e.icon = v
+			}
+		case name == "key":
+			// A label shown beside the item, of any value's text, as a
+			// bound key is: it binds nothing.
+			if v, ok := s.value(&Attr{Name: "key", Type: TypeString}, a, bound); ok {
+				e.keyLabel = v
+			}
+		case name == "disabled":
+			if v, ok := s.value(&Attr{Name: "disabled", Type: TypeBool}, a, bound); ok {
+				e.off = v
+			}
+		default:
+			s.c.fail(s.t.file, a.Pos, "%s", takesNo("action", name, actionAttrs))
+		}
+	}
+	hasLabel := len(n.Kids) > 0 // given, if not compiled
+	for _, k := range n.Kids {
+		if k.Kind != markup.Text {
+			s.c.fail(s.t.file, k.Pos, "an <action>'s label is text, not <%s>", k.Tag)
+			continue
+		}
+		e.text = append(e.text, s.parts(k.Parts)...)
+	}
+	if !hasDo {
+		s.c.fail(s.t.file, n.Pos, "<action> has a do, the handler a pick of it runs: do=\"method(args)\"")
+	}
+	if !hasLabel {
+		s.c.fail(s.t.file, n.Pos, "<action> has a label, its text: <action do=\"…\">Label</action>")
+	}
+	if !e.hasHandler || len(e.text) == 0 {
+		return nil
+	}
+	return e
 }
 
 // kids compiles a list of children, a :if chain taking its :else-if and

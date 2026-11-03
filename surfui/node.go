@@ -59,7 +59,8 @@ type Node struct {
 	kids  []*Node
 	on    []handler
 	keys  []Binding
-	focus bool // autofocus
+	menu  []MenuItem // its context menu, which the host draws, never the tree
+	focus bool       // autofocus
 
 	cycle   *cycle  // a Cycle's value and options
 	choice  *choice // a Select's value and options
@@ -224,6 +225,33 @@ func (n *Node) AddBinding(b Binding) *Node {
 	n.keys = append(n.keys, b)
 	return n
 }
+
+// MenuItem is an item of an element's context menu (Menu): an action,
+// or a separator (Sep), which has nothing else.
+type MenuItem struct {
+	// ID names the item among its menu's, for a pick of it
+	// (surfrun.Surface.Pick); "" for its place in the menu, from 0.
+	ID  string
+	Sep bool
+	// Label is what the item says; Icon an MDI symbol's name
+	// ("content-copy"), "" for none; Key a key's name shown beside it,
+	// which binds nothing.
+	Label, Icon, Key string
+	Disabled         bool
+	// Act is what a pick of it runs, as a click's handler does.
+	Act Action
+}
+
+// Menu gives n a context menu, which the host draws where the user asks
+// for it (surfrun.Surface.Menu), and which n's tree never draws: items,
+// in order. Given again, it replaces the last.
+func (n *Node) Menu(items ...MenuItem) *Node {
+	n.menu = items
+	return n
+}
+
+// MenuOf is n's context menu, nil for none.
+func MenuOf(n *Node) []MenuItem { return n.menu }
 
 // Autofocus gives n the keyboard when the surface is shown.
 func (n *Node) Autofocus() *Node { n.focus = true; return n }
@@ -402,6 +430,7 @@ func Clone(n *Node) *Node {
 	c.vars = append([]attr(nil), n.vars...)
 	c.on = append([]handler(nil), n.on...)
 	c.keys = append([]Binding(nil), n.keys...)
+	c.menu = append([]MenuItem(nil), n.menu...)
 	c.kids = make([]*Node, len(n.kids))
 	for i, k := range n.kids {
 		c.kids[i] = Clone(k)

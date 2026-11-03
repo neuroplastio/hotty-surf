@@ -517,6 +517,35 @@ func (r *Renderer) viewsFrom(n *surfui.Node) []port {
 	return out
 }
 
+// At is the id of the innermost element drawn at x, y, whether or not
+// it acts on a press: what a host's event at that cell would target, as
+// a host that draws an element's context menu asks for it at the cell
+// the user pressed (surfrun.Surface.Menu). Of siblings drawn over each
+// other, the one drawn last is. It is "" where the surface draws
+// nothing, or a Select's open list does, which is the runtime's.
+func (r *Renderer) At(x, y int) string {
+	r.ensure()
+	if h, ok := r.hitAt(x, y); ok && h.list || r.over != nil && r.overRect().has(x, y) {
+		return ""
+	}
+	if vis, ok := r.rects[r.tree]; r.tree == nil || !ok || !vis.has(x, y) {
+		return ""
+	}
+	n := r.tree
+	for {
+		var in *surfui.Node
+		for _, k := range surfui.Kids(n) {
+			if vis, ok := r.rects[k]; ok && vis.has(x, y) {
+				in = k
+			}
+		}
+		if in == nil {
+			return surfui.IDOf(n)
+		}
+		n = in
+	}
+}
+
 // Where is a cell a press on reaches the element id: inside it, where
 // what acts on a press there is what a press on it reaches (it, or the
 // nearest element around it that acts). ok is false where it is not on

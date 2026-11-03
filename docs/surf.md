@@ -367,6 +367,45 @@ parent element, while that element or something in it has the keyboard.
   cells, a run that doesn't scroll) it goes on to the next binding out,
   and a field types it.
 
+## Context menus
+
+A widget's `<menu>` is its context menu. The template declares it; the
+host draws it, at the pointer or the focused element, and runs the item
+picked. The tree never draws it: it takes no room and changes no cell,
+and a `:if` chain goes on past it.
+
+```html
+<stack :each="r in rows" :key="r.key" @click="open(r.key)">
+  {{ r.title }}
+  <menu>
+    <action icon="content-copy" do="copy(r.key)">Copy text</action>
+    <sep/>
+    <action :disabled="!r.live" do="dismiss(r.key)">Dismiss</action>
+  </menu>
+</stack>
+```
+
+- **A widget has one `<menu>`,** of `<action>`s and `<sep/>`s only. A
+  `<menu>` takes no attributes, and goes in no partial's or
+  component's tag: put it on a widget of their template.
+- **An `<action>`'s text is its label,** with `{{ }}`; `do` is the
+  handler a pick runs, as a `<bind>`'s is, so it sees `r` and takes no
+  `$value` or `$event`. Both are a must.
+- `icon` is an MDI symbol's name, as the hosts' font names it
+  (`content-copy`), which the host draws; `key` is a key's name shown
+  beside the label, which binds nothing (a `<bind>` binds it).
+  `:disabled` greys the item, and a pick of it runs nothing. `:icon`
+  and `:key` bind too.
+- **`:if`, `:else-if` and `:else`** go on `<action>` and `<sep/>`;
+  `:each` doesn't: each item's id is its place in the `<menu>`, from 0,
+  so an item left out moves no other's.
+- **The host asks the surface for the menu** where the user asks for it,
+  `surfrun.Surface.Menu`, by an element's id, a cell's
+  (`cells.Renderer.At`) or the focus: the innermost element's with a
+  menu. It draws the items, and hands the one picked to
+  `Surface.Pick`, which runs it as a click runs a handler. A pick of an
+  item gone since (its row, or the item, or disabled now) runs nothing.
+
 ## Components and partials
 
 - **A stateful child** is a field of its parent, or an element of a
