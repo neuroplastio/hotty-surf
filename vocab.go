@@ -154,6 +154,7 @@ var Attrs = []Attr{
 	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},
 	{Name: "key", Type: TypeString, Doc: "the node's key among its siblings, which the diff follows", Func: "ModKey"},
 	{Name: "tone", Type: TypeString, Doc: "the text's colour: accent, ok, warn, error, info, muted or plain", Func: "ModTone", Fails: true, Values: tones},
+	{Name: "hue", Type: TypeString, Doc: "the text's colour as a hue a palette names, not a tone; bound, a name no palette declares draws the ink and warns once", Tags: []string{"text", "dot", "glyph", "icon"}, Func: "ModHue"},
 	{Name: "fill", Type: TypeString, Doc: "a fill in a tone's colour: accent, ok, warn, error, info, muted or plain", Func: "ModFill", Fails: true, Values: tones},
 	{Name: "bold", Type: TypeBool, Doc: "bold text", Func: "ModBold"},
 	{Name: "semibold", Type: TypeBool, Doc: "text at weight 600", Func: "ModSemibold"},
@@ -344,6 +345,11 @@ func ModTone(n *surfui.Node, v string) error {
 	}
 	return err
 }
+
+// ModHue colours a node's text in the hue named v (surfui.Node.Hue). A
+// name no palette declares is no error here: a bound one draws the ink,
+// and the runtime warns of it once. A literal's name is checked at load.
+func ModHue(n *surfui.Node, v string) { n.Hue(v) }
 
 // ModFill gives a node a fill.
 func ModFill(n *surfui.Node, v string) error {

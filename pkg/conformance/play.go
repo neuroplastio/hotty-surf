@@ -12,6 +12,7 @@ import (
 	"github.com/neuroplastio/hotty-surf/surflive"
 	"github.com/neuroplastio/hotty-surf/surfrun"
 	"github.com/neuroplastio/hotty-surf/surftest"
+	"github.com/neuroplastio/hotty-surf/surfui"
 	"golang.org/x/tools/txtar"
 )
 
@@ -70,6 +71,12 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 	a := start(t, m, opts)
 	a.Call(func() {}) // what follows the document, written
 	out := []txtar.File{{Name: "state.json", Data: state}, {Name: "document", Data: []byte(a.Surface().HTML() + "\n")}}
+	if _, ok := File(ar, "css"); ok {
+		// What a case says of its palette: the rules the stylesheet gains
+		// after the floor's, which a run sends after it (surfui.Palette.CSS).
+		_, sheet, _ := a.Host.Resource(surfui.StyleID)
+		out = append(out, txtar.File{Name: "css", Data: []byte(strings.TrimPrefix(string(sheet), surfui.CSS))})
+	}
 	nops, nlog := len(a.Ops()), 0
 	for i, ev := range events {
 		n := strconv.Itoa(i + 1)

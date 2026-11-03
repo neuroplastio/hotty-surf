@@ -294,8 +294,14 @@ func (f Fill) Draw(name string, out []*surfui.Node, binds *[]surfui.Binding) ([]
 // (surfgen's surfCompiledT): render is its root template's function.
 // under is the component's Go value, whose Cells, Attacher, Sizer,
 // DensitySetter and KeyStyler it passes on, as a View does.
-func Compiled(under any, file string, render func(e *Errs) []*surfui.Node) surflive.Component {
+//
+// palette is the templates' <palette>s, which surfgen writes out where
+// they have any: the compiled mode has no Set to hold them.
+func Compiled(under any, file string, render func(e *Errs) []*surfui.Node, palette ...surfui.Palette) surflive.Component {
 	v := &CompiledView{under: under, file: file, render: render}
+	if len(palette) > 0 {
+		v.palette = palette[0]
+	}
 	if c, ok := under.(surfrun.Cells); ok {
 		return compiledCells{v, c}
 	}
@@ -307,6 +313,8 @@ type CompiledView struct {
 	under  any
 	file   string
 	render func(e *Errs) []*surfui.Node
+	// palette is the templates' hues.
+	palette surfui.Palette
 	// OnError is a View's.
 	OnError func(error)
 	seen    map[string]bool
@@ -358,6 +366,15 @@ func (v *CompiledView) SetDensity(d surfui.Density) {
 	if s, ok := v.under.(surfrun.DensitySetter); ok {
 		s.SetDensity(d)
 	}
+}
+
+// Palette is the templates' hues, and those of the component's Go value,
+// where it declares some (surfrun.Palettist).
+func (v *CompiledView) Palette() surfui.Palette {
+	if p, ok := v.under.(surfrun.Palettist); ok {
+		return v.palette.Merge(p.Palette())
+	}
+	return v.palette
 }
 
 // KeyStyle is how the component's Go value draws its keys, if it says

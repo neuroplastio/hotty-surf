@@ -305,3 +305,28 @@ func (d *Deck) File(from, folder, where string) {
 
 // Open is a click on a row.
 func (d *Deck) Open(id string) { d.Log = append(d.Log, "open "+id) }
+
+// Hand is a data struct: a crew member, and the colour its user gave it,
+// the name of a hue (crew.surf's palette) or none.
+type Hand struct {
+	Name   string
+	Colour string
+}
+
+// Crew is a component whose template declares a palette and draws each of
+// its hands in the hue its data names (crew.surf).
+type Crew struct {
+	Title string
+	Hands []*Hand
+	Log   []string
+}
+
+// Recolour gives the hand its colour: plum.
+func (c *Crew) Recolour(name string) {
+	for _, h := range c.Hands {
+		if h.Name == name {
+			h.Colour = "plum"
+		}
+	}
+	c.Log = append(c.Log, "recolour "+name)
+}

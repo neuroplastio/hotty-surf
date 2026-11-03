@@ -160,9 +160,32 @@ func (g *gen) compiled(set *surf.Set) (string, []string, error) {
 		for _, p := range r.params {
 			args += ", " + c.zero(p)
 		}
+		pal := ""
+		if len(set.Palette()) > 0 {
+			pal = ", surfPalette"
+		}
 		fmt.Fprintf(&b, "// surfCompiled%s is c drawn by its templates compiled into Go.\n", capital(sh.name))
-		fmt.Fprintf(&b, "func surfCompiled%s(c *%s) surflive.Component {\nreturn surf.Compiled(c, %q, func(e *surf.Errs) []*surfui.Node { return %s(e, nil, c, nil%s) })\n}\n\n",
-			capital(sh.name), gt, r.t.Path(), r.name, args)
+		fmt.Fprintf(&b, "func surfCompiled%s(c *%s) surflive.Component {\nreturn surf.Compiled(c, %q, func(e *surf.Errs) []*surfui.Node { return %s(e, nil, c, nil%s) }%s)\n}\n\n",
+			capital(sh.name), gt, r.t.Path(), r.name, args, pal)
+	}
+	if pal := set.Palette(); len(pal) > 0 {
+		// The templates' <palette>s, which the compiled mode, with no Set,
+		// hands the run with its component.
+		b.WriteString("// surfPalette is the templates' hues, <palette>s as written.\nvar surfPalette = surfui.Palette{\n")
+		for _, n := range pal.Names() {
+			h := pal[n]
+			fmt.Fprintf(&b, "%q: {", n)
+			if h.Value != "" {
+				fmt.Fprintf(&b, "Value: %q", h.Value)
+			} else {
+				fmt.Fprintf(&b, "Dark: %q, Light: %q", h.Dark, h.Light)
+			}
+			if h.Cells != nil {
+				fmt.Fprintf(&b, ", Cells: surfui.Cell(%d)", *h.Cells)
+			}
+			b.WriteString("},\n")
+		}
+		b.WriteString("}\n\n")
 	}
 	var std []string
 	for p := range c.std {

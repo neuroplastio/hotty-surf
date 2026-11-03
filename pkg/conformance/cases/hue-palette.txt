@@ -1,0 +1,73 @@
+A palette is read where it is written: <hue name= dark= light= cells=/>,
+or value= for one colour on both grounds, each its own element and
+literal. A name is a lower-case identifier; colours are #rgb or #rrggbb,
+and hex is written nowhere else; cells is 0 to 15. A palette comes once
+in a file, before the root, holds <hue>s alone, and declares a name once.
+-- pal-hex.surf --
+<palette>
+  <hue name="a" dark="red" light="#fff"/>
+</palette>
+-- pal-late.surf --
+<text>x</text>
+<palette/>
+-- pal-name.surf --
+<palette>
+  <hue name="Coral" dark="#fff" light="#000"/>
+</palette>
+-- pal-noname.surf --
+<palette>
+  <hue dark="#fff" light="#000"/>
+</palette>
+-- pal-cells.surf --
+<palette>
+  <hue name="a" dark="#fff" light="#000" cells="16"/>
+</palette>
+-- pal-twice.surf --
+<palette/>
+<palette/>
+-- pal-both.surf --
+<palette>
+  <hue name="a" value="#fff" dark="#fff"/>
+</palette>
+-- pal-lone.surf --
+<palette>
+  <hue name="a" dark="#fff"/>
+</palette>
+-- pal-expr.surf --
+<palette>
+  <hue name="a" :dark="'#fff'" light="#000"/>
+</palette>
+-- pal-attr.surf --
+<palette>
+  <hue name="a" dark="#fff" light="#000" size="1"/>
+</palette>
+-- pal-text.surf --
+<palette>
+  hello
+</palette>
+-- pal-child.surf --
+<palette>
+  <text>x</text>
+</palette>
+-- pal-attrs.surf --
+<palette mode="dark"/>
+-- pal-same.surf --
+<palette>
+  <hue name="a" dark="#fff" light="#000"/>
+  <hue name="a" dark="#eee" light="#111"/>
+</palette>
+-- load --
+pal-attr.surf:2:42: <hue> takes no size; it takes name, dark, light, value or cells
+pal-attrs.surf:1:10: <palette> takes no attributes; its <hue>s do
+pal-both.surf:2:3: hue a takes value, or dark and light, not both
+pal-cells.surf:2:49: cells is 0 to 15, not "16"
+pal-child.surf:2:3: <palette> holds <hue>s, not <text>
+pal-expr.surf:2:17: a hue is written out: dark takes a literal, not an expression
+pal-hex.surf:2:23: dark is #rgb or #rrggbb, not "red": hex is written in a <palette>, as it is nowhere else
+pal-late.surf:2:1: <palette> comes before the root element
+pal-lone.surf:2:3: hue a takes dark and light, or value
+pal-name.surf:2:14: a hue's name is a lower-case identifier, as coral or sea_green, not "Coral"
+pal-noname.surf:2:3: a <hue> takes a name
+pal-same.surf:3:14: hue a is declared twice
+pal-text.surf:1:10: <palette> holds <hue>s, not text
+pal-twice.surf:2:1: <palette> comes once in a file

@@ -1,0 +1,55 @@
+A hue is refused, at load, where it can't be what it says: an element
+that takes a tone and a hue (literal or bound), a literal name no
+palette declares, an element that takes no hue (a button), and a bare
+hue. A palette's hue is refused where it is declared twice, in any
+files; and where its text can't be read on a ground, with the number: 4.5:1
+against the dark ground (#282c34, hotty-blitz's default, which the gate
+draws on) and against paper's (#fbfbfd), each colour of the hue
+(a single value on both). A file that holds a palette alone is no
+template: used as a partial, it says so. (The refusals that read a
+palette itself, a hue's name or hex, are hue-palette's.)
+-- crew.surf --
+<palette>
+  <hue name="coral" dark="#ff8e7a" light="#b4321f"/>
+</palette>
+<surface>
+  <pal-ok/>
+  <text tone="ok" hue="coral">both</text>
+  <text :tone="title" :hue="title">both, bound</text>
+  <text hue="cora">a typo</text>
+  <button hue="coral">no hue</button>
+  <text hue>bare</text>
+  <dot :hue="title"/>
+</surface>
+-- pal-ok.surf --
+<palette>
+  <hue name="sky" dark="#7cc4ff" light="#0b62a8"/>
+</palette>
+-- pal-dup.surf --
+<palette>
+  <hue name="coral" dark="#ff8e7a" light="#b4321f"/>
+</palette>
+-- pal-faint.surf --
+<palette>
+  <hue name="faint" dark="#a33" light="#fff"/>
+</palette>
+-- pal-mid.surf --
+<palette>
+  <hue name="mid" value="#808a9c"/>
+</palette>
+-- typed --
+A Lua host's shapes name no Crew component, so its Load never compiles
+crew.surf, where the hue= refusals are, and its partial pal-ok.surf: it
+has only the palettes' to refuse: a name declared twice, and the contrast.
+-- load --
+pal-dup.surf:2:3: hue coral is declared in crew.surf:2 too: a name is declared once
+pal-ok.surf:1:1: no root element: the file holds a <palette> alone, so it is no template
+crew.surf:6:19: <text> takes a tone or a hue, not both
+crew.surf:7:23: <text> takes a tone or a hue, not both
+crew.surf:8:14: hue "cora" is in no <palette>; the palettes declare coral, faint, mid or sky
+crew.surf:9:11: <button> takes no hue; it takes autofocus, bare, bold, checked, chrome, disabled, down, drag, drop, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, tone, top, width or wrap
+crew.surf:10:9: hue takes a value
+pal-faint.surf:2:3: faint's dark #a33 is 2.1:1 on the dark ground; text needs 4.5
+pal-faint.surf:2:3: faint's light #fff is 1.0:1 on paper; text needs 4.5
+pal-mid.surf:2:3: mid's value #808a9c is 4.0:1 on the dark ground; text needs 4.5
+pal-mid.surf:2:3: mid's value #808a9c is 3.3:1 on paper; text needs 4.5

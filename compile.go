@@ -35,6 +35,8 @@ type Set struct {
 	tmpls map[string]*tmpl // by template name and owner: name + "\x00" + owner
 	stamp map[string]stamp // what each file was when read, for Stale
 	svgs  map[string]SVGAsset
+	// palette is the hues the templates' <palette>s declare, in every file.
+	palette surfui.Palette
 }
 
 // file is a parsed template.
@@ -42,6 +44,10 @@ type file struct {
 	name  string // the template's: its file name without .surf
 	path  string // in the Set's fs
 	props []prop
+	// palette is its <palette>'s hues, each with where it is declared.
+	palette    surfui.Palette
+	hueAt      map[string]markup.Pos
+	hasPalette bool
 	// roots are the top-level elements: one, or the elements of one :if
 	// chain.
 	roots []*markup.Node
@@ -106,6 +112,8 @@ func (s *Set) load() error {
 		return err
 	}
 	c := &compiler{set: s, files: files, tmpls: map[string]*tmpl{}, svgs: svgs}
+	c.palette = c.mergePalettes()
+	c.hueDot, c.hueText = map[string]bool{}, map[string]bool{}
 	names := make([]string, 0, len(s.shapes))
 	for n, sh := range s.shapes {
 		if sh.Component {
@@ -121,13 +129,103 @@ func (s *Set) load() error {
 		}
 		c.template(TemplateName(n), sh, markup.Pos{})
 	}
+	c.checkContrast()
 	if len(c.errs) > 0 {
 		return errors.Join(c.errs...)
 	}
 	s.mu.Lock()
-	s.files, s.tmpls, s.stamp, s.svgs = files, c.tmpls, stamps, svgs
+	s.files, s.tmpls, s.stamp, s.svgs, s.palette = files, c.tmpls, stamps, svgs, c.palette
 	s.mu.Unlock()
 	return nil
+}
+
+// Palette is the hues the templates' <palette>s declare, every file's
+// together. Where a run shows the Set (View), they are sent as the
+// stylesheet's rules.
+func (s *Set) Palette() surfui.Palette {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.palette
+}
+
+// checkContrast refuses a hue that can't be read where it is drawn, with
+// the number: text needs 4.5:1 against the dark ground and paper's, a dot
+// 3:1. The check knows where the templates draw a hue: one that only dots
+// are drawn in, by a literal hue= on a dot and no bound :hue on anything
+// else, needs the dot's. A bound hue may be any name, so one on text or an
+// icon asks text's of every hue; and a hue no template draws is asked
+// text's, for the one that will.
+func (c *compiler) checkContrast() {
+	names := make([]string, 0, len(c.files))
+	for n := range c.files {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		f := c.files[n]
+		for _, h := range f.palette.Names() {
+			dotOnly := !c.boundText && !c.hueText[h] && (c.hueDot[h] || c.boundDot)
+			need := func(string) float64 {
+				if dotOnly {
+					return surfui.DotContrast
+				}
+				return surfui.TextContrast
+			}
+			for _, w := range (surfui.Palette{h: f.palette[h]}).ContrastAt(need) {
+				c.fail(f, f.hueAt[h], "%s", w)
+			}
+		}
+	}
+}
+
+// noteHue records where a template draws hues: the tag of n, and the
+// hue= it has, literal or bound.
+func (c *compiler) noteHue(n *markup.Node) {
+	for _, a := range n.Attrs {
+		name, bound := strings.CutPrefix(a.Name, ":")
+		if name != "hue" {
+			continue
+		}
+		dot := n.Tag == "dot"
+		switch {
+		case bound && dot:
+			c.boundDot = true
+		case bound:
+			c.boundText = true
+		case dot:
+			c.hueDot[a.Value] = true
+		default:
+			c.hueText[a.Value] = true
+		}
+	}
+}
+
+// mergePalettes is every file's hues in one palette, in the files' order;
+// a name two files declare is an error, where the second is.
+func (c *compiler) mergePalettes() surfui.Palette {
+	names := make([]string, 0, len(c.files))
+	for n := range c.files {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	var out surfui.Palette
+	first := map[string]string{}
+	for _, n := range names {
+		f := c.files[n]
+		for _, h := range f.palette.Names() {
+			at := f.hueAt[h]
+			if was, dup := first[h]; dup {
+				c.fail(f, at, "hue %s is declared in %s too: a name is declared once", h, was)
+				continue
+			}
+			first[h] = f.path + ":" + strconv.Itoa(at.Line)
+			if out == nil {
+				out = surfui.Palette{}
+			}
+			out[h] = f.palette[h]
+		}
+	}
+	return out
 }
 
 // root is the compiled template sh draws with.
@@ -243,16 +341,98 @@ func parseFile(name, src string) (*file, error) {
 			if f.props == nil {
 				f.props = []prop{}
 			}
+		case n.Tag == "palette":
+			if err := parsePalette(f, n, fail); err != nil {
+				return nil, err
+			}
 		default:
 			if err := addRoot(f, n, fail); err != nil {
 				return nil, err
 			}
 		}
 	}
-	if len(f.roots) == 0 {
+	if len(f.roots) == 0 && !f.hasPalette {
 		return nil, fail(markup.Pos{Line: 1, Col: 1}, "no root element")
 	}
 	return f, nil
+}
+
+// parsePalette reads a <palette>: <hue name= dark= light= cells=/>, or
+// value= for one colour on both grounds. The colours are hex, here and
+// nowhere else. It comes once, before the root element; a file may hold
+// nothing else. Its contrast is checked once the templates are compiled
+// (checkContrast), which know where each hue is drawn.
+func parsePalette(f *file, n *markup.Node, fail func(markup.Pos, string, ...any) error) error {
+	switch {
+	case len(f.roots) > 0:
+		return fail(n.Pos, "<palette> comes before the root element")
+	case f.hasPalette:
+		return fail(n.Pos, "<palette> comes once in a file")
+	case len(n.Attrs) > 0:
+		return fail(n.Attrs[0].Pos, "<palette> takes no attributes; its <hue>s do")
+	}
+	f.hasPalette = true
+	f.palette, f.hueAt = surfui.Palette{}, map[string]markup.Pos{}
+	for _, k := range n.Kids {
+		switch {
+		case k.Kind == markup.Text:
+			return fail(k.Pos, "<palette> holds <hue>s, not text")
+		case k.Tag != "hue":
+			return fail(k.Pos, "<palette> holds <hue>s, not <%s>", k.Tag)
+		case len(k.Kids) > 0:
+			return fail(k.Pos, "<hue> has no children")
+		}
+		var h surfui.Hue
+		var name string
+		pos := map[string]markup.Pos{}
+		for _, a := range k.Attrs {
+			if strings.HasPrefix(a.Name, ":") || strings.HasPrefix(a.Name, "@") {
+				return fail(a.Pos, "a hue is written out: %s takes a literal, not an expression", strings.TrimLeft(a.Name, ":@"))
+			}
+			if a.Bare {
+				return fail(a.Pos, "%s takes a value", a.Name)
+			}
+			pos[a.Name] = a.ValuePos
+			switch a.Name {
+			case "name":
+				name = a.Value
+			case "dark":
+				h.Dark = a.Value
+			case "light":
+				h.Light = a.Value
+			case "value":
+				h.Value = a.Value
+			case "cells":
+				c, err := strconv.Atoi(a.Value)
+				if err != nil || c < 0 || c > 15 {
+					return fail(a.ValuePos, "cells is 0 to 15, not %q", a.Value)
+				}
+				h.Cells = surfui.Cell(c)
+			default:
+				return fail(a.Pos, "<hue> takes no %s; it takes %s", a.Name, orList([]string{"name", "dark", "light", "value", "cells"}))
+			}
+		}
+		if _, ok := k.Attr("name"); !ok {
+			return fail(k.Pos, "a <hue> takes a name")
+		}
+		if !surfui.ValidHueName(name) {
+			return fail(pos["name"], "a hue's name is a lower-case identifier, as coral or sea_green, not %q", name)
+		}
+		for _, c := range [...]struct{ what, v string }{{"dark", h.Dark}, {"light", h.Light}, {"value", h.Value}} {
+			if _, _, _, ok := surfui.ParseHex(c.v); c.v != "" && !ok {
+				return fail(pos[c.what], "%s is #rgb or #rrggbb, not %q: hex is written in a <palette>, as it is nowhere else", c.what, c.v)
+			}
+		}
+		if err := h.Check(name); err != nil {
+			return fail(k.Pos, "%v", err)
+		}
+		if _, dup := f.palette[name]; dup {
+			return fail(pos["name"], "hue %s is declared twice", name)
+		}
+		f.palette[name] = h
+		f.hueAt[name] = k.Pos
+	}
+	return nil
 }
 
 // addRoot adds the top-level element n to f: the first, or the next of
@@ -352,6 +532,15 @@ type compiler struct {
 	errs  []error
 	ords  map[*markup.Node]int // each <menu> item's place in its menu
 	svgs  map[string]SVGAsset  // the .svg files beside the templates
+	// palette is every file's hues: a literal hue is one of them.
+	palette surfui.Palette
+	// Where the hues are drawn, which the contrast asked of each depends
+	// on: the names a literal hue= gives a dot, and the names it gives
+	// text, a glyph or an icon; and whether a bound :hue, which may be any
+	// name, is on a dot, or on the others.
+	hueDot, hueText map[string]bool
+	boundDot        bool
+	boundText       bool
 }
 
 // tmpl is a template compiled for an owner: the component whose fields
@@ -403,6 +592,11 @@ func (c *compiler) template(name string, owner *Shape, at markup.Pos) *tmpl {
 	stackprobe.Probe()
 	t, sc := c.tmplOf(name, owner)
 	if sc == nil {
+		return t
+	}
+	if len(t.file.roots) == 0 {
+		c.fail(t.file, markup.Pos{Line: 1, Col: 1}, "no root element: the file holds a <palette> alone, so it is no template")
+		t.root = &elem{kind: kNone}
 		return t
 	}
 	c.viewChain(t, name)
@@ -909,6 +1103,10 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 		}
 	}
 	s.dragNeeds(n, vals)
+	s.c.noteHue(n)
+	if a, ok := hueAndTone(n); ok {
+		s.c.fail(s.t.file, a.Pos, "<%s> takes a tone or a hue, not both", n.Tag)
+	}
 	for i := range Attrs {
 		at := &Attrs[i]
 		if at.Arg {
@@ -946,6 +1144,22 @@ func (s *scope) dragNeeds(n *markup.Node, vals map[int]value) {
 			}
 		}
 	}
+}
+
+// hueAndTone is n's hue= attribute where it has a tone= too, literal or
+// bound: an element's text is in one or the other.
+func hueAndTone(n *markup.Node) (markup.Attr, bool) {
+	var hue markup.Attr
+	var hasHue, hasTone bool
+	for _, a := range n.Attrs {
+		switch strings.TrimPrefix(a.Name, ":") {
+		case "hue":
+			hue, hasHue = a, true
+		case "tone":
+			hasTone = true
+		}
+	}
+	return hue, hasHue && hasTone
 }
 
 // leafKids compiles the children of a widget that holds no widgets: a
@@ -1342,7 +1556,12 @@ func (s *scope) value(at *Attr, a markup.Attr, bound bool) (value, bool) {
 			return value{}, false
 		}
 		v.lit = cellite.StringValue(a.Value)
-		if at.Func != "" && at.Name != "key" {
+		if at.Name == "hue" {
+			if err := s.c.checkHue(a.Value); err != nil {
+				s.c.fail(s.t.file, a.ValuePos, "%v", err)
+				return value{}, false
+			}
+		} else if at.Func != "" && at.Name != "key" {
 			// A literal a modifier refuses is the template's error.
 			if err := checkLiteral(at, a.Value); err != nil {
 				s.c.fail(s.t.file, a.ValuePos, "%v", err)
@@ -1351,6 +1570,18 @@ func (s *scope) value(at *Attr, a markup.Attr, bound bool) (value, bool) {
 		}
 	}
 	return v, true
+}
+
+// checkHue is what the palettes say of a literal hue's name: refused where
+// none declares it.
+func (c *compiler) checkHue(name string) error {
+	if _, ok := c.palette[name]; ok {
+		return nil
+	}
+	if len(c.palette) == 0 {
+		return fmt.Errorf("hue %q is in no <palette>: no template declares one", name)
+	}
+	return fmt.Errorf("hue %q is in no <palette>; the palettes declare %s", name, orList(c.palette.Names()))
 }
 
 // checkLiteral is what a string modifier says of the literal v.

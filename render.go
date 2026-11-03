@@ -626,6 +626,8 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModKey(n, v)
 	case "tone":
 		return ModTone(n, v)
+	case "hue":
+		ModHue(n, v)
 	case "fill":
 		return ModFill(n, v)
 	case "value":

@@ -1,0 +1,96 @@
+A palette gives a template's data named colours (docs/surf.md, "Colours
+from data"). crew.surf declares coral, teal and plum; a literal hue="coral"
+and a bound :hue="h.colour" put each element's text, or a dot, in a hue:
+its class u-hue-<name>, which the stylesheet's palette rules (the css file)
+colour from --u-hue-<name>, its dark value, its light one on a light
+ground. A name no palette declares (mauve) draws the ink, as an empty one
+does: the class is there and no rule answers it. The cells draw each hue in
+its terminal colour (ansi-9, ansi-6; plum's, by its angle, ansi-12), and an
+unknown one in the ink; teal is cells="6" where its angle says 14. A click
+changes a bound hue in place: the class op.
+-- root --
+Crew
+-- state.json --
+{"Title": "Crew", "Hands": [{"Name": "ada", "Colour": "coral"}, {"Name": "bo", "Colour": "teal"}, {"Name": "cy", "Colour": "mauve"}, {"Name": "di", "Colour": ""}]}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.0" class="u-heading">Crew</div><div id="r.klit" class="u-row u-gap1"><span id="r.klit.0" class="u-glyph u-dot u-hue-coral">●</span><span id="r.klit.1" class="u-text u-hue-coral">a literal hue</span></div><div id="r.kada" class="u-row u-gap1" data-on="click"><span id="r.kada.0" class="u-glyph u-dot u-hue-coral">●</span><span id="r.kada.1" class="u-text u-hue-coral">ada</span></div><div id="r.kbo" class="u-row u-gap1" data-on="click"><span id="r.kbo.0" class="u-glyph u-dot u-hue-teal">●</span><span id="r.kbo.1" class="u-text u-hue-teal">bo</span></div><div id="r.kcy" class="u-row u-gap1" data-on="click"><span id="r.kcy.0" class="u-glyph u-dot u-hue-mauve">●</span><span id="r.kcy.1" class="u-text u-hue-mauve">cy</span></div><div id="r.kdi" class="u-row u-gap1" data-on="click"><span id="r.kdi.0" class="u-glyph u-dot">●</span><span id="r.kdi.1" class="u-text">di</span></div></div></body></html>
+-- cells --
+cells 64x32
+text
+> Crew
+> ● a literal hue
+> ● ada
+> ● bo
+> ● cy
+> ● di
+style
+= aaaa
+= b.bbbbbbbbbbbbb
+= b.bbb
+= c.cc
+. fg/bg
+a fg/bg bold
+b ansi-9/bg
+c ansi-6/bg
+hits
+@ 0,2 64x1 r.kada
+@ 0,3 64x1 r.kbo
+@ 0,4 64x1 r.kcy
+@ 0,5 64x1 r.kdi
+-- css --
+
+/* The palette's hues (surfui.Palette). */
+.u-surface {
+  --u-hue-coral: #ff8e7a;
+  --u-hue-plum: #c9a0ff;
+  --u-hue-teal: #4fd1c5;
+}
+@media (prefers-color-scheme: light) {
+  .u-surface {
+    --u-hue-coral: #b4321f;
+    --u-hue-plum: #6b3fa0;
+    --u-hue-teal: #0f766e;
+  }
+}
+.u-surface.u-theme-paper {
+  --u-hue-coral: #b4321f;
+  --u-hue-plum: #6b3fa0;
+  --u-hue-teal: #0f766e;
+}
+.u-hue-coral { color: var(--u-hue-coral); }
+.u-hue-plum { color: var(--u-hue-plum); }
+.u-hue-teal { color: var(--u-hue-teal); }
+-- 1.event --
+click r.kcy
+-- 1.log --
+recolour cy
+-- 1.ops --
+attr r.kcy.0 class "u-glyph u-dot u-hue-plum"
+attr r.kcy.1 class "u-text u-hue-plum"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.0" class="u-heading">Crew</div><div id="r.klit" class="u-row u-gap1"><span id="r.klit.0" class="u-glyph u-dot u-hue-coral">●</span><span id="r.klit.1" class="u-text u-hue-coral">a literal hue</span></div><div id="r.kada" class="u-row u-gap1" data-on="click"><span id="r.kada.0" class="u-glyph u-dot u-hue-coral">●</span><span id="r.kada.1" class="u-text u-hue-coral">ada</span></div><div id="r.kbo" class="u-row u-gap1" data-on="click"><span id="r.kbo.0" class="u-glyph u-dot u-hue-teal">●</span><span id="r.kbo.1" class="u-text u-hue-teal">bo</span></div><div id="r.kcy" class="u-row u-gap1" data-on="click"><span id="r.kcy.0" class="u-glyph u-dot u-hue-plum">●</span><span id="r.kcy.1" class="u-text u-hue-plum">cy</span></div><div id="r.kdi" class="u-row u-gap1" data-on="click"><span id="r.kdi.0" class="u-glyph u-dot">●</span><span id="r.kdi.1" class="u-text">di</span></div></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+> Crew
+> ● a literal hue
+> ● ada
+> ● bo
+> ● cy
+> ● di
+style
+= aaaa
+= b.bbbbbbbbbbbbb
+= b.bbb
+= c.cc
+= d.dd
+. fg/bg
+a fg/bg bold
+b ansi-9/bg
+c ansi-6/bg
+d ansi-12/bg
+hits
+@ 0,2 64x1 r.kada
+@ 0,3 64x1 r.kbo
+@ 0,4 64x1 r.kcy
+@ 0,5 64x1 r.kdi

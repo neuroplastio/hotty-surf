@@ -74,6 +74,7 @@ var canonAttrs = map[string]string{
 	"density/surface":   `<surface density="dense"/>`,
 	"key":               `<row><text key="a">x</text></row>`,
 	"tone":              `<text tone="warn">x</text>`,
+	"hue/text":          `<text :hue="'coral'">x</text>`,
 	"fill":              `<badge fill="ok">x</badge>`,
 	"bold":              `<text bold>x</text>`,
 	"semibold":          `<text semibold>x</text>`,

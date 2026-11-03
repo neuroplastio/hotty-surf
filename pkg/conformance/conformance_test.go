@@ -27,12 +27,13 @@ type mode struct {
 	frame func(*Frame) surflive.Component
 	shelf func(*Shelf) surflive.Component
 	deck  func(*Deck) surflive.Component
+	crew  func(*Crew) surflive.Component
 }
 
 // modes are the ways a root is drawn: each case holds in both, alike.
 var modes = []mode{
-	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck},
-	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck},
+	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew},
+	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew},
 }
 
 // A case is a txtar file (cases/*.txt): its comment says what it shows;
@@ -210,7 +211,7 @@ func errorsFile(heard []string) string {
 // Board or the fixture its root file names: its files as they come out,
 // and the errors its renders reported.
 func play(t *testing.T, host player, ar *txtar.Archive, m mode) ([]txtar.File, []string) {
-	board, form, frame, shelf, deck := m.view, m.form, m.frame, m.shelf, m.deck
+	board, form, frame, shelf, deck, crew := m.view, m.form, m.frame, m.shelf, m.deck, m.crew
 	state, _ := File(ar, "state.json")
 	root, _ := File(ar, "root")
 	switch r := strings.TrimSpace(string(root)); r {
@@ -244,6 +245,12 @@ func play(t *testing.T, host player, ar *txtar.Archive, m mode) ([]txtar.File, [
 			t.Fatal(err)
 		}
 		return host(t, ar, deck(d), func() []string { return d.Log })
+	case "Crew":
+		c := &Crew{}
+		if err := json.Unmarshal(state, c); err != nil {
+			t.Fatal(err)
+		}
+		return host(t, ar, crew(c), func() []string { return c.Log })
 	default:
 		t.Fatalf("root: no fixture %s", r)
 		return nil, nil

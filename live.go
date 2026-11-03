@@ -112,6 +112,16 @@ func (v *View) SetDensity(d surfui.Density) {
 	}
 }
 
+// Palette is the templates' hues, and those of the component's Go value,
+// where it declares some (surfrun.Palettist): what the run sends as the
+// stylesheet's rules.
+func (v *View) Palette() surfui.Palette {
+	if p, ok := v.under().(surfrun.Palettist); ok {
+		return v.set.Palette().Merge(p.Palette())
+	}
+	return v.set.Palette()
+}
+
 // KeyStyle is how the component's Go value draws its keys, if it says
 // (surfrun.KeyStyler): the zero Style, which says none, where it doesn't.
 func (v *View) KeyStyle() surfkeys.Style {
