@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/neuroplastio/hotty-go"
 	"github.com/neuroplastio/hotty-go/hottytest"
@@ -73,22 +74,29 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 	for i, ev := range events {
 		n := strconv.Itoa(i + 1)
 		doc := a.Surface().HTML()
-		f := strings.Fields(ev)
-		var err error
-		switch {
-		case len(f) == 2 && f[0] == "click":
-			err = a.Host.Click(a.Name, f[1])
-		case len(f) == 3 && f[0] == "choose": // the select's list opened, and the option clicked
-			a.Pick(f[1], f[2])
-		case len(f) >= 2 && f[0] == "fill":
-			err = a.Host.Fill(a.Name, f[1], strings.Join(f[2:], " "))
-		case len(f) == 2 && f[0] == "key":
-			a.Host.Key(f[1])
-		default:
-			t.Fatalf("%s.event: %q is no event", n, ev)
-		}
-		if err != nil {
-			t.Fatalf("%s.event %q: %v", n, ev, err)
+		var f []string
+		for _, cmd := range strings.Split(ev, ";") {
+			f = strings.Fields(cmd)
+			var err error
+			switch {
+			case len(f) == 2 && f[0] == "click":
+				err = a.Host.Click(a.Name, f[1])
+			case len(f) == 3 && f[0] == "choose": // the select's list opened, and the option clicked
+				a.Pick(f[1], f[2])
+			case len(f) >= 2 && f[0] == "fill":
+				err = a.Host.Fill(a.Name, f[1], strings.Join(f[2:], " "))
+			case len(f) == 2 && f[0] == "key":
+				a.Host.Key(f[1])
+			case len(f) == 2 && f[0] == "press": // a drag's start
+				err = a.Host.DragStart(a.Name, f[1], 0, 0)
+			case (len(f) == 2 || len(f) == 3) && (f[0] == "over" || f[0] == "release"):
+				err = dragTo(a.Host, f)
+			default:
+				t.Fatalf("%s.event: %q is no event", n, ev)
+			}
+			if err != nil {
+				t.Fatalf("%s.event %q: %v", n, ev, err)
+			}
 		}
 		a.Wait("the handler's log or document", func() bool {
 			var k int
@@ -99,6 +107,22 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 			}
 			return k > nlog || a.Surface().HTML() != doc
 		})
+		// A step of several events logs as many lines as the case says:
+		// the first is no sign the rest are in. A release logs two when
+		// it is a click as well (a drag's end, then the click's handler).
+		if want, ok := File(ar, n+".log"); ok && len(f) > 0 && (strings.Contains(ev, ";") || f[0] == "release") {
+			lines := 0
+			if w := strings.TrimSpace(string(want)); w != "" {
+				lines = strings.Count(w, "\n") + 1
+			}
+			for end := time.Now().Add(surftest.Patience); time.Now().Before(end); time.Sleep(2 * time.Millisecond) {
+				var k int
+				a.Call(func() { k = len(log()) })
+				if k >= nlog+lines {
+					break
+				}
+			}
+		}
 		a.Call(func() {}) // its update, written
 		var logged []string
 		a.Call(func() { logged = append(logged, log()[nlog:]...) })
@@ -126,6 +150,29 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 	var errs []string
 	a.Call(func() { errs = append(errs, heard()...) })
 	return out, errs
+}
+
+// dragTo is a drag's step on a host: `over ID [STEP]`, the pointer onto
+// the element ID, at step STEP of a place to drop on split in steps;
+// `release ID [STEP]`, the button released there.
+func dragTo(h *hottytest.Host, f []string) error {
+	ty, stepped := -1, len(f) == 3
+	if stepped {
+		v, err := strconv.Atoi(f[2])
+		if err != nil {
+			return err
+		}
+		ty = v
+	}
+	switch {
+	case f[0] == "over" && stepped:
+		return h.DragOver(f[1], 0, 0, 0, ty)
+	case f[0] == "over":
+		return h.DragMove(f[1], 0, 0)
+	case stepped:
+		return h.DragEndOver(f[1], 0, 0, 0, ty)
+	}
+	return h.DragEnd(f[1], 0, 0)
 }
 
 // hear has c's render errors appended to errs, each the first time.

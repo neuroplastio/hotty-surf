@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
+//go:embed board.surf deck.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeShelf, &surfShapeNote, &surfShapeBranch}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeDeck, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -125,6 +125,72 @@ func (o surfBoard) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpBoard is c drawn by its template, interpreted.
 func surfInterpBoard(c *Board) surflive.Component { return surf.Component(surfSet(), surfBoard{c}) }
+
+// surfShapeDeck is Deck's shape, a component.
+var surfShapeDeck = surf.Shape{Name: "Deck", Component: true,
+	Fields: []surf.Field{{Name: "rows", Type: cellite.ListOf(cellite.StructOf("Card"))}, {Name: "folders", Type: cellite.ListOf(cellite.StructOf("Card"))}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "done", Args: []cellite.Type{cellite.String, cellite.Bool}},
+		{Name: "file", Args: []cellite.Type{cellite.String, cellite.String, cellite.String}},
+		{Name: "move", Args: []cellite.Type{cellite.String, cellite.String, cellite.String}},
+		{Name: "open", Args: []cellite.Type{cellite.String}},
+		{Name: "start", Args: []cellite.Type{cellite.String}},
+	},
+}
+
+// surfDeck is a *Deck as its templates read it.
+type surfDeck struct{ p *Deck }
+
+// surfDeckValue is p as a value: null for nil.
+func surfDeckValue(p *Deck) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Deck", surfDeck{p})
+}
+
+// surfDeckOf is a value's *Deck: nil for any other.
+func surfDeckOf(v cellite.Value) *Deck {
+	if o, ok := v.Object().(surfDeck); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfDeck) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.ListValue(surfList4(o.p.Rows))
+	case 1:
+		return cellite.ListValue(surfList4(o.p.Folders))
+	case 2:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfDeck) Shape() *surf.Shape { return &surfShapeDeck }
+
+func (o surfDeck) Unwrap() any { return o.p }
+
+func (o surfDeck) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Done(string(args[0].String()), bool(args[1].Bool()))
+	case 1:
+		o.p.File(string(args[0].String()), string(args[1].String()), string(args[2].String()))
+	case 2:
+		o.p.Move(string(args[0].String()), string(args[1].String()), string(args[2].String()))
+	case 3:
+		o.p.Open(string(args[0].String()))
+	case 4:
+		o.p.Start(string(args[0].String()))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpDeck is c drawn by its template, interpreted.
+func surfInterpDeck(c *Deck) surflive.Component { return surf.Component(surfSet(), surfDeck{c}) }
 
 // surfShapeForm is Form's shape, a component.
 var surfShapeForm = surf.Shape{Name: "Form", Component: true,
@@ -343,7 +409,7 @@ func (o surfShelf) Field(i int) cellite.Value {
 	case 1:
 		return surfInfoPanelValue(o.p.Panel)
 	case 2:
-		return cellite.ListValue(surfList4(o.p.Panels))
+		return cellite.ListValue(surfList5(o.p.Panels))
 	case 3:
 		return cellite.ListValue(surfList2(o.p.Log))
 	}
@@ -443,6 +509,40 @@ func (o surfBranch) Field(i int) cellite.Value {
 		return cellite.StringValue(string(o.p.Via))
 	case 4:
 		return surfBranchValue(o.p.Next)
+	}
+	return cellite.NullValue()
+}
+
+// surfShapeCard is Card's shape, a struct.
+var surfShapeCard = surf.Shape{Name: "Card", Component: false,
+	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "name", Type: cellite.String}},
+}
+
+// surfCard is a *Card as its templates read it.
+type surfCard struct{ p *Card }
+
+// surfCardValue is p as a value: null for nil.
+func surfCardValue(p *Card) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Card", surfCard{p})
+}
+
+// surfCardOf is a value's *Card: nil for any other.
+func surfCardOf(v cellite.Value) *Card {
+	if o, ok := v.Object().(surfCard); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfCard) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.ID))
+	case 1:
+		return cellite.StringValue(string(o.p.Name))
 	}
 	return cellite.NullValue()
 }
@@ -702,6 +802,202 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 		for _, kb := range b1 {
 			n1.AddBinding(kb)
 		}
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
+// surfRenderDeck draws deck.surf for Deck.
+func surfRenderDeck(e *surf.Errs, out []*surfui.Node, c *Deck, fill surf.Fill) []*surfui.Node {
+	// deck.surf:1:1 <surface>
+	if e.Enter("deck.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// deck.surf:2:3 <list>
+		if e.Enter("deck.surf", 2, 3) {
+			var k2 []*surfui.Node
+			for _, x3 := range c.Rows {
+				// deck.surf:3:5 <item>
+				if e.Enter("deck.surf", 3, 5) {
+					var k4 []*surfui.Node
+					// deck.surf:6:7 <stack>
+					if e.Enter("deck.surf", 6, 7) {
+						var k5 []*surfui.Node
+						// deck.surf:7:9 <text>
+						if e.Enter("deck.surf", 7, 9) {
+							var t8 string
+							switch {
+							default:
+								p7 := x3
+								if p7 == nil {
+									e.Null("deck.surf", 7, 9)
+									break
+								}
+								t8 += p7.Name
+							}
+							n6 := surfui.Text(t8)
+							k5 = append(k5, n6)
+							e.Leave()
+						}
+						// deck.surf:8:9 <text>
+						if e.Enter("deck.surf", 8, 9) {
+							var t11 string
+							switch {
+							default:
+								p10 := x3
+								if p10 == nil {
+									e.Null("deck.surf", 8, 9)
+									break
+								}
+								t11 += p10.ID
+							}
+							n9 := surfui.Text(t11)
+							surf.ModMuted(n9, true)
+							k5 = append(k5, n9)
+							e.Leave()
+						}
+						n5 := surfui.Stack(k5...)
+						surf.ModGrow(n5, true)
+						k4 = append(k4, n5)
+						e.Leave()
+					}
+					n4 := surfui.Item(k4...)
+					switch {
+					default:
+						p12 := x3
+						if p12 == nil {
+							e.Null("deck.surf", 3, 5)
+							break
+						}
+						surf.ModKey(n4, p12.ID)
+					}
+					surf.ModDrag(n4, true)
+					surf.ModDrop(n4, "halves")
+					n4.On("dragstart", func(ev surfrun.Event) { c.Start(ev.Drag.From) })
+					n4.On("dragend", func(ev surfrun.Event) { c.Done(ev.Drag.From, ev.Drag.Cancel) })
+					switch {
+					default:
+						p13 := x3
+						if p13 == nil {
+							e.Null("deck.surf", 3, 5)
+							break
+						}
+						a14 := p13.ID
+						n4.On("drop", func(ev surfrun.Event) { c.Move(ev.Drag.From, a14, ev.Drag.Where) })
+					}
+					switch {
+					default:
+						p15 := x3
+						if p15 == nil {
+							e.Null("deck.surf", 3, 5)
+							break
+						}
+						a16 := p15.ID
+						n4.On("click", func() { c.Open(a16) })
+					}
+					k2 = append(k2, n4)
+					e.Leave()
+				}
+			}
+			n2 := surfui.List(k2...)
+			surf.ModKey(n2, "rows")
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// deck.surf:12:3 <list>
+		if e.Enter("deck.surf", 12, 3) {
+			var k17 []*surfui.Node
+			for _, x18 := range c.Folders {
+				// deck.surf:13:5 <item>
+				if e.Enter("deck.surf", 13, 5) {
+					var k19 []*surfui.Node
+					// deck.surf:15:7 <stack>
+					if e.Enter("deck.surf", 15, 7) {
+						var k20 []*surfui.Node
+						// deck.surf:16:9 <text>
+						if e.Enter("deck.surf", 16, 9) {
+							var t23 string
+							switch {
+							default:
+								p22 := x18
+								if p22 == nil {
+									e.Null("deck.surf", 16, 9)
+									break
+								}
+								t23 += p22.Name
+							}
+							n21 := surfui.Text(t23)
+							k20 = append(k20, n21)
+							e.Leave()
+						}
+						// deck.surf:17:9 <text>
+						if e.Enter("deck.surf", 17, 9) {
+							n24 := surfui.Text("folder")
+							surf.ModMuted(n24, true)
+							k20 = append(k20, n24)
+							e.Leave()
+						}
+						// deck.surf:18:9 <text>
+						if e.Enter("deck.surf", 18, 9) {
+							var t27 string
+							switch {
+							default:
+								p26 := x18
+								if p26 == nil {
+									e.Null("deck.surf", 18, 9)
+									break
+								}
+								t27 += p26.ID
+							}
+							n25 := surfui.Text(t27)
+							surf.ModMuted(n25, true)
+							k20 = append(k20, n25)
+							e.Leave()
+						}
+						n20 := surfui.Stack(k20...)
+						surf.ModGrow(n20, true)
+						k19 = append(k19, n20)
+						e.Leave()
+					}
+					n19 := surfui.Item(k19...)
+					switch {
+					default:
+						p28 := x18
+						if p28 == nil {
+							e.Null("deck.surf", 13, 5)
+							break
+						}
+						surf.ModKey(n19, p28.ID)
+					}
+					surf.ModDrop(n19, "thirds")
+					switch {
+					default:
+						p29 := x18
+						if p29 == nil {
+							e.Null("deck.surf", 13, 5)
+							break
+						}
+						a30 := p29.ID
+						n19.On("drop", func(ev surfrun.Event) { c.File(ev.Drag.From, a30, ev.Drag.Where) })
+					}
+					k17 = append(k17, n19)
+					e.Leave()
+				}
+			}
+			n17 := surfui.List(k17...)
+			surf.ModKey(n17, "folders")
+			k1 = append(k1, n17)
+			e.Leave()
+		}
+		// deck.surf:22:3 <text>
+		if e.Enter("deck.surf", 22, 3) {
+			n31 := surfui.Text("Nothing to drop on")
+			surf.ModKey(n31, "none")
+			surf.ModMuted(n31, true)
+			k1 = append(k1, n31)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
 		out = append(out, n1)
 		e.Leave()
 	}
@@ -2284,6 +2580,11 @@ func surfCompiledBoard(c *Board) surflive.Component {
 	return surf.Compiled(c, "board.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderBoard(e, nil, c, nil) })
 }
 
+// surfCompiledDeck is c drawn by its templates compiled into Go.
+func surfCompiledDeck(c *Deck) surflive.Component {
+	return surf.Compiled(c, "deck.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderDeck(e, nil, c, nil) })
+}
+
 // surfCompiledForm is c drawn by its templates compiled into Go.
 func surfCompiledForm(c *Form) surflive.Component {
 	return surf.Compiled(c, "form.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderForm(e, nil, c, nil) })
@@ -2361,14 +2662,33 @@ func surfList3Of(v cellite.Value) []*Branch {
 	return out
 }
 
-// surfList4 is a []*InfoPanel as a list.
-type surfList4 []*InfoPanel
+// surfList4 is a []*Card as a list.
+type surfList4 []*Card
 
 func (l surfList4) Len() int               { return len(l) }
-func (l surfList4) At(i int) cellite.Value { return surfInfoPanelValue(l[i]) }
+func (l surfList4) At(i int) cellite.Value { return surfCardValue(l[i]) }
 
-// surfList4Of is a list's value as a []*InfoPanel.
-func surfList4Of(v cellite.Value) []*InfoPanel {
+// surfList4Of is a list's value as a []*Card.
+func surfList4Of(v cellite.Value) []*Card {
+	l := v.List()
+	if l == nil {
+		return nil
+	}
+	out := make([]*Card, l.Len())
+	for i := range out {
+		out[i] = surfCardOf(l.At(i))
+	}
+	return out
+}
+
+// surfList5 is a []*InfoPanel as a list.
+type surfList5 []*InfoPanel
+
+func (l surfList5) Len() int               { return len(l) }
+func (l surfList5) At(i int) cellite.Value { return surfInfoPanelValue(l[i]) }
+
+// surfList5Of is a list's value as a []*InfoPanel.
+func surfList5Of(v cellite.Value) []*InfoPanel {
 	l := v.List()
 	if l == nil {
 		return nil

@@ -1,0 +1,200 @@
+Escape during a drag ends it: @dragend runs at once with $drag.cancel
+true, and the mark goes. The release after it runs no @drop, and no
+click; the next drag is a drag as any.
+-- root --
+Deck
+-- state.json --
+{"Rows": [{"ID": "a", "Name": "Alpha"}, {"ID": "b", "Name": "Beta"}, {"ID": "c", "Name": "Gamma"}], "Folders": [{"ID": "f", "Name": "Inbox"}]}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.krows" class="u-list" role="listbox"><div id="r.krows.ka" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.ka.0" class="u-stack u-grow"><span id="r.krows.ka.0.0" class="u-text">Alpha</span><span id="r.krows.ka.0.1" class="u-text u-tone-muted">a</span></div></div><div id="r.krows.kb" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kb.0" class="u-stack u-grow"><span id="r.krows.kb.0.0" class="u-text">Beta</span><span id="r.krows.kb.0.1" class="u-text u-tone-muted">b</span></div></div><div id="r.krows.kc" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kc.0" class="u-stack u-grow"><span id="r.krows.kc.0.0" class="u-text">Gamma</span><span id="r.krows.kc.0.1" class="u-text u-tone-muted">c</span></div></div></div><div id="r.kfolders" class="u-list" role="listbox"><div id="r.kfolders.kf" class="u-item" role="option" data-on="drop" data-steps="0 2"><div id="r.kfolders.kf.0" class="u-stack u-grow"><span id="r.kfolders.kf.0.0" class="u-text">Inbox</span><span id="r.kfolders.kf.0.1" class="u-text u-tone-muted">folder</span><span id="r.kfolders.kf.0.2" class="u-text u-tone-muted">f</span></div></div></div><span id="r.knone" class="u-text u-tone-muted">Nothing to drop on</span></div></body></html>
+-- cells --
+cells 64x32
+text
+>  Alpha
+>  a
+>  Beta
+>  b
+>  Gamma
+>  c
+>  Inbox
+>  folder
+>  f
+> Nothing to drop on
+style
+=
+= .a
+=
+= .a
+=
+= .a
+=
+= .aaaaaa
+= .a
+= aaaaaaaaaaaaaaaaaa
+. fg/bg
+a muted/bg
+hits
+@ 0,0 64x2 r.krows.ka
+@ 0,2 64x2 r.krows.kb
+@ 0,4 64x2 r.krows.kc
+@ 0,6 64x3 r.kfolders.kf
+-- 1.event --
+press r.krows.ka
+-- 1.log --
+dragstart a
+-- 1.ops --
+
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.krows" class="u-list" role="listbox"><div id="r.krows.ka" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.ka.0" class="u-stack u-grow"><span id="r.krows.ka.0.0" class="u-text">Alpha</span><span id="r.krows.ka.0.1" class="u-text u-tone-muted">a</span></div></div><div id="r.krows.kb" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kb.0" class="u-stack u-grow"><span id="r.krows.kb.0.0" class="u-text">Beta</span><span id="r.krows.kb.0.1" class="u-text u-tone-muted">b</span></div></div><div id="r.krows.kc" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kc.0" class="u-stack u-grow"><span id="r.krows.kc.0.0" class="u-text">Gamma</span><span id="r.krows.kc.0.1" class="u-text u-tone-muted">c</span></div></div></div><div id="r.kfolders" class="u-list" role="listbox"><div id="r.kfolders.kf" class="u-item" role="option" data-on="drop" data-steps="0 2"><div id="r.kfolders.kf.0" class="u-stack u-grow"><span id="r.kfolders.kf.0.0" class="u-text">Inbox</span><span id="r.kfolders.kf.0.1" class="u-text u-tone-muted">folder</span><span id="r.kfolders.kf.0.2" class="u-text u-tone-muted">f</span></div></div></div><span id="r.knone" class="u-text u-tone-muted">Nothing to drop on</span></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+>  Alpha
+>  a
+>  Beta
+>  b
+>  Gamma
+>  c
+>  Inbox
+>  folder
+>  f
+> Nothing to drop on
+style
+=
+= .a
+=
+= .a
+=
+= .a
+=
+= .aaaaaa
+= .a
+= aaaaaaaaaaaaaaaaaa
+. fg/bg
+a muted/bg
+hits
+@ 0,0 64x2 r.krows.ka
+@ 0,2 64x2 r.krows.kb
+@ 0,4 64x2 r.krows.kc
+@ 0,6 64x3 r.kfolders.kf
+-- 2.event --
+over r.krows.kc 1
+-- 2.log --
+
+-- 2.ops --
+attr r.krows.kc class "u-item u-drop-after"
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.krows" class="u-list" role="listbox"><div id="r.krows.ka" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.ka.0" class="u-stack u-grow"><span id="r.krows.ka.0.0" class="u-text">Alpha</span><span id="r.krows.ka.0.1" class="u-text u-tone-muted">a</span></div></div><div id="r.krows.kb" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kb.0" class="u-stack u-grow"><span id="r.krows.kb.0.0" class="u-text">Beta</span><span id="r.krows.kb.0.1" class="u-text u-tone-muted">b</span></div></div><div id="r.krows.kc" class="u-item u-drop-after" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kc.0" class="u-stack u-grow"><span id="r.krows.kc.0.0" class="u-text">Gamma</span><span id="r.krows.kc.0.1" class="u-text u-tone-muted">c</span></div></div></div><div id="r.kfolders" class="u-list" role="listbox"><div id="r.kfolders.kf" class="u-item" role="option" data-on="drop" data-steps="0 2"><div id="r.kfolders.kf.0" class="u-stack u-grow"><span id="r.kfolders.kf.0.0" class="u-text">Inbox</span><span id="r.kfolders.kf.0.1" class="u-text u-tone-muted">folder</span><span id="r.kfolders.kf.0.2" class="u-text u-tone-muted">f</span></div></div></div><span id="r.knone" class="u-text u-tone-muted">Nothing to drop on</span></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+>  Alpha
+>  a
+>  Beta
+>  b
+>  Gamma
+>  c
+>  Inbox
+>  folder
+>  f
+> Nothing to drop on
+style
+=
+= .a
+=
+= .a
+=
+= bcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+= .aaaaaa
+= .a
+= aaaaaaaaaaaaaaaaaa
+. fg/bg
+a muted/bg
+b fg/bg underline line:accent
+c muted/bg underline line:accent
+hits
+@ 0,0 64x2 r.krows.ka
+@ 0,2 64x2 r.krows.kb
+@ 0,4 64x2 r.krows.kc
+@ 0,6 64x3 r.kfolders.kf
+-- 3.event --
+key escape
+-- 3.log --
+dragend a cancelled
+-- 3.ops --
+attr r.krows.kc class "u-item"
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.krows" class="u-list" role="listbox"><div id="r.krows.ka" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.ka.0" class="u-stack u-grow"><span id="r.krows.ka.0.0" class="u-text">Alpha</span><span id="r.krows.ka.0.1" class="u-text u-tone-muted">a</span></div></div><div id="r.krows.kb" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kb.0" class="u-stack u-grow"><span id="r.krows.kb.0.0" class="u-text">Beta</span><span id="r.krows.kb.0.1" class="u-text u-tone-muted">b</span></div></div><div id="r.krows.kc" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kc.0" class="u-stack u-grow"><span id="r.krows.kc.0.0" class="u-text">Gamma</span><span id="r.krows.kc.0.1" class="u-text u-tone-muted">c</span></div></div></div><div id="r.kfolders" class="u-list" role="listbox"><div id="r.kfolders.kf" class="u-item" role="option" data-on="drop" data-steps="0 2"><div id="r.kfolders.kf.0" class="u-stack u-grow"><span id="r.kfolders.kf.0.0" class="u-text">Inbox</span><span id="r.kfolders.kf.0.1" class="u-text u-tone-muted">folder</span><span id="r.kfolders.kf.0.2" class="u-text u-tone-muted">f</span></div></div></div><span id="r.knone" class="u-text u-tone-muted">Nothing to drop on</span></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+>  Alpha
+>  a
+>  Beta
+>  b
+>  Gamma
+>  c
+>  Inbox
+>  folder
+>  f
+> Nothing to drop on
+style
+=
+= .a
+=
+= .a
+=
+= .a
+=
+= .aaaaaa
+= .a
+= aaaaaaaaaaaaaaaaaa
+. fg/bg
+a muted/bg
+hits
+@ 0,0 64x2 r.krows.ka
+@ 0,2 64x2 r.krows.kb
+@ 0,4 64x2 r.krows.kc
+@ 0,6 64x3 r.kfolders.kf
+-- 4.event --
+release r.krows.kc 1; press r.krows.kb; release r.krows.kb
+-- 4.log --
+dragstart b
+dragend b
+open b
+-- 4.ops --
+
+-- 4.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.krows" class="u-list" role="listbox"><div id="r.krows.ka" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.ka.0" class="u-stack u-grow"><span id="r.krows.ka.0.0" class="u-text">Alpha</span><span id="r.krows.ka.0.1" class="u-text u-tone-muted">a</span></div></div><div id="r.krows.kb" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kb.0" class="u-stack u-grow"><span id="r.krows.kb.0.0" class="u-text">Beta</span><span id="r.krows.kb.0.1" class="u-text u-tone-muted">b</span></div></div><div id="r.krows.kc" class="u-item" role="option" data-on="click drag drop" data-steps="0 1"><div id="r.krows.kc.0" class="u-stack u-grow"><span id="r.krows.kc.0.0" class="u-text">Gamma</span><span id="r.krows.kc.0.1" class="u-text u-tone-muted">c</span></div></div></div><div id="r.kfolders" class="u-list" role="listbox"><div id="r.kfolders.kf" class="u-item" role="option" data-on="drop" data-steps="0 2"><div id="r.kfolders.kf.0" class="u-stack u-grow"><span id="r.kfolders.kf.0.0" class="u-text">Inbox</span><span id="r.kfolders.kf.0.1" class="u-text u-tone-muted">folder</span><span id="r.kfolders.kf.0.2" class="u-text u-tone-muted">f</span></div></div></div><span id="r.knone" class="u-text u-tone-muted">Nothing to drop on</span></div></body></html>
+-- 4.cells --
+cells 64x32
+text
+>  Alpha
+>  a
+>  Beta
+>  b
+>  Gamma
+>  c
+>  Inbox
+>  folder
+>  f
+> Nothing to drop on
+style
+=
+= .a
+=
+= .a
+=
+= .a
+=
+= .aaaaaa
+= .a
+= aaaaaaaaaaaaaaaaaa
+. fg/bg
+a muted/bg
+hits
+@ 0,0 64x2 r.krows.ka
+@ 0,2 64x2 r.krows.kb
+@ 0,4 64x2 r.krows.kc
+@ 0,6 64x3 r.kfolders.kf

@@ -29,6 +29,7 @@ func (r *Renderer) Draw(cols, rows int) Screen {
 			r.ports = append([]port{{id: "", view: screen, b: r.root}}, r.ports...)
 		}
 	}
+	r.dropLines(g)
 	if o := r.over; o != nil {
 		p.list = true
 		p.focus = nil

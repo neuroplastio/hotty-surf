@@ -43,9 +43,12 @@ const (
 	Underline
 	Reverse
 	Strike
+	// Overline is a line over the cell, SGR 53: where a drop would land
+	// before an element with nothing drawn above it.
+	Overline
 )
 
-var attrNames = [...]string{"bold", "dim", "italic", "underline", "reverse", "strike"}
+var attrNames = [...]string{"bold", "dim", "italic", "underline", "reverse", "strike", "overline"}
 
 // String is the attributes' names, joined by "+": "bold+underline".
 func (a Attr) String() string {
@@ -73,6 +76,9 @@ type Run struct {
 	Clusters   []Cluster
 	Fg, Bg     Role
 	Attr       Attr
+	// Ul is the colour of an Underline or an Overline, "" for the text's:
+	// a drop's line is the accent's whatever the text's colour (SGR 58).
+	Ul Role
 }
 
 // Hit is a rectangle of cells, X and Y from the screen's top left, that
@@ -148,7 +154,7 @@ func (s Screen) same(o Screen) bool {
 	}
 	for i := range s.Lines {
 		if !slices.EqualFunc(s.Lines[i], o.Lines[i], func(a, b Run) bool {
-			return a.Col == b.Col && a.Width == b.Width && a.Text == b.Text && a.Fg == b.Fg && a.Bg == b.Bg && a.Attr == b.Attr
+			return a.Col == b.Col && a.Width == b.Width && a.Text == b.Text && a.Fg == b.Fg && a.Bg == b.Bg && a.Attr == b.Attr && a.Ul == b.Ul
 		}) {
 			return false
 		}
@@ -160,6 +166,7 @@ func (s Screen) same(o Screen) bool {
 type style struct {
 	fg, bg Role
 	attr   Attr
+	ul     Role // the line's colour (Run.Ul)
 }
 
 // cell is one cell of the grid: the cluster that starts in it, or "" in
@@ -257,7 +264,7 @@ func (g *grid) lines() [][]Run {
 		row := g.cells[y*g.cols : (y+1)*g.cols]
 		for x := 0; x < g.cols; {
 			st := row[x].style
-			r := Run{Col: x, Fg: st.fg, Bg: st.bg, Attr: st.attr}
+			r := Run{Col: x, Fg: st.fg, Bg: st.bg, Attr: st.attr, Ul: st.ul}
 			var b strings.Builder
 			for x < g.cols && row[x].style == st {
 				c := row[x]
@@ -278,7 +285,8 @@ func (g *grid) lines() [][]Run {
 
 // Golden is the screen as text, for a test's golden file: its size, the
 // caret, then the text, a line each row, then the style of each cell, a
-// letter each, then what each letter is, then the hits. A row's trailing
+// letter each, then what each letter is (its colours, its attributes,
+// and the colour of its line where it has one of its own), then the hits. A row's trailing
 // spaces and trailing plain cells ('.') are cut, and the blank rows at the
 // end of each grid.
 //
@@ -324,7 +332,7 @@ func (s Screen) Golden() string {
 	for _, l := range s.Lines {
 		var row strings.Builder
 		for _, r := range l {
-			st := style{r.Fg, r.Bg, r.Attr}
+			st := style{r.Fg, r.Bg, r.Attr, r.Ul}
 			c, ok := letters[st]
 			if !ok {
 				c = '?'
@@ -348,6 +356,9 @@ func (s Screen) Golden() string {
 		line := string(letters[st]) + " " + string(st.fg) + "/" + string(st.bg)
 		if st.attr != 0 {
 			line += " " + st.attr.String()
+		}
+		if st.ul != "" {
+			line += " line:" + string(st.ul)
 		}
 		b.WriteString(line + "\n")
 	}

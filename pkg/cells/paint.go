@@ -580,13 +580,13 @@ func (p *painter) bar(x int, view rect, clip rect, content, offset int, focused 
 	}
 }
 
-// acts reports whether a press acts on n: it takes the keyboard, or
-// reports a click.
+// acts reports whether a press acts on n: it takes the keyboard, reports
+// a click, or drags; or a drag drops on it.
 func acts(n *surfui.Node) bool {
 	if _, off := surfui.AttrOf(n, "disabled"); off {
 		return false
 	}
-	return focusable(n) || reportsClick(n)
+	return focusable(n) || reportsClick(n) || surfui.Draggable(n) || surfui.DropOf(n) != surfui.DropNone
 }
 
 // focusable reports whether n takes the keyboard on a press and by Tab,

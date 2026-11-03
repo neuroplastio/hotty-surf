@@ -11,6 +11,7 @@ package conformance
 //go:generate go run ../../cmd/surfgen
 
 import (
+	"slices"
 	"strconv"
 
 	"github.com/neuroplastio/hotty-surf/surflive"
@@ -247,3 +248,60 @@ func (s *Shelf) Drop() {
 	s.Panel = nil
 	s.Log = append(s.Log, "drop")
 }
+
+// Deck is a component whose rows drag to reorder, each a drag handle and
+// a place to drop on in halves, and whose folders take a row into them,
+// each a place to drop on in thirds (deck.surf): drags' handlers, what
+// they hear ($drag.from, $drag.where, $drag.cancel), and the drop
+// indicator.
+type Deck struct {
+	Rows    []*Card
+	Folders []*Card
+	Log     []string
+}
+
+// Card is a data struct: a Deck's row or folder.
+type Card struct {
+	ID   string
+	Name string
+}
+
+// Start is a row's dragstart.
+func (d *Deck) Start(from string) { d.Log = append(d.Log, "dragstart "+from) }
+
+// Done is a row's dragend, cancelled by Escape or not.
+func (d *Deck) Done(from string, cancel bool) {
+	if cancel {
+		d.Log = append(d.Log, "dragend "+from+" cancelled")
+		return
+	}
+	d.Log = append(d.Log, "dragend "+from)
+}
+
+// Move is a drop on a row: the row from moves before or after the row to.
+func (d *Deck) Move(from, to, where string) {
+	d.Log = append(d.Log, "move "+from+" "+where+" "+to)
+	i := slices.IndexFunc(d.Rows, func(c *Card) bool { return c.ID == from })
+	if i < 0 {
+		return
+	}
+	c := d.Rows[i]
+	d.Rows = slices.Delete(d.Rows, i, i+1)
+	j := slices.IndexFunc(d.Rows, func(c *Card) bool { return c.ID == to })
+	if j < 0 {
+		d.Rows = slices.Insert(d.Rows, i, c)
+		return
+	}
+	if where == "after" {
+		j++
+	}
+	d.Rows = slices.Insert(d.Rows, j, c)
+}
+
+// File is a drop on a folder: before it, into it or after it.
+func (d *Deck) File(from, folder, where string) {
+	d.Log = append(d.Log, "file "+from+" "+where+" "+folder)
+}
+
+// Open is a click on a row.
+func (d *Deck) Open(id string) { d.Log = append(d.Log, "open "+id) }

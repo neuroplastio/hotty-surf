@@ -87,14 +87,15 @@ func (r *Runtime) leaveCells() {
 func (r *Runtime) Renderer() *cells.Renderer { return r.rend }
 
 // The terminal's mouse reporting, its presses, releases and wheel in SGR's
-// encoding (DECSET 1000 and 1006), which hottyterm reads as ultraviolet's
-// mouse events. hotty-go has no call for it: it is a mode of the
+// encoding (DECSET 1000 and 1006), and its moves while a button is down
+// (1002), which drag an element (cells.Renderer.Move): hottyterm reads
+// them as ultraviolet's mouse events. hotty-go has no call for it: it is a mode of the
 // program's own screen, as the alternate screen is, and the runtime
 // writes it itself, only while the renderer has something a press or the
 // wheel acts on, so that the terminal's own selection works otherwise.
 const (
-	mouseOn  = "\x1b[?1000h\x1b[?1006h"
-	mouseOff = "\x1b[?1006l\x1b[?1000l"
+	mouseOn  = "\x1b[?1000h\x1b[?1006h\x1b[?1002h"
+	mouseOff = "\x1b[?1002l\x1b[?1006l\x1b[?1000l"
 )
 
 // drawTree writes the renderer's screen, unless it is the one written
@@ -155,6 +156,10 @@ func (r *Runtime) cellsEvent(ev hottyterm.Event) {
 	case uv.MouseClickEvent:
 		if e.Button == uv.MouseLeft {
 			r.rend.Press(e.X, e.Y-r.opts.Top, mods(e.Mod))
+		}
+	case uv.MouseMotionEvent:
+		if e.Button == uv.MouseLeft {
+			r.rend.Move(e.X, e.Y-r.opts.Top, mods(e.Mod))
 		}
 	case uv.MouseReleaseEvent:
 		if e.Button == uv.MouseLeft || e.Button == uv.MouseNone {
@@ -228,10 +233,13 @@ func cellsSGR(run cells.Run) string {
 	for _, a := range [...]struct {
 		attr cells.Attr
 		sgr  string
-	}{{cells.Bold, "1"}, {cells.Dim, "2"}, {cells.Italic, "3"}, {cells.Underline, "4"}, {cells.Reverse, "7"}, {cells.Strike, "9"}} {
+	}{{cells.Bold, "1"}, {cells.Dim, "2"}, {cells.Italic, "3"}, {cells.Underline, "4"}, {cells.Reverse, "7"}, {cells.Strike, "9"}, {cells.Overline, "53"}} {
 		if run.Attr&a.attr != 0 {
 			ps = append(ps, a.sgr)
 		}
+	}
+	if c := ansiIndex(run.Ul); c != "" && run.Attr&(cells.Underline|cells.Overline) != 0 {
+		ps = append(ps, "58;5;"+c) // the line's colour; a terminal without it draws it in the text's
 	}
 	return "\x1b[" + strings.Join(ps, ";") + "m"
 }
@@ -253,6 +261,26 @@ func ansiFg(r cells.Role) string {
 		return "90"
 	case cells.Muted, cells.Faint:
 		return "2"
+	}
+	return ""
+}
+
+// ansiIndex is a role's colour as an index of the terminal's palette, for
+// a line's colour (SGR 58;5), as ansiFg maps it; "" for the text's.
+func ansiIndex(r cells.Role) string {
+	switch r {
+	case cells.Accent:
+		return "5"
+	case cells.OK:
+		return "10"
+	case cells.Warn:
+		return "11"
+	case cells.Error:
+		return "9"
+	case cells.Info:
+		return "14"
+	case cells.Border, cells.Line:
+		return "8"
 	}
 	return ""
 }

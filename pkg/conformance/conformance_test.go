@@ -19,16 +19,20 @@ import (
 
 var update = flag.Bool("update", false, "write each case's document, ops and log as the interpreter gives them (Cases, for the next build)")
 
-// modes are the ways a root is drawn: each case holds in both, alike.
-var modes = []struct {
+// mode is a way a root is drawn, for each fixture.
+type mode struct {
 	name  string
 	view  func(*Board) surflive.Component
 	form  func(*Form) surflive.Component
 	frame func(*Frame) surflive.Component
 	shelf func(*Shelf) surflive.Component
-}{
-	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf},
-	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf},
+	deck  func(*Deck) surflive.Component
+}
+
+// modes are the ways a root is drawn: each case holds in both, alike.
+var modes = []mode{
+	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck},
+	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck},
 }
 
 // A case is a txtar file (cases/*.txt): its comment says what it shows;
@@ -37,7 +41,10 @@ var modes = []struct {
 // scrolls; document is what the host shows, and cells what the cells
 // show (PlayCells); then each step N has N.event (`click ID`, `choose ID
 // VALUE` (a select's option, picked as the user picks it), `fill ID
-// TEXT`, `key NAME`), and what follows it: N.log (what the handlers did,
+// TEXT`, `key NAME`; a drag's `press ID`, its start, `over ID [STEP]`,
+// the pointer onto ID at step STEP of a place to drop on split in steps,
+// and `release ID [STEP]`; several, split by `;`, are one step), and what
+// follows it: N.log (what the handlers did,
 // on a host and in the cells alike), N.ops (the ops the runtime sent),
 // N.document and N.cells. Where it has an errors file, that is the render
 // errors the host hears, one a line, each once, as first heard.
@@ -85,7 +92,7 @@ func TestCases(t *testing.T) {
 					continue // the files are the runtime's
 				}
 				t.Run(name+"/"+m.name+h.name, func(t *testing.T) {
-					got, heard := play(t, h.play, ar, m.view, m.form, m.frame, m.shelf)
+					got, heard := play(t, h.play, ar, m)
 					errs[m.name+h.name] = heard
 					if _, ok := File(ar, "errors"); ok {
 						got = append(got, txtar.File{Name: "errors", Data: []byte(errorsFile(heard))})
@@ -97,7 +104,7 @@ func TestCases(t *testing.T) {
 									got = append([]txtar.File{{Name: name, Data: data}}, got...)
 								}
 							}
-							drawn, _ := play(t, PlayCells, ar, m.view, m.form, m.frame, m.shelf)
+							drawn, _ := play(t, PlayCells, ar, m)
 							ar.Files = withCells(got, drawn)
 							if err := os.WriteFile(file, txtar.Format(ar), 0o644); err != nil {
 								t.Fatal(err)
@@ -202,8 +209,8 @@ func errorsFile(heard []string) string {
 // play runs a case in a mode on a host (Play or PlayHosted), its root a
 // Board or the fixture its root file names: its files as they come out,
 // and the errors its renders reported.
-func play(t *testing.T, host player, ar *txtar.Archive, board func(*Board) surflive.Component, form func(*Form) surflive.Component,
-	frame func(*Frame) surflive.Component, shelf func(*Shelf) surflive.Component) ([]txtar.File, []string) {
+func play(t *testing.T, host player, ar *txtar.Archive, m mode) ([]txtar.File, []string) {
+	board, form, frame, shelf, deck := m.view, m.form, m.frame, m.shelf, m.deck
 	state, _ := File(ar, "state.json")
 	root, _ := File(ar, "root")
 	switch r := strings.TrimSpace(string(root)); r {
@@ -231,6 +238,12 @@ func play(t *testing.T, host player, ar *txtar.Archive, board func(*Board) surfl
 			t.Fatal(err)
 		}
 		return host(t, ar, shelf(s), func() []string { return s.Log })
+	case "Deck":
+		d := &Deck{}
+		if err := json.Unmarshal(state, d); err != nil {
+			t.Fatal(err)
+		}
+		return host(t, ar, deck(d), func() []string { return d.Log })
 	default:
 		t.Fatalf("root: no fixture %s", r)
 		return nil, nil

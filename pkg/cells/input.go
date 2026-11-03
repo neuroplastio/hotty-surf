@@ -278,16 +278,21 @@ func (r *Renderer) Press(x, y, mods int) (taken, redraw bool) {
 	if ok {
 		n = h.n
 	}
-	due := false
+	r.drag = nil
+	started, due := false, false
+	if ok {
+		// A press on a drag handle starts its drag first (SPEC §9.1).
+		started, due = r.startDrag(n, x, y, mods)
+	}
 	if f := closest(n, focusable); f != nil {
-		due = r.take(surfui.IDOf(f), true)
+		due = r.take(surfui.IDOf(f), true) || due
 	} else if r.kb {
 		// A press on what takes no focus gives the keyboard back.
-		due = r.blur()
+		due = r.blur() || due
 	}
 	r.press = &pressed{n: closest(n, reportsClick), mods: mods}
 	r.settle(due)
-	return ok || due, true
+	return ok || due || started, true
 }
 
 // overRect is the open list's box.
@@ -297,11 +302,28 @@ func (r *Renderer) overRect() *rect {
 }
 
 // Release is the release of the button pressed: over what the press
-// reports, its click (SPEC §9), counted in a run of clicks on it.
+// reports, its click (SPEC §9), counted in a run of clicks on it. During
+// a drag, dragend first, and the click only where the drag ended on the
+// handle it began on (drag.go).
 func (r *Renderer) Release(x, y, mods int) (taken, redraw bool) {
 	r.changed = false
 	p := r.press
 	r.press = nil
+	if r.drag != nil {
+		clicks, due := r.endDrag(x, y, mods)
+		r.settle(due)
+		if !clicks {
+			r.click.id = "" // a drag that ends elsewhere ends the run of clicks too
+			return true, true
+		}
+		r.release(p, x, y, mods)
+		return true, true
+	}
+	return r.release(p, x, y, mods)
+}
+
+// release is Release's click: p's, where it is over what p reports.
+func (r *Renderer) release(p *pressed, x, y, mods int) (taken, redraw bool) {
 	if p == nil || p.n == nil {
 		return false, false
 	}

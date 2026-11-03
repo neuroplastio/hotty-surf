@@ -145,6 +145,7 @@ type Renderer struct {
 	changed bool // since the input began: the screen may differ
 
 	press *pressed
+	drag  *dragging // a drag in progress (drag.go)
 	click struct {
 		id    string
 		at    time.Time
@@ -199,7 +200,7 @@ func New(p Program) *Renderer {
 func (r *Renderer) Show() {
 	r.focused, r.kb, r.away = "", false, ""
 	r.fields, r.offsets = map[string]*fieldState{}, map[string]int{}
-	r.list, r.press, r.reveals = nil, nil, nil
+	r.list, r.press, r.reveals, r.drag = nil, nil, nil, nil
 	r.settle(r.apply(r.p.Show()))
 }
 

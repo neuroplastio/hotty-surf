@@ -1,0 +1,23 @@
+<surface>
+  <list key="rows">
+    <item :each="r in rows" :key="r.id" drag drop="halves"
+          @dragstart="start($drag.from)" @dragend="done($drag.from, $drag.cancel)"
+          @drop="move($drag.from, r.id, $drag.where)" @click="open(r.id)">
+      <stack grow>
+        <text>{{ r.name }}</text>
+        <text muted>{{ r.id }}</text>
+      </stack>
+    </item>
+  </list>
+  <list key="folders">
+    <item :each="f in folders" :key="f.id" drop="thirds"
+          @drop="file($drag.from, f.id, $drag.where)">
+      <stack grow>
+        <text>{{ f.name }}</text>
+        <text muted>folder</text>
+        <text muted>{{ f.id }}</text>
+      </stack>
+    </item>
+  </list>
+  <text key="none" muted>Nothing to drop on</text>
+</surface>

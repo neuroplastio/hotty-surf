@@ -61,10 +61,46 @@ return function(state)
 end
 `
 
+// deckLua is the Deck fixture in Lua: rows that drag to reorder, and
+// folders to drop them in (deck.surf).
+const deckLua = `
+local Deck = {}
+Deck.__index = Deck
+function Deck:start(from) table.insert(self.log, "dragstart " .. from) end
+function Deck:done(from, cancel)
+  if cancel then table.insert(self.log, "dragend " .. from .. " cancelled")
+  else table.insert(self.log, "dragend " .. from) end
+end
+function Deck:move(from, to, where)
+  table.insert(self.log, "move " .. from .. " " .. where .. " " .. to)
+  local i
+  for k, r in ipairs(self.rows) do if r.id == from then i = k end end
+  if not i then return end
+  local c = table.remove(self.rows, i)
+  for k, r in ipairs(self.rows) do
+    if r.id == to then
+      if where == "after" then k = k + 1 end
+      table.insert(self.rows, k, c)
+      return
+    end
+  end
+  table.insert(self.rows, i, c)
+end
+function Deck:file(from, folder, where) table.insert(self.log, "file " .. from .. " " .. where .. " " .. folder) end
+function Deck:open(id) table.insert(self.log, "open " .. id) end
+return function(state)
+  state.rows = state.rows or {}
+  state.folders = state.folders or {}
+  state.log = state.log or {}
+  return setmetatable(state, Deck)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
-// as Lua values, a table drawn by the first template; the Form's and the
-// Shelf's, their fixtures written in Lua (formLua, shelfLua) and drawn
+// as Lua values, a table drawn by the first template; the Form's, the
+// Shelf's and the Deck's, their fixtures written in Lua (formLua,
+// shelfLua, deckLua) and drawn
 // by the suite's templates; and the load cases but those only a host
 // with typed parameters runs (their typed file says why). Each plays on
 // two hosts (play), and its files and errors are the case's on both.
@@ -103,11 +139,14 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck":
 			ran++
 			src, tmpl := formLua, "form"
-			if strings.TrimSpace(string(root)) == "Shelf" {
+			switch strings.TrimSpace(string(root)) {
+			case "Shelf":
 				src, tmpl = shelfLua, "shelf"
+			case "Deck":
+				src, tmpl = deckLua, "deck"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any
