@@ -245,7 +245,6 @@
 .u-line.u-wrap > .u-text { white-space: normal; }
 .u-bold { font-weight: 700; }
 .u-semi { font-weight: 600; }
-.u-compact .u-bold, .u-roomy .u-bold { font-weight: 500; }
 .u-compact .u-small { font-size: 12.5px; }
 .u-roomy .u-small { font-size: 13px; }
 .u-heading { font-weight: 700; white-space: pre; overflow: hidden; text-overflow: ellipsis; }

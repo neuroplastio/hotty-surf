@@ -444,7 +444,8 @@ func (n *Node) Fill(t Tone) *Node {
 	return n.Class("u-fill-" + string(t))
 }
 
-// Bold sets n's text in bold.
+// Bold sets n's text in bold: weight 700 at every density, the heaviest
+// of the weights (Semibold's is 600).
 func (n *Node) Bold() *Node { return n.Class("u-bold") }
 
 // Semibold sets n's text at weight 600: a match in a row, as plx draws
