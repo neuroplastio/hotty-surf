@@ -818,7 +818,7 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 		}
 		at, i, ok := attrOf(n.Tag, name)
 		if !ok {
-			s.c.fail(s.t.file, a.Pos, "<%s> takes no %s", n.Tag, name)
+			s.c.fail(s.t.file, a.Pos, "%s", takesNo(n.Tag, name, attrsOf(n.Tag)))
 			continue
 		}
 		if v, ok := s.value(at, a, bound); ok {

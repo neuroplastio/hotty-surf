@@ -218,7 +218,11 @@ func TestLoadErrors(t *testing.T) {
 		{`<surface><text>{{ titel }}</text></surface>`, `board.surf:1:19: undeclared reference to 'titel'`},
 		{`<surface><text :bold="title">x</text></surface>`, `board.surf:1:23: :bold is a bool, not string`},
 		{`<surface><row gap="x"/></surface>`, `board.surf:1:20: gap is an int, not "x"`},
-		{`<surface><row frob/></surface>`, `board.surf:1:15: <row> takes no frob`},
+		// The refusal names what the widget takes, its own and every
+		// widget's, each once, in alphabetical order.
+		{`<surface><row frob/></surface>`, `board.surf:1:15: <row> takes no frob; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, fit, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, search, selected, semibold, small, tone, top, width or wrap`},
+		{`<surface><text w="3">x</text></surface>`, `board.surf:1:16: <text> takes no w; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, tone, top, width or wrap`},
+		{`<surface><select value="a" size="3"/></surface>`, `board.surf:1:28: <select> takes no size; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, options, pad, reveal, scale, scroll, selected, semibold, small, tone, top, value, width or wrap`},
 		{`<surface><blink/></surface>`, `board.surf:1:10: <blink> is no widget; a component's tag has a dash`},
 		{`<surface><button @click="close()">x</button></surface>`, `board.surf:1:26: board has no method close`},
 		{`<surface><button @click="open()">x</button></surface>`, `board.surf:1:26: open takes 1 arguments, not 0`},

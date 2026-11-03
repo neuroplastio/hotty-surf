@@ -1494,7 +1494,9 @@ column in bytes. From `examples/hello`, each with one thing changed:
   no prop taks`;
 - a widget or an attribute that isn't one, or a literal it refuses:
   `<blink> is no widget; a component's tag has a dash`, `<row> takes no
-  frob`, `gap is an int, not "x"`, `<spacer> has no click event`;
+  frob; it takes autofocus, bare, bold, …, width or wrap` (every
+  attribute it takes, in alphabetical order), `gap is an int, not "x"`,
+  `<spacer> has no click event`;
 - what would be dropped without a word, or can't go together:
   `<bind> has no widget around it to bind on`, `<titled-box> has no slot
   foot`, `:if and :else on one element`, `{{ }} of a list(Task), which

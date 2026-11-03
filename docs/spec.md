@@ -460,7 +460,9 @@ the floor's constructors (both modes call the same ones). `data-on` and
   the attribute's type, or `dyn`. A bound `pad` is a `list(int)` of one
   or two. A bound `key` takes any type, and is its value's text at
   render.
-- **An attribute the tag doesn't take is a load error.** There is no
+- **An attribute the tag doesn't take is a load error,** which names
+  every attribute the tag takes, in alphabetical order: `<text> takes no
+  w; it takes autofocus, bare, bold, …, width or wrap`. There is no
   `class`, `style`, `id` or raw HTML in a template.
 - **The canonical order:** the arguments (*as* argument) build the
   widget; the modifiers then apply in the table's order, whatever the

@@ -2,6 +2,7 @@ package surf
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -187,6 +188,39 @@ func attrOf(tag, name string) (*Attr, int, bool) {
 		}
 	}
 	return nil, 0, false
+}
+
+// attrsOf are the names of the attributes tag takes, each once, in
+// alphabetical order: a widget takes some thirty, and one who reads the
+// list looks for a name they half remember.
+func attrsOf(tag string) []string {
+	var out []string
+	for i := range Attrs {
+		a := &Attrs[i]
+		if (len(a.Tags) == 0 || contains(a.Tags, tag)) && !contains(out, a.Name) {
+			out = append(out, a.Name)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// takesNo is the refusal of an attribute name that tag doesn't take,
+// with those it does, as a literal's refusal names the values it takes:
+// "<text> takes no w; it takes bold, fill, … or wrap".
+func takesNo(tag, name string, takes []string) string {
+	if len(takes) == 0 {
+		return fmt.Sprintf("<%s> takes nothing, not %s", tag, name)
+	}
+	return fmt.Sprintf("<%s> takes no %s; it takes %s", tag, name, orList(takes))
+}
+
+// orList is names as a sentence lists them: "a", "a or b", "a, b or c".
+func orList(names []string) string {
+	if len(names) == 1 {
+		return names[0]
+	}
+	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
 }
 
 func contains(s []string, x string) bool {
