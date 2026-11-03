@@ -497,6 +497,13 @@
 .u-field:hover, .u-select:hover, .u-cycle:hover, .u-search:hover, .u-query:hover { box-shadow: inset 0 0 0 1px var(--u-hover-line); }
 .u-field:focus, .u-select:focus, .u-cycle:focus, .u-search:focus-within, .u-query:focus-within { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 .u-cycle-step:hover, .u-cycle:focus .u-cycle-step { color: var(--u-ink); }
+/* A focused Select has no caret, as a field has, to say the keyboard is
+   on it: its focus-line alone was all it showed (plx-frames, 2026-11-03).
+   It also steps its sunk fill up by the selected state, as a focused
+   button does, and draws its chevron in the ink, as a focused Cycle its
+   steps. */
+.u-select:focus { background: linear-gradient(var(--u-selected), var(--u-selected)), var(--u-field); }
+.u-select:focus .u-select-chevron { color: var(--u-ink); }
 .u-btn:hover { background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-hover-line); }
 .u-btn:focus { background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 .u-btn.u-fill-accent:hover { background: var(--u-solid-hover); box-shadow: none; }
