@@ -141,6 +141,11 @@ func dataOn(n *Node) string {
 	if Commits(n) {
 		on = appendOnce(on, "input")
 	}
+	if n.choice != nil {
+		// Where it is (SPEC §9.5): a key that opens its list, which
+		// carries no area as a click does, places the list by it.
+		on = appendOnce(on, "view")
+	}
 	// SECONDARY PRESS: waiting on hotty's spec (hotty 0.7 proposal
 	// V7-01, pending). An element with a menu (MenuOf) will opt in here
 	// to the host's press with the secondary button (a press whose

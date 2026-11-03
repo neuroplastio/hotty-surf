@@ -20,8 +20,11 @@ import (
 // places it. The runtime places it under the Select (listPlacement).
 //
 // Closed, the Select's keys reach the program (its data-keys give those
-// a host would scroll with) and pick at once. A click, or Space or Enter
-// (the host's click from the keyboard), opens the list under it. Open,
+// a host would scroll with): ↓ and ↑ open the list, and Home, End, the
+// pages and a letter pick at once. A click, or Space or Enter (the host's
+// click from the keyboard), opens the list under it; a key, which carries
+// no area, opens it where the host's last view put the Select (its
+// data-on asks for view, SPEC §9.5). Open,
 // the Select keeps the keyboard and gives the program Space and Enter
 // too: ↑ ↓, Home, End and a letter move, Space and Enter pick, Escape
 // closes. A click on an option picks it; a click on the Select, Tab, or
@@ -52,7 +55,8 @@ func (s *Surface) selectClick(n *surfui.Node, e hotty.Event) {
 	s.openList(n, e.Area)
 }
 
-// openList opens n's list, under area if a click said where n is.
+// openList opens n's list, under area if a click said where n is, else
+// where the last view did.
 func (s *Surface) openList(n *surfui.Node, area *hotty.Area) {
 	value, options, ok := surfui.SelectOf(n)
 	if !ok || len(options) == 0 || !s.shown {
@@ -60,6 +64,9 @@ func (s *Surface) openList(n *surfui.Node, area *hotty.Area) {
 	}
 	if _, off := surfui.AttrOf(n, "disabled"); off {
 		return
+	}
+	if a, ok := s.areas[surfui.IDOf(n)]; ok && area == nil {
+		area = &a
 	}
 	s.closeList(false)
 	s.list = &selectList{id: surfui.IDOf(n), value: value, options: options, at: max(slices.Index(options, value), 0), area: area}
@@ -203,10 +210,11 @@ func (s *Surface) selectKey(key string) bool {
 	value, options, _ := surfui.SelectOf(n)
 	at, last := slices.Index(options, value), len(options)-1
 	switch key {
-	case "arrow_up":
-		at = max(at-1, 0)
-	case "arrow_down":
-		at = min(at+1, last)
+	case "arrow_down", "arrow_up":
+		// As a select-only combobox's arrows (WAI-ARIA APG): they open
+		// the list, on the picked option.
+		s.openList(n, nil)
+		return true
 	case "home", "page_up":
 		at = 0
 	case "end", "page_down":

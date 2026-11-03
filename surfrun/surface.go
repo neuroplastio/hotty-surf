@@ -97,8 +97,9 @@ type Surface struct {
 	edits map[string]heard  // a committing field's value and rev, as typed
 	base  map[string]string // a committing field's value before the user's edits
 
-	list      *selectList // a Select's open list
-	listPress bool        // a press on the list, whose blur on the surface is no leaving
+	list      *selectList           // a Select's open list
+	listPress bool                  // a press on the list, whose blur on the surface is no leaving
+	areas     map[string]hotty.Area // the Selects in view, where the host's last view put them
 
 	// What the next frame sends besides the model's changes.
 	blur     bool
@@ -313,6 +314,13 @@ func (s *Surface) event(e hotty.Event) bool {
 	s.listPress = false
 	took := false
 	switch e.Kind {
+	case hotty.EventView:
+		// A Select asks where it is (surfui's data-on), so that a key
+		// that opens its list places it as a click does.
+		if e.View != nil {
+			s.areas = e.View.Areas
+		}
+		return true
 	case hotty.EventFocus:
 		took = true
 		s.focused, s.lent = e.Target, false // the user came back: the loan is over

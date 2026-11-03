@@ -175,6 +175,44 @@ func TestSelect(t *testing.T) {
 	}
 }
 
+// Enter, Space, ↓ and ↑ open the list of the Select with the keyboard
+// under it, the keys on the picked option; Escape closes it, picking
+// nothing, and the Select keeps the keyboard; ↓ and Enter pick the next.
+func TestSelectKeys(t *testing.T) {
+	for _, key := range []string{"enter", "space", "arrow_down", "arrow_up"} {
+		t.Run(key, func(t *testing.T) {
+			f := newForm()
+			r := show(f)
+			r.Draw(40, 10)
+			keys(r, "tab", "tab", "tab")
+			if r.Focused() != "r.1.1" {
+				t.Fatalf("focus %q, want the Select", r.Focused())
+			}
+			keys(r, key)
+			s := r.Draw(40, 10)
+			_, sy, _ := r.Where("r.1.1")
+			_, oy, ok := r.Where(surfui.OptionID(0))
+			if !strings.Contains(s.Text(), "debug") || !ok || oy <= sy {
+				t.Fatalf("no list under the Select (row %d, its first option's %d):\n%s", sy, oy, s.Golden())
+			}
+			if !strings.Contains(s.Golden(), "info") {
+				t.Errorf("the list lost the picked option:\n%s", s.Golden())
+			}
+			keys(r, "escape")
+			if s := r.Draw(40, 10); strings.Contains(s.Text(), "debug") {
+				t.Errorf("Escape left the list open:\n%s", s.Text())
+			}
+			if f.level != "info" || r.Focused() != "r.1.1" {
+				t.Errorf("after Escape: picked %q, focus %q", f.level, r.Focused())
+			}
+			keys(r, key, "arrow_down", "enter")
+			if f.level != "warn" || r.Focused() != "r.1.1" {
+				t.Errorf("↓ Enter in the list: picked %q, focus %q", f.level, r.Focused())
+			}
+		})
+	}
+}
+
 // A key the focused element binds is the program's; one that nothing
 // binds and nothing scrolls with is too.
 func TestBound(t *testing.T) {

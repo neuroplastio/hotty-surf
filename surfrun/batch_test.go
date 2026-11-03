@@ -43,7 +43,7 @@ func TestManyEventsThenOneUpdate(t *testing.T) {
 				t.Fatal(err)
 			}
 		},
-		key("enter"), key("tab"), key("arrow_down"), key("arrow_down"),
+		key("enter"), key("tab"), key("g"), key("n"),
 		key("tab"), key("arrow_right"), key("arrow_right"),
 		func(t *testing.T, h *hottytest.Host, name string) {
 			for range 2 {

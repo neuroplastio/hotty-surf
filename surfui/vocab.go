@@ -266,10 +266,10 @@ var (
 // setting with many choices: the value and a chevron, the value as wide
 // as the widest option. It is no host control, since a host may show no
 // list for a <select> (hotty-blitz shows none, SPEC §10.2): the runtime
-// drives it. A click, Space or Enter opens its list under it, in a
+// drives it. A click, Space, Enter, ↓ or ↑ opens its list under it, in a
 // surface of its own; there ↑ ↓, Home, End and a letter move, Space,
 // Enter or a click picks, and Escape, Tab or a click elsewhere closes it.
-// Closed, ↑ ↓, Home, End and a letter pick at once. Each pick runs its
+// Closed, Home, End and a letter pick at once. Each pick runs its
 // OnChange with the option, as a Cycle's step does; the model keeps the
 // value and draws it.
 func Select(value string, options ...string) *Node {

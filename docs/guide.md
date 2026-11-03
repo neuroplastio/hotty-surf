@@ -463,9 +463,10 @@ a handler, as `@click`'s. `:key` and `:label` bind, and a `<bind>` takes
   up and down arrows, Page Up and Down, Enter, the function keys. A
   letter, Space, Backspace, the left and right arrows, Home and End stay
   the field's, even where a parent binds them.
-- **A Select is the runtime's:** closed, the arrows, Home, End and a
-  letter pick at once; open, they move in its list, Space, Enter or a
-  click picks, and Escape, Tab or a click anywhere else closes it. After
+- **A Select is the runtime's:** closed, Space, Enter, ↓ and ↑ open its
+  list, and Home, End and a letter pick at once; open, the keys move in
+  its list, Space, Enter or a click picks, and Escape, Tab or a click
+  anywhere else closes it, picking nothing. After
   a pick it keeps the keyboard, so a list's letters don't reach the list
   until the user moves on with Tab, a click or Escape.
   **A Cycle is the runtime's too:** while it has the keyboard, ←/↑ step it

@@ -154,21 +154,66 @@ func TestSelectListKeys(t *testing.T) {
 	}
 }
 
-// Closed, the keys pick at once, with no list.
+// Closed, Home, End and a letter pick at once, with no list.
 func TestSelectClosedKeys(t *testing.T) {
 	m, a := startChooser(t)
 	for _, step := range []struct{ key, want string }{
-		{"arrow_down", "nord"}, {"arrow_down", "nord"}, {"home", "catppuccin"}, {"arrow_down", "dracula"},
-		{"n", "neuroplastio"}, {"n", "nord"}, {"end", "nord"}, {"arrow_up", "neuroplastio"},
+		{"end", "nord"}, {"home", "catppuccin"}, {"d", "dracula"},
+		{"n", "neuroplastio"}, {"n", "nord"}, {"end", "nord"}, {"g", "gruvbox"},
 	} {
 		a.Host.Key(step.key)
 		a.Wait(step.key+": "+step.want, func() bool {
 			return strings.HasPrefix(a.Surface().TextOf(selectID), step.want)
 		})
 	}
-	changed(t, a, m, "nord", "catppuccin", "dracula", "neuroplastio", "nord", "neuroplastio")
+	changed(t, a, m, "nord", "catppuccin", "dracula", "neuroplastio", "nord", "gruvbox")
 	if open(a) {
 		t.Error("a key opened the list")
+	}
+}
+
+// Enter and Space (the host's click from the keyboard), ↓ and ↑ each
+// open the list of the Select with the keyboard, the keys on the picked
+// option, on a host and on a host of its own; Escape closes it, picking
+// nothing, and the Select keeps the keyboard. The arrows, which carry no
+// area, place it under the Select where the host's view said it is.
+func TestSelectKeysOpen(t *testing.T) {
+	for _, h := range hosts {
+		for _, key := range []string{"enter", "space", "arrow_down", "arrow_up"} {
+			t.Run(h.name+"/"+key, func(t *testing.T) {
+				m := &chooser{value: "neuroplastio"}
+				a := h.start(t, m, surfrun.Options{})
+				a.Wait("the Select has the keyboard", func() bool { return a.Surface().Focused() == selectID })
+				if v, _ := a.Surface().Attr(selectID, "data-on"); !slices.Contains(strings.Fields(v), "view") {
+					t.Errorf("the Select doesn't ask where it is: data-on %q", v)
+				}
+				in := map[string]any{"in": map[string]any{selectID: map[string]int{"c": 7, "r": 2, "w": 16, "h": 1}}, "end": true}
+				if err := a.Host.Emit(a.Name, "view", "", in); err != nil {
+					t.Fatal(err)
+				}
+				a.Call(func() {})
+				a.Host.Key(key)
+				a.Wait("the list open", func() bool { return open(a) })
+				if hi(a) != 3 {
+					t.Errorf("the keys on %d, want the picked one", hi(a))
+				}
+				if strings.HasPrefix(key, "arrow") {
+					sc, sr := a.Surface().At()
+					if c, r := a.List().At(); c != sc+7 || r != sr+3 {
+						t.Errorf("the list at %d,%d, want under the Select at %d,%d", c, r, sc+7, sr+3)
+					}
+				}
+				a.Host.Key("escape")
+				a.Wait("the list closed", func() bool { return !open(a) })
+				a.Wait("the Select has the keyboard again", func() bool { return a.Surface().Focused() == selectID })
+				changed(t, a, m)
+				var esc int
+				a.Call(func() { esc = m.escaped })
+				if esc != 0 {
+					t.Errorf("the list's Escape ran the root's binding %d times", esc)
+				}
+			})
+		}
 	}
 }
 
