@@ -987,6 +987,15 @@ func surfRenderInfoPanel(e *surf.Errs, out []*surfui.Node, c *InfoPanel, fill su
 				k2 = append(k2, n8)
 				e.Leave()
 			}
+			// info-panel.surf:7:5 <dot>
+			if e.Enter("info-panel.surf", 7, 5) {
+				n11 := surfui.Dot()
+				surf.ModKey(n11, "busy")
+				surf.ModTone(n11, "ok")
+				surf.ModPulse(n11, c.Open)
+				k2 = append(k2, n11)
+				e.Leave()
+			}
 			n2 := surfui.Row(k2...)
 			surf.ModGap(n2, 1)
 			k1 = append(k1, n2)

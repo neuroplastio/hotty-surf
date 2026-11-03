@@ -305,6 +305,8 @@ here. `surfui.CSS` stays away from each:
 - (a thin border with a radius drops out at a fractional scale: now hit,
   and its cause found, [above](#compact-the-kits-looks-in-the-gate-2026-10-30));
 - no `filter`, no `text-shadow`;
-- no CSS transitions or animations (no frames are scheduled);
+- no CSS transitions or animations (no frames are scheduled), up to
+  hotty-blitz 0.6.1, which runs them; the gate renders with 0.5.8 and
+  still documents, so a `pulse` dot is shown at rest (css-subset.md);
 - no range, progress or meter; `:placeholder-shown` and `:invalid` never
   match; `resize` is ignored.

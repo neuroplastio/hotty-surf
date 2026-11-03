@@ -25,7 +25,9 @@ const StyleID = "surf-css"
 //     host shows the shape the document asks for): a pointer over what
 //     acts on a click, the text caret over a field only, the arrow over
 //     the rest, text included;
-//   - no transitions, animations, filters or text-shadow.
+//   - one animation, a pulse dot's opacity (hotty-blitz runs them from
+//     0.6.1), off under prefers-reduced-motion and in the gate's still
+//     documents; no transitions, filters or text-shadow.
 //
 // Its tokens are custom properties under .u-surface, named for roles
 // (gov R-24), never levels: the layers (chrome, canvas, popover, raised),

@@ -103,6 +103,7 @@ var canonAttrs = map[string]string{
 	"card/box":          `<box card/>`,
 	"ring/dot":          `<dot ring/>`,
 	"target/dot":        `<dot target/>`,
+	"pulse/dot":         `<dot pulse/>`,
 	"search/row":        `<row search><field bare/></row>`,
 	"nav/list":          `<list nav/>`,
 	"entries/list":      `<list entries><item/></list>`,

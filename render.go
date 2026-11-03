@@ -684,6 +684,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModRing(n, v)
 	case "target":
 		ModTarget(n, v)
+	case "pulse":
+		ModPulse(n, v)
 	case "search":
 		ModSearch(n, v)
 	case "nav":

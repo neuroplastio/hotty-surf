@@ -340,7 +340,7 @@ func TestSelectList(t *testing.T) {
 }
 
 // A Dot's shape is a class for the sheet and its glyph for the cells;
-// on any other node Ring and Target do nothing.
+// on any other node Ring, Target and Pulse do nothing.
 func TestDotShapes(t *testing.T) {
 	for _, c := range []struct {
 		n            *surfui.Node
@@ -349,6 +349,7 @@ func TestDotShapes(t *testing.T) {
 		{surfui.Dot(), "●", ""},
 		{surfui.Dot().Ring(), "○", "u-ring"},
 		{surfui.Dot().Tone(surfui.Error).Target(), "◉", "u-target"},
+		{surfui.Dot().Tone(surfui.Info).Pulse(), "●", "u-pulse"}, // the cells' dot is the plain one
 	} {
 		cl := surfui.Classes(c.n)
 		if got := surfui.TextOf(c.n); got != c.glyph || !slices.Contains(cl, "u-dot") || c.class != "" && !slices.Contains(cl, c.class) {
@@ -357,5 +358,8 @@ func TestDotShapes(t *testing.T) {
 	}
 	if n := surfui.Glyph("●").Ring().Target(); surfui.TextOf(n) != "●" || slices.Contains(surfui.Classes(n), "u-ring") || slices.Contains(surfui.Classes(n), "u-target") {
 		t.Errorf("a Glyph took a dot's shape: %q %q", surfui.TextOf(n), surfui.Classes(n))
+	}
+	if n := surfui.Text("x").Pulse(); slices.Contains(surfui.Classes(n), "u-pulse") {
+		t.Errorf("a Text pulses: %q", surfui.Classes(n))
 	}
 }

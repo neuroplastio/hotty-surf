@@ -10,27 +10,28 @@ Shelf
 -- state.json --
 {"Title": "Shelf", "Panel": {"Open": true, "Title": "Main"}, "Panels": [{"Open": false, "Title": "a"}, {"Open": true, "Title": "b"}]}
 -- document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">Main</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">closed</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">Main</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kmain.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">closed</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button><span id="r.ka.0.kbusy" class="u-glyph u-dot u-tone-ok">●</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kb.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
 -- cells --
 cells 64x32
 text
 > Shelf                                                Add   Drop
-> [on]  Main 󰋙  󰋙
-> [off] closed 󰋙  󰞋
-> [on]  b 󰋙  󰋙
+> [on]  Main 󰋙  󰋙  ●
+> [off] closed 󰋙  󰞋  ●
+> [on]  b 󰋙  󰋙  ●
 > 2 panels
 style
 = aaaaa...............................................bbbbb.bbbbbb
-= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= dddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= eeeeeeee
+= ccccbbbbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeeebbbbbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ffffffff
 . fg/bg
 a fg/bg bold
 b fg/tonal
 c accent/tonal
-d muted/tonal
-e muted/bg
+d ok/tonal
+e muted/tonal
+f muted/bg
 hits
 @ 52,0 5x1 r.khead.kadd
 @ 58,0 6x1 r.khead.kdrop
@@ -49,29 +50,31 @@ attr r.ka.0.0 class "u-switch is-on"
 attr r.ka.0.0 aria-checked "true"
 text r.ka.0.1 "a"
 inner r.ka.0.ktoggle.0 "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2L21 7V17L12 22L3 17V7Z\"></path></svg>"
+attr r.ka.0.kbusy class "u-glyph u-dot u-tone-ok u-pulse"
 -- 1.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">Main</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">Main</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kmain.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.ka.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kb.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
 -- 1.cells --
 cells 64x32
 text
 > Shelf                                                Add   Drop
-> [on]  Main 󰋙  󰋙
-> [on]  a 󰋙  󰋙
-> [on]  b 󰋙  󰋙
+> [on]  Main 󰋙  󰋙  ●
+> [on]  a 󰋙  󰋙  ●
+> [on]  b 󰋙  󰋙  ●
 > 2 panels
 style
 = aaaaa...............................................bbbbb.bbbbbb
-= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ddddebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ffffffff
+= ccccbbbbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeefbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= gggggggg
 . fg/bg
 a fg/bg bold
 b fg/tonal
 c accent/tonal
-d accent/sel
-e fg/sel
-f muted/bg
+d ok/tonal
+e accent/sel
+f fg/sel
+g muted/bg
 hits
 @ 52,0 5x1 r.khead.kadd
 @ 58,0 6x1 r.khead.kdrop
@@ -90,28 +93,30 @@ attr r.kmain.0.0 class "u-switch"
 attr r.kmain.0.0 aria-checked "false"
 text r.kmain.0.1 "closed"
 inner r.kmain.0.ktoggle.0 "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z\"></path></svg>"
+attr r.kmain.0.kbusy class "u-glyph u-dot u-tone-ok"
 -- 2.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button><span id="r.kmain.0.kbusy" class="u-glyph u-dot u-tone-ok">●</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.ka.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kb.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">2 panels</span></div></body></html>
 -- 2.cells --
 cells 64x32
 text
 > Shelf                                                Add   Drop
-> [off] closed 󰋙  󰞋
-> [on]  a 󰋙  󰋙
-> [on]  b 󰋙  󰋙
+> [off] closed 󰋙  󰞋  ●
+> [on]  a 󰋙  󰋙  ●
+> [on]  b 󰋙  󰋙  ●
 > 2 panels
 style
 = aaaaa...............................................bbbbb.bbbbbb
-= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= eeeeeeee
+= cccccbbbbbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ffffffff
 . fg/bg
 a fg/bg bold
 b fg/tonal
 c muted/sel
-d accent/tonal
-e muted/bg
+d ok/tonal
+e accent/tonal
+f muted/bg
 hits
 @ 52,0 5x1 r.khead.kadd
 @ 58,0 6x1 r.khead.kdrop
@@ -126,34 +131,35 @@ click r.khead.kadd
 -- 3.log --
 add
 -- 3.ops --
-after r.kb "<div id=\"r.kp3\" class=\"u-box\"><div id=\"r.kp3.0\" class=\"u-row u-gap1\"><button id=\"r.kp3.0.0\" class=\"u-switch\" type=\"button\" role=\"switch\" aria-checked=\"false\" aria-label=\"Open\"><span id=\"r.kp3.0.0.0\" class=\"u-knob\"></span></button><span id=\"r.kp3.0.1\" class=\"u-text\">closed</span><span id=\"r.kp3.0.2\" class=\"u-text u-icon u-svg\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2L21 7V17L12 22L3 17V7Z\"></path></svg></span><button id=\"r.kp3.0.ktoggle\" class=\"u-btn u-btn-icon\" type=\"button\" aria-label=\"Toggle\"><span id=\"r.kp3.0.ktoggle.0\" class=\"u-text u-icon u-svg\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z\"></path></svg></span></button></div></div>"
+after r.kb "<div id=\"r.kp3\" class=\"u-box\"><div id=\"r.kp3.0\" class=\"u-row u-gap1\"><button id=\"r.kp3.0.0\" class=\"u-switch\" type=\"button\" role=\"switch\" aria-checked=\"false\" aria-label=\"Open\"><span id=\"r.kp3.0.0.0\" class=\"u-knob\"></span></button><span id=\"r.kp3.0.1\" class=\"u-text\">closed</span><span id=\"r.kp3.0.2\" class=\"u-text u-icon u-svg\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2L21 7V17L12 22L3 17V7Z\"></path></svg></span><button id=\"r.kp3.0.ktoggle\" class=\"u-btn u-btn-icon\" type=\"button\" aria-label=\"Toggle\"><span id=\"r.kp3.0.ktoggle.0\" class=\"u-text u-icon u-svg\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z\"></path></svg></span></button><span id=\"r.kp3.0.kbusy\" class=\"u-glyph u-dot u-tone-ok\">●</span></div></div>"
 text r.kstatus "3 panels"
 -- 3.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">closed</span><span id="r.kp3.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kp3.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kp3.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button><span id="r.kmain.0.kbusy" class="u-glyph u-dot u-tone-ok">●</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.ka.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kb.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">closed</span><span id="r.kp3.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kp3.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kp3.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button><span id="r.kp3.0.kbusy" class="u-glyph u-dot u-tone-ok">●</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
 -- 3.cells --
 cells 64x32
 text
 > Shelf                                                Add   Drop
-> [off] closed 󰋙  󰞋
-> [on]  a 󰋙  󰋙
-> [on]  b 󰋙  󰋙
-> [off] closed 󰋙  󰞋
+> [off] closed 󰋙  󰞋  ●
+> [on]  a 󰋙  󰋙  ●
+> [on]  b 󰋙  󰋙  ●
+> [off] closed 󰋙  󰞋  ●
 > 3 panels
 style
 = aaaaa...............................................bcccb.dddddd
-= eeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-= ffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-= ffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-= eeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-= gggggggg
+= eeeeeddddddddddddddfdddddddddddddddddddddddddddddddddddddddddddd
+= ggggddddddddddfddddddddddddddddddddddddddddddddddddddddddddddddd
+= ggggddddddddddfddddddddddddddddddddddddddddddddddddddddddddddddd
+= eeeeeddddddddddddddfdddddddddddddddddddddddddddddddddddddddddddd
+= hhhhhhhh
 . fg/bg
 a fg/bg bold
 b fg/accent
 c on-accent/accent
 d fg/tonal
 e muted/tonal
-f accent/tonal
-g muted/bg
+f ok/tonal
+g accent/tonal
+h muted/bg
 hits
 @ 52,0 5x1 r.khead.kadd
 @ 58,0 6x1 r.khead.kdrop
@@ -174,32 +180,34 @@ attr r.kp3.0.0 class "u-switch is-on"
 attr r.kp3.0.0 aria-checked "true"
 text r.kp3.0.1 "p3"
 inner r.kp3.0.ktoggle.0 "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2L21 7V17L12 22L3 17V7Z\"></path></svg>"
+attr r.kp3.0.kbusy class "u-glyph u-dot u-tone-ok u-pulse"
 -- 4.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">p3</span><span id="r.kp3.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kp3.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kp3.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.kmain" class="u-box"><div id="r.kmain.0" class="u-row u-gap1"><button id="r.kmain.0.0" class="u-switch" type="button" role="switch" aria-checked="false" aria-label="Open"><span id="r.kmain.0.0.0" class="u-knob"></span></button><span id="r.kmain.0.1" class="u-text">closed</span><span id="r.kmain.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kmain.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kmain.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2ZM12 5A7 7 0 1 1 12 19A7 7 0 1 1 12 5Z"></path></svg></span></button><span id="r.kmain.0.kbusy" class="u-glyph u-dot u-tone-ok">●</span></div></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.ka.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kb.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">p3</span><span id="r.kp3.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kp3.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kp3.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kp3.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
 -- 4.cells --
 cells 64x32
 text
 > Shelf                                                Add   Drop
-> [off] closed 󰋙  󰞋
-> [on]  a 󰋙  󰋙
-> [on]  b 󰋙  󰋙
-> [on]  p3 󰋙  󰋙
+> [off] closed 󰋙  󰞋  ●
+> [on]  a 󰋙  󰋙  ●
+> [on]  b 󰋙  󰋙  ●
+> [on]  p3 󰋙  󰋙  ●
 > 3 panels
 style
 = aaaaa...............................................bbbbb.bbbbbb
-= cccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= eeeefbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= gggggggg
+= cccccbbbbbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ffffgbbbbbbbbbbdbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= hhhhhhhh
 . fg/bg
 a fg/bg bold
 b fg/tonal
 c muted/tonal
-d accent/tonal
-e accent/sel
-f fg/sel
-g muted/bg
+d ok/tonal
+e accent/tonal
+f accent/sel
+g fg/sel
+h muted/bg
 hits
 @ 52,0 5x1 r.khead.kadd
 @ 58,0 6x1 r.khead.kdrop
@@ -218,28 +226,29 @@ drop
 -- 5.ops --
 remove r.kmain
 -- 5.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">p3</span><span id="r.kp3.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kp3.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kp3.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Shelf</div><span id="r.khead.1" class="u-grow"></span><button id="r.khead.kadd" class="u-btn" type="button">Add</button><button id="r.khead.kdrop" class="u-btn" type="button">Drop</button></div><div id="r.ka" class="u-box"><div id="r.ka.0" class="u-row u-gap1"><button id="r.ka.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.ka.0.0.0" class="u-knob"></span></button><span id="r.ka.0.1" class="u-text">a</span><span id="r.ka.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.ka.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.ka.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.ka.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kb" class="u-box"><div id="r.kb.0" class="u-row u-gap1"><button id="r.kb.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kb.0.0.0" class="u-knob"></span></button><span id="r.kb.0.1" class="u-text">b</span><span id="r.kb.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kb.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kb.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kb.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><div id="r.kp3" class="u-box"><div id="r.kp3.0" class="u-row u-gap1"><button id="r.kp3.0.0" class="u-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Open"><span id="r.kp3.0.0.0" class="u-knob"></span></button><span id="r.kp3.0.1" class="u-text">p3</span><span id="r.kp3.0.2" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span><button id="r.kp3.0.ktoggle" class="u-btn u-btn-icon" type="button" aria-label="Toggle"><span id="r.kp3.0.ktoggle.0" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span></button><span id="r.kp3.0.kbusy" class="u-glyph u-dot u-tone-ok u-pulse">●</span></div></div><span id="r.kstatus" class="u-text u-tone-muted">3 panels</span></div></body></html>
 -- 5.cells --
 cells 64x32
 text
 > Shelf                                                Add   Drop
-> [on]  a 󰋙  󰋙
-> [on]  b 󰋙  󰋙
-> [on]  p3 󰋙  󰋙
+> [on]  a 󰋙  󰋙  ●
+> [on]  b 󰋙  󰋙  ●
+> [on]  p3 󰋙  󰋙  ●
 > 3 panels
 style
 = aaaaa...............................................bbbbb.cddddc
-= eeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= eeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= eeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-= ffffffff
+= eeeebbbbbbbbbbfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeebbbbbbbbbbbfbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= gggggggg
 . fg/bg
 a fg/bg bold
 b fg/tonal
 c fg/accent
 d on-accent/accent
 e accent/tonal
-f muted/bg
+f ok/tonal
+g muted/bg
 hits
 @ 52,0 5x1 r.khead.kadd
 @ 58,0 6x1 r.khead.kdrop

@@ -37,8 +37,14 @@ var forced = strings.NewReplacer(
 )
 
 // CSS is surfui.CSS with its states forced: each of the pseudo-classes Force
-// names written as the attribute it sets.
-func CSS() string { return forced.Replace(surfui.CSS) }
+// names written as the attribute it sets. It is still, as the gate's
+// documents are: a pulse dot is drawn at rest, at full opacity, which is
+// what Chromium's shot draws too (it disables animations), so that no
+// shot catches it mid-way.
+func CSS() string { return forced.Replace(surfui.CSS) + still }
+
+// still stops what moves in surfui.CSS.
+const still = "\n.u-dot.u-pulse { animation: none; }\n"
 
 // Beside is css with each rule that reads a pseudo-class Force names
 // followed by its forced copy: a node Force marks looks focused or
@@ -179,7 +185,8 @@ var All = []Story{
 	}},
 	{"dot/shapes", 40, func() *surfui.Node {
 		// A state told by its shape as well as its tone, as plx's agents
-		// roster: working a dot, needs-you a target, idle a ring. A host
+		// roster: working a dot that pulses (still in the gate, live in
+		// the gallery), needs-you a target, idle a ring. A host
 		// has no shape for offline (◌) until a dashed ring is proven
 		// (blitz-gaps), so offline is a ring in the error's tone, its
 		// name muted and its row saying so. On a sidebar's ground and a
@@ -188,7 +195,7 @@ var All = []Story{
 			return surfui.Item(dot, name.Grow(), surfui.Text(state).Small().Muted()).Gap(1).Selected(sel)
 		}
 		return surfui.List(
-			agent(surfui.Dot().Tone(surfui.Info), surfui.Text("claude-1").Bold(), "working", false),
+			agent(surfui.Dot().Tone(surfui.Info).Pulse(), surfui.Text("claude-1").Bold(), "working", false),
 			agent(surfui.Dot().Tone(surfui.Error).Target(), surfui.Text("claude-2").Bold(), "needs you", true),
 			agent(surfui.Dot().Tone(surfui.Muted).Ring(), surfui.Text("pi-1").Bold(), "idle", false),
 			agent(surfui.Dot().Tone(surfui.Error).Ring(), surfui.Text("codex-1").Muted(), "offline", false),

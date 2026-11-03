@@ -65,6 +65,7 @@ hosts ship (hottyterm 26.10.31), which the gate renders with from then.
 | `overflow-wrap` | `anywhere` | proven | text/tones |
 | `text-align` | `center` | proven | glyph/column, key/caps |
 | `visibility` | `hidden`, `visible` (`.u-reveal`) | unknown | no story uses `Reveal()` |
+| `animation`, `opacity` | a `pulse` dot: `u-pulse 1.6s ease-in-out infinite alternate`, opacity 1 to 0.4 | unknown: runs from hotty-blitz 0.6.1, which the gate doesn't render with | the gate renders still documents: a story's sheet sets `animation: none` on `.u-pulse` (`stories.CSS`), and Chromium's shot disables animations, so dot/shapes shows the dot at rest in both. Whether it pulses is the host's to show, live |
 | `color-scheme` | `dark`; `light` (paper) | proven | the paper stories' controls |
 | `cursor` | `default` (the surface, so text shows the arrow), `pointer` (Button, Switch, Select, Cycle, a Nav's and Entries' Items, `[data-on~="click"]`, links), `text` (Field) | draws nothing; reaches the pointer | no story can show it: a still render has no pointer. hotty-blitz computes it from Stylo's style (blitz-dom `get_cursor`, `document.rs:2373`: a non-`auto` value wins; `auto` is the text caret over any text) and hottyterm shows it (`hotty_host_cursor`, `ffi.rs:875`, to `MouseShape.fromString`, hottyterm `mods/ghostty/0001…patch:1033`). Pinned by hotty-blitz's `the_pointer_shape_follows_the_document` and `a_detached_surface_shows_a_hand_only_over_a_hyperlink` (`tests/host.rs`), and here by `ui`'s `TestCursorOverTheVocabulary`, which reads the cascade of `surfui.CSS` |
 
@@ -94,6 +95,7 @@ Gone with the look (2026-10-31), and so no longer shown here: a 1px
 | `:hover`, `:focus`, `:focus-visible`, `:focus-within` | the looks proven, forced | button/bare, field/focus, switch/focus, cycle/states, list/nav, list/entries, list/keyboard, box/scroll. `:focus-within` matches in Blitz from fork patch 0043 (R-23's build), not before |
 | `@media (prefers-color-scheme: light)` | unknown | the gate's host is dark |
 | `[data-on~="click"]` with `:hover`, `:focus-visible` (what acts on a click shows it) | the looks proven, forced | text/clickable |
+| `@keyframes`, `@media (prefers-reduced-motion: reduce)` | unknown | a `pulse` dot, above: still in the gate |
 
 ## Elements
 
@@ -108,7 +110,7 @@ Gone with the look (2026-10-31), and so no longer shown here: a 1px
 ## Known not to draw (not in `surfui.CSS`)
 
 `filter`, `text-shadow`,
-transitions and animations, range, progress and meter, `:invalid`,
+transitions and animations but a `pulse` dot's (above), range, progress and meter, `:invalid`,
 `:placeholder-shown`, `resize`; inside an inline SVG, document rules,
 `var()` and `vector-effect: non-scaling-stroke`. See
 [`blitz-gaps.md`](blitz-gaps.md).

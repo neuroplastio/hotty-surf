@@ -574,12 +574,13 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | 40 | `card` | bool | `box` | modifier | a group's panel: a fill a step lighter than the page, its rows split by rules | `<box card/>` | `<div id="r" class="u-box u-card"></div>` |
 | 41 | `ring` | bool | `dot` | modifier | a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven | `<dot ring/>` | `<span id="r" class="u-glyph u-dot u-ring">○</span>` |
 | 42 | `target` | bool | `dot` | modifier | a dot in a ring (◉), a state that asks for someone | `<dot target/>` | `<span id="r" class="u-glyph u-dot u-target">◉</span>` |
-| 43 | `search` | bool | `row` | modifier | a row drawn as a search field: its icon and a bare field in one field's box | `<row search><field bare/></row>` | `<div id="r" class="u-row u-search"><input id="r.0" class="u-field u-bare" type="text"></div>` |
-| 44 | `nav` | bool | `list` | modifier | a sidebar's list | `<list nav/>` | `<div id="r" class="u-list u-nav" role="listbox" tabindex="0"></div>` |
-| 45 | `entries` | bool | `list` | modifier | a list whose items are entries, each taking the keyboard | `<list entries><item/></list>` | `<div id="r" class="u-list u-entries" role="listbox"><div id="r.0" class="u-item" role="option" tabindex="0"></div></div>` |
-| 46 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
-| 47 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
-| 48 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
+| 43 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
+| 44 | `search` | bool | `row` | modifier | a row drawn as a search field: its icon and a bare field in one field's box | `<row search><field bare/></row>` | `<div id="r" class="u-row u-search"><input id="r.0" class="u-field u-bare" type="text"></div>` |
+| 45 | `nav` | bool | `list` | modifier | a sidebar's list | `<list nav/>` | `<div id="r" class="u-list u-nav" role="listbox" tabindex="0"></div>` |
+| 46 | `entries` | bool | `list` | modifier | a list whose items are entries, each taking the keyboard | `<list entries><item/></list>` | `<div id="r" class="u-list u-entries" role="listbox"><div id="r.0" class="u-item" role="option" tabindex="0"></div></div>` |
+| 47 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
+| 48 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
+| 49 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
 <!-- end attributes table -->
 
 `autofocus` changes no HTML: the runtime gives the first element that

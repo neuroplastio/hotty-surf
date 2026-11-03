@@ -157,6 +157,17 @@ func (n *Node) Ring() *Node { return n.dotShape("u-ring", "○") }
 // larger than a Dot, in the same slot. On other nodes it does nothing.
 func (n *Node) Target() *Node { return n.dotShape("u-target", "◉") }
 
+// Pulse makes a Dot pulse, for a working state: on a host it fades slowly
+// to 0.4 and back, 1.6 s each way, and holds still where the person asks
+// for less motion (prefers-reduced-motion). The cells draw the dot. On
+// other nodes it does nothing.
+func (n *Node) Pulse() *Node {
+	if !slices.Contains(n.class, "u-dot") {
+		return n
+	}
+	return n.Class("u-pulse")
+}
+
 // dotShape gives a Dot the shape the sheet draws for class, and glyph
 // for the cells.
 func (n *Node) dotShape(class, glyph string) *Node {

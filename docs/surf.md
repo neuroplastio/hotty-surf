@@ -249,6 +249,7 @@ component or a partial.
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
 | `card` | bool | box | a group's panel: a fill a step lighter than the page, room across inside it, its rows split by `rule`s; a `semibold` text over it is its title, a `small muted` one under it its note |
 | `ring`, `target` | bool | dot | a dot's shape, so that a state is told by its shape as well as its tone: `ring` hollow (○), `target` a dot in a ring (◉), and the cells draw those glyphs. A host has no shape for ◌ (offline) until a dashed ring is proven, so offline there is a `ring`, told by its tone and its row's text |
+| `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
 | `search` | bool | row | a row drawn as a search field: its `icon` and a `bare` field in one field's box |
 | `fit` | bool | row | a row of what fits: its children right to left, each whole, those it has no room for left out, the last first |
 
