@@ -436,6 +436,23 @@ var All = []Story{
 		}
 		return surfui.Row(nav(0), Force(nav(1), "within"), Force(nav(3), "hover")).Gap(4).Top()
 	}},
+	{"list/drop", 40, func() *surfui.Node {
+		// Where a drop would land, as the runtime marks it while a row is
+		// dragged (surfui.DropMark): a line in the accent at a row's top
+		// (before) or its bottom (after), which takes no room, over a
+		// selected row's fill too; an outline round a folder (into).
+		row := func(name string, sel bool, where string) *surfui.Node {
+			return surfui.DropMark(surfui.Item(surfui.Text(name).Grow()).Drag().Drop(surfui.DropHalves).Selected(sel), where)
+		}
+		folder := func(name, where string) *surfui.Node {
+			return surfui.DropMark(surfui.Item(surfui.Text(name).Grow(), surfui.Text("3").Muted()).Drop(surfui.DropThirds), where)
+		}
+		return surfui.Stack(
+			surfui.List(row("alpha", false, ""), row("beta", false, surfui.WhereBefore), row("gamma", true, "")),
+			surfui.List(row("alpha", false, ""), row("beta", true, surfui.WhereAfter), row("gamma", false, "")),
+			surfui.List(folder("Inbox", surfui.WhereInto), folder("Archive", "")),
+		).Gap(1)
+	}},
 	{"list/entries", 30, func() *surfui.Node {
 		entry := func(dot string, tone surfui.Tone, emoji, name string, hand bool, lines ...string) *surfui.Node {
 			head := surfui.Row(surfui.Text(name).Bold().Grow())

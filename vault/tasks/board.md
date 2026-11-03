@@ -303,6 +303,34 @@ The order is the maintainer's, via gov (2026-10-30):
   docs/surf.md ("Icons") and the spec.
 - [ ] **Icons: MDI names as SVG on hosts** (out of the icon piece): a
   host draws a `name`d icon by the font's glyph, not by MDI's SVG.
+- [x] **Drag and drop** (for plx-agents' roster, which reorders agents
+  by dragging a row before or after another, through a shim of plx's
+  own until now, `sdk/surfdk/drag.go`). `drag` makes a widget a drag
+  handle and `drop` a place to drop on: bare the whole of it, `halves`
+  before or after it, `thirds` before, into or after it (`data-on`,
+  `data-steps`, hotty SPEC §9.1). `@drop` on the target, `@dragstart`
+  and `@dragend` on the handle, each in its element's scope, with
+  `$drag.from` (the handle's `:key`), `$drag.where` and `$drag.cancel`:
+  `$`-names, as `$value`, since they are the event's. `surfrun.Surface`
+  keeps the drag from the host's events, marks the target
+  (`u-drop-before`, `-after`, `-into`: a 2px accent line inside its
+  edge, an accent outline), runs `@drop` then `@dragend` on the
+  release, and Escape cancels (`@dragend` with `$drag.cancel`, no
+  `@drop`, no click). The cells: `cells.Renderer.Move`, a press on a
+  handle holding its click for the release (a port of plx's
+  `sdk/internal/events/drag.go`), and the indicator as an accent
+  underline where plx's `dropLine` draws one (`Run.Ul`, `Overline`).
+  Both modes, surflua, the conformance cases `drag-*` on a host and in
+  the cells, the gallery's `list/drop` story, docs/surf.md ("Drag") and
+  the spec ("Drags"). **What plx can delete:** `sdk/surfdk/drag.go`
+  whole (`MarkDrag`, `MarkDrop`, `dropLine`, `hitAbove`, `OnDrag`,
+  `Pointer`, the Escape `dragKeys`), its cells `Pointer` plumbing from
+  `sdk/tool`'s `OnDrag` where nothing else uses it (the renderer takes
+  `Move`), and the roster's `marked` wrapper and `Carry`/`Drop`
+  wiring: `agents.surf`'s `<item>` gets `drag drop="halves"
+  @drop="move($drag.from, e.address, $drag.where)"`, with
+  `@dragend`/`@dragstart` for its carried look if it keeps one. Its
+  `DropBefore`/`DropAfter` fields go: the indicator is surf's.
 - [ ] **Tooltips** (after drag; the maintainer, 2026-11-03: "tip ->
   title, but make it a component, not plain text, so tooltip could be
   complex. hotty-surf feature", and hotty's V7-02 withdrawn: "withdraw,

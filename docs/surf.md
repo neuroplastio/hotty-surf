@@ -252,6 +252,8 @@ component or a partial.
 | `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
 | `search` | bool | row | a row drawn as a search field: its `icon` and a `bare` field in one field's box |
 | `fit` | bool | row | a row of what fits: its children right to left, each whole, those it has no room for left out, the last first |
+| `drag` | bool | every widget with events | a drag handle ("Drag") |
+| `drop` | bare, `whole`, `halves` or `thirds` | every widget with events | a place to drop on: the whole of it, before or after it, or before, into or after it ("Drag") |
 
 - **`scroll`** makes a `box`, a `stack` or a `list` take the room left
   in its stack and scroll what doesn't fit, down, with a thin
@@ -346,6 +348,8 @@ component or a partial.
     take none;
   - `change` and `input` on a `field`;
   - `change` on a `select` and a `cycle`;
+  - `dragstart` and `dragend` on a drag handle, and `drop` on a place
+    to drop on ("Drag");
   - none for the wheel or a scroll: scrolling is the host's
     ([Scrolling](guide.md#scrolling)).
 - **A field's `@change` runs when the user commits it:** on Enter, and
@@ -430,6 +434,83 @@ and a `:if` chain goes on past it.
   menu. It draws the items, and hands the one picked to
   `Surface.Pick`, which runs it as a click runs a handler. A pick of an
   item gone since (its row, or the item, or disabled now) runs nothing.
+
+## Drag
+
+A widget is a drag handle with `drag`, and a place to drop on with
+`drop`; a row that a list reorders is both. The runtime keeps the drag,
+draws where it would land, and runs the handlers, on a host and in the
+cells alike.
+
+```html
+<list>
+  <item :each="a in agents" :key="a.addr" drag drop="halves"
+        @drop="move($drag.from, a.addr, $drag.where)"
+        @click="open(a.addr)">
+    {{ a.name }}
+  </item>
+</list>
+```
+
+```go
+func (s *roster) Move(from, to, where string) { … } // where: before, after
+```
+
+- **`drop`** says how the target is split:
+  - bare (or `drop="whole"`): the whole element, a drop into it;
+  - `drop="halves"`: before it or after it, by the half the pointer is
+    in;
+  - `drop="thirds"`: before, into or after it, by its top quarter, its
+    middle half or its bottom quarter, as a folder in a tree takes a
+    row into it or beside it.
+
+  A bound `:drop` takes the same, or `''` for no target.
+- **The handlers:**
+  - `@drop` on the target runs when a drag ends over it;
+  - `@dragstart` and `@dragend` on the handle, both optional, as the
+    drag starts and when it ends, over a target or not, after `@drop`.
+
+  Each sees its own element's scope, as `@click` does, so a `:each`
+  row's data is there, evaluated at render.
+- **What the drag brings** is three more of the event's names, whole
+  arguments of a drag's handler as `$value` is, and nowhere else:
+  - `$drag.from`, a string: the dragged element's key, its `:key` (an
+    `:each` row's, `a.addr` above), or its id where it has none;
+  - `$drag.where`, a string: `before`, `after` or `into` in `@drop`,
+    `""` elsewhere;
+  - `$drag.cancel`, a bool: true in the `@dragend` of a drag Escape
+    ended.
+
+  `$drag` is a `$`-name because it is the event's, filled in when the
+  handler runs, while the rest of the call is evaluated at render. A
+  `surfrun.Event` has them as `Drag.From`, `Drag.Where` and
+  `Drag.Cancel`.
+- **Escape** while a drag is on ends it: `@dragend` with `$drag.cancel`,
+  and no `@drop`, wherever the button is let go.
+- **A drag that ends on nothing** to drop on, or on the dragged element
+  itself, runs `@dragend` alone.
+- **A press and a release on a handle is its click:** a row that is a
+  handle and has `@click` is clicked as before, and dragged by anything
+  else. In the cells a press on a handle starts the drag at once, and
+  holds the click until the release, which clicks only where it began.
+- **The drop indicator is the runtime's,** the same for every app: a
+  2px line in the accent at the target's top (before) or its bottom
+  (after), inside it, so it takes no room and nothing moves under the
+  pointer; an outline in the accent round it (into); nothing while the
+  pointer is over no target. In the cells the line is an underline in the
+  accent: under the target's bottom row (after), under the bottom row of
+  what is drawn directly above it (before), and over its top row and
+  under its bottom one (into).
+- **Refused at load:** `drop` with another value; `drag` or `drop` on a
+  widget without events (`spacer`, `rule`, `dot`) or a component's tag;
+  `@dragstart` or `@dragend` without `drag`, and `@drop` without
+  `drop`; `$drag.…` outside a drag's handler.
+- **Hosting:** a host hands `surfrun.Surface.Event` the host's
+  `dragstart`, `drag` and `dragend` (hotty SPEC §9.1) as it hands it a
+  click, and its keys, Escape among them, to `Key`; `Surface.Dragging`
+  says a drag is on. In the cells, `cells.Renderer.Press`, `Move` (the
+  pointer while the button is down) and `Release` make the same events
+  from what it drew.
 
 ## Icons
 
