@@ -308,8 +308,11 @@ The order is the maintainer's, via gov (2026-10-30):
   complex. hotty-surf feature", and hotty's V7-02 withdrawn: "withdraw,
   no spec changes"). A tooltip is a surface the host application places,
   as it places a context menu, from hotty's `hover` (SPEC §9.4: the
-  element and the cell under the pointer). No hotty change. The shape,
-  whose two choices wait on the maintainer:
+  element and the cell under the pointer). No hotty change. The shape:
+  markup and the `heading` rename are decided (the maintainer,
+  2026-11-03: "OK, makes sense"). plx uses no `section title=` (its
+  .surf files and Lua, checked 2026-11-03), so plx's pin move needs no
+  rename.
   - **Markup.** `title="Plain text"` (and `:title`) is the shorthand. A
     `<title>` child holds any surf elements: rows, text, dots, badges,
     icons, a partial (a component of its own). SVG gives a tooltip the
