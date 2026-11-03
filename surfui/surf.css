@@ -282,6 +282,12 @@
 }
 .u-compact .u-icon { width: 18px; font-size: 16px; }
 .u-roomy .u-icon { width: 20px; font-size: 17px; }
+/* A toned icon takes its tone: .u-icon's muted comes after the tones. */
+.u-icon.u-tone-accent { color: var(--u-accent); }
+.u-icon.u-tone-ok { color: var(--u-ok); }
+.u-icon.u-tone-warn { color: var(--u-warn); }
+.u-icon.u-tone-error { color: var(--u-error); }
+.u-icon.u-tone-info { color: var(--u-info); }
 .u-item.is-sel .u-icon { color: var(--u-ink); }
 /* An SVG icon: its path in a square of the icon's size, centred in its
    slot, filled in the text's colour (fill="currentColor" on the svg, a

@@ -43,6 +43,10 @@ func TestIcon(t *testing.T) {
 			html: "<span class=\"u-text u-icon\">\U000F08BB</span>"},
 		{src: `<icon name="cog-outline"/>`, cell: "\U000F08BB",
 			html: "<span class=\"u-text u-icon\">\U000F08BB</span>"},
+		{src: `<icon name="cog-outline" tone="ok"/>`, cell: "\U000F08BB", // the tone class is the icon's colour (surf.css)
+			html: "<span class=\"u-text u-icon u-tone-ok\">\U000F08BB</span>"},
+		{src: `<icon name="cog-outline" path="M1 1H23V23H1Z" tone="warn"/>`, cell: "\U000F08BB",
+			html: `<span class="u-text u-icon u-svg u-tone-warn"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 1H23V23H1Z"></path></svg></span>`},
 		{src: `<icon :name="sel"/>`, sel: "restart", cell: "\U000F0709"},
 		{src: `<icon :name="sel"/>`, sel: "no-such", cell: "\U000F078B",
 			err: `board.surf:1:1: an icon's name is one of MDI's, as cog-outline, not "no-such"`},

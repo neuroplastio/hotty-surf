@@ -273,6 +273,11 @@ var All = []Story{
 			surfui.Row(hexagon(), surfui.Field().Bare().Placeholder("Search").Width(16)).Gap(2).Search(),
 		).Gap(1)
 	}},
+	{"icon/tone", 30, func() *surfui.Node {
+		// A tone on an icon is its colour, a glyph's and an SVG's.
+		return surfui.Row(surfui.Icon(mdCogOutline).Tone(surfui.OK), hexagon().Tone(surfui.Warn),
+			surfui.Icon(mdCogOutline).Tone(surfui.Error), hexagon().Tone(surfui.Accent)).Gap(2)
+	}},
 	{"field/states", 60, func() *surfui.Node {
 		return surfui.Stack(
 			surfui.Row(surfui.Text("Name").Width(10), surfui.Field().Value("alpha").Grow()),
