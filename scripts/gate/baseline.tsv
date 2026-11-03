@@ -120,6 +120,12 @@ glyph-column-neuroplastio-roomy-1.6	19.5
 glyph-column-paper-roomy-1.6	13.7
 glyph-column-terminal-compact-1.6	12.1
 glyph-column-terminal-roomy-1.6	19.5
+hue-palette-neuroplastio-compact-1.6	100.0
+hue-palette-neuroplastio-roomy-2	25.5
+hue-palette-paper-compact-1.6	412.5
+hue-palette-paper-roomy-2	25.5
+hue-palette-terminal-compact-1.6	100.0
+hue-palette-terminal-roomy-2	25.5
 icon-svg-paper-dense-1.6	312.5
 icon-tone-paper-compact-1.6	187.5
 icon-tone-paper-dense-1.6	187.5
