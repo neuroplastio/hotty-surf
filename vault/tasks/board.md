@@ -107,6 +107,13 @@ The order is the maintainer's, via gov (2026-10-30):
       `<dot target>` ◉, in dot/shapes. A host has no shape for ◌
       (offline) until a dashed ring is proven (blitz-gaps, a later
       leg), so a row whose dot is offline says so in its text;
+  - [x] named colours (Q-0001, answered by the maintainer 2026-11-03):
+    a `<palette>` of `<hue>`s in a `.surf` file, or `surf.Palette` and
+    `surf.palette` at run time, and `hue=` on text, dot, glyph and icon,
+    in both modes, on a host (`--u-hue-<name>`, `u-hue-<name>`) and in the
+    cells (the terminal's colour); text 4.5:1 and a dot 3:1 on the dark
+    ground and paper's. Script CSS tokens (`--u-accent: hue(coral)`) are
+    left for a smaller leg of their own. Story hue/palette;
   - [ ] a dashed ring for ◌, a host's offline, to prove in a later leg
     (gov, 2026-10-31; blitz-gaps, "Settings in cards and a dot's
     shapes"); a Ring until then;

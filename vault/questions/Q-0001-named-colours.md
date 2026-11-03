@@ -1,6 +1,6 @@
 # Q-0001 — A colour that comes from data: named colours, declared once
 
-Status: answered
+Status: answered, built in ff11eb0..142738a (hues; script CSS tokens, the last bullet, are left for a leg of their own)
 Blocks: hue on text, dot, glyph and icon; script CSS (after `<icon>`)
 Raised: 2026-11-03
 
