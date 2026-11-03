@@ -82,6 +82,7 @@ func newHosted(h *hottytest.Host, m surfrun.Model, opts surfrun.Options, stats f
 	o.s = surfrun.NewSurface(m, o)
 	o.s.Scroll, o.s.Coarse, o.s.Density, o.s.Theme = opts.Scroll, opts.Coarse, opts.Density, opts.Theme
 	o.s.Unhandled = opts.Unhandled
+	o.s.Palette, o.s.Warn = opts.Palette, opts.Warn
 	return o
 }
 
@@ -89,7 +90,18 @@ func newHosted(h *hottytest.Host, m surfrun.Model, opts surfrun.Options, stats f
 // surfrun.Runtime.SetCSS does: on the host's goroutine (Post).
 func (o *hosted) SetCSS(css string) {
 	o.css = css
-	o.write(hotty.Res(surfui.StyleID, "text/css", []byte(css)))
+	o.write(hotty.Res(surfui.StyleID, "text/css", []byte(o.sheet())))
+}
+
+// sheet is the stylesheet sent: the base, then the hues' rules.
+func (o *hosted) sheet() string { return o.css + o.s.Hues().CSS() }
+
+// SetPalette declares the hues again, as surfrun.Runtime.SetPalette does:
+// the stylesheet is sent again, on the host's goroutine (Post).
+func (o *hosted) SetPalette(p surfui.Palette) {
+	o.s.Palette = p
+	o.s.WarnHues()
+	o.write(hotty.Res(surfui.StyleID, "text/css", []byte(o.sheet())))
 }
 
 // resource is one of SetResource's.
@@ -240,7 +252,8 @@ func (o *hosted) write(s string) { _, _ = io.WriteString(o.h, s) }
 func (o *hosted) show() {
 	f := o.s.Show()
 	var b strings.Builder
-	b.WriteString(hotty.Res(surfui.StyleID, "text/css", []byte(o.css)))
+	o.s.WarnHues()
+	b.WriteString(hotty.Res(surfui.StyleID, "text/css", []byte(o.sheet())))
 	for _, x := range o.res {
 		b.WriteString(hotty.Res(x.id, x.mime, x.data))
 	}

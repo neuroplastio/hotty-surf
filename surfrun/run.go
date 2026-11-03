@@ -132,6 +132,14 @@ type DensitySetter interface{ SetDensity(surfui.Density) }
 // stands, as it does for a surflive.App whose root is no KeyStyler.
 type KeyStyler interface{ KeyStyle() surfkeys.Style }
 
+// Palettist is a model that has hues of its own (surfui.Palette): the
+// <palette>s of its templates, and any it declares in Go. The runtime sends
+// them as rules after the stylesheet, and the cells renderer draws each in
+// its terminal colour. They lie under Options.Palette and what SetPalette
+// declares, which win for a name both have. A surflive.App is one for a
+// root that is.
+type Palettist interface{ Palette() surfui.Palette }
+
 func (r *Runtime) resize() {
 	if s, ok := r.m.(Sizer); ok {
 		s.Resize(r.cols, r.surfaceRows())
@@ -195,6 +203,14 @@ type Options struct {
 	// Unhandled, if set, is the surface's (Surface.Unhandled): it hears
 	// each event on an element with no handler for it.
 	Unhandled func(Event)
+	// Palette is the run's hues, declared at run time (a colour from a
+	// user's configuration), over those the model's templates declare
+	// (Palettist). SetPalette declares them again.
+	Palette surfui.Palette
+	// Warn, if set, hears a hue's warning, once each: a hue in the
+	// palette that is too faint for text on a ground, and a name a
+	// document uses that no palette declares. Nil writes each to Stderr.
+	Warn func(msg string)
 }
 
 // Update is one update's cost, for F10.
@@ -234,6 +250,9 @@ type Runtime struct {
 	altSaved, altOff bool
 
 	res []resource // what SetResource sent, which a new document needs again
+
+	sent   surfui.Palette  // the hues the host has, as the stylesheet it holds carries them
+	warned map[string]bool // each hue warning given, once
 
 	posted   chan func()
 	done     chan struct{}
@@ -283,6 +302,7 @@ func (r *Runtime) surfaceOf(m Model) *Surface {
 	s := NewSurface(m, r)
 	s.Scroll, s.Coarse, s.Density, s.Theme, s.KeyStyle = r.opts.Scroll, r.opts.Coarse, r.opts.Density, r.opts.Theme, r.opts.KeyStyle
 	s.Unhandled = r.opts.Unhandled
+	s.Palette, s.Warn = r.opts.Palette, r.warn
 	if d, ok := m.(DensitySetter); ok && s.Density != "" {
 		d.SetDensity(s.Density)
 	}
@@ -337,23 +357,76 @@ func New(t *hottyterm.Term, m Model, opts Options) *Runtime {
 	return r
 }
 
-// css is the stylesheet the run sends.
+// css is the stylesheet the run sends: the base, then the palette's rules.
 func (r *Runtime) css() string {
+	base := surfui.CSS
 	if r.opts.CSS != "" {
-		return r.opts.CSS
+		base = r.opts.CSS
 	}
-	return surfui.CSS
+	return base + r.palette().CSS()
 }
 
 // SetCSS sends css as the run's stylesheet in place of what it sent, on
 // the runtime's goroutine (Post): the host replaces the resource and
 // draws the surface again (SPEC §7.1), with the document and its state
-// as they are. A dev mode's reload of surfui/surf.css.
+// as they are. A dev mode's reload of surfui/surf.css. The palette's
+// rules follow it, as they follow the stylesheet the run began with.
 func (r *Runtime) SetCSS(css string) {
 	r.opts.CSS = css
 	if r.Host() {
-		r.write(hotty.Res(surfui.StyleID, "text/css", []byte(css)))
+		r.write(hotty.Res(surfui.StyleID, "text/css", []byte(r.css())))
 	}
+}
+
+// palette is the hues of the run that are hues: what is drawn.
+func (r *Runtime) palette() surfui.Palette { return r.s.Hues() }
+
+// SetPalette declares the run's hues again, in place of those it declared
+// (Options.Palette, or the last call), on the runtime's goroutine (Post):
+// the stylesheet is sent again as SetCSS sends it, the host draws the
+// surface again with the document and its state as they are, and the
+// cells draw the next frame in the new terminal colours. A hue in it that
+// is no hue (a name or a colour that isn't, a cells past 15) is left out
+// and warned of; one whose text can't be read on a ground (4.5:1 against
+// the dark ground and paper's) draws its text in the ink there, its dots
+// in the hue, and warns once.
+func (r *Runtime) SetPalette(p surfui.Palette) {
+	r.opts.Palette = p
+	r.syncPalette(true)
+}
+
+// syncPalette sends the stylesheet again where the palette it carries is
+// not the one the host has (a reload of the templates), or force says a
+// declaration has it sent whatever it holds.
+func (r *Runtime) syncPalette(force bool) {
+	r.s.Palette = r.opts.Palette
+	p := r.s.rawHues()
+	if p.Equal(r.sent) && !force {
+		return
+	}
+	r.sent = p
+	r.s.WarnHues()
+	if r.Host() {
+		r.write(hotty.Res(surfui.StyleID, "text/css", []byte(r.css())))
+	} else if r.rend != nil {
+		r.gen = 0 // the colours changed, not the text
+	}
+}
+
+// warn tells Options.Warn (Stderr where nil) of msg, the first time.
+func (r *Runtime) warn(msg string) {
+	if r.warned == nil {
+		r.warned = map[string]bool{}
+	}
+	if r.warned[msg] {
+		return
+	}
+	r.warned[msg] = true
+	if r.opts.Warn != nil {
+		r.opts.Warn(msg)
+		return
+	}
+	fmt.Fprintln(Stderr, "surf:", msg)
 }
 
 // resource is one of SetResource's.
@@ -577,6 +650,8 @@ func (r *Runtime) surfaceRows() int {
 func (r *Runtime) show() {
 	r.write("\x1b[?2026h")
 	f := r.s.Show()
+	r.sent = r.s.rawHues()
+	r.s.WarnHues()
 	r.write(hotty.Res(surfui.StyleID, "text/css", []byte(r.css())))
 	for _, x := range r.res {
 		r.write(hotty.Res(x.id, x.mime, x.data))
@@ -621,6 +696,7 @@ func (r *Runtime) render() { r.s.Update() }
 // update brings the screen up to the model, after anything that may have
 // changed it.
 func (r *Runtime) update() {
+	r.syncPalette(false)
 	if !r.Host() {
 		switch {
 		case r.rend == nil:

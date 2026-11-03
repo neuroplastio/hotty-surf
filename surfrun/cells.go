@@ -3,6 +3,7 @@ package surfrun
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -28,6 +29,10 @@ func (p program) Event(e hotty.Event) (took, redraw bool)     { return p.s.Event
 func (p program) ListEvent(e hotty.Event) (took, redraw bool) { return p.s.ListEvent(e) }
 func (p program) Key(name string) (took, redraw bool)         { return p.s.Key(name) }
 func (p program) Keys() ([]cells.KeyUse, cells.Chars)         { return p.s.Keys() }
+
+// Hues are the surface's, which the renderer draws each in its terminal
+// colour (cells.Hued).
+func (p program) Hues() surfui.Palette { return p.s.Hues() }
 
 // cellsFrame is f for a renderer: its ops are in the tree it draws, and
 // its reveals the ids it brings into view.
@@ -246,6 +251,13 @@ func cellsSGR(run cells.Run) string {
 
 // ansiFg is a role's colour as text's SGR, "" for the terminal's own.
 func ansiFg(r cells.Role) string {
+	if n, ok := r.Ansi(); ok {
+		// A hue: one of the terminal's 16 colours, as its palette has it.
+		if n < 8 {
+			return strconv.Itoa(30 + n)
+		}
+		return strconv.Itoa(90 + n - 8)
+	}
 	switch r {
 	case cells.Accent:
 		return "35"

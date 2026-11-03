@@ -66,6 +66,11 @@ type Program interface {
 	Keys() ([]KeyUse, Chars)
 }
 
+// Hued is a Program that has hues (surfui.Palette), as a surfrun.Surface
+// has those of its model's templates and its host's: the renderer draws
+// each in the terminal colour it names, unless its own Palette is set.
+type Hued interface{ Hues() surfui.Palette }
+
 // Frame is what a program asks of its host besides its tree, in this
 // order: each of Fields as an a=field (SPEC §6.4), the open list, Blur
 // (a=blur), Focus (a=focus), then each of Reveals brought into view.
@@ -108,6 +113,11 @@ type Renderer struct {
 	// caps where it leaves Caps to the renderer, as a terminal's font may
 	// have no glyphs. A model's surfkeys.Node is drawn as it is.
 	KeyStyle surfkeys.Style
+	// Palette, where set, is the hues the tree's elements may be drawn in
+	// (surfui.Node.Hue), in place of the program's (Hued): each in the
+	// terminal colour it names (AnsiRole). An element whose hue the
+	// palette doesn't declare is drawn as the text around it is.
+	Palette surfui.Palette
 	// Now is the clock clicks are counted by; time.Now where nil.
 	Now func() time.Time
 	// Copy, where set, is the clipboard's: in a text field, copy and cut

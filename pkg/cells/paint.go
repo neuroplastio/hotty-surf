@@ -41,10 +41,14 @@ type painter struct {
 	within map[*surfui.Node]bool // the focused element, and what holds it
 	list   bool                  // drawing the open list
 	caret  Caret
+	hues   surfui.Palette // what a hue is, as the renderer has it now
 }
 
 func (r *Renderer) painter(g *grid) *painter {
-	p := &painter{r: r, g: g, within: map[*surfui.Node]bool{}}
+	p := &painter{r: r, g: g, within: map[*surfui.Node]bool{}, hues: r.Palette}
+	if h, ok := r.p.(Hued); ok && p.hues == nil {
+		p.hues = h.Hues()
+	}
 	if n := r.index[r.focused]; n != nil && r.focused != "" {
 		p.focus = n
 		for ; n != nil; n = surfui.Parent(n) {
@@ -160,6 +164,14 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	if b.tone != "" {
 		if !in.plain {
 			in.fg = b.tone
+		}
+	}
+	// A hue is a terminal colour of the palette's choosing, which the
+	// terminal's own palette then draws; one the palette doesn't declare
+	// draws as the text does around it.
+	if h := surfui.HueOf(n); h != "" && !in.plain {
+		if hue, ok := p.hues[h]; ok {
+			in.fg = AnsiRole(hue.CellsIndex())
 		}
 	}
 	if b.f&fBold != 0 {

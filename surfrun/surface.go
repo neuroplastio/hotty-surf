@@ -1,6 +1,8 @@
 package surfrun
 
 import (
+	"fmt"
+
 	"github.com/neuroplastio/hotty-go"
 
 	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
@@ -72,6 +74,12 @@ type Surface struct {
 	// a story without handlers is given); a program has its handlers. An
 	// Update is due after it, as after a handler.
 	Unhandled func(Event)
+	// Palette is the hues the host has declared at run time, over those
+	// the model's templates declare (Palettist). A name a render uses that
+	// neither declares is warned of, once (Warn): it draws in the ink.
+	Palette surfui.Palette
+	// Warn, if set, hears each such warning; nil writes it to Stderr.
+	Warn func(msg string)
 
 	m     Model
 	rn    Runner
@@ -97,8 +105,9 @@ type Surface struct {
 	edits map[string]heard  // a committing field's value and rev, as typed
 	base  map[string]string // a committing field's value before the user's edits
 
-	drag    *dragging // the drag in progress, nil for none
-	noClick string    // the element whose click ends a drag Escape ended, which is dropped
+	drag    *dragging       // the drag in progress, nil for none
+	noClick string          // the element whose click ends a drag Escape ended, which is dropped
+	warned  map[string]bool // each hue warning given, once
 
 	list      *selectList           // a Select's open list
 	listPress bool                  // a press on the list, whose blur on the surface is no leaving
@@ -523,7 +532,69 @@ func (s *Surface) tree() *surfui.Node {
 		t.Give(s.Program...)
 	}
 	surfkeys.Expand(t, surfkeys.OnPlatform(s.keyStyle(), s.Platform.Mod), true)
+	s.checkHues(t)
 	return t
+}
+
+// rawHues is the hues of the surface as declared: the model's templates',
+// and those declared at run time over them (Palette).
+func (s *Surface) rawHues() surfui.Palette {
+	if m, ok := s.m.(Palettist); ok {
+		return m.Palette().Merge(s.Palette)
+	}
+	return s.Palette
+}
+
+// Hues are the surface's hues that are hues, the rules of which follow
+// the stylesheet on a host (surfui.Palette.CSS): the model's templates',
+// and those the host declared (Palette) over them. A host of its own
+// sends them after the stylesheet, as the runtime does, and again where
+// they change.
+func (s *Surface) Hues() surfui.Palette {
+	p, _ := s.rawHues().Valid()
+	return p
+}
+
+// WarnHues warns of what is wrong with the hues, once for each
+// (surfui.Palette.Faults).
+func (s *Surface) WarnHues() {
+	for _, msg := range s.rawHues().Faults() {
+		s.warn(msg)
+	}
+}
+
+// warn tells Warn (Stderr where nil) of msg, the first time.
+func (s *Surface) warn(msg string) {
+	if s.warned[msg] {
+		return
+	}
+	if s.warned == nil {
+		s.warned = map[string]bool{}
+	}
+	s.warned[msg] = true
+	if s.Warn != nil {
+		s.Warn(msg)
+		return
+	}
+	fmt.Fprintln(Stderr, "surf:", msg)
+}
+
+// checkHues warns of each hue the tree names that no palette declares,
+// the first time: its text draws in the ink, and the author hears why.
+func (s *Surface) checkHues(t *surfui.Node) {
+	if t == nil {
+		return
+	}
+	names := surfui.Hues(t)
+	if len(names) == 0 {
+		return
+	}
+	p := s.rawHues()
+	for _, n := range names {
+		if _, ok := p[n]; !ok {
+			s.warn(fmt.Sprintf("hue %q is in no palette: its text draws in the ink", n))
+		}
+	}
 }
 
 // keyStyle is the style the tree's keys are drawn in: the model's, where

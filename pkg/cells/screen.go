@@ -32,6 +32,21 @@ const (
 	OnAccent Role = "on-accent" // text on an accent fill
 )
 
+// AnsiRole is the role of the terminal's colour n, 0 to 15, "ansi-9": a
+// hue's (surfui.Palette), which the terminal's palette draws, so that its
+// theme keeps the control of colour in the cells too.
+func AnsiRole(n int) Role { return Role("ansi-" + strconv.Itoa(n)) }
+
+// Ansi is the terminal colour a role names, if it is AnsiRole's.
+func (r Role) Ansi() (n int, ok bool) {
+	rest, ok := strings.CutPrefix(string(r), "ansi-")
+	if !ok {
+		return 0, false
+	}
+	n, err := strconv.Atoi(rest)
+	return n, err == nil && n >= 0 && n <= 15
+}
+
 // Attr is a set of text attributes.
 type Attr uint8
 

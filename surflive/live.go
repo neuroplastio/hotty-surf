@@ -89,6 +89,15 @@ func (a *App) KeyStyle() surfkeys.Style {
 	return surfkeys.Style{}
 }
 
+// Palette is the root's hues, if it declares some (surfrun.Palettist):
+// the zero Palette, which declares none, where it doesn't.
+func (a *App) Palette() surfui.Palette {
+	if p, ok := a.root.(surfrun.Palettist); ok {
+		return p.Palette()
+	}
+	return nil
+}
+
 type cellsApp struct {
 	*App
 	surfrun.Cells
