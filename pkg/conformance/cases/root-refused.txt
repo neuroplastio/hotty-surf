@@ -1,0 +1,52 @@
+A partial's top is one root element, or one :if chain (:if, :else-if,
+:else) of which one draws. Everything else is refused at load, at the
+element that breaks it: a second element that doesn't join the chain,
+a second chain, an :each at the top, an element after the :else, text
+between or after the elements. (Comments and white space between a
+chain's elements are fine: tab-ok.surf loads.)
+-- tab-ok.surf --
+<props on="bool"/>
+<!-- a comment before -->
+<button :if="on">a</button>
+<!-- a comment between -->
+<button :else-if="!on">b</button>
+
+<button :else>c</button>
+-- tab-two.surf --
+<props on="bool"/>
+<button :if="on">a</button>
+<text>b</text>
+-- tab-plain-two.surf --
+<props on="bool"/>
+<button>a</button>
+<text>b</text>
+-- tab-twice.surf --
+<props on="bool"/>
+<button :if="on">a</button>
+<text :if="!on">b</text>
+-- tab-each.surf --
+<props on="bool"/>
+<button :each="x in [1, 2]">a</button>
+-- tab-after-else.surf --
+<props on="bool"/>
+<button :if="on">a</button>
+<button :else>b</button>
+<text :else-if="on">c</text>
+-- tab-text.surf --
+<props on="bool"/>
+<button :if="on">a</button>
+between
+<button :else>b</button>
+-- tab-text-after.surf --
+<props on="bool"/>
+<button :if="on">a</button>
+<button :else>b</button>
+after
+-- load --
+tab-after-else.surf:4:1: a template has one root element or one :if chain; <text> comes after the chain's :else
+tab-each.surf:2:9: a template's root takes no :each: it draws one element, or one :if chain, not a list
+tab-plain-two.surf:3:1: a template has one root element; <text> is a second
+tab-text-after.surf:3:25: text between or after the top-level elements: only white space and comments go there
+tab-text.surf:2:28: text between or after the top-level elements: only white space and comments go there
+tab-twice.surf:3:7: a template's top is one :if chain; this :if begins a second
+tab-two.surf:3:1: a template has one root element or one :if chain; <text> is a second, and has no :else-if or :else to join the chain

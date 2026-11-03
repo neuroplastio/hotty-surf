@@ -42,7 +42,9 @@ type file struct {
 	name  string // the template's: its file name without .surf
 	path  string // in the Set's fs
 	props []prop
-	root  *markup.Node
+	// roots are the top-level elements: one, or the elements of one :if
+	// chain.
+	roots []*markup.Node
 }
 
 // prop is a declared prop: its name and type.
@@ -148,7 +150,7 @@ func (s *Set) Template(name string) []*markup.Node {
 	if !ok {
 		return nil
 	}
-	return []*markup.Node{f.root}
+	return f.roots
 }
 
 // Prop is a prop a template declares: its name and its type.
@@ -204,7 +206,8 @@ func readFiles(fsys fs.FS) (map[string]*file, map[string]stamp, error) {
 	return files, stamps, errors.Join(errs...)
 }
 
-// parseFile reads a template: an optional <props>, then one root element.
+// parseFile reads a template: an optional <props>, then one root element,
+// or one :if chain of them (:if, :else-if, :else) of which one draws.
 func parseFile(name, src string) (*file, error) {
 	nodes, err := markup.Parse(name, src)
 	if err != nil {
@@ -216,10 +219,12 @@ func parseFile(name, src string) (*file, error) {
 	}
 	for _, n := range nodes {
 		switch {
+		case n.Kind == markup.Text && len(f.roots) > 0:
+			return nil, fail(n.Pos, "text between or after the top-level elements: only white space and comments go there")
 		case n.Kind == markup.Text:
 			return nil, fail(n.Pos, "text outside the root element")
 		case n.Tag == "props":
-			if f.root != nil || f.props != nil {
+			if len(f.roots) > 0 || f.props != nil {
 				return nil, fail(n.Pos, "<props> comes once, before the root element")
 			}
 			if len(n.Kids) > 0 {
@@ -238,16 +243,46 @@ func parseFile(name, src string) (*file, error) {
 			if f.props == nil {
 				f.props = []prop{}
 			}
-		case f.root != nil:
-			return nil, fail(n.Pos, "a template has one root element; <%s> is a second", n.Tag)
 		default:
-			f.root = n
+			if err := addRoot(f, n, fail); err != nil {
+				return nil, err
+			}
 		}
 	}
-	if f.root == nil {
+	if len(f.roots) == 0 {
 		return nil, fail(markup.Pos{Line: 1, Col: 1}, "no root element")
 	}
 	return f, nil
+}
+
+// addRoot adds the top-level element n to f: the first, or the next of
+// the :if chain the first begins. Anything else is refused where it is.
+func addRoot(f *file, n *markup.Node, fail func(markup.Pos, string, ...any) error) error {
+	if a, ok := n.Attr(":each"); ok {
+		return fail(a.Pos, "a template's root takes no :each: it draws one element, or one :if chain, not a list")
+	}
+	if len(f.roots) == 0 {
+		f.roots = append(f.roots, n)
+		return nil
+	}
+	first := f.roots[0]
+	if _, ok := first.Attr(":if"); !ok {
+		return fail(n.Pos, "a template has one root element; <%s> is a second", n.Tag)
+	}
+	last := f.roots[len(f.roots)-1]
+	if _, ok := last.Attr(":else"); ok {
+		return fail(n.Pos, "a template has one root element or one :if chain; <%s> comes after the chain's :else", n.Tag)
+	}
+	if a, ok := n.Attr(":if"); ok {
+		return fail(a.Pos, "a template's top is one :if chain; this :if begins a second")
+	}
+	_, elseIf := n.Attr(":else-if")
+	_, els := n.Attr(":else")
+	if !elseIf && !els {
+		return fail(n.Pos, "a template has one root element or one :if chain; <%s> is a second, and has no :else-if or :else to join the chain", n.Tag)
+	}
+	f.roots = append(f.roots, n)
+	return nil
 }
 
 // ident reports whether s is an identifier, as CEL reads one.
@@ -370,12 +405,29 @@ func (c *compiler) template(name string, owner *Shape, at markup.Pos) *tmpl {
 	if sc == nil {
 		return t
 	}
-	t.root = sc.element(t.file.root, nil)
+	c.viewChain(t, name)
+	t.root = sc.element(t.file.roots[0], t.file.roots[1:])
 	if t.root == nil {
 		t.root = &elem{kind: kNone}
 	}
 	t.done = true
 	return t
+}
+
+// viewChain fails a component's own template whose top is an :if chain
+// that may draw nothing: a view's root is its one node, and a render
+// that gives none is an error. A chain that ends in :else always draws.
+func (c *compiler) viewChain(t *tmpl, name string) {
+	if name != TemplateName(t.owner.Name) {
+		return
+	}
+	last := t.file.roots[len(t.file.roots)-1]
+	if _, ok := t.file.roots[0].Attr(":if"); !ok {
+		return
+	}
+	if _, ok := last.Attr(":else"); !ok {
+		c.fail(t.file, last.Pos, "a component's own template draws one root, and this :if chain may draw none: end it with an :else")
+	}
 }
 
 // tmplOf is the template name compiled for owner: the one compiled, or

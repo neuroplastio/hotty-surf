@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf form.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
+//go:embed board.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -854,17 +854,59 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 				e.Leave()
 			}
 		}
-		// frame.surf:10:3 <text>
+		// frame.surf:10:3 <frame-tab>
 		if e.Enter("frame.surf", 10, 3) {
-			n12 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " added")
-			surf.ModKey(n12, "count")
-			surf.ModMuted(n12, true)
-			k1 = append(k1, n12)
+			start12 := len(k1)
+			k1 = surfRenderFrame_FrameTab(e, k1, c, nil, c.Hidden, "Tab")
+			for _, kn := range k1[start12:] {
+				kn.Key("tab")
+			}
+			e.Leave()
+		}
+		// frame.surf:11:3 <frame-tab>
+		if e.Enter("frame.surf", 11, 3) {
+			start13 := len(k1)
+			k1 = surfRenderFrame_FrameTab(e, k1, c, nil, false, "")
+			for _, kn := range k1[start13:] {
+				kn.Key("notab")
+			}
+			e.Leave()
+		}
+		// frame.surf:12:3 <text>
+		if e.Enter("frame.surf", 12, 3) {
+			n14 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " added")
+			surf.ModKey(n14, "count")
+			surf.ModMuted(n14, true)
+			k1 = append(k1, n14)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)
 		out = append(out, n1)
 		e.Leave()
+	}
+	return out
+}
+
+// surfRenderFrame_FrameTab draws frame-tab.surf for Frame.
+func surfRenderFrame_FrameTab(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill, prop5 bool, prop6 string) []*surfui.Node {
+	if prop5 {
+		// frame-tab.surf:4:1 <button>
+		if e.Enter("frame-tab.surf", 4, 1) {
+			n1 := surfui.Button(prop6)
+			surf.ModFill(n1, "accent")
+			surf.ModBold(n1, true)
+			n1.On("click", func() { c.Hide() })
+			out = append(out, n1)
+			e.Leave()
+		}
+	} else if prop6 != "" {
+		// frame-tab.surf:5:1 <button>
+		if e.Enter("frame-tab.surf", 5, 1) {
+			n2 := surfui.Button(prop6)
+			n2.On("click", func() { c.Hide() })
+			out = append(out, n2)
+			e.Leave()
+		}
 	}
 	return out
 }

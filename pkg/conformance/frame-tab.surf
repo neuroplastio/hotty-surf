@@ -1,0 +1,5 @@
+<!-- A partial whose root is a :if chain: a tab drawn selected, or plain,
+     or nothing at all while its label is empty. -->
+<props on="bool" label="string"/>
+<button :if="on" bold fill="accent" @click="hide">{{ label }}</button>
+<button :else-if="label != ''" @click="hide">{{ label }}</button>

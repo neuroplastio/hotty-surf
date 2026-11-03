@@ -7,5 +7,7 @@
   </row>
   <embed :of="inset()" key="inset"/>
   <embed :if="hidden" :of="inset()" key="never"/>
+  <frame-tab key="tab" :on="hidden" label="Tab"/>
+  <frame-tab key="notab" :on="false" label=""/>
   <text muted key="count">{{ count }} added</text>
 </surface>

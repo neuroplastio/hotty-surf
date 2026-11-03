@@ -60,8 +60,9 @@ surflive.New(surfInterpNotices(s)) // or surfCompiledNotices(s)
   `notices`, `agent-row.surf` for `AgentRow`.
 - **Any other template is a partial.** A partial has props and no state
   of its own.
-- A file holds an optional `<props …/>`, then **one root element**.
-  Comments are `<!-- … -->`; one in a text drops out and keeps the
+- A file holds an optional `<props …/>`, then **one root element**, or
+  **one `:if` chain** (under "Components and partials"). Comments are
+  `<!-- … -->`; one in a text drops out and keeps the
   text's space: `a <!-- c --> b` is `a b`.
 - A file nests its elements **at most 32 deep** (`markup.MaxDepth`): an
   element inside 32 others fails to load, `<stack> is nested past 32
@@ -499,6 +500,32 @@ A `<button>` holds one `<icon>`, before its text or after it.
 - **A partial** has no state of its own. It is drawn in its user's
   component: it reads that component's fields, and its handlers call
   that component's methods, beside its props.
+- **A partial's root can be a `:if` chain.** The file's top is then the
+  chain's elements, as siblings: an `:if`, any `:else-if`s, and an
+  optional `:else`. One of them draws, and a chain with no `:else` whose
+  conditions all fail draws nothing, as an `:if` does anywhere. A tab
+  button drawn selected or plain:
+
+  ```html
+  <props on="bool" label="string"/>
+  <button :if="on" bold fill="accent" @click="pick">{{ label }}</button>
+  <button :else @click="pick">{{ label }}</button>
+  ```
+
+  - The user's `key` goes on whichever arm draws, so when the condition
+    flips, the element at that key is morphed in place (its attributes,
+    or its kind, change), never removed and added: what has the
+    keyboard still has it, and a field of the partial that keeps its
+    kind keeps what was typed.
+  - Everything else keeps one root, and is a load error at the element
+    that breaks it: a second element that is not in the chain, a second
+    `:if` chain, an `:each` at the top, an element after the `:else`,
+    and text between or after the elements (white space and comments
+    are fine).
+  - **A component's own template** (`notices.surf` for `notices`) goes
+    through the same code, and may be a chain too, but only one that
+    ends in `:else`: a view draws one root, and a chain that may draw
+    none would be a render error, so it is refused at load.
 - **Props** are declared before the root:
 
   ```html

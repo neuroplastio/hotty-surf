@@ -1,0 +1,16 @@
+A component's own template (here info-panel.surf, InfoPanel's) draws
+one root, and a render that gives none is an error. So its top may be
+an :if chain only where the chain ends in :else, which always draws:
+this one doesn't, and is refused at its last element.
+-- info-panel.surf --
+<box :if="open" key="panel">
+  <text>open</text>
+</box>
+<box :else-if="title != ''" key="panel">
+  <text>{{ title }}</text>
+</box>
+-- typed --
+A Lua host's shapes name no InfoPanel component, so its Load never
+compiles this view's template and has nothing to refuse.
+-- load --
+info-panel.surf:4:1: a component's own template draws one root, and this :if chain may draw none: end it with an :else

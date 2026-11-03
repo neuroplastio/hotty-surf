@@ -1,22 +1,26 @@
 <embed> draws a component chosen as the frame runs, one of Go's, by its
 own Render, keyed: a click on its button is its own handler's. While the
 frame's method gives none (null) it draws nothing, so the second embed,
-whose :if holds only then, never shows.
+whose :if holds only then, never shows. The tab is a partial whose root is a :if chain: drawn
+selected while the frame is hidden, plain while it shows, and the one
+whose chain holds nowhere draws nothing (frame-tab.surf).
 -- root --
 Frame
 -- state.json --
 {"Title": "Frame"}
 -- document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛑</span>Hide</button></div><div id="r.kinset" class="u-row u-gap1"><span id="r.kinset.kn" class="u-text">inset 0</span><button id="r.kinset.kadd" class="u-btn" type="button">Add</button></div><span id="r.kcount" class="u-text u-tone-muted">0 added</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛑</span>Hide</button></div><div id="r.kinset" class="u-row u-gap1"><span id="r.kinset.kn" class="u-text">inset 0</span><button id="r.kinset.kadd" class="u-btn" type="button">Add</button></div><button id="r.ktab" class="u-btn" type="button">Tab</button><span id="r.kcount" class="u-text u-tone-muted">0 added</span></div></body></html>
 -- cells --
 cells 64x32
 text
 > Frame  󰛑 Hide
 > inset 0  Add
+>                               Tab
 > 0 added
 style
 = aaaaa.bbbbbbbb
 = ........bbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 = ccccccc
 . fg/bg
 a fg/bg bold
@@ -25,6 +29,7 @@ c muted/bg
 hits
 @ 6,0 8x1 r.khead.khide
 @ 8,1 5x1 r.kinset.kadd
+@ 0,2 64x1 r.ktab
 -- 1.event --
 click r.kinset.kadd
 -- 1.log --
@@ -33,16 +38,18 @@ inset add
 text r.kinset.kn "inset 1"
 text r.kcount "1 added"
 -- 1.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛑</span>Hide</button></div><div id="r.kinset" class="u-row u-gap1"><span id="r.kinset.kn" class="u-text">inset 1</span><button id="r.kinset.kadd" class="u-btn" type="button">Add</button></div><span id="r.kcount" class="u-text u-tone-muted">1 added</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛑</span>Hide</button></div><div id="r.kinset" class="u-row u-gap1"><span id="r.kinset.kn" class="u-text">inset 1</span><button id="r.kinset.kadd" class="u-btn" type="button">Add</button></div><button id="r.ktab" class="u-btn" type="button">Tab</button><span id="r.kcount" class="u-text u-tone-muted">1 added</span></div></body></html>
 -- 1.cells --
 cells 64x32
 text
 > Frame  󰛑 Hide
 > inset 1  Add
+>                               Tab
 > 1 added
 style
 = aaaaa.bbbbbbbb
 = ........cdddc
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 = eeeeeee
 . fg/bg
 a fg/bg bold
@@ -53,6 +60,7 @@ e muted/bg
 hits
 @ 6,0 8x1 r.khead.khide
 @ 8,1 5x1 r.kinset.kadd
+@ 0,2 64x1 r.ktab
 -- 2.event --
 click r.khead.khide
 -- 2.log --
@@ -60,23 +68,28 @@ hide
 -- 2.ops --
 remove r.kinset
 inner r.khead.khide "<span id=\"r.khead.khide.0\" class=\"u-text u-icon\">\U000f06d0</span>Show"
+attr r.ktab class "u-btn u-fill-accent u-bold"
 -- 2.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛐</span>Show</button></div><span id="r.kcount" class="u-text u-tone-muted">1 added</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛐</span>Show</button></div><button id="r.ktab" class="u-btn u-fill-accent u-bold" type="button">Tab</button><span id="r.kcount" class="u-text u-tone-muted">1 added</span></div></body></html>
 -- 2.cells --
 cells 64x32
 text
 > Frame  󰛐 Show
+>                               Tab
 > 1 added
 style
 = aaaaa.bccccccb
-= ddddddd
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeeeee
 . fg/bg
 a fg/bg bold
 b fg/accent
 c on-accent/accent
-d muted/bg
+d fg/accent bold
+e muted/bg
 hits
 @ 6,0 8x1 r.khead.khide
+@ 0,1 64x1 r.ktab
 -- 3.event --
 click r.khead.khide
 -- 3.log --
@@ -84,17 +97,20 @@ hide
 -- 3.ops --
 after r.khead "<div id=\"r.kinset\" class=\"u-row u-gap1\"><span id=\"r.kinset.kn\" class=\"u-text\">inset 1</span><button id=\"r.kinset.kadd\" class=\"u-btn\" type=\"button\">Add</button></div>"
 inner r.khead.khide "<span id=\"r.khead.khide.0\" class=\"u-text u-icon\">\U000f06d1</span>Hide"
+attr r.ktab class "u-btn"
 -- 3.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛑</span>Hide</button></div><div id="r.kinset" class="u-row u-gap1"><span id="r.kinset.kn" class="u-text">inset 1</span><button id="r.kinset.kadd" class="u-btn" type="button">Add</button></div><span id="r.kcount" class="u-text u-tone-muted">1 added</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.khead" class="u-row u-gap1"><div id="r.khead.0" class="u-heading">Frame</div><button id="r.khead.khide" class="u-btn u-btn-icon" type="button"><span id="r.khead.khide.0" class="u-text u-icon">󰛑</span>Hide</button></div><div id="r.kinset" class="u-row u-gap1"><span id="r.kinset.kn" class="u-text">inset 1</span><button id="r.kinset.kadd" class="u-btn" type="button">Add</button></div><button id="r.ktab" class="u-btn" type="button">Tab</button><span id="r.kcount" class="u-text u-tone-muted">1 added</span></div></body></html>
 -- 3.cells --
 cells 64x32
 text
 > Frame  󰛑 Hide
 > inset 1  Add
+>                               Tab
 > 1 added
 style
 = aaaaa.bccccccb
 = ........ddddd
+= dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 = eeeeeee
 . fg/bg
 a fg/bg bold
@@ -105,3 +121,4 @@ e muted/bg
 hits
 @ 6,0 8x1 r.khead.khide
 @ 8,1 5x1 r.kinset.kadd
+@ 0,2 64x1 r.ktab
