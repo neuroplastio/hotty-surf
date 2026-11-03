@@ -851,9 +851,8 @@ sep    = "<sep/>" ;
   root, in a partial's or a component's tag, or in a `<slot>`.
 - An `<action>` has a `do`, a handler as a `<bind>`'s is (no `$value` or
   `$event`), evaluated at render in the scope of its widget; and a label,
-  its text, with `{{ }}`. It takes `icon` (an MDI symbol's name, lower
-  case words of letters and digits joined by dashes: a literal is
-  checked at load, a bound one at render, where one it refuses is left
+  its text, with `{{ }}`. It takes `icon` (one of MDI's names, as for an `<icon>`: a literal is
+  checked at load against the table, a bound one at render, where one it refuses is left
   out with a render error), `key` (a key's name shown beside the label,
   any value's text bound; it binds nothing) and `disabled`, each bound
   or literal, and `:if`, `:else-if` and `:else`. A `<sep/>` takes only

@@ -22,7 +22,7 @@ const menuRows = `
       <action icon="content-copy" do="open('copy ' + n.id)">Copy text</action>
       <sep/>
       <action :disabled="!n.unread" do="open('dismiss ' + n.id)">Dismiss</action>
-      <action :if="n.id == 'n1'" :icon="n.text" do="open('first')">First</action>
+      <action :if="n.id == 'n1'" :icon="n.text == 'first' ? 'star' : 'x'" do="open('first')">First</action>
       <action :else :key="size(notes)" do="open('not first')">Not first</action>
     </menu>
     <button key="b" @click="open('button')">B<menu><action do="open('inner ' + n.id)">Inner</action></menu></button>
@@ -114,7 +114,7 @@ func TestMenu(t *testing.T) {
 		}
 		return mn.ID + " " + strings.Join(items, " ")
 	}
-	n1 := "r.kn1 0:Mute n1/bell-off-outline/m/true 1:Copy text/content-copy//true 2:- 3:Dismiss///true 4:First/first//true"
+	n1 := "r.kn1 0:Mute n1/bell-off-outline/m/true 1:Copy text/content-copy//true 2:- 3:Dismiss///true 4:First/star//true"
 	n2 := "r.kn2 0:Mute n2/bell-off-outline/m/true 1:Copy text/content-copy//true 2:- 3:Dismiss///false 5:Not first//2/true"
 	for _, c := range []struct {
 		what string
@@ -192,7 +192,7 @@ func TestMenuIconError(t *testing.T) {
 	b := newBoard()
 	b.Title = "Not An Icon"
 	n, errs := set.Render(boardObj{b})
-	if len(errs) != 1 || !strings.Contains(errs[0].Error(), `board.surf:1:16: an icon is an MDI symbol's name, as content-copy, not "Not An Icon"`) {
+	if len(errs) != 1 || !strings.Contains(errs[0].Error(), `board.surf:1:16: an icon's name is one of MDI's, as cog-outline, not "Not An Icon"`) {
 		t.Errorf("errors: %v", errs)
 	}
 	if items := surfui.MenuOf(n); len(items) != 1 || items[0].Icon != "" || items[0].Label != "X" {

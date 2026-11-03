@@ -394,8 +394,8 @@ and a `:if` chain goes on past it.
 - **An `<action>`'s text is its label,** with `{{ }}`; `do` is the
   handler a pick runs, as a `<bind>`'s is, so it sees `r` and takes no
   `$value` or `$event`. Both are a must.
-- `icon` is an MDI symbol's name, as the hosts' font names it
-  (`content-copy`), which the host draws; `key` is a key's name shown
+- `icon` is one of MDI's names (`content-copy`), checked as an
+  `<icon>`'s `name` is, which the host draws; `key` is a key's name shown
   beside the label, which binds nothing (a `<bind>` binds it).
   `:disabled` greys the item, and a pick of it runs nothing. `:icon`
   and `:key` bind too.

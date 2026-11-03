@@ -286,7 +286,7 @@ func TestLoadErrors(t *testing.T) {
 		{`<surface><row><menu><action do="close()">A</action></menu></row></surface>`, `board.surf:1:33: board has no method close`},
 		{`<surface><row><menu><action do="open($value)">A</action></menu></row></surface>`, `board.surf:1:38: $value is an @ handler's argument only`},
 		{`<surface><row><menu><action do="open('x')" tone="ok">A</action></menu></row></surface>`, `board.surf:1:44: <action> takes no tone; it takes disabled, do, icon or key`},
-		{`<surface><row><menu><action do="open('x')" icon="Content Copy">A</action></menu></row></surface>`, `board.surf:1:50: an icon is an MDI symbol's name, as content-copy, not "Content Copy"`},
+		{`<surface><row><menu><action do="open('x')" icon="Content Copy">A</action></menu></row></surface>`, `board.surf:1:50: an icon's name is one of MDI's, as cog-outline, not "Content Copy"`},
 		{`<surface><row><menu><action do="open('x')" :icon="unread()">A</action></menu></row></surface>`, `board.surf:1:51: :icon is a string, not int`},
 		{`<surface><row><menu><action do="open('x')" :disabled="title">A</action></menu></row></surface>`, `board.surf:1:55: :disabled is a bool, not string`},
 		{`<surface><row><menu><action do="open('x')" disabled="maybe">A</action></menu></row></surface>`, `board.surf:1:54: disabled is bare, true or false, not "maybe"`},

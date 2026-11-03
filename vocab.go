@@ -251,18 +251,11 @@ func NewSelect(value string, options []string) *surfui.Node { return surfui.Sele
 // NewCycle is a cycle through options, value showing.
 func NewCycle(value string, options []string) *surfui.Node { return surfui.Cycle(value, options...) }
 
-// CheckIcon checks an <action>'s icon: an MDI symbol's name, as the
-// hosts' font names it ("content-copy"), lower-case words of letters and
-// digits joined by dashes. Which names the font has is the host's.
+// CheckIcon checks an <action>'s icon: one of MDI's names (pkg/mdi), as
+// an <icon>'s name is, "content-copy". The host draws the name.
 func CheckIcon(name string) error {
-	ok := name != "" && name[0] != '-' && name[len(name)-1] != '-' && !strings.Contains(name, "--")
-	for _, c := range []byte(name) {
-		ok = ok && (c == '-' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9')
-	}
-	if !ok {
-		return fmt.Errorf("an icon is an MDI symbol's name, as content-copy, not %q", name)
-	}
-	return nil
+	_, err := IconGlyph(name)
+	return err
 }
 
 // MenuAction is a menu's <action> as both modes build it: its id its
