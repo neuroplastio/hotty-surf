@@ -105,7 +105,7 @@ func writeGallery(dir, theme, density string, width int) error {
 		}
 		g := gallery.New()
 		app := surflive.New(m.of(g))
-		css := gallery.Options(g).CSS
+		css := gallery.Options(g).CSS + gallery.Options(g).Palette.CSS()
 		section := ""
 		for _, e := range g.Shown() {
 			if e.Kind == "section" {

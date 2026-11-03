@@ -36,12 +36,24 @@ var forced = strings.NewReplacer(
 	":hover", "[data-force~=hover]",
 )
 
+// Palette is the hues the stories draw in (hue/palette): five pairs, each
+// 4.5:1 or over on both grounds. A story is a tree with no template, so
+// the palette is declared here, and the stylesheet of the gate's documents
+// and the gallery's runtime carry it.
+var Palette = surfui.Palette{
+	"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: surfui.Cell(9)},
+	"amber": {Dark: "#f2c14e", Light: "#8a5a00"},
+	"lime":  {Dark: "#a3d977", Light: "#3f6b12"},
+	"teal":  {Dark: "#4fd1c5", Light: "#0f766e", Cells: surfui.Cell(6)},
+	"plum":  {Dark: "#c9a0ff", Light: "#6b3fa0"},
+}
+
 // CSS is surfui.CSS with its states forced: each of the pseudo-classes Force
-// names written as the attribute it sets. It is still, as the gate's
-// documents are: a pulse dot is drawn at rest, at full opacity, which is
-// what Chromium's shot draws too (it disables animations), so that no
-// shot catches it mid-way.
-func CSS() string { return forced.Replace(surfui.CSS) + still }
+// names written as the attribute it sets, and the stories' palette's rules
+// after it. It is still, as the gate's documents are: a pulse dot is drawn
+// at rest, at full opacity, which is what Chromium's shot draws too (it
+// disables animations), so that no shot catches it mid-way.
+func CSS() string { return forced.Replace(surfui.CSS) + Palette.CSS() + still }
 
 // still stops what moves in surfui.CSS.
 const still = "\n.u-dot.u-pulse { animation: none; }\n"
@@ -200,6 +212,26 @@ var All = []Story{
 			agent(surfui.Dot().Tone(surfui.Muted).Ring(), surfui.Text("pi-1").Bold(), "idle", false),
 			agent(surfui.Dot().Tone(surfui.Error).Ring(), surfui.Text("codex-1").Muted(), "offline", false),
 		).Chrome()
+	}},
+	{"hue/palette", 50, func() *surfui.Node {
+		// Named colours from data: each agent in the hue its user gave
+		// it, a dot and its name, as the palette declares it (Palette). The
+		// dark ground draws a hue's dark value and paper its light one,
+		// each 4.5:1 or over, so text reads on both. An icon and a glyph
+		// take a hue too.
+		agent := func(hue, name, task string) *surfui.Node {
+			return surfui.Item(surfui.Dot().Hue(hue), surfui.Text(name).Hue(hue).Bold(), surfui.Text(task).Small().Muted().Grow()).Gap(1)
+		}
+		return surfui.Stack(
+			surfui.List(
+				agent("coral", "claude-1", "refactoring the parser"),
+				agent("amber", "codex-1", "waiting on review"),
+				agent("lime", "pi-1", "tests are green"),
+				agent("teal", "claude-2", "reading the logs"),
+				agent("plum", "gemini-1", "drafting the plan"),
+			).Chrome(),
+			surfui.Row(surfui.Glyph("●").Hue("coral"), surfui.Icon("\U000F0493").Hue("teal"), surfui.Text("a glyph, an icon").Hue("plum")).Gap(1),
+		).Gap(1)
 	}},
 	{"key/caps", 50, func() *surfui.Node {
 		row := func(group, title string, sel bool, seq string) *surfui.Node {

@@ -8,6 +8,7 @@ import (
 
 	cellite "github.com/neuroplastio/cel-lite"
 	surf "github.com/neuroplastio/hotty-surf"
+	"github.com/neuroplastio/hotty-surf/internal/stories"
 )
 
 // widgetStory is a widget's own story: its tag with a control for each
@@ -64,8 +65,10 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 	}
 	for _, a := range ws.attrs() {
 		// A string it draws: not its name or its label, which no one sees.
-		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label"}
+		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "hue"}
 		switch {
+		case a.Name == "hue": // one of the stories' palette's, which the story declares
+			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, stories.Palette.Names()...)
 		case a.Type == surf.TypeBool:
 			c.Kind, c.Value = "switch", "false"
 		case a.Values != nil:
@@ -166,9 +169,30 @@ func (ws *widgetStory) source() string {
 	} else {
 		b.WriteString(">" + kids + "</" + w.Tag + ">")
 	}
+	src := b.String()
 	if p, ok := placements[w.Tag]; ok {
-		return p.open + b.String() + p.close
+		src = p.open + src + p.close
 	}
+	if h := ws.by["hue"]; h != nil && h.Value != "" && h.Value != none {
+		src = palettePrefix() + src
+	}
+	return src
+}
+
+// palettePrefix is the stories' palette as a <palette>, which a story
+// that gives a hue declares before its root.
+func palettePrefix() string {
+	var b strings.Builder
+	b.WriteString("<palette>")
+	for _, n := range stories.Palette.Names() {
+		h := stories.Palette[n]
+		b.WriteString(`<hue name="` + n + `" dark="` + h.Dark + `" light="` + h.Light + `"`)
+		if h.Cells != nil {
+			b.WriteString(` cells="` + strconv.Itoa(*h.Cells) + `"`)
+		}
+		b.WriteString("/>")
+	}
+	b.WriteString("</palette>")
 	return b.String()
 }
 

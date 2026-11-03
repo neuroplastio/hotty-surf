@@ -122,7 +122,7 @@ func (g *Gallery) index(all []*story) {
 // beside the real ones (stories.Beside). A story of stories.All, which
 // has no handlers, logs what the host sends it.
 func Options(g *Gallery) surfrun.Options {
-	return surfrun.Options{Name: "gallery", Scroll: hotty.ScrollVertical, CSS: stories.Beside(g.src.css), Unhandled: g.unhandled,
+	return surfrun.Options{Name: "gallery", Scroll: hotty.ScrollVertical, CSS: stories.Beside(g.src.css), Palette: stories.Palette, Unhandled: g.unhandled,
 		KeyStyle: stories.KeyStyle}
 }
 

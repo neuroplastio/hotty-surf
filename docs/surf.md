@@ -582,6 +582,119 @@ A `<button>` holds one `<icon>`, before its text or after it.
 - A `:if` on the icon may leave it out; `:each` on it doesn't load, nor
   a second icon, nor an icon between two texts.
 
+## Colours from data
+
+The look's colours are the theme's: the tones (`accent`, `ok`, `warn`,
+`error`, `info`, `muted`) and the tokens it sets. A colour that comes
+from data, such as the one each agent in a list was given, is a *hue*:
+a name the view declares once, which a theme may still override. There is
+no way to write a colour anywhere else.
+
+```html
+<!-- agents.surf -->
+<palette>
+  <hue name="coral" dark="#ff8e7a" light="#b4321f" cells="9"/>
+  <hue name="teal"  dark="#4fd1c5" light="#0f766e" cells="6"/>
+</palette>
+
+<stack>
+  <row :each="a in agents" :key="a.name" gap="1">
+    <dot :hue="a.colour"/>
+    <text :hue="a.colour">{{ a.name }}</text>
+  </row>
+</stack>
+```
+
+- **`<palette>`** is in a `.surf` file, once, before its root (a file may
+  hold only a palette), and holds `<hue>`s: a `name` (a lower-case
+  identifier, `coral`, `sea_green`), a `dark` and a `light` value, or a
+  `value` for one colour on both grounds, and `cells`. Colours are
+  `#rgb` or `#rrggbb`; hex is written here and nowhere else. Every
+  file's hues make one set, and a name is declared once in it. Go and Lua,
+  the interpreted and the compiled mode all read it.
+- **`hue`** is on `text`, `dot`, `glyph` and `icon`: a literal
+  (`hue="coral"`, which must be declared) or bound (`:hue="a.colour"`). An
+  element takes a `tone` or a `hue`, not both. A bound name that no
+  palette declares, or an empty one, draws the ink: the first is warned of
+  once for each name, on stderr or `Options.Warn`.
+- **A pair is a dark and a light value:** the dark one where the ground is
+  dark, the light one on `paper` and under a light terminal. A single
+  `value` has to read on both grounds, which few colours do: see below.
+- **On a host,** the stylesheet gains each hue as the custom property
+  `--u-hue-<name>` on the surface, its dark value, and its light one
+  under `prefers-color-scheme: light` and in the `paper` theme, and an
+  element of a hue has the class `u-hue-<name>`, which colours its text,
+  and a dot's fill, from it. A theme (or the host's stylesheet) overrides a
+  hue as it overrides `--u-accent`, by setting the property in a rule of
+  its own:
+
+  ```css
+  .u-surface.u-theme-paper { --u-hue-coral: #9e2a1b; }
+  ```
+
+  surf doesn't check an override's contrast: the theme owns it.
+- **In the cells** a hue is one of the terminal's 16 colours, `cells`
+  (0 to 15), by default the nearest chromatic one by hue angle of its dark
+  value: red 0°, yellow 60°, green 120°, cyan 180°, blue 240°, magenta
+  300°, each as its bright colour, 9 to 14 (a grey has no angle, and is
+  red: write `cells`). The terminal's palette draws it, so the terminal's
+  theme keeps control there too. There is no truecolor.
+- **Contrast** is checked against the dark ground, `#282c34` (hotty-blitz's
+  default theme's, which the terminal's own may differ from), and paper's,
+  `#fbfbfd`: text needs 4.5:1, a dot 3:1. A palette in a `.surf` file that
+  fails is refused at load, with the number:
+
+  ```
+  agents.surf:3:3: coral's dark #a33 is 2.1:1 on the dark ground; text needs 4.5
+  ```
+
+  The check knows where the templates draw a hue. One that only dots are
+  drawn in (a literal `hue=` on dots, and no bound `:hue` on anything
+  else) is asked a dot's 3:1: `<hue name="slate" value="#808a9c"/>` is
+  4.0:1 and 3.4:1, a dot's and not text's. A bound `:hue` on text, a glyph
+  or an icon may be any name, so it asks text's 4.5:1 of every hue, and so
+  does a hue no template draws. No single colour is text on both grounds
+  (4.5 on each takes a ratio of 20.25 between them, and the grounds are
+  13.5), so a `value` hue is a dot's.
+
+### At run time
+
+A set that is known only then (a colour from a user's configuration) is
+declared in Go with `surf.Palette`, and in Lua with `surf.palette`:
+
+```go
+rt.SetPalette(surf.Palette{
+	"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: surf.Cell(9)},
+	"slate": {Value: "#808a9c"},
+})
+```
+
+```lua
+surf.palette{ coral = { dark = "#ff8e7a", light = "#b4321f", cells = 9 } }
+```
+
+- **`surfrun.Options.Palette`** declares the set a run begins with, and
+  `Runtime.SetPalette` declares it again, in place of the last (the
+  runtime posts it: on its goroutine): the stylesheet is sent again, as
+  `SetCSS` sends it, with the palette's rules after it, and the cells draw
+  the next frame in the new colours. A model that has hues of its own
+  (`surfrun.Palettist`: its templates' `<palette>`s) has them under these,
+  which win for a name both have. A host of its own on a `surfrun.Surface`
+  sends `Surface.Hues().CSS()` after its stylesheet.
+- **`surf.palette{…}` in Lua** returns the stylesheet to send again, the
+  floor's with every hue's rules, and `surf.css` is that from then on. A
+  view the script made draws with the templates' hues and the script's
+  (`surflua.View.Palette`), so a Go host that shows it has them sent.
+- **A hue that is no hue** (a name that isn't an identifier, a colour that
+  isn't hex, `cells` past 15) is left out and warned of; in Lua it raises
+  and declares nothing.
+- **A hue whose text can't be read warns once** (for each colour), and on
+  the failing ground its text is drawn in the ink, and its dots keep the
+  hue. A run can't know where a hue will be drawn, so its text is asked
+  4.5:1 whatever the templates draw it in.
+- **A name that no palette, the templates' or the run's, declares** is
+  warned of once, and draws the ink.
+
 ## Components and partials
 
 - **A stateful child** is a field of its parent, or an element of a
@@ -858,7 +971,8 @@ The module:
 | `view:event(ev)` | routes the host's event `ev.kind` on `ev.target` as the runtime does, `ev.value` the handler's `$value` and `ev` its `$event`: true if the view took it. Also `view:event(id, kind, value)` |
 | `view:key(name)` | routes a key that reached the program (`enter`, `ctrl+k`) as the runtime does: true if the view took it |
 | `view:reload()` | the shapes built again from `t`'s keys and the classes', and the templates loaded: true, or nil and why |
-| `surf.css` | the floor's stylesheet, which the markup is drawn with |
+| `surf.palette(t)` | declares hues at run time, `{ coral = { dark = "#ff8e7a", light = "#b4321f", cells = 9 } }` (or `value`), replacing those the last call declared: returns the stylesheet to send again, and raises where a hue is no hue ([Colours from data](#colours-from-data)) |
+| `surf.css` | the floor's stylesheet, which the markup is drawn with, and the hues' rules once the script has declared some |
 
 `view:html`, `view:event` and `view:key` are a host of the script's
 own, on a `surfrun.Surface`, so the keyboard works as in the runtime. The
