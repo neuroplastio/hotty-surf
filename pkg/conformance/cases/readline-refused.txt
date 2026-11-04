@@ -1,0 +1,15 @@
+readline goes on a surface, for every field in it, or on a field; program
+on a surface. Another element takes neither.
+-- form.surf --
+<surface readline program="ctrl+b">
+  <field readline/>
+  <stack readline/>
+  <row program="ctrl+b"/>
+  <field program="ctrl+b"/>
+  <text :readline="on">x</text>
+</surface>
+-- load --
+form.surf:3:10: <stack> takes no readline; it takes autofocus, bare, bold, checked, chrome, disabled, down, drag, drop, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, tone, top, width or wrap
+form.surf:4:8: <row> takes no program; it takes autofocus, bare, bold, checked, chrome, disabled, down, drag, drop, fill, fit, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, search, selected, semibold, small, tone, top, width or wrap
+form.surf:5:10: <field> takes no program; it takes autofocus, bare, bold, checked, chrome, disabled, down, drag, drop, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, placeholder, readline, reveal, scale, scroll, selected, semibold, small, tone, top, value, width or wrap
+form.surf:6:9: <text> takes no readline; it takes autofocus, bare, bold, checked, chrome, disabled, down, drag, drop, fill, focusable, gap, grow, height, hue, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, tone, top, width or wrap

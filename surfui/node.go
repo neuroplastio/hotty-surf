@@ -51,20 +51,21 @@ type Node struct {
 	isRaw bool
 	cells string // what the cells draw in its place: an SVG icon's glyph
 
-	key   string
-	id    string // given, or the key path once resolved
-	fixed bool   // id given by the author
-	class []string
-	attrs []attr
-	vars  []attr
-	kids  []*Node
-	on    []handler
-	keys  []Binding
-	menu  []MenuItem // its context menu, which the host draws, never the tree
-	focus bool       // autofocus
-	drag  bool       // a drag handle (Drag)
-	drop  DropMode   // a place to drop on (Drop)
-	hue   string     // the name of the hue its text is drawn in (Hue)
+	key      string
+	id       string // given, or the key path once resolved
+	fixed    bool   // id given by the author
+	class    []string
+	attrs    []attr
+	vars     []attr
+	kids     []*Node
+	on       []handler
+	keys     []Binding
+	menu     []MenuItem // its context menu, which the host draws, never the tree
+	focus    bool       // autofocus
+	drag     bool       // a drag handle (Drag)
+	drop     DropMode   // a place to drop on (Drop)
+	hue      string     // the name of the hue its text is drawn in (Hue)
+	readline bool       // a Surface or Field whose fields edit by hotty.TerminalKeys (Readline)
 
 	cycle   *cycle  // a Cycle's value and options
 	choice  *choice // a Select's value and options
@@ -259,6 +260,15 @@ func MenuOf(n *Node) []MenuItem { return n.menu }
 
 // Autofocus gives n the keyboard when the surface is shown.
 func (n *Node) Autofocus() *Node { n.focus = true; return n }
+
+// Readline makes the text fields in n (n itself, a Field) edit by the
+// SDK's keymap, hotty.TerminalKeys: the readline keys of a terminal's
+// input, ctrl+w, ctrl+u, ctrl+k, alt+b, alt+f, alt+d, ctrl+backspace
+// and the rest. Off, a field has SPEC §10.2's default keymap for its
+// platform, which on a Mac has no ctrl+backspace. It goes into n's
+// data-keys ahead of everything n binds or gives the program, so that
+// those win where they name the same key.
+func (n *Node) Readline() *Node { n.readline = true; return n }
 
 // If is n while ok holds, nil otherwise (Add leaves nils out).
 func If(ok bool, n *Node) *Node {

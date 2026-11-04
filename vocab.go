@@ -192,6 +192,8 @@ var Attrs = []Attr{
 	{Name: "entries", Type: TypeBool, Doc: "a list whose items are entries, each taking the keyboard", Tags: []string{"list"}, Func: "ModEntries"},
 	{Name: "scale", Type: TypeInt, Doc: "drawn at a percentage of its size", Func: "ModScale"},
 	{Name: "scroll", Type: TypeBool, Doc: "takes the room left and scrolls what doesn't fit", Func: "ModScroll"},
+	{Name: "readline", Type: TypeBool, Doc: "the fields in it edit by the readline keys of a terminal (ctrl+w, ctrl+u, ctrl+k, alt+b, …), whatever the platform", Tags: []string{"surface", "field"}, Func: "ModReadline"},
+	{Name: "program", Type: TypeString, Doc: "keys, by myelin's names and apart by spaces, that belong to the host program, which the fields in it give it", Tags: []string{"surface"}, Func: "ModProgram"},
 	{Name: "autofocus", Type: TypeBool, Doc: "takes the keyboard when the surface is shown", Func: "ModAutofocus"},
 	{Name: "drag", Type: TypeBool, Doc: "a drag handle: a press drags it, and its click waits for the release", Tags: pointed, Func: "ModDrag"},
 	{Name: "drop", Type: TypeString, Doc: "a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it", Tags: pointed, Func: "ModDrop", Fails: true, Values: drops},
@@ -326,6 +328,9 @@ func ModDensity(n *surfui.Node, v string) error {
 // ModKey sets a node's key.
 func ModKey(n *surfui.Node, v string) { n.Key(v) }
 
+// ModProgram gives the program the keys v names (surfui.Node.Give).
+func ModProgram(n *surfui.Node, v string) { n.Give(strings.Fields(v)...) }
+
 // tone is the tone v names.
 func tone(v string) (surfui.Tone, error) {
 	switch t := surfui.Tone(v); t {
@@ -390,6 +395,7 @@ func ModNav(n *surfui.Node, v bool)       { flag(n, v, n.Nav) }
 func ModEntries(n *surfui.Node, v bool)   { flag(n, v, n.Entries) }
 func ModScroll(n *surfui.Node, v bool)    { flag(n, v, n.Scroll) }
 func ModAutofocus(n *surfui.Node, v bool) { flag(n, v, n.Autofocus) }
+func ModReadline(n *surfui.Node, v bool)  { flag(n, v, n.Readline) }
 func ModDrag(n *surfui.Node, v bool)      { flag(n, v, n.Drag) }
 
 // ModDrop makes a node a place to drop on: "whole" (a bare drop), "halves"

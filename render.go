@@ -640,6 +640,8 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModLabel(n, v)
 	case "drop":
 		return ModDrop(n, v)
+	case "program":
+		ModProgram(n, v)
 	default:
 		panic("surf: no string modifier " + name)
 	}
@@ -702,6 +704,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModAutofocus(n, v)
 	case "drag":
 		ModDrag(n, v)
+	case "readline":
+		ModReadline(n, v)
 	default:
 		panic("surf: no bool modifier " + name)
 	}

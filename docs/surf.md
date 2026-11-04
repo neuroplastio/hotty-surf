@@ -252,6 +252,8 @@ component or a partial.
 | `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
 | `search` | bool | row | a row drawn as a search field: its `icon` and a `bare` field in one field's box |
 | `fit` | bool | row | a row of what fits: its children right to left, each whole, those it has no room for left out, the last first |
+| `readline` | bool | surface, field | the fields in it edit by a terminal's readline keys ("Field keys") |
+| `program` | string | surface | keys the host program keeps from the fields in it, apart by spaces ("Field keys") |
 | `drag` | bool | every widget with events | a drag handle ("Drag") |
 | `drop` | bare, `whole`, `halves` or `thirds` | every widget with events | a place to drop on: the whole of it, before or after it, or before, into or after it ("Drag") |
 
@@ -395,6 +397,37 @@ parent element, while that element or something in it has the keyboard.
   less `scroll-`). It runs nothing: where the program hears the key (the
   cells, a run that doesn't scroll) it goes on to the next binding out,
   and a field types it.
+
+## Field keys
+
+A field edits with the keymap its host gives it (hotty SPEC §10.2): the
+platform's default, which follows the browser conventions of the system
+it runs on. On a Mac, for one, `ctrl+backspace` is not a word delete, and
+`ctrl+b` moves the caret back, as Cocoa has it.
+
+- **`readline`** on a `surface` (for every field in it) or on a `field`
+  gives the fields a terminal's keymap besides, hotty-go's
+  `TerminalKeys`, whatever the platform. It is off by default. The keys:
+  - characters and words: `ctrl+b`, `ctrl+f`, `alt+b`, `alt+f`,
+    `alt+left`, `ctrl+left`, `alt+right`, `ctrl+right`;
+  - lines: `ctrl+e` and `end` to the end, `home` to the start, `ctrl+p`
+    and `ctrl+n` up and down in a multi-line field;
+  - delete: `backspace` and `ctrl+h` before the caret, `delete` and
+    `ctrl+d` after it, `ctrl+w`, `alt+backspace` and `ctrl+backspace` a
+    word before it, `alt+d`, `alt+delete` and `ctrl+delete` a word after
+    it, `ctrl+u` to the start of the line, `ctrl+k` to its end;
+  - the whole field: `alt+<` and `ctrl+home` to the start, `alt+>` and
+    `ctrl+end` to the end, `mod+a` selects all, and `ctrl+m` is a newline.
+
+  A program whose users live in a terminal wants it: the palette of a
+  multiplexer, say, where `ctrl+backspace` and `ctrl+w` delete a word on a
+  Mac too. A `<bind>` of the program's on the same key wins over it,
+  whether it binds on the field, around it or on the surface.
+- **`program="ctrl+b"`** on the `surface` reserves keys (space apart) for
+  the host program, from every field in it: on a Mac `ctrl+b` is a
+  field's `char-backward`, which would eat a leader key. A field gives
+  those keys up, before `readline` and the platform's default, and the
+  program hears them. In Go, `surfrun.Surface.Program` does the same.
 
 ## Context menus
 

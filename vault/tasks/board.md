@@ -271,6 +271,12 @@ The order is the maintainer's, via gov (2026-10-30):
 
 ## After v0.1.0
 
+- [x] **Readline for fields** (maintainer, 2026-11-04, from a Mac
+  terminal's palette): `readline` on a `surface` or a `field` gives the
+  fields hotty's `TerminalKeys` (ctrl+backspace, ctrl+w, ctrl+u, alt+b…)
+  whatever the platform, off by default; `program="ctrl+b"` on a
+  `surface` keeps a leader from the fields. A `<bind>` wins over both.
+  `vault/knowledge/field-keys.md`.
 - [x] **A dialog's Escape** (gov, 2026-11-01, for plx's boxes): in a
   box, the first Escape only blurred the focused control, and the
   second closed the box. A browser's modal dialog closes on Escape

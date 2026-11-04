@@ -254,6 +254,9 @@ func dataKeys(n *Node) string {
 		return fieldKeys(n)
 	}
 	var keys []string
+	if n.readline {
+		keys = append(keys, hotty.TerminalKeys)
+	}
 	switch {
 	case n.cycle != nil:
 		keys = append(keys, cycleKeys...)
@@ -295,6 +298,9 @@ func dataKeys(n *Node) string {
 // none of a field's: its keymap leaves them out (SPEC §10.2).
 func fieldKeys(n *Node) string {
 	var keys []string
+	if n.readline {
+		keys = append(keys, hotty.TerminalKeys)
+	}
 	if Commits(n) {
 		keys = append(keys, "enter=program")
 	}
