@@ -1,0 +1,3 @@
+ 󰬕 Welcome, ada@devbox                                                          
+   Arch Linux · 6.12.4-arch1-1 · up 3h 12m · 1184 packages                      
+    Memory 9.0/31.0 GiB  29%    Disk 384/932 GiB  41%                           

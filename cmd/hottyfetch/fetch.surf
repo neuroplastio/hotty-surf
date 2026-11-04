@@ -1,0 +1,26 @@
+<!-- The greeting: the neuroplastio mark, who and where, and two cards,
+     memory and the disk. A welcome, not a dashboard: three lines beside
+     the mark. -->
+<surface :theme="theme">
+  <row gap="2" pad="1 1" top key="greeting">
+    <stack scale="300" key="mark">
+      <icon svg="mark" tone="accent"/>
+    </stack>
+    <stack grow key="facts">
+      <line key="who">
+        <text semibold>Welcome, </text>
+        <text semibold tone="accent">{{ who() }}</text>
+      </line>
+      <line key="system">
+        <text :if="os != ''">{{ os }}</text>
+        <text muted :if="kernel != ''">  ·  {{ kernel }}</text>
+        <text muted :if="uptime != ''">  ·  {{ uptime }}</text>
+        <text muted :if="packages != ''">  ·  {{ packages }}</text>
+      </line>
+      <row gap="1" key="gauges">
+        <gauge-card :if="mem.used != ''" :g="mem" key="mem"/>
+        <gauge-card :if="disk.used != ''" :g="disk" key="disk"/>
+      </row>
+    </stack>
+  </row>
+</surface>
