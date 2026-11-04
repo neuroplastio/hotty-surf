@@ -33,3 +33,28 @@ func TestSixteenColours(t *testing.T) {
 		}
 	}
 }
+
+// Lines paints each row's runs as the runtime does, and leaves out the
+// rows at the end that show nothing: spaces on the ground, or on a fill
+// the sixteen colours don't paint (tonal).
+func TestLines(t *testing.T) {
+	run := func(text string, fg, bg cells.Role) cells.Run {
+		return cells.Run{Text: text, Width: len(text), Fg: fg, Bg: bg}
+	}
+	s := cells.Screen{Cols: 4, Rows: 4, Lines: [][]cells.Run{
+		{run("ab", cells.Accent, cells.Bg), run("  ", cells.Fg, cells.Bg)},
+		{run("    ", cells.Fg, cells.Field)},
+		{run("    ", cells.Fg, cells.Bg)},
+		{run("    ", cells.Fg, cells.Tonal)},
+	}}
+	got := Lines(s)
+	want := []string{"\x1b[0;35mab\x1b[0m  \x1b[0m", "\x1b[0;100m    \x1b[0m"}
+	if len(got) != len(want) {
+		t.Fatalf("%d rows %q, want %d", len(got), got, len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("row %d: %q, want %q", i, got[i], want[i])
+		}
+	}
+}

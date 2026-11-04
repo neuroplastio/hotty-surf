@@ -150,6 +150,44 @@ func (r *Runtime) drawTree() {
 	r.write(b.String())
 }
 
+// Lines is a screen as the runtime paints it, one string a row: each run
+// in the terminal's colours (cellsSGR), the row ending in a reset. It is
+// for a program that prints its tree once among its output, as a
+// command's result or a shell's greeting is, and leaves the terminal to
+// what runs next: no cursor moves, no modes. The rows at the screen's
+// end that show nothing are left out.
+func Lines(s cells.Screen) []string {
+	end := len(s.Lines)
+	for end > 0 && blank(s.Lines[end-1]) {
+		end--
+	}
+	out := make([]string, end)
+	for i, line := range s.Lines[:end] {
+		var b strings.Builder
+		for _, run := range line {
+			b.WriteString(cellsSGR(run))
+			b.WriteString(run.Text)
+		}
+		b.WriteString("\x1b[0m")
+		out[i] = b.String()
+	}
+	return out
+}
+
+// blank reports whether a row shows nothing in the sixteen colours:
+// spaces, with no fill cellsSGR paints and no line.
+func blank(line []cells.Run) bool {
+	for _, run := range line {
+		if strings.Trim(run.Text, " ") != "" || run.Attr&(cells.Reverse|cells.Underline|cells.Strike|cells.Overline) != 0 {
+			return false
+		}
+		if s := cellsSGR(cells.Run{Fg: run.Fg, Bg: run.Bg}); strings.Contains(s, ";7") || strings.Contains(s, ";100") {
+			return false
+		}
+	}
+	return true
+}
+
 // cellsEvent is the mouse, or the terminal's focus, for the renderer: at
 // the surface's cells, below the header.
 func (r *Runtime) cellsEvent(ev hottyterm.Event) {
