@@ -344,7 +344,7 @@ The order is the maintainer's, via gov (2026-10-30):
   @drop="move($drag.from, e.address, $drag.where)"`, with
   `@dragend`/`@dragstart` for its carried look if it keeps one. Its
   `DropBefore`/`DropAfter` fields go: the indicator is surf's.
-- [ ] **Tooltips** (after drag; the maintainer, 2026-11-03: "tip ->
+- [x] **Tooltips** (after drag; the maintainer, 2026-11-03: "tip ->
   title, but make it a component, not plain text, so tooltip could be
   complex. hotty-surf feature", and hotty's V7-02 withdrawn: "withdraw,
   no spec changes"). A tooltip is a surface the host application places,
@@ -388,6 +388,20 @@ The order is the maintainer's, via gov (2026-10-30):
   - **Hosts:** hottyterm has `hover` and `passthrough`. The xterm addon
     sends no `hover` yet (its own §9.4 gap), so it shows no tooltips
     until it does.
+  - **Built** (b52c261, journal 2026-11-04-tooltips; gate baseline 4578a80): as above, in both modes,
+    the conformance fixtures (`TestTips`, `tip-refused`,
+    `section-refused`) and the gallery's `tip/shown`. `Frame.Hover` asks
+    for hover; `Tip` has `HTML`, `Cols`×`Rows` for a host and `Cells`
+    (`cells.DrawTip`), a row more in the cells for the line round it.
+    surfrun's runtime shows none, as it shows no menu: the guide's
+    "Tooltips" is the host's recipe. **What plx does:** put
+    `Frame.Hover` in its placement of a view's surface; on a `hover`
+    with a target, after 500 ms, `Surface.Tip`, and place `tip.HTML`
+    (with `html { pointer-events: none }`) at `Cols`×`Rows`, `z` above,
+    a row under the pointer or above it; hide it on another `ID`, `out`,
+    a press or a key; ask again after each Update while it shows. In the
+    cells, `cells.Renderer.At` and `tip.Cells.Lines` where it draws a
+    menu.
 
 ## v0
 
