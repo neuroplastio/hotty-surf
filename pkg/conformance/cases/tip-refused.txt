@@ -1,0 +1,41 @@
+A tooltip is a title= or one <title>, not both, and a <title> goes in a
+widget. Nothing in one acts, since it goes when the pointer moves: not
+in it, nor in a partial it uses. A partial's use takes title= as a prop.
+-- form.surf --
+<surface>
+  <text title="Plain">x<title>Rich</title></text>
+  <row><title>One</title><title>Two</title></row>
+  <row>
+    <title>
+      <button>Go</button>
+      <text @click="add(1)">x</text>
+      <stack focusable/>
+      <field/>
+      <row><menu><action do="add(1)">Add</action></menu></row>
+      <text title="Inner">y</text>
+      <bind key="a" do="add(1)"/>
+    </title>
+  </row>
+  <title>Stray</title>
+  <row><title :if="true">Has a directive</title></row>
+  <tip-part title="A prop"/>
+  <row><title><tip-part/></title></row>
+  <tip-part><title>In a use</title></tip-part>
+</surface>
+-- tip-part.surf --
+<props title="string"/>
+<row :title="title"><slot/><button @click="add(2)">Go</button></row>
+-- load --
+form.surf:2:24: <text> has a title= and a <title>: its tooltip is one or the other
+form.surf:3:26: <row> has one <title>; this is a second
+form.surf:6:7: a tooltip holds nothing that acts, not <button>: it goes when the pointer moves
+form.surf:7:7: a tooltip holds nothing that acts, not @click: it goes when the pointer moves
+form.surf:8:7: a tooltip holds nothing that acts, not focusable: it goes when the pointer moves
+form.surf:9:7: a tooltip holds nothing that acts, not <field>: it goes when the pointer moves
+form.surf:10:12: a tooltip holds nothing that acts, not a <menu>: it goes when the pointer moves
+form.surf:11:7: a tooltip holds nothing that acts, not a tooltip of its own: it goes when the pointer moves
+form.surf:12:7: a tooltip holds nothing that acts, not <bind>: it goes when the pointer moves
+form.surf:16:15: <title> takes nothing, not :if
+form.surf:18:15: a tooltip holds nothing that acts, and a tooltip of its own at tip-part.surf:2:1 does: it goes when the pointer moves
+form.surf:18:15: a tooltip holds nothing that acts, and <button> at tip-part.surf:2:28 does: it goes when the pointer moves
+form.surf:19:13: <title> goes in a widget, whose tooltip it is

@@ -408,6 +408,26 @@ var All = []Story{
 			surfui.Row(surfui.Box().Width(10), surfui.Box(list).Width(14)),
 		)
 	}},
+	// A tooltip is a surface of its own over the view (surfrun's Tip),
+	// here drawn under what it is of, as its host places it: a text one,
+	// and a rich one of a row with a dot, bold text and a muted line.
+	{"tip/shown", 50, func() *surfui.Node {
+		card := func(n *surfui.Node) *surfui.Node {
+			return surfui.Kids(surfui.TipCard(n, surfui.TipOf(n)))[0]
+		}
+		copyBtn := surfui.Button("Copy").Title("Copies the note's text to the clipboard, as it is shown")
+		agent := Force(surfui.Item(surfui.Dot().Tone(surfui.OK), surfui.Text("claude-2")).Gap(1), "hover")
+		agent.Tip(surfui.Stack(
+			surfui.Row(surfui.Dot().Tone(surfui.OK), surfui.Text("claude-2").Bold()).Gap(1),
+			surfui.Text("Waiting for you since 4 min, in p-3").Muted(),
+		))
+		return surfui.Stack(
+			surfui.Row(copyBtn),
+			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(copyBtn)).Width(30)),
+			surfui.List(agent).Width(20),
+			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(agent)).Width(30)),
+		).Gap(1)
+	}},
 	{"cycle/states", 50, func() *surfui.Node {
 		row := func(label string, c *surfui.Node) *surfui.Node {
 			return surfui.Row(surfui.Text(label).Bold().Grow(), c)

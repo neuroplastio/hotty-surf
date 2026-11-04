@@ -672,3 +672,24 @@
 .u-drop-before { background-position: var(--u-r) 0 !important; }
 .u-drop-after { background-position: var(--u-r) 100% !important; }
 .u-drop-into { box-shadow: inset 0 0 0 2px var(--u-accent) !important; }
+
+/* A tooltip (surfui.TipCard): a card in a surface of its own, which its
+   host places over the view, a step lighter than the page with a
+   hairline round it, as a Select's open list is (its shadow left out:
+   the surface ends at the card); half a cell of room above and below
+   its rows and a cell beside them, its text small. Muted and dim are
+   mixed again with its fill. */
+.u-tip {
+  --u-bg: var(--u-raised);
+  --u-muted: color-mix(in srgb, var(--u-ink) 60%, var(--u-bg));
+  --u-dim: color-mix(in srgb, var(--u-ink) 38%, var(--u-bg));
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: calc(0.5 * var(--hotty-cell-h)) var(--hotty-cell-w);
+  border-radius: calc(2 * var(--u-radius));
+  color: var(--u-ink);
+  background: var(--u-raised);
+  box-shadow: inset 0 0 0 1px var(--u-border);
+}

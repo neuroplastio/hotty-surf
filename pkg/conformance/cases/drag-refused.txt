@@ -18,8 +18,8 @@ handler's arguments only, and $drag has no other names.
 </surface>
 -- load --
 form.surf:2:15: drop is bare, whole, halves or thirds, not "sideways"
-form.surf:3:11: <spacer> takes no drag; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, tone, top, width or wrap
-form.surf:4:9: <rule> takes no drop; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, tone, top, width or wrap
+form.surf:3:11: <spacer> takes no drag; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, title, tone, top, width or wrap
+form.surf:4:9: <rule> takes no drop; it takes autofocus, bare, bold, checked, chrome, disabled, down, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, title, tone, top, width or wrap
 form.surf:5:9: @drop runs on a place to drop on: give <item> drop
 form.surf:6:14: @dragstart runs on a drag handle: give <item> drag
 form.surf:7:25: $drag.from is a drag's handler's argument only: @dragstart's, @dragend's or @drop's

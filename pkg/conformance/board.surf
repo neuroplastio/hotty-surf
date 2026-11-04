@@ -1,12 +1,12 @@
 <surface>
   <bind key="j" label="Bump" do="bump(1)"/>
   <row gap="1" pad="1 0" key="head">
-    <heading>{{ title }}</heading>
+    <heading title="The board's notes">{{ title }}</heading>
     <spacer/>
     <badge :if="unread() > 0" fill="accent" key="count">{{ unread() }} unread</badge>
     <menu><action do="setFilter('unread')">Unread only</action></menu>
     <badge :else fill="muted" key="count">All read</badge>
-    <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter"/>
+    <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter" :title="'Shows ' + filter"/>
   </row>
   <list focusable autofocus key="list">
     <bind key="enter" label="Open" do="open(sel)"/>

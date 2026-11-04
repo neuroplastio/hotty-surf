@@ -1132,6 +1132,44 @@ clips it to its room. A list placed in fewer rows than it wants
 scrolls (`hotty.Scroll`), and the host reveals option `At` after each
 change.
 
+### Tooltips
+
+A template's `title` and `<title>` are tooltips, which the tree never
+draws: the host shows them, as it shows a context menu, and keeps the
+dwell and the placement. `surfrun.Runtime` shows none (it shows no
+context menu either), so this is the recipe for a host of its own:
+
+- **Ask for hover.** A frame's `Hover` is the surface's `v` (hotty SPEC
+  §9.4): `hotty.On` where its view has a tooltip, `hotty.Off` where it
+  has none. Show's frame says it; an Update's only when it changes. Put
+  it in the surface's placement (`hotty.Placement.Hover`), and place
+  the surface again when an Update's changes it. Hover events go to the
+  host, not to `Event`.
+- **Wait for the pointer to rest.** On each `hover` with a target (`t`,
+  the element under the pointer, as every element has an id), start a
+  timer of about 500 ms. When it fires, `s.Tip(surfrun.TipAt{ID: t})`
+  is the tooltip of the innermost element with one around it; false is
+  none, or an element gone since.
+- **Place it** in a surface of its own: `tip.HTML("cid:tip")` with a
+  sheet of the host's that keeps it from the pointer,
+  `html { pointer-events: none }`, at `tip.Cols` by `tip.Rows`, with a
+  `Z` above the view's. Put it a row under the pointer's cell (the
+  hover's `c` and `r`, plus where the surface is), or above it where
+  there is no room below, and clamp it to the grid.
+- **Hide it** on a `hover` whose tooltip is another's (a `Tip` with
+  another `ID`; the same one stays), on `out`, on a press, and on a
+  key. Moving within one element sends no `hover`.
+- **Draw it again** after each Update while it shows: ask `Tip` with
+  the same target and send the new document (or delete it, where it is
+  gone), so live data stays live.
+- **In the cells,** the pointer's cell's element is `r.At(x, y)`
+  (`cells.Renderer.At`), and `tip.Cells.Lines`, `tip.Cells.Cols` by
+  `tip.Cells.Rows` with a line round the card, go where a context menu
+  is drawn, a row under the pointer or above it. The terminal reports
+  motion with no button held only in its mode 1003, which the host
+  turns on while the view has a tooltip.
+- The keyboard shows no tooltip, nor does a touch.
+
 A host's loop, in short (a sketch, not a file of `examples/hello`; the
 whole one is `surftest/hosted.go`'s `loop`):
 

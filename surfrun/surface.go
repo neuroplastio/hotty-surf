@@ -112,6 +112,7 @@ type Surface struct {
 	list      *selectList           // a Select's open list
 	listPress bool                  // a press on the list, whose blur on the surface is no leaving
 	areas     map[string]hotty.Area // the Selects in view, where the host's last view put them
+	hover     bool                  // the view has a tooltip, as the last frame said
 
 	// What the next frame sends besides the model's changes.
 	blur     bool
@@ -145,6 +146,12 @@ type Frame struct {
 	// the document scrolls (Surface.Scroll): after Focus, which scrolls
 	// too.
 	Reveals []hotty.Op
+	// Hover is the surface's hover (hotty.Placement.Hover, SPEC §9.4),
+	// which a host that shows tooltips (Surface.Tip) places it with: On
+	// where its view has a tooltip, Off where it has none. Show's says
+	// it; an Update's only when it changes, and the host then places the
+	// surface again with it. The zero Flag changes nothing.
+	Hover hotty.Flag
 }
 
 // Field is an a=field: the control ID set as Change says, against the
@@ -245,7 +252,17 @@ func (s *Surface) Show() Frame {
 	if s.Scroll != 0 {
 		f.Reveals = surfui.Reveals(nil, s.prev)
 	}
+	s.hover = surfui.HasTip(s.prev)
+	f.Hover = flag(s.hover)
 	return f
+}
+
+// flag is on as a placement's flag: On or Off.
+func flag(on bool) hotty.Flag {
+	if on {
+		return hotty.On
+	}
+	return hotty.Off
 }
 
 // Hide takes the surface off the host, as for the cells, until Show: the
@@ -304,6 +321,12 @@ func (s *Surface) Update() Frame {
 	f.List = s.showList()
 	f.Blur, f.Focus = s.blur, s.focus
 	s.blur, s.focus = false, ""
+	if restructured {
+		if h := surfui.HasTip(s.prev); h != s.hover {
+			s.hover = h
+			f.Hover = flag(h)
+		}
+	}
 	return f
 }
 
@@ -335,6 +358,9 @@ func (s *Surface) event(e hotty.Event) bool {
 	}
 	took := false
 	switch e.Kind {
+	case hotty.EventHover:
+		// The host's, for a tooltip's dwell (Tip): no handler hears it.
+		return false
 	case hotty.EventView:
 		// A Select asks where it is (surfui's data-on), so that a key
 		// that opens its list places it as a click does.

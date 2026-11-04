@@ -203,7 +203,7 @@ component or a partial.
 | `cycle` | `‹ value ›`, stepping through `:options` | nothing |
 | `list` | a column of items with a selection | children |
 | `item` | a row of a list | children |
-| `section` | a titled group: `title` | children |
+| `section` | a group under a heading: `heading` | children |
 | `rule` | a line across | nothing |
 | `box` | a raised panel | children |
 | `dialog` | the box plx draws round its palette | children |
@@ -229,7 +229,7 @@ component or a partial.
 | `on` | bool | switch | whether it is on |
 | `value` | string | select, cycle | the option picked |
 | `options` | list(string) | select, cycle | the options (bound only: `:options="['a', 'b']"`) |
-| `title` | string | section | its title |
+| `heading` | string | section | its heading |
 | `name` | string | icon | an MDI symbol's name, as `cog-outline`: its glyph ("Icons") |
 | `svg` | string | icon | an SVG a host draws: the name of an `.svg` file beside the templates |
 | `path` | string | icon | an SVG a host draws: one path's data, filled, in a 24×24 box |
@@ -244,6 +244,7 @@ component or a partial.
 | `selected`, `checked`, `disabled`, `invalid` | bool | all | states |
 | `value`, `placeholder` | string | field | a field's value and placeholder |
 | `name`, `label` | string | all | a control's name (an `icon`'s is its symbol's), an accessible label |
+| `title` | string | all | its tooltip, this text wrapped ("Tooltips"); never an HTML `title` |
 | `reveal`, `focusable`, `bare`, `scroll`, `autofocus` | bool | all | the floor's behaviours |
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
@@ -467,6 +468,50 @@ and a `:if` chain goes on past it.
   menu. It draws the items, and hands the one picked to
   `Surface.Pick`, which runs it as a click runs a handler. A pick of an
   item gone since (its row, or the item, or disabled now) runs nothing.
+
+## Tooltips
+
+A widget's `title` is its tooltip: text, wrapped. A `<title>` child is
+one of any elements, a component of its own: rows, text, dots, badges,
+icons, a partial. The host shows it once the pointer rests on the
+widget, in a small card over the view. The tree never draws it: it
+takes no room and changes no cell, and a `:if` chain goes on past it.
+
+```html
+<item :each="a in agents" :key="a.addr" title="Open its pane">
+  {{ a.name }}
+</item>
+
+<item :each="a in agents" :key="a.addr">
+  {{ a.name }}
+  <title>
+    <row gap="1"><dot :tone="a.tone"/><text bold>{{ a.name }}</text></row>
+    <text muted>{{ a.status }}</text>
+  </title>
+</item>
+```
+
+- **`title="text"` or `:title`, or one `<title>`,** not both. A
+  `<title>` takes no attributes; its children are a stack's, in the
+  widget's scope, so a `:each`'s row reads its row. Text directly in it
+  wraps, as `title`'s does.
+- **Nothing in a tooltip acts:** it goes when the pointer moves, so
+  nothing in it can be reached. A `<button>`, a `<field>`, a `<switch>`,
+  a `<select>`, a `<cycle>`, an `@` handler, a `<bind>`, a `<menu>`,
+  `focusable`, `autofocus`, `drag`, `drop`, an `<embed>` and a tooltip
+  in a tooltip are refused at load, in a partial it uses too.
+- **On a partial's use, its attributes are its props:** a partial that
+  wants a tooltip takes a `title` prop and gives it to its root,
+  `<item :title="title">`. A `<title>` goes in a widget only.
+- **A `section`'s heading is `heading`,** `<section heading="Agents">`.
+  Until 0.3, a `section` with `title` and no `heading` is refused, so
+  that a template from before keeps its heading.
+- **The host shows it** ("Tooltips" in the guide): the surface asks for
+  the pointer's hover, the host waits for it to rest, asks
+  `surfrun.Surface.Tip` for the tooltip there, by the hovered element's
+  id or a cell's (`cells.Renderer.At`), the innermost element's with
+  one, and places it. surf writes no HTML `title`, so a browser host
+  draws no second one.
 
 ## Drag
 

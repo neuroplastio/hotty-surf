@@ -235,6 +235,10 @@ What fails a load:
   `:each`; an `<action>` with no `do` or no label, an attribute it
   doesn't take, a bound `do`, an element in it, or a literal `icon`
   that is no MDI name; a `<sep/>` with attributes or children;
+- **tooltips:** a `<title>` outside a widget, a second one, one beside
+  a `title` or a `:title`, one with attributes or with nothing in it;
+  anything in one that acts ([Tooltips](#tooltips)); a `section` with
+  a `title` and no `heading` (until 0.3);
 - **icons:** an `<icon>` with its text and `name`, `svg` or `path`,
   or with both `svg` and `path`; a literal `name` MDI
   hasn't; a literal `svg` with no `.svg` file; a literal `path` that
@@ -416,7 +420,7 @@ A tag with no dash is a widget of the floor's vocabulary (`surfui`). Its
 - **none**: nothing, but `<bind>`s.
 - **switch**, **choice**: the arguments named (`on`; `value` and
   `options`), and nothing but `<bind>`s.
-- **section**: `title`, then its children as kids.
+- **section**: `heading`, then its children as kids.
 - **icon**: its text, its glyph, or `name`, a symbol's; and `svg` or
   `path`, an SVG a host draws in its place ([Icons](#icons)).
 
@@ -448,7 +452,7 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | `cycle` | choice | `value`, `options` | click, focus, change | steps through its options: ‹ value › | `<cycle value="b" :options="['a', 'b']"/>` | `<div id="r" class="u-cycle" tabindex="0" role="spinbutton" aria-valuemin="1" aria-valuemax="2" aria-valuetext="b" aria-valuenow="2" style="--u-chars:1" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program space=program"><span id="r.0" class="u-cycle-step" aria-label="previous" data-on="click">󰅁</span><span id="r.1" class="u-cycle-value" data-on="click">b</span><span id="r.2" class="u-cycle-step" aria-label="next" data-on="click">󰅂</span></div>` |
 | `list` | kids | children | click, focus | a column of items with a selection | `<list/>` | `<div id="r" class="u-list" role="listbox"></div>` |
 | `item` | kids | children | click, focus | a row of a list | `<item/>` | `<div id="r" class="u-item" role="option"></div>` |
-| `section` | section | `title`, children | click, focus | a titled group | `<section title="Agents"/>` | `<section id="r" class="u-section"><div id="r.0" class="u-heading u-section-head">Agents</div></section>` |
+| `section` | section | `heading`, children | click, focus | a group under a heading | `<section heading="Agents"/>` | `<section id="r" class="u-section"><div id="r.0" class="u-heading u-section-head">Agents</div></section>` |
 | `rule` | none | nothing | none | a line across | `<rule/>` | `<div id="r" class="u-rule"></div>` |
 | `box` | kids | children | click, focus | a raised panel | `<box/>` | `<div id="r" class="u-box"></div>` |
 | `dialog` | kids | children | click, focus | the box plx draws round its palette | `<dialog/>` | `<div id="r" class="u-dialog" role="dialog"></div>` |
@@ -581,7 +585,7 @@ but in a palette.
 | 1 | `on` | bool | `switch` | argument | whether the switch is on | `<switch on/>` | `<button id="r" class="u-switch is-on" type="button" role="switch" aria-checked="true"><span id="r.0" class="u-knob"></span></button>` |
 | 2 | `value` | string | `select`, `cycle` | argument | the option picked | `<select value="b" :options="['a', 'b']"/>` | `<button id="r" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:1" data-on="view" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.0" class="u-select-value">b</span><span id="r.1" class="u-select-chevron">󰅀</span></button>` |
 | 3 | `options` | list(string) | `select`, `cycle` | argument | the options, in order | `<select :options="['a', 'b']"/>` | `<button id="r" class="u-select" type="button" aria-haspopup="listbox" aria-expanded="false" style="--u-chars:1" data-on="view" data-keys="arrow_up=program arrow_down=program home=program end=program page_up=program page_down=program"><span id="r.0" class="u-select-value"></span><span id="r.1" class="u-select-chevron">󰅀</span></button>` |
-| 4 | `title` | string | `section` | argument | the section's title | `<section title="Agents"/>` | `<section id="r" class="u-section"><div id="r.0" class="u-heading u-section-head">Agents</div></section>` |
+| 4 | `heading` | string | `section` | argument | the section's heading | `<section heading="Agents"/>` | `<section id="r" class="u-section"><div id="r.0" class="u-heading u-section-head">Agents</div></section>` |
 | 5 | `name` | string | `icon` | argument | an MDI symbol's name, as cog-outline: the glyph it draws, in the cells beside an svg | `<icon name="cog-outline"/>` | `<span id="r" class="u-text u-icon">󰢻</span>` |
 | 6 | `svg` | string | `icon` | argument | an SVG a host draws: the name of an .svg file beside the templates | `<icon svg="spec"/>` | `<span id="r" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span>` |
 | 7 | `path` | string | `icon` | argument | an SVG a host draws: one path's data, filled, in a 24×24 box | `<icon name="hexagon-outline" path="M12 2L21 7V17L12 22L3 17V7Z"/>` | `<span id="r" class="u-text u-icon u-svg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L21 7V17L12 22L3 17V7Z"></path></svg></span>` |
@@ -614,24 +618,25 @@ but in a palette.
 | 34 | `placeholder` | string | `field` | modifier | a field's placeholder | `<field placeholder="Find"/>` | `<input id="r" class="u-field" type="text" placeholder="Find">` |
 | 35 | `name` | string | every widget | modifier | a control's name | `<field name="q"/>` | `<input id="r" class="u-field" type="text" name="q">` |
 | 36 | `label` | string | every widget | modifier | its accessible label | `<button label="Close">x</button>` | `<button id="r" class="u-btn" type="button" aria-label="Close">x</button>` |
-| 37 | `reveal` | bool | every widget | modifier | shown only while its item is pointed at, selected or focused | `<button reveal>x</button>` | `<button id="r" class="u-btn u-reveal" type="button">x</button>` |
-| 38 | `focusable` | bool | every widget | modifier | takes the keyboard on a click and by Tab | `<list focusable/>` | `<div id="r" class="u-list" role="listbox" tabindex="0"></div>` |
-| 39 | `bare` | bool | every widget | modifier | a field or a button with no border and no fill | `<button bare>x</button>` | `<button id="r" class="u-btn u-bare" type="button">x</button>` |
-| 40 | `chrome` | bool | every widget | modifier | a sidebar's ground: a darker fill with a hairline at its end | `<stack chrome/>` | `<div id="r" class="u-stack u-chrome"></div>` |
-| 41 | `card` | bool | `box` | modifier | a group's panel: a fill a step lighter than the page, its rows split by rules | `<box card/>` | `<div id="r" class="u-box u-card"></div>` |
-| 42 | `ring` | bool | `dot` | modifier | a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven | `<dot ring/>` | `<span id="r" class="u-glyph u-dot u-ring">○</span>` |
-| 43 | `target` | bool | `dot` | modifier | a dot in a ring (◉), a state that asks for someone | `<dot target/>` | `<span id="r" class="u-glyph u-dot u-target">◉</span>` |
-| 44 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
-| 45 | `search` | bool | `row` | modifier | a row drawn as a search field: its icon and a bare field in one field's box | `<row search><field bare/></row>` | `<div id="r" class="u-row u-search"><input id="r.0" class="u-field u-bare" type="text"></div>` |
-| 46 | `nav` | bool | `list` | modifier | a sidebar's list | `<list nav/>` | `<div id="r" class="u-list u-nav" role="listbox" tabindex="0"></div>` |
-| 47 | `entries` | bool | `list` | modifier | a list whose items are entries, each taking the keyboard | `<list entries><item/></list>` | `<div id="r" class="u-list u-entries" role="listbox"><div id="r.0" class="u-item" role="option" tabindex="0"></div></div>` |
-| 48 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
-| 49 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
-| 50 | `readline` | bool | `surface`, `field` | modifier | the fields in it edit by the readline keys of a terminal (ctrl+w, ctrl+u, ctrl+k, alt+b, …), whatever the platform | `<surface readline/>` | `<div id="r" class="u-surface u-theme-neuroplastio u-compact" data-keys="arrow_left=char-backward ctrl+b=char-backward arrow_right=char-forward ctrl+f=char-forward alt+arrow_left=word-backward ctrl+arrow_left=word-backward alt+b=word-backward alt+arrow_right=word-forward ctrl+arrow_right=word-forward alt+f=word-forward home=line-start end=line-end ctrl+e=line-end backspace=delete-char-backward ctrl+h=delete-char-backward delete=delete-char-forward ctrl+d=delete-char-forward alt+backspace=delete-word-backward ctrl+w=delete-word-backward ctrl+backspace=delete-word-backward alt+delete=delete-word-forward alt+d=delete-word-forward ctrl+delete=delete-word-forward ctrl+u=delete-to-line-start ctrl+k=delete-to-line-end arrow_up=line-previous ctrl+p=line-previous arrow_down=line-next ctrl+n=line-next page_up=page-up page_down=page-down alt+&lt;=input-start ctrl+home=input-start alt+&gt;=input-end ctrl+end=input-end mod+a=select-all ctrl+m=newline"></div>` |
-| 51 | `program` | string | `surface` | modifier | keys, by myelin's names and apart by spaces, that belong to the host program, which the fields in it give it | `<surface program="ctrl+b"/>` | `<div id="r" class="u-surface u-theme-neuroplastio u-compact"></div>` |
-| 52 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
-| 53 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
-| 54 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
+| 37 | `title` | string | every widget | modifier | its tooltip, this text wrapped, which the host shows while the pointer rests on it; a <title> child is one of any elements | `<text title="Copies the row">x</text>` | `<span id="r" class="u-text">x</span>` |
+| 38 | `reveal` | bool | every widget | modifier | shown only while its item is pointed at, selected or focused | `<button reveal>x</button>` | `<button id="r" class="u-btn u-reveal" type="button">x</button>` |
+| 39 | `focusable` | bool | every widget | modifier | takes the keyboard on a click and by Tab | `<list focusable/>` | `<div id="r" class="u-list" role="listbox" tabindex="0"></div>` |
+| 40 | `bare` | bool | every widget | modifier | a field or a button with no border and no fill | `<button bare>x</button>` | `<button id="r" class="u-btn u-bare" type="button">x</button>` |
+| 41 | `chrome` | bool | every widget | modifier | a sidebar's ground: a darker fill with a hairline at its end | `<stack chrome/>` | `<div id="r" class="u-stack u-chrome"></div>` |
+| 42 | `card` | bool | `box` | modifier | a group's panel: a fill a step lighter than the page, its rows split by rules | `<box card/>` | `<div id="r" class="u-box u-card"></div>` |
+| 43 | `ring` | bool | `dot` | modifier | a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven | `<dot ring/>` | `<span id="r" class="u-glyph u-dot u-ring">○</span>` |
+| 44 | `target` | bool | `dot` | modifier | a dot in a ring (◉), a state that asks for someone | `<dot target/>` | `<span id="r" class="u-glyph u-dot u-target">◉</span>` |
+| 45 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
+| 46 | `search` | bool | `row` | modifier | a row drawn as a search field: its icon and a bare field in one field's box | `<row search><field bare/></row>` | `<div id="r" class="u-row u-search"><input id="r.0" class="u-field u-bare" type="text"></div>` |
+| 47 | `nav` | bool | `list` | modifier | a sidebar's list | `<list nav/>` | `<div id="r" class="u-list u-nav" role="listbox" tabindex="0"></div>` |
+| 48 | `entries` | bool | `list` | modifier | a list whose items are entries, each taking the keyboard | `<list entries><item/></list>` | `<div id="r" class="u-list u-entries" role="listbox"><div id="r.0" class="u-item" role="option" tabindex="0"></div></div>` |
+| 49 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
+| 50 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
+| 51 | `readline` | bool | `surface`, `field` | modifier | the fields in it edit by the readline keys of a terminal (ctrl+w, ctrl+u, ctrl+k, alt+b, …), whatever the platform | `<surface readline/>` | `<div id="r" class="u-surface u-theme-neuroplastio u-compact" data-keys="arrow_left=char-backward ctrl+b=char-backward arrow_right=char-forward ctrl+f=char-forward alt+arrow_left=word-backward ctrl+arrow_left=word-backward alt+b=word-backward alt+arrow_right=word-forward ctrl+arrow_right=word-forward alt+f=word-forward home=line-start end=line-end ctrl+e=line-end backspace=delete-char-backward ctrl+h=delete-char-backward delete=delete-char-forward ctrl+d=delete-char-forward alt+backspace=delete-word-backward ctrl+w=delete-word-backward ctrl+backspace=delete-word-backward alt+delete=delete-word-forward alt+d=delete-word-forward ctrl+delete=delete-word-forward ctrl+u=delete-to-line-start ctrl+k=delete-to-line-end arrow_up=line-previous ctrl+p=line-previous arrow_down=line-next ctrl+n=line-next page_up=page-up page_down=page-down alt+&lt;=input-start ctrl+home=input-start alt+&gt;=input-end ctrl+end=input-end mod+a=select-all ctrl+m=newline"></div>` |
+| 52 | `program` | string | `surface` | modifier | keys, by myelin's names and apart by spaces, that belong to the host program, which the fields in it give it | `<surface program="ctrl+b"/>` | `<div id="r" class="u-surface u-theme-neuroplastio u-compact"></div>` |
+| 53 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
+| 54 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
+| 55 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
 <!-- end attributes table -->
 
 `autofocus` changes no HTML: the runtime gives the first element that
@@ -944,6 +949,37 @@ sep    = "<sep/>" ;
   `surfrun.Surface.Menu` and `Pick`). No event of hotty's asks for a
   menu yet: an element with one asks the host for nothing.
 
+### Tooltips
+
+```ebnf
+tip = "<title>", { element | text }, "</title>" ;
+```
+
+- A widget's tooltip is its `title` (a string, literal or bound): the
+  text, wrapped; `''` is none. Or it is its child `<title>`: at most
+  one, and not beside a `title`; never drawn (no element, no cell, no
+  room), and no break in a `:if` chain of its siblings. A `<title>`
+  takes no attributes, holds elements and text as a `stack` does, and
+  goes in a widget only, not at a root, in a partial's or a component's
+  tag, or in a `<slot>`. A use's attributes are its props: a partial
+  gives its root its own `title` prop.
+- Its children render in the scope of its widget, as the widget does,
+  and in a stack (`surfui.Stack`); a text directly in it wraps. One
+  whose children draw nothing at a render is none.
+- Nothing in it acts, since it goes when the pointer moves: a `button`,
+  `field`, `switch`, `select` or `cycle`, a handler, a `<bind>`, a
+  `<menu>`, `focusable`, `autofocus`, `drag` or `drop`, an `<embed>`, a
+  tooltip of its own, in it or in a template a use in it draws, is a
+  load error.
+- It writes nothing into the document: no HTML `title`, which a browser
+  host would draw a second time, and no attribute; every element has an
+  id ([Ids](#ids)) already. A surface whose tree has a tooltip asks for
+  hover (hotty SPEC §9.4, `v=1`).
+- The host finds the tooltip of the innermost element with one around
+  the hovered element or the pointer's cell, and shows it as a view of
+  its own: surf's card, its text small, at most 48 cells wide (Go:
+  `surfrun.Surface.Tip`, `surfui.TipCard`, `cells.DrawTip`).
+
 ### Drags
 
 A widget the pointer reaches (one with events: not a `spacer`, a
@@ -1113,7 +1149,7 @@ give, and the rest renders:
 | a modifier's value (bad type, or a tone, fill, theme or density it doesn't take) | the modifier |
 | a bound `hue` that no palette declares | none: the ink; the runtime warns once for the name |
 | `key` or `:key` | the key: the element's id is its index |
-| `on`, `value`, `options`, `title` | false, `''`, no options, `''` |
+| `on`, `value`, `options`, `heading` | false, `''`, no options, `''` |
 | an `<icon>`'s `name` or `svg`, or one the program hasn't | its glyph: `help-box`, and no SVG |
 | an `<icon>`'s `path`, or one that isn't path data | the SVG: the glyph alone |
 | a `:if` or `:else-if` condition | the chain, from there: no branch is drawn, nor the `:else` |
@@ -1670,10 +1706,13 @@ The partials and their props:
   `event-to-string` and `event-missing`, which fail where the
   `load` file says (the last two only where parameters have types);
 - with its fixtures as above, and the templates unchanged: their
-  `<menu>`s draw nothing, so each case's document and cells are as they
-  would be without them; and in Go, `TestMenus`: the fixtures' menus
-  found by an element, a cell and the focus, and picked, alike in each
-  mode;
+  `<menu>`s and tooltips draw nothing, so each case's document and
+  cells are as they would be without them; and in Go, `TestMenus`: the
+  fixtures' menus found by an element, a cell and the focus, and
+  picked, alike in each mode; and `TestTips`: their tooltips (a
+  `title`, a bound `:title`, a `<title>` of a row with a dot, bold
+  text and a muted line, and one in a `:each` reading its row) found
+  by an element and a cell, alike in each mode;
 - every file of each case equal to the case's: `document`, each step's
   `N.log`, `N.ops` and `N.document`, and `errors` where the case has it;
   and, in a runtime that draws in cells, `cells` and each `N.cells`, its

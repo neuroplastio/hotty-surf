@@ -61,6 +61,7 @@ type Node struct {
 	on       []handler
 	keys     []Binding
 	menu     []MenuItem // its context menu, which the host draws, never the tree
+	tip      *Node      // its tooltip's content, which the host shows, never the tree
 	focus    bool       // autofocus
 	drag     bool       // a drag handle (Drag)
 	drop     DropMode   // a place to drop on (Drop)
@@ -450,6 +451,9 @@ func Clone(n *Node) *Node {
 	c.on = append([]handler(nil), n.on...)
 	c.keys = append([]Binding(nil), n.keys...)
 	c.menu = append([]MenuItem(nil), n.menu...)
+	if n.tip != nil {
+		c.tip = Clone(n.tip)
+	}
 	c.kids = make([]*Node, len(n.kids))
 	for i, k := range n.kids {
 		c.kids[i] = Clone(k)

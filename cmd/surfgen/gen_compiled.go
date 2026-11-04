@@ -548,6 +548,15 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		}
 		fmt.Fprintf(b, "%s.Menu(%s...)\n", n, ms)
 	}
+	if t := el.Tip(); t != nil {
+		// Its <title>: what its children draw, in its scope, in a stack.
+		ts := w.tmp("tip")
+		fmt.Fprintf(b, "var %s []*surfui.Node\n", ts)
+		for _, kid := range t.Kids() {
+			w.render(b, kid, sc, target{out: ts})
+		}
+		fmt.Fprintf(b, "if len(%s) > 0 {\n%s.Tip(surfui.Stack(%s...))\n}\n", ts, n, ts)
+	}
 	w.used[tg.out] = true
 	fmt.Fprintf(b, "%s = append(%s, %s)\ne.Leave()\n}\n", tg.out, tg.out, n)
 }

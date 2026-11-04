@@ -440,12 +440,13 @@ func Item(kids ...*Node) *Node {
 	return El("div", kids...).Class("u-item").Attr("role", "option")
 }
 
-// Section is a titled group of nodes; a Section in a Section is indented
-// two cells under its parent's title (Indent's cells, in every density),
-// so that a label column of Width(n) inside lines up with one of
-// Width(n+2) outside.
-func Section(title string, kids ...*Node) *Node {
-	return El("section", Heading(title).Class("u-section-head")).Add(kids...).Class("u-section")
+// Section is a group of nodes under a heading, heading; a Section in a
+// Section is indented two cells under its parent's heading (Indent's
+// cells, in every density), so that a label column of Width(n) inside
+// lines up with one of Width(n+2) outside. A template gives the heading
+// as `heading`: `title` is a tooltip on every element (Node.Title).
+func Section(heading string, kids ...*Node) *Node {
+	return El("section", Heading(heading).Class("u-section-head")).Add(kids...).Class("u-section")
 }
 
 // Rule is a line across.

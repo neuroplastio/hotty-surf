@@ -1,0 +1,13 @@
+A section's heading is heading=: title= is a tooltip on every element.
+Until 0.3, a section with a title and no heading is refused, so that a
+template from before keeps its heading.
+-- form.surf --
+<surface>
+  <section title="Agents"/>
+  <section :title="'Agents'"/>
+  <section heading="Agents" title="Who is working"/>
+  <section :heading="'Agents'"><text>x</text></section>
+</surface>
+-- load --
+form.surf:2:12: a <section>'s heading is heading= now, and title= its tooltip: <section heading=…>
+form.surf:3:12: a <section>'s heading is heading= now, and :title= its tooltip: <section :heading=…>

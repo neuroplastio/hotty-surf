@@ -52,10 +52,14 @@ const (
 	ElemMenu      = kMenu  // a widget's Menu: its Kids are its items
 	ElemAction    = kAction
 	ElemSep       = kSep
+	ElemTip       = kTip // a widget's Tip: its Kids are what it shows
 )
 
 // Menu is a widget's <menu>, nil for none.
 func (e *elem) Menu() *Elem { return e.menu }
+
+// Tip is a widget's <title>, nil for none: its title= is a Mod.
+func (e *elem) Tip() *Elem { return e.tip }
 
 // Ord is an <action>'s or a <sep>'s place among its menu's items in the
 // source, from 0: its id (MenuAction, MenuSep).

@@ -29,7 +29,7 @@ const (
 	FormSwitch
 	// FormChoice is a select or a cycle: its `value` and `options`.
 	FormChoice
-	// FormSection is a section: its `title`, then its element children.
+	// FormSection is a section: its `heading`, then its element children.
 	FormSection
 	// FormIcon is an icon: its glyph, as its text or by its `name`, and an
 	// SVG a host draws in its place, by its `svg` or its `path`.
@@ -134,7 +134,7 @@ var Widgets = []Widget{
 	{"cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}},
 	{"list", "a column of items with a selection", FormKids, "surfui.List", events},
 	{"item", "a row of a list", FormKids, "surfui.Item", events},
-	{"section", "a titled group", FormSection, "surfui.Section", events},
+	{"section", "a group under a heading", FormSection, "surfui.Section", events},
 	{"rule", "a line across", FormNone, "surfui.Rule", nil},
 	{"box", "a raised panel", FormKids, "surfui.Box", events},
 	{"dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events},
@@ -145,7 +145,7 @@ var Attrs = []Attr{
 	{Name: "on", Type: TypeBool, Doc: "whether the switch is on", Tags: []string{"switch"}, Arg: true},
 	{Name: "value", Type: TypeString, Doc: "the option picked", Tags: []string{"select", "cycle"}, Arg: true},
 	{Name: "options", Type: TypeStrings, Doc: "the options, in order", Tags: []string{"select", "cycle"}, Arg: true},
-	{Name: "title", Type: TypeString, Doc: "the section's title", Tags: []string{"section"}, Arg: true},
+	{Name: "heading", Type: TypeString, Doc: "the section's heading", Tags: []string{"section"}, Arg: true},
 	{Name: "name", Type: TypeString, Doc: "an MDI symbol's name, as cog-outline: the glyph it draws, in the cells beside an svg", Tags: []string{"icon"}, Arg: true},
 	{Name: "svg", Type: TypeString, Doc: "an SVG a host draws: the name of an .svg file beside the templates", Tags: []string{"icon"}, Arg: true},
 	{Name: "path", Type: TypeString, Doc: "an SVG a host draws: one path's data, filled, in a 24×24 box", Tags: []string{"icon"}, Arg: true},
@@ -179,6 +179,7 @@ var Attrs = []Attr{
 	{Name: "placeholder", Type: TypeString, Doc: "a field's placeholder", Tags: []string{"field"}, Func: "ModPlaceholder"},
 	{Name: "name", Type: TypeString, Doc: "a control's name", Func: "ModName"},
 	{Name: "label", Type: TypeString, Doc: "its accessible label", Func: "ModLabel"},
+	{Name: "title", Type: TypeString, Doc: "its tooltip, this text wrapped, which the host shows while the pointer rests on it; a <title> child is one of any elements", Func: "ModTitle"},
 	{Name: "reveal", Type: TypeBool, Doc: "shown only while its item is pointed at, selected or focused", Func: "ModReveal"},
 	{Name: "focusable", Type: TypeBool, Doc: "takes the keyboard on a click and by Tab", Func: "ModFocusable"},
 	{Name: "bare", Type: TypeBool, Doc: "a field or a button with no border and no fill", Func: "ModBare"},
@@ -438,6 +439,7 @@ func ModValue(n *surfui.Node, v string)       { n.Value(v) }
 func ModPlaceholder(n *surfui.Node, v string) { n.Placeholder(v) }
 func ModName(n *surfui.Node, v string)        { n.Name(v) }
 func ModLabel(n *surfui.Node, v string)       { n.Label(v) }
+func ModTitle(n *surfui.Node, v string)       { n.Title(v) }
 
 // clampInt is v as an int, within what a 32-bit int holds (TinyGo's).
 func clampInt(v int64) int {

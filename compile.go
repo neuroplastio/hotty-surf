@@ -863,6 +863,7 @@ const (
 	kMenu               // <menu>: a widget's context menu, never drawn
 	kAction             // <action>: an item of a menu
 	kSep                // <sep/>: a menu's separator
+	kTip                // <title>: a widget's tooltip, never drawn
 )
 
 type elem struct {
@@ -897,6 +898,8 @@ type elem struct {
 	// A widget's <menu> (kMenu), whose kids are its items: kAction, kSep,
 	// and kIf over them.
 	menu *elem
+	// A widget's <title> (kTip), whose kids are what its tooltip shows.
+	tip *elem
 	// kAction and kSep: its place among its menu's items in the source,
 	// from 0, which is its id; kAction: its label is text, and do the
 	// handler a pick of it runs.
@@ -1045,6 +1048,9 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return s.embedEl(n)
 	case n.Tag == "menu", n.Tag == "action", n.Tag == "sep":
 		return s.menuPart(n)
+	case n.Tag == "title":
+		s.c.fail(s.t.file, n.Pos, "<title> goes in a widget, whose tooltip it is")
+		return nil
 	case strings.Contains(n.Tag, "-"):
 		return s.use(n)
 	}
@@ -1052,7 +1058,7 @@ func (s *scope) bare(n *markup.Node) *elem {
 	if e == nil {
 		return nil
 	}
-	ks := s.menuOf(e, n)
+	ks := s.tipOf(e, n, s.menuOf(e, n))
 	was, wasLine := s.around, s.inLine
 	s.around = true // a <bind> in it binds on it
 	if e.w.Form == FormKids || e.w.Form == FormSection {
@@ -1103,6 +1109,7 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 		}
 	}
 	s.dragNeeds(n, vals)
+	s.headingNeeds(n)
 	s.c.noteHue(n)
 	if a, ok := hueAndTone(n); ok {
 		s.c.fail(s.t.file, a.Pos, "<%s> takes a tone or a hue, not both", n.Tag)
@@ -1143,6 +1150,29 @@ func (s *scope) dragNeeds(n *markup.Node, vals map[int]value) {
 				s.c.fail(s.t.file, a.Pos, "@drop runs on a place to drop on: give <%s> drop", n.Tag)
 			}
 		}
+	}
+}
+
+// headingNeeds fails a <section> with a title and no heading: its
+// heading was title= until title became every element's tooltip, so an
+// old template would lose its heading quietly. For one minor version,
+// until hotty-surf 0.3.
+func (s *scope) headingNeeds(n *markup.Node) {
+	if n.Tag != "section" {
+		return
+	}
+	var title markup.Attr
+	hasTitle, hasHeading := false, false
+	for _, a := range n.Attrs {
+		switch strings.TrimPrefix(a.Name, ":") {
+		case "title":
+			title, hasTitle = a, true
+		case "heading":
+			hasHeading = true
+		}
+	}
+	if hasTitle && !hasHeading {
+		s.c.fail(s.t.file, title.Pos, "a <section>'s heading is heading= now, and %s= its tooltip: <section %sheading=…>", title.Name, strings.TrimSuffix(title.Name, "title"))
 	}
 }
 
@@ -1329,6 +1359,154 @@ func (s *scope) menuOf(e *elem, n *markup.Node) []*markup.Node {
 }
 
 func isMenu(k *markup.Node) bool { return k.Kind == markup.Element && k.Tag == "menu" }
+
+// The tooltip: a widget's title= (a modifier, surfui.Node.Title), or its
+// <title>, of any elements, which the tree never draws; its host shows
+// it where the pointer rests (surfrun.Surface.Tip). It goes when the
+// pointer moves, so nothing in it can be reached: nothing in it acts.
+
+// tipOf compiles the <title> among ks, n's children, as e's, and returns
+// the rest, which are drawn: a tooltip is no child of the tree, and a
+// :if chain goes on past it.
+//
+//go:noinline
+func (s *scope) tipOf(e *elem, n *markup.Node, ks []*markup.Node) []*markup.Node {
+	at := slices.IndexFunc(ks, isTitle)
+	if at < 0 {
+		return ks
+	}
+	var rest []*markup.Node
+	seen := false
+	for _, k := range ks {
+		if !isTitle(k) {
+			rest = append(rest, k)
+			continue
+		}
+		switch {
+		case seen:
+			s.c.fail(s.t.file, k.Pos, "<%s> has one <title>; this is a second", n.Tag)
+			continue
+		case hasTitleAttr(n):
+			s.c.fail(s.t.file, k.Pos, "<%s> has a title= and a <title>: its tooltip is one or the other", n.Tag)
+			seen = true
+			continue
+		}
+		seen = true
+		e.tip = s.tipEl(k)
+	}
+	return rest
+}
+
+func isTitle(k *markup.Node) bool { return k.Kind == markup.Element && k.Tag == "title" }
+
+// hasTitleAttr reports whether n has a title=, literal or bound.
+func hasTitleAttr(n *markup.Node) bool {
+	_, lit := n.Attr("title")
+	_, bound := n.Attr(":title")
+	return lit || bound
+}
+
+// tipEl compiles a <title>: its children, in the scope of its widget,
+// as a stack's, which may hold nothing that acts.
+//
+//go:noinline
+func (s *scope) tipEl(n *markup.Node) *elem {
+	stackprobe.Probe()
+	for _, a := range n.Attrs {
+		s.c.fail(s.t.file, a.Pos, "%s", takesNo("title", a.Name, nil))
+	}
+	wasLine := s.inLine
+	s.inLine = false
+	kids := s.kids(n.Kids)
+	s.inLine = wasLine
+	if len(kids) == 0 {
+		if len(n.Kids) == 0 {
+			s.c.fail(s.t.file, n.Pos, "<title> holds what the tooltip shows")
+		}
+		return nil
+	}
+	e := &elem{kind: kTip, pos: n.Pos, kids: kids}
+	for _, k := range kids {
+		s.inert(k, s.t.file, nil, map[*tmpl]bool{})
+	}
+	return e
+}
+
+// acting are the widgets a tooltip may not hold: the controls.
+var acting = []string{"button", "field", "switch", "select", "cycle"}
+
+// inert fails what acts in a tooltip's e: a control, a handler, a
+// <bind>, a <menu>, focusable, autofocus, drag or drop, an <embed>, or a
+// tooltip of its own; in the templates its partials and components use
+// too. e is in file f; use is the use in this template that f's
+// template is under, nil where f is this template's: what fails there is
+// told at it.
+func (s *scope) inert(e *elem, f *file, use *elem, seen map[*tmpl]bool) {
+	stackprobe.Probe()
+	if e == nil {
+		return
+	}
+	switch e.kind {
+	case kWidget:
+		switch {
+		case contains(acting, e.w.Tag):
+			s.acts("<"+e.w.Tag+">", e.pos, f, use)
+		case len(e.evs) > 0:
+			s.acts("@"+e.evs[0].kind, e.pos, f, use)
+		case e.menu != nil:
+			s.acts("a <menu>", e.menu.pos, f, use)
+		case e.tip != nil:
+			s.acts("a tooltip of its own", e.tip.pos, f, use)
+		}
+		for _, m := range e.mods {
+			switch m.attr.Name {
+			case "focusable", "autofocus", "drag", "drop":
+				s.acts(m.attr.Name, e.pos, f, use)
+			case "title":
+				s.acts("a tooltip of its own", e.pos, f, use)
+			}
+		}
+	case kBind:
+		s.acts("<bind>", e.pos, f, use)
+	case kEmbed:
+		s.acts("<embed>", e.pos, f, use)
+	case kIf:
+		for _, b := range e.branches {
+			s.inert(b.body, f, use, seen)
+		}
+	case kEach:
+		s.inert(e.body, f, use, seen)
+	case kComponent, kPartial:
+		for _, fill := range e.fills {
+			for _, k := range fill {
+				s.inert(k, f, use, seen)
+			}
+		}
+		if e.sub == nil || seen[e.sub] || e.sub.root == nil {
+			return
+		}
+		seen[e.sub] = true
+		in := use
+		if in == nil {
+			in = e
+		}
+		s.inert(e.sub.root, e.sub.file, in, seen)
+		return
+	}
+	for _, k := range e.kids {
+		s.inert(k, f, use, seen)
+	}
+}
+
+// acts fails what, which acts in a tooltip, at at in f: at the use the
+// template is under, where use isn't nil.
+func (s *scope) acts(what string, at markup.Pos, f *file, use *elem) {
+	if use == nil {
+		s.c.fail(s.t.file, at, "a tooltip holds nothing that acts, not %s: it goes when the pointer moves", what)
+		return
+	}
+	s.c.fail(s.t.file, use.pos, "a tooltip holds nothing that acts, and %s at %s:%d:%d does: it goes when the pointer moves", what, f.path, at.Line, at.Col)
+}
 
 // menuEl compiles a <menu>: its items, each with its place among them in
 // the source, which is its id, an :if's branches each their own.

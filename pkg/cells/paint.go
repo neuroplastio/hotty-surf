@@ -188,7 +188,7 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	switch {
 	case b.f&fSurface != 0:
 		bg = Bg
-	case b.f&(fDialog|fOptions) != 0:
+	case b.f&(fDialog|fOptions|fTip) != 0:
 		bg = Surface
 	case b.f&fBox != 0 && b.d == compact:
 		bg = Tonal
@@ -519,7 +519,7 @@ func (p *painter) decorate(b *box, r rect, clip rect, in ink) {
 	switch {
 	case b.f&fDialog != 0:
 		p.edges(r, clip, Border)
-	case b.f&fOptions != 0:
+	case b.f&(fOptions|fTip) != 0:
 		p.edges(r, clip, Line)
 	case b.f&fItem != 0:
 		list := surfui.Parent(b.n)

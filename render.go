@@ -414,8 +414,8 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 			n = NewCycle(val, opts)
 		}
 	case FormSection:
-		title, _ := f.strOr(e, e.args[0], "")
-		n = surfui.Section(title, kids...)
+		heading, _ := f.strOr(e, e.args[0], "")
+		n = surfui.Section(heading, kids...)
 	}
 	for _, m := range e.mods {
 		f.apply(e, n, m)
@@ -435,7 +435,25 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 		}
 		n.Menu(items...)
 	}
+	if e.tip != nil {
+		f.tip(e.tip, n)
+	}
 	return n
+}
+
+// tip gives n its <title>'s tooltip: what its children draw, in n's
+// scope, in a stack; none where they draw nothing.
+//
+//go:noinline
+func (f *frame) tip(e *elem, n *surfui.Node) {
+	stackprobe.Probe()
+	var kids []*surfui.Node
+	for _, k := range e.kids {
+		f.render(k, &kids, nil)
+	}
+	if len(kids) > 0 {
+		n.Tip(surfui.Stack(kids...))
+	}
 }
 
 // icon builds an <icon>: its glyph, its text or its bound name's; and
@@ -638,6 +656,8 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModName(n, v)
 	case "label":
 		ModLabel(n, v)
+	case "title":
+		ModTitle(n, v)
 	case "drop":
 		return ModDrop(n, v)
 	case "program":

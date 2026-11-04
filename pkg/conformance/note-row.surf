@@ -6,11 +6,15 @@
     <sep/>
     <action icon="close" :disabled="!note.unread" do="dismiss(note)">Dismiss</action>
   </menu>
+  <title>
+    <row gap="1"><dot :tone="note.unread ? 'accent' : 'muted'"/><text bold>{{ note.id }}</text></row>
+    <text muted>{{ note.text }}</text>
+  </title>
   <row gap="1" grow>
     <glyph :tone="note.unread ? 'accent' : 'muted'">●</glyph>
     <badge :fill="toneOf(note.level)" width="6">{{ note.level }}</badge>
     <text grow :bold="note.unread">{{ note.text }}</text>
-    <badge :each="(i, t) in note.tags" :key="t" muted>{{ i + 1 }}:{{ t }}</badge>
+    <badge :each="(i, t) in note.tags" :key="t" muted :title="'Tag ' + t + ' of ' + note.id">{{ i + 1 }}:{{ t }}</badge>
     <icon :if="size(note.tags) > 0" name="tag-outline" path="M3 3H11L21 13L13 21L3 11Z"/>
     <button reveal @click="dismiss(note)"><icon name="close"/>Dismiss</button>
   </row>

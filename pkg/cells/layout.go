@@ -87,6 +87,7 @@ const (
 	fHolds // holds a scaled element
 	fGone  // a Fit row's child it has no room for
 	fKeys  // a key's caps (surfkeys.SeqOf), drawn in the renderer's KeyStyle
+	fTip   // a tooltip's card (surfui.TipCard)
 )
 
 // density is the surface's, for the steps.
@@ -293,9 +294,11 @@ func (b *box) look(d density) {
 		case c == "u-surface":
 			b.f |= fSurface
 			known = true
-		case c == "u-stack", c == "u-section", c == "u-box", c == "u-list", c == "u-options", c == "u-dialog":
+		case c == "u-stack", c == "u-section", c == "u-box", c == "u-list", c == "u-options", c == "u-dialog", c == "u-tip":
 			known = true
 			switch c {
+			case "u-tip":
+				b.f |= fTip
 			case "u-section":
 				b.f |= fSection
 			case "u-box":
@@ -438,7 +441,8 @@ func (b *box) look(d density) {
 	case b.f&fDialog != 0:
 		// The line, and a cell and a half of room beside it.
 		b.pl, b.pr, b.pt, b.pb = 2, 2, 1, 1
-	case b.f&fOptions != 0:
+	case b.f&(fOptions|fTip) != 0:
+		// The line round it.
 		b.pl, b.pr, b.pt, b.pb = 1, 1, 1, 1
 	case b.f&fBox != 0 && hasClass(n, "u-card"):
 		// A card's room across, a host's in Dense.

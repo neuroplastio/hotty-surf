@@ -58,14 +58,15 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 		add(&Control{Name: "options (count)", Kind: "cycle", Value: "3", Options: []string{"1", "2", "3", "4", "5", "6"}})
 		add(&Control{Name: "value", Kind: "select", Value: sample[1], Options: sample[:3]})
 	case surf.FormSection:
-		add(&Control{Name: "title", Kind: "field", Value: "Section", text: true})
+		add(&Control{Name: "heading", Kind: "field", Value: "Section", text: true})
 	}
 	if w.Form == surf.FormKids || w.Form == surf.FormSection {
 		add(&Control{Name: "children (count)", Kind: "cycle", Value: "3", Options: kidCounts})
 	}
 	for _, a := range ws.attrs() {
-		// A string it draws: not its name or its label, which no one sees.
-		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "hue"}
+		// A string it draws: not its name, its label or its tooltip,
+		// which it doesn't draw in place.
+		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "hue" && a.Name != "title"}
 		switch {
 		case a.Name == "hue": // one of the stories' palette's, which the story declares
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, stories.Palette.Names()...)
@@ -131,7 +132,7 @@ func (ws *widgetStory) source() string {
 		opts := ws.by["value"].Options
 		b.WriteString(` value="` + escape(ws.by["value"].Value, true) + `" :options="['` + strings.Join(opts, "', '") + `']"`)
 	case surf.FormSection:
-		b.WriteString(` title="` + escape(ws.by["title"].Value, true) + `"`)
+		b.WriteString(` heading="` + escape(ws.by["heading"].Value, true) + `"`)
 	}
 	for _, a := range ws.attrs() {
 		v := ws.by[a.Name].Value
