@@ -47,7 +47,7 @@ pal-ok.surf:1:1: no root element: the file holds a <palette> alone, so it is no 
 crew.surf:6:19: <text> takes a tone or a hue, not both
 crew.surf:7:23: <text> takes a tone or a hue, not both
 crew.surf:8:14: hue "cora" is in no <palette>; the palettes declare coral, faint, mid or sky
-crew.surf:9:11: <button> takes no hue; it takes autofocus, bare, bold, checked, chrome, disabled, down, drag, drop, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, reveal, scale, scroll, selected, semibold, small, title, tone, top, width or wrap
+crew.surf:9:11: <button> takes no hue; it takes autofocus, bare, bold, checked, chrome, current, disabled, down, drag, drop, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, pill, raised, reveal, scale, scroll, selected, semibold, small, title, tone, top, width or wrap
 crew.surf:10:9: hue takes a value
 pal-faint.surf:2:3: faint's dark #a33 is 2.1:1 on the dark ground; text needs 4.5
 pal-faint.surf:2:3: faint's light #fff is 1.0:1 on paper; text needs 4.5

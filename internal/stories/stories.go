@@ -331,6 +331,45 @@ var All = []Story{
 				surfui.IconButton(icon(mdClose), "Off", false).Disabled(true)).Gap(1),
 		).Gap(1)
 	}},
+	{"pill/states", 80, func() *surfui.Node {
+		// A chrome control on a bar, in its states: at rest, the pointer
+		// on it, what it opens shown, the keyboard on it, and what it
+		// opens holding the keyboard; a bar's picker, raised, at rest and
+		// under the pointer; a stack's tabs, small, the one whose stack
+		// has the keyboard current, and shown without it, with an icon
+		// button to add one.
+		app := func() *surfui.Node { return surfui.IconButton(surfui.Icon(mdConsoleLine), "app", false).Pill() }
+		picker := func() *surfui.Node {
+			return surfui.IconButton(surfui.Icon(mdMenuDown), "neuroplastio", true).Pill().Raised()
+		}
+		tab := func(name string) *surfui.Node { return surfui.Button(name).Pill().Small() }
+		return surfui.Stack(
+			surfui.Row(app(), Force(app(), "hover"), app().Selected(true), Force(app(), "focus"), app().Current(true)).Gap(4),
+			surfui.Row(picker(), Force(picker(), "hover"),
+				surfui.Row(tab("editor").Current(true), tab("shell"), Force(tab("logs"), "hover"),
+					surfui.IconButton(surfui.Icon(mdPlus), "", false).Label("New tab").Pill().Small()).Gap(1),
+				surfui.Row(tab("editor").Selected(true), tab("shell")).Gap(1)).Gap(4),
+		).Gap(1)
+	}},
+	{"pill/icon", 80, func() *surfui.Node {
+		// An icon button, a circle: a stripe's tool at rest, under the
+		// pointer, shown, holding the keyboard, tabbed to and disabled; a
+		// stripe's toggle, off and on; and a header's actions, small, the
+		// zoomed pane's zoom current and the pointer on close.
+		tool := func() *surfui.Node {
+			return surfui.IconButton(surfui.Icon(mdRobotOutline), "", false).Label("Agents").Pill()
+		}
+		act := func(g, label string) *surfui.Node {
+			return surfui.IconButton(surfui.Icon(g), "", false).Label(label).Pill().Small()
+		}
+		toggle := func() *surfui.Node {
+			return surfui.IconButton(surfui.Icon(mdViewColumn), "", false).Label("Stripes").Pill()
+		}
+		return surfui.Row(tool(), Force(tool(), "hover"), tool().Selected(true), tool().Current(true), Force(tool(), "focus"),
+			tool().Disabled(true), toggle(), toggle().Selected(true),
+			surfui.Row(act(mdSplitVertical, "Split right"), act(mdSplitHoriz, "Split down"),
+				act(mdArrowExpand, "Zoom").Current(true), Force(act(mdClose, "Close"), "hover"))).Gap(4)
+	}},
 	{"icon/svg", 50, func() *surfui.Node {
 		// An SVG icon where a glyph would be: beside an item's label, the
 		// search row's, at the icon's size and in its colour, the ink where

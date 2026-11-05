@@ -455,6 +455,9 @@ The order is the maintainer's, via gov (2026-10-30):
   - [x] H1: the tokens `--u-float`, `--u-accent-soft` and
     `--u-accent-strong`, and one `--u-canvas` (the chrome's too); the
     tooltip in a bar's tip's look, radius 6.
+  - [x] H2: the chrome pill and the icon button (`pill`, `raised`,
+    `current` on a button; surfui `Pill`, `Raised`, `Current`), 28 and
+    22 (`small`); stories pill/states and pill/icon.
 
 ## v0
 
