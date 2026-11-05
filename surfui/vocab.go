@@ -425,10 +425,10 @@ func CycleOf(n *Node) (c *Node, value string, options []string, step int, ok boo
 // List is a column of Items with a selection: the selected Item on a
 // translucent fill, with a straight 2px accent bar inside its start
 // while the List or what drives it beside it (a palette's Field) has the
-// keyboard, never an accent fill. In Compact and Roomy the selection is a rounded block,
-// a hairline round its fill, in the accent's faint tint while the List
-// has the keyboard, and on a host its rows have air above, below and
-// between them; the cells keep a row a cell.
+// keyboard, on the accent's soft fill then, never a solid accent fill. In
+// Compact and Roomy the selection is a rounded block, a hairline round
+// its fill but where the List has the keyboard, and on a host its rows
+// have air above, below and between them; the cells keep a row a cell.
 func List(items ...*Node) *Node {
 	return El("div", items...).Class("u-list").Attr("role", "listbox")
 }

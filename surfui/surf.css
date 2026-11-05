@@ -35,7 +35,7 @@
   --u-border: rgb(255 255 255 / 0.094);
   --u-input: rgb(255 255 255 / 0.14);
   --u-field: rgb(0 0 0 / 0.22);
-  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4);
+  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -6px rgb(0 0 0 / 0.5);
   --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }
@@ -58,7 +58,7 @@
     --u-border: rgb(0 0 0 / 0.1);
     --u-input: rgb(0 0 0 / 0.16);
     --u-field: #ffffff;
-    --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
+    --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12), 0 6px 16px -6px rgb(0 0 0 / 0.18);
     --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.2);
     color-scheme: light;
   }
@@ -77,7 +77,7 @@
   --u-border: rgb(0 0 0 / 0.1);
   --u-input: rgb(0 0 0 / 0.16);
   --u-field: #ffffff;
-  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
+  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12), 0 6px 16px -6px rgb(0 0 0 / 0.18);
   --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.2);
   color-scheme: light;
 }
@@ -125,7 +125,7 @@
 }
 /* What is mixed with the ground is mixed again where a layer sets its
    own (a dialog, a menu). */
-.u-surface, .u-dialog, .u-options, .u-card {
+.u-surface, .u-dialog, .u-options, .u-menu, .u-card {
   --u-muted: color-mix(in srgb, var(--u-ink) 60%, var(--u-bg));
   --u-dim: color-mix(in srgb, var(--u-ink) 38%, var(--u-bg));
   --u-hover-line: color-mix(in srgb, var(--u-ink) 30%, transparent);
@@ -683,6 +683,46 @@
 .u-options > .u-item + .u-item { margin-top: 0; }
 .u-options > .u-item.is-picked { color: var(--u-accent); font-weight: 500; }
 .u-options > .u-item.is-hi { background: var(--u-selected); }
+
+/* A menu (surfui.MenuCard), one look for every menu: raised, radius 8,
+   the border's hairline and the raised shadow; in Compact and Roomy 4px
+   of room round its rows, each 28px tall, all 1px apart, 8px across, its
+   icon muted, its label 13px, its keys at its end; the pointer or the
+   keyboard on one the selected fill, its icon in the ink. A heading a
+   caption, 600 at 11.5px, muted; a rule 4px clear above and below; an
+   action that destroys in the error's colour; one that can't be picked
+   dim. In Dense its rows are a cell tall, as a Select's open list's. */
+.u-menu {
+  --u-bg: var(--u-raised);
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: calc(0.5 * var(--hotty-cell-h)) 0;
+  border-radius: 8px;
+  color: var(--u-ink);
+  background: var(--u-raised);
+  box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-raised);
+}
+.u-compact .u-menu, .u-roomy .u-menu { padding: 4px; gap: 1px; }
+.u-menu > .u-item { column-gap: var(--u-gx); color: var(--u-ink); cursor: pointer; }
+.u-menu > .u-item + .u-item { margin-top: 0; }
+.u-compact .u-menu > .u-menu-item, .u-roomy .u-menu > .u-menu-item {
+  height: 28px;
+  padding: 0 8px;
+  column-gap: 8px;
+  font-size: 13px;
+  line-height: 28px;
+  border-radius: 6px;
+}
+.u-compact .u-menu > .u-menu-item > .u-icon, .u-roomy .u-menu > .u-menu-item > .u-icon { width: 16px; }
+.u-menu > .u-item:hover, .u-menu > .u-item.is-sel { background: var(--u-selected); box-shadow: none; }
+.u-menu > .u-item:hover > .u-icon { color: var(--u-ink); }
+.u-menu > .u-item.u-danger, .u-menu > .u-item.u-danger > .u-icon { color: var(--u-error); }
+.u-menu > .u-item[disabled], .u-menu > .u-item[disabled] > .u-icon { color: var(--u-dim); background: transparent; cursor: default; }
+.u-menu-head { color: var(--u-muted); font-weight: 600; padding: 0 var(--u-px); }
+.u-compact .u-menu-head, .u-roomy .u-menu-head { font-size: 11.5px; line-height: 1; padding: 8px 8px 4px; }
+.u-compact .u-menu > .u-menu-sep, .u-roomy .u-menu > .u-menu-sep { margin: 4px 0; }
 
 .u-reveal { visibility: hidden; }
 .u-item:hover .u-reveal, .u-item.is-sel .u-reveal, .u-reveal:focus { visibility: visible; }

@@ -907,6 +907,7 @@ type elem struct {
 	icon     value
 	keyLabel value
 	off      value // :disabled
+	danger   value // :danger
 	do       handler
 }
 
@@ -1329,7 +1330,7 @@ func (s *scope) iconEl(e *elem, hasText bool) {
 
 // actionAttrs are the attributes an <action> takes, besides :if,
 // :else-if and :else.
-var actionAttrs = []string{"disabled", "do", "icon", "key"}
+var actionAttrs = []string{"danger", "disabled", "do", "icon", "key"}
 
 // menuOf compiles the <menu> among n's children as e's, and returns the
 // rest, which are drawn: a menu is no child of the tree, and a :if chain
@@ -1589,7 +1590,7 @@ func (s *scope) sepEl(n *markup.Node) *elem {
 // isCond reports whether name is a :if chain's directive.
 func isCond(name string) bool { return name == ":if" || name == ":else-if" || name == ":else" }
 
-// actionEl compiles <action do="method(args)" icon= key= :disabled=>,
+// actionEl compiles <action do="method(args)" icon= key= :disabled= :danger=>,
 // its text its label.
 //
 //go:noinline
@@ -1630,6 +1631,10 @@ func (s *scope) actionEl(n *markup.Node) *elem {
 		case name == "disabled":
 			if v, ok := s.value(&Attr{Name: "disabled", Type: TypeBool}, a, bound); ok {
 				e.off = v
+			}
+		case name == "danger":
+			if v, ok := s.value(&Attr{Name: "danger", Type: TypeBool}, a, bound); ok {
+				e.danger = v
 			}
 		default:
 			s.c.fail(s.t.file, a.Pos, "%s", takesNo("action", name, actionAttrs))

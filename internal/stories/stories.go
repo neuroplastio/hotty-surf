@@ -503,6 +503,24 @@ var All = []Story{
 			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(host)).Width(cols(host))),
 		).Gap(1)
 	}},
+	{"menu/shown", 50, func() *surfui.Node {
+		// A menu as its host shows it, the one look of every menu: a
+		// pane's, its heading, actions with icons and keys, the keyboard
+		// on one, one that can't be picked, a rule, and one that
+		// destroys.
+		items := []surfui.MenuItem{
+			{Heading: true, Label: "Pane"},
+			{Label: "Split right", Icon: "view-split-vertical", Key: "ctrl+b %"},
+			{Label: "Split down", Icon: "view-split-horizontal", Key: `ctrl+b "`},
+			{Label: "Zoom", Icon: "arrow-expand", Key: "ctrl+b z"},
+			{Label: "Rename…", Icon: "pencil-outline"},
+			{Label: "Copy selection", Icon: "content-copy", Disabled: true},
+			{Sep: true},
+			{Label: "Close pane", Icon: "close", Danger: true},
+		}
+		card := surfui.Kids(surfui.MenuCard(nil, items, 2))[0]
+		return surfui.Row(surfui.Stack(card).Width(24))
+	}},
 	{"cycle/states", 50, func() *surfui.Node {
 		row := func(label string, c *surfui.Node) *surfui.Node {
 			return surfui.Row(surfui.Text(label).Bold().Grow(), c)

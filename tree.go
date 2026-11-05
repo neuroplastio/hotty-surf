@@ -65,10 +65,12 @@ func (e *elem) Tip() *Elem { return e.tip }
 // source, from 0: its id (MenuAction, MenuSep).
 func (e *elem) Ord() int { return e.ord }
 
-// An <action>'s icon, key label, :disabled and do; its label is its Text.
+// An <action>'s icon, key label, :disabled, :danger and do; its label is
+// its Text.
 func (e *elem) Icon() AttrValue     { return e.icon }
 func (e *elem) KeyLabel() AttrValue { return e.keyLabel }
 func (e *elem) Disabled() AttrValue { return e.off }
+func (e *elem) Danger() AttrValue   { return e.danger }
 func (e *elem) Do() Handler         { return e.do }
 
 // After says a <button>'s <icon>, among its Kids, is after its text.

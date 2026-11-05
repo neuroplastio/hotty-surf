@@ -290,9 +290,10 @@ func CheckIcon(name string) error {
 
 // MenuAction is a menu's <action> as both modes build it: its id its
 // place among its menu's items in the source (ord), and what a pick of
-// it runs. An icon CheckIcon refuses is left out, and is the error.
-func MenuAction(ord int, label, icon, key string, disabled bool, act surfui.Action) (surfui.MenuItem, error) {
-	it := surfui.MenuItem{ID: strconv.Itoa(ord), Label: label, Key: key, Disabled: disabled, Act: act}
+// it runs; danger draws it in the error's colour. An icon CheckIcon
+// refuses is left out, and is the error.
+func MenuAction(ord int, label, icon, key string, disabled, danger bool, act surfui.Action) (surfui.MenuItem, error) {
+	it := surfui.MenuItem{ID: strconv.Itoa(ord), Label: label, Key: key, Disabled: disabled, Danger: danger, Act: act}
 	if icon == "" {
 		return it, nil
 	}

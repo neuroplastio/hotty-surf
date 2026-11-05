@@ -512,11 +512,12 @@ func (f *frame) menuItem(e *elem, items *[]surfui.MenuItem) {
 			key, _ = f.str(e, e.keyLabel)
 		}
 		off, _ := f.boolOf(e, e.off, false)
+		danger, _ := f.boolOf(e, e.danger, false)
 		act, ok := f.action(e, e.do)
 		if !ok {
 			return
 		}
-		it, err := MenuAction(e.ord, label, icon, key, off, act)
+		it, err := MenuAction(e.ord, label, icon, key, off, danger, act)
 		if err != nil {
 			f.fail(e, err)
 		}
