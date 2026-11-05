@@ -494,6 +494,15 @@ The order is the maintainer's, via gov (2026-10-30):
     `attention` on a button or an item (surfui `Attention`): the warn,
     its soft fill where current, the keyboard's row on warn-soft with a
     warn marker; story attention/states.
+  - [ ] Open, from the maintainer's look at kit-2 (2026-11-05):
+    - The gallery offers every attribute for every widget, and some draw
+      nothing on it (checked on a text, gap on a leaf, raised or current
+      off a pill, a switch's tone). Show only those that draw on it.
+    - Modifiers win since 096fd21: once plx pins the kit, wherever it
+      sets one its widget used to beat, it shows. Look at plx then.
+    - A field's tone and weight still don't show.
+    - A look item: on dark, a tooltip over a row lets the row's red text
+      show through its float (96%), as plx's Machines tool shows.
 
 ## v0
 
