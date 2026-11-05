@@ -74,7 +74,8 @@ function parse(argv) {
     else a._.push(v);
   }
   a.theme ??= "dark";
-  a.density ??= "compact";
+  // A gallery's own density by default (plx's is its ui.density's).
+  a.density ??= a.gallery ? "" : "compact";
   a.engine ??= "both";
   a.levels = Number(a.levels ?? 8);
   a.scales = !a.scale || a.scale === "both" ? [1.6, 2] : [Number(a.scale)];
@@ -118,8 +119,8 @@ function storySize(a, name) {
 // The story's document as both engines draw it, with --state forced.
 async function storyDoc(a, name) {
   const theme = THEMES[a.theme];
-  const dir = path.join(a.out, "work", `${theme}-${a.density}`);
-  execFileSync(storiesBin(a), ["-out", dir, "-theme", theme, "-density", a.density, ...(a.width ? ["-width", String(a.width)] : [])]);
+  const dir = path.join(a.out, "work", `${theme}-${a.density || "own"}`);
+  execFileSync(storiesBin(a), ["-out", dir, "-theme", theme, ...(a.density ? ["-density", a.density] : []), ...(a.width ? ["-width", String(a.width)] : [])]);
   const file = path.join(dir, name.replaceAll("/", "-") + ".html");
   if (!a.state) return file;
   if (!a.at) throw new Error("--state needs --at <selector>");
@@ -207,7 +208,7 @@ async function story(a, name) {
   const size = storySize(a, name);
   const cols = Number(a.width ?? size.cols);
   const file = await storyDoc(a, name);
-  const base = [slug(name), a.theme, a.density, cols, ...(a.state ? [slug(a.state + "-" + a.at)] : []), ...(a.crop ? ["crop-" + slug(a.crop)] : [])].join("-");
+  const base = [slug(name), a.theme, a.density || "own", cols, ...(a.state ? [slug(a.state + "-" + a.at)] : []), ...(a.crop ? ["crop-" + slug(a.crop)] : [])].join("-");
   const shots = {};
   fs.mkdirSync(a.out, { recursive: true });
   for (const s of a.scales) {
@@ -366,7 +367,7 @@ async function run(a, name) {
   const rf = await ref(a, a.board);
   const res = [];
   for (const s of a.scales) {
-    const tag = [slug(name), a.theme, a.density, s, ...(a.crop ? [slug(a.crop)] : [])].join("-");
+    const tag = [slug(name), a.theme, a.density || "own", s, ...(a.crop ? [slug(a.crop)] : [])].join("-");
     if (st[s].chromium)
       res.push(await compare({ ...a, trim: true, "label-a": `${name}, Chromium ${s}`, "label-b": `${path.basename(rf[s])}, ${a.select}` }, st[s].chromium, rf[s], `${tag}-vs-board`));
     if (st[s].chromium && st[s].blitz)
