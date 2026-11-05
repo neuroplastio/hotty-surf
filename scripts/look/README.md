@@ -47,7 +47,8 @@ program that speaks the stories binary's `-list` and `-out` (plx's
 gallery of its own surfaces, from made-up data). A third column in its
 `-list` is the rows a surface is placed in, which both engines draw it
 in; `--width` is passed on to it as `-width`, since it draws a surface
-for the cells it is given; and Chromium prefers a light scheme for its
+for the cells it is given; `--density` is passed on only when given, so
+that a gallery draws in its own density by default; and Chromium prefers a light scheme for its
 light theme, a light terminal's. `hotty render` draws on a dark host
 only, so Blitz shows such a surface in its dark roles: compare the light
 theme in Chromium alone.
