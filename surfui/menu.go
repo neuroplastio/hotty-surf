@@ -38,7 +38,8 @@ func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 			if g, ok := mdi.Glyph(it.Icon); ok {
 				icon = Icon(string(g))
 			}
-			row := Item(icon, Text(it.Label).Grow()).Class("u-menu-item").Attr("role", "menuitem")
+			// Its click is a pick (surfrun.Surface.MenuEvent).
+			row := Item(icon, Text(it.Label).Grow()).Class("u-menu-item").Attr("role", "menuitem").On("click", nil)
 			if it.Key != "" {
 				row.Add(Key(it.Key))
 			}

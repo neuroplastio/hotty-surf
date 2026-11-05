@@ -288,7 +288,7 @@ func (o *hosted) send(f surfrun.Frame, took time.Duration) {
 
 // frame writes f to b, in surfrun.Frame's order.
 func (o *hosted) frame(b *strings.Builder, f surfrun.Frame) {
-	surfrun.WriteFrame(b, o.name, f, o.writeList)
+	surfrun.WriteFrame(b, o.name, f, o.writeList, nil)
 }
 
 // writeList writes the open list's part of a frame to b.

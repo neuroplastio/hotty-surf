@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/neuroplastio/hotty-surf/pkg/cells"
 	"github.com/neuroplastio/hotty-surf/surflive"
 	"github.com/neuroplastio/hotty-surf/surfrun"
+	"github.com/neuroplastio/hotty-surf/surfui"
 	"golang.org/x/tools/txtar"
 )
 
@@ -141,4 +143,37 @@ func menuText(m surfrun.Menu, ok bool) string {
 		items[i] = fmt.Sprintf("%s %q %s %s %s", it.ID, it.Label, or(it.Icon), or(it.Key), on)
 	}
 	return m.ID + " [" + strings.Join(items, " | ") + "]"
+}
+
+// The fixtures' menus opt in to the secondary press (SPEC §9) in both
+// modes: the elements TestMenus finds a menu at ask for it in data-on, and
+// the status, which has none, does not. The conformance cases play no
+// secondary press (a host's case plays clicks and keys), so what a press
+// opens is surfrun's own tests'.
+func TestMenusAskForSecondary(t *testing.T) {
+	src, err := fs.ReadFile(Cases, "cases/board.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, _ := File(txtar.Parse(src), "state.json")
+	for _, m := range modes {
+		t.Run(m.name, func(t *testing.T) {
+			b := &Board{}
+			if err := json.Unmarshal(state, b); err != nil {
+				t.Fatal(err)
+			}
+			var heard []string
+			s := surfrun.NewSurface(surflive.New(hear(m.view(b), &heard)), nil)
+			s.Show()
+			for id, want := range map[string]bool{"r.klist.kn1": true, "r.klist.kn2": true, "r.klist": true, "r.khead": true, "r.kstatus": false} {
+				n := s.Index()[id]
+				if n == nil {
+					t.Fatalf("%s is not in the tree", id)
+				}
+				if got := slices.Contains(strings.Fields(surfui.DataOn(n)), "secondary"); got != want {
+					t.Errorf("%s asks for secondary: %v, want %v (%q)", id, got, want, surfui.DataOn(n))
+				}
+			}
+		})
+	}
 }

@@ -116,6 +116,11 @@ type Surface struct {
 	areas     map[string]hotty.Area // the Selects in view, where the host's last view put them
 	hover     bool                  // the view has a tooltip, as the last frame said
 
+	menu     *openMenu             // an element's open menu (ctxmenu.go)
+	menuGone bool                  // a menu that was shown closed: its surface goes
+	hits     map[string]hotty.Area // the elements' cells, as their last click or press said
+	noMenu   bool                  // the host draws no menu yet: the runtime's, until it places one
+
 	// What the next frame sends besides the model's changes.
 	blur     bool
 	focus    string
@@ -126,7 +131,7 @@ type Surface struct {
 
 // Frame is what brings the host up to the model, in this order: Ops as
 // a delta (hotty.Delta), each of Fields as an a=field (hotty.SetField),
-// List's surface, Blur (hotty.Blur), Focus (hotty.Focus), then Reveals
+// List's surface, Menu's surface, Blur (hotty.Blur), Focus (hotty.Focus), then Reveals
 // as a delta. Where no Blur or Focus comes between, Ops and Reveals go
 // as one delta. The zero Frame sends nothing.
 type Frame struct {
@@ -138,6 +143,10 @@ type Frame struct {
 	Fields []Field
 	// List is what changed of a Select's open list: nil for nothing.
 	List *List
+	// Menu is what changed of an element's open menu (a secondary press or
+	// a key opened it): nil for nothing. Like List, it is the host's to
+	// draw.
+	Menu *MenuFrame
 	// Blur takes the keyboard from the surface: an Escape nothing took.
 	Blur bool
 	// Focus is the element to give the keyboard, "" for none: the keys'
@@ -158,16 +167,18 @@ type Frame struct {
 
 // WriteFrame writes f to b as hotty commands for the surface name, in
 // Frame's order: Ops as a delta, each of Fields as an a=field (SPEC
-// §6.4), the list, Blur, Focus, then Reveals as a delta. Where neither
-// Blur nor Focus is set, Ops and Reveals go as one delta. The zero Frame
-// writes nothing.
+// §6.4), the list, the menu, Blur, Focus, then Reveals as a delta. Where
+// neither Blur nor Focus is set, Ops and Reveals go as one delta. The zero
+// Frame writes nothing.
 //
-// The list is the host's to write, because the host places its surface:
-// WriteFrame calls list at the list's place in the order, and only where
-// f.List is set and list is not nil. Use it in a host of its own that
+// The list and the menu are the host's to write, because the host places
+// their surfaces: WriteFrame calls list at the list's place in the order,
+// and only where f.List is set and list is not nil, and menu right after
+// it, where f.Menu is set and menu is not nil (a host that draws no menu
+// passes nil, and CloseMenu where one opens). Use it in a host of its own that
 // writes each Frame (docs/guide.md, "Hosting without surfrun.Runtime");
 // surfrun.Runtime writes its Frames so.
-func WriteFrame(b *strings.Builder, name string, f Frame, list func(b *strings.Builder, l *List)) {
+func WriteFrame(b *strings.Builder, name string, f Frame, list func(b *strings.Builder, l *List), menu func(b *strings.Builder, m *MenuFrame)) {
 	ops, reveals := f.Ops, f.Reveals
 	if !f.Blur && f.Focus == "" {
 		ops, reveals = slices.Concat(ops, reveals), nil
@@ -180,6 +191,9 @@ func WriteFrame(b *strings.Builder, name string, f Frame, list func(b *strings.B
 	}
 	if f.List != nil && list != nil {
 		list(b, f.List)
+	}
+	if f.Menu != nil && menu != nil {
+		menu(b, f.Menu)
 	}
 	if f.Blur {
 		b.WriteString(hotty.Blur(name))
@@ -271,6 +285,10 @@ func (s *Surface) Show() Frame {
 	if s.DropList() {
 		f.List = &List{Closed: true}
 	}
+	if m := s.menu; m != nil && m.tree != nil || s.menuGone {
+		f.Menu = &MenuFrame{Closed: true, At: -1}
+	}
+	s.menu, s.menuGone, s.hits = nil, false, nil
 	s.drag, s.noClick = nil, ""
 	s.render()
 	// The document gives each control its value: what the host has, so
@@ -339,6 +357,7 @@ func (s *Surface) Update() Frame {
 		tree := s.tree()
 		ix := surfui.Resolve(tree, "r")
 		s.markList(ix)
+		s.markMenu(ix)
 		s.markDrop(ix)
 		s.markDragging(ix)
 		if s.Coarse {
@@ -358,6 +377,7 @@ func (s *Surface) Update() Frame {
 	}
 	s.refocused()
 	f.List = s.showList()
+	f.Menu = s.showMenu()
 	f.Blur, f.Focus = s.blur, s.focus
 	s.blur, s.focus = false, ""
 	if restructured {
@@ -387,6 +407,22 @@ func (s *Surface) Event(e hotty.Event) (took, redraw bool) {
 }
 
 func (s *Surface) event(e hotty.Event) bool {
+	if s.menu != nil && closesMenu(e) {
+		// The user went elsewhere: the menu closes, and the event does
+		// what it would have (SDK.md §4.7).
+		s.closeMenu(false)
+	}
+	if e.Area != nil && (e.Kind == hotty.EventClick || e.Kind == hotty.EventPress) {
+		if s.hits == nil {
+			s.hits = map[string]hotty.Area{}
+		}
+		s.hits[e.Target] = *e.Area
+	}
+	if e.Kind == hotty.EventPress && e.Button == 2 {
+		// A secondary press does nothing else (SPEC §9).
+		s.listPress = false
+		return s.secondaryPress(e)
+	}
 	press := s.listPress
 	s.listPress = false
 	if nc := s.noClick; nc != "" {
@@ -420,7 +456,8 @@ func (s *Surface) event(e hotty.Event) bool {
 			// The press on the list took the keyboard: the list has it.
 			return true
 		}
-		if !s.lent {
+		if !s.lent && s.menu == nil {
+			// An open menu has the keyboard (its host gave it), and gives it back.
 			s.focused = "" // lent, it is the element Lend gives the keyboard back to
 		}
 		s.closeList(false)
@@ -492,8 +529,14 @@ func (s *Surface) Key(name string) (took, redraw bool) {
 		s.cancelDrag()
 		return true, true
 	}
+	if s.menu != nil && s.menuKey(name) {
+		return true, s.due
+	}
 	took = s.fieldEnter(name)
 	if s.selectKey(name) || s.cycleKey(name) {
+		return true, s.due
+	}
+	if s.menu == nil && (name == "shift+f10" || name == "context_menu") && s.menuKey(name) {
 		return true, s.due
 	}
 	switch s.bound(name) {
@@ -700,6 +743,7 @@ func (s *Surface) fresh() {
 	s.prev = s.tree()
 	s.index = surfui.Resolve(s.prev, "r")
 	s.markList(s.index)
+	s.markMenu(s.index)
 	s.markDrop(s.index)
 	s.markDragging(s.index)
 	if s.shown {
@@ -809,6 +853,7 @@ func (s *Surface) Lend(lent bool) Frame {
 	s.lent = lent
 	if lent {
 		s.closeList(false)
+		s.closeMenu(false)
 		s.blur, s.focus = true, ""
 		return s.Update()
 	}

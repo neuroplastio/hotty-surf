@@ -974,8 +974,9 @@ sep     = "<sep/>" ;
   where the user asks for it, draws it, and hands back the item picked,
   whose `do` then runs as a click's handler does; a pick of an item
   gone since, a separator, a heading or a disabled one runs nothing (Go:
-  `surfrun.Surface.Menu` and `Pick`). No event of hotty's asks for a
-  menu yet: an element with one asks the host for nothing.
+  `surfrun.Surface.Menu` and `Pick`). An element with a menu that has an
+  item to pick asks the host for the secondary press (hotty SPEC §9) with
+  `secondary` in its `data-on`, so that a host opens the menu on one.
 
 ### Tooltips
 
@@ -1263,7 +1264,8 @@ are.
   `click` where a click handler is on an element that isn't a `button`
   (or an `a`, a `summary`, a button `input`), and on a cycle's parts;
   `input` where an input handler is, and on a text field with a change
-  handler (the runtime keeps what Enter commits). Each once, by a space.
+  handler (the runtime keeps what Enter commits); `secondary` on an
+  element whose menu has an item that can be picked. Each once, by a space.
 - **`data-keys`** is the keys an element gives the program, each
   `key=program`, and those it binds back to an action of its own, each
   once, by a space ([Keys](#keys)):

@@ -25,31 +25,44 @@ func TestWriteFrame(t *testing.T) {
 		}
 		b.WriteString(listOut)
 	}
+	mf := &MenuFrame{}
+	const menuOut = "<menu>"
+	writeMenu := func(b *strings.Builder, got *MenuFrame) {
+		if got != mf {
+			t.Errorf("menu called with %p, want %p", got, mf)
+		}
+		b.WriteString(menuOut)
+	}
 	tests := []struct {
 		name string
 		f    Frame
 		list func(*strings.Builder, *List)
+		menu func(*strings.Builder, *MenuFrame)
 		want string
 	}{
-		{"zero", Frame{}, writeList, ""},
-		{"joined", Frame{Ops: ops, Reveals: reveals}, writeList, hotty.Delta(name, both)},
-		{"reveals only", Frame{Reveals: reveals}, writeList, hotty.Delta(name, reveals)},
-		{"split around focus", Frame{Ops: ops, Focus: "k", Reveals: reveals}, writeList,
+		{"zero", Frame{}, writeList, writeMenu, ""},
+		{"joined", Frame{Ops: ops, Reveals: reveals}, writeList, writeMenu, hotty.Delta(name, both)},
+		{"reveals only", Frame{Reveals: reveals}, writeList, writeMenu, hotty.Delta(name, reveals)},
+		{"split around focus", Frame{Ops: ops, Focus: "k", Reveals: reveals}, writeList, writeMenu,
 			hotty.Delta(name, ops) + hotty.Focus(name, "k") + hotty.Delta(name, reveals)},
-		{"fields", Frame{Fields: fields}, writeList, fieldsOut},
-		{"blur", Frame{Blur: true}, writeList, hotty.Blur(name)},
-		{"blur and focus", Frame{Blur: true, Focus: "k"}, writeList,
+		{"fields", Frame{Fields: fields}, writeList, writeMenu, fieldsOut},
+		{"blur", Frame{Blur: true}, writeList, writeMenu, hotty.Blur(name)},
+		{"blur and focus", Frame{Blur: true, Focus: "k"}, writeList, writeMenu,
 			hotty.Blur(name) + hotty.Focus(name, "k")},
-		{"list in place", Frame{Ops: ops, Fields: fields, List: l, Blur: true, Focus: "k", Reveals: reveals}, writeList,
+		{"list in place", Frame{Ops: ops, Fields: fields, List: l, Blur: true, Focus: "k", Reveals: reveals}, writeList, writeMenu,
 			hotty.Delta(name, ops) + fieldsOut + listOut + hotty.Blur(name) +
 				hotty.Focus(name, "k") + hotty.Delta(name, reveals)},
-		{"no list", Frame{Fields: fields, Blur: true}, writeList, fieldsOut + hotty.Blur(name)},
-		{"nil callback", Frame{Fields: fields, List: l, Blur: true}, nil, fieldsOut + hotty.Blur(name)},
+		{"menu after the list", Frame{Ops: ops, List: l, Menu: mf, Blur: true}, writeList, writeMenu,
+			hotty.Delta(name, ops) + listOut + menuOut + hotty.Blur(name)},
+		{"menu alone", Frame{Menu: mf}, writeList, writeMenu, menuOut},
+		{"nil menu callback", Frame{Menu: mf, Blur: true}, writeList, nil, hotty.Blur(name)},
+		{"no list", Frame{Fields: fields, Blur: true}, writeList, writeMenu, fieldsOut + hotty.Blur(name)},
+		{"nil callback", Frame{Fields: fields, List: l, Blur: true}, nil, writeMenu, fieldsOut + hotty.Blur(name)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var b strings.Builder
-			WriteFrame(&b, name, tt.f, tt.list)
+			WriteFrame(&b, name, tt.f, tt.list, tt.menu)
 			if got := b.String(); got != tt.want {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}

@@ -156,13 +156,11 @@ func dataOn(n *Node) string {
 	if n.drop != DropNone {
 		on = append(on, "drop")
 	}
-	// SECONDARY PRESS: waiting on hotty's spec (hotty 0.7 proposal
-	// V7-01, pending). An element with a menu (MenuOf) will opt in here
-	// to the host's press with the secondary button (a press whose
-	// detail has "button": 2, and the pointer's cell, "c" and "r"), by
-	// its token in data-on, once the spec names it; until then it asks
-	// for nothing, and its host finds the menu itself
-	// (surfrun.Surface.Menu). vault/tasks/board.md, "Context menus".
+	// A menu opts in to the secondary press (SPEC §9), the host's press
+	// with the secondary button, which opens it (surfrun.Surface).
+	if menuPickable(n.menu) {
+		on = appendOnce(on, "secondary")
+	}
 	return strings.Join(on, " ")
 }
 
@@ -475,4 +473,15 @@ func Document(root *Node, sheets ...string) string {
 func StandaloneDocument(root *Node, hostCSS string) string {
 	return `<!doctype html><html><head><meta charset="utf-8"><style>` + hostCSS + `</style><style>` + CSS + `</style></head><body>` +
 		HTML(root) + `</body></html>`
+}
+
+// menuPickable reports whether items hold one that can be picked: not a
+// rule, a heading or a disabled item. A menu with none asks for nothing.
+func menuPickable(items []MenuItem) bool {
+	for _, it := range items {
+		if !it.Sep && !it.Heading && !it.Disabled {
+			return true
+		}
+	}
+	return false
 }

@@ -1113,6 +1113,14 @@ What the host calls, and what it gets back:
   multiplexer whose model is in another process does: a key that is in
   neither, `Key` refuses. They hold after Show, Update, Event, ListEvent,
   Key or Lend, as a Frame does.
+- **`MenuEvent(e)`** is an event of the open menu's surface (an
+  element's context menu, `Frame.Menu`): a click on an item's row picks it
+  and closes the menu, and a blur closes it. **`CloseMenu()`** closes the
+  open menu, picking nothing, and the next Update's `Frame.Menu` says
+  `Closed`: call it when the surface is resized or scrolled, when the
+  pointer leaves it, and when the host goes to another view, since the
+  menu is drawn at a place that no longer holds. A click or press on the
+  main surface closes it by itself, and still does what it would have.
 - **`DropList()`** closes the open list at once and reports whether its
   surface is up, which the host then deletes: when the surface moves or
   goes, or the host answers ENOENT for the list's surface.
@@ -1121,11 +1129,11 @@ What the host calls, and what it gets back:
   element with the keyboard.
 
 A `Frame` goes in its order: `Ops` as a delta, each of `Fields` as an
-`a=field`, the `List`, `Blur`, `Focus`, then `Reveals` as a delta (with
-`Ops`, where no `Blur` or `Focus` comes between).
-`surfrun.WriteFrame(b, name, f, list)` writes it so, with the host's
-`list` func for the `List`, which it calls at the list's place and only
-where `f.List` is set. A `List` is a Select's
+`a=field`, the `List`, the `Menu`, `Blur`, `Focus`, then `Reveals` as a
+delta (with `Ops`, where no `Blur` or `Focus` comes between).
+`surfrun.WriteFrame(b, name, f, list, menu)` writes it so, with the host's
+`list` and `menu` funcs, which it calls at their places and only where
+`f.List` or `f.Menu` is set (nil, for a host that draws no menu). A `List` is a Select's
 list for the host to show in a surface of its own: `Closed` deletes the
 last one; `New` sends `surfui.Document(l.Tree)` and places it, with `Z`
 above the Select's surface and `Press: hotty.On`, so that a press on
@@ -1137,6 +1145,23 @@ list under the anchor, or above it where there is more room there, and
 clips it to its room. A list placed in fewer rows than it wants
 scrolls (`hotty.Scroll`), and the host reveals option `At` after each
 change.
+
+A `Menu` (a `surfrun.MenuFrame`) is an element's open context menu, which
+a secondary press (`secondary` in the element's `data-on`) or `shift+f10`
+and `context_menu` opened, for the host to show in a surface of its own
+as a list is, above the element's with `Press: hotty.On`, and to give
+the keyboard (`hotty.Focus`): `Closed` deletes the last one; `New` sends
+`View.HTML()` and places it, otherwise its `Ops` are a delta (the
+highlighted row). `Point` is the pointer's cell for a press, and
+`View.Place(col, row, cols, rows)` puts the menu under it and to its
+right, flipped where the grid ends; `Area` is the element's cells for a
+key, under which the host puts it; with neither, the host places it where
+it likes. `View.Cols` and `Rows` are its cells, `View.Cells` what it
+draws in the cells, `At` the item the keys are on (-1 for none, as the
+pointer opens it). The surface keeps its keys (`Key` takes them while it is
+open, whatever surface has the keyboard) and its picks (`MenuEvent`);
+the host sends it the menu surface's click and blur events, and calls
+`CloseMenu` when the menu should not outlast its place.
 
 ### Tooltips
 

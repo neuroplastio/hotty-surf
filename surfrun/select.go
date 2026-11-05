@@ -69,6 +69,7 @@ func (s *Surface) openList(n *surfui.Node, area *hotty.Area) {
 		area = &a
 	}
 	s.closeList(false)
+	s.closeMenu(false)
 	s.list = &selectList{id: surfui.IDOf(n), value: value, options: options, at: max(slices.Index(options, value), 0), area: area}
 	s.due = true
 }

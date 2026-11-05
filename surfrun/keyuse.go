@@ -69,12 +69,20 @@ func (s *Surface) Keys() ([]KeyUse, Chars) {
 			keys = append(keys, KeyUse{Name: "enter", Own: true}) // fieldEnter
 		}
 	}
-	if s.shown && s.list != nil {
+	if s.shown && s.menu != nil {
+		own(menuKeys)
+		chars = CharsPick
+	} else if s.shown && s.list != nil {
 		own(listKeys)
 		chars = CharsPick
 	} else if s.focusedSelect() != nil {
 		own(selectKeys)
 		chars = CharsPick
+	}
+	if s.shown && s.menu == nil && !s.noMenu {
+		if _, ok := s.Menu(MenuAt{Focus: true}); ok {
+			own([]string{"shift+f10", "context_menu"}) // menuKey
+		}
 	}
 	if s.focusedCycle() != nil {
 		own(cycleKeys)

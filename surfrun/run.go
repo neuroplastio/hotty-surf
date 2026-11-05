@@ -300,6 +300,7 @@ func (r *Runtime) Swap(m Model, tick Action, every time.Duration, scroll hotty.A
 // surfaceOf is m's surface, with the run's options, attached to r.
 func (r *Runtime) surfaceOf(m Model) *Surface {
 	s := NewSurface(m, r)
+	s.noMenu = true // 5b: the runtime places the menu
 	s.Scroll, s.Coarse, s.Density, s.Theme, s.KeyStyle = r.opts.Scroll, r.opts.Coarse, r.opts.Density, r.opts.Theme, r.opts.KeyStyle
 	s.Unhandled = r.opts.Unhandled
 	s.Palette, s.Warn = r.opts.Palette, r.warn
@@ -727,7 +728,7 @@ func (r *Runtime) update() {
 
 // frame writes f to b, in Frame's order.
 func (r *Runtime) frame(b *strings.Builder, f Frame) {
-	WriteFrame(b, r.surface, f, r.list)
+	WriteFrame(b, r.surface, f, r.list, nil)
 }
 
 func (r *Runtime) event(ev hottyterm.Event) {

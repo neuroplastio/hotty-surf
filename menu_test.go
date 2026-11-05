@@ -71,7 +71,8 @@ func (m *renderOf) Do(act surfui.Action, ev surfrun.Event) {
 }
 
 // A <menu> draws nothing: the document and the cells are those of the
-// same template without it.
+// same template without it, but for the `secondary` its elements ask the
+// host for in data-on (SPEC §9).
 func TestMenuNotDrawn(t *testing.T) {
 	draw := func(src string) (string, string) {
 		m := &renderOf{set: menuSet(t, src), b: newBoard()}
@@ -82,11 +83,51 @@ func TestMenuNotDrawn(t *testing.T) {
 	}
 	hm, cm := draw(menuRows)
 	hp, cp := draw(plainRows)
+	hm = strings.NewReplacer(` data-on="secondary"`, ``, ` secondary"`, `"`).Replace(hm)
 	if hm != hp {
 		t.Errorf("HTML with a menu:\n%s\nwithout:\n%s", hm, hp)
 	}
 	if cm != cp {
 		t.Errorf("cells with a menu:\n%s\nwithout:\n%s", cm, cp)
+	}
+}
+
+// An element with a menu asks the host for the secondary press in its
+// data-on (SPEC §9): a :each row whose own click is kept, a button, a
+// field. Without a menu nothing asks. A menu with no item that can be
+// picked asks for nothing.
+func TestMenuAsksForSecondary(t *testing.T) {
+	on := func(src string) map[string]string {
+		m := &renderOf{set: menuSet(t, src), b: newBoard()}
+		s := surfrun.NewSurface(m, nil)
+		s.Show()
+		out := map[string]string{}
+		for id, n := range s.Index() {
+			out[id] = surfui.DataOn(n)
+		}
+		return out
+	}
+	got := on(menuRows)
+	for id, want := range map[string]string{
+		"r.kn1": "click secondary", "r.kn2": "click secondary", "r.kn1.kb": "secondary", "r.kf": "secondary", "r": "",
+	} {
+		if got[id] != want {
+			t.Errorf("%s data-on %q, want %q", id, got[id], want)
+		}
+	}
+	for id, d := range on(plainRows) {
+		if strings.Contains(d, "secondary") {
+			t.Errorf("%s asks for the secondary press with no menu: %q", id, d)
+		}
+	}
+	none := menuSet(t, `<surface><stack><menu><action :disabled="true" do="open('x')">X</action><heading>Only</heading><sep/></menu>x</stack></surface>`)
+	m := &renderOf{set: none, b: newBoard()}
+	s := surfrun.NewSurface(m, nil)
+	s.Show()
+	for id, n := range s.Index() {
+		if strings.Contains(surfui.DataOn(n), "secondary") {
+			t.Errorf("%s asks with nothing to pick: %q", id, surfui.DataOn(n))
+		}
 	}
 }
 

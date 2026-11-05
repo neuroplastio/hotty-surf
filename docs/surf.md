@@ -521,7 +521,21 @@ and a `:if` chain goes on past it.
   `<sep/>`;
   `:each` doesn't: each item's id is its place in the `<menu>`, from 0,
   so an item left out moves no other's.
-- **The host asks the surface for the menu** where the user asks for it,
+- **The menu opens itself.** An element with a menu asks the host for
+  the secondary press (`secondary` in its `data-on`, hotty SPEC §9), and
+  `surfrun.Surface` opens the innermost menu on one, at the pointer's
+  cell, and on `shift+f10` and `context_menu` under the focused element,
+  at the area its last click or press said. The program declares the menu
+  and nothing more: the surface keeps the rest, as a native menu does. It
+  hands its host the menu to draw (`Frame.Menu`); Up and Down skip rules,
+  headings and disabled items, Home and End go to the ends, a letter goes
+  to the next item that starts with it, Enter picks and Escape closes
+  (no blur), and any other key closes it and goes on. Opened by the
+  pointer, no item is highlighted until a key moves. A click on an item
+  picks it; a click or press elsewhere closes the menu first and does what
+  it would have; one menu is open at a time, and it closes with its
+  element.
+- **A host that asks for the menu itself** does so with
   `surfrun.Surface.Menu`, by an element's id, a cell's
   (`cells.Renderer.At`) or the focus: the innermost element's with a
   menu. It shows them in surf's look, `Surface.MenuView`: a surface of
