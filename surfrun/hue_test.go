@@ -153,7 +153,7 @@ func TestPaletteWarnsOnce(t *testing.T) {
 				"  --u-hue-faint: #7a8499;\n  --u-hue-faint-ink: var(--u-ink);\n",
 				"    --u-hue-faint: #b4321f;\n    --u-hue-faint-ink: var(--u-hue-faint);\n",
 				".u-hue-faint { color: var(--u-hue-faint-ink); }",
-				".u-dot.u-hue-faint { color: var(--u-hue-faint); }",
+				".u-dot.u-hue-faint { --u-dw: 8px; color: var(--u-hue-faint); }",
 				".u-hue-coral { color: var(--u-hue-coral); }",
 			} {
 				if !strings.Contains(css(), c) {

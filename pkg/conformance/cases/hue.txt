@@ -58,8 +58,11 @@ hits
   --u-hue-teal: #0f766e;
 }
 .u-hue-coral { color: var(--u-hue-coral); }
+.u-dot.u-hue-coral { --u-dw: 8px; }
 .u-hue-plum { color: var(--u-hue-plum); }
+.u-dot.u-hue-plum { --u-dw: 8px; }
 .u-hue-teal { color: var(--u-hue-teal); }
+.u-dot.u-hue-teal { --u-dw: 8px; }
 -- 1.event --
 click r.kcy
 -- 1.log --
