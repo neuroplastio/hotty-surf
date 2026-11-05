@@ -184,6 +184,9 @@ var Attrs = []Attr{
 	{Name: "reveal", Type: TypeBool, Doc: "shown only while its item is pointed at, selected or focused", Func: "ModReveal"},
 	{Name: "focusable", Type: TypeBool, Doc: "takes the keyboard on a click and by Tab", Func: "ModFocusable"},
 	{Name: "bare", Type: TypeBool, Doc: "a field or a button with no border and no fill", Func: "ModBare"},
+	{Name: "pill", Type: TypeBool, Doc: "a button on a bar: a pill, no fill at rest; its icon alone, a circle", Tags: []string{"button"}, Func: "ModPill"},
+	{Name: "raised", Type: TypeBool, Doc: "a pill on the selected fill: a bar's picker", Tags: []string{"button"}, Func: "ModRaised"},
+	{Name: "current", Type: TypeBool, Doc: "a pill whose thing holds the keyboard: the accent's soft fill", Tags: []string{"button"}, Func: "ModCurrent"},
 	{Name: "chrome", Type: TypeBool, Doc: "a sidebar's ground: a darker fill with a hairline at its end", Func: "ModChrome"},
 	{Name: "card", Type: TypeBool, Doc: "a group's panel: a fill a step lighter than the page, its rows split by rules", Tags: []string{"box"}, Func: "ModCard"},
 	{Name: "ring", Type: TypeBool, Doc: "a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven", Tags: []string{"dot"}, Func: "ModRing"},
@@ -389,6 +392,8 @@ func ModReveal(n *surfui.Node, v bool)    { flag(n, v, n.Reveal) }
 func ModFocusable(n *surfui.Node, v bool) { flag(n, v, n.Focusable) }
 func ModBare(n *surfui.Node, v bool)      { flag(n, v, n.Bare) }
 func ModChrome(n *surfui.Node, v bool)    { flag(n, v, n.Chrome) }
+func ModPill(n *surfui.Node, v bool)      { flag(n, v, n.Pill) }
+func ModRaised(n *surfui.Node, v bool)    { flag(n, v, n.Raised) }
 func ModCard(n *surfui.Node, v bool)      { flag(n, v, n.Card) }
 func ModRing(n *surfui.Node, v bool)      { flag(n, v, n.Ring) }
 func ModTarget(n *surfui.Node, v bool)    { flag(n, v, n.Target) }
@@ -423,6 +428,7 @@ func ModDrop(n *surfui.Node, v string) error {
 func ModSelected(n *surfui.Node, v bool) { n.Selected(v) }
 func ModChecked(n *surfui.Node, v bool)  { n.Checked(v) }
 func ModDisabled(n *surfui.Node, v bool) { n.Disabled(v) }
+func ModCurrent(n *surfui.Node, v bool)  { n.Current(v) }
 func ModInvalid(n *surfui.Node, v bool)  { n.Invalid(v) }
 
 // The sizes, in the floor's steps; the floor clamps them.

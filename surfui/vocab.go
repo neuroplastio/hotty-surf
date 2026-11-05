@@ -203,14 +203,15 @@ func Button(label string) *Node {
 // before it, or after it where after is set. On a host the icon sits in
 // its face beside the label, centred on the line; in the cells it is its
 // glyph, a space, then the label. With no label it is the icon alone:
-// give it a Label, which a host reads out.
+// give it a Label, which a host reads out. On a Pill an icon after its
+// label is a caret, smaller and muted: a picker's.
 func IconButton(icon *Node, label string, after bool) *Node {
 	n := El("button").Class("u-btn", "u-btn-icon").Attr("type", "button")
 	switch {
 	case label == "":
 		n.Add(icon)
 	case after:
-		n.Add(Str(label), icon)
+		n.Add(Str(label), icon.Class("u-after"))
 	default:
 		n.Add(icon, Str(label))
 	}
@@ -642,6 +643,35 @@ func (n *Node) Focusable() *Node { return n.Attr("tabindex", "0") }
 // palette's query, which shows only the caret, or a settings row's
 // Reset.
 func (n *Node) Bare() *Node { return n.Class("u-bare") }
+
+// Pill makes a Button a chrome control, a control on a bar: a pill with
+// no fill at rest, its label muted, 28px tall (22 Small) in Compact and
+// Roomy, a row in Dense. The pointer over it shows the hover fill, and
+// Selected (what it opens shows) the selected one; Current (what it
+// opens holds the keyboard) the accent's soft fill and the accent's
+// ink; the keyboard on it the focus-line. A Button of its icon alone
+// (IconButton with no label) is a circle, an icon button: a stripe's
+// or a header's action. The cells draw it as a Button.
+func (n *Node) Pill() *Node {
+	if hasClassOf(n, "u-btn-icon") && !hasText(n) {
+		return n.Class("u-iconbtn")
+	}
+	return n.Class("u-pill")
+}
+
+// Raised lifts a Pill onto the selected fill, its label in the ink: a
+// bar's picker, which names what the bar is on.
+func (n *Node) Raised() *Node { return n.Class("u-raised") }
+
+// Current marks a Pill whose thing holds the keyboard (a tab whose
+// stack has it, a stripe's tool that has it): the accent's soft fill
+// and the accent's ink.
+func (n *Node) Current(on bool) *Node {
+	if on {
+		n.Class("is-cur").Attr("aria-current", "true")
+	}
+	return n
+}
 
 // Chrome gives n a sidebar's ground, as plx's chrome: a fill darker than
 // the surface's, and a hairline at its end. Cells draw no ground.
