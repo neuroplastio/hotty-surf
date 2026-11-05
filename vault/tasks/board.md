@@ -468,8 +468,9 @@ The order is the maintainer's, via gov (2026-10-30):
     icon, label, keys, a heading, rules, `danger`), shown by
     `Surface.MenuView` for an element's menu and `surfrun.OpenMenu`
     for a host program's at a point (`MenuView.Place`, `.Item`);
-    `<action danger>`; story menu/shown. Left: a heading in a
-    template's `<menu>` (Go's `MenuItem.Heading` only).
+    `<action danger>`; story menu/shown. A heading in a template's
+    `<menu>` since: `<heading>` among its items, in both modes and the
+    conformance fixtures (note-row.surf).
   - [x] H6: one bold (`.u-bold` and a Dense heading 600, not 700), and
     the radius table as tokens (`--u-r-xs` … `--u-r-xl`, `--u-r-pill`).
   - [x] H7 (no open question): `--u-warn-soft` and `--u-error-soft`;

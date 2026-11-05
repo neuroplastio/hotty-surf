@@ -230,11 +230,13 @@ What fails a load:
   and `scroll`, an attribute it doesn't take, a bound `do` or `scroll`, a
   `scroll` that is no scroll action, children, or no widget around it;
 - **context menus:** a `<menu>` outside a widget, a second one, one
-  with attributes, with no item, or with anything but `<action>`s and
-  `<sep/>`s; an `<action>` or a `<sep/>` outside a `<menu>`, or with
-  `:each`; an `<action>` with no `do` or no label, an attribute it
-  doesn't take, a bound `do`, an element in it, or a literal `icon`
-  that is no MDI name; a `<sep/>` with attributes or children;
+  with attributes, with no item, or with anything but `<action>`s,
+  `<heading>`s and `<sep/>`s; an `<action>` or a `<sep/>` outside a
+  `<menu>`, or an item with `:each`; an `<action>` with no `do` or no
+  label, an attribute it doesn't take, a bound `do`, an element in it,
+  or a literal `icon` that is no MDI name; a menu's `<heading>` with an
+  attribute, an element in it or no text; a `<sep/>` with attributes or
+  children;
 - **tooltips:** a `<title>` outside a widget, a second one, one beside
   a `title` or a `:title`, one with attributes or with nothing in it;
   anything in one that acts ([Tooltips](#tooltips)); a `section` with
@@ -942,24 +944,28 @@ widget it is drawn in.
 ### Context menus
 
 ```ebnf
-menu   = "<menu>", { action | sep }, "</menu>" ;
-action = "<action", { attr }, ">", text, "</action>" ;
-sep    = "<sep/>" ;
+menu    = "<menu>", { action | heading | sep }, "</menu>" ;
+action  = "<action", { attr }, ">", text, "</action>" ;
+heading = "<heading", { attr }, ">", text, "</heading>" ;
+sep     = "<sep/>" ;
 ```
 
 - A widget's child `<menu>` is its context menu: at most one, never
   drawn (no element, no cell, no room), and no break in a `:if` chain
-  of its siblings. A `<menu>` takes no attributes, holds `<action>`s and
-  `<sep/>`s only, and at least one; it goes in a widget only, not at a
+  of its siblings. A `<menu>` takes no attributes, holds `<action>`s,
+  `<heading>`s and `<sep/>`s only, and at least one; it goes in a widget only, not at a
   root, in a partial's or a component's tag, or in a `<slot>`.
 - An `<action>` has a `do`, a handler as a `<bind>`'s is (no `$value` or
   `$event`), evaluated at render in the scope of its widget; and a label,
   its text, with `{{ }}`. It takes `icon` (one of MDI's names, as for an `<icon>`: a literal is
   checked at load against the table, a bound one at render, where one it refuses is left
   out with a render error), `key` (a key's name shown beside the label,
-  any value's text bound; it binds nothing) and `disabled`, each bound
-  or literal, and `:if`, `:else-if` and `:else`. A `<sep/>` takes only
-  those three directives. Neither takes `:each`.
+  any value's text bound; it binds nothing), `disabled` and `danger`
+  (drawn in the error's colour), each bound or literal, and `:if`,
+  `:else-if` and `:else`. A `<heading>` in a `<menu>` is a caption over
+  the items after it: its text, with `{{ }}`, and only those three
+  directives; a `<heading>` anywhere else is the widget. A `<sep/>` takes
+  only the directives. None takes `:each`.
 - Each item's id is its place among its `<menu>`'s items in the source,
   from 0, a `:if` chain's branches each their own; a menu's id is its
   widget's ([Ids](#ids)). An action whose `do`'s arguments fail at
@@ -967,7 +973,7 @@ sep    = "<sep/>" ;
 - The host finds the menu of the innermost element with one around
   where the user asks for it, draws it, and hands back the item picked,
   whose `do` then runs as a click's handler does; a pick of an item
-  gone since, a separator or a disabled one runs nothing (Go:
+  gone since, a separator, a heading or a disabled one runs nothing (Go:
   `surfrun.Surface.Menu` and `Pick`). No event of hotty's asks for a
   menu yet: an element with one asks the host for nothing.
 

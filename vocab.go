@@ -335,6 +335,12 @@ func NewFace(icon, value, unit string) (*surfui.Node, error) {
 	return surfui.Widget(g, value, unit), err
 }
 
+// MenuHeading is a menu's <heading>, a caption over the items after it,
+// its id its place among its menu's items: a pick of it runs nothing.
+func MenuHeading(ord int, label string) surfui.MenuItem {
+	return surfui.MenuItem{ID: strconv.Itoa(ord), Label: label, Heading: true}
+}
+
 // MenuSep is a menu's <sep/>, its id its place among its menu's items.
 func MenuSep(ord int) surfui.MenuItem {
 	return surfui.MenuItem{ID: strconv.Itoa(ord), Sep: true}

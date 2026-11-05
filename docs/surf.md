@@ -485,6 +485,7 @@ and a `:if` chain goes on past it.
 <stack :each="r in rows" :key="r.key" @click="open(r.key)">
   {{ r.title }}
   <menu>
+    <heading>{{ r.title }}</heading>
     <action icon="content-copy" do="copy(r.key)">Copy text</action>
     <sep/>
     <action :disabled="!r.live" danger do="dismiss(r.key)">Dismiss</action>
@@ -492,7 +493,8 @@ and a `:if` chain goes on past it.
 </stack>
 ```
 
-- **A widget has one `<menu>`,** of `<action>`s and `<sep/>`s only. A
+- **A widget has one `<menu>`,** of `<action>`s, `<heading>`s and
+  `<sep/>`s only. A
   `<menu>` takes no attributes, and goes in no partial's or
   component's tag: put it on a widget of their template.
 - **An `<action>`'s text is its label,** with `{{ }}`; `do` is the
@@ -504,7 +506,12 @@ and a `:if` chain goes on past it.
   `:disabled` greys the item, and a pick of it runs nothing; `danger`
   draws an item that destroys in the error's colour. `:icon`, `:key`
   and `:danger` bind too.
-- **`:if`, `:else-if` and `:else`** go on `<action>` and `<sep/>`;
+- **A `<heading>` in a menu** is a caption over the items after it, its
+  text with `{{ }}`: a group's name, as "Move to". It takes no
+  attributes, and a pick of it runs nothing. Anywhere else `<heading>` is
+  the widget.
+- **`:if`, `:else-if` and `:else`** go on `<action>`, `<heading>` and
+  `<sep/>`;
   `:each` doesn't: each item's id is its place in the `<menu>`, from 0,
   so an item left out moves no other's.
 - **The host asks the surface for the menu** where the user asks for it,

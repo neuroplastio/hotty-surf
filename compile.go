@@ -864,6 +864,7 @@ const (
 	kAction             // <action>: an item of a menu
 	kSep                // <sep/>: a menu's separator
 	kTip                // <title>: a widget's tooltip, never drawn
+	kMenuHead           // <heading> in a <menu>: a caption over the items after it
 )
 
 type elem struct {
@@ -1047,7 +1048,7 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return s.bind(n)
 	case n.Tag == "embed":
 		return s.embedEl(n)
-	case n.Tag == "menu", n.Tag == "action", n.Tag == "sep":
+	case n.Tag == "menu", n.Tag == "action", n.Tag == "sep", n.Tag == "heading" && s.inMenu:
 		return s.menuPart(n)
 	case n.Tag == "title":
 		s.c.fail(s.t.file, n.Pos, "<title> goes in a widget, whose tooltip it is")
@@ -1528,10 +1529,10 @@ func (s *scope) menuEl(n *markup.Node) *elem {
 	for _, k := range n.Kids {
 		switch {
 		case k.Kind == markup.Text:
-			s.c.fail(s.t.file, k.Pos, "<menu> holds <action>s and <sep/>s, not text")
+			s.c.fail(s.t.file, k.Pos, "<menu> holds <action>s, <heading>s and <sep/>s, not text")
 			continue
-		case k.Tag != "action" && k.Tag != "sep":
-			s.c.fail(s.t.file, k.Pos, "<menu> holds <action>s and <sep/>s, not <%s>", k.Tag)
+		case k.Tag != "action" && k.Tag != "sep" && k.Tag != "heading":
+			s.c.fail(s.t.file, k.Pos, "<menu> holds <action>s, <heading>s and <sep/>s, not <%s>", k.Tag)
 			continue
 		}
 		if a, ok := k.Attr(":each"); ok {
@@ -1560,8 +1561,9 @@ func (s *scope) menuEl(n *markup.Node) *elem {
 	return &elem{kind: kMenu, pos: n.Pos, kids: kids}
 }
 
-// menuPart compiles a <menu>, an <action> or a <sep> where n is: an item
-// in a <menu>'s, and none of them anywhere else.
+// menuPart compiles a <menu>, an <action>, a <sep> or a menu's <heading>
+// where n is: an item in a <menu>'s, and none of them anywhere else (a
+// <heading> anywhere else is the widget).
 //
 //go:noinline
 func (s *scope) menuPart(n *markup.Node) *elem {
@@ -1574,8 +1576,38 @@ func (s *scope) menuPart(n *markup.Node) *elem {
 		return nil
 	case n.Tag == "sep":
 		return s.sepEl(n)
+	case n.Tag == "heading":
+		return s.menuHeadEl(n)
 	}
 	return s.actionEl(n)
+}
+
+// menuHeadEl compiles a menu's <heading>, a caption over the items after
+// it: its text, with {{ }}, and no attribute but :if, :else-if and
+// :else.
+//
+//go:noinline
+func (s *scope) menuHeadEl(n *markup.Node) *elem {
+	e := &elem{kind: kMenuHead, pos: n.Pos, ord: s.c.ords[n]}
+	for _, a := range n.Attrs {
+		if !isCond(a.Name) {
+			s.c.fail(s.t.file, a.Pos, "a menu's <heading> takes nothing, not %s", a.Name)
+		}
+	}
+	for _, k := range n.Kids {
+		if k.Kind != markup.Text {
+			s.c.fail(s.t.file, k.Pos, "a menu's <heading> is text, not <%s>", k.Tag)
+			continue
+		}
+		e.text = append(e.text, s.parts(k.Parts)...)
+	}
+	if len(n.Kids) == 0 {
+		s.c.fail(s.t.file, n.Pos, "a menu's <heading> has its text: <heading>Move to</heading>")
+	}
+	if len(e.text) == 0 {
+		return nil
+	}
+	return e
 }
 
 // sepEl compiles a <sep/>, which takes nothing.
