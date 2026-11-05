@@ -416,6 +416,8 @@ The order is the maintainer's, via gov (2026-10-30):
   - [x] H3: the keyboard's row (a focused list's selection) is
     `--u-accent-soft` with its 2px marker, no hairline, in every
     list; story list/states.
+  - [x] H4: the segmented control, `segmented` on a row of buttons
+    (surfui `Segmented`); story segmented/states.
 
 ## v0
 

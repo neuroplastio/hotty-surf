@@ -114,6 +114,7 @@ var canonAttrs = map[string]string{
 	"target/dot":        `<dot target/>`,
 	"pulse/dot":         `<dot pulse/>`,
 	"search/row":        `<row search><field bare/></row>`,
+	"segmented/row":     `<row segmented><button selected>All</button><button>Errors</button></row>`,
 	"nav/list":          `<list nav/>`,
 	"entries/list":      `<list entries><item/></list>`,
 	"scale":             `<box scale="80"/>`,

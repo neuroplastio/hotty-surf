@@ -358,6 +358,30 @@ var All = []Story{
 			surfui.Row(act(mdSplitVertical, "Split right"), act(mdSplitHoriz, "Split down"),
 				act(mdArrowExpand, "Zoom").Current(true), Force(act(mdClose, "Close"), "hover"))).Gap(4)
 	}},
+	{"segmented/states", 80, func() *surfui.Node {
+		// A scope and a filter of three values each, as the board's: the
+		// selected one raised, the pointer on one, the keyboard on one;
+		// beside them a switch off, on and focused, the board's row.
+		seg := func(sel int, hover, focus int, names ...string) *surfui.Node {
+			var kids []*surfui.Node
+			for i, s := range names {
+				b := surfui.Button(s).Selected(i == sel)
+				switch i {
+				case hover:
+					b = Force(b, "hover")
+				case focus:
+					b = Force(b, "focus")
+				}
+				kids = append(kids, b)
+			}
+			return surfui.Row(kids...).Segmented()
+		}
+		return surfui.Stack(
+			surfui.Row(seg(0, 2, -1, "Workspace", "Machine", "All"), seg(0, -1, -1, "All", "Errors", "Agents"),
+				surfui.Switch(false), surfui.Switch(true), Force(surfui.Switch(false), "focus")).Gap(5),
+			surfui.Row(seg(1, -1, 2, "Workspace", "Machine", "All")),
+		).Gap(1)
+	}},
 	{"icon/svg", 50, func() *surfui.Node {
 		// An SVG icon where a glyph would be: beside an item's label, the
 		// search row's, at the icon's size and in its colour, the ink where

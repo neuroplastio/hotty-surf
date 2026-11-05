@@ -681,6 +681,13 @@ func (n *Node) Card() *Node { return n.Class("u-card") }
 // pointer over it and the keyboard in its field. Cells draw the row.
 func (n *Node) Search() *Node { return n.Class("u-search") }
 
+// Segmented draws a Row of Buttons as one control, a scope or a filter
+// of two to four values: a sunk pill holding them, the Selected one
+// raised on the selected fill with a hairline, the others muted. Each
+// Button keeps its own OnClick, and the keyboard reaches each by Tab.
+// Past four values, a Select. The cells draw the row of buttons.
+func (n *Node) Segmented() *Node { return n.Class("u-seg") }
+
 // Nav makes a List a sidebar's: its Items muted but the selected one
 // and the one under the pointer, with more air than a List's on a host.
 // A Nav List is Focusable; bind its keys on it.

@@ -311,6 +311,7 @@ and Chromium 153. Each case was checked in its gate sheet, and in a
 | pill/states (Compact and Roomy: 15–23) | A small pill's label (12.5px in 22px) sits a CSS px low, and a focused pill's focus-line has gaps where it bends | both | The text's place, and the hairline on a round end, as pill/icon | Cosmetic |
 | list/states (Compact 1.6×: 23–323, 2×: 52–54; Roomy 1.6×: 19–23) | A selected row's hairline has an edge a device row off; the rows' text sits low | both | The inset hairline and the text's place ([above](#the-look-2026-10-31)). H3's keyboard row, its soft fill and marker, draws the same | Cosmetic |
 | list/states (Dense 1.6×: 260–313) | Dense text and the paper hairline under the surface, a few px | 1.6× | The `100vh` hairline ([above](#over-the-threshold-30-of-132-cases)) and rounding | Cosmetic |
+| segmented/states (Compact and Roomy: 27–320) | The buttons' text (12.5px in 24px) sits a CSS px low; the selected one's hairline at 1.6×. The pill, its fill, the raised button and the switches are where Chromium draws them | both | The text's place and the inset hairline ([above](#the-look-2026-10-31)) | Cosmetic |
 | pill/icon (paper Dense 1.6×: 504) | The hairline under the surface | 1.6× | The `100vh` hairline ([above](#over-the-threshold-30-of-132-cases)) | Cosmetic, at a document's edge only |
 
 ## Known, not hit by the stories

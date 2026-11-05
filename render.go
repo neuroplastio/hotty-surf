@@ -720,6 +720,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModPulse(n, v)
 	case "search":
 		ModSearch(n, v)
+	case "segmented":
+		ModSegmented(n, v)
 	case "nav":
 		ModNav(n, v)
 	case "entries":
