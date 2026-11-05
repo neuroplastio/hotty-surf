@@ -1,6 +1,9 @@
 package surfui
 
-import "strconv"
+import (
+	"slices"
+	"strconv"
+)
 
 // A tool's count (Q11's lean names it "count", leaving "badge" to a
 // pane's corner marks): what a tool puts on its own button while the
@@ -29,4 +32,14 @@ func (n *Node) WithCount(c *Node) *Node {
 		return n
 	}
 	return n.Class("u-has-count").Add(c)
+}
+
+// CountOf is the count WithCount put on n, nil for none.
+func CountOf(n *Node) *Node {
+	for _, k := range n.kids {
+		if slices.Contains(k.class, "u-count") {
+			return k
+		}
+	}
+	return nil
 }
