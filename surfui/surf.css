@@ -143,6 +143,20 @@
 }
 .u-surface * { box-sizing: border-box; }
 
+/* The radii, by elevation, and the pill: a key cap and a badge (xs), a
+   row, a field, a button and a tip (sm), a menu and a query (md), a
+   card (lg), a dialog (xl), and a chrome control half its height
+   (pill). Nothing else: a rule's radius is one of these. --u-r is a
+   row's and a control's in a density, sm but in Dense, where it is xs. */
+.u-surface {
+  --u-r-xs: 4px;
+  --u-r-sm: 6px;
+  --u-r-md: 8px;
+  --u-r-lg: 10px;
+  --u-r-xl: 12px;
+  --u-r-pill: 999px;
+}
+
 /* Focus is never a ring: not round a surface, a pane, a scroll area or a
    list as a whole, nor round a control, which shows it as its
    focus-line. The host's default sheet rings what is :focus-visible
@@ -168,8 +182,8 @@
   --u-ny: 0px;
   --u-ig: 0px;
   --u-ctl: var(--hotty-cell-h);
-  --u-radius: 4px;
-  --u-r: 4px;
+  --u-radius: var(--u-r-xs);
+  --u-r: var(--u-r-xs);
   font-family: var(--hotty-font);
   line-height: var(--hotty-cell-h);
 }
@@ -183,8 +197,8 @@
   --u-ny: 6px;
   --u-ig: 2px;
   --u-ctl: 28px;
-  --u-radius: 4px;
-  --u-r: 6px;
+  --u-radius: var(--u-r-xs);
+  --u-r: var(--u-r-sm);
   font-family: "IBM Plex Sans", Inter, "Noto Sans", system-ui, sans-serif;
   font-size: 14px;
   line-height: var(--hotty-cell-h);
@@ -199,8 +213,8 @@
   --u-ny: 6px;
   --u-ig: 2px;
   --u-ctl: 32px;
-  --u-radius: 4px;
-  --u-r: 6px;
+  --u-radius: var(--u-r-xs);
+  --u-r: var(--u-r-sm);
   font-family: "IBM Plex Sans", Inter, "Noto Sans", system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
@@ -257,11 +271,11 @@
 /* A Line that wraps is a paragraph: its runs wrap at their spaces too,
    and its keys sit in its lines whole. */
 .u-line.u-wrap > .u-text { white-space: normal; }
-.u-bold { font-weight: 700; }
+.u-bold { font-weight: 600; }
 .u-semi { font-weight: 600; }
 .u-compact .u-small { font-size: 12.5px; }
 .u-roomy .u-small { font-size: 13px; }
-.u-heading { font-weight: 700; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.u-heading { font-weight: 600; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .u-compact .u-heading { font-size: 15px; font-weight: 600; }
 .u-roomy .u-heading { font-size: 17px; font-weight: 600; line-height: var(--u-row); }
 .u-caption { color: var(--u-dim); }
@@ -472,7 +486,7 @@
   width: 28px;
   height: 16px;
   padding: 0 2px;
-  border-radius: 999px;
+  border-radius: var(--u-r-pill);
   background: var(--u-input);
 }
 .u-dense .u-switch { width: calc(3 * var(--u-cw)); }
@@ -503,8 +517,8 @@
   background: var(--u-field);
   box-shadow: inset 0 0 0 1px var(--u-input);
 }
-.u-compact .u-query { height: 32px; border-radius: 8px; }
-.u-roomy .u-query { height: 36px; border-radius: 8px; }
+.u-compact .u-query { height: 32px; border-radius: var(--u-r-md); }
+.u-roomy .u-query { height: 36px; border-radius: var(--u-r-md); }
 
 /* The pointer over a control shows its hover-line (a button also steps
    up a fill), the keyboard on it its focus-line. */
@@ -545,7 +559,7 @@
   align-items: center;
   justify-content: center;
   column-gap: var(--u-gx);
-  border-radius: 999px;
+  border-radius: var(--u-r-pill);
   color: var(--u-muted);
   background: transparent;
   box-shadow: none;
@@ -579,14 +593,14 @@
   flex: 0 0 auto;
   gap: 2px;
   padding: 2px;
-  border-radius: 999px;
+  border-radius: var(--u-r-pill);
   background: var(--u-field);
   box-shadow: inset 0 0 0 1px var(--u-border);
 }
 .u-dense .u-row.u-seg { padding: 0; }
 .u-row.u-seg > .u-btn {
   padding: 0 var(--u-px);
-  border-radius: 999px;
+  border-radius: var(--u-r-pill);
   color: var(--u-muted);
   background: transparent;
   box-shadow: none;
@@ -674,7 +688,7 @@
   flex-direction: column;
   min-width: 0;
   padding: calc(0.5 * var(--hotty-cell-h)) 0;
-  border-radius: calc(2 * var(--u-radius));
+  border-radius: var(--u-r-md);
   background: var(--u-raised);
   box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-raised);
 }
@@ -699,7 +713,7 @@
   flex-direction: column;
   min-width: 0;
   padding: calc(0.5 * var(--hotty-cell-h)) 0;
-  border-radius: 8px;
+  border-radius: var(--u-r-md);
   color: var(--u-ink);
   background: var(--u-raised);
   box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-raised);
@@ -713,7 +727,7 @@
   column-gap: 8px;
   font-size: 13px;
   line-height: 28px;
-  border-radius: 6px;
+  border-radius: var(--u-r-sm);
 }
 .u-compact .u-menu > .u-menu-item > .u-icon, .u-roomy .u-menu > .u-menu-item > .u-icon { width: 16px; }
 .u-menu > .u-item:hover, .u-menu > .u-item.is-sel { background: var(--u-selected); box-shadow: none; }
@@ -736,7 +750,7 @@
    inside in Dense, the scale's 8px in Compact and Roomy. */
 .u-rule { flex: 0 0 auto; height: 1px; background: var(--u-border); }
 .u-compact .u-rule { margin: 4px 0; }
-.u-box { border-radius: calc(2 * var(--u-radius)); box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-box { border-radius: var(--u-r-md); box-shadow: inset 0 0 0 1px var(--u-border); }
 .u-chrome { background: var(--u-canvas); box-shadow: inset -1px 0 0 var(--u-border); }
 /* A card: a group's panel, a step lighter than the page (raised), with
    no hairline round it and room across inside it, its rows split by
@@ -751,7 +765,7 @@
   flex-direction: column;
   min-width: 0;
   padding: calc(0.5 * var(--hotty-cell-h)) calc(1.5 * var(--hotty-cell-w));
-  border-radius: 12px;
+  border-radius: var(--u-r-xl);
   color: var(--u-ink);
   background: var(--u-popover);
   box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-modal);
@@ -807,7 +821,7 @@
   justify-content: center;
   min-width: 0;
   padding: calc(0.5 * var(--hotty-cell-h)) var(--hotty-cell-w);
-  border-radius: 6px;
+  border-radius: var(--u-r-sm);
   color: var(--u-ink);
   background: var(--u-float);
   box-shadow: inset 0 0 0 1px var(--u-input);
