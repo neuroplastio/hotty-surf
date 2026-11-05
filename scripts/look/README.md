@@ -42,6 +42,19 @@ doesn't say what moved.
     make look LOOK='run tip/shown --crop ".u-row:nth-child(5) .u-tip" --board Components-dark.html --select "section:nth-of-type(9) .u-tip.two"'
     node scripts/look/look.cjs compare a.png b.png --trim
 
+**Another program's gallery.** `--gallery <bin>` takes the stories from a
+program that speaks the stories binary's `-list` and `-out` (plx's
+gallery of its own surfaces, from made-up data). A third column in its
+`-list` is the rows a surface is placed in, which both engines draw it
+in; `--width` is passed on to it as `-width`, since it draws a surface
+for the cells it is given; and Chromium prefers a light scheme for its
+light theme, a light terminal's. `hotty render` draws on a dark host
+only, so Blitz shows such a surface in its dark roles: compare the light
+theme in Chromium alone.
+
+    node scripts/look/look.cjs run presence/take-over --gallery ../plx/bin/plx-gallery \
+      --board Components-dark.html --select 'section:nth-of-type(3) .u-bar:nth-of-type(2)'
+
 `DESIGN` (or `--design`) is the design's directory, `../design` by
 default. `HOTTY` and `HOTTY_BLITZ` work as they do for `make gate`. The
 gate's `node_modules` (Playwright, pngjs) serves this script too.
