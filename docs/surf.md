@@ -249,6 +249,7 @@ component or a partial.
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
 | `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
+| `count`, `count-dot`, `count-tone` | int, bool, string | button | a tool's count on its corner: a number (99+ past 99, none at 0), or a dot where it has none; its tone `accent` (the default), `warn`, `error` or `muted` ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
 | `strip`, `grid` | bool | row | a strip of chrome, its three rows its start, centre and end; a picker's grid of buttons, squares that wrap ("Pills") |
 | `attention` | bool | button, item | it waits for someone: its text in the warn, the warn's soft fill where it is current or the keyboard's row |
@@ -289,6 +290,13 @@ component or a partial.
   fill), and `raised` makes it a bar's picker, on the selected fill:
   `<button pill raised>{{ ws }}<icon name="menu-down"/></button>`. The
   cells draw it as a button.
+- **A tool's count** sits on its button's corner while the tool is shut,
+  as an app's unread count: `count` a number, `count-dot` a dot where
+  something is new with no number, `count-tone` its tone, the accent
+  unless it is someone waiting (`warn`), something failed (`error`) or
+  only for information (`muted`):
+  `<button pill label="Tests" :count="failed" count-tone="error"><icon name="flask-outline"/></button>`.
+  The tool sets it and clears it; it goes once the tool shows.
 - **A strip** is a `row strip` of three `row`s, its start, centre and
   end zones, on the canvas, 40px tall on a host. **A picker** of icons
   or emoji is a `row grid` of buttons, 32px squares that wrap, the

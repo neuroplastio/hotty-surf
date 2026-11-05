@@ -1287,8 +1287,8 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 			// frame.surf:6:5 <button>
 			if e.Enter("frame.surf", 6, 5) {
 				var k4 []*surfui.Node
-				// frame.surf:6:38 <icon>
-				if e.Enter("frame.surf", 6, 38) {
+				// frame.surf:6:104 <icon>
+				if e.Enter("frame.surf", 6, 104) {
 					var g6 string
 					{
 						var v7 string
@@ -1300,7 +1300,7 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 						{
 							var err error
 							if g6, err = surf.IconGlyph(v7); err != nil {
-								e.Fail("frame.surf", 6, 38, err)
+								e.Fail("frame.surf", 6, 104, err)
 							}
 						}
 					}
@@ -1320,6 +1320,17 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 				}
 				n4 := surf.ButtonNode(t9, false, k4)
 				surf.ModKey(n4, "hide")
+				{
+					var v10 int64
+					if c.Hidden {
+						v10 = int64(0)
+					} else {
+						v10 = int64(c.Count)
+					}
+					surf.ModCount(n4, v10)
+				}
+				surf.ModCountDot(n4, c.Hidden)
+				surf.ModCountTone(n4, "warn")
 				n4.On("click", func() { c.Hide() })
 				k2 = append(k2, n4)
 				e.Leave()
@@ -1332,9 +1343,9 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 		}
 		// frame.surf:8:3 <embed>
 		if e.Enter("frame.surf", 8, 3) {
-			start10 := len(k1)
+			start11 := len(k1)
 			k1 = e.Embed("frame.surf", 8, 3, surf.ComponentValue(c.Inset()), k1)
-			for _, kn := range k1[start10:] {
+			for _, kn := range k1[start11:] {
 				kn.Key("inset")
 			}
 			e.Leave()
@@ -1342,9 +1353,9 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 		if c.Hidden {
 			// frame.surf:9:3 <embed>
 			if e.Enter("frame.surf", 9, 3) {
-				start11 := len(k1)
+				start12 := len(k1)
 				k1 = e.Embed("frame.surf", 9, 3, surf.ComponentValue(c.Inset()), k1)
-				for _, kn := range k1[start11:] {
+				for _, kn := range k1[start12:] {
 					kn.Key("never")
 				}
 				e.Leave()
@@ -1352,28 +1363,28 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 		}
 		// frame.surf:10:3 <frame-tab>
 		if e.Enter("frame.surf", 10, 3) {
-			start12 := len(k1)
+			start13 := len(k1)
 			k1 = surfRenderFrame_FrameTab(e, k1, c, nil, c.Hidden, "Tab")
-			for _, kn := range k1[start12:] {
+			for _, kn := range k1[start13:] {
 				kn.Key("tab")
 			}
 			e.Leave()
 		}
 		// frame.surf:11:3 <frame-tab>
 		if e.Enter("frame.surf", 11, 3) {
-			start13 := len(k1)
+			start14 := len(k1)
 			k1 = surfRenderFrame_FrameTab(e, k1, c, nil, false, "")
-			for _, kn := range k1[start13:] {
+			for _, kn := range k1[start14:] {
 				kn.Key("notab")
 			}
 			e.Leave()
 		}
 		// frame.surf:12:3 <text>
 		if e.Enter("frame.surf", 12, 3) {
-			n14 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " added")
-			surf.ModKey(n14, "count")
-			surf.ModMuted(n14, true)
-			k1 = append(k1, n14)
+			n15 := surfui.Text(strconv.FormatInt(int64(c.Count), 10) + " added")
+			surf.ModKey(n15, "count")
+			surf.ModMuted(n15, true)
+			k1 = append(k1, n15)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)
