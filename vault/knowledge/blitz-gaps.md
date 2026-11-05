@@ -298,7 +298,7 @@ To prove in a later leg (gov, 2026-10-31):
   Blitz draws a dashed border on a rounded box, and whether it reads at
   6–10px, is unknown.
 
-## The kit to plx-design's board (2026-11-05)
+## The kit to the design board (2026-11-05)
 
 Design Agent's legs (journal 2026-11-05-kit), with hotty-blitz 0.5.8
 and Chromium 153. Each case was checked in its gate sheet, and in a
