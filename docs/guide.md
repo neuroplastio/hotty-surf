@@ -1119,7 +1119,10 @@ What the host calls, and what it gets back:
 
 A `Frame` goes in its order: `Ops` as a delta, each of `Fields` as an
 `a=field`, the `List`, `Blur`, `Focus`, then `Reveals` as a delta (with
-`Ops`, where no `Blur` or `Focus` comes between). A `List` is a Select's
+`Ops`, where no `Blur` or `Focus` comes between).
+`surfrun.WriteFrame(b, name, f, list)` writes it so, with the host's
+`list` func for the `List`, which it calls at the list's place and only
+where `f.List` is set. A `List` is a Select's
 list for the host to show in a surface of its own: `Closed` deletes the
 last one; `New` sends `surfui.Document(l.Tree)` and places it, with `Z`
 above the Select's surface and `Press: hotty.On`, so that a press on
@@ -1179,7 +1182,7 @@ s.Platform = hotty.PlatformOf(caps)
 f := s.Show()
 send(hotty.Doc(name, surfui.Document(s.Tree(), "cid:my-theme")) +
 	hotty.PlaceAt(name, x, y, place))
-write(f)
+write(f) // surfrun.WriteFrame(&b, name, f, writeList), then send
 for !quit { // host.Quit sets it
 	var redraw bool
 	select {
@@ -1199,12 +1202,13 @@ for !quit { // host.Quit sets it
 		redraw = true
 	}
 	if redraw {
-		write(s.Update()) // each part of the frame, with hotty-go
+		write(s.Update()) // surfrun.WriteFrame, with the list writer
 	}
 }
 ```
 
-There, `frame` is a whole `write`, and `placeList` a list's placement.
+There, `frame` is `surfrun.WriteFrame` with a `writeList`, which uses
+`placeList` for a list's placement.
 
 ## Hosting a Lua view
 

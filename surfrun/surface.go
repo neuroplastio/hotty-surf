@@ -2,6 +2,8 @@ package surfrun
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/neuroplastio/hotty-go"
 
@@ -152,6 +154,42 @@ type Frame struct {
 	// it; an Update's only when it changes, and the host then places the
 	// surface again with it. The zero Flag changes nothing.
 	Hover hotty.Flag
+}
+
+// WriteFrame writes f to b as hotty commands for the surface name, in
+// Frame's order: Ops as a delta, each of Fields as an a=field (SPEC
+// §6.4), the list, Blur, Focus, then Reveals as a delta. Where neither
+// Blur nor Focus is set, Ops and Reveals go as one delta. The zero Frame
+// writes nothing.
+//
+// The list is the host's to write, because the host places its surface:
+// WriteFrame calls list at the list's place in the order, and only where
+// f.List is set and list is not nil. Use it in a host of its own that
+// writes each Frame (docs/guide.md, "Hosting without surfrun.Runtime");
+// surfrun.Runtime writes its Frames so.
+func WriteFrame(b *strings.Builder, name string, f Frame, list func(b *strings.Builder, l *List)) {
+	ops, reveals := f.Ops, f.Reveals
+	if !f.Blur && f.Focus == "" {
+		ops, reveals = slices.Concat(ops, reveals), nil
+	}
+	if len(ops) > 0 {
+		b.WriteString(hotty.Delta(name, ops))
+	}
+	for _, fl := range f.Fields {
+		b.WriteString(hotty.SetField(name, fl.ID, fl.Change))
+	}
+	if f.List != nil && list != nil {
+		list(b, f.List)
+	}
+	if f.Blur {
+		b.WriteString(hotty.Blur(name))
+	}
+	if f.Focus != "" {
+		b.WriteString(hotty.Focus(name, f.Focus))
+	}
+	if len(reveals) > 0 {
+		b.WriteString(hotty.Delta(name, reveals))
+	}
 }
 
 // Field is an a=field: the control ID set as Change says, against the

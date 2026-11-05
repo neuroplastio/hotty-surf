@@ -727,26 +727,7 @@ func (r *Runtime) update() {
 
 // frame writes f to b, in Frame's order.
 func (r *Runtime) frame(b *strings.Builder, f Frame) {
-	ops, reveals := f.Ops, f.Reveals
-	if !f.Blur && f.Focus == "" {
-		ops, reveals = slices.Concat(ops, reveals), nil
-	}
-	if len(ops) > 0 {
-		b.WriteString(hotty.Delta(r.surface, ops))
-	}
-	for _, fl := range f.Fields {
-		b.WriteString(hotty.SetField(r.surface, fl.ID, fl.Change))
-	}
-	r.list(b, f.List)
-	if f.Blur {
-		b.WriteString(hotty.Blur(r.surface))
-	}
-	if f.Focus != "" {
-		b.WriteString(hotty.Focus(r.surface, f.Focus))
-	}
-	if len(reveals) > 0 {
-		b.WriteString(hotty.Delta(r.surface, reveals))
-	}
+	WriteFrame(b, r.surface, f, r.list)
 }
 
 func (r *Runtime) event(ev hottyterm.Event) {

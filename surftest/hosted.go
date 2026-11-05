@@ -288,47 +288,31 @@ func (o *hosted) send(f surfrun.Frame, took time.Duration) {
 
 // frame writes f to b, in surfrun.Frame's order.
 func (o *hosted) frame(b *strings.Builder, f surfrun.Frame) {
-	ops, reveals := f.Ops, f.Reveals
-	if !f.Blur && f.Focus == "" {
-		ops, reveals = slices.Concat(ops, reveals), nil
+	surfrun.WriteFrame(b, o.name, f, o.writeList)
+}
+
+// writeList writes the open list's part of a frame to b.
+func (o *hosted) writeList(b *strings.Builder, l *surfrun.List) {
+	if l.Closed {
+		b.WriteString(hotty.Del(o.list, hotty.Q(hotty.NoReply)))
 	}
-	if len(ops) > 0 {
-		b.WriteString(hotty.Delta(o.name, ops))
-	}
-	for _, fl := range f.Fields {
-		b.WriteString(hotty.SetField(o.name, fl.ID, fl.Change))
-	}
-	if l := f.List; l != nil {
-		if l.Closed {
-			b.WriteString(hotty.Del(o.list, hotty.Q(hotty.NoReply)))
+	switch {
+	case l.Tree == nil:
+	case l.New:
+		x, y, p := o.placeList(l)
+		o.listScrolls = p.Rows < l.Rows
+		if o.listScrolls {
+			b.WriteString(hotty.Doc(o.list, surfui.Document(l.Tree), hotty.Scroll(hotty.ScrollVertical)))
+		} else {
+			b.WriteString(hotty.Doc(o.list, surfui.Document(l.Tree)))
 		}
-		switch {
-		case l.Tree == nil:
-		case l.New:
-			x, y, p := o.placeList(l)
-			o.listScrolls = p.Rows < l.Rows
-			if o.listScrolls {
-				b.WriteString(hotty.Doc(o.list, surfui.Document(l.Tree), hotty.Scroll(hotty.ScrollVertical)))
-			} else {
-				b.WriteString(hotty.Doc(o.list, surfui.Document(l.Tree)))
-			}
-			b.WriteString(hotty.PlaceAt(o.list, x, y, p))
-		case len(l.Ops) > 0:
-			ops := l.Ops
-			if o.listScrolls {
-				ops = append(ops, hotty.OpReveal(surfui.OptionID(l.At), hotty.RevealNearest))
-			}
-			b.WriteString(hotty.Delta(o.list, ops))
+		b.WriteString(hotty.PlaceAt(o.list, x, y, p))
+	case len(l.Ops) > 0:
+		ops := l.Ops
+		if o.listScrolls {
+			ops = append(ops, hotty.OpReveal(surfui.OptionID(l.At), hotty.RevealNearest))
 		}
-	}
-	if f.Blur {
-		b.WriteString(hotty.Blur(o.name))
-	}
-	if f.Focus != "" {
-		b.WriteString(hotty.Focus(o.name, f.Focus))
-	}
-	if len(reveals) > 0 {
-		b.WriteString(hotty.Delta(o.name, reveals))
+		b.WriteString(hotty.Delta(o.list, ops))
 	}
 }
 
