@@ -1106,6 +1106,12 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 			continue
 		}
 		if v, ok := s.value(at, a, bound); ok {
+			if n.Tag == "face" && name == "icon" && !bound {
+				if err := CheckIcon(a.Value); err != nil {
+					s.c.fail(s.t.file, a.ValuePos, "%v", err)
+					continue
+				}
+			}
 			vals[i] = v
 		}
 	}
