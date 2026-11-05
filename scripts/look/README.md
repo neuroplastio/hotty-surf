@@ -12,7 +12,9 @@ can run each one alone:
    from `hotty css` in a layer, hotty-blitz's font, unhinted). Blitz draws
    it through `hotty render`. `--state hover|focus|within --at <selector>`
    forces a state's look (`stories.Force`) on the nodes the selector
-   picks, in the one document both engines draw.
+   picks, in the one document both engines draw. `--crop <selector>`
+   cuts both shots to the box of what the selector picks, as Chromium
+   lays it out, so that you can compare one element against a board's.
 2. **ref**: a board of the design, or the one element of it that
    `--select` picks, drawn in Chromium at the same scale with the
    snapshot's `kit.css`. `--theme` puts the board in the kit's dark or
@@ -37,6 +39,7 @@ doesn't say what moved.
     make look                       # the button's states against the button row, dark and light
     make look LOOK='run list/selection --board Components-dark.html --select "section:nth-of-type(8) > div:nth-child(2)"'
     make look LOOK='story button/states --scale 2 --engine blitz' LOOK_THEMES=light
+    make look LOOK='run tip/shown --crop ".u-row:nth-child(5) .u-tip" --board Components-dark.html --select "section:nth-of-type(9) .u-tip.two"'
     node scripts/look/look.cjs compare a.png b.png --trim
 
 `DESIGN` (or `--design`) is the design's directory, `../design` by
