@@ -795,9 +795,9 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 					// gallery.surf:43:7 <row>
 					if e.Enter("gallery.surf", 43, 7) {
 						var k32 []*surfui.Node
-						// gallery.surf:44:9 <badge>
+						// gallery.surf:44:9 <chip>
 						if e.Enter("gallery.surf", 44, 9) {
-							n33 := surfui.Badge("Window too narrow")
+							n33 := surfui.Chip("Window too narrow")
 							surf.ModKey(n33, "tag")
 							surf.ModFill(n33, "warn")
 							k32 = append(k32, n33)

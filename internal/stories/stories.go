@@ -150,7 +150,7 @@ var All = []Story{
 	{"line/runs", 30, func() *surfui.Node {
 		// A palette's rows: each label one line of runs, its group muted
 		// and its matches in the accent at weight 600, cut once, at its
-		// end, beside keys that keep whole (text: a badge is a pixel wider
+		// end, beside keys that keep whole (text: a chip is a pixel wider
 		// in Blitz, roomy, a gap of its own). The first fits, its detail
 		// two cells on; the others are cut in their titles.
 		row := func(sel bool, keys string, runs ...*surfui.Node) *surfui.Node {
@@ -179,7 +179,7 @@ var All = []Story{
 		// A footer: its note, then flush right the actions that fit, each
 		// whole, the most significant rightmost; those there is no room
 		// for are left out. A long note leaves less room.
-		act := func(title, key string) *surfui.Node { return surfui.Row(surfui.Text(title), surfui.Badge(key)).Gap(2) }
+		act := func(title, key string) *surfui.Node { return surfui.Row(surfui.Text(title), surfui.Chip(key)).Gap(2) }
 		foot := func(note string) *surfui.Node {
 			return surfui.Row(surfui.Text(note).Muted(),
 				surfui.Row(act("Run", "enter"), act("Stay", "mod+enter"), act("Copy", "alt+enter")).Fit().Gap(5)).Gap(5).Pad(3, 0)
@@ -198,9 +198,9 @@ var All = []Story{
 				surfui.Row(hint("next", "j"), hint("prev", "k"), hint("comment", "c"), hint("approve", "a"), hint("quit", "q")).FitStart().Gap(2)).Gap(3).Pad(3, 0),
 		)
 	}},
-	{"badge/fills", 60, func() *surfui.Node {
-		return surfui.Row(surfui.Badge("devbox"), surfui.Badge("ok").Fill(surfui.OK), surfui.Badge("warn").Fill(surfui.Warn),
-			surfui.Badge("error").Fill(surfui.Error), surfui.Badge("info").Fill(surfui.Info), surfui.Badge("accent").Fill(surfui.Accent)).Gap(1)
+	{"chip/fills", 60, func() *surfui.Node {
+		return surfui.Row(surfui.Chip("devbox"), surfui.Chip("ok").Fill(surfui.OK), surfui.Chip("warn").Fill(surfui.Warn),
+			surfui.Chip("error").Fill(surfui.Error), surfui.Chip("info").Fill(surfui.Info), surfui.Chip("accent").Fill(surfui.Accent)).Gap(1)
 	}},
 	{"glyph/column", 40, func() *surfui.Node {
 		return surfui.Stack(
@@ -524,7 +524,7 @@ var All = []Story{
 	{"text/clickable", 50, func() *surfui.Node {
 		// What acts on a click with no look of its own says so under the
 		// pointer and with the keyboard: a text and an icon in the accent,
-		// a badge with a control's hover-line, a row on the hover fill.
+		// a chip with a control's hover-line, a row on the hover fill.
 		// Each is at rest, then the same hovered or focused.
 		click := func(n *surfui.Node) *surfui.Node { return n.On("click", nil) }
 		return surfui.Stack(
@@ -532,7 +532,7 @@ var All = []Story{
 			surfui.Row(click(surfui.Text("#4182").Muted()), Force(click(surfui.Text("#4182").Muted().Focusable()), "focus"),
 				click(surfui.Icon(mdContentCopy)), Force(click(surfui.Icon(mdContentCopy)), "hover"),
 				click(hexagon()), Force(click(hexagon()), "hover"),
-				click(surfui.Badge("devbox")), Force(click(surfui.Badge("devbox")), "hover")).Gap(2),
+				click(surfui.Chip("devbox")), Force(click(surfui.Chip("devbox")), "hover")).Gap(2),
 			Force(click(surfui.Row(surfui.Icon(mdSourceBranch), surfui.Text("main"), surfui.Text("3 ahead").Small().Muted()).Gap(1)), "hover"),
 		).Gap(1)
 	}},
@@ -655,8 +655,8 @@ var All = []Story{
 	}},
 	{"list/selection", 50, func() *surfui.Node {
 		return surfui.List(
-			surfui.Item(surfui.Text("pane.split").Grow(), surfui.Badge("ctrl+b %")),
-			surfui.Item(surfui.Text("pane.close").Grow(), surfui.Badge("ctrl+b x")).Selected(true),
+			surfui.Item(surfui.Text("pane.split").Grow(), surfui.Chip("ctrl+b %")),
+			surfui.Item(surfui.Text("pane.close").Grow(), surfui.Chip("ctrl+b x")).Selected(true),
 			surfui.Item(surfui.Text("workspace.new").Grow()),
 		)
 	}},
@@ -673,10 +673,10 @@ var All = []Story{
 			return surfui.Item(dot, surfui.Text(name).Grow(), end).Gap(2)
 		}
 		return surfui.Stack(
-			surfui.List(row(true, "devbox", surfui.Badge("1 ws")),
+			surfui.List(row(true, "devbox", surfui.Chip("1 ws")),
 				Force(row(false, "ci-runner", surfui.Text("offline").Small().Muted()), "hover"),
-				row(true, "spare", surfui.Badge("2 ws")).Selected(true)),
-			Force(surfui.List(row(true, "this machine", surfui.Badge("3 ws")).Selected(true)), "within"),
+				row(true, "spare", surfui.Chip("2 ws")).Selected(true)),
+			Force(surfui.List(row(true, "this machine", surfui.Chip("3 ws")).Selected(true)), "within"),
 		)
 	}},
 	{"list/error", 50, func() *surfui.Node {
@@ -821,8 +821,8 @@ var All = []Story{
 	{"scale/zoom", 50, func() *surfui.Node {
 		part := func() *surfui.Node {
 			return surfui.Stack(
-				surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Split").Bold().Tone(surfui.Accent), surfui.Spacer(), surfui.Badge("p-1")).Selected(true),
-				surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Focus"), surfui.Spacer(), surfui.Badge("p-2").Fill(surfui.Accent)),
+				surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Split").Bold().Tone(surfui.Accent), surfui.Spacer(), surfui.Chip("p-1")).Selected(true),
+				surfui.Item(surfui.Text("Pane: ").Muted(), surfui.Text("Focus"), surfui.Spacer(), surfui.Chip("p-2").Fill(surfui.Accent)),
 			).Width(40)
 		}
 		return surfui.Stack(part(), part().Scale(80))

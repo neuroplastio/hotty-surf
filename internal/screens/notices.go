@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Level is a notice's severity. Its name is its badge's tone.
+// Level is a notice's severity. Its name is its chip's tone.
 type Level string
 
 // The levels.

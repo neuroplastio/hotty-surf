@@ -446,7 +446,7 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | `line` | kids | children | click, focus | one line of texts side by side, each in its own tone and weight, cut once with … at its end where they don't fit; with wrap, a paragraph of its texts and keys | `<line><text muted>Pane: </text><text>New</text></line>` | `<span id="r" class="u-line"><span id="r.0" class="u-text u-tone-muted">Pane: </span><span id="r.1" class="u-text">New</span></span>` |
 | `heading` | text | text | click, focus | a section's or a screen's title | `<heading>Agents</heading>` | `<div id="r" class="u-heading">Agents</div>` |
 | `caption` | text | text | click, focus | a group's title over its rows, small and dim | `<caption>Panes</caption>` | `<span id="r" class="u-text u-small u-caption">Panes</span>` |
-| `badge` | text | text | click, focus | a short label on a fill | `<badge>3</badge>` | `<span id="r" class="u-badge">3</span>` |
+| `chip` | text | text | click, focus | a short label on a fill | `<chip>3</chip>` | `<span id="r" class="u-chip">3</span>` |
 | `glyph` | text | text | click, focus | one symbol in a fixed slot: a status's dot | `<glyph>●</glyph>` | `<span id="r" class="u-glyph">●</span>` |
 | `icon` | icon | text or `name`, and `svg` or `path` | click, focus | a mark beside a label, muted: an MDI symbol of the hosts' Nerd Font, its glyph or its name; or an SVG on a host, its glyph in the cells | `<icon>󰢻</icon>` | `<span id="r" class="u-text u-icon">󰢻</span>` |
 | `dot` | none | nothing | none | a state's mark: a small dot in its tone | `<dot tone="ok"/>` | `<span id="r" class="u-glyph u-dot u-tone-ok">●</span>` |
@@ -603,7 +603,7 @@ but in a palette.
 | 12 | `key` | string | every widget | modifier | the node's key among its siblings, which the diff follows | `<row><text key="a">x</text></row>` | `<div id="r" class="u-row"><span id="r.ka" class="u-text">x</span></div>` |
 | 13 | `tone` | string | every widget | modifier | the text's colour: accent, ok, warn, error, info, muted or plain | `<text tone="warn">x</text>` | `<span id="r" class="u-text u-tone-warn">x</span>` |
 | 14 | `hue` | string | `text`, `dot`, `glyph`, `icon` | modifier | the text's colour as a hue a palette names, not a tone; bound, a name no palette declares draws the ink and warns once | `<text :hue="'coral'">x</text>` | `<span id="r" class="u-text u-hue-coral">x</span>` |
-| 15 | `fill` | string | every widget | modifier | a fill in a tone's colour: accent, ok, warn, error, info, muted or plain | `<badge fill="ok">x</badge>` | `<span id="r" class="u-badge u-fill-ok">x</span>` |
+| 15 | `fill` | string | every widget | modifier | a fill in a tone's colour: accent, ok, warn, error, info, muted or plain | `<chip fill="ok">x</chip>` | `<span id="r" class="u-chip u-fill-ok">x</span>` |
 | 16 | `bold` | bool | every widget | modifier | bold text | `<text bold>x</text>` | `<span id="r" class="u-text u-bold">x</span>` |
 | 17 | `semibold` | bool | every widget | modifier | text at weight 600 | `<text semibold>x</text>` | `<span id="r" class="u-text u-semi">x</span>` |
 | 18 | `muted` | bool | every widget | modifier | the muted colour | `<text muted>x</text>` | `<span id="r" class="u-text u-tone-muted">x</span>` |
@@ -618,7 +618,7 @@ but in a palette.
 | 27 | `indent` | int | every widget | modifier | moves it in by cells | `<text indent="2">x</text>` | `<span id="r" class="u-text u-indent" style="--u-in:2">x</span>` |
 | 28 | `down` | int | every widget | modifier | moves it down by rows | `<box down="4"/>` | `<div id="r" class="u-box u-down" style="--u-dn:4"></div>` |
 | 29 | `top` | bool | every widget | modifier | aligns a row's children to its top | `<row top/>` | `<div id="r" class="u-row u-top"></div>` |
-| 30 | `width` | int | every widget | modifier | its width in cells | `<badge width="6">x</badge>` | `<span id="r" class="u-badge u-width" style="--u-w:6">x</span>` |
+| 30 | `width` | int | every widget | modifier | its width in cells | `<chip width="6">x</chip>` | `<span id="r" class="u-chip u-width" style="--u-w:6">x</span>` |
 | 31 | `height` | int | every widget | modifier | its height in rows | `<stack height="3"/>` | `<div id="r" class="u-stack u-height" style="--u-h:3"></div>` |
 | 32 | `selected` | bool | every widget | modifier | an item that is its list's selection, kept in view where the document scrolls | `<item selected/>` | `<div id="r" class="u-item is-sel" role="option" aria-selected="true"></div>` |
 | 33 | `checked` | bool | every widget | modifier | a switch's state, set in place | `<switch checked/>` | `<button id="r" class="u-switch is-on" type="button" role="switch" aria-checked="true"><span id="r.0" class="u-knob"></span></button>` |
@@ -659,8 +659,8 @@ but in a palette.
 | 68 | `readline` | bool | `surface`, `field` | modifier | the fields in it edit by the readline keys of a terminal (ctrl+w, ctrl+u, ctrl+k, alt+b, …), whatever the platform | `<surface readline/>` | `<div id="r" class="u-surface u-theme-neuroplastio u-compact" data-keys="arrow_left=char-backward ctrl+b=char-backward arrow_right=char-forward ctrl+f=char-forward alt+arrow_left=word-backward ctrl+arrow_left=word-backward alt+b=word-backward alt+arrow_right=word-forward ctrl+arrow_right=word-forward alt+f=word-forward home=line-start end=line-end ctrl+e=line-end backspace=delete-char-backward ctrl+h=delete-char-backward delete=delete-char-forward ctrl+d=delete-char-forward alt+backspace=delete-word-backward ctrl+w=delete-word-backward ctrl+backspace=delete-word-backward alt+delete=delete-word-forward alt+d=delete-word-forward ctrl+delete=delete-word-forward ctrl+u=delete-to-line-start ctrl+k=delete-to-line-end arrow_up=line-previous ctrl+p=line-previous arrow_down=line-next ctrl+n=line-next page_up=page-up page_down=page-down alt+&lt;=input-start ctrl+home=input-start alt+&gt;=input-end ctrl+end=input-end mod+a=select-all ctrl+m=newline"></div>` |
 | 69 | `program` | string | `surface` | modifier | keys, by myelin's names and apart by spaces, that belong to the host program, which the fields in it give it | `<surface program="ctrl+b"/>` | `<div id="r" class="u-surface u-theme-neuroplastio u-compact"></div>` |
 | 70 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
-| 71 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `face` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
-| 72 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `badge`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `face` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
+| 71 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `chip`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `face` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
+| 72 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `chip`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `face` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
 <!-- end attributes table -->
 
 `autofocus` changes no HTML: the runtime gives the first element that
@@ -1406,7 +1406,7 @@ for a host draws in cells unchanged.
   child that grows (`grow`, a `spacer`, a `scroll` box) starts from
   nothing and shares the room left. A `text`, a `field`, a `row` or a
   `stack` shrinks where there is too little, by its width, as far as
-  nothing; a `badge`, a `button`, a `key`, a `glyph`, the controls and
+  nothing; a `chip`, a `button`, a `key`, a `glyph`, the controls and
   what `keep` keeps never shrink. A `fit` row takes the room left, never
   less than its widest child, and shows its children right to left from
   its end, each whole, those it has no room for left out. A `scroll` box

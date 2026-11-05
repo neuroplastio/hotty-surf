@@ -85,11 +85,11 @@ in cells. Each is fixed in the renderer, for any screen:
 - **A switch was a knob too small to read.** `▬▬■` in three cells read
   as neither a switch nor its state: in cells it is `[on]` in the accent,
   `[off]` in muted.
-- **A badge was its tone on itself.** The runtime filled a tone with its
+- **A chip was its tone on itself.** The runtime filled a tone with its
   colour and wrote the text in ansi black, which many palettes give a
   shade of the tone. A tone's fill is now the tone in reverse video, its
   text the ground's own colour, as a focused Compact button's is.
-- **A badge's text was cut in its width.** Its padding is half a `ch` a
+- **A chip's text was cut in its width.** Its padding is half a `ch` a
   side on a host, a cell a side in cells, so the notices' `error` in 6
   cells was `err…`. Where the width leaves no room for both, the text
   takes the padding, the right side first.

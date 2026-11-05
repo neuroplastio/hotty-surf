@@ -17,7 +17,7 @@ padding (the widgets leg), and 230 of 504 since the look, on hotty-blitz
 ([below](#compact-the-kits-looks-in-the-gate-2026-10-30)). Before them it
 was 36 of 132, not 30. The six that came then are
 `list/selection` roomy at both scales (12.3–16.8 against about 3.5): the
-selected row's badge is 1 CSS px wider in Blitz. They came with
+selected row's chip is 1 CSS px wider in Blitz. They came with
 hotty-blitz's main after 2026-10-26, most likely 49057bb ("rounding
 alone draws no ellipsis"), and fail the same with or without the batch.
 The cause isn't verified.
@@ -52,7 +52,7 @@ fault.
 | Story | What Blitz draws wrong, next to Chromium | Scale | Likely cause in Blitz | How bad |
 | --- | --- | --- | --- | --- |
 | `<select>`, no longer in the vocabulary (select/closed until 2026-10-30) | The arrow is a small ▾ glyph where Chromium draws a chevron; the option's text sits 4 CSS px further left and 2 px higher; the box is 1 px narrower | both | Fork patch 0023 draws a closed select in UA CSS: `inline-grid`, the option in cell 1, `select::after { content: "\25BE"; padding-inline-start: 0.5em }`. Chromium's menulist adds an inner inline padding of about 4 px and centres its text box in the control | Cosmetic. It reads as a select, and 0023 chose the ▾. Measured (2026-10-30): the 2 px vertical offset is the gate's, not Blitz's: Chromium ignores a select's `line-height` and centres a normal line, which grows because `--hotty-font` ends in `monospace` (the system's face in Chromium); without that fallback Chromium's text sits where Blitz's does. The 4 px is Chromium's inner padding; matching its arrow would need the select `position: relative` in the UA sheet, and the chevron itself. Left as is |
-| A root of `min-height: 100vh` whose rows × 21.25 px ends in .25: badge/fills, button/states, select/open (paper), field/states, section/nested, text/tones roomy (9); paper theme | The last device row is 60% the terminal's background: a dark hairline under a light surface | 1.6× | Blitz rounds layout to whole CSS px (`taffy::round_layout`, blitz-dom `layout/round.rs`). At 1.6× a row is 21.25 CSS px, so a viewport of 5 rows is 106.25 px; the root is laid out 106 px tall and stops 0.4 device px short. Chromium lays out in 1/64 px and snaps the edge to the device pixel | Cosmetic, and seen only where the surface's background isn't the terminal's (paper on a dark terminal). The same at 2× with an odd cell height. The fix is rounding layout to device px, not CSS px, in `layout/round.rs`: fork patch 0001, the incremental resolve, and it moves pixels in every story. hotty-blitz's or the maintainer's to decide |
+| A root of `min-height: 100vh` whose rows × 21.25 px ends in .25: chip/fills, button/states, select/open (paper), field/states, section/nested, text/tones roomy (9); paper theme | The last device row is 60% the terminal's background: a dark hairline under a light surface | 1.6× | Blitz rounds layout to whole CSS px (`taffy::round_layout`, blitz-dom `layout/round.rs`). At 1.6× a row is 21.25 CSS px, so a viewport of 5 rows is 106.25 px; the root is laid out 106 px tall and stops 0.4 device px short. Chromium lays out in 1/64 px and snaps the edge to the device pixel | Cosmetic, and seen only where the surface's background isn't the terminal's (paper on a dark terminal). The same at 2× with an odd cell height. The fix is rounding layout to device px, not CSS px, in `layout/round.rs`: fork patch 0001, the incremental resolve, and it moves pixels in every story. hotty-blitz's or the maintainer's to decide |
 | A ◉ in Inter's text: glyph/column and list/two-line, roomy (12 cases), until 2026-10-31, when a Compact or roomy Glyph took a face that has ◉ (DejaVu Sans): no story shows it now | ◉ (U+25C9) is drawn small, at the monospace font's size, where Chromium draws it as large as ● and ○ | both | Inter has ● and ○ but no ◉. hotty-blitz puts its own AdwaitaMono second in every non-monospace family (`fonts.rs`), so ◉ comes from it; Chromium's fallback (fontconfig) takes DejaVu Sans | Cosmetic, but a status column of ● ○ ◉ reads unevenly. By hotty-blitz's design (a host draws alike everywhere); a fix is a fallback that prefers a proportional face for a proportional family |
 
 ## Under the threshold
@@ -63,7 +63,7 @@ they're known, and nothing in `surfui.CSS` should lean on them.
 | Story | What differs | Scale | Likely cause | How bad |
 | --- | --- | --- | --- | --- |
 | Every roomy story | Text sits 1 CSS px lower than in Chromium (Inter, `line-height: 1.6`) | both | Half-leading: Chromium rounds the font's ascent and descent to whole pixels before it splits the leading; parley doesn't | Cosmetic |
-| badge/fills, button/states, list rows | Each box is rounded to whole CSS px, where Chromium keeps fractions: a row of six badges drifts by up to 2 CSS px | both | `taffy::round_layout` again | Cosmetic |
+| chip/fills, button/states, list rows | Each box is rounded to whole CSS px, where Chromium keeps fractions: a row of six chips drifts by up to 2 CSS px | both | `taffy::round_layout` again | Cosmetic |
 | glyph/column, list/two-line (dense; Compact and roomy are over it, above) | Colour emoji (🦀 🐙) differ by a few pixels | 1.6× | Noto Color Emoji is a bitmap font, resampled with another filter | None |
 
 ## From candidate C (live, 2026-10-29)
@@ -173,7 +173,7 @@ cut once at its end; the caps beside it keep whole (`.u-keep`); the
 footer's actions sit in a Fit row (`.u-fit`), which leaves out whole
 those it has no room for. The caps are shorter than their row, all one
 width (`min-width: 2.4em`) and lifted on a selected row (`--u-chip`), and
-a Compact badge is shorter than its row. Two new stories prove it:
+a Compact chip is shorter than its row. Two new stories prove it:
 row/fit passes in all 18 cases, line/runs in 15. The baseline is 131 of
 468 cases: key/caps' 16 dark cases came off it (its caps no longer meet
 their row's edges), and line/runs' 3 came on.
@@ -201,7 +201,7 @@ are where Chromium draws them.
 
 | Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
 | --- | --- | --- | --- | --- |
-| most Compact and roomy stories (13–170): badge/fills, button/states, button/bare, field/states, cycle/states, select/closed, select/open, list/*, line/runs, row/fit, text/tones, box/scroll, look/* | Proportional text sits 1–2 CSS px lower in its line | both | The earlier "text 1 CSS px off" (button/bare, box/scroll above), not verified: Parley's line box against Chromium's for IBM Plex Sans and Inter | Cosmetic. The sheets show nothing else |
+| most Compact and roomy stories (13–170): chip/fills, button/states, button/bare, field/states, cycle/states, select/closed, select/open, list/*, line/runs, row/fit, text/tones, box/scroll, look/* | Proportional text sits 1–2 CSS px lower in its line | both | The earlier "text 1 CSS px off" (button/bare, box/scroll above), not verified: Parley's line box against Chromium's for IBM Plex Sans and Inter | Cosmetic. The sheets show nothing else |
 | field/focus (Compact 221–534, Dense 206), cycle/states (Dense 66), select/closed (Compact 110), look/settings (Dense 240), list/entries (Compact 57–251), list/drop (Compact, 1.6×: 32–282, its rows' hairline; roomy 2×: 12.5, under list/* above), box/scroll (1.6×: 158–249, the Scroll box's focus line since cells-selected) | An inset `1px` hairline round a rounded control (`box-shadow: inset 0 0 0 1px`) has an edge a device row off from Chromium's, and its corners a shade brighter | 1.6× | Not verified: blitz-paint snaps the shadow's rect to device px where Chromium antialiases the 1.6 device px; as the outline's snap above | Cosmetic: the line is there, one device px thinner or moved |
 | select/open (Dense 84–250), dialog/box (paper, 2×: 224–237) | A drop shadow's last row where it meets the story's end (the menu's `0 1px 2px`, the dialog's `0 12px 24px -4px`) | both | Not verified: the root's end, as the `100vh` hairline above, under a shadow | Cosmetic, at a document's edge only |
 | list/keyboard (found, not used) | `box-shadow: inset 2px 0 0 accent` (a marker at a row's start) also draws a hairline round the rest of the row | both | Not verified: blitz-paint's inset shadow with an offset and no spread | Blocks the marker as a shadow: it is a background layer instead, `linear-gradient(90deg, accent 2px, transparent 2px)` over the selected fill, which draws the same |
@@ -229,7 +229,7 @@ the baseline is 284 of 558. It is 287 since cells-selected: box/scroll's
 three Dense 1.6× cases came on with the Scroll box's focus line, the
 inset hairline ([above](#the-look-2026-10-31)). The screens' move to
 `internal/screens/demodata` (demo-screens) wrote it again with nothing new: the
-sample host's badge reads "devbox" now, so badge/fills' 10 known
+sample host's chip reads "devbox" now, so chip/fills' 10 known
 diffs moved within a few px² (12.5–426.6), still 287 of 558.
 
 | Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |

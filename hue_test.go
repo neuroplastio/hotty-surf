@@ -116,7 +116,7 @@ func TestHueRefusals(t *testing.T) {
 		{"hex in a hue", `<surface><text hue="#ff8e7a">x</text></surface>`, `crew.surf:5:21: hue "#ff8e7a" is in no <palette>; the palettes declare coral or teal`},
 		{"a button", `<surface><button hue="coral">x</button></surface>`, "crew.surf:5:18: <button> takes no hue; it takes attention, autofocus,"},
 		{"a row", `<surface><row :hue="colour"/></surface>`, "crew.surf:5:15: <row> takes no hue; it takes autofocus,"},
-		{"a badge", `<surface><badge hue="coral">x</badge></surface>`, "crew.surf:5:17: <badge> takes no hue; it takes autofocus,"},
+		{"a chip", `<surface><chip hue="coral">x</chip></surface>`, "crew.surf:5:16: <chip> takes no hue; it takes autofocus,"},
 		{"a bound number", `<surface><text :hue="1">x</text></surface>`, "crew.surf:5:22: :hue is a string, not int"},
 	} {
 		got := refused(t, fstest.MapFS{"crew.surf": {Data: []byte(huePair + c.src)}})

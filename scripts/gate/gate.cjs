@@ -57,7 +57,7 @@ const THRESHOLD = 12; // CSS px² that may differ: a case over it fails
 //   from another fallback font, is 18; the select and the root a fraction
 //   of a pixel short, 79 and up.
 // - Faults planted in Chromium's side alone (--inject), each on its story
-//   in all 12 variants: every variant failed. A badge 1 px further right
+//   in all 12 variants: every variant failed. A chip 1 px further right
 //   (184 and up), a fill mixing 9% of the foreground for 12% (626), no
 //   ellipsis (48), muted text in the plain colour (580), no rule
 //   (1173), a field without its padding (450), a radius of 0.12em for

@@ -82,7 +82,7 @@ func board(d surfui.Density, sel *int) *model {
 		var items []*surfui.Node
 		for i, s := range []string{"alpha", "beta 日本", "gamma"} {
 			items = append(items, surfui.Item(
-				surfui.Glyph("●").Tone(surfui.OK), surfui.Text(s), surfui.Spacer(), surfui.Badge(strconv.Itoa(i)),
+				surfui.Glyph("●").Tone(surfui.OK), surfui.Text(s), surfui.Spacer(), surfui.Chip(strconv.Itoa(i)),
 				surfui.Button("Go").Reveal().OnClick(func() {}),
 			).Key(s).Selected(i == *sel))
 		}
@@ -95,7 +95,7 @@ func board(d surfui.Density, sel *int) *model {
 			surfui.Section("Keys", surfui.Row(surfui.Key("ctrl+k"), surfui.Text("open"), surfui.Key("ctrl+b v"), surfui.Text("split")).Gap(1),
 				surfui.Section("More", surfui.Text("indented"))),
 			surfui.Text("A long line of text that wraps over a few lines when it is too long for the screen").Wrap(),
-			surfui.Row(surfui.Badge("ok").Fill(surfui.OK), surfui.Badge("warn").Fill(surfui.Warn), surfui.Text("err").Tone(surfui.Error).Bold()).Gap(1),
+			surfui.Row(surfui.Chip("ok").Fill(surfui.OK), surfui.Chip("warn").Fill(surfui.Warn), surfui.Text("err").Tone(surfui.Error).Bold()).Gap(1),
 		).Density(d)
 	}
 	return m

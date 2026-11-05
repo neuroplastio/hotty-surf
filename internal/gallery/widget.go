@@ -38,7 +38,7 @@ const none = "none"
 // sample are a choice's options, and a text widget's text.
 var (
 	sample     = []string{"alpha", "beta", "gamma", "delta", "epsilon", "zeta"}
-	sampleText = map[string]string{"text": "A line of text", "heading": "Settings", "caption": "Terminal", "badge": "devbox", "glyph": "●", "icon": "\U000F08BB", "key": "ctrl+b v", "button": "Restart"}
+	sampleText = map[string]string{"text": "A line of text", "heading": "Settings", "caption": "Terminal", "chip": "devbox", "glyph": "●", "icon": "\U000F08BB", "key": "ctrl+b v", "button": "Restart"}
 	kidCounts  = []string{"0", "1", "2", "3", "4", "5", "6"}
 )
 
@@ -223,7 +223,7 @@ type placement struct {
 var placements = func() map[string]placement {
 	inRow := placement{"<row>", "</row>", 0}
 	m := map[string]placement{"spacer": {"<row><text muted>start</text>", "<text muted>end</text></row>", 1}}
-	for _, tag := range []string{"badge", "glyph", "icon", "dot", "key", "button", "switch", "select", "cycle", "face"} {
+	for _, tag := range []string{"chip", "glyph", "icon", "dot", "key", "button", "switch", "select", "cycle", "face"} {
 		m[tag] = inRow
 	}
 	return m

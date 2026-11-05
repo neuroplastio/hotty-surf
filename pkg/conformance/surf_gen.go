@@ -673,18 +673,18 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 				e.Leave()
 			}
 			if int64(c.Unread()) > int64(0) {
-				// board.surf:6:5 <badge>
+				// board.surf:6:5 <chip>
 				if e.Enter("board.surf", 6, 5) {
-					n6 := surfui.Badge(strconv.FormatInt(int64(c.Unread()), 10) + " unread")
+					n6 := surfui.Chip(strconv.FormatInt(int64(c.Unread()), 10) + " unread")
 					surf.ModKey(n6, "count")
 					surf.ModFill(n6, "accent")
 					k3 = append(k3, n6)
 					e.Leave()
 				}
 			} else {
-				// board.surf:8:5 <badge>
+				// board.surf:8:5 <chip>
 				if e.Enter("board.surf", 8, 5) {
-					n7 := surfui.Badge("All read")
+					n7 := surfui.Chip("All read")
 					surf.ModKey(n7, "count")
 					surf.ModFill(n7, "muted")
 					k3 = append(k3, n7)
@@ -1871,9 +1871,9 @@ func surfRenderBoard_LabPart(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 				break
 			}
 			if v12 {
-				// lab-part.surf:6:3 <badge>
+				// lab-part.surf:6:3 <chip>
 				if e.Enter("lab-part.surf", 6, 3) {
-					n10 := surfui.Badge("in")
+					n10 := surfui.Chip("in")
 					surf.ModKey(n10, "in")
 					k1 = append(k1, n10)
 					e.Leave()
@@ -2093,7 +2093,7 @@ func surfRenderBoard_LabPart(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 			}
 			for i43 := range l43.Len() {
 				x43 := l43.At(i43)
-				// lab-part.surf:20:3 <badge>
+				// lab-part.surf:20:3 <chip>
 				if e.Enter("lab-part.surf", 20, 3) {
 					var t46 string
 					switch {
@@ -2104,7 +2104,7 @@ func surfRenderBoard_LabPart(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 						}
 						t46 += v45
 					}
-					n44 := surfui.Badge(t46)
+					n44 := surfui.Chip(t46)
 					switch {
 					default:
 						v47, ok47 := e.AsText("lab-part.surf", 20, 3, x43)
@@ -2377,7 +2377,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 				k2 = append(k2, n3)
 				e.Leave()
 			}
-			// note-row.surf:16:5 <badge>
+			// note-row.surf:16:5 <chip>
 			if e.Enter("note-row.surf", 16, 5) {
 				var t8 string
 				switch {
@@ -2389,7 +2389,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 					}
 					t8 += string(p7.Level)
 				}
-				n6 := surfui.Badge(t8)
+				n6 := surfui.Chip(t8)
 				switch {
 				default:
 					p9 := prop10
@@ -2440,7 +2440,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 				}
 				l15 := p14.Tags
 				for i15, x15 := range l15 {
-					// note-row.surf:18:5 <badge>
+					// note-row.surf:18:5 <chip>
 					if e.Enter("note-row.surf", 18, 5) {
 						var t18 string
 						switch {
@@ -2453,7 +2453,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 						}
 						t18 += ":"
 						t18 += x15
-						n16 := surfui.Badge(t18)
+						n16 := surfui.Chip(t18)
 						surf.ModKey(n16, x15)
 						surf.ModMuted(n16, true)
 						switch {

@@ -3,7 +3,7 @@
 <item :selected="sel" @click="select(notice.id)">
   <row gap="1" grow>
     <glyph :tone="notice.unread ? 'accent' : 'muted'">{{ notice.unread ? '●' : '○' }}</glyph>
-    <badge :fill="notice.level" width="6">{{ notice.level }}</badge>
+    <chip :fill="notice.level" width="6">{{ notice.level }}</chip>
     <text muted width="8">{{ notice.source }}</text>
     <text grow :bold="notice.unread">{{ notice.text }}</text>
     <text muted>{{ age(notice.age) }}</text>

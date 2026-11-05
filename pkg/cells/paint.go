@@ -201,7 +201,7 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 		if b.f&fItem != 0 {
 			p.item(b, &in, &bg)
 		}
-	case badge:
+	case chip:
 		bg, in.fg = Tonal, Muted
 		if b.fill != "" && b.fill != Muted {
 			bg, in.fg = b.fill, Fg
@@ -331,7 +331,7 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 			}
 			p.write(x, y+i, w, fit(l, w), st, clip)
 		}
-	case badge:
+	case chip:
 		// Its padding is half a cell a side, rounded up to a cell: where
 		// its width leaves the text no room for both, the text takes the
 		// right one, then the left.

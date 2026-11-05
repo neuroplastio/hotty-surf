@@ -3,9 +3,9 @@
   <row gap="1" pad="1 0" key="head">
     <heading title="The board's notes">{{ title }}</heading>
     <spacer/>
-    <badge :if="unread() > 0" fill="accent" key="count">{{ unread() }} unread</badge>
+    <chip :if="unread() > 0" fill="accent" key="count">{{ unread() }} unread</chip>
     <menu><action do="setFilter('unread')">Unread only</action></menu>
-    <badge :else fill="muted" key="count">All read</badge>
+    <chip :else fill="muted" key="count">All read</chip>
     <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter" :title="'Shows ' + filter"/>
   </row>
   <list focusable autofocus key="list">

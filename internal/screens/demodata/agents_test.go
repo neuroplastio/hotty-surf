@@ -70,15 +70,15 @@ func TestLook(t *testing.T) {
 // line with nothing at all is "".
 func TestItem(t *testing.T) {
 	a := Agent{Name: "pi-1", Kind: "pi", Status: "done", Workspace: "docs"}
-	if got := DefaultItem.Badges(a); len(got) != 0 {
-		t.Errorf("badges %q", got)
+	if got := DefaultItem.Chips(a); len(got) != 0 {
+		t.Errorf("chips %q", got)
 	}
 	if got := DefaultItem.Lines(a); !slices.Equal(got, []string{"", "done"}) {
 		t.Errorf("lines %q", got)
 	}
 	it := Item{{"@kind", "@host"}, {"@workspace", "@pane", "@status"}}
-	if got := it.Badges(a); !slices.Equal(got, []string{"pi"}) {
-		t.Errorf("badges %q", got)
+	if got := it.Chips(a); !slices.Equal(got, []string{"pi"}) {
+		t.Errorf("chips %q", got)
 	}
 	if got := it.Lines(a); !slices.Equal(got, []string{"docs · done"}) {
 		t.Errorf("lines %q", got)

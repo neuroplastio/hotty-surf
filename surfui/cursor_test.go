@@ -9,7 +9,7 @@ import (
 // The pointer's shape over each part of the vocabulary, as a host works
 // it out from CSS's cursor (SPEC §9): a pointer over what acts on a
 // click, the text caret over a field, and the arrow over everything else,
-// the text of a label, a badge or a heading included. Disabled, a
+// the text of a label, a chip or a heading included. Disabled, a
 // control shows the arrow.
 func TestCursorOverTheVocabulary(t *testing.T) {
 	click := func() {}
@@ -21,7 +21,7 @@ func TestCursorOverTheVocabulary(t *testing.T) {
 	}{
 		{"text", Text("plain"), nil, "default"},
 		{"heading", Heading("Settings"), nil, "default"},
-		{"badge", Badge("devbox"), nil, "default"},
+		{"chip", Chip("devbox"), nil, "default"},
 		{"glyph", Glyph("●"), nil, "default"},
 		{"a key that does nothing", Key("enter"), nil, "default"},
 		{"an item of a plain list", List(Item(Text("row"))), []int{0}, "default"},
@@ -41,7 +41,7 @@ func TestCursorOverTheVocabulary(t *testing.T) {
 		{"a cycle's chevron", Cycle("auto", "auto", "cells"), []int{0}, "pointer"},
 		{"an item with a click handler", List(Item(Text("alpha")).OnClick(click)), []int{0}, "pointer"},
 		{"a name in an item with a click handler", List(Item(Text("alpha").Bold()).OnClick(click)), []int{0, 0}, "pointer"},
-		{"a badge in an item with a click handler", List(Item(Badge("devbox")).OnClick(click)), []int{0, 0}, "pointer"},
+		{"a chip in an item with a click handler", List(Item(Chip("devbox")).OnClick(click)), []int{0, 0}, "pointer"},
 		{"a disabled item with a click handler", List(Item(Text("alpha")).OnClick(click).Disabled(true)), []int{0}, "default"},
 		{"a nav's item", List(Item(Text("General"))).Nav(), []int{0}, "pointer"},
 		{"a text in a nav's item", List(Item(Text("General"))).Nav(), []int{0, 0}, "pointer"},

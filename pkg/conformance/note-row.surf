@@ -13,9 +13,9 @@
   </title>
   <row gap="1" grow>
     <glyph :tone="note.unread ? 'accent' : 'muted'">●</glyph>
-    <badge :fill="toneOf(note.level)" width="6">{{ note.level }}</badge>
+    <chip :fill="toneOf(note.level)" width="6">{{ note.level }}</chip>
     <text grow :bold="note.unread">{{ note.text }}</text>
-    <badge :each="(i, t) in note.tags" :key="t" muted :title="'Tag ' + t + ' of ' + note.id">{{ i + 1 }}:{{ t }}</badge>
+    <chip :each="(i, t) in note.tags" :key="t" muted :title="'Tag ' + t + ' of ' + note.id">{{ i + 1 }}:{{ t }}</chip>
     <icon :if="size(note.tags) > 0" name="tag-outline" path="M3 3H11L21 13L13 21L3 11Z"/>
     <button reveal @click="dismiss(note)"><icon name="close"/>Dismiss</button>
   </row>

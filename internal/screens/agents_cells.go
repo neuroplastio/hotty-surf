@@ -31,7 +31,7 @@ func (l *Agents) DrawCells(cols, rows int) []string {
 			name.tone = surfui.Muted
 		}
 		head := []seg{{" " + dot + " ", tone, false}, {icon + " ", "", false}, name}
-		for _, b := range l.item.Badges(a) {
+		for _, b := range l.item.Chips(a) {
 			head = append(head, seg{" " + b, surfui.Info, false})
 		}
 		if a.Host != "" {

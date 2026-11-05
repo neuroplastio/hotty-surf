@@ -18,7 +18,7 @@ import (
 // The fixtures' tooltips (board.surf's heading, a title=, and its
 // select, a bound :title; note-row.surf's item, a <title> of a row with
 // a dot, bold text and a muted line, reading its note, and each tag's
-// badge in a :each, a :title reading its row) are found alike in both
+// chip in a :each, a :title reading its row) are found alike in both
 // modes: by an element's id, the innermost one's around it, and by a
 // cell; none where no element around has one, or the id is gone. A
 // change shows in the tooltip asked again after it. The document has no

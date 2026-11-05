@@ -151,7 +151,7 @@ func lookAgents() *surfui.Node {
 		).Gap(1).Top().Grow()).Selected(sel)
 	}
 	sidebar := surfui.Stack(
-		surfui.Row(surfui.Icon(mdRobotOutline), surfui.Text("Agents").Bold().Grow(), surfui.Badge("5")).Gap(2).Pad(2, 0),
+		surfui.Row(surfui.Icon(mdRobotOutline), surfui.Text("Agents").Bold().Grow(), surfui.Chip("5")).Gap(2).Pad(2, 0),
 		surfui.List(
 			agent(surfui.Warn, "claude-1", "Fix the flaky parser test", "now", true),
 			agent(surfui.Error, "claude-2", "Agents toolbar redesign", "2m", false),

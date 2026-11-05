@@ -3,7 +3,7 @@
   <text key="sum">{{ count + big }}</text>
   <text key="first">{{ notes[0].text }}</text>
   <text key="math">{{ ratio * 2.0 }} {{ -ratio }} {{ size(title) }} {{ title + '!' }}</text>
-  <badge :if="'unread' in filters()" key="in">in</badge>
+  <chip :if="'unread' in filters()" key="in">in</chip>
   <text :if="panel.open" key="chain">open</text>
   <text :else-if="count > 1" key="chain">many</text>
   <text :else key="chain">else</text>
@@ -17,7 +17,7 @@
     <text>{{ i }}={{ n.id }}</text>
     <button :disabled="i == 0" @click="open(n.id)">Pick</button>
   </row>
-  <badge :each="t in dyn(filters())" :key="t">{{ t }}</badge>
+  <chip :each="t in dyn(filters())" :key="t">{{ t }}</chip>
   <button key="openfirst" @click="open(notes[0].id)">first</button>
   <button key="dynbad" @click="open(dyn(1))">dyn 1</button>
   <button key="dynok" @click="open(dyn('n2'))">dyn n2</button>

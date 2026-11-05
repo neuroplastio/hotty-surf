@@ -123,8 +123,8 @@ var boardFS = fstest.MapFS{
   <row gap="1" key="head">
     <heading>{{ title }}</heading>
     <spacer/>
-    <badge :if="unread() > 0" fill="accent">{{ unread() }} unread</badge>
-    <badge :else fill="muted">All read</badge>
+    <chip :if="unread() > 0" fill="accent">{{ unread() }} unread</chip>
+    <chip :else fill="muted">All read</chip>
     <select :value="sel" :options="['a', 'b']" @change="pick($event)"/>
   </row>
   <list focusable key="list">
@@ -173,7 +173,7 @@ func TestRender(t *testing.T) {
 		return surfui.Item(surfui.Glyph("●").Tone(tone), text).Selected(n.ID == b.Sel).OnClick(func() {}).Key(n.ID)
 	}
 	want := NewSurface(
-		surfui.Row(surfui.Heading("Notes"), surfui.Spacer(), surfui.Badge("1 unread").Fill(surfui.Accent),
+		surfui.Row(surfui.Heading("Notes"), surfui.Spacer(), surfui.Chip("1 unread").Fill(surfui.Accent),
 			surfui.Select("n2", "a", "b").OnChange(func(surfrun.Event) {})).Gap(1).Key("head"),
 		surfui.List(row(b.Notes[0]), row(b.Notes[1])).Focusable().Key("list").Bind("enter", "Open", func() {}),
 	)

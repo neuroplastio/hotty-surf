@@ -94,8 +94,8 @@ var todoFiles = map[string]string{
   <row gap="1" key="head">
     <heading>{{ title }}</heading>
     <spacer/>
-    <badge :if="left() > 0" fill="accent" key="left">{{ left() }} left</badge>
-    <badge :else fill="muted" key="left">All done</badge>
+    <chip :if="left() > 0" fill="accent" key="left">{{ left() }} left</chip>
+    <chip :else fill="muted" key="left">All done</chip>
   </row>
   <row gap="1" key="new">
     <field grow placeholder="Something to do" :value="draft" @input="typed($value)" @change="enter($event)"/>
@@ -169,12 +169,12 @@ func todoTree(draft string, items []todoItem) string {
 	if len(items) == 0 {
 		rows = append(rows, surfui.Item(surfui.Text("Nothing to do.").Muted()).Key("none"))
 	}
-	badge := surfui.Badge(fmt.Sprintf("%d left", left)).Key("left").Fill(surfui.Accent)
+	chip := surfui.Chip(fmt.Sprintf("%d left", left)).Key("left").Fill(surfui.Accent)
 	if left == 0 {
-		badge = surfui.Badge("All done").Key("left").Fill(surfui.Muted)
+		chip = surfui.Chip("All done").Key("left").Fill(surfui.Muted)
 	}
 	root := surf.NewSurface(
-		surfui.Row(surfui.Heading("To-do"), surfui.Spacer(), badge).Key("head").Gap(1),
+		surfui.Row(surfui.Heading("To-do"), surfui.Spacer(), chip).Key("head").Gap(1),
 		surfui.Row(surfui.Field().Grow().Value(draft).Placeholder("Something to do").OnInput(act).OnChange(act),
 			surfui.Button("Add").OnClick(act)).Key("new").Gap(1),
 		surfui.List(rows...).Key("items"),

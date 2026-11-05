@@ -19,7 +19,7 @@ type tipper struct {
 }
 
 func (m *tipper) Render() *surfui.Node {
-	row := surfui.Row(surfui.Text("agent").Key("name"), surfui.Badge("p-3").Key("pane")).Key("row")
+	row := surfui.Row(surfui.Text("agent").Key("name"), surfui.Chip("p-3").Key("pane")).Key("row")
 	if m.tips {
 		row.Tip(surfui.Stack(
 			surfui.Row(surfui.Dot().Tone(surfui.OK), surfui.Text("claude-2").Bold()).Gap(1),
@@ -59,7 +59,7 @@ func TestTipHoverAndSize(t *testing.T) {
 	}
 	tip, ok := s.Tip(surfrun.TipAt{ID: "r.krow.kpane"})
 	if !ok || tip.ID != "r.krow" {
-		t.Fatalf("the row's tooltip from its badge: %+v, %v", tip, ok)
+		t.Fatalf("the row's tooltip from its chip: %+v, %v", tip, ok)
 	}
 	if tip.Cols != 25 || tip.Rows != 3 || tip.Cells.Rows != 4 {
 		t.Errorf("one line: %d×%d on a host, %d rows in the cells\n%s", tip.Cols, tip.Rows, tip.Cells.Rows, tip.Cells.Text())

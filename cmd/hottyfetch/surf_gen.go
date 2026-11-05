@@ -332,7 +332,7 @@ func surfRenderFetch_GaugeCard(e *surf.Errs, out []*surfui.Node, c *Fetch, fill 
 				k2 = append(k2, n6)
 				e.Leave()
 			}
-			// gauge-card.surf:8:5 <badge>
+			// gauge-card.surf:8:5 <chip>
 			if e.Enter("gauge-card.surf", 8, 5) {
 				var t11 string
 				switch {
@@ -345,7 +345,7 @@ func surfRenderFetch_GaugeCard(e *surf.Errs, out []*surfui.Node, c *Fetch, fill 
 					t11 += strconv.FormatInt(int64(p10.Pct), 10)
 				}
 				t11 += "%"
-				n9 := surfui.Badge(t11)
+				n9 := surfui.Chip(t11)
 				switch {
 				default:
 					p12 := prop10

@@ -583,8 +583,8 @@ func buildText(tag, s string) *surfui.Node {
 		return surfui.Heading(s)
 	case "caption":
 		return surfui.Caption(s)
-	case "badge":
-		return surfui.Badge(s)
+	case "chip":
+		return surfui.Chip(s)
 	case "glyph":
 		return surfui.Glyph(s)
 	case "icon":

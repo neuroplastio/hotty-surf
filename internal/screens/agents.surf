@@ -1,7 +1,7 @@
 <!-- Until the source answers, nothing is drawn. An entry: its dot and its
      pane's emoji (a blank where it has none), each in a glyph's slot, so
      that the names line up whatever the marks, and its lines: the name in
-     bold with the first line's badges, its host and ✋ after it, then a
+     bold with the first line's chips, its host and ✋ after it, then a
      small muted line for each further line of the item that shows
      something, as the look's entries have them (R-24). -->
 <surface pad="1 0">
@@ -16,8 +16,8 @@
         <stack grow>
           <row gap="2" key="name">
             <text bold :muted="a.offline" wrap grow>{{ a.name }}</text>
-            <badge :each="b in badges(a)">{{ b }}</badge>
-            <badge :if="a.host != ''" key="host">{{ a.host }}</badge>
+            <chip :each="b in chips(a)">{{ b }}</chip>
+            <chip :if="a.host != ''" key="host">{{ a.host }}</chip>
             <text :if="a.attention" key="hand">✋</text>
           </row>
           <text :each="(n, line) in lines(a)" :if="line != ''" small muted wrap :key="'l' + string(n)">{{ line }}</text>

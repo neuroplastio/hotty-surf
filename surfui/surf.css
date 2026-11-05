@@ -158,7 +158,7 @@
 }
 .u-surface * { box-sizing: border-box; }
 
-/* The radii, by elevation, and the pill: a key cap and a badge (xs), a
+/* The radii, by elevation, and the pill: a key cap and a chip (xs), a
    row, a field, a button and a tip (sm), a menu and a query (md), a
    card (lg), a dialog (xl), and a chrome control half its height
    (pill). Nothing else: a rule's radius is one of these. --u-r is a
@@ -359,14 +359,14 @@
 .u-dot.u-pulse { animation: u-pulse 1.6s ease-in-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) { .u-dot.u-pulse { animation: none; } }
 
-/* A badge: outlined, its text muted, no fill; a badge in a tone's fill
-   keeps that. A badge a row tall but in Compact, where Blitz places a
+/* A chip: outlined, its text muted, no fill; a chip in a tone's fill
+   keeps that. A chip a row tall but in Compact, where Blitz places a
    shorter one's text as Chromium does. A key: a muted glyph run, no box
    (the maintainer, 2026-11-05, on a tooltip's caps: "too claustrophobic
    inside. Too many borders"), in the hosts' Nerd Font, which has the
    modifiers' symbols (⌃ ⇧ ⌥ ⌘); a Cap keeps the box, outlined in the
    input's hairline: a sheet of keys. */
-.u-badge {
+.u-chip {
   flex: 0 0 auto;
   display: inline-block;
   white-space: pre;
@@ -375,9 +375,9 @@
   color: var(--u-muted);
   box-shadow: inset 0 0 0 1px var(--u-border);
 }
-.u-compact .u-badge { padding: 0 6px; font-size: 11.5px; line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px)); }
-.u-roomy .u-badge { padding: 0 6px; font-size: 12.5px; }
-.u-badge[class*="u-fill-"] { box-shadow: none; }
+.u-compact .u-chip { padding: 0 6px; font-size: 11.5px; line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px)); }
+.u-roomy .u-chip { padding: 0 6px; font-size: 12.5px; }
+.u-chip[class*="u-fill-"] { box-shadow: none; }
 .u-key {
   flex: 0 0 auto;
   display: inline-block;
@@ -731,7 +731,7 @@
 
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
-   heading or an icon in the accent, as a link is; a badge or a key cap
+   heading or an icon in the accent, as a link is; a chip or a key cap
    with a control's hover-line (focus-line); a box likewise, round its
    panel; a row or a stack on the hover fill, as a list's row is, with
    the focus-line too where the keyboard is. A dot and a glyph keep their
@@ -741,8 +741,8 @@
 .u-heading[data-on~="click"]:hover, .u-icon[data-on~="click"]:hover,
 .u-text[data-on~="click"]:focus-visible, .u-line[data-on~="click"]:focus-visible, .u-line[data-on~="click"]:focus-visible > .u-text,
 .u-heading[data-on~="click"]:focus-visible, .u-icon[data-on~="click"]:focus-visible { color: var(--u-accent); }
-.u-badge[data-on~="click"]:hover, .u-key[data-on~="click"]:hover, .u-box[data-on~="click"]:hover { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-hover-line); }
-.u-badge[data-on~="click"]:focus-visible, .u-key[data-on~="click"]:focus-visible, .u-box[data-on~="click"]:focus-visible { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-chip[data-on~="click"]:hover, .u-key[data-on~="click"]:hover, .u-box[data-on~="click"]:hover { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-hover-line); }
+.u-chip[data-on~="click"]:focus-visible, .u-key[data-on~="click"]:focus-visible, .u-box[data-on~="click"]:focus-visible { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 .u-row[data-on~="click"]:hover, .u-stack[data-on~="click"]:hover { border-radius: var(--u-r); background: var(--u-hover); }
 .u-row[data-on~="click"]:focus-visible, .u-stack[data-on~="click"]:focus-visible { border-radius: var(--u-r); background: var(--u-hover); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
@@ -968,7 +968,7 @@
    on a button). A component sets its colour, fill, weight, margins and
    padding in rules of one or two classes, and each modifier was one
    class before them, so tone, fill, bold, semibold, indent, down and pad
-   did nothing on a button, a badge, a switch, a select or a field. They
+   did nothing on a button, a chip, a switch, a select or a field. They
    are here, last, under the surface: two classes, after every rule of
    two. A component's own pairing with one (a count's tone, the primary
    and the destructive button) is three. */

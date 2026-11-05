@@ -321,8 +321,8 @@ func (s *Tasks) SetDraft(text string) { s.Draft = text }
     <row gap="1" key="head">
       <heading>Tasks</heading>
       <spacer/>
-      <badge :if="left() > 0" fill="accent" key="left">{{ left() }} left</badge>
-      <badge :else fill="ok" key="left">All done</badge>
+      <chip :if="left() > 0" fill="accent" key="left">{{ left() }} left</chip>
+      <chip :else fill="ok" key="left">All done</chip>
       <select :value="filter" :options="filters()"
               @change="setFilter($value)" key="filter"/>
     </row>
@@ -728,7 +728,7 @@ density gives the units.
   Focus is never a ring: a control shows the keyboard as a hairline on
   its own edge, a step stronger than the one the pointer brings.
 - **Tones** colour text (`tone="warn"`, `muted`) and fills (`fill="ok"`
-  on a badge; a fill takes the same names, `muted` too). The accent is
+  on a chip; a fill takes the same names, `muted` too). The accent is
   kept for the checked choice, a focused list's marker and the palette's
   matches. A tone can follow the state:
   `:tone="t.done ? 'muted' : 'accent'"`.
@@ -917,7 +917,7 @@ same calls of the struct's methods (the spec's
   `[on]` or `[off]`.
 - **The runtime's colours are the terminal's sixteen,** which have one
   grey: `tonal` shows as no fill there, so that a box in Compact is no
-  slab of grey, and a tone's fill (a badge's) is the tone in reverse
+  slab of grey, and a tone's fill (a chip's) is the tone in reverse
   video, its text the ground's colour. A host that paints the cells itself mixes it in its own
   palette ([Painting the cells yourself](#painting-the-cells-yourself)).
 

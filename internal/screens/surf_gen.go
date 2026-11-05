@@ -71,7 +71,7 @@ func surfInstance(v any) surf.Instance {
 var surfShapeAgents = surf.Shape{Name: "Agents", Component: true,
 	Fields: []surf.Field{{Name: "agents", Type: cellite.ListOf(cellite.StructOf("Agent"))}, {Name: "loaded", Type: cellite.Bool}, {Name: "refused", Type: cellite.String}, {Name: "at", Type: cellite.Int}},
 	Methods: []surf.Method{
-		{Name: "badges", Args: []cellite.Type{cellite.StructOf("Agent")}, Result: surf.TypeOf(cellite.ListOf(cellite.String))},
+		{Name: "chips", Args: []cellite.Type{cellite.StructOf("Agent")}, Result: surf.TypeOf(cellite.ListOf(cellite.String))},
 		{Name: "dot", Args: []cellite.Type{cellite.StructOf("Agent")}, Result: surf.TypeOf(cellite.String)},
 		{Name: "enter"},
 		{Name: "focus", Args: []cellite.Type{cellite.Int}},
@@ -121,7 +121,7 @@ func (o surfAgents) Unwrap() any { return o.p }
 func (o surfAgents) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
 	case 0:
-		return cellite.ListValue(surfList2(o.p.Badges(surf.Deref(surfAgentOf(args[0])))))
+		return cellite.ListValue(surfList2(o.p.Chips(surf.Deref(surfAgentOf(args[0])))))
 	case 1:
 		return cellite.StringValue(string(o.p.Dot(surf.Deref(surfAgentOf(args[0])))))
 	case 2:
@@ -966,18 +966,18 @@ func surfRenderAgents(e *surf.Errs, out []*surfui.Node, c *Agents, fill surf.Fil
 											k12 = append(k12, n13)
 											e.Leave()
 										}
-										for _, x14 := range c.Badges(surf.Deref((&l4[i4]))) {
-											// agents.surf:19:13 <badge>
+										for _, x14 := range c.Chips(surf.Deref((&l4[i4]))) {
+											// agents.surf:19:13 <chip>
 											if e.Enter("agents.surf", 19, 13) {
-												n15 := surfui.Badge(x14)
+												n15 := surfui.Chip(x14)
 												k12 = append(k12, n15)
 												e.Leave()
 											}
 										}
 										if (&l4[i4]).Host != "" {
-											// agents.surf:20:13 <badge>
+											// agents.surf:20:13 <chip>
 											if e.Enter("agents.surf", 20, 13) {
-												n16 := surfui.Badge((&l4[i4]).Host)
+												n16 := surfui.Chip((&l4[i4]).Host)
 												surf.ModKey(n16, "host")
 												k12 = append(k12, n16)
 												e.Leave()
@@ -1171,7 +1171,7 @@ func surfRenderNotices_NoticeRow(e *surf.Errs, out []*surfui.Node, c *Notices, f
 				k2 = append(k2, n3)
 				e.Leave()
 			}
-			// notice-row.surf:6:5 <badge>
+			// notice-row.surf:6:5 <chip>
 			if e.Enter("notice-row.surf", 6, 5) {
 				var t11 string
 				switch {
@@ -1183,7 +1183,7 @@ func surfRenderNotices_NoticeRow(e *surf.Errs, out []*surfui.Node, c *Notices, f
 					}
 					t11 += string(p10.Level)
 				}
-				n9 := surfui.Badge(t11)
+				n9 := surfui.Chip(t11)
 				switch {
 				default:
 					p12 := prop6
@@ -1316,18 +1316,18 @@ func surfRenderNotices(e *surf.Errs, out []*surfui.Node, c *Notices, fill surf.F
 				e.Leave()
 			}
 			if int64(c.Unread()) > int64(0) {
-				// notices.surf:6:5 <badge>
+				// notices.surf:6:5 <chip>
 				if e.Enter("notices.surf", 6, 5) {
-					n5 := surfui.Badge(strconv.FormatInt(int64(c.Unread()), 10) + " unread")
+					n5 := surfui.Chip(strconv.FormatInt(int64(c.Unread()), 10) + " unread")
 					surf.ModKey(n5, "unread")
 					surf.ModFill(n5, "accent")
 					k2 = append(k2, n5)
 					e.Leave()
 				}
 			} else {
-				// notices.surf:7:5 <badge>
+				// notices.surf:7:5 <chip>
 				if e.Enter("notices.surf", 7, 5) {
-					n6 := surfui.Badge("All read")
+					n6 := surfui.Chip("All read")
 					surf.ModKey(n6, "unread")
 					surf.ModFill(n6, "muted")
 					k2 = append(k2, n6)

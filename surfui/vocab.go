@@ -117,10 +117,10 @@ func Heading(s string) *Node { return El("div", Str(s)).Class("u-heading") }
 // cells.
 func Caption(s string) *Node { return Text(s).Small().Class("u-caption") }
 
-// Badge is a short label on a fill: a host's name, a count, a key. In
-// Compact it is a little shorter than its row, so that the badges of rows
+// Chip is a short label on a fill: a host's name, a count, a key. In
+// Compact it is a little shorter than its row, so that the chips of rows
 // one under another stand apart.
-func Badge(s string) *Node { return El("span", Str(s)).Class("u-badge") }
+func Chip(s string) *Node { return El("span", Str(s)).Class("u-chip") }
 
 // Glyph is one symbol in a fixed slot, so that the labels after a column
 // of glyphs line up: a status's dot, an emoji. It is two cells wide
@@ -188,7 +188,7 @@ func (n *Node) dotShape(class, glyph string) *Node {
 // A cap of one or two characters is one width, so that the caps of a
 // list's rows stand in columns; it is a little shorter than its row, so
 // that those of rows one under another stand apart; and on a selected
-// or hovered row its fill is lifted, as a badge's is, so that it still
+// or hovered row its fill is lifted, as a chip's is, so that it still
 // shows on the row's band. Keys in a style of the model's own, whatever
 // the renderer's, are surfkeys.Node.
 func Key(s string) *Node { return El("kbd", Str(s)).Class("u-key") }
@@ -479,7 +479,7 @@ func (n *Node) Tone(t Tone) *Node {
 	return n.Class("u-tone-" + string(t))
 }
 
-// Fill gives n a fill in its tone's colour, for a badge that says a state.
+// Fill gives n a fill in its tone's colour, for a chip that says a state.
 func (n *Node) Fill(t Tone) *Node {
 	if t == Plain {
 		return n
@@ -568,7 +568,7 @@ func (n *Node) Down(rows int) *Node {
 func (n *Node) Top() *Node { return n.Class("u-top") }
 
 // Width sets n's width in cells (dense, Compact) or half rems (roomy),
-// its padding included: a column of Badges as wide as the widest lines
+// its padding included: a column of Chips as wide as the widest lines
 // up what comes after them.
 func (n *Node) Width(cells int) *Node { return n.Var("u-w", strconv.Itoa(cells)).Class("u-width") }
 

@@ -18,7 +18,7 @@ import (
 // an Item left to right, centred on the line. A child that grows (Grow,
 // a Spacer, a Scroll box) starts from nothing and shares the room left;
 // a Text, a Field, a Row or a Stack shrinks where there is too little,
-// as far as nothing, by its width; a Badge, a Button, a Key, a Glyph and
+// as far as nothing, by its width; a Chip, a Button, a Key, a Glyph and
 // the controls never shrink, nor does what Keep keeps whole. A Fit row
 // takes the room left, never less than its widest child, and shows its
 // children right to left from its end, each whole, those that don't fit
@@ -40,7 +40,7 @@ const (
 	across             // a Row, an Item, an inline element with elements in it
 	flow               // a Line that wraps: its runs and keys one paragraph
 	text               // a Text, a Heading, an element of text only
-	badge
+	chip
 	glyph
 	keycap
 	button
@@ -324,8 +324,8 @@ func (b *box) look(d density) {
 			b.f |= fPre | fBold
 		case c == "u-caption":
 			caption = true
-		case c == "u-badge":
-			b.kind, known = badge, true
+		case c == "u-chip":
+			b.kind, known = chip, true
 		case c == "u-glyph":
 			b.kind, known = glyph, true
 		case c == "u-key":
@@ -428,7 +428,7 @@ func (b *box) look(d density) {
 	}
 	// The controls' and an Item's own padding, which win over Pad's.
 	switch b.kind {
-	case badge, button, keycap:
+	case chip, button, keycap:
 		b.pl, b.pr, b.pt, b.pb = 1, 1, 0, 0
 	case field, choose:
 		b.pl, b.pr, b.pt, b.pb = 1, 1, 0, 0
@@ -475,7 +475,7 @@ func (b *box) look(d density) {
 			b.ml += d.across(2)
 		}
 	}
-	if b.kind == text || b.kind == badge || b.kind == glyph || b.kind == keycap || b.kind == button {
+	if b.kind == text || b.kind == chip || b.kind == glyph || b.kind == keycap || b.kind == button {
 		b.text = textOf(n)
 	}
 }
@@ -557,7 +557,7 @@ func atoi(s string) int {
 // fixed reports whether b never shrinks, flex: 0 0 auto.
 func (b *box) fixed() bool {
 	switch b.kind {
-	case badge, glyph, keycap, button, toggle, choose, cycle:
+	case chip, glyph, keycap, button, toggle, choose, cycle:
 		return true
 	}
 	return b.fw >= 0 || b.f&(fKeep|fFit|fFitStart) != 0
@@ -587,7 +587,7 @@ func (b *box) leafWidth() int {
 			return w
 		}
 		return width(clusters(strings.Join(strings.Fields(b.text), " ")))
-	case badge:
+	case chip:
 		return textWidth(b.text) + 2
 	case glyph:
 		if b.d == compact {

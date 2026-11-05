@@ -471,18 +471,18 @@ func surfRenderTasks(e *surf.Errs, out []*surfui.Node, c *Tasks, fill surf.Fill)
 					e.Leave()
 				}
 				if int64(c.Left()) > int64(0) {
-					// tasks.surf:7:7 <badge>
+					// tasks.surf:7:7 <chip>
 					if e.Enter("tasks.surf", 7, 7) {
-						n6 := surfui.Badge(strconv.FormatInt(int64(c.Left()), 10) + " left")
+						n6 := surfui.Chip(strconv.FormatInt(int64(c.Left()), 10) + " left")
 						surf.ModKey(n6, "left")
 						surf.ModFill(n6, "accent")
 						k3 = append(k3, n6)
 						e.Leave()
 					}
 				} else {
-					// tasks.surf:8:7 <badge>
+					// tasks.surf:8:7 <chip>
 					if e.Enter("tasks.surf", 8, 7) {
-						n7 := surfui.Badge("All done")
+						n7 := surfui.Chip("All done")
 						surf.ModKey(n7, "left")
 						surf.ModFill(n7, "ok")
 						k3 = append(k3, n7)

@@ -22,10 +22,10 @@ R-23, picked by the maintainer (gov NEIO-15).
   <row gap="1" pad="1 0" key="head">
     <heading>Notices</heading>
     <spacer/>
-    <badge :if="unread() > 0" fill="accent" key="count">
+    <chip :if="unread() > 0" fill="accent" key="count">
       {{ unread() }} unread
-    </badge>
-    <badge :else fill="muted" key="count">All read</badge>
+    </chip>
+    <chip :else fill="muted" key="count">All read</chip>
   </row>
   <list focusable autofocus key="list">
     <bind key="enter" label="Open" do="open(sel)"/>
@@ -191,7 +191,7 @@ component or a partial.
 | `line` | one line of texts side by side, each in its own tone and weight, cut once with … at its end; with `wrap`, a paragraph of its texts and keys | children |
 | `heading` | a section's or a screen's title | text |
 | `caption` | a group's title over its rows, small and dim | text |
-| `badge` | a short label on a fill | text |
+| `chip` | a short label on a fill | text |
 | `glyph` | one symbol in a fixed slot: a status's dot | text |
 | `icon` | a mark beside a label, muted: an MDI symbol by its glyph or its `name`, or an SVG (`svg`, `path`) a host draws ("Icons") | text, or `name`; `svg` or `path` |
 | `dot` | a state's mark: a small dot in its `tone` | nothing |
@@ -411,7 +411,7 @@ component or a partial.
 - **What has a `@click` looks it under the pointer:** the pointer is a
   hand over it, and what has no hover look of its own shows one. A
   `text`, a `line`, a `heading` or an `icon` turns to the accent, as a
-  link; a `badge`, a `key` or a `box` shows a control's hairline; a
+  link; a `chip`, a `key` or a `box` shows a control's hairline; a
   `row` or a `stack` the hover fill, as a list's row. With `focusable`,
   the keyboard on it shows the same. A `dot` and a `glyph` keep their
   tone, which is a state. The cells show neither look.
@@ -540,7 +540,7 @@ and a `:if` chain goes on past it.
 ## Tooltips
 
 A widget's `title` is its tooltip: text, wrapped. A `<title>` child is
-one of any elements, a component of its own: rows, text, dots, badges,
+one of any elements, a component of its own: rows, text, dots, chips,
 icons, a partial. The host shows it once the pointer rests on the
 widget, in a small card over the view. The tree never draws it: it
 takes no room and changes no cell, and a `:if` chain goes on past it.
@@ -1171,10 +1171,10 @@ local view = surf.load("todo"):view("todo", todo)
   <row gap="1" pad="1 0" key="head">
     <heading>To-do</heading>
     <spacer/>
-    <badge :if="left() > 0" fill="accent" key="left">
+    <chip :if="left() > 0" fill="accent" key="left">
       {{ left() }} left
-    </badge>
-    <badge :else fill="muted" key="left">All done</badge>
+    </chip>
+    <chip :else fill="muted" key="left">All done</chip>
   </row>
   <row gap="1" key="new">
     <field grow placeholder="Something to do" :value="draft"

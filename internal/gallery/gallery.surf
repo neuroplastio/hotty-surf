@@ -41,7 +41,7 @@
         </row>
       </row>
       <row :if="fit() != ''" top gap="1" pad="1 0" key="fit">
-        <badge fill="warn" key="tag">Window too narrow</badge>
+        <chip fill="warn" key="tag">Window too narrow</chip>
         <text tone="warn" wrap grow key="why">{{ fit() }}</text>
       </row>
     </stack>

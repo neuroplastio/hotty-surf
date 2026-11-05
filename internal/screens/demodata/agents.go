@@ -59,20 +59,20 @@ func Look(status string) (dot, tone string) {
 	return "●", ""
 }
 
-// Item is what an agent's entry shows. Its first line holds the badges
+// Item is what an agent's entry shows. Its first line holds the chips
 // after the name, and each line after it is a line under the name. A
 // line is a list of refs: @topic, @model, @kind, @status, @workspace,
 // @host or @pane. An offline agent's @status is that its host is not
 // answering, not the last status it sent.
 type Item [][]string
 
-// DefaultItem is the item the demo's agents list draws: no badges after
+// DefaultItem is the item the demo's agents list draws: no chips after
 // the name, then the topic, then the status.
 var DefaultItem = Item{{}, {"@topic"}, {"@status"}}
 
-// Badges are what the name's line shows after the name, those with
+// Chips are what the name's line shows after the name, those with
 // nothing to show left out.
-func (it Item) Badges(a Agent) []string {
+func (it Item) Chips(a Agent) []string {
 	if len(it) == 0 {
 		return nil
 	}

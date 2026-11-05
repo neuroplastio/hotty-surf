@@ -52,7 +52,7 @@ func TestParse(t *testing.T) {
 		{`<row gap="1" grow><text>Hi</text></row>`, `row[gap=1 grow](text("Hi"))`},
 		{`<text :each="n in rows" :key='n.id' @click="open(n.id)"/>`, `text[:each=n in rows :key=n.id @click=open(n.id)]`},
 		{"<stack>\n  <heading>Notices</heading>\n  <!-- a comment -->\n  <spacer />\n</stack>", `stack(heading("Notices") spacer)`},
-		{`<badge>{{ unread() }}   unread</badge>`, `badge({unread()}" unread")`},
+		{`<chip>{{ unread() }}   unread</chip>`, `chip({unread()}" unread")`},
 		{`<text>  a  {{ x }}  {{ y }}  b  </text>`, `text("a "{x}" "{y}" b")`},
 		{`<text>{{ a < b ? "}}" : '<x>' }}</text>`, `text({a < b ? "}}" : '<x>'})`},
 		{`<text label="a &amp; &lt;b&gt; &quot;c&quot; &#39;d&apos;">x &amp; y</text>`, `text[label=a & <b> "c" 'd']("x & y")`},

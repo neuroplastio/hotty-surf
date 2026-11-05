@@ -134,14 +134,14 @@ func TestNoticesEnterReads(t *testing.T) {
 	inModes(t, func(t *testing.T, m mode) {
 		n := startNotices(t, m)
 		if got := n.text("r.khead.kunread"); got != "3 unread" {
-			t.Fatalf("badge = %q, want 3 unread", got)
+			t.Fatalf("chip = %q, want 3 unread", got)
 		}
 		n.keys("arrow_down", "enter")
 		n.until("n2 is opened", func() bool {
 			return n.text("r.kstatus") == "Opened: claude-2 is waiting for you"
 		})
 		if got := n.text("r.khead.kunread"); got != "2 unread" {
-			t.Fatalf("badge = %q after opening n2, want 2 unread", got)
+			t.Fatalf("chip = %q after opening n2, want 2 unread", got)
 		}
 		if got := n.text("r.klist.kn2.0.0"); got != "○" {
 			t.Fatalf("n2's dot = %q, want ○", got)
@@ -244,7 +244,7 @@ func TestNoticesTick(t *testing.T) {
 			t.Fatalf("new1's age = %q, want now", got)
 		}
 		if got := n.text("r.khead.kunread"); got != "4 unread" {
-			t.Fatalf("badge = %q, want 4 unread", got)
+			t.Fatalf("chip = %q, want 4 unread", got)
 		}
 		if !n.selected("r.klist.kn1") {
 			t.Fatal("the selection left n1 when new1 came")

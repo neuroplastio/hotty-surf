@@ -90,11 +90,11 @@ func TestScaleInABox(t *testing.T) {
 	}
 }
 
-// A badge's padding is half a cell a side on a host: in a width that
+// A chip's padding is half a cell a side on a host: in a width that
 // holds its text and one cell, the text is whole.
-func TestBadgeInItsWidth(t *testing.T) {
+func TestChipInItsWidth(t *testing.T) {
 	m := &model{render: func() *surfui.Node {
-		return surfui.Surface(surfui.Row(surfui.Badge("error").Width(6), surfui.Badge("warn").Width(6), surfui.Badge("errors").Width(5)))
+		return surfui.Surface(surfui.Row(surfui.Chip("error").Width(6), surfui.Chip("warn").Width(6), surfui.Chip("errors").Width(5)))
 	}}
 	s := show(m).Draw(20, 1)
 	if got := strings.TrimRight(s.Text(), "\n "); got != " error warn erro…" {

@@ -760,10 +760,10 @@ func TestAWideStoryKeepsTheStories(t *testing.T) {
 func TestPlaced(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(mode.name, func(t *testing.T) {
-			a, g := start(t, mode.of, "w-badge")
-			badge := storyID("w-badge") + ".0.0"
-			a.Wait("the badge in its row", func() bool {
-				return a.Has(storyID("w-badge")+".0", "u-row") && a.Has(badge, "u-badge")
+			a, g := start(t, mode.of, "w-chip")
+			chip := storyID("w-chip") + ".0.0"
+			a.Wait("the chip in its row", func() bool {
+				return a.Has(storyID("w-chip")+".0", "u-row") && a.Has(chip, "u-chip")
 			})
 
 			a.Call(func() { g.Pick("w-spacer") })
@@ -779,15 +779,15 @@ func TestPlaced(t *testing.T) {
 					a.Surface().TextOf(box) == "Child 1Child 2Child 3"
 			})
 
-			a.Call(func() { g.Pick("w-badge") })
-			a.Wait("the badge again", func() bool { _, ok := a.Surface().Element(badge); return ok })
+			a.Call(func() { g.Pick("w-chip") })
+			a.Wait("the chip again", func() bool { _, ok := a.Surface().Element(chip); return ok })
 			if err := a.Host.Click(a.Name, barCtl("states")); err != nil {
 				t.Fatal(err)
 			}
-			hover := storyID("w-badge") + ".kmatrix.km-hover.kin.0"
-			a.Wait("the hovered badge", func() bool { f, _ := a.Surface().Attr(hover+".0", "data-force"); return f == "hover" })
+			hover := storyID("w-chip") + ".kmatrix.km-hover.kin.0"
+			a.Wait("the hovered chip", func() bool { f, _ := a.Surface().Attr(hover+".0", "data-force"); return f == "hover" })
 			if f, ok := a.Surface().Attr(hover, "data-force"); ok {
-				t.Errorf("the badge's row is forced %q", f)
+				t.Errorf("the chip's row is forced %q", f)
 			}
 
 			a.Call(func() { g.Pick("f-key-caps-no-keys") })

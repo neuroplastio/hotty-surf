@@ -12,7 +12,7 @@ import (
 
 // rootChainFS draws a board whose partials' roots are :if chains: a
 // field that is the same element in either arm (only its attributes
-// differ), a tab that is a button in one arm and a badge in the other,
+// differ), a tab that is a button in one arm and a chip in the other,
 // and a sibling field that is no part of any chain.
 var rootChainFS = fstest.MapFS{
 	"board.surf": {Data: []byte(`
@@ -27,7 +27,7 @@ var rootChainFS = fstest.MapFS{
 <field :else autofocus placeholder="plain"/>`)},
 	"name-tab.surf": {Data: []byte(`
 <props on="bool"/>
-<badge :if="on" fill="accent">selected</badge>
+<chip :if="on" fill="accent">selected</chip>
 <button :else-if="!on" @click="open('n1')">plain</button>`)},
 }
 

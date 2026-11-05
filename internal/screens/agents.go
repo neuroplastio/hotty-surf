@@ -107,11 +107,11 @@ func (l *Agents) Tone(a demodata.Agent) string {
 	return tone
 }
 
-// Badges are what a's name's line shows after the name, and Lines the
+// Chips are what a's name's line shows after the name, and Lines the
 // lines under it, as the style's item says: "" for a line with nothing to
 // show.
-func (l *Agents) Badges(a demodata.Agent) []string { return l.item.Badges(a) }
-func (l *Agents) Lines(a demodata.Agent) []string  { return l.item.Lines(a) }
+func (l *Agents) Chips(a demodata.Agent) []string { return l.item.Chips(a) }
+func (l *Agents) Lines(a demodata.Agent) []string { return l.item.Lines(a) }
 
 // firstLine is s's first line.
 func firstLine(s string) string {

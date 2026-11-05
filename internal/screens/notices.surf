@@ -3,8 +3,8 @@
   <row gap="1" pad="1 0" key="head">
     <heading>Notices</heading>
     <spacer/>
-    <badge :if="unread() > 0" fill="accent" key="unread">{{ unread() }} unread</badge>
-    <badge :else fill="muted" key="unread">All read</badge>
+    <chip :if="unread() > 0" fill="accent" key="unread">{{ unread() }} unread</chip>
+    <chip :else fill="muted" key="unread">All read</chip>
     <select :value="filter" :options="filters()" @change="setFilter($value)" key="filter"/>
   </row>
   <list focusable autofocus key="list">

@@ -4,8 +4,8 @@
     <row gap="1" key="head">
       <heading>Tasks</heading>
       <spacer/>
-      <badge :if="left() > 0" fill="accent" key="left">{{ left() }} left</badge>
-      <badge :else fill="ok" key="left">All done</badge>
+      <chip :if="left() > 0" fill="accent" key="left">{{ left() }} left</chip>
+      <chip :else fill="ok" key="left">All done</chip>
       <select :value="filter" :options="filters()"
               @change="setFilter($value)" key="filter"/>
     </row>

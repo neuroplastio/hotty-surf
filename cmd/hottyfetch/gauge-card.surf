@@ -1,10 +1,10 @@
 <!-- A gauge as a small card: what it is, how much of it is used, and
-     the share as a badge in its tone. -->
+     the share as a chip in its tone. -->
 <props g="Gauge"/>
 <box card>
   <row gap="1">
     <text muted>{{ g.label }}</text>
     <text>{{ g.used }}</text>
-    <badge :fill="g.tone">{{ g.pct }}%</badge>
+    <chip :fill="g.tone">{{ g.pct }}%</chip>
   </row>
 </box>

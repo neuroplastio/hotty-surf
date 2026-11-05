@@ -128,7 +128,7 @@ var Widgets = []Widget{
 	{"line", "one line of texts side by side, each in its own tone and weight, cut once with … at its end where they don't fit; with wrap, a paragraph of its texts and keys", FormKids, "surfui.Line", events},
 	{"heading", "a section's or a screen's title", FormText, "surfui.Heading", events},
 	{"caption", "a group's title over its rows, small and dim", FormText, "surfui.Caption", events},
-	{"badge", "a short label on a fill", FormText, "surfui.Badge", events},
+	{"chip", "a short label on a fill", FormText, "surfui.Chip", events},
 	{"glyph", "one symbol in a fixed slot: a status's dot", FormText, "surfui.Glyph", events},
 	{"icon", "a mark beside a label, muted: an MDI symbol of the hosts' Nerd Font, its glyph or its name; or an SVG on a host, its glyph in the cells", FormIcon, "IconNode", events},
 	{"dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil},
