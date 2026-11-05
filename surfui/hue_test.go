@@ -154,12 +154,14 @@ func TestPaletteCSS(t *testing.T) {
 		".u-surface.u-theme-paper {\n  --u-hue-coral: #b4321f;\n  --u-hue-teal: #0f766e;\n}",
 		".u-hue-coral { color: var(--u-hue-coral); }",
 		".u-hue-teal { color: var(--u-hue-teal); }",
+		// A hue's dot is a thing's own colour, 8px, where a state's is 6.
+		".u-dot.u-hue-coral { --u-dw: 8px; }",
 	} {
 		if !strings.Contains(css, want) {
 			t.Errorf("the css lacks %q:\n%s", want, css)
 		}
 	}
-	if strings.Contains(css, "-ink") || strings.Contains(css, ".u-dot.") {
+	if strings.Contains(css, "-ink") || strings.Contains(css, "--u-dw: 8px; color") {
 		t.Errorf("a palette that reads has no ink fallback:\n%s", css)
 	}
 	if (Palette{}).CSS() != "" || Palette(nil).CSS() != "" {
@@ -180,7 +182,7 @@ func TestPaletteCSSFaint(t *testing.T) {
 		"  --u-hue-faint: #7a8499;\n  --u-hue-faint-ink: var(--u-ink);\n",
 		"    --u-hue-faint: #b4321f;\n    --u-hue-faint-ink: var(--u-hue-faint);\n",
 		".u-hue-faint { color: var(--u-hue-faint-ink); }",
-		".u-dot.u-hue-faint { color: var(--u-hue-faint); }",
+		".u-dot.u-hue-faint { --u-dw: 8px; color: var(--u-hue-faint); }",
 		".u-hue-ok { color: var(--u-hue-ok); }",
 	} {
 		if !strings.Contains(css, want) {

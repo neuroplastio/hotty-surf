@@ -384,7 +384,9 @@ func (h Hue) grounds() []groundOf {
 //     dark value, its light one where the ground is light (under
 //     prefers-color-scheme: light, and the paper theme), so that a theme
 //     sets it again as it sets --u-accent, in a rule of its own;
-//   - an element of the hue (class u-hue-<name>) is coloured from it.
+//   - an element of the hue (class u-hue-<name>) is coloured from it, and
+//     a dot of a hue is 8px, a thing's own colour (a machine's), where a
+//     state's dot is 6.
 //
 // Where a colour is too faint for text on its ground (Contrast), the
 // hue's text draws in the ink there, through --u-hue-<name>-ink; a dot
@@ -422,9 +424,9 @@ func (p Palette) CSS() string {
 		decl(&dark, n, d, f[0])
 		decl(&light, n, l, f[1])
 		if _, any := weak[n]; any {
-			fmt.Fprintf(&rules, ".u-hue-%s { color: var(--u-hue-%s-ink); }\n.u-dot.u-hue-%s { color: var(--u-hue-%s); }\n", n, n, n, n)
+			fmt.Fprintf(&rules, ".u-hue-%s { color: var(--u-hue-%s-ink); }\n.u-dot.u-hue-%s { --u-dw: 8px; color: var(--u-hue-%s); }\n", n, n, n, n)
 		} else {
-			fmt.Fprintf(&rules, ".u-hue-%s { color: var(--u-hue-%s); }\n", n, n)
+			fmt.Fprintf(&rules, ".u-hue-%s { color: var(--u-hue-%s); }\n.u-dot.u-hue-%s { --u-dw: 8px; }\n", n, n, n)
 		}
 	}
 	var b strings.Builder
