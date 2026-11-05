@@ -297,15 +297,26 @@ The order is the maintainer's, via gov (2026-10-30):
   (`Surface.Pick`), a stale pick running nothing. docs/surf.md and the
   spec say it. `:each` in a `<menu>` is refused: an item's id is its
   place in the source.
-- [ ] **Context menus: a secondary press** (hotty 0.7 proposal V7-01,
-  pending; the maintainer's call): a `press` whose detail has
-  `"button": 2` and the pointer's cell (`"c"`, `"r"`), on an element
-  that opts in by a token in its `data-on`, whose name the spec has not
-  settled. Until then no element asks for it, and the host finds the
-  menu itself. Where it goes is marked `SECONDARY PRESS` in
-  `surfui/html.go` (`dataOn`); then `Surface.Event` hands the host the
-  menu of such a press's target, and the cells' renderer sends one on a
-  right press.
+- [ ] **Context menus: a secondary press** (hotty 0.7, V7-01; the
+  maintainer's call: hotty-surf does the whole thing out of the box).
+  Leg 5a, in `surfrun.Surface`, so every host gets it:
+  - [x] `secondary` in the `data-on` of an element whose menu has an item
+    to pick (`surfui/html.go`, SPEC §9).
+  - [x] A secondary press (`Button` 2) opens the innermost menu at the
+    pointer's cell; `shift+f10` and `context_menu` open it under the
+    focused element, anchored to the area its last click or press said.
+  - [x] `Frame.Menu` (`MenuFrame`), `WriteFrame`'s `menu` func, and
+    `Surface.MenuEvent` and `CloseMenu`.
+  - [x] The menu's keys: Up, Down, Home, End, type-ahead, Enter, Escape;
+    any other key closes it and goes on. One menu at a time, closed by a
+    click or press elsewhere (which still does what it would), a blur,
+    and a re-render that drops its element.
+  - [ ] **Leg 5b:** `surfrun.Runtime` places the menu (`MenuView.Place`,
+    its own surface above the element's, the keyboard given to it) and
+    draws no menu until then (`Surface.noMenu`); `CloseMenu` on a resize,
+    a scroll and the pointer leaving; the keyboard on a real terminal;
+    the cells (a right press at `cells.Renderer.At`, the menu drawn from
+    `MenuView.Cells`); `surftest`'s hosted host; the shots.
 - [x] **Icons by name, SVG icons, icons in buttons**: `<icon
   name="cog-outline"/>` and `:name`, MDI's names from Nerd Fonts
   3.5.1's glyphnames.json (`pkg/mdi`, generated; NOTICE), a literal
