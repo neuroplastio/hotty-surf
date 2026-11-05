@@ -30,11 +30,12 @@ const StyleID = "surf-css"
 //     documents; no transitions, filters or text-shadow.
 //
 // Its tokens are custom properties under .u-surface, named for roles
-// (gov R-24), never levels: the layers (chrome, canvas, popover, raised),
+// (gov R-24), never levels: the layers (canvas, popover, raised, float),
 // the translucent states (hover, selected, border, input), a sunk field,
-// a neutral ink with muted and dim, the accent, solid and on-solid, the
-// tones, and the hairlines a control shows under the pointer and with
-// the keyboard (hover-line, focus-line). The ground, the tones and the
+// a neutral ink with muted and dim, the accent and its soft and strong
+// fills, solid and on-solid, the tones, and the hairlines a control
+// shows under the pointer and with the keyboard (hover-line,
+// focus-line). The ground, the tones and the
 // accent come from the host's stylesheet (SPEC §8) and the theme; the
 // units (a row, gaps, a control's height, radii, the type) from the
 // density. Every rule of it reads tokens, never a colour or a size.
