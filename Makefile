@@ -2,10 +2,10 @@
 # Every step runs under CAP (below): GO and GOFMT carry it, GO_BARE is go
 # for a step that CAP already wraps.
 
-# A machine's own settings (CAP, IDLE_CPUS, HOTTY, HOTTY_BLITZ) go in
-# $XDG_CONFIG_HOME/hotty-surf/make.mk, read here if it is there, before
-# the defaults below, which suit CI and a first checkout. A variable on
-# the command line wins over both (`make check CAP=`).
+# A machine's own settings (CAP, IDLE_CPUS, HOTTY, HOTTY_BLITZ, HOTTY_FONTS)
+# go in $XDG_CONFIG_HOME/hotty-surf/make.mk, read here if it is there,
+# before the defaults below, which suit CI and a first checkout. A variable
+# on the command line wins over both (`make check CAP=`).
 -include $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/hotty-surf/make.mk
 
 GO_BARE     ?= mise x -- go
@@ -151,16 +151,22 @@ wasm-tinygo:
 # F5's fidelity gate (scripts/gate): every story in hotty-blitz and in
 # Chromium, diffed, and judged against the known failures, the Blitz gaps
 # (GATE_BASELINE; scripts/gate/gate.cjs says how). It needs a hotty-blitz
-# release build, its fonts from a checkout next to this one or HOTTY_BLITZ,
-# and Node for Playwright. GATE_FLAGS: e.g. --only button-states, or
-# --inject <css>.
+# release build, its fonts from HOTTY_FONTS (a checkout next to this one or
+# HOTTY_BLITZ has them), and Node for Playwright. GATE_FLAGS: e.g. --only
+# button-states, or --inject <css>.
 #
 # HOTTY is the hotty-blitz the hosts ship: the baseline is written with
 # v0.5.8, hottyterm 26.10.31's, so build that tag (make blitz and make
 # release in a hotty-blitz checkout). HOTTY_BLITZ is the checkout, next to
-# this one by default, for its fonts.
+# this one by default. HOTTY_FONTS is the fonts/ Chromium loads: AdwaitaMono
+# and, from hotty-blitz 0.6.9, IBM Plex Sans, which the kit draws Compact and
+# Roomy in. Chromium's side is machine-independent with them. Blitz's is not
+# yet: HOTTY is v0.5.8, which takes Plex from the system, so a machine
+# without Plex falls back to Inter or Noto in Blitz and fails those cases,
+# until HOTTY moves to 0.6.9 (a re-baseline, after the kit).
 HOTTY_BLITZ   ?= $(abspath $(patsubst %/Cargo.toml,%,$(firstword $(wildcard ../hotty-blitz/Cargo.toml))))
 HOTTY         ?= $(HOTTY_BLITZ)/target/release/hotty
+HOTTY_FONTS   ?= $(HOTTY_BLITZ)/crates/hotty-blitz/fonts
 NODE          ?= mise x node@26.10.0 --
 GATE_BASELINE ?= scripts/gate/baseline.tsv
 GATE_FLAGS    ?=
@@ -170,13 +176,13 @@ GATE_FLAGS    ?=
 gate: scripts/gate/node_modules   ## F5: every story in Blitz and Chromium, diffed, against the known failures: .shots/gate/report.md
 	@test -x "$(HOTTY)" || { echo "no hotty at $(HOTTY): run make release in hotty-blitz, or set HOTTY_BLITZ"; exit 1; }
 	$(GO) build -o bin/stories ./internal/cmd/stories
-	$(CAP) $(PIN) $(NODE) node scripts/gate/gate.cjs --hotty $(HOTTY) --fonts $(HOTTY_BLITZ)/crates/hotty-blitz/fonts \
+	$(CAP) $(PIN) $(NODE) node scripts/gate/gate.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
 	  --stories bin/stories --out .shots/gate $(if $(GATE_BASELINE),--baseline $(GATE_BASELINE)) $(GATE_FLAGS)
 
 gate-baseline: scripts/gate/node_modules   ## writes the known failures again: when a Blitz fix lands, or a gap is listed
 	@test -x "$(HOTTY)" || { echo "no hotty at $(HOTTY): run make release in hotty-blitz, or set HOTTY_BLITZ"; exit 1; }
 	$(GO) build -o bin/stories ./internal/cmd/stories
-	-$(CAP) $(PIN) $(NODE) node scripts/gate/gate.cjs --hotty $(HOTTY) --fonts $(HOTTY_BLITZ)/crates/hotty-blitz/fonts \
+	-$(CAP) $(PIN) $(NODE) node scripts/gate/gate.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
 	  --stories bin/stories --out .shots/gate --write-baseline $(GATE_BASELINE)
 
 # The legible gate (scripts/gate/legible.cjs says how): every story the
@@ -196,7 +202,7 @@ LEGIBLE_FLAGS ?=
 legible: scripts/gate/node_modules   ## the gallery's stories at their widths, measured: nothing past its box, no text cut to under 4 characters: .shots/legible/report.md
 	@test -x "$(HOTTY)" || { echo "no hotty at $(HOTTY): run make release in hotty-blitz, or set HOTTY_BLITZ"; exit 1; }
 	$(GO) build -o bin/stories ./internal/cmd/stories
-	$(CAP) $(PIN) $(NODE) node scripts/gate/legible.cjs --hotty $(HOTTY) --fonts $(HOTTY_BLITZ)/crates/hotty-blitz/fonts \
+	$(CAP) $(PIN) $(NODE) node scripts/gate/legible.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
 	  --stories bin/stories --out .shots/legible $(if $(LEGIBLE_KNOWN),--known $(LEGIBLE_KNOWN)) $(LEGIBLE_FLAGS)
 
 # The pinned Playwright, and the Chromium it drives.

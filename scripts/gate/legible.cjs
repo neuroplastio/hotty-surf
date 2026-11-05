@@ -70,7 +70,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const FONT = "AdwaitaMono Nerd Font Propo"; // as gate.cjs
+const FONT = "AdwaitaMono Nerd Font Propo"; // as gate.cjs, which says too why IBM Plex Sans is loaded and where Blitz takes it from
 const FONT_FILE = "AdwaitaMonoNerdFontPropo";
 const ORIGIN = "https://legible.invalid";
 const SCALE = 1.6; // a high-DPI display's
@@ -289,14 +289,22 @@ function measure({ canvas, min, tol }) {
     }
 
   // What ORIGIN serves: the fonts, and each document with the host's
-  // stylesheet, as gate.cjs serves them.
+  // stylesheet, as gate.cjs serves them: AdwaitaMono and IBM Plex Sans
+  // from --fonts. Chromium's side is machine-independent so; Blitz's is
+  // not yet (HOTTY is v0.5.8, which takes Plex from the system), until
+  // the re-baseline after the kit. gate.cjs says more.
   const hostCSS = execFileSync(a.hotty, ["css", "--cell", `${CELL.w}x${CELL.h}`, "--scale", String(SCALE), "--font", FONT], { encoding: "utf8" });
   const faces = [["Regular", 400, "normal"], ["Bold", 700, "normal"], ["Italic", 400, "italic"], ["BoldItalic", 700, "italic"]];
+  const plex = [["Regular", 400], ["Medium", 500], ["SemiBold", 600]];
+  const havePlex = plex.every(([f]) => fs.existsSync(path.join(a.fonts, `IBMPlexSans-${f}.woff2`)));
+  if (!havePlex) console.error(`legible: no IBM Plex Sans in ${a.fonts}: Chromium takes the system's Plex or a fallback; point HOTTY_FONTS at hotty-blitz 0.6.9's fonts/`);
   const fontCSS = faces
     .map(([f, w, st]) => `@font-face { font-family: "${FONT}"; src: url(/fonts/${FONT_FILE}-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: ${st}; }`)
+    .concat(havePlex ? plex.map(([f, w]) => `@font-face { font-family: "IBM Plex Sans"; src: url(/fonts/IBMPlexSans-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: normal; }`) : [])
     .join("\n");
   const served = new Map();
   for (const [f] of faces) served.set(`/fonts/${FONT_FILE}-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `${FONT_FILE}-${f}.woff2`))]);
+  if (havePlex) for (const [f] of plex) served.set(`/fonts/IBMPlexSans-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `IBMPlexSans-${f}.woff2`))]);
   const style = `<style>${fontCSS}\n@layer hotty-host {\n${hostCSS}\n}</style>`;
 
   // A document the other mode wrote byte for byte is measured once.
