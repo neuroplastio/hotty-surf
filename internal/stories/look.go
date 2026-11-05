@@ -178,7 +178,7 @@ func lookAgents() *surfui.Node {
 			command(mdContentCopy, "Copy tab's layout", "", false),
 			command(mdBellOutline, "Notices", "3 unread", false, "ctrl", "b", "!"),
 		).Label("More commands"),
-		surfui.Rule().Down(1),
+		surfui.Rule(),
 		surfui.Row(surfui.Text("pane.split").Small().Muted().Grow(), surfui.Text("Actions").Small(), keyCap("ctrl"), keyCap("k"),
 			surfui.Text("Run").Small().Indent(2), keyCap("enter")).Gap(1),
 	).Width(76)

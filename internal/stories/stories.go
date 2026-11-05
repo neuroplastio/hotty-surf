@@ -830,9 +830,15 @@ var All = []Story{
 }
 
 // Surface is a story's tree in a surface of the theme and density, its
-// keys drawn in KeyStyle, as the gallery draws them.
+// keys drawn in KeyStyle, as the gallery draws them: a cell in from the
+// edges. A dialog's story isn't: a dialog has its own padding, which a
+// pad given it would take over (modifiers win, surf.css's last rules).
 func Surface(s Story, theme string, d surfui.Density) *surfui.Node {
-	root := surfui.Surface(s.Tree().Pad(1, 0)).Theme(theme).Density(d)
+	tree := s.Tree()
+	if !strings.HasPrefix(s.Name, "dialog/") {
+		tree.Pad(1, 0)
+	}
+	root := surfui.Surface(tree).Theme(theme).Density(d)
 	surfkeys.Expand(root, KeyStyle, true)
 	return root
 }

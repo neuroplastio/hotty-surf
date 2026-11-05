@@ -271,20 +271,6 @@
 .u-stack.u-gap4 { gap: calc(4 * var(--u-gy)); }
 .u-stack.u-gap5 { gap: calc(5 * var(--u-gy)); }
 .u-stack.u-gap6 { gap: calc(6 * var(--u-gy)); }
-.u-px1 { padding-left: var(--u-gx); padding-right: var(--u-gx); }
-.u-px2 { padding-left: calc(2 * var(--u-gx)); padding-right: calc(2 * var(--u-gx)); }
-.u-px3 { padding-left: calc(3 * var(--u-gx)); padding-right: calc(3 * var(--u-gx)); }
-.u-px4 { padding-left: calc(4 * var(--u-gx)); padding-right: calc(4 * var(--u-gx)); }
-.u-px5 { padding-left: calc(5 * var(--u-gx)); padding-right: calc(5 * var(--u-gx)); }
-.u-px6 { padding-left: calc(6 * var(--u-gx)); padding-right: calc(6 * var(--u-gx)); }
-.u-py1 { padding-top: var(--u-gy); padding-bottom: var(--u-gy); }
-.u-py2 { padding-top: calc(2 * var(--u-gy)); padding-bottom: calc(2 * var(--u-gy)); }
-.u-py3 { padding-top: calc(3 * var(--u-gy)); padding-bottom: calc(3 * var(--u-gy)); }
-.u-py4 { padding-top: calc(4 * var(--u-gy)); padding-bottom: calc(4 * var(--u-gy)); }
-.u-py5 { padding-top: calc(5 * var(--u-gy)); padding-bottom: calc(5 * var(--u-gy)); }
-.u-py6 { padding-top: calc(6 * var(--u-gy)); padding-bottom: calc(6 * var(--u-gy)); }
-.u-indent { margin-left: calc(var(--u-in) * var(--u-cw)); }
-.u-down { margin-top: calc(var(--u-dn) * var(--u-row)); }
 
 /* Type: the terminal's face in Dense; one proportional face at small
    sizes in Compact and Roomy, the chrome's a step smaller; captions small
@@ -294,8 +280,6 @@
 /* A Line that wraps is a paragraph: its runs wrap at their spaces too,
    and its keys sit in its lines whole. */
 .u-line.u-wrap > .u-text { white-space: normal; }
-.u-bold { font-weight: 600; }
-.u-semi { font-weight: 600; }
 .u-compact .u-small { font-size: 12.5px; }
 .u-roomy .u-small { font-size: 13px; }
 .u-heading { font-weight: 600; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
@@ -309,13 +293,7 @@
 /* Small text that wraps (a setting's description, an agent's task) on
    GPUI's tight leading, not the row's. */
 .u-compact .u-small.u-wrap, .u-roomy .u-small.u-wrap { line-height: 1.5; }
-.u-tone-accent { color: var(--u-accent); }
-.u-tone-ok { color: var(--u-ok); }
-.u-tone-warn { color: var(--u-warn); }
-.u-tone-error { color: var(--u-error); }
 .u-item.is-sel.u-tone-error, .u-item.is-sel .u-tone-error { color: var(--u-error-on-sel); }
-.u-tone-info { color: var(--u-info); }
-.u-tone-muted { color: var(--u-muted); }
 
 /* Marks: a glyph in a slot of its own; an icon, an MDI glyph from the
    hosts' Nerd Font (HOST.md §2.1) beside a label, muted; a state's dot. */
@@ -399,12 +377,6 @@
 }
 .u-compact .u-badge { padding: 0 6px; font-size: 11.5px; line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px)); }
 .u-roomy .u-badge { padding: 0 6px; font-size: 12.5px; }
-.u-fill-accent { background: color-mix(in srgb, var(--u-accent) 26%, var(--u-bg)); color: var(--u-ink); }
-.u-fill-ok { background: color-mix(in srgb, var(--u-ok) 24%, var(--u-bg)); color: var(--u-ink); }
-.u-fill-warn { background: color-mix(in srgb, var(--u-warn) 24%, var(--u-bg)); color: var(--u-ink); }
-.u-fill-error { background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); color: var(--u-ink); }
-.u-fill-info { background: color-mix(in srgb, var(--u-info) 24%, var(--u-bg)); color: var(--u-ink); }
-.u-fill-muted { background: var(--u-selected); color: var(--u-muted); }
 .u-badge[class*="u-fill-"] { box-shadow: none; }
 .u-key {
   flex: 0 0 auto;
@@ -493,10 +465,10 @@
   box-shadow: inset 0 0 0 1px var(--u-border);
 }
 .u-compact .u-btn, .u-roomy .u-btn { padding: 0 calc(1.5 * var(--u-px)); font-weight: 500; }
-.u-btn.u-fill-accent { color: var(--u-on-solid); background: var(--u-solid); box-shadow: none; }
+.u-surface .u-btn.u-fill-accent { color: var(--u-on-solid); background: var(--u-solid); box-shadow: none; }
 /* A button in the error's fill is destructive: the error's tint, its
    text in the error, no hairline. */
-.u-btn.u-fill-error { color: var(--u-error); background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); box-shadow: none; }
+.u-surface .u-btn.u-fill-error { color: var(--u-error); background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); box-shadow: none; }
 .u-btn.u-bare { color: var(--u-muted); background: transparent; box-shadow: none; }
 /* A small button fits its row: a line tall (the row's, in the button's
    own small type in Roomy), never taller than the text beside it, so
@@ -693,9 +665,9 @@
   color: var(--u-on-solid);
   background: var(--u-accent);
 }
-.u-count.u-tone-warn { color: var(--u-canvas); background: var(--u-warn); }
-.u-count.u-tone-error { color: var(--u-canvas); background: var(--u-error); }
-.u-count.u-tone-muted { color: var(--u-ink); background: var(--u-input); }
+.u-surface .u-count.u-tone-warn { color: var(--u-canvas); background: var(--u-warn); }
+.u-surface .u-count.u-tone-error { color: var(--u-canvas); background: var(--u-error); }
+.u-surface .u-count.u-tone-muted { color: var(--u-ink); background: var(--u-input); }
 .u-count.u-count-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
 .u-has-count { position: relative; }
 .u-has-count > .u-count { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }
@@ -990,3 +962,41 @@
 .u-compact .u-tip, .u-roomy .u-tip { padding: 3px 8px; line-height: 18px; font-weight: 500; }
 .u-compact .u-tip .u-tone-muted, .u-roomy .u-tip .u-tone-muted { font-weight: 400; }
 .u-compact .u-tip > .u-stack, .u-roomy .u-tip > .u-stack { gap: 3px; padding: 3px 0; }
+
+/* What a program asks of a widget wins over the widget's own look (the
+   maintainer, 2026-11-05, on the gallery: its controls changed nothing
+   on a button). A component sets its colour, fill, weight, margins and
+   padding in rules of one or two classes, and each modifier was one
+   class before them, so tone, fill, bold, semibold, indent, down and pad
+   did nothing on a button, a badge, a switch, a select or a field. They
+   are here, last, under the surface: two classes, after every rule of
+   two. A component's own pairing with one (a count's tone, the primary
+   and the destructive button) is three. */
+.u-surface .u-px1, .u-surface.u-px1 { padding-left: var(--u-gx); padding-right: var(--u-gx); }
+.u-surface .u-px2, .u-surface.u-px2 { padding-left: calc(2 * var(--u-gx)); padding-right: calc(2 * var(--u-gx)); }
+.u-surface .u-px3, .u-surface.u-px3 { padding-left: calc(3 * var(--u-gx)); padding-right: calc(3 * var(--u-gx)); }
+.u-surface .u-px4, .u-surface.u-px4 { padding-left: calc(4 * var(--u-gx)); padding-right: calc(4 * var(--u-gx)); }
+.u-surface .u-px5, .u-surface.u-px5 { padding-left: calc(5 * var(--u-gx)); padding-right: calc(5 * var(--u-gx)); }
+.u-surface .u-px6, .u-surface.u-px6 { padding-left: calc(6 * var(--u-gx)); padding-right: calc(6 * var(--u-gx)); }
+.u-surface .u-py1, .u-surface.u-py1 { padding-top: var(--u-gy); padding-bottom: var(--u-gy); }
+.u-surface .u-py2, .u-surface.u-py2 { padding-top: calc(2 * var(--u-gy)); padding-bottom: calc(2 * var(--u-gy)); }
+.u-surface .u-py3, .u-surface.u-py3 { padding-top: calc(3 * var(--u-gy)); padding-bottom: calc(3 * var(--u-gy)); }
+.u-surface .u-py4, .u-surface.u-py4 { padding-top: calc(4 * var(--u-gy)); padding-bottom: calc(4 * var(--u-gy)); }
+.u-surface .u-py5, .u-surface.u-py5 { padding-top: calc(5 * var(--u-gy)); padding-bottom: calc(5 * var(--u-gy)); }
+.u-surface .u-py6, .u-surface.u-py6 { padding-top: calc(6 * var(--u-gy)); padding-bottom: calc(6 * var(--u-gy)); }
+.u-surface .u-indent, .u-surface.u-indent { margin-left: calc(var(--u-in) * var(--u-cw)); }
+.u-surface .u-down, .u-surface.u-down { margin-top: calc(var(--u-dn) * var(--u-row)); }
+.u-surface .u-bold, .u-surface.u-bold { font-weight: 600; }
+.u-surface .u-semi, .u-surface.u-semi { font-weight: 600; }
+.u-surface .u-tone-accent, .u-surface.u-tone-accent { color: var(--u-accent); }
+.u-surface .u-tone-ok, .u-surface.u-tone-ok { color: var(--u-ok); }
+.u-surface .u-tone-warn, .u-surface.u-tone-warn { color: var(--u-warn); }
+.u-surface .u-tone-error, .u-surface.u-tone-error { color: var(--u-error); }
+.u-surface .u-tone-info, .u-surface.u-tone-info { color: var(--u-info); }
+.u-surface .u-tone-muted, .u-surface.u-tone-muted { color: var(--u-muted); }
+.u-surface .u-fill-accent, .u-surface.u-fill-accent { background: color-mix(in srgb, var(--u-accent) 26%, var(--u-bg)); color: var(--u-ink); }
+.u-surface .u-fill-ok, .u-surface.u-fill-ok { background: color-mix(in srgb, var(--u-ok) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-surface .u-fill-warn, .u-surface.u-fill-warn { background: color-mix(in srgb, var(--u-warn) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-surface .u-fill-error, .u-surface.u-fill-error { background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-surface .u-fill-info, .u-surface.u-fill-info { background: color-mix(in srgb, var(--u-info) 24%, var(--u-bg)); color: var(--u-ink); }
+.u-surface .u-fill-muted, .u-surface.u-fill-muted { background: var(--u-selected); color: var(--u-muted); }
