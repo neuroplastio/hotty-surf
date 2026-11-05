@@ -462,9 +462,10 @@ func (w *fw) menuItem(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	icon := w.arg(b, el, sc, el.Icon(), ctx{k: cString}, "string")
 	key := w.arg(b, el, sc, el.KeyLabel(), ctx{k: cText}, "string")
 	off := w.arg(b, el, sc, el.Disabled(), ctx{k: cBool}, "bool")
+	danger := w.arg(b, el, sc, el.Danger(), ctx{k: cBool}, "bool")
 	apre, act := w.action(el, sc, el.Do())
-	b.WriteString(guard(apre, fmt.Sprintf("it, err := surf.MenuAction(%d, %s, %s, %s, %s, %s)\nif err != nil {\ne.Fail(%s, err)\n}\n%s = append(%s, it)",
-		el.Ord(), label, icon, key, off, act, w.pos(el), tg.menu, tg.menu)))
+	b.WriteString(guard(apre, fmt.Sprintf("it, err := surf.MenuAction(%d, %s, %s, %s, %s, %s, %s)\nif err != nil {\ne.Fail(%s, err)\n}\n%s = append(%s, it)",
+		el.Ord(), label, icon, key, off, danger, act, w.pos(el), tg.menu, tg.menu)))
 	b.WriteString("}\n")
 }
 

@@ -463,6 +463,12 @@ The order is the maintainer's, via gov (2026-10-30):
     list; story list/states.
   - [x] H4: the segmented control, `segmented` on a row of buttons
     (surfui `Segmented`); story segmented/states.
+  - [x] H5: one menu: `surfui.MenuCard` (raised, radius 8, rows 28,
+    icon, label, keys, a heading, rules, `danger`), shown by
+    `Surface.MenuView` for an element's menu and `surfrun.OpenMenu`
+    for a host program's at a point (`MenuView.Place`, `.Item`);
+    `<action danger>`; story menu/shown. Left: a heading in a
+    template's `<menu>` (Go's `MenuItem.Heading` only).
 
 ## v0
 

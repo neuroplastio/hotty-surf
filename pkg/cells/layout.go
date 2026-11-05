@@ -295,7 +295,7 @@ func (b *box) look(d density) {
 		case c == "u-surface":
 			b.f |= fSurface
 			known = true
-		case c == "u-stack", c == "u-section", c == "u-box", c == "u-list", c == "u-options", c == "u-dialog", c == "u-tip":
+		case c == "u-stack", c == "u-section", c == "u-box", c == "u-list", c == "u-options", c == "u-menu", c == "u-dialog", c == "u-tip":
 			known = true
 			switch c {
 			case "u-tip":
@@ -306,7 +306,7 @@ func (b *box) look(d density) {
 				b.f |= fBox
 			case "u-list":
 				b.f |= fList
-			case "u-options":
+			case "u-options", "u-menu":
 				b.f |= fOptions | fList
 			case "u-dialog":
 				b.f |= fDialog

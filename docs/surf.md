@@ -459,7 +459,7 @@ and a `:if` chain goes on past it.
   <menu>
     <action icon="content-copy" do="copy(r.key)">Copy text</action>
     <sep/>
-    <action :disabled="!r.live" do="dismiss(r.key)">Dismiss</action>
+    <action :disabled="!r.live" danger do="dismiss(r.key)">Dismiss</action>
   </menu>
 </stack>
 ```
@@ -473,17 +473,27 @@ and a `:if` chain goes on past it.
 - `icon` is one of MDI's names (`content-copy`), checked as an
   `<icon>`'s `name` is, which the host draws; `key` is a key's name shown
   beside the label, which binds nothing (a `<bind>` binds it).
-  `:disabled` greys the item, and a pick of it runs nothing. `:icon`
-  and `:key` bind too.
+  `:disabled` greys the item, and a pick of it runs nothing; `danger`
+  draws an item that destroys in the error's colour. `:icon`, `:key`
+  and `:danger` bind too.
 - **`:if`, `:else-if` and `:else`** go on `<action>` and `<sep/>`;
   `:each` doesn't: each item's id is its place in the `<menu>`, from 0,
   so an item left out moves no other's.
 - **The host asks the surface for the menu** where the user asks for it,
   `surfrun.Surface.Menu`, by an element's id, a cell's
   (`cells.Renderer.At`) or the focus: the innermost element's with a
-  menu. It draws the items, and hands the one picked to
-  `Surface.Pick`, which runs it as a click runs a handler. A pick of an
-  item gone since (its row, or the item, or disabled now) runs nothing.
+  menu. It shows them in surf's look, `Surface.MenuView`: a surface of
+  its own, with its HTML, its size in cells for a host
+  (`MenuView.Place` puts it at the point) and its cells, and
+  `MenuView.Item` says which item a press in it picks. It hands that
+  item to `Surface.Pick`, which runs it as a click runs a handler. A
+  pick of an item gone since (its row, or the item, or disabled now)
+  runs nothing.
+- **Every menu has that look,** and a host program opens one of its
+  own at a point (a pane's, a tab's) with `surfrun.OpenMenu`: its
+  items, a heading among them, rules, items that destroy, in the theme
+  and density of what it is of. It is raised, radius 8, with rows 28px
+  tall on a host.
 
 ## Tooltips
 

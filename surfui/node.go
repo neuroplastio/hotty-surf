@@ -244,6 +244,10 @@ type MenuItem struct {
 	// which binds nothing.
 	Label, Icon, Key string
 	Disabled         bool
+	// Danger draws it in the error's colour: an action that destroys
+	// (Close pane). Heading makes it a caption over the items after it,
+	// its Label alone, which can't be picked.
+	Danger, Heading bool
 	// Act is what a pick of it runs, as a click's handler does.
 	Act Action
 }
