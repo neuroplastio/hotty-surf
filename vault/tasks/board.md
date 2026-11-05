@@ -486,7 +486,10 @@ The order is the maintainer's, via gov (2026-10-30):
     `Stale`) and `Node.Popover`; stories widget/states, pop/shown. No
     sparkline yet. Markup since: `<face icon value unit>` with `meter`
     and `stale`, and `popover` on a box or a stack; in the conformance
-    fixtures (shelf.surf, info-panel.surf).
+    fixtures (shelf.surf, info-panel.surf). Answered 2026-11-05: both
+    paths, data-first the default; a face holds the program's own
+    widgets too (`Widget(…, kids...)`, children in `<face>`); story
+    widget/own.
   - [x] H7, Q19 (the lean: attention is the warn tone):
     `attention` on a button or an item (surfui `Attention`): the warn,
     its soft fill where current, the keyboard's row on warn-soft with a

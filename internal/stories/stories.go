@@ -457,6 +457,21 @@ var All = []Story{
 				surfui.Widget(mdMemory, "23%", "").Meter(0.23)).Gap(5),
 		).Gap(1).Pad(2, 1).Chrome()
 	}},
+	{"widget/own", 80, func() *surfui.Node {
+		// A widget that draws its own face, the custom path: its widgets
+		// in the kit's capsule, at rest, under the pointer and with its
+		// popover shown; then one that mixes the data (an icon and a
+		// value) with its own dots.
+		agents := func() []*surfui.Node {
+			return []*surfui.Node{surfui.Dot().Tone(surfui.OK), surfui.Dot().Tone(surfui.Warn),
+				surfui.Dot().Ring().Tone(surfui.Muted), surfui.Text("3").Small()}
+		}
+		return surfui.Stack(
+			surfui.Row(surfui.Widget("", "", "", agents()...), Force(surfui.Widget("", "", "", agents()...), "hover"),
+				surfui.Widget("", "", "", agents()...).Selected(true),
+				surfui.Widget(mdRobotOutline, "2", "", surfui.Dot().Tone(surfui.Warn))).Gap(5),
+		).Gap(1).Pad(2, 1).Chrome()
+	}},
 	{"pop/shown", 50, func() *surfui.Node {
 		// A popover a widget opens under it: its header (an icon, a
 		// title, an action), a rule, and its body, a list.

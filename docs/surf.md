@@ -312,8 +312,15 @@ component or a partial.
   shows (the accent's soft fill), `stale` dims it where its source is
   gone, and `meter` adds a bar after it:
   `<face icon="memory" :value="string(load) + '%'" :meter="load" @click="open()"/>`.
+  That is the data-first path, the default: the program gives the data
+  and the kit draws the face, so a prototype needs no styling. A
+  program that draws its own puts its widgets inside the `face`, after
+  its icon, value and unit or in their place, and keeps the capsule,
+  its states and its meter:
+  `<face @click="open()"><dot tone="ok"/><text>{{ n }} live</text></face>`.
   What it opens is a `popover`, a `box` or a `stack` at the root of a
-  surface of its own. The cells draw its glyph, value and unit in a row.
+  surface of its own. The cells draw its glyph, value and unit in a row,
+  then what it holds.
 - **A scope or a filter of two to four values** is a `row segmented` of
   buttons: one sunk pill, the `selected` button raised in it, each with
   its own `@click`. Past four, a `select`:

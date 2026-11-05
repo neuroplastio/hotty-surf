@@ -462,7 +462,7 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | `rule` | none | nothing | none | a line across | `<rule/>` | `<div id="r" class="u-rule"></div>` |
 | `box` | kids | children | click, focus | a raised panel | `<box/>` | `<div id="r" class="u-box"></div>` |
 | `dialog` | kids | children | click, focus | the box plx draws round its palette | `<dialog/>` | `<div id="r" class="u-dialog" role="dialog"></div>` |
-| `face` | face | `icon`, `value`, `unit` | click, focus | a widget's face on a strip: its icon, value and unit in a capsule, which opens a popover or runs its verb | `<face icon="source-branch" value="main" unit="+2"/>` | `<div id="r" class="u-row u-wg"><span id="r.0" class="u-text u-icon">󰘬</span><span id="r.1" class="u-text u-wg-v">main</span><span id="r.2" class="u-text u-wg-u">+2</span></div>` |
+| `face` | face | `icon`, `value`, `unit` | click, focus | a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb | `<face icon="source-branch" value="main" unit="+2"/>` | `<div id="r" class="u-row u-wg"><span id="r.0" class="u-text u-icon">󰘬</span><span id="r.1" class="u-text u-wg-v">main</span><span id="r.2" class="u-text u-wg-u">+2</span></div>` |
 <!-- end widgets table -->
 
 - The `surface`'s density is Compact unless `density` says; the floor's

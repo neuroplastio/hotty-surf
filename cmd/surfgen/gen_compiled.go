@@ -482,7 +482,7 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	n := w.tmp("n")
 	k, bs := "k"+n[1:], "b"+n[1:]
 	ktg := target{binds: bs}
-	if wd.Form == surf.FormKids || wd.Form == surf.FormSection || wd.Tag == "button" {
+	if wd.Form == surf.FormKids || wd.Form == surf.FormSection || wd.Form == surf.FormFace || wd.Tag == "button" {
 		ktg.out = k // a button's: its <icon>
 	}
 	var kids bytes.Buffer
@@ -531,6 +531,9 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		i := w.arg(b, el, sc, el.Args()[0], ctx{k: cString}, "string")
 		v := w.arg(b, el, sc, el.Args()[1], ctx{k: cString}, "string")
 		u := w.arg(b, el, sc, el.Args()[2], ctx{k: cString}, "string")
+		if kidsArg != "" {
+			u += ", " + kidsArg
+		}
 		fmt.Fprintf(b, "var %s *surfui.Node\n{\nvar err error\nif %s, err = surf.NewFace(%s, %s, %s); err != nil {\ne.Fail(%s, err)\n}\n}\n", n, n, i, v, u, w.pos(el))
 	case surf.FormSection:
 		t := w.arg(b, el, sc, el.Args()[0], ctx{k: cString}, "string")

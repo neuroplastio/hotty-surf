@@ -1063,7 +1063,7 @@ func (s *scope) bare(n *markup.Node) *elem {
 	ks := s.tipOf(e, n, s.menuOf(e, n))
 	was, wasLine := s.around, s.inLine
 	s.around = true // a <bind> in it binds on it
-	if e.w.Form == FormKids || e.w.Form == FormSection {
+	if e.w.Form == FormKids || e.w.Form == FormSection || e.w.Form == FormFace {
 		s.inLine = e.w.Tag == "line"
 		e.kids = s.kids(ks)
 	} else {

@@ -701,8 +701,8 @@
 .u-has-count > .u-count { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }
 .u-has-count > .u-count.u-count-dot { top: 1px; right: 1px; }
 
-/* A widget's face (Widget, Q16's lean: a face the program draws): a
-   capsule on the hover ground, 28px on a host, 10px across, its icon
+/* A widget's face (Widget; Q16, the maintainer: data-first by default,
+   or the program's own widgets in it): a capsule on the hover ground, 28px on a host, 10px across, its icon
    muted, its value 500 in the ink, its unit 400 muted, 6px apart; the
    pointer on it the selected fill, its popover shown (Selected) the
    accent's soft fill in the accent; a tone its icon and value's colour

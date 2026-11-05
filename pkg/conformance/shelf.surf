@@ -3,6 +3,7 @@
     <heading>{{ title }}</heading>
     <spacer/>
     <face key="load" icon="layers-outline" :value="string(size(panels))" unit="panels" :meter="size(panels) * 25" :stale="size(panels) == 0" tone="ok"/>
+    <face key="own" @click="add"><dot tone="ok"/><text>{{ size(panels) }} live</text></face>
     <button key="add" @click="add">Add</button>
     <button key="drop" @click="drop">Drop</button>
   </row>

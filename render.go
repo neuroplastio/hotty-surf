@@ -417,7 +417,7 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 		heading, _ := f.strOr(e, e.args[0], "")
 		n = surfui.Section(heading, kids...)
 	case FormFace:
-		n = f.faceOf(e)
+		n = f.faceOf(e, kids)
 	}
 	for _, m := range e.mods {
 		f.apply(e, n, m)
@@ -458,14 +458,14 @@ func (f *frame) tip(e *elem, n *surfui.Node) {
 	}
 }
 
-// faceOf builds a <face>: its icon, value and unit.
+// faceOf builds a <face>: its icon, value and unit, then kids.
 //
 //go:noinline
-func (f *frame) faceOf(e *elem) *surfui.Node {
+func (f *frame) faceOf(e *elem, kids []*surfui.Node) *surfui.Node {
 	icon, _ := f.strOr(e, e.args[0], "")
 	val, _ := f.strOr(e, e.args[1], "")
 	unit, _ := f.strOr(e, e.args[2], "")
-	n, err := NewFace(icon, val, unit)
+	n, err := NewFace(icon, val, unit, kids...)
 	if err != nil {
 		f.fail(e, err)
 	}

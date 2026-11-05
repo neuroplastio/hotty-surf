@@ -34,7 +34,8 @@ const (
 	// FormIcon is an icon: its glyph, as its text or by its `name`, and an
 	// SVG a host draws in its place, by its `svg` or its `path`.
 	FormIcon
-	// FormFace is a widget's face: its `icon`, `value` and `unit`.
+	// FormFace is a widget's face: its `icon`, `value` and `unit`, then
+	// its element children, the program's own.
 	FormFace
 )
 
@@ -143,7 +144,7 @@ var Widgets = []Widget{
 	{"rule", "a line across", FormNone, "surfui.Rule", nil},
 	{"box", "a raised panel", FormKids, "surfui.Box", events},
 	{"dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events},
-	{"face", "a widget's face on a strip: its icon, value and unit in a capsule, which opens a popover or runs its verb", FormFace, "NewFace", events},
+	{"face", "a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb", FormFace, "NewFace", events},
 }
 
 // Attrs are the attributes, constructors' arguments first.
@@ -323,16 +324,16 @@ func MenuAction(ord int, label, icon, key string, disabled, danger bool, act sur
 	return it, nil
 }
 
-// NewFace is a widget's face (Q16's lean: a face the program draws
-// from what it is given): icon, one of MDI's names, as an <icon>'s, its
-// value and its unit, each left out where "". An icon IconGlyph refuses
+// NewFace is a widget's face: icon, one of MDI's names, as an <icon>'s,
+// its value and its unit, each left out where "", then kids, what the
+// program draws in it itself (surfui.Widget). An icon IconGlyph refuses
 // is the help box, and the error.
-func NewFace(icon, value, unit string) (*surfui.Node, error) {
+func NewFace(icon, value, unit string, kids ...*surfui.Node) (*surfui.Node, error) {
 	if icon == "" {
-		return surfui.Widget("", value, unit), nil
+		return surfui.Widget("", value, unit, kids...), nil
 	}
 	g, err := IconGlyph(icon)
-	return surfui.Widget(g, value, unit), err
+	return surfui.Widget(g, value, unit, kids...), err
 }
 
 // MenuHeading is a menu's <heading>, a caption over the items after it,
