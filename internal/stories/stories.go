@@ -431,6 +431,17 @@ var All = []Story{
 		}
 		return surfui.Stack(g).Width(30)
 	}},
+	{"count/states", 60, func() *surfui.Node {
+		// A tool's count on its button, on a strip's canvas: new (the
+		// accent), waiting for you (warn), failed (error), informational
+		// (muted), past 99, a dot with no number, and none once open.
+		tool := func(c *surfui.Node) *surfui.Node {
+			return surfui.IconButton(surfui.Icon(mdBellOutline), "", false).Label("Notices").Pill().WithCount(c)
+		}
+		return surfui.Row(tool(surfui.Count(3)), tool(surfui.Count(1).Tone(surfui.Warn)), tool(surfui.Count(2).Tone(surfui.Error)),
+			tool(surfui.Count(12).Tone(surfui.Muted)), tool(surfui.Count(120)), tool(surfui.CountDot()),
+			tool(nil).Selected(true)).Gap(5).Pad(2, 1).Chrome()
+	}},
 	{"icon/svg", 50, func() *surfui.Node {
 		// An SVG icon where a glyph would be: beside an item's label, the
 		// search row's, at the icon's size and in its colour, the ink where
