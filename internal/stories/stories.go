@@ -497,6 +497,25 @@ var All = []Story{
 			surfui.Item(surfui.Text("workspace.new").Grow()),
 		)
 	}},
+	{"list/states", 50, func() *surfui.Node {
+		// A list's rows in their states, as the board's hosts: at rest,
+		// under the pointer, selected, and the keyboard's row, the
+		// selection of a list that has the keyboard (the accent's soft
+		// fill and its marker).
+		row := func(on bool, name string, end *surfui.Node) *surfui.Node {
+			dot := surfui.Dot().Tone(surfui.OK)
+			if !on {
+				dot = surfui.Dot().Ring().Tone(surfui.Muted)
+			}
+			return surfui.Item(dot, surfui.Text(name).Grow(), end).Gap(2)
+		}
+		return surfui.Stack(
+			surfui.List(row(true, "studio", surfui.Badge("1 ws")),
+				Force(row(false, "build-02", surfui.Text("offline").Small().Muted()), "hover"),
+				row(true, "laptop", surfui.Badge("2 ws")).Selected(true)),
+			Force(surfui.List(row(true, "this machine", surfui.Badge("3 ws")).Selected(true)), "within"),
+		)
+	}},
 	{"list/keyboard", 50, func() *surfui.Node {
 		// A palette's rows: in Compact, the selection is the accent band
 		// while the List's container has the keyboard (the Field that
