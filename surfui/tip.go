@@ -73,8 +73,8 @@ func walkEls(n *Node, f func(*Node) bool) {
 // TipCard is a tooltip as its host shows it, in a surface of its own:
 // the root of that surface, in the theme and density nearest the element
 // (from, or a node of its tree: the first of each from it up to its
-// root), holding a card, a step lighter than the page with a hairline
-// round it, its text small, and in it a copy of content. A text directly
+// root), holding a card in a bar's tip's look (the float ground, the
+// input's hairline), its text small, and in it a copy of content. A text directly
 // in content (a template's <title>'s text) wraps. Resolve it under
 // TipID.
 func TipCard(from *Node, content *Node) *Node {

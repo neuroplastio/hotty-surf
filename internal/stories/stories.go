@@ -14,6 +14,7 @@ package stories
 import (
 	"strings"
 
+	"github.com/neuroplastio/hotty-surf/pkg/cells"
 	"github.com/neuroplastio/hotty-surf/surfkeys"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
@@ -412,20 +413,31 @@ var All = []Story{
 	// here drawn under what it is of, as its host places it: a text one,
 	// and a rich one of a row with a dot, bold text and a muted line.
 	{"tip/shown", 50, func() *surfui.Node {
+		// A tooltip's card as its host shows it, in a bar's tip's look,
+		// each as wide as the host would make it (its cells' width): a
+		// text that wraps, a label with a muted word, and two lines, a
+		// host's name over its state.
 		card := func(n *surfui.Node) *surfui.Node {
 			return surfui.Kids(surfui.TipCard(n, surfui.TipOf(n)))[0]
 		}
+		cols := func(n *surfui.Node) int {
+			t := surfui.TipCard(n, surfui.TipOf(n))
+			surfui.Resolve(t, surfui.TipID)
+			return cells.DrawTip(t, KeyStyle, Palette).Cols
+		}
 		copyBtn := surfui.Button("Copy").Title("Copies the note's text to the clipboard, as it is shown")
-		agent := Force(surfui.Item(surfui.Dot().Tone(surfui.OK), surfui.Text("claude-2")).Gap(1), "hover")
-		agent.Tip(surfui.Stack(
-			surfui.Row(surfui.Dot().Tone(surfui.OK), surfui.Text("claude-2").Bold()).Gap(1),
-			surfui.Text("Waiting for you since 4 min, in p-3").Muted(),
+		agents := surfui.Button("Agents").Tip(surfui.Row(surfui.Text("Agents"), surfui.Text("shown").Muted()).Gap(2))
+		host := Force(surfui.Item(surfui.Dot().Tone(surfui.OK), surfui.Text("devbox")).Gap(1), "hover")
+		host.Tip(surfui.Stack(
+			surfui.Text("devbox"),
+			surfui.Text("connected · 1 workspace mounted").Muted(),
 		))
 		return surfui.Stack(
-			surfui.Row(copyBtn),
+			surfui.Row(copyBtn, agents).Gap(1),
 			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(copyBtn)).Width(30)),
-			surfui.List(agent).Width(20),
-			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(agent)).Width(30)),
+			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(agents)).Width(cols(agents))),
+			surfui.List(host).Width(20),
+			surfui.Row(surfui.Box().Width(2), surfui.Stack(card(host)).Width(cols(host))),
 		).Gap(1)
 	}},
 	{"cycle/states", 50, func() *surfui.Node {

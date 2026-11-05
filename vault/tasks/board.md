@@ -403,6 +403,14 @@ The order is the maintainer's, via gov (2026-10-30):
     cells, `cells.Renderer.At` and `tip.Cells.Lines` where it draws a
     menu.
 
+- [ ] **The kit to plx-design's board** (Design Agent, from 2026-11-05;
+  the design's Migration board's hotty legs, one commit each, in its
+  order; journal 2026-11-05-kit). `make look` (scripts/look) draws a
+  story in Chromium and Blitz beside the board, and compares them.
+  - [x] H1: the tokens `--u-float`, `--u-accent-soft` and
+    `--u-accent-strong`, and one `--u-canvas` (the chrome's too); the
+    tooltip in a bar's tip's look, radius 6.
+
 ## v0
 
 - [x] **The rename** to hotty-surf, package `surf` (8c89236, 1a4310d):

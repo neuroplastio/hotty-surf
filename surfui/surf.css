@@ -3,10 +3,11 @@
    §8): the ground, the tones and the accent are the terminal's.
 
    The roles, as Herdr derives them from a terminal's palette (dark):
-   - layers: the content on the terminal's ground (bg); chrome (a sidebar)
-     and canvas a step toward black, so the terminal stays the brightest
-     dark layer; popover (a dialog) and raised (a menu) a step toward
-     white;
+   - layers: the content on the terminal's ground (bg); the canvas
+     behind it, and the chrome on the canvas (a sidebar, a bar), a step
+     toward black, so the terminal stays the brightest dark layer;
+     popover (a dialog) and raised (a menu) a step toward white; float
+     (a bar or a tip over content) the canvas, a little translucent;
    - states, translucent so that they are right on any layer: hover,
      selected, border and input, white at 5.5, 9, 9.4 and 14%; a field
      sunk below the layer it is on;
@@ -80,32 +81,45 @@
   --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.2);
   color-scheme: light;
 }
-/* The layers, from the ground. On light, chrome and canvas are still a
-   step darker than the content, and popover and raised are white. */
+/* The layers, from the ground: one canvas behind the cards, which the
+   chrome on it shares (a sidebar, a bar, a stripe), a step toward black;
+   popover (a dialog) and raised (a menu) a step toward white; float, a
+   bar or a tooltip over content, the canvas a little translucent. On
+   light the canvas is still darker than the content, and popover,
+   raised and float are white.
+
+   The accent's two fills: soft, the keyboard's things (a row, a stripe,
+   a tab); strong, a press and a drop target. */
 .u-surface {
-  --u-chrome: color-mix(in srgb, var(--u-bg) 76%, black);
-  --u-canvas: color-mix(in srgb, var(--u-bg) 88%, black);
+  --u-canvas: color-mix(in srgb, var(--u-bg) 72%, black);
   --u-popover: color-mix(in srgb, var(--u-bg) 90%, white);
   --u-raised: color-mix(in srgb, var(--u-bg) 93%, white);
+  --u-float: color-mix(in srgb, var(--u-canvas) 96%, transparent);
+  --u-accent-soft: color-mix(in srgb, var(--u-accent) 16%, transparent);
+  --u-accent-strong: color-mix(in srgb, var(--u-accent) 35%, transparent);
   --u-solid: var(--u-ink);
   --u-solid-hover: white;
-  --u-on-solid: var(--u-chrome);
+  --u-on-solid: var(--u-canvas);
 }
 @media (prefers-color-scheme: light) {
   .u-surface {
-    --u-chrome: color-mix(in srgb, var(--u-bg) 94%, black);
-    --u-canvas: color-mix(in srgb, var(--u-bg) 97%, black);
+    --u-canvas: color-mix(in srgb, var(--u-bg) 94%, black);
     --u-popover: #ffffff;
     --u-raised: #ffffff;
+    --u-float: rgb(255 255 255 / 0.96);
+    --u-accent-soft: color-mix(in srgb, var(--u-accent) 12%, transparent);
+    --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
     --u-solid-hover: black;
     --u-on-solid: #ffffff;
   }
 }
 .u-surface.u-theme-paper {
-  --u-chrome: color-mix(in srgb, var(--u-bg) 94%, black);
-  --u-canvas: color-mix(in srgb, var(--u-bg) 97%, black);
+  --u-canvas: color-mix(in srgb, var(--u-bg) 94%, black);
   --u-popover: #ffffff;
   --u-raised: #ffffff;
+  --u-float: rgb(255 255 255 / 0.96);
+  --u-accent-soft: color-mix(in srgb, var(--u-accent) 12%, transparent);
+  --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
   --u-solid-hover: black;
   --u-on-solid: #ffffff;
 }
@@ -612,13 +626,13 @@
 .u-section .u-section { margin-left: calc(2 * var(--u-cw)); }
 
 /* Layers: a rule a hairline; a box a hairline round flat content; the
-   chrome (a sidebar) darker than the content, with a hairline at its
-   end; a dialog a popover, modal, a half row and a cell and a half
+   chrome (a sidebar) on the canvas, darker than the content, with a
+   hairline at its end; a dialog a popover, modal, a half row and a cell and a half
    inside in Dense, the scale's 8px in Compact and Roomy. */
 .u-rule { flex: 0 0 auto; height: 1px; background: var(--u-border); }
 .u-compact .u-rule { margin: 4px 0; }
 .u-box { border-radius: calc(2 * var(--u-radius)); box-shadow: inset 0 0 0 1px var(--u-border); }
-.u-chrome { background: var(--u-chrome); box-shadow: inset -1px 0 0 var(--u-border); }
+.u-chrome { background: var(--u-canvas); box-shadow: inset -1px 0 0 var(--u-border); }
 /* A card: a group's panel, a step lighter than the page (raised), with
    no hairline round it and room across inside it, its rows split by
    rules that end at that room. A note under it has a little air over
@@ -674,22 +688,25 @@
 .u-drop-into { box-shadow: inset 0 0 0 2px var(--u-accent) !important; }
 
 /* A tooltip (surfui.TipCard): a card in a surface of its own, which its
-   host places over the view, a step lighter than the page with a
-   hairline round it, as a Select's open list is (its shadow left out:
-   the surface ends at the card); half a cell of room above and below
-   its rows and a cell beside them, its text small. Muted and dim are
-   mixed again with its fill. */
+   host places over the view, in the look of a bar's tip: the float
+   ground, the input's hairline, radius 6, no shadow (the surface ends at
+   the card), its text small. In Dense, half a cell of room above and
+   below its rows and a cell beside them; in Compact and Roomy 3px and
+   8px, a line 18px, its text 500 and a muted line 400, two lines 3px
+   apart with 6px above and below them. Its rows sit in its middle where
+   its surface is taller (a host places it in whole rows). */
 .u-tip {
-  --u-bg: var(--u-raised);
-  --u-muted: color-mix(in srgb, var(--u-ink) 60%, var(--u-bg));
-  --u-dim: color-mix(in srgb, var(--u-ink) 38%, var(--u-bg));
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   min-width: 0;
   padding: calc(0.5 * var(--hotty-cell-h)) var(--hotty-cell-w);
-  border-radius: calc(2 * var(--u-radius));
+  border-radius: 6px;
   color: var(--u-ink);
-  background: var(--u-raised);
-  box-shadow: inset 0 0 0 1px var(--u-border);
+  background: var(--u-float);
+  box-shadow: inset 0 0 0 1px var(--u-input);
 }
+.u-compact .u-tip, .u-roomy .u-tip { padding: 3px 8px; line-height: 18px; font-weight: 500; }
+.u-compact .u-tip .u-tone-muted, .u-roomy .u-tip .u-tone-muted { font-weight: 400; }
+.u-compact .u-tip > .u-stack, .u-roomy .u-tip > .u-stack { gap: 3px; padding: 3px 0; }
