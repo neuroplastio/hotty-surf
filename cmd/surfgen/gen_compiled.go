@@ -443,17 +443,23 @@ func (w *fw) render(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		w.use(b, el, sc, tg)
 	case surf.ElemEmbed:
 		w.embed(b, el, sc, tg)
-	case surf.ElemAction, surf.ElemSep:
+	case surf.ElemAction, surf.ElemSep, surf.ElemMenuHead:
 		w.menuItem(b, el, sc, tg)
 	}
 }
 
-// menuItem writes a <menu>'s item, appended to tg.menu: a separator, or
-// an action, left out where its handler's arguments fail, as the
-// interpreter's.
+// menuItem writes a <menu>'s item, appended to tg.menu: a separator, a
+// heading, or an action, left out where its handler's arguments fail, as
+// the interpreter's.
 func (w *fw) menuItem(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	if el.Kind() == surf.ElemSep {
 		fmt.Fprintf(b, "%s = append(%s, surf.MenuSep(%d))\n", tg.menu, tg.menu, el.Ord())
+		return
+	}
+	if el.Kind() == surf.ElemMenuHead {
+		pre, label := w.text(el, sc, el.Text())
+		b.WriteString("{\n" + pre)
+		fmt.Fprintf(b, "%s = append(%s, surf.MenuHeading(%d, %s))\n}\n", tg.menu, tg.menu, el.Ord(), label)
 		return
 	}
 	b.WriteString("{\n")
