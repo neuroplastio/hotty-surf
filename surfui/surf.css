@@ -692,6 +692,49 @@
 .u-has-count > .u-count { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }
 .u-has-count > .u-count.u-count-dot { top: 1px; right: 1px; }
 
+/* A widget's face (Widget, Q16's lean: a face the program draws): a
+   capsule on the hover ground, 28px on a host, 10px across, its icon
+   muted, its value 500 in the ink, its unit 400 muted, 6px apart; the
+   pointer on it the selected fill, its popover shown (Selected) the
+   accent's soft fill in the accent; a tone its icon and value's colour
+   (ok its icon's); stale dim. A meter a 28×4 bar on the input, filled
+   in the muted. */
+.u-row.u-wg {
+  flex: 0 0 auto;
+  column-gap: var(--u-gx);
+  padding: 0 var(--u-px);
+  border-radius: var(--u-r-pill);
+  white-space: pre;
+  font-weight: 500;
+  background: var(--u-hover);
+}
+.u-compact .u-row.u-wg, .u-roomy .u-row.u-wg { height: 28px; padding: 0 10px; column-gap: 6px; font-size: 13px; }
+.u-compact .u-wg > .u-icon, .u-roomy .u-wg > .u-icon { width: 16px; }
+.u-wg-u { color: var(--u-muted); font-weight: 400; }
+.u-row.u-wg:hover { background: var(--u-selected); }
+.u-row.u-wg.is-sel { color: var(--u-accent); background: var(--u-accent-soft); }
+.u-wg.is-sel > .u-icon, .u-wg.u-tone-warn > .u-icon, .u-wg.u-tone-error > .u-icon, .u-wg.u-tone-ok > .u-icon { color: inherit; }
+.u-row.u-wg.u-tone-ok { color: var(--u-ink); }
+.u-wg.u-tone-ok > .u-icon { color: var(--u-ok); }
+.u-row.u-wg.u-stale, .u-wg.u-stale > .u-icon, .u-wg.u-stale > .u-wg-u { color: var(--u-dim); }
+.u-wg-meter { display: inline-block; flex: 0 0 auto; width: calc(3 * var(--u-cw)); height: 4px; border-radius: 2px; overflow: hidden; background: var(--u-input); }
+.u-compact .u-wg-meter, .u-roomy .u-wg-meter { width: 28px; }
+.u-wg-fill { display: block; width: calc(var(--u-m) * 100%); height: 100%; border-radius: 2px; background: var(--u-muted); }
+
+/* A popover (Popover): what a widget or a top strip's tool opens under
+   it, a card of the page's ground in a surface of its own, radius 10,
+   the input's hairline and the raised shadow, what it holds clipped. */
+.u-pop {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--u-r-lg);
+  background: var(--u-bg);
+  box-shadow: inset 0 0 0 1px var(--u-input), var(--u-shadow-raised);
+}
+
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
    heading or an icon in the accent, as a link is; a badge or a key cap

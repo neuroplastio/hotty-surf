@@ -477,6 +477,10 @@ The order is the maintainer's, via gov (2026-10-30):
   - [x] H7, Q11 (the lean: "count"): `surfui.Count`, `CountDot`,
     `Node.WithCount`, a tool's count on its button; story
     count/states. Go only: no markup yet.
+  - [x] H7, Q16 (the lean: a widget is a face plx draws, its popover a
+    surface): `surfui.Widget` (icon, value, unit, tone, `Meter`,
+    `Stale`) and `Node.Popover`; stories widget/states, pop/shown. Go
+    only; no sparkline yet.
 
 ## v0
 
