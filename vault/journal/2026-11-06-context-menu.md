@@ -1,4 +1,4 @@
-# 2026-11-05: an element's menu opens itself (V7-01, leg 5a)
+# 2026-11-06: an element's menu opens itself (V7-01, leg 5a)
 
 The maintainer's goal for hotty 0.7 is "native feel when interacting with
 individual hotty elements"; their decision, "Program, hotty-surf does the
