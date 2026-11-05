@@ -199,6 +199,27 @@ legible: scripts/gate/node_modules   ## the gallery's stories at their widths, m
 	$(CAP) $(PIN) $(NODE) node scripts/gate/legible.cjs --hotty $(HOTTY) --fonts $(HOTTY_BLITZ)/crates/hotty-blitz/fonts \
 	  --stories bin/stories --out .shots/legible $(if $(LEGIBLE_KNOWN),--known $(LEGIBLE_KNOWN)) $(LEGIBLE_FLAGS)
 
+# The look loop (scripts/look/README.md): a story drawn in Chromium and in
+# Blitz, a board of the design (or one element of it) drawn in Chromium
+# with its kit.css, and the sheets that compare them, in .shots/look/.
+# LOOK is what to run, once for each of LOOK_THEMES; by default the
+# button's states against the Components board's button row. DESIGN is
+# the design's directory, ../design by default:
+#
+#   make look LOOK='run list/selection --board Components-dark.html --select "section:nth-of-type(8)"'
+#   make look LOOK='story button/states --scale 2' LOOK_THEMES=light
+LOOK        ?= run button/states --board Components-dark.html --select 'section:nth-of-type(4) > div:nth-child(2)'
+LOOK_THEMES ?= dark light
+DESIGN      ?=
+
+.PHONY: look
+
+look: scripts/gate/node_modules   ## edit, render, compare: a story in Chromium and Blitz beside a board of the design, .shots/look/
+	@test -x "$(HOTTY)" || { echo "no hotty at $(HOTTY): run make release in hotty-blitz, or set HOTTY_BLITZ"; exit 1; }
+	$(GO) build -o bin/stories ./internal/cmd/stories
+	for t in $(LOOK_THEMES); do $(CAP) $(PIN) $(NODE) node scripts/look/look.cjs $(LOOK) --theme $$t --hotty $(HOTTY) \
+	  --fonts $(HOTTY_BLITZ)/crates/hotty-blitz/fonts --stories bin/stories $(if $(DESIGN),--design $(DESIGN)) || exit 1; done
+
 # The pinned Playwright, and the Chromium it drives.
 scripts/gate/node_modules: scripts/gate/package.json scripts/gate/package-lock.json
 	cd scripts/gate && $(CAP) $(NODE) npm ci --no-audit --no-fund && $(CAP) $(NODE) npx playwright install chromium-headless-shell
