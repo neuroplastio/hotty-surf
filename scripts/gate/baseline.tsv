@@ -2,6 +2,10 @@
 # is a Blitz gap on vault/knowledge/blitz-gaps.md, with its score in CSS
 # px². Written by --write-baseline, again only when a Blitz fix lands or
 # a gap is listed. Last written with hotty built 2026-10-31 11:56 UTC (checkout at unknown), Chromium 153.0.8010.12.
+attention-states-neuroplastio-compact-1.6	23.4
+attention-states-paper-compact-1.6	22.3
+attention-states-paper-dense-1.6	375.0
+attention-states-terminal-compact-1.6	23.4
 badge-fills-neuroplastio-compact-1.6	55.9
 badge-fills-neuroplastio-compact-2	139.3
 badge-fills-neuroplastio-roomy-1.6	52.3

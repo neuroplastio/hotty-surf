@@ -436,6 +436,10 @@ The order is the maintainer's, via gov (2026-10-30):
     surface): `surfui.Widget` (icon, value, unit, tone, `Meter`,
     `Stale`) and `Node.Popover`; stories widget/states, pop/shown. Go
     only; no sparkline yet.
+  - [x] H7, Q19 (the lean: attention is the warn tone):
+    `attention` on a button or an item (surfui `Attention`): the warn,
+    its soft fill where current, the keyboard's row on warn-soft with a
+    warn marker; story attention/states.
 
 ## v0
 

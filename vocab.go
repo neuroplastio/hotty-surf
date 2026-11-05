@@ -191,6 +191,7 @@ var Attrs = []Attr{
 	{Name: "ring", Type: TypeBool, Doc: "a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven", Tags: []string{"dot"}, Func: "ModRing"},
 	{Name: "target", Type: TypeBool, Doc: "a dot in a ring (◉), a state that asks for someone", Tags: []string{"dot"}, Func: "ModTarget"},
 	{Name: "pulse", Type: TypeBool, Doc: "a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells", Tags: []string{"dot"}, Func: "ModPulse"},
+	{Name: "attention", Type: TypeBool, Doc: "it waits for someone: drawn in the warn tone", Tags: []string{"button", "item"}, Func: "ModAttention"},
 	{Name: "cap", Type: TypeBool, Doc: "a key drawn boxed, a cap: a sheet of keys", Tags: []string{"key"}, Func: "ModCap"},
 	{Name: "strip", Type: TypeBool, Doc: "a row that is a strip of chrome: its three rows its start, centre and end", Tags: []string{"row"}, Func: "ModStrip"},
 	{Name: "grid", Type: TypeBool, Doc: "a row that is a picker's grid: its buttons squares that wrap", Tags: []string{"row"}, Func: "ModGrid"},
@@ -432,11 +433,12 @@ func ModDrop(n *surfui.Node, v string) error {
 }
 
 // The states, which draw only when set.
-func ModSelected(n *surfui.Node, v bool) { n.Selected(v) }
-func ModChecked(n *surfui.Node, v bool)  { n.Checked(v) }
-func ModDisabled(n *surfui.Node, v bool) { n.Disabled(v) }
-func ModCurrent(n *surfui.Node, v bool)  { n.Current(v) }
-func ModInvalid(n *surfui.Node, v bool)  { n.Invalid(v) }
+func ModSelected(n *surfui.Node, v bool)  { n.Selected(v) }
+func ModChecked(n *surfui.Node, v bool)   { n.Checked(v) }
+func ModDisabled(n *surfui.Node, v bool)  { n.Disabled(v) }
+func ModCurrent(n *surfui.Node, v bool)   { n.Current(v) }
+func ModAttention(n *surfui.Node, v bool) { n.Attention(v) }
+func ModInvalid(n *surfui.Node, v bool)   { n.Invalid(v) }
 
 // The sizes, in the floor's steps; the floor clamps them.
 func ModGap(n *surfui.Node, v int64)    { n.Gap(clampInt(v)) }

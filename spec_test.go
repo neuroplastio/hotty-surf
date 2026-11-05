@@ -114,6 +114,7 @@ var canonAttrs = map[string]string{
 	"target/dot":        `<dot target/>`,
 	"pulse/dot":         `<dot pulse/>`,
 	"search/row":        `<row search><field bare/></row>`,
+	"attention/button":  `<button pill attention>build</button>`,
 	"cap/key":           `<key cap>ctrl+b</key>`,
 	"strip/row":         `<row strip><row/><row/><row/></row>`,
 	"grid/row":          `<row grid><button>a</button></row>`,
