@@ -2,14 +2,14 @@ cells 44x6
 text
 > ctrl+shift+t   [ctrl+T]
 > ctrl+b v       [ctrl+b] then [v]
-> mod+enter      [ctrl+enter]
+> mod+enter      [ctrl+↵]
 > alt+arrow_up   [alt+↑]
 > ctrl+b p +     [ctrl+b] then [p] then [+]
 > super+l        [meta+l]
 style
 = ...............a......a
 = ...............a......a.aaaa.a.a
-= ...............a..........a
+= ...............a......a
 = ...............a.....a
 = ...............a......a.aaaa.a.a.aaaa.a.a
 = ...............a......a

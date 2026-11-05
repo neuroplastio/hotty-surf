@@ -31,10 +31,11 @@ type Style struct {
 	// renderer's: glyphs on a host, text in cells, whose font is the
 	// terminal's.
 	Caps string
-	// Case is how a cap's words are written: "title" (Ctrl+Shift+L, Esc),
-	// "lower" (ctrl+shift+l), or "shifted", lower but for a letter with
-	// Shift, which is its capital with no Shift (ctrl+L). "" is as the
-	// system writes them: Ctrl, Esc, a letter in capitals.
+	// Case is how a cap's words are written: "lower" (ctrl+shift+l, esc),
+	// "title" (Ctrl+Shift+L, Esc), "shifted", lower but for a letter with
+	// Shift, which is its capital with no Shift (ctrl+L), or "system", as
+	// the system writes them (title's, but for macOS's esc, which stays
+	// lower in glyphs). "" is lower, as the kit's design board has it.
 	Case string
 	// Sep joins a chord's labels: "+", "-", or "space". "" is the
 	// system's: "-" on macOS, as Apple writes keys, "+" elsewhere.
@@ -72,7 +73,7 @@ func OnPlatform(st Style, mod string) Style {
 func Caps(st Style, host bool, seq string) []string {
 	var out []string
 	for _, chord := range strings.Fields(seq) {
-		out = append(out, chordCap(st, host, chord))
+		out = append(out, chordCap(st, host, false, chord))
 	}
 	return out
 }
@@ -102,10 +103,15 @@ func Text(st Style, host bool, seq string) string {
 // Words are seq's caps as a screen reader says them (aria-label): in
 // words whatever the caps are drawn in, as no reader says a Nerd Font's
 // glyph, the person's own labels left out for the same reason, and the
-// caps apart by spaces.
+// caps apart by spaces. The arrows are the text's arrows; Enter is the
+// word, as no reader says ↵.
 func Words(st Style, seq string) string {
 	st.Caps, st.Labels = "text", nil
-	return strings.Join(Caps(st, false, seq), " ")
+	var out []string
+	for _, chord := range strings.Fields(seq) {
+		out = append(out, chordCap(st, false, true, chord))
+	}
+	return strings.Join(out, " ")
 }
 
 // The labels a cap's keys take, as the kit's Keycaps has them for a PC
@@ -113,8 +119,10 @@ func Words(st Style, seq string) string {
 // the font hosts ship (^, an outlined ⇧); alt and the rest are words.
 var (
 	pcGlyphs = map[string]string{"ctrl": "\U000F0634", "shift": "\U000F0636", "backspace": "\U000F0B5C",
-		"arrow_up": "\U000F005D", "arrow_down": "\U000F0045", "arrow_left": "\U000F004D", "arrow_right": "\U000F0054"}
+		"arrow_up": "\U000F005D", "arrow_down": "\U000F0045", "arrow_left": "\U000F004D", "arrow_right": "\U000F0054",
+		"enter": "\U000F0311"}
 	pcArrows = map[string]string{"arrow_up": "↑", "arrow_down": "↓", "arrow_left": "←", "arrow_right": "→"}
+	pcReturn = "↵" // Enter in text, as the arrows are
 	pcWords  = map[string]string{"super": "Meta", "ctrl": "Ctrl", "alt": "Alt", "shift": "Shift", "enter": "Enter",
 		"escape": "Esc", "backspace": "Backspace", "delete": "Del", "tab": "Tab", "space": "Space",
 		"page_up": "PgUp", "page_down": "PgDn", "insert": "Ins", "context_menu": "Menu"}
@@ -156,7 +164,7 @@ func splitChord(chord string) (mods []string, key string) {
 // the modifiers in myelin's order, mod as the system's; with glue on,
 // those drawn as one glyph go last, tight against the key, and the rest
 // are joined by sep.
-func chordCap(st Style, host bool, chord string) string {
+func chordCap(st Style, host, spoken bool, chord string) string {
 	mods, key := splitChord(chord)
 	for i, m := range mods {
 		if m == "mod" {
@@ -167,7 +175,7 @@ func chordCap(st Style, host bool, chord string) string {
 		}
 	}
 	slices.SortStableFunc(mods, func(a, b string) int { return slices.Index(modOrder, a) - slices.Index(modOrder, b) })
-	label := keyLabel(st, host, key)
+	label := keyLabel(st, host, spoken, key)
 	if _, own := st.Labels[key]; st.Case == "shifted" && !own && utf8.RuneCountInString(key) == 1 && slices.Contains(mods, "shift") {
 		label = strings.ToUpper(key)
 		mods = slices.DeleteFunc(mods, func(m string) bool { return m == "shift" })
@@ -185,7 +193,7 @@ func chordCap(st Style, host bool, chord string) string {
 	glue := st.Glue == "on" || auto(st.Glue) && mac(st) && glyphs(st, host)
 	var words, marks []string
 	for _, m := range mods {
-		l := keyLabel(st, host, m)
+		l := keyLabel(st, host, spoken, m)
 		if glue && utf8.RuneCountInString(l) == 1 {
 			marks = append(marks, l)
 		} else {
@@ -196,8 +204,8 @@ func chordCap(st Style, host bool, chord string) string {
 }
 
 // keyLabel is a key's label on a cap: the person's own, else the system's
-// in the style's case.
-func keyLabel(st Style, host bool, key string) string {
+// in the style's case. Spoken, Enter is the word, not ↵.
+func keyLabel(st Style, host, spoken bool, key string) string {
 	if l, ok := st.Labels[key]; ok {
 		return l
 	}
@@ -208,6 +216,8 @@ func keyLabel(st Style, host bool, key string) string {
 		l = macGlyphs[key]
 	case g && pcGlyphs[key] != "":
 		l = pcGlyphs[key]
+	case key == "enter" && !spoken:
+		l = pcReturn
 	case pcArrows[key] != "":
 		l = pcArrows[key]
 	case pcWords[key] != "":
@@ -218,12 +228,12 @@ func keyLabel(st Style, host bool, key string) string {
 		l = titled(strings.ReplaceAll(key, "_", " "))
 	}
 	switch st.Case {
-	case "lower", "shifted":
-		return strings.ToLower(l)
+	case "system":
+		return l
 	case "title":
 		return titled(l)
 	}
-	return l
+	return strings.ToLower(l)
 }
 
 // titled is s with each word's first letter a capital.

@@ -1,14 +1,14 @@
 cells 22x14
 text
-> Press [Ctrl+B] and a
+> Press [ctrl+b] and a
 > hint shows what each
 > next key does:
-> [Ctrl+B] > [V] splits
+> [ctrl+b] > [v] splits
 > right.
 >
 > What this does: it
 > runs the command, and
-> [Esc] closes it:
+> [esc] closes it:
 > supercalifragilisticex
 > pialidocious.
 style

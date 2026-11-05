@@ -7,7 +7,7 @@ text
 > ▎●beta 日本                      1  Go
 >  ●gamma                          2
 > Keys
-> [Ctrl+K] open [Ctrl+B] > [V] split
+> [ctrl+k] open [ctrl+b] > [v] split
 >  More
 >  indented
 > A long line of text that wraps over a

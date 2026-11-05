@@ -80,7 +80,7 @@ func TestPaletteOpens(t *testing.T) {
 			t.Error("a status at open")
 		}
 		foot := a.text(palFoot)
-		for _, w := range []string{"pane.new", "Actions", "\U000F0634k", "Run and stay", "\U000F0634enter", "Run", "enter"} {
+		for _, w := range []string{"pane.new", "Actions", "\U000F0634k", "Run and stay", "\U000F0634\U000F0311", "Run", "\U000F0311"} {
 			if !strings.Contains(foot, w) {
 				t.Errorf("footer %q has no %q", foot, w)
 			}
@@ -115,9 +115,9 @@ func TestPaletteNarrow(t *testing.T) {
 		keys, note   bool
 		foot, absent []string
 	}{
-		{40, true, true, []string{"pane.new", "Actions", "Run", "enter"}, []string{"Run and stay", "Copy command"}},
-		{30, true, true, []string{"pane.new", "Run", "enter"}, []string{"Actions", "Run and stay"}},
-		{20, false, false, []string{"Run", "enter"}, []string{"pane.new", "Actions", "Run and stay"}},
+		{40, true, true, []string{"pane.new", "Actions", "Run", "\U000F0311"}, []string{"Run and stay", "Copy command"}},
+		{26, true, true, []string{"pane.new", "Run", "\U000F0311"}, []string{"Actions", "Run and stay"}},
+		{18, false, false, []string{"Run", "\U000F0311"}, []string{"pane.new", "Actions", "Run and stay"}},
 	} {
 		t.Run(strconv.Itoa(c.cols), func(t *testing.T) {
 			inModes(t, func(t *testing.T, m mode) {
@@ -328,13 +328,13 @@ func TestPaletteActionsPanel(t *testing.T) {
 		a.Wait("pane.split first", func() bool { return a.Has(palRow("pane.split"), "is-sel") })
 		a.keys("ctrl+k")
 		a.Wait("the panel", func() bool { return a.text(palHead) == "Actions: Split" })
-		if got := a.text(palAct("run")); got != "Run…enter" {
+		if got := a.text(palAct("run")); got != "Run…\U000F0311" {
 			t.Errorf("Run… %q", got)
 		}
-		if got := a.text(palAct("copy")); got != "Copy commandalt+enter" {
+		if got := a.text(palAct("copy")); got != "Copy commandalt+\U000F0311" {
 			t.Errorf("Copy command %q", got)
 		}
-		if foot := a.text(palFoot); !strings.Contains(foot, "pane.split") || !strings.Contains(foot, "Backesc") || !strings.Contains(foot, "Runenter") {
+		if foot := a.text(palFoot); !strings.Contains(foot, "pane.split") || !strings.Contains(foot, "Backesc") || !strings.Contains(foot, "Run\U000F0311") {
 			t.Errorf("footer %q", foot)
 		}
 		if !a.Has(palAct("run"), "is-sel") {

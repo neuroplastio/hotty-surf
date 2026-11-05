@@ -1,11 +1,11 @@
 cells 30x14
 text
-> Press [Ctrl+B] and a hint
+> Press [ctrl+b] and a hint
 > shows what each next key does:
-> [Ctrl+B] > [V] splits right.
+> [ctrl+b] > [v] splits right.
 >
 > What this does: it runs the
-> command, and [Esc] closes it:
+> command, and [esc] closes it:
 > supercalifragilisticexpialidoc
 > ious.
 style

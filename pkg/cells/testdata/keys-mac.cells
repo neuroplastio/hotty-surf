@@ -1,15 +1,15 @@
 cells 44x6
 text
-> ctrl+shift+t   [Ctrl-Shift-T]
-> ctrl+b v       [Ctrl-B] > [V]
-> mod+enter      [Meta-Enter]
-> alt+arrow_up   [Alt-↑]
-> ctrl+b p +     [Ctrl-B] > [P] > [+]
-> super+l        [Meta-L]
+> ctrl+shift+t   [ctrl-shift-t]
+> ctrl+b v       [ctrl-b] > [v]
+> mod+enter      [meta-↵]
+> alt+arrow_up   [alt-↑]
+> ctrl+b p +     [ctrl-b] > [p] > [+]
+> super+l        [meta-l]
 style
 = ...............a............a
 = ...............a......a.a.a.a
-= ...............a..........a
+= ...............a......a
 = ...............a.....a
 = ...............a......a.a.a.a.a.a.a
 = ...............a......a

@@ -195,7 +195,7 @@ component or a partial.
 | `glyph` | one symbol in a fixed slot: a status's dot | text |
 | `icon` | a mark beside a label, muted: an MDI symbol by its glyph or its `name`, or an SVG (`svg`, `path`) a host draws ("Icons") | text, or `name`; `svg` or `path` |
 | `dot` | a state's mark: a small dot in its `tone` | nothing |
-| `key` | a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style | text |
+| `key` | a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style, lower case by default, Enter as `↵` | text |
 | `button` | a button, its text its label, with an `<icon>` before or after it ("Icons") | text, an `icon` |
 | `field` | a one-line text field | nothing |
 | `switch` | a boolean as a track with a knob: it shows `:on`, and its `@click` handler changes the state `:on` reads | nothing |

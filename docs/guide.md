@@ -489,7 +489,8 @@ a handler, as `@click`'s. `:key` and `:label` bind, and a `<bind>` takes
   `surfrun.Surface.KeyStyle`, `cells.Renderer.KeyStyle`) says it. The zero
   Style is the defaults: glyph caps on a host, words in the cells, whose
   font is the terminal's, for the platform's system (`mod` is Command on
-  macOS). Keys shown in a style that isn't the surface's, such as a
+  macOS), in lower case (`ctrl+c`, `esc`, `f5`) with Enter as the return
+  glyph (`↵` in cells); `Case: "title"` brings back `Ctrl+C` and `Esc`. Keys shown in a style that isn't the surface's, such as a
   slide that shows a sample of each style, are `surfkeys.Node(style, host,
   seq)`, which a renderer draws as they are.
 - **Quitting:** `do` calls a method, so a method ends the run. A struct

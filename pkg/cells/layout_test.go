@@ -42,7 +42,7 @@ func TestKeep(t *testing.T) {
 		return surfui.Surface(surfui.Row(surfui.Text("Toggle the zoom of the pane"), surfui.Row(surfui.Key("Ctrl"), surfui.Key("Z")).Keep()).Gap(2))
 	}}
 	s := show(m).Draw(24, 1)
-	if got := strings.TrimRight(s.Text(), "\n "); got != "Toggle the …  [Ctrl] [Z]" {
+	if got := strings.TrimRight(s.Text(), "\n "); got != "Toggle the …  [ctrl] [z]" {
 		t.Errorf("%q", got)
 	}
 }
