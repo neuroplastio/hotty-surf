@@ -22,7 +22,9 @@ const MenuID = "m"
 // Disabled and in the error where it is Danger; a Heading its label, a
 // caption; a Sep a rule. hi is the index of the item the keyboard is
 // on, -1 for none: the selected fill. Resolve it under MenuID: item i's
-// row is then MenuItemID(i).
+// row is then MenuItemID(i). On a host the surface is clear round the
+// card, with room under it and at its end for the raised shadow
+// (MenuShadowBelow, MenuShadowSide), which its host's view counts in.
 func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 	card := El("div").Class("u-menu").Attr("role", "menu")
 	for i, it := range items {
@@ -47,7 +49,7 @@ func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 			card.Add(row)
 		}
 	}
-	s := El("div", card).Class("u-surface")
+	s := El("div", card).Class("u-surface", "u-menu-surface")
 	density, theme := false, false
 	for n := from; n != nil; n = n.parent {
 		for _, cl := range n.class {
@@ -63,6 +65,14 @@ func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 	}
 	return s
 }
+
+// MenuShadowBelow and MenuShadowSide are the CSS px the raised shadow
+// reaches under a menu's card and past its end (--u-shadow-raised: 6 down,
+// 16 of blur, 6 drawn in), the room its surface keeps clear for it.
+const (
+	MenuShadowBelow = 16
+	MenuShadowSide  = 10
+)
 
 // MenuItemID is the id of item i's row in a MenuCard resolved under
 // MenuID: a click's target there names the item it picks.
