@@ -90,6 +90,12 @@ const (
 	DropIntoClass   = "u-drop-into"
 )
 
+// DraggingClass is the class the runtime gives the tree's root (the
+// .u-surface element) from a drag's start until its end or Escape's
+// cancel: surf.css shows the closed hand over the whole surface while it
+// is there. The cells ignore it.
+const DraggingClass = "u-dragging"
+
 // DropMark marks n where a drop would land, by where (WhereBefore,
 // WhereAfter, WhereInto): a line at its top or bottom edge, which takes no
 // room, or an outline round it. surf.css draws it on a host, and the cells

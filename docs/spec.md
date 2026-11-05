@@ -1030,6 +1030,12 @@ to drop on, `drop`, or both, as a row a list reorders is:
   under the target's bottom row (after), under the bottom row of what is
   drawn directly above it (before; an overline of its top row where
   nothing is), and both of its own (into) ([Cells](#cells)).
+- **The drag's own mark** is the class `u-dragging` on the root, from
+  `dragstart` until `dragend` or Escape ends the drag: the stylesheet
+  shows the closed hand (`cursor: grabbing`) over the whole surface
+  while it is there, and a drag handle shows the pointer otherwise. The
+  cells ignore it. A model that sends its own ops (Go: `surfrun.Fine`)
+  gets no mark, as it gets no drop indicator.
 
 ## Components, partials, props, slots
 

@@ -49,8 +49,8 @@ func TestCursorOverTheVocabulary(t *testing.T) {
 		{"a key that acts", Key("^b").OnClick(click), nil, "pointer"},
 		{"anything with a click handler", Box(Text("tap")).OnClick(click), nil, "pointer"},
 		{"a link", El("a", Str("docs")).Attr("href", "https://example.com"), nil, "pointer"},
-		{"a drag handle", List(Item(Text("row")).Drag()), []int{0}, "grab"},
-		{"a drag handle with a click handler", List(Item(Text("row")).OnClick(click).Drag().Drop(DropHalves)), []int{0}, "grab"},
+		{"a drag handle", List(Item(Text("row")).Drag()), []int{0}, "pointer"},
+		{"a drag handle with a click handler", List(Item(Text("row")).OnClick(click).Drag().Drop(DropHalves)), []int{0}, "pointer"},
 		{"a place to drop on only", List(Item(Text("row")).Drop(DropWhole)), []int{0}, "default"},
 	}
 	rules := cursorRules(t)
@@ -64,6 +64,28 @@ func TestCursorOverTheVocabulary(t *testing.T) {
 			t.Errorf("%s: cursor %s, want %s (%s)", c.name, got, c.want, HTML(n))
 		}
 	}
+	// While a drag is on, the root's mark (DraggingClass) shows the closed
+	// hand over all of it: links, fields and disabled things too.
+	over := Surface(
+		List(Item(Text("row")).Drag()),
+		List(Item(Text("alpha")).OnClick(click)),
+		Button("Restart"), Button("Off").Disabled(true), Field(), Field().Disabled(true),
+		El("a", Str("docs")).Attr("href", "https://example.com"),
+		Text("plain"),
+	).Class(DraggingClass)
+	Resolve(over, "r")
+	var walk func(n *Node)
+	walk = func(n *Node) {
+		if n.tag != "" {
+			if got := cursorOf(t, rules, n); got != "grabbing" {
+				t.Errorf("while dragging: cursor %s, want grabbing (%s)", got, HTML(n))
+			}
+		}
+		for _, k := range n.kids {
+			walk(k)
+		}
+	}
+	walk(over)
 	// The surface itself, and so the text in it, shows the arrow, not the
 	// text caret a host shows over text with cursor: auto.
 	root := Surface(Text("plain"))
@@ -180,6 +202,7 @@ func parseSelector(t *testing.T, sel string) cursorRule {
 func parseCompound(t *testing.T, sel, f string) compound {
 	t.Helper()
 	var c compound
+	f = strings.TrimPrefix(f, "*") // any element: no tag
 	i := 0
 	for i < len(f) && f[i] != '.' && f[i] != '[' {
 		i++

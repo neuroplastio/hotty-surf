@@ -340,6 +340,7 @@ func (s *Surface) Update() Frame {
 		ix := surfui.Resolve(tree, "r")
 		s.markList(ix)
 		s.markDrop(ix)
+		s.markDragging(ix)
 		if s.Coarse {
 			f.Ops = surfui.Coarse(s.held, tree)
 		} else {
@@ -700,6 +701,7 @@ func (s *Surface) fresh() {
 	s.index = surfui.Resolve(s.prev, "r")
 	s.markList(s.index)
 	s.markDrop(s.index)
+	s.markDragging(s.index)
 	if s.shown {
 		s.rehome()
 	} else {

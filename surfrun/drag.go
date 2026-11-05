@@ -47,6 +47,9 @@ func (s *Surface) Dragging() bool { return s.drag != nil && !s.drag.cancelled }
 func (s *Surface) dragEvent(e hotty.Event) bool {
 	switch e.Kind {
 	case hotty.EventDragStart:
+		if s.drag != nil {
+			s.due, s.stale = true, true // the root's mark goes, or stays
+		}
 		s.drag = nil
 		n := s.index[e.Target]
 		if n == nil || !surfui.Draggable(n) {
@@ -54,6 +57,7 @@ func (s *Surface) dragEvent(e hotty.Event) bool {
 		}
 		g := &dragging{from: e.Target, key: dragKey(n)}
 		s.drag = g
+		s.due, s.stale = true, true // the root is marked
 		s.dragRun(n, hotty.EventDragStart, Drag{From: g.key}, e.Mods)
 		return true
 	case hotty.EventDrag:
@@ -73,9 +77,7 @@ func (s *Surface) dragEvent(e hotty.Event) bool {
 		if g == nil {
 			return false
 		}
-		if g.over != "" {
-			s.due, s.stale = true, true // the mark goes
-		}
+		s.due, s.stale = true, true // the marks go
 		if g.cancelled {
 			s.noClick = g.from
 			return true
@@ -128,10 +130,8 @@ func (s *Surface) dragRun(n *surfui.Node, kind string, d Drag, mods int) {
 func (s *Surface) cancelDrag() {
 	g := s.drag
 	g.cancelled = true
-	if g.over != "" {
-		g.over, g.where = "", ""
-		s.due, s.stale = true, true
-	}
+	g.over, g.where = "", ""
+	s.due, s.stale = true, true // the marks go
 	s.fresh()
 	if n := s.index[g.from]; n != nil {
 		s.dragRun(n, hotty.EventDragEnd, Drag{From: g.key, Cancel: true}, 0)
@@ -147,6 +147,18 @@ func (s *Surface) markDrop(ix surfui.Index) {
 	}
 	if n := ix[g.over]; n != nil {
 		surfui.DropMark(n, g.where)
+	}
+}
+
+// markDragging marks the root of the tree indexed by ix while a drag is
+// in progress (surfui.DraggingClass). A Fine model's tree is its own and
+// gets no mark, as it gets no drop mark.
+func (s *Surface) markDragging(ix surfui.Index) {
+	if !s.Dragging() {
+		return
+	}
+	if n := ix["r"]; n != nil {
+		n.Class(surfui.DraggingClass)
 	}
 }
 

@@ -544,7 +544,7 @@
 .u-row[data-on~="click"]:focus-visible, .u-stack[data-on~="click"]:focus-visible { border-radius: var(--u-r); background: var(--u-hover); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
 .u-surface { cursor: default; }
-.u-btn, .u-switch, .u-select, .u-cycle, [data-on~="click"], .u-nav > .u-item, .u-entries > .u-item, .u-surface a[href], .u-surface summary { cursor: pointer; }
+.u-btn, .u-switch, .u-select, .u-cycle, [data-on~="click"], .u-nav > .u-item, .u-entries > .u-item, .u-surface a[href], .u-surface summary, [data-on~="drag"] { cursor: pointer; }
 .u-field { cursor: text; }
 .u-surface [disabled], .u-surface .is-disabled { cursor: default; }
 
@@ -662,16 +662,21 @@
   scrollbar-color: var(--u-input) transparent;
 }
 
-[data-on~="drag"] { cursor: grab; }
 /* Drag and drop (surfui.Drag, Drop; surfrun keeps the drag): above, a
-   drag handle shows the hand that grabs. Where a drop would land, the runtime
+   drag handle shows the pointer, and the whole surface the closed hand
+   while a drag is on (below). Where a drop would land, the runtime
    marks the target (surfui.DropMark), the same for every app: before or
    after it, a 2px line in the accent at its top or its bottom edge,
    inside it, so that it takes no room and nothing under the pointer
    moves; into it, an outline in the accent. The line is a background
    layer, as a focused list's marker is, kept off the corners by the
    radius; it and the outline win over a row's own fill layers and
-   hairline while they show (!important), the fill's colour staying. */
+   hairline while they show (!important), the fill's colour staying.
+   While a drag is on, the runtime marks the root
+   (surfui.DraggingClass), and the closed hand shows over all of it, links,
+   fields and disabled things too: the root's own selector with a third
+   class, by repeating one, beats every cursor rule above (0,2,1 at most),
+   without !important. */
 .u-drop-before, .u-drop-after {
   background-image: linear-gradient(var(--u-accent), var(--u-accent)) !important;
   background-size: calc(100% - 2 * var(--u-r)) 2px !important;
@@ -680,6 +685,7 @@
 .u-drop-before { background-position: var(--u-r) 0 !important; }
 .u-drop-after { background-position: var(--u-r) 100% !important; }
 .u-drop-into { box-shadow: inset 0 0 0 2px var(--u-accent) !important; }
+.u-surface.u-dragging.u-dragging, .u-surface.u-dragging.u-dragging * { cursor: grabbing; }
 
 /* A tooltip (surfui.TipCard): a card in a surface of its own, which its
    host places over the view, a step lighter than the page with a
