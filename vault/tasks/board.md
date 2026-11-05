@@ -469,6 +469,8 @@ The order is the maintainer's, via gov (2026-10-30):
     for a host program's at a point (`MenuView.Place`, `.Item`);
     `<action danger>`; story menu/shown. Left: a heading in a
     template's `<menu>` (Go's `MenuItem.Heading` only).
+  - [x] H6: one bold (`.u-bold` and a Dense heading 600, not 700), and
+    the radius table as tokens (`--u-r-xs` … `--u-r-xl`, `--u-r-pill`).
 
 ## v0
 
