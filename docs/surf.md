@@ -250,6 +250,8 @@ component or a partial.
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
 | `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
+| `strip`, `grid` | bool | row | a strip of chrome, its three rows its start, centre and end; a picker's grid of buttons, squares that wrap ("Pills") |
+| `cap` | bool | key | a key drawn boxed, a cap: a sheet of keys. A key is a muted glyph run elsewhere |
 | `card` | bool | box | a group's panel: a fill a step lighter than the page, room across inside it, its rows split by `rule`s; a `semibold` text over it is its title, a `small muted` one under it its note |
 | `ring`, `target` | bool | dot | a dot's shape, so that a state is told by its shape as well as its tone: `ring` hollow (○), `target` a dot in a ring (◉), and the cells draw those glyphs. A host has no shape for ◌ (offline) until a dashed ring is proven, so offline there is a `ring`, told by its tone and its row's text |
 | `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
@@ -285,6 +287,10 @@ component or a partial.
   fill), and `raised` makes it a bar's picker, on the selected fill:
   `<button pill raised>{{ ws }}<icon name="menu-down"/></button>`. The
   cells draw it as a button.
+- **A strip** is a `row strip` of three `row`s, its start, centre and
+  end zones, on the canvas, 40px tall on a host. **A picker** of icons
+  or emoji is a `row grid` of buttons, 32px squares that wrap, the
+  `selected` one in the accent's soft fill.
 - **A scope or a filter of two to four values** is a `row segmented` of
   buttons: one sunk pill, the `selected` button raised in it, each with
   its own `@click`. Past four, a `select`:

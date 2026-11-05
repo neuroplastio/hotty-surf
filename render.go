@@ -723,6 +723,12 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModSearch(n, v)
 	case "segmented":
 		ModSegmented(n, v)
+	case "cap":
+		ModCap(n, v)
+	case "strip":
+		ModStrip(n, v)
+	case "grid":
+		ModGrid(n, v)
 	case "nav":
 		ModNav(n, v)
 	case "entries":

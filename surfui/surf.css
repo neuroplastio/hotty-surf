@@ -89,7 +89,8 @@
    raised and float are white.
 
    The accent's two fills: soft, the keyboard's things (a row, a stripe,
-   a tab); strong, a press and a drop target. */
+   a tab); strong, a press and a drop target. The warn's and the error's
+   soft fills: a row or a header that needs someone, a drop refused. */
 .u-surface {
   --u-canvas: color-mix(in srgb, var(--u-bg) 72%, black);
   --u-popover: color-mix(in srgb, var(--u-bg) 90%, white);
@@ -97,6 +98,8 @@
   --u-float: color-mix(in srgb, var(--u-canvas) 96%, transparent);
   --u-accent-soft: color-mix(in srgb, var(--u-accent) 16%, transparent);
   --u-accent-strong: color-mix(in srgb, var(--u-accent) 35%, transparent);
+  --u-warn-soft: color-mix(in srgb, var(--u-warn) 14%, transparent);
+  --u-error-soft: color-mix(in srgb, var(--u-error) 16%, transparent);
   --u-solid: var(--u-ink);
   --u-solid-hover: white;
   --u-on-solid: var(--u-canvas);
@@ -109,6 +112,8 @@
     --u-float: rgb(255 255 255 / 0.96);
     --u-accent-soft: color-mix(in srgb, var(--u-accent) 12%, transparent);
     --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
+    --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
+    --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
     --u-solid-hover: black;
     --u-on-solid: #ffffff;
   }
@@ -120,6 +125,8 @@
   --u-float: rgb(255 255 255 / 0.96);
   --u-accent-soft: color-mix(in srgb, var(--u-accent) 12%, transparent);
   --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
+  --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
+  --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
   --u-solid-hover: black;
   --u-on-solid: #ffffff;
 }
@@ -357,10 +364,13 @@
 .u-dot.u-pulse { animation: u-pulse 1.6s ease-in-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) { .u-dot.u-pulse { animation: none; } }
 
-/* A badge and a key cap: outlined, their text muted, no fill; a badge
-   in a tone's fill keeps that. A cap is in the hosts' Nerd Font, which
-   has the modifiers' symbols (⌃ ⇧ ⌥ ⌘). A badge a row tall but in
-   Compact, where Blitz places a shorter one's text as Chromium does. */
+/* A badge: outlined, its text muted, no fill; a badge in a tone's fill
+   keeps that. A badge a row tall but in Compact, where Blitz places a
+   shorter one's text as Chromium does. A key: a muted glyph run, no box
+   (the maintainer, 2026-11-05, on a tooltip's caps: "too claustrophobic
+   inside. Too many borders"), in the hosts' Nerd Font, which has the
+   modifiers' symbols (⌃ ⇧ ⌥ ⌘); a Cap keeps the box, outlined in the
+   input's hairline: a sheet of keys. */
 .u-badge {
   flex: 0 0 auto;
   display: inline-block;
@@ -382,21 +392,23 @@
 .u-key {
   flex: 0 0 auto;
   display: inline-block;
-  min-width: 2.4em;
-  padding: 0 0.4em;
   text-align: center;
   white-space: pre;
   font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace);
   line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px));
   color: var(--u-muted);
   border-radius: var(--u-radius);
-  box-shadow: inset 0 0 0 1px var(--u-input);
 }
 .u-key + .u-key { margin-left: 0.4em; }
-.u-compact .u-key { min-width: 18px; padding: 0 5px; font-size: 11.5px; }
-.u-compact .u-key + .u-key { margin-left: 3px; }
-.u-roomy .u-key { min-width: 20px; padding: 0 6px; font-size: 12.5px; line-height: 1.5; }
-.u-roomy .u-key + .u-key { margin-left: 4px; }
+.u-compact .u-key { font-size: 12px; }
+.u-compact .u-key + .u-key { margin-left: 5px; }
+.u-roomy .u-key { font-size: 12.5px; line-height: 1.5; }
+.u-roomy .u-key + .u-key { margin-left: 5px; }
+.u-key.u-cap, .u-cap > .u-key { min-width: 2.4em; padding: 0 0.4em; box-shadow: inset 0 0 0 1px var(--u-input); }
+.u-compact .u-key.u-cap, .u-compact .u-cap > .u-key { min-width: 18px; padding: 0 5px; font-size: 11.5px; }
+.u-compact .u-key.u-cap + .u-key.u-cap, .u-compact .u-cap > .u-key + .u-key { margin-left: 3px; }
+.u-roomy .u-key.u-cap, .u-roomy .u-cap > .u-key { min-width: 20px; padding: 0 6px; }
+.u-roomy .u-key.u-cap + .u-key.u-cap, .u-roomy .u-cap > .u-key + .u-key { margin-left: 4px; }
 /* A key, a chord or a sequence drawn in a key style (package keys): its
    caps side by side, kept whole, and what stands between a sequence's
    chords (u-then), dim, in the caps' font. */
@@ -609,6 +621,39 @@
 .u-row.u-seg > .u-btn:hover { color: var(--u-ink); background: transparent; box-shadow: none; }
 .u-row.u-seg > .u-btn.is-sel { color: var(--u-ink); background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-border); }
 .u-row.u-seg > .u-btn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+
+/* A strip (Strip): a flat edge's row of chrome on the canvas, 40px tall
+   on a host, its items 8px from its edges; its zones (three Rows) a
+   third each, their items 4px apart, the centre's in its middle, the
+   end's at its end. */
+.u-row.u-strip { flex: 0 0 auto; column-gap: var(--u-gx); padding: 0 var(--u-gx); background: var(--u-canvas); }
+.u-compact .u-row.u-strip, .u-roomy .u-row.u-strip { height: 40px; padding: 0 8px; column-gap: 8px; }
+.u-row.u-strip > .u-row { flex: 1 1 0; min-width: 0; column-gap: var(--u-gx); }
+.u-compact .u-row.u-strip > .u-row, .u-roomy .u-row.u-strip > .u-row { column-gap: 4px; }
+.u-row.u-strip > .u-row + .u-row { justify-content: center; }
+.u-row.u-strip > .u-row + .u-row + .u-row { justify-content: flex-end; }
+
+/* A picker's grid (Grid): its buttons squares that wrap, 2px apart, an
+   icon or an emoji in the ink, 18px; the pointer on one the hover fill,
+   the selected one the accent's soft fill with its line, in the
+   accent; the keyboard on one its focus-line. In Dense a square is two
+   cells by a row. */
+.u-row.u-grid { flex-wrap: wrap; gap: 2px; align-items: flex-start; }
+.u-row.u-grid > .u-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(2 * var(--u-cw));
+  padding: 0;
+  color: var(--u-ink);
+  background: transparent;
+  box-shadow: none;
+}
+.u-compact .u-row.u-grid > .u-btn, .u-roomy .u-row.u-grid > .u-btn { width: 32px; height: 32px; line-height: 32px; font-size: 18px; }
+.u-compact .u-row.u-grid > .u-btn > .u-icon, .u-roomy .u-row.u-grid > .u-btn > .u-icon { width: 18px; font-size: 18px; color: inherit; }
+.u-row.u-grid > .u-btn:hover { background: var(--u-hover); box-shadow: none; }
+.u-row.u-grid > .u-btn.is-sel { color: var(--u-accent); background: var(--u-accent-soft); box-shadow: inset 0 0 0 1px var(--u-accent); }
+.u-row.u-grid > .u-btn:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
