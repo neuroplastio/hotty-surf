@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-11-03
+Last updated: 2026-11-05
 
 **Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
 2026-10-30): candidate A (Live) with layout in `.surf` templates and
@@ -402,6 +402,52 @@ The order is the maintainer's, via gov (2026-10-30):
     a press or a key; ask again after each Update while it shows. In the
     cells, `cells.Renderer.At` and `tip.Cells.Lines` where it draws a
     menu.
+
+- [ ] **Kit gaps, after the kit** (gov, 2026-11-05; none started). They
+  wait for `design/2026-11-05-kit`. The order: G1, G5, G2, G3, then
+  menu slots and columns, colours from data. Sizes: S is one leg, M two
+  or three, L more.
+  - From margin's port (hosting it is done: `surfrun.WriteFrame`
+    cb7727c, `Paint` 00bf8af, `<row fit-start>` 1b90083):
+    - **G1 textarea** (L): `<field rows="8">` grows from one row to 8,
+      then scrolls; Enter types a newline, `<bind key="mod+enter">`
+      sends. No spec change (SPEC §6.4 rev and ESTALE, §10.2). On a
+      host, CSS `field-sizing: content` in hotty-blitz (S–M); in the
+      cells, hottyedit needs soft wrap and up/down by visual rows (M, in
+      hotty-go).
+    - **G5 table** (M–L): `<table>` with `<col>`s (heading; align start
+      or end; width auto, or fill with a … cut) and `item` rows, reusing
+      list's selection, keys and reveal. surf measures the auto widths in
+      cells, so both renderings align.
+    - **G2 tree** (M): a `list` whose items carry `depth` and `open`,
+      flattened by the model; surf draws the indent and the chevron;
+      ←/→ as ARIA's tree. The chevron and indent step need a Design
+      board.
+    - **G3 Markdown in a text** (M): `<markdown>` for inline code,
+      emphasis, links and fenced code, built from surf's own nodes (code
+      span and link are new). New tokens need a Design board.
+    - G4, a prose surface, is not surf's: margin places its own hotdoc
+      surfaces beside surf's.
+  - From Design Agent's P7 and P8:
+    - **Menu items' slots** (#2): a dot, a note, the current item, an
+      inline field, and an error row. plx adds them after the kit draws
+      today.
+    - **Menu columns** (#3): toggle and preview columns, so plx's key
+      picker can move onto the menu. Same pass as #2.
+    - **Colours from data** (#7): a colour from the model draws only
+      where the template declares it; carry it as a style value.
+    - **A tooltip in a tool's own view** (#1, for plx's `sdk/surfdk`):
+      `surfrun.Surface.Tip` exists (b52c261), so first find what a
+      tool's view lacks to use it.
+    - For the kit branch: MenuCard's `flex: 1 0 auto` clips its own
+      shadow (#4); the dot is 6 px where the board has 8 (#5).
+    - Answered: a row that keeps keys from the left and drops the
+      trailing ones (#6) is `<row fit-start>`.
+    - A question for the maintainer: `<key>` draws "C" and "Enter",
+      approved in margin ("keycaps ok"), where the board has "c" and
+      "↵" (#8).
+  - A look question for the kit: in dark, the selected row's fill
+    (#595a5e) leaves error red at about 2.3:1.
 
 ## v0
 
