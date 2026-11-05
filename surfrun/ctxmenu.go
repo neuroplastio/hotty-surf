@@ -17,10 +17,10 @@ import (
 // host the menu to draw in a surface of its own (Frame.Menu), which the
 // host places and gives the keyboard to, as a Select's list (List); and
 // it keeps the menu's keys and picks (Key, MenuEvent): Up and Down, Home
-// and End, a letter, Enter and Escape.
+// and End, a letter, Enter, Space and Escape.
 
 // menuKeys are the keys an open menu takes besides a character.
-var menuKeys = []string{"arrow_up", "arrow_down", "home", "end", "enter", "escape", "shift+f10", "context_menu"}
+var menuKeys = []string{"arrow_up", "arrow_down", "home", "end", "enter", "space", "escape", "shift+f10", "context_menu"}
 
 // openMenu is the open menu of an element.
 type openMenu struct {
@@ -209,9 +209,11 @@ func ahead(items []MenuItem, at int, ch rune) int {
 }
 
 // menuKey is key for the menu: the open menu's, which take the keys ahead
-// of everything but a drag's Escape; or, with none open, the keys that
-// open one under the focused element. It reports whether it took the key;
-// a key it did not take closed the menu, and goes on.
+// of everything but a drag's Escape, and take every key, those it has no
+// use for too (Tab, ctrl+..., a function key, a character no label starts
+// with), which they ignore: the menu stays open. With none open, it takes
+// the keys that open one under the focused element, if there is a menu.
+// It reports whether it took the key.
 func (s *Surface) menuKey(key string) bool {
 	opens := key == "shift+f10" || key == "context_menu"
 	m := s.menu
@@ -232,7 +234,7 @@ func (s *Surface) menuKey(key string) bool {
 		m.at = step(cur.Items, -1, 1)
 	case "end":
 		m.at = step(cur.Items, len(cur.Items), -1)
-	case "enter":
+	case "enter", "space":
 		if m.at >= 0 && m.at < len(cur.Items) {
 			s.closeMenu(true)
 			s.Pick(cur.ID, cur.Items[m.at].ID)
@@ -242,8 +244,9 @@ func (s *Surface) menuKey(key string) bool {
 	default:
 		ch, ok := character(key)
 		if !ok {
-			s.closeMenu(false)
-			return false
+			// A key the menu has no use for is taken and ignored: it
+			// holds the keyboard, as a native menu does.
+			return true
 		}
 		m.at = ahead(cur.Items, m.at, ch)
 	}

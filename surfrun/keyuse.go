@@ -70,9 +70,12 @@ func (s *Surface) Keys() ([]KeyUse, Chars) {
 		}
 	}
 	if s.shown && s.menu != nil {
+		// An open menu holds the keyboard: Key takes every key, and
+		// ignores those it has no use for. Only these do something.
 		own(menuKeys)
-		chars = CharsPick
-	} else if s.shown && s.list != nil {
+		return keys, CharsPick
+	}
+	if s.shown && s.list != nil {
 		own(listKeys)
 		chars = CharsPick
 	} else if s.focusedSelect() != nil {

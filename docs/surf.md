@@ -530,7 +530,9 @@ and a `:if` chain goes on past it.
   hands its host the menu to draw (`Frame.Menu`); Up and Down skip rules,
   headings and disabled items, Home and End go to the ends, a letter goes
   to the next item that starts with it, Enter picks and Escape closes
-  (no blur), and any other key closes it and goes on. Opened by the
+  (no blur), and Space picks as Enter does. An open menu holds the
+  keyboard: a key it has no use for (Tab, `ctrl+…`, a function key) is
+  taken and ignored, and the menu stays open. Opened by the
   pointer, no item is highlighted until a key moves. A click on an item
   picks it; a click or press elsewhere closes the menu first and does what
   it would have; one menu is open at a time, and it closes with its

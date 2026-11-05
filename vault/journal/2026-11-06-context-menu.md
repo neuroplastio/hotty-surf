@@ -24,7 +24,8 @@ template's `<menu>`) and nothing more.
   headings and disabled items without wrapping, Home and End, type-ahead
   cycling, Enter picks (`Pick`), Escape and the opening keys close (no
   Blur; the element gets the keyboard back), any other key closes it and
-  goes on. `Keys()` lists them.
+  goes on (changed in the next commit: an open menu holds the keyboard,
+  ignores keys it has no use for, and Space picks). `Keys()` lists them.
 - **`MenuEvent`**: a click on an item's row picks and closes; a blur
   closes. `MenuCard`'s rows now ask for `click` (`.On("click", nil)`), as
   a Select's options do; without it a host never reports one.
@@ -48,7 +49,7 @@ template's `<menu>`) and nothing more.
   it. The hosted test host passes a nil `menu` func and does not opt out.
 - **Which events close it:** click, press, focus, dragstart. Hover, view,
   blur and input leave it.
-- **Space** closes the menu and goes on; the task lists only Enter.
+- **Space** closed the menu and went on; the next commit makes it pick.
 
 ## Commits
 

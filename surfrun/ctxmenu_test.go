@@ -270,8 +270,8 @@ func TestMenuEnterPicks(t *testing.T) {
 	}
 }
 
-// Escape closes the menu, with no Blur; any other key closes it and goes
-// on as it would have.
+// Escape closes the menu, with no Blur; a key it has no use for is taken
+// and ignored, and Space picks the highlighted item.
 func TestMenuEscapeAndOtherKeys(t *testing.T) {
 	m, s := startCtx(t)
 	s.Event(hotty.Event{Kind: hotty.EventFocus, Target: rowB})
@@ -284,18 +284,31 @@ func TestMenuEscapeAndOtherKeys(t *testing.T) {
 	}
 	keys(t, s, "shift+f10")
 	s.Update()
-	if took, _ := s.Key("tab"); took {
-		t.Error("a key nothing binds was taken")
+	keys(t, s, "tab", "ctrl+c", "f5", "ctrl+x", "x")
+	if f := s.Update(); f.Menu != nil || f.Blur {
+		t.Errorf("a key with no use for the menu changed it: %+v", f.Menu)
+	}
+	// Space picks the highlighted item; with none, it does nothing.
+	keys(t, s, "arrow_down", "space")
+	if !slices.Equal(m.picks, []string{rowB + ":open2"}) {
+		t.Errorf("Space: picks %q", m.picks)
 	}
 	if f := s.Update(); f.Menu == nil || !f.Menu.Closed {
-		t.Errorf("tab did not close the menu: %+v", f.Menu)
+		t.Errorf("Space did not close the menu: %+v", f.Menu)
+	}
+	secondary(s, rowB)
+	s.Update()
+	keys(t, s, "space")
+	if len(m.picks) != 1 || s.Update().Menu != nil {
+		t.Errorf("Space with none highlighted: picks %q", m.picks)
 	}
 	// Escape nothing else takes blurs, as it does with no menu: the menu
 	// took the first one.
+	keys(t, s, "escape")
+	s.Update()
 	if _, _ = s.Key("escape"); s.Focused() != "" {
 		t.Errorf("the second Escape did not blur: %q", s.Focused())
 	}
-	_ = m
 }
 
 // Keys says what an open menu takes.
@@ -314,8 +327,12 @@ func TestMenuKeysListed(t *testing.T) {
 		t.Errorf("closed: %q", got)
 	}
 	s.Key("shift+f10")
-	if got := names(); !slices.Contains(got, "enter") || !slices.Contains(got, "arrow_down") {
-		t.Errorf("open: %q", got)
+	want := []string{"arrow_up", "arrow_down", "home", "end", "enter", "space", "escape", "shift+f10", "context_menu"}
+	if got := names(); !slices.Equal(got, want) {
+		t.Errorf("open: %q, want only %q", got, want)
+	}
+	if _, chars := s.Keys(); chars != surfrun.CharsPick {
+		t.Errorf("chars %v", chars)
 	}
 }
 
