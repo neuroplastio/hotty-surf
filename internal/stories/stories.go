@@ -664,6 +664,16 @@ var All = []Story{
 			Force(surfui.List(row(true, "this machine", surfui.Badge("3 ws")).Selected(true)), "within"),
 		)
 	}},
+	{"list/error", 50, func() *surfui.Node {
+		// A machine that failed, at rest and selected: on dark the
+		// selected row's error is the lighter red (--u-error-on-sel), so
+		// that it clears 4.5:1 on the selected fill.
+		row := func(sel bool) *surfui.Node {
+			return surfui.Item(surfui.Dot().Tone(surfui.Error), surfui.Text("build-02").Grow(),
+				surfui.Text("connection refused").Small().Tone(surfui.Error)).Gap(2).Selected(sel)
+		}
+		return surfui.List(row(false), row(true))
+	}},
 	{"list/keyboard", 50, func() *surfui.Node {
 		// A palette's rows: in Compact, the selection is the accent band
 		// while the List's container has the keyboard (the Field that

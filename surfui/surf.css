@@ -90,7 +90,12 @@
 
    The accent's two fills: soft, the keyboard's things (a row, a stripe,
    a tab); strong, a press and a drop target. The warn's and the error's
-   soft fills: a row or a header that needs someone, a drop refused. */
+   soft fills: a row or a header that needs someone, a drop refused.
+
+   The error on a selected row (the maintainer, 2026-11-05: "Selected-row
+   red >= 4.5:1"): on dark the selected fill (#595a5e on a dark ground)
+   leaves the terminal's red at about 2.3:1, so a selected row's error is
+   a lighter red, 4.56:1 there; other rows keep the terminal's. */
 .u-surface {
   --u-canvas: color-mix(in srgb, var(--u-bg) 72%, black);
   --u-popover: color-mix(in srgb, var(--u-bg) 90%, white);
@@ -100,6 +105,7 @@
   --u-accent-strong: color-mix(in srgb, var(--u-accent) 35%, transparent);
   --u-warn-soft: color-mix(in srgb, var(--u-warn) 14%, transparent);
   --u-error-soft: color-mix(in srgb, var(--u-error) 16%, transparent);
+  --u-error-on-sel: #ffc4c0;
   --u-solid: var(--u-ink);
   --u-solid-hover: white;
   --u-on-solid: var(--u-canvas);
@@ -114,6 +120,7 @@
     --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
     --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
     --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
+    --u-error-on-sel: var(--u-error);
     --u-solid-hover: black;
     --u-on-solid: #ffffff;
   }
@@ -127,6 +134,7 @@
   --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
   --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
   --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
+  --u-error-on-sel: var(--u-error);
   --u-solid-hover: black;
   --u-on-solid: #ffffff;
 }
@@ -305,6 +313,7 @@
 .u-tone-ok { color: var(--u-ok); }
 .u-tone-warn { color: var(--u-warn); }
 .u-tone-error { color: var(--u-error); }
+.u-item.is-sel.u-tone-error, .u-item.is-sel .u-tone-error { color: var(--u-error-on-sel); }
 .u-tone-info { color: var(--u-info); }
 .u-tone-muted { color: var(--u-muted); }
 

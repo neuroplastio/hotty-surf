@@ -446,8 +446,9 @@ The order is the maintainer's, via gov (2026-10-30):
     - A question for the maintainer: `<key>` draws "C" and "Enter",
       approved in margin ("keycaps ok"), where the board has "c" and
       "↵" (#8).
-  - A look question for the kit: in dark, the selected row's fill
-    (#595a5e) leaves error red at about 2.3:1.
+  - [x] A look question for the kit: in dark, the selected row's fill
+    (#595a5e) leaves error red at about 2.3:1. Answered ("Selected-row
+    red ≥4.5:1"): `--u-error-on-sel`, #ffc4c0 on dark; story list/error.
 - [ ] **The kit to plx-design's board** (Design Agent, from 2026-11-05;
 - [ ] **The kit to the design board** (Design Agent, from 2026-11-05;
   the design's Migration board's hotty legs, one commit each, in its
