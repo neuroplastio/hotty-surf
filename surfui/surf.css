@@ -836,6 +836,14 @@
 .u-options > .u-item.is-picked { color: var(--u-accent); font-weight: 500; }
 .u-options > .u-item.is-hi { background: var(--u-selected); }
 
+/* A menu's own surface (surfui.MenuCard): clear round its card, which
+   keeps its own height, with room under it and at its end for the
+   raised shadow (MenuShadowBelow, MenuShadowSide); in Dense the cells
+   draw it, with no shadow. */
+.u-menu-surface { background: transparent; }
+.u-menu-surface > .u-menu { flex: none; }
+.u-compact.u-menu-surface, .u-roomy.u-menu-surface { padding: 0 10px 16px 0; }
+
 /* A menu (surfui.MenuCard), one look for every menu: raised, radius 8,
    the border's hairline and the raised shadow; in Compact and Roomy 4px
    of room round its rows, each 28px tall, all 1px apart, 8px across, its

@@ -141,8 +141,10 @@ func menuView(from *surfui.Node, items []MenuItem, hi int, style surfkeys.Style,
 				h += 28
 			}
 		}
-		rows = int(math.Ceil(h / ch))
-		cols = max(cols, int(math.Ceil(220/cw)))
+		// Under the card and past its end, the room its surface keeps
+		// for the raised shadow (surfui.MenuShadowBelow, MenuShadowSide).
+		rows = int(math.Ceil((h + surfui.MenuShadowBelow) / ch))
+		cols = max(cols, int(math.Ceil(220/cw))) + int(math.Ceil(surfui.MenuShadowSide/cw))
 	}
 	return MenuView{Tree: tree, Items: items, Cols: cols, Rows: rows, Cells: scr}
 }

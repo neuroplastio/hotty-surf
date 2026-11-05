@@ -25,16 +25,17 @@ var paneItems = []surfrun.MenuItem{
 func TestOpenMenu(t *testing.T) {
 	v := surfrun.OpenMenu(paneItems, 1, surfrun.MenuLook{})
 	html := v.HTML()
-	for _, want := range []string{`class="u-surface u-theme-neuroplastio u-compact"`, `class="u-menu"`, "u-menu-head", "u-menu-sep",
+	for _, want := range []string{`class="u-surface u-menu-surface u-theme-neuroplastio u-compact"`, `class="u-menu"`, "u-menu-head", "u-menu-sep",
 		"u-menu-item u-danger", "is-sel", "disabled", "Split right"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("the menu's HTML lacks %q:\n%s", want, html)
 		}
 	}
-	// 4+23.5+1+28+1+28+1+9+1+28+4 = 128.5 CSS px, in rows of 21; at
-	// least 220 CSS px across.
-	if v.Rows != 7 || v.Cols < 22 {
-		t.Errorf("a menu of %d×%d cells, want 7 rows and at least 22 across", v.Cols, v.Rows)
+	// 4+23.5+1+28+1+28+1+9+1+28+4 = 128.5 CSS px and 16 for the shadow
+	// under it, in rows of 21; at least 220 CSS px across and 10 for the
+	// shadow past its end.
+	if v.Rows != 7 || v.Cols < 23 {
+		t.Errorf("a menu of %d×%d cells, want 7 rows and at least 23 across", v.Cols, v.Rows)
 	}
 	if len(v.Cells.Lines) != v.Cells.Rows || v.Cells.Rows != len(paneItems)+2 {
 		t.Errorf("the cells draw %d rows, want a row an item and the line round them, %d", v.Cells.Rows, len(paneItems)+2)
