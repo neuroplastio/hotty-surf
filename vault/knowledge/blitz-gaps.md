@@ -309,6 +309,8 @@ and Chromium 153. Each case was checked in its gate sheet, and in a
 | tip/shown (Dense 1.6×: 264–575; Roomy: 66–180) | H1's tooltip: its input hairline has an edge a device row off at 1.6×, plus paper's hairline under the surface. In Roomy its text sits low | both | The inset hairline and the text's place ([above](#the-look-2026-10-31)) | Cosmetic |
 | pill/icon (Compact and Roomy 1.6×: 23.8–32.8; Compact 2×: 24–29) | An icon button's focus-line (`inset 0 0 0 1px` on a 28px circle) comes out broken, in dashes, at 1.6×. Its glyph sits about a device px lower | both | Not verified. The inset hairline above, on a box whose radius is half its size: blitz-paint's snapped rect against a round edge. The glyph is the text's place | Cosmetic, but a tabbed-to icon button's ring reads as dashed |
 | pill/states (Compact and Roomy: 15–23) | A small pill's label (12.5px in 22px) sits a CSS px low, and a focused pill's focus-line has gaps where it bends | both | The text's place, and the hairline on a round end, as pill/icon | Cosmetic |
+| list/states (Compact 1.6×: 23–323, 2×: 52–54; Roomy 1.6×: 19–23) | A selected row's hairline has an edge a device row off; the rows' text sits low | both | The inset hairline and the text's place ([above](#the-look-2026-10-31)). H3's keyboard row, its soft fill and marker, draws the same | Cosmetic |
+| list/states (Dense 1.6×: 260–313) | Dense text and the paper hairline under the surface, a few px | 1.6× | The `100vh` hairline ([above](#over-the-threshold-30-of-132-cases)) and rounding | Cosmetic |
 | pill/icon (paper Dense 1.6×: 504) | The hairline under the surface | 1.6× | The `100vh` hairline ([above](#over-the-threshold-30-of-132-cases)) | Cosmetic, at a document's edge only |
 
 ## Known, not hit by the stories

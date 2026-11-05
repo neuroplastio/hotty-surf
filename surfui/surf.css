@@ -608,13 +608,14 @@
 .u-select[disabled] .u-select-chevron { color: var(--u-dim); }
 
 /* Rows: the pointer and the selection each a translucent step up; a
-   focused list's selection keeps that fill with a 2px accent marker at
-   its start, never a solid accent fill. The marker is a layer of the
+   focused list's selection, the keyboard's row, is the accent's soft
+   fill with a 2px accent marker at its start, never a solid accent
+   fill, in every list (the palette, settings, hosts, agents, menus). The marker is a layer of the
    row's background, so that it moves nothing: a straight bar inside the
    row's start, half its radius in and a radius short of either end,
    which the radius doesn't bend into a "(". In Compact and Roomy a
-   selected row is a block, a hairline round its fill (herdr UI's), the
-   accent's faint tint where its list has the keyboard (the mock's). A
+   selected row is a block, a hairline round its fill (herdr UI's); the
+   keyboard's row has none, its soft fill being the accent's. A
    nav's rows are muted but the selected one, and the one the pointer
    is on. */
 .u-list { display: flex; flex-direction: column; min-width: 0; }
@@ -624,11 +625,11 @@
 .u-item.is-sel { background: var(--u-selected); color: var(--u-ink); }
 .u-compact .u-item.is-sel, .u-roomy .u-item.is-sel { box-shadow: inset 0 0 0 1px var(--u-border); }
 .u-list:focus-within > .u-item.is-sel, :focus-within > .u-list > .u-item.is-sel {
-  background: linear-gradient(var(--u-accent), var(--u-accent)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-selected);
+  background: linear-gradient(var(--u-accent), var(--u-accent)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-accent-soft);
 }
 .u-compact .u-list:focus-within > .u-item.is-sel, .u-compact :focus-within > .u-list > .u-item.is-sel,
 .u-roomy .u-list:focus-within > .u-item.is-sel, .u-roomy :focus-within > .u-list > .u-item.is-sel {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-accent) 20%, transparent);
+  box-shadow: none;
 }
 .u-nav > .u-item { padding-top: var(--u-ny); padding-bottom: var(--u-ny); color: var(--u-muted); }
 .u-nav > .u-item.is-sel { color: var(--u-ink); }

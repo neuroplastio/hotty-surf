@@ -717,8 +717,8 @@ density gives the units.
 - **The look** is GPUI's, by roles (gov R-24): a sidebar's chrome is a
   step darker than the content, a dialog a step lighter, and a menu
   raised. Hover and selection are translucent fills that are right on
-  any layer; a focused list's selection keeps its fill and shows a 2px
-  marker in the accent. A primary button (`fill="accent"`) is solid ink,
+  any layer; a focused list's selection, the keyboard's row, is the
+  accent's soft fill with a 2px marker in the accent. A primary button (`fill="accent"`) is solid ink,
   a destructive one (`fill="error"`) the error's tint with its text in
   the error. A group of settings is a card (`<box card>`): a step
   lighter than the page, its title over it in sentence case and
