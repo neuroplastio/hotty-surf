@@ -708,7 +708,7 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 			{
 				{
 					a9 := "unread"
-					it, err := surf.MenuAction(0, "Unread only", "", "", false, func() { c.SetFilter(a9) })
+					it, err := surf.MenuAction(0, "Unread only", "", "", false, false, func() { c.SetFilter(a9) })
 					if err != nil {
 						e.Fail("board.surf", 7, 11, err)
 					}
@@ -796,7 +796,7 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 			{
 				{
 					a21 := int(int64(1))
-					it, err := surf.MenuAction(0, "Bump", "", "+", false, func() { c.Bump(a21) })
+					it, err := surf.MenuAction(0, "Bump", "", "+", false, false, func() { c.Bump(a21) })
 					if err != nil {
 						e.Fail("board.surf", 17, 7, err)
 					}
@@ -2538,7 +2538,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 					break
 				}
 				a30 := p29.ID
-				it, err := surf.MenuAction(0, t28, "email-open-outline", "enter", false, func() { c.Open(a30) })
+				it, err := surf.MenuAction(0, t28, "email-open-outline", "enter", false, false, func() { c.Open(a30) })
 				if err != nil {
 					e.Fail("note-row.surf", 4, 5, err)
 				}
@@ -2572,7 +2572,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 							break
 						}
 						a34 := int(int64(len(p33.Tags)))
-						it, err := surf.MenuAction(1, "Bump by its tags", "", a32, false, func() { c.Bump(a34) })
+						it, err := surf.MenuAction(1, "Bump by its tags", "", a32, false, false, func() { c.Bump(a34) })
 						if err != nil {
 							e.Fail("note-row.surf", 5, 5, err)
 						}
@@ -2596,7 +2596,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 			}
 			{
 				a38 := prop10
-				it, err := surf.MenuAction(3, "Dismiss", "close", "", a37, func() { c.Dismiss(a38) })
+				it, err := surf.MenuAction(3, "Dismiss", "close", "", a37, true, func() { c.Dismiss(a38) })
 				if err != nil {
 					e.Fail("note-row.surf", 7, 5, err)
 				}

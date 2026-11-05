@@ -52,6 +52,10 @@ type MenuItem struct {
 	// Enabled is false for an item that can't be picked (:disabled):
 	// shown, and its pick does nothing.
 	Enabled bool
+	// Danger is an action that destroys, drawn in the error's colour;
+	// Heading a caption over the items after it, its Label alone, which
+	// can't be picked.
+	Danger, Heading bool
 }
 
 // Menu is the context menu at at: that of the innermost element that has
@@ -91,7 +95,8 @@ func (s *Surface) menuStart(at MenuAt) *surfui.Node {
 func menuItems(items []surfui.MenuItem) []MenuItem {
 	out := make([]MenuItem, len(items))
 	for i, it := range items {
-		out[i] = MenuItem{ID: itemID(it, i), Sep: it.Sep, Label: it.Label, Icon: it.Icon, Key: it.Key, Enabled: !it.Disabled && !it.Sep}
+		out[i] = MenuItem{ID: itemID(it, i), Sep: it.Sep, Label: it.Label, Icon: it.Icon, Key: it.Key,
+			Enabled: !it.Disabled && !it.Sep && !it.Heading, Danger: it.Danger, Heading: it.Heading}
 	}
 	return out
 }
@@ -125,7 +130,7 @@ func (s *Surface) Pick(menu, item string) (took, redraw bool) {
 		if itemID(it, i) != item {
 			continue
 		}
-		if it.Sep || it.Disabled || it.Act == nil {
+		if it.Sep || it.Heading || it.Disabled || it.Act == nil {
 			return false, s.due
 		}
 		s.do(it.Act, Event{Kind: "pick", Target: menu, Value: item})

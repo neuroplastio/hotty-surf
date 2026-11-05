@@ -28,14 +28,14 @@ func TestMenus(t *testing.T) {
 	}
 	state, _ := File(txtar.Parse(src), "state.json")
 	want := strings.Join([]string{
-		"r.klist.kn1: r.klist.kn1 [0 \"Open n1\" email-open-outline enter on | 1 \"Bump by its tags\" - 2 on | 2 sep | 3 \"Dismiss\" close - on]",
-		"r.klist.kn2: r.klist.kn2 [0 \"Open n2\" email-open-outline enter on | 2 sep | 3 \"Dismiss\" close - off]",
-		"r.klist.kn1.0.2: r.klist.kn1 [0 \"Open n1\" email-open-outline enter on | 1 \"Bump by its tags\" - 2 on | 2 sep | 3 \"Dismiss\" close - on]",
+		"r.klist.kn1: r.klist.kn1 [0 \"Open n1\" email-open-outline enter on | 1 \"Bump by its tags\" - 2 on | 2 sep | 3 \"Dismiss\" close - on danger]",
+		"r.klist.kn2: r.klist.kn2 [0 \"Open n2\" email-open-outline enter on | 2 sep | 3 \"Dismiss\" close - off danger]",
+		"r.klist.kn1.0.2: r.klist.kn1 [0 \"Open n1\" email-open-outline enter on | 1 \"Bump by its tags\" - 2 on | 2 sep | 3 \"Dismiss\" close - on danger]",
 		"r.klist: r.klist [0 \"Bump\" - + on]",
 		"r.khead.kcount: r.khead [0 \"Unread only\" - - on]",
 		"r.kstatus: none",
 		"r.gone: none",
-		"cell of r.klist.kn3.0.2: r.klist.kn3 [0 \"Open n3\" email-open-outline enter on | 2 sep | 3 \"Dismiss\" close - off]",
+		"cell of r.klist.kn3.0.2: r.klist.kn3 [0 \"Open n3\" email-open-outline enter on | 2 sep | 3 \"Dismiss\" close - off danger]",
 		"cell of r.kstatus: none",
 		"focus: r.klist [0 \"Bump\" - + on]",
 		"pick r.klist.kn1 1: true [bump]",
@@ -127,6 +127,9 @@ func menuText(m surfrun.Menu, ok bool) string {
 		on := "on"
 		if !it.Enabled {
 			on = "off"
+		}
+		if it.Danger {
+			on += " danger"
 		}
 		items[i] = fmt.Sprintf("%s %q %s %s %s", it.ID, it.Label, or(it.Icon), or(it.Key), on)
 	}

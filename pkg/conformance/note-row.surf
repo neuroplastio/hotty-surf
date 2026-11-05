@@ -4,7 +4,7 @@
     <action icon="email-open-outline" key="enter" do="open(note.id)">Open {{ note.id }}</action>
     <action :if="size(note.tags) > 0" :key="size(note.tags)" do="bump(size(note.tags))">Bump by its tags</action>
     <sep/>
-    <action icon="close" :disabled="!note.unread" do="dismiss(note)">Dismiss</action>
+    <action icon="close" :disabled="!note.unread" danger do="dismiss(note)">Dismiss</action>
   </menu>
   <title>
     <row gap="1"><dot :tone="note.unread ? 'accent' : 'muted'"/><text bold>{{ note.id }}</text></row>
