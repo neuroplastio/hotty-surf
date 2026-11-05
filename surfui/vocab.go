@@ -689,6 +689,24 @@ func (n *Node) Card() *Node { return n.Class("u-card") }
 // pointer over it and the keyboard in its field. Cells draw the row.
 func (n *Node) Search() *Node { return n.Class("u-search") }
 
+// Cap draws a Key boxed, a cap outlined in the input's hairline: a sheet
+// of keys, where keys are the point. A Key is a muted glyph run with no
+// box anywhere else, a tooltip's, a menu's and a palette's.
+func (n *Node) Cap() *Node { return n.Class("u-cap") }
+
+// Strip makes a Row a flat edge's strip, a bar of chrome on the canvas:
+// its children, three Rows, are its zones, start, centre and end, each a
+// third of it, their items 4px apart, the centre's in its middle and the
+// end's at its end. On a host it is 40px tall, its items 8px from its
+// edges. The cells draw the row.
+func (n *Node) Strip() *Node { return n.Class("u-strip") }
+
+// Grid makes a Row a picker's grid: its Buttons (an icon or an emoji
+// each) 32px squares that wrap, 2px apart; the pointer on one the hover
+// fill, the Selected one the accent's soft fill and line. The cells draw
+// the buttons.
+func (n *Node) Grid() *Node { return n.Class("u-grid") }
+
 // Segmented draws a Row of Buttons as one control, a scope or a filter
 // of two to four values: a sunk pill holding them, the Selected one
 // raised on the selected fill with a hairline, the others muted. Each

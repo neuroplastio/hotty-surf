@@ -471,6 +471,9 @@ The order is the maintainer's, via gov (2026-10-30):
     template's `<menu>` (Go's `MenuItem.Heading` only).
   - [x] H6: one bold (`.u-bold` and a Dense heading 600, not 700), and
     the radius table as tokens (`--u-r-xs` … `--u-r-xl`, `--u-r-pill`).
+  - [x] H7 (no open question): `--u-warn-soft` and `--u-error-soft`;
+    borderless keys, `cap` for a sheet of them; `strip` and `grid` on a
+    row; stories strip/zones and grid/picker.
 
 ## v0
 

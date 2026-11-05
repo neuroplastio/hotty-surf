@@ -12,6 +12,7 @@
 package stories
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/neuroplastio/hotty-surf/pkg/cells"
@@ -247,10 +248,13 @@ var All = []Story{
 		).Gap(1)
 	}},
 	{"key/caps", 50, func() *surfui.Node {
+		// A sheet of keys, where keys are the point: each a boxed cap.
 		row := func(group, title string, sel bool, seq string) *surfui.Node {
-			return surfui.Item(surfui.Text(group).Muted(), surfui.Text(title).Grow(), surfui.Key(seq)).Selected(sel)
+			return surfui.Item(surfui.Text(group).Muted(), surfui.Text(title).Grow(), surfui.Key(seq).Cap()).Selected(sel)
 		}
-		hint := func(title, seq string) *surfui.Node { return surfui.Row(surfui.Text(title), surfui.Key(seq)).Gap(2) }
+		hint := func(title, seq string) *surfui.Node {
+			return surfui.Row(surfui.Text(title), surfui.Key(seq).Cap()).Gap(2)
+		}
 		return surfui.Stack(
 			surfui.List(
 				row("Pane: ", "New", true, "ctrl+b p n"),
@@ -393,6 +397,39 @@ var All = []Story{
 				surfui.Switch(false), surfui.Switch(true), Force(surfui.Switch(false), "focus")).Gap(5),
 			surfui.Row(seg(1, -1, 2, "Workspace", "Machine", "All")),
 		).Gap(1)
+	}},
+	{"strip/zones", 180, func() *surfui.Node {
+		// A top strip: its start's picker, its centre's tabs, its end's
+		// tools and toggle, each zone's items 4px apart.
+		tool := func(g, label string) *surfui.Node {
+			return surfui.IconButton(surfui.Icon(g), "", false).Label(label).Pill()
+		}
+		return surfui.Row(
+			surfui.Row(surfui.IconButton(surfui.Icon(mdMenuDown), "neuroplastio", true).Pill().Raised()),
+			surfui.Row(surfui.Button("editor").Pill().Small().Current(true), surfui.Button("shell").Pill().Small()),
+			surfui.Row(tool(mdRobotOutline, "Agents"), tool(mdBellOutline, "Notices").Selected(true),
+				tool(mdPaletteOutline, "Commands"), tool(mdViewColumn, "Stripes")),
+		).Strip()
+	}},
+	{"grid/picker", 40, func() *surfui.Node {
+		// An icon and emoji picker's grid: squares that wrap, the
+		// pointer on one, the picked one.
+		g := surfui.Row().Grid()
+		for i, s := range []string{mdConsoleLine, mdRobotOutline, mdSourceBranch, mdBellOutline, mdCogOutline, mdPaletteOutline,
+			mdKeyboard, mdMagnify, mdTab, mdPencilOutline, mdContentCopy, mdRestart} {
+			b := surfui.IconButton(surfui.Icon(s), "", false).Label("icon " + strconv.Itoa(i))
+			switch i {
+			case 2:
+				b.Selected(true)
+			case 4:
+				b = Force(b, "hover")
+			}
+			g.Add(b)
+		}
+		for _, e := range []string{"🦀", "🐙", "🚀", "🧪"} {
+			g.Add(surfui.Button(e).Label("emoji " + e))
+		}
+		return surfui.Stack(g).Width(30)
 	}},
 	{"icon/svg", 50, func() *surfui.Node {
 		// An SVG icon where a glyph would be: beside an item's label, the
