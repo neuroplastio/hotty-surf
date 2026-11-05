@@ -1002,7 +1002,9 @@ for {
 
 - **A `Screen`** is `Lines` of runs: text, its role, its fill's role
   and its attributes (`cells.Run`), never colours. Paint each role in
-  your palette. `Hits` are the cells a press acts on, by element id,
+  your palette. `surfrun.Paint` paints a screen in the terminal's sixteen
+  colours, as the runtime does, one string per row; `surfrun.Lines` is
+  the same for printing once, without the blank rows at the end. `Hits` are the cells a press acts on, by element id,
   the later on top; `Caret` is where the caret shows; `Gen` changes
   only when the screen does; `Mouse` says the mouse acts on something.
 - **`r.Focus(in)`** is the terminal's focus coming and going: going,

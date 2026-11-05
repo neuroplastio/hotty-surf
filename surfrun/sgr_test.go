@@ -58,3 +58,37 @@ func TestLines(t *testing.T) {
 		}
 	}
 }
+
+// Paint keeps every row, the blank ones at the end too, and paints each
+// as Lines does the rows it keeps. A zero screen gives no rows.
+func TestPaint(t *testing.T) {
+	run := func(text string, fg, bg cells.Role) cells.Run {
+		return cells.Run{Text: text, Width: len(text), Fg: fg, Bg: bg}
+	}
+	s := cells.Screen{Cols: 4, Rows: 4, Lines: [][]cells.Run{
+		{run("ab", cells.Accent, cells.Bg), run("  ", cells.Fg, cells.Bg)},
+		{run("    ", cells.Fg, cells.Field)},
+		{run("    ", cells.Fg, cells.Bg)},
+		{run("    ", cells.Fg, cells.Tonal)},
+	}}
+	got, kept := Paint(s), Lines(s)
+	if len(got) != len(s.Lines) {
+		t.Fatalf("%d rows %q, want %d", len(got), got, len(s.Lines))
+	}
+	if len(kept) != 2 {
+		t.Fatalf("Lines kept %d rows, want 2", len(kept))
+	}
+	for i := range kept {
+		if got[i] != kept[i] {
+			t.Errorf("row %d: %q, Lines has %q", i, got[i], kept[i])
+		}
+	}
+	for i := len(kept); i < len(got); i++ {
+		if got[i] != "\x1b[0m    \x1b[0m" {
+			t.Errorf("blank row %d: %q", i, got[i])
+		}
+	}
+	if got := Paint(cells.Screen{}); len(got) != 0 {
+		t.Errorf("zero screen: %q, want no rows", got)
+	}
+}
