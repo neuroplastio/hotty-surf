@@ -90,6 +90,9 @@ var (
 	densities = []string{"compact", "dense", "roomy"}
 	tones     = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
 	drops     = []string{"whole", "halves", "thirds"}
+	// countTones are a count's (Q11, Q12's lean): new, someone waits,
+	// something failed, for information.
+	countTones = []string{"accent", "warn", "error", "muted"}
 )
 
 var events = []string{"click", "focus"}
@@ -186,6 +189,9 @@ var Attrs = []Attr{
 	{Name: "pill", Type: TypeBool, Doc: "a button on a bar: a pill, no fill at rest; its icon alone, a circle", Tags: []string{"button"}, Func: "ModPill"},
 	{Name: "raised", Type: TypeBool, Doc: "a pill on the selected fill: a bar's picker", Tags: []string{"button"}, Func: "ModRaised"},
 	{Name: "current", Type: TypeBool, Doc: "a pill whose thing holds the keyboard: the accent's soft fill", Tags: []string{"button"}, Func: "ModCurrent"},
+	{Name: "count", Type: TypeInt, Doc: "a tool's count on the button's corner: its number, 99+ past 99; none at 0", Tags: []string{"button"}, Func: "ModCount"},
+	{Name: "count-dot", Type: TypeBool, Doc: "a count with no number on the button's corner, a dot: something new", Tags: []string{"button"}, Func: "ModCountDot"},
+	{Name: "count-tone", Type: TypeString, Doc: "the count's tone: accent (the default), warn, error or muted", Tags: []string{"button"}, Func: "ModCountTone", Fails: true, Values: countTones},
 	{Name: "chrome", Type: TypeBool, Doc: "a sidebar's ground: a darker fill with a hairline at its end", Func: "ModChrome"},
 	{Name: "card", Type: TypeBool, Doc: "a group's panel: a fill a step lighter than the page, its rows split by rules", Tags: []string{"box"}, Func: "ModCard"},
 	{Name: "ring", Type: TypeBool, Doc: "a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven", Tags: []string{"dot"}, Func: "ModRing"},
@@ -428,6 +434,42 @@ func ModDrop(n *surfui.Node, v string) error {
 		n.Drop(surfui.DropThirds)
 	default:
 		return fmt.Errorf("drop is bare, whole, halves or thirds, not %q", v)
+	}
+	return nil
+}
+
+// A tool's count on a button (Q11's lean): count, count-dot and
+// count-tone, applied in that order.
+
+// ModCount puts a count of v on a button's corner (surfui.Count); none
+// where v is 0 or less.
+func ModCount(n *surfui.Node, v int64) {
+	if v > 0 {
+		n.WithCount(surfui.Count(clampInt(v)))
+	}
+}
+
+// ModCountDot puts a dot on a button's corner (surfui.CountDot), where v
+// is set and it has no count.
+func ModCountDot(n *surfui.Node, v bool) {
+	if v && surfui.CountOf(n) == nil {
+		n.WithCount(surfui.CountDot())
+	}
+}
+
+// ModCountTone sets the tone of a button's count: accent, warn, error or
+// muted.
+func ModCountTone(n *surfui.Node, v string) error {
+	var t surfui.Tone
+	switch v {
+	case "accent":
+	case "warn", "error", "muted":
+		t = surfui.Tone(v)
+	default:
+		return fmt.Errorf("a count's tone is accent, warn, error or muted, not %q", v)
+	}
+	if c := surfui.CountOf(n); c != nil {
+		c.Tone(t)
 	}
 	return nil
 }
