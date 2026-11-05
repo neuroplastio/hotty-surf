@@ -251,6 +251,7 @@ component or a partial.
 | `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
 | `strip`, `grid` | bool | row | a strip of chrome, its three rows its start, centre and end; a picker's grid of buttons, squares that wrap ("Pills") |
+| `attention` | bool | button, item | it waits for someone: its text in the warn, the warn's soft fill where it is current or the keyboard's row |
 | `cap` | bool | key | a key drawn boxed, a cap: a sheet of keys. A key is a muted glyph run elsewhere |
 | `card` | bool | box | a group's panel: a fill a step lighter than the page, room across inside it, its rows split by `rule`s; a `semibold` text over it is its title, a `small muted` one under it its note |
 | `ring`, `target` | bool | dot | a dot's shape, so that a state is told by its shape as well as its tone: `ring` hollow (○), `target` a dot in a ring (◉), and the cells draw those glyphs. A host has no shape for ◌ (offline) until a dashed ring is proven, so offline there is a `ring`, told by its tone and its row's text |

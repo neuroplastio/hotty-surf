@@ -468,6 +468,26 @@ var All = []Story{
 			surfui.IconButton(surfui.Icon(mdClose), "", false).Label("Close").Pill().Small()).Gap(2).Pad(1, 0)
 		return surfui.Row(surfui.Stack(surfui.Stack(head, surfui.Rule(), body.Pad(1, 1)).Popover()).Width(36))
 	}},
+	{"attention/states", 60, func() *surfui.Node {
+		// What waits for you, in the warn: an agent's row, at rest and
+		// as the keyboard's row, with a warn count; a tab and a tool
+		// whose agent waits, and the tab current.
+		agent := func(name, what, when string, att bool) *surfui.Node {
+			end := surfui.Stack(surfui.Text(when).Small().Muted())
+			if att {
+				end.Add(surfui.Row(surfui.Spacer(), surfui.Count(1).Tone(surfui.Warn)))
+			}
+			return surfui.Item(surfui.Dot().Tone(map[bool]surfui.Tone{true: surfui.Warn, false: surfui.OK}[att]),
+				surfui.Stack(surfui.Text(name).Semibold(), surfui.Text(what).Small().Muted()).Grow(), end).Gap(2).Top().Attention(att)
+		}
+		tab := func(name string) *surfui.Node { return surfui.Button(name).Pill().Small() }
+		return surfui.Stack(
+			surfui.List(agent("reviewer", "opus · reading the diff", "2m", false), agent("builder", "sonnet · waiting for you", "now", true)),
+			Force(surfui.List(agent("builder", "sonnet · waiting for you", "now", true).Selected(true)), "within"),
+			surfui.Row(tab("editor"), tab("agents").Attention(true), tab("agents").Attention(true).Current(true),
+				surfui.IconButton(surfui.Icon(mdRobotOutline), "", false).Label("Agents").Pill().Attention(true)).Gap(1),
+		).Gap(1)
+	}},
 	{"icon/svg", 50, func() *surfui.Node {
 		// An SVG icon where a glyph would be: beside an item's label, the
 		// search row's, at the icon's size and in its colour, the ink where

@@ -727,6 +727,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModSegmented(n, v)
 	case "cap":
 		ModCap(n, v)
+	case "attention":
+		ModAttention(n, v)
 	case "strip":
 		ModStrip(n, v)
 	case "grid":

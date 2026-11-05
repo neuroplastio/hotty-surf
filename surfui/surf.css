@@ -735,6 +735,19 @@
   box-shadow: inset 0 0 0 1px var(--u-input), var(--u-shadow-raised);
 }
 
+/* Attention (Attention, Q19's lean: the warn tone, waiting for you): a
+   pill's or an icon button's label in the warn, on the warn's soft fill
+   where it is current; an item's text in the warn, its muted text 80%
+   toward it, and where it is the keyboard's row the warn's soft fill
+   and a warn marker. */
+.u-btn.u-pill.is-att, .u-btn.u-iconbtn.is-att { color: var(--u-warn); }
+.u-btn.u-pill.is-att.is-cur, .u-btn.u-iconbtn.is-att.is-cur { color: var(--u-warn); background: var(--u-warn-soft); }
+.u-item.is-att, .u-item.is-sel.is-att { color: var(--u-warn); }
+.u-item.is-att .u-tone-muted { color: color-mix(in srgb, var(--u-warn) 80%, var(--u-muted)); }
+.u-list:focus-within > .u-item.is-sel.is-att, :focus-within > .u-list > .u-item.is-sel.is-att {
+  background: linear-gradient(var(--u-warn), var(--u-warn)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-warn-soft);
+}
+
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
    heading or an icon in the accent, as a link is; a badge or a key cap
