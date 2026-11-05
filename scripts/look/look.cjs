@@ -3,7 +3,7 @@
 //
 //   node scripts/look/look.cjs story <name> [--theme dark|light] [--density compact]
 //        [--width COLS] [--scale 1.6|2|both] [--engine chromium|blitz|both]
-//        [--state hover|focus|within --at <selector>]
+//        [--state hover|focus|within --at <selector>] [--crop <selector>]
 //   node scripts/look/look.cjs ref <board.html> [--select <selector>] [--theme dark|light] [--scale …]
 //   node scripts/look/look.cjs compare <a.png> <b.png> [--trim] [--name <name>]
 //   node scripts/look/look.cjs run <name> --board <board.html> --select <selector> [any of the above]
@@ -14,7 +14,8 @@
 // font, unhinted), and in Blitz, by `hotty render`. dark is the
 // neuroplastio theme on the host's dark ground, light the paper theme.
 // --state forces a pseudo-class's look (stories.Force) on what --at
-// selects, in the document both engines draw.
+// selects, in the document both engines draw. --crop cuts both shots to
+// the box of what the selector picks, as Chromium lays it out.
 //
 // `ref` draws a board of the design (a page drawn with its kit.css), or
 // the one element --select picks of it, in Chromium at the same scale;
@@ -80,7 +81,7 @@ function parse(argv) {
   return a;
 }
 
-const slug = (s) => s.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+const slug = (s) => s.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120);
 
 let browserP;
 function browser() {
@@ -174,8 +175,16 @@ async function chromiumStory(a, file, cols, s, out) {
   const png = new PNG({ width: w, height: h });
   PNG.bitblt(shot, png, 0, 0, w, h, 0, 0);
   fs.writeFileSync(out, PNG.sync.write(png));
+  // The box --crop picks, in device px, for both engines' shots.
+  let box = null;
+  if (a.crop) {
+    const r = await page.locator(a.crop).first().boundingBox();
+    if (!r) throw new Error(`--crop ${a.crop}: nothing in the story matches`);
+    const x = Math.floor(r.x * s), y = Math.floor(r.y * s);
+    box = { x, y, w: Math.min(w, Math.ceil((r.x + r.width) * s)) - x, h: Math.min(h, Math.ceil((r.y + r.height) * s)) - y };
+  }
   await ctx.close();
-  return rows;
+  return { rows, box };
 }
 
 function blitzStory(a, file, cols, s, out, rows) {
@@ -187,16 +196,24 @@ async function story(a, name) {
   if (!fs.existsSync(a.hotty)) throw new Error(`no hotty at ${a.hotty}: build hotty-blitz (make blitz release), or set --hotty`);
   const cols = Number(a.width ?? storyCols(a, name));
   const file = await storyDoc(a, name);
-  const base = [slug(name), a.theme, a.density, cols, ...(a.state ? [slug(a.state + "-" + a.at)] : [])].join("-");
+  const base = [slug(name), a.theme, a.density, cols, ...(a.state ? [slug(a.state + "-" + a.at)] : []), ...(a.crop ? ["crop-" + slug(a.crop)] : [])].join("-");
   const shots = {};
   fs.mkdirSync(a.out, { recursive: true });
   for (const s of a.scales) {
     const c = path.join(a.out, `${base}-${s}.chromium.png`), b = path.join(a.out, `${base}-${s}.blitz.png`);
-    let rows;
-    if (a.engine !== "blitz") rows = await chromiumStory(a, file, cols, s, c);
+    let rows, box;
+    if (a.engine !== "blitz") ({ rows, box } = await chromiumStory(a, file, cols, s, c));
     // Blitz at Chromium's rows when both draw, so that the two line up;
     // its own rows=auto otherwise.
     if (a.engine !== "chromium") blitzStory(a, file, cols, s, b, rows);
+    if (box)
+      for (const f of [c, b]) {
+        if (!fs.existsSync(f)) continue;
+        const img = PNG.sync.read(fs.readFileSync(f));
+        const out = new PNG({ width: box.w, height: box.h });
+        PNG.bitblt(img, out, box.x, box.y, Math.min(box.w, img.width - box.x), Math.min(box.h, img.height - box.y), 0, 0);
+        fs.writeFileSync(f, PNG.sync.write(out));
+      }
     shots[s] = { chromium: a.engine !== "blitz" ? c : null, blitz: a.engine !== "chromium" ? b : null };
     for (const f of Object.values(shots[s])) if (f) console.log(f);
   }
@@ -338,7 +355,7 @@ async function run(a, name) {
   const rf = await ref(a, a.board);
   const res = [];
   for (const s of a.scales) {
-    const tag = `${slug(name)}-${a.theme}-${a.density}-${s}`;
+    const tag = [slug(name), a.theme, a.density, s, ...(a.crop ? [slug(a.crop)] : [])].join("-");
     if (st[s].chromium)
       res.push(await compare({ ...a, trim: true, "label-a": `${name}, Chromium ${s}`, "label-b": `${path.basename(rf[s])}, ${a.select}` }, st[s].chromium, rf[s], `${tag}-vs-board`));
     if (st[s].chromium && st[s].blitz)
