@@ -681,8 +681,8 @@ func applyString(name string, n *surfui.Node, v string) error {
 		return ModDrop(n, v)
 	case "program":
 		ModProgram(n, v)
-	case "count-tone":
-		return ModCountTone(n, v)
+	case "badge-tone":
+		return ModBadgeTone(n, v)
 	default:
 		panic("surf: no string modifier " + name)
 	}
@@ -733,8 +733,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModRaised(n, v)
 	case "current":
 		ModCurrent(n, v)
-	case "count-dot":
-		ModCountDot(n, v)
+	case "badge-dot":
+		ModBadgeDot(n, v)
 	case "card":
 		ModCard(n, v)
 	case "ring":
@@ -792,8 +792,8 @@ func applyInt(name string, n *surfui.Node, v int64) {
 		ModScale(n, v)
 	case "meter":
 		ModMeter(n, v)
-	case "count":
-		ModCount(n, v)
+	case "badge":
+		ModBadge(n, v)
 	default:
 		panic("surf: no int modifier " + name)
 	}

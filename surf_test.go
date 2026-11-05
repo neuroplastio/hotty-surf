@@ -230,7 +230,7 @@ func TestLoadErrors(t *testing.T) {
 		{`<surface><button @click="open()">x</button></surface>`, `board.surf:1:26: open takes 1 arguments, not 0`},
 		{`<surface><text tone="loud">x</text></surface>`, `board.surf:1:22: a tone is accent, ok, warn, error, info, muted or plain, not "loud"`},
 		{`<surface><face icon="Git Branch"/></surface>`, `board.surf:1:22: an icon's name is one of MDI's, as cog-outline, not "Git Branch"`},
-		{`<surface><button count="2" count-tone="ok">x</button></surface>`, `board.surf:1:40: a count's tone is accent, warn, error or muted, not "ok"`},
+		{`<surface><button badge="2" badge-tone="ok">x</button></surface>`, `board.surf:1:40: a badge's tone is accent, warn, error or muted, not "ok"`},
 		{`<surface><text :else>x</text></surface>`, `board.surf:1:16: :else with no :if before it`},
 		{`<surface><text :if="nope">a</text></surface>`, `board.surf:1:21: undeclared reference to 'nope'`},
 		{`<surface><text :if="nope">a</text><text :else>b</text></surface>`, `board.surf:1:21: undeclared reference to 'nope'`},
@@ -458,7 +458,7 @@ func TestAttrValues(t *testing.T) {
 		}
 	}
 	if n != 6 {
-		t.Errorf("%d attributes have values, not 6 (tone, fill, theme, density, count-tone, drop)", n)
+		t.Errorf("%d attributes have values, not 6 (tone, fill, theme, density, badge-tone, drop)", n)
 	}
 }
 

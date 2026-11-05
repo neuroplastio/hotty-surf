@@ -693,8 +693,8 @@ func (n *Node) Search() *Node { return n.Class("u-search") }
 // warn tone, not a hue of its own, nor a hand): a Pill's or an icon
 // button's label in the warn, the warn's soft fill where it is Current;
 // an Item's text in the warn, its muted text mixed toward it, and the
-// keyboard's row on the warn's soft fill with a warn marker. A count
-// that says how many waits is Count(n).Tone(Warn).
+// keyboard's row on the warn's soft fill with a warn marker. A badge
+// that says how many waits is Badge(n).Tone(Warn).
 func (n *Node) Attention(on bool) *Node {
 	if on {
 		n.Class("is-att")

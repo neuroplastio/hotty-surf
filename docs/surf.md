@@ -250,7 +250,7 @@ component or a partial.
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
 | `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
-| `count`, `count-dot`, `count-tone` | int, bool, string | button | a tool's count on its corner: a number (99+ past 99, none at 0), or a dot where it has none; its tone `accent` (the default), `warn`, `error` or `muted` ("Pills") |
+| `badge`, `badge-dot`, `badge-tone` | int, bool, string | button | a tool's badge on its corner: a count (99+ past 99, none at 0), or a dot where it has none; its tone `accent` (the default), `warn`, `error` or `muted` ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
 | `meter`, `stale` | int, bool | face | a meter after its value, filled to a percentage (0 to 100); a face whose value is old, dimmed ("A widget's face") |
 | `popover` | bool | box, stack | a popover's card, the root of what a face or a strip's tool opens ("A widget's face") |
@@ -293,12 +293,12 @@ component or a partial.
   fill), and `raised` makes it a bar's picker, on the selected fill:
   `<button pill raised>{{ ws }}<icon name="menu-down"/></button>`. The
   cells draw it as a button.
-- **A tool's count** sits on its button's corner while the tool is shut,
-  as an app's unread count: `count` a number, `count-dot` a dot where
-  something is new with no number, `count-tone` its tone, the accent
+- **A tool's badge** sits on its button's corner while the tool is shut,
+  as an app's unread count: `badge` a number, `badge-dot` a dot where
+  something is new with no number, `badge-tone` its tone, the accent
   unless it is someone waiting (`warn`), something failed (`error`) or
   only for information (`muted`):
-  `<button pill label="Tests" :count="failed" count-tone="error"><icon name="flask-outline"/></button>`.
+  `<button pill label="Tests" :badge="failed" badge-tone="error"><icon name="flask-outline"/></button>`.
   The tool sets it and clears it; it goes once the tool shows.
 - **A strip** is a `row strip` of three `row`s, its start, centre and
   end zones, on the canvas, 40px tall on a host. **A picker** of icons

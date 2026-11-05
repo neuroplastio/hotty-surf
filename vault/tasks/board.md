@@ -481,6 +481,11 @@ The order is the maintainer's, via gov (2026-10-30):
     `Node.WithCount`, a tool's count on its button; story
     count/states. Markup since: `count`, `count-dot` and `count-tone`
     on a `<button>`; the conformance fixtures' hide button has one.
+    Answered 2026-11-05: a tool's count is its badge, and the label pill
+    a chip (plx's pane badges become chips later). Renamed: `surfui.Badge`,
+    `BadgeDot`, `Node.WithBadge`, `BadgeOf`, markup `badge`, `badge-dot`
+    and `badge-tone`, story badge/states; the pill `<chip>`,
+    `surfui.Chip`, story chip/fills.
   - [x] H7, Q16 (the lean: a widget is a face plx draws, its popover a
     surface): `surfui.Widget` (icon, value, unit, tone, `Meter`,
     `Stale`) and `Node.Popover`; stories widget/states, pop/shown. No

@@ -644,12 +644,12 @@
 .u-row.u-grid > .u-btn.is-sel { color: var(--u-accent); background: var(--u-accent-soft); box-shadow: inset 0 0 0 1px var(--u-accent); }
 .u-row.u-grid > .u-btn:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
-/* A tool's count (Count, Q11's name): a pill 16px tall, at least as
+/* A tool's badge (Badge, Q11's name): a pill 16px tall, at least as
    wide, its number 600 at 10.5px in the accent's fill (Q12's lean: new),
    or the warn's, the error's, the input's (muted); a dot 8px with no
-   number. On a button (WithCount) it sits over the corner, 3px above
+   number. On a button (WithBadge) it sits over the corner, 3px above
    and 4px past its edge, a dot 1px in, ringed 2px in the canvas. */
-.u-count {
+.u-badge {
   flex: 0 0 auto;
   display: inline-block;
   box-sizing: border-box;
@@ -665,13 +665,13 @@
   color: var(--u-on-solid);
   background: var(--u-accent);
 }
-.u-surface .u-count.u-tone-warn { color: var(--u-canvas); background: var(--u-warn); }
-.u-surface .u-count.u-tone-error { color: var(--u-canvas); background: var(--u-error); }
-.u-surface .u-count.u-tone-muted { color: var(--u-ink); background: var(--u-input); }
-.u-count.u-count-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
-.u-has-count { position: relative; }
-.u-has-count > .u-count { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }
-.u-has-count > .u-count.u-count-dot { top: 1px; right: 1px; }
+.u-surface .u-badge.u-tone-warn { color: var(--u-canvas); background: var(--u-warn); }
+.u-surface .u-badge.u-tone-error { color: var(--u-canvas); background: var(--u-error); }
+.u-surface .u-badge.u-tone-muted { color: var(--u-ink); background: var(--u-input); }
+.u-badge.u-badge-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
+.u-has-badge { position: relative; }
+.u-has-badge > .u-badge { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }
+.u-has-badge > .u-badge.u-badge-dot { top: 1px; right: 1px; }
 
 /* A widget's face (Widget; Q16, the maintainer: data-first by default,
    or the program's own widgets in it): a capsule on the hover ground, 28px on a host, 10px across, its icon
@@ -970,7 +970,7 @@
    class before them, so tone, fill, bold, semibold, indent, down and pad
    did nothing on a button, a chip, a switch, a select or a field. They
    are here, last, under the surface: two classes, after every rule of
-   two. A component's own pairing with one (a count's tone, the primary
+   two. A component's own pairing with one (a badge's tone, the primary
    and the destructive button) is three. */
 .u-surface .u-px1, .u-surface.u-px1 { padding-left: var(--u-gx); padding-right: var(--u-gx); }
 .u-surface .u-px2, .u-surface.u-px2 { padding-left: calc(2 * var(--u-gx)); padding-right: calc(2 * var(--u-gx)); }

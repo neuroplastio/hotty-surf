@@ -1811,8 +1811,8 @@ func checkLiteral(at *Attr, v string) error {
 	case "tone", "fill":
 		_, err := tone(v)
 		return err
-	case "count-tone":
-		return ModCountTone(surfui.Button(""), v)
+	case "badge-tone":
+		return ModBadgeTone(surfui.Button(""), v)
 	case "theme":
 		return ModTheme(NewSurface(), v)
 	case "density":

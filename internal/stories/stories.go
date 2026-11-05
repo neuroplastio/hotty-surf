@@ -431,15 +431,15 @@ var All = []Story{
 		}
 		return surfui.Stack(g).Width(30)
 	}},
-	{"count/states", 60, func() *surfui.Node {
-		// A tool's count on its button, on a strip's canvas: new (the
+	{"badge/states", 60, func() *surfui.Node {
+		// A tool's badge on its button, on a strip's canvas: new (the
 		// accent), waiting for you (warn), failed (error), informational
 		// (muted), past 99, a dot with no number, and none once open.
 		tool := func(c *surfui.Node) *surfui.Node {
-			return surfui.IconButton(surfui.Icon(mdBellOutline), "", false).Label("Notices").Pill().WithCount(c)
+			return surfui.IconButton(surfui.Icon(mdBellOutline), "", false).Label("Notices").Pill().WithBadge(c)
 		}
-		return surfui.Row(tool(surfui.Count(3)), tool(surfui.Count(1).Tone(surfui.Warn)), tool(surfui.Count(2).Tone(surfui.Error)),
-			tool(surfui.Count(12).Tone(surfui.Muted)), tool(surfui.Count(120)), tool(surfui.CountDot()),
+		return surfui.Row(tool(surfui.Badge(3)), tool(surfui.Badge(1).Tone(surfui.Warn)), tool(surfui.Badge(2).Tone(surfui.Error)),
+			tool(surfui.Badge(12).Tone(surfui.Muted)), tool(surfui.Badge(120)), tool(surfui.BadgeDot()),
 			tool(nil).Selected(true)).Gap(5).Pad(2, 1).Chrome()
 	}},
 	{"widget/states", 140, func() *surfui.Node {
@@ -485,12 +485,12 @@ var All = []Story{
 	}},
 	{"attention/states", 60, func() *surfui.Node {
 		// What waits for you, in the warn: an agent's row, at rest and
-		// as the keyboard's row, with a warn count; a tab and a tool
+		// as the keyboard's row, with a warn badge; a tab and a tool
 		// whose agent waits, and the tab current.
 		agent := func(name, what, when string, att bool) *surfui.Node {
 			end := surfui.Stack(surfui.Text(when).Small().Muted())
 			if att {
-				end.Add(surfui.Row(surfui.Spacer(), surfui.Count(1).Tone(surfui.Warn)))
+				end.Add(surfui.Row(surfui.Spacer(), surfui.Badge(1).Tone(surfui.Warn)))
 			}
 			return surfui.Item(surfui.Dot().Tone(map[bool]surfui.Tone{true: surfui.Warn, false: surfui.OK}[att]),
 				surfui.Stack(surfui.Text(name).Semibold(), surfui.Text(what).Small().Muted()).Grow(), end).Gap(2).Top().Attention(att)

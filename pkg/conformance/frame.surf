@@ -3,7 +3,7 @@
 <surface>
   <row gap="1" key="head">
     <heading>{{ title }}</heading>
-    <button @click="hide" key="hide" :count="hidden ? 0 : count" :count-dot="hidden" count-tone="warn"><icon :name="hidden ? 'eye-outline' : 'eye-off-outline'"/>{{ hidden ? 'Show' : 'Hide' }}</button>
+    <button @click="hide" key="hide" :badge="hidden ? 0 : count" :badge-dot="hidden" badge-tone="warn"><icon :name="hidden ? 'eye-outline' : 'eye-off-outline'"/>{{ hidden ? 'Show' : 'Hide' }}</button>
   </row>
   <embed :of="inset()" key="inset"/>
   <embed :if="hidden" :of="inset()" key="never"/>

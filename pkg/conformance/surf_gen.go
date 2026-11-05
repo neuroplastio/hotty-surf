@@ -1327,10 +1327,10 @@ func surfRenderFrame(e *surf.Errs, out []*surfui.Node, c *Frame, fill surf.Fill)
 					} else {
 						v10 = int64(c.Count)
 					}
-					surf.ModCount(n4, v10)
+					surf.ModBadge(n4, v10)
 				}
-				surf.ModCountDot(n4, c.Hidden)
-				surf.ModCountTone(n4, "warn")
+				surf.ModBadgeDot(n4, c.Hidden)
+				surf.ModBadgeTone(n4, "warn")
 				n4.On("click", func() { c.Hide() })
 				k2 = append(k2, n4)
 				e.Leave()
