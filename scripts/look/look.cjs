@@ -7,6 +7,7 @@
 //   node scripts/look/look.cjs ref <board.html> [--select <selector>] [--theme dark|light] [--scale …]
 //   node scripts/look/look.cjs compare <a.png> <b.png> [--trim] [--name <name>]
 //   node scripts/look/look.cjs run <name> --board <board.html> --select <selector> [any of the above]
+//   … --gallery <bin>: the surfaces of another program's gallery in place of the stories
 //
 // `story` draws one of internal/stories' stories (the gate's documents,
 // written by internal/cmd/stories) in Chromium, as the gate does (the
@@ -33,6 +34,13 @@
 // `run` is the three: the story in both engines, the reference, and the
 // sheets story-in-Chromium against the reference and Blitz against
 // Chromium, at each scale.
+//
+// --gallery takes the stories from another program's gallery that speaks
+// the stories binary's -list and -out (plx's: its surfaces from made-up
+// data). A third column in its -list is the rows a surface is placed in,
+// which both engines then draw it in; --width is passed on to it as
+// -width, as it draws a surface for the cells it is given; and its light
+// theme is a light terminal's, so Chromium prefers a light scheme for it.
 //
 // Everything goes under .shots/look/. Options: --hotty (the hotty
 // binary), --fonts (hotty-blitz's fonts/), --stories (the stories
@@ -92,24 +100,26 @@ function browser() {
 }
 
 function storiesBin(a) {
+  if (a.gallery) return a.gallery;
   if (a.stories) return a.stories;
   const bin = path.join(ROOT, "bin", "stories");
   execFileSync("mise", ["x", "--", "go", "build", "-o", bin, "./internal/cmd/stories"], { cwd: ROOT, stdio: "inherit" });
   return (a.stories = bin);
 }
 
-function storyCols(a, name) {
+// A story's cells across, and down where its list says (a gallery's).
+function storySize(a, name) {
   const list = execFileSync(storiesBin(a), ["-list"], { encoding: "utf8" }).trim().split("\n");
   const hit = list.map((l) => l.split("\t")).find(([n]) => n === name);
   if (!hit) throw new Error(`no story ${name}; the stories are:\n${list.map((l) => l.split("\t")[0]).join("\n")}`);
-  return Number(hit[1]);
+  return { cols: Number(hit[1]), rows: a.gallery && Number(hit[2]) > 0 ? Number(hit[2]) : null };
 }
 
 // The story's document as both engines draw it, with --state forced.
 async function storyDoc(a, name) {
   const theme = THEMES[a.theme];
   const dir = path.join(a.out, "work", `${theme}-${a.density}`);
-  execFileSync(storiesBin(a), ["-out", dir, "-theme", theme, "-density", a.density]);
+  execFileSync(storiesBin(a), ["-out", dir, "-theme", theme, "-density", a.density, ...(a.width ? ["-width", String(a.width)] : [])]);
   const file = path.join(dir, name.replaceAll("/", "-") + ".html");
   if (!a.state) return file;
   if (!a.at) throw new Error("--state needs --at <selector>");
@@ -154,9 +164,9 @@ const fontCSS = [["Regular", 400, "normal"], ["Bold", 700, "normal"], ["Italic",
 
 // The story in Chromium, as gate.cjs draws a case: rows counted as Blitz
 // counts rows=auto, the shot cut to the rows' device px.
-async function chromiumStory(a, file, cols, s, out) {
+async function chromiumStory(a, file, cols, s, out, fixed) {
   const sc = cell(s);
-  const { page, docs, ctx } = await servingPage(a, s, "dark");
+  const { page, docs, ctx } = await servingPage(a, s, a.gallery && a.theme === "light" ? "light" : "dark");
   const doc = fs.readFileSync(file, "utf8");
   const style = `<style>${fontCSS}\n@layer hotty-host {\n${hostCSS(a, s)}\n}</style>`;
   docs.set("/story.html", ["text/html", doc.includes("<head>") ? doc.replace("<head>", "<head>" + style) : style + doc]);
@@ -167,7 +177,7 @@ async function chromiumStory(a, file, cols, s, out) {
     const r = document.documentElement;
     return Math.max(r.getBoundingClientRect().bottom + (parseFloat(getComputedStyle(r).marginBottom) || 0), r.scrollHeight);
   });
-  const rows = Math.min(1000, Math.max(1, Math.ceil(Math.ceil(Math.max(0, bottom - 0.5) * s) / sc.h)));
+  const rows = fixed ?? Math.min(1000, Math.max(1, Math.ceil(Math.ceil(Math.max(0, bottom - 0.5) * s) / sc.h)));
   const w = cols * sc.w, h = rows * sc.h;
   await page.setViewportSize({ width: Math.ceil(w / s), height: Math.ceil(h / s) });
   await page.evaluate(() => document.fonts.ready);
@@ -194,7 +204,8 @@ function blitzStory(a, file, cols, s, out, rows) {
 async function story(a, name) {
   if (!name) throw new Error("story: which story?");
   if (!fs.existsSync(a.hotty)) throw new Error(`no hotty at ${a.hotty}: build hotty-blitz (make blitz release), or set --hotty`);
-  const cols = Number(a.width ?? storyCols(a, name));
+  const size = storySize(a, name);
+  const cols = Number(a.width ?? size.cols);
   const file = await storyDoc(a, name);
   const base = [slug(name), a.theme, a.density, cols, ...(a.state ? [slug(a.state + "-" + a.at)] : []), ...(a.crop ? ["crop-" + slug(a.crop)] : [])].join("-");
   const shots = {};
@@ -202,10 +213,10 @@ async function story(a, name) {
   for (const s of a.scales) {
     const c = path.join(a.out, `${base}-${s}.chromium.png`), b = path.join(a.out, `${base}-${s}.blitz.png`);
     let rows, box;
-    if (a.engine !== "blitz") ({ rows, box } = await chromiumStory(a, file, cols, s, c));
+    if (a.engine !== "blitz") ({ rows, box } = await chromiumStory(a, file, cols, s, c, size.rows));
     // Blitz at Chromium's rows when both draw, so that the two line up;
     // its own rows=auto otherwise.
-    if (a.engine !== "chromium") blitzStory(a, file, cols, s, b, rows);
+    if (a.engine !== "chromium") blitzStory(a, file, cols, s, b, rows ?? size.rows);
     if (box)
       for (const f of [c, b]) {
         if (!fs.existsSync(f)) continue;
