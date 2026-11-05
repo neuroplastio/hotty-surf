@@ -1,6 +1,7 @@
 <props note="Note" sel="bool"/>
 <item :selected="sel" @click="open(note.id)">
   <menu>
+    <heading>Note {{ note.id }}</heading>
     <action icon="email-open-outline" key="enter" do="open(note.id)">Open {{ note.id }}</action>
     <action :if="size(note.tags) > 0" :key="size(note.tags)" do="bump(size(note.tags))">Bump by its tags</action>
     <sep/>

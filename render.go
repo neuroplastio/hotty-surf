@@ -507,9 +507,9 @@ func (f *frame) icon(e *elem) *surfui.Node {
 	return n
 }
 
-// menuItem adds a <menu>'s item to items: an action, a separator, or the
-// one a :if chain draws. An action whose handler's arguments fail is left
-// out, as a <bind>'s key is.
+// menuItem adds a <menu>'s item to items: an action, a separator, a
+// heading, or the one a :if chain draws. An action whose handler's
+// arguments fail is left out, as a <bind>'s key is.
 //
 //go:noinline
 func (f *frame) menuItem(e *elem, items *[]surfui.MenuItem) {
@@ -520,6 +520,8 @@ func (f *frame) menuItem(e *elem, items *[]surfui.MenuItem) {
 		}
 	case kSep:
 		*items = append(*items, MenuSep(e.ord))
+	case kMenuHead:
+		*items = append(*items, MenuHeading(e.ord, f.text(e, e.text)))
 	case kAction:
 		label := f.text(e, e.text)
 		icon, _ := f.strOr(e, e.icon, "")
