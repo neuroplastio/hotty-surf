@@ -1510,6 +1510,7 @@ func surfRenderInfoPanel(e *surf.Errs, out []*surfui.Node, c *InfoPanel, fill su
 		}
 		n1 := surfui.Box(k1...)
 		surf.ModKey(n1, "panel")
+		surf.ModPopover(n1, c.Open)
 		out = append(out, n1)
 		e.Leave()
 	}
@@ -2721,20 +2722,58 @@ func surfRenderShelf(e *surf.Errs, out []*surfui.Node, c *Shelf, fill surf.Fill)
 				k2 = append(k2, n4)
 				e.Leave()
 			}
-			// shelf.surf:5:5 <button>
+			// shelf.surf:5:5 <face>
 			if e.Enter("shelf.surf", 5, 5) {
-				n5 := surfui.Button("Add")
-				surf.ModKey(n5, "add")
-				n5.On("click", func() { c.Add() })
+				var a8 string
+				switch {
+				default:
+					v6, ok6 := e.Eval("shelf.surf", 5, 5, surfProgsShelf()[1], surf.Act(func(i int) cellite.Value {
+						return surfShelf{c}.Field(i - 1)
+					}))
+					if !ok6 {
+						break
+					}
+					v7, ok7 := e.AsString("shelf.surf", 5, 5, v6)
+					if !ok7 {
+						break
+					}
+					a8 = v7
+				}
+				var n5 *surfui.Node
+				{
+					var err error
+					if n5, err = surf.NewFace("layers-outline", a8, "panels"); err != nil {
+						e.Fail("shelf.surf", 5, 5, err)
+					}
+				}
+				surf.ModKey(n5, "load")
+				surf.ModTone(n5, "ok")
+				switch {
+				default:
+					v9, ok9 := e.MulInt("shelf.surf", 5, 5, int64(len(c.Panels)), int64(25))
+					if !ok9 {
+						break
+					}
+					surf.ModMeter(n5, v9)
+				}
+				surf.ModStale(n5, (int64(len(c.Panels)) == int64(0)))
 				k2 = append(k2, n5)
 				e.Leave()
 			}
 			// shelf.surf:6:5 <button>
 			if e.Enter("shelf.surf", 6, 5) {
-				n6 := surfui.Button("Drop")
-				surf.ModKey(n6, "drop")
-				n6.On("click", func() { c.Drop() })
-				k2 = append(k2, n6)
+				n10 := surfui.Button("Add")
+				surf.ModKey(n10, "add")
+				n10.On("click", func() { c.Add() })
+				k2 = append(k2, n10)
+				e.Leave()
+			}
+			// shelf.surf:7:5 <button>
+			if e.Enter("shelf.surf", 7, 5) {
+				n11 := surfui.Button("Drop")
+				surf.ModKey(n11, "drop")
+				n11.On("click", func() { c.Drop() })
+				k2 = append(k2, n11)
 				e.Leave()
 			}
 			n2 := surfui.Row(k2...)
@@ -2743,107 +2782,107 @@ func surfRenderShelf(e *surf.Errs, out []*surfui.Node, c *Shelf, fill surf.Fill)
 			k1 = append(k1, n2)
 			e.Leave()
 		}
-		// shelf.surf:8:3 <info-panel>
-		if e.Enter("shelf.surf", 8, 3) {
+		// shelf.surf:9:3 <info-panel>
+		if e.Enter("shelf.surf", 9, 3) {
 			switch {
 			default:
-				v7, ok7 := e.Eval("shelf.surf", 8, 3, surfProgsShelf()[1], surf.Act(func(i int) cellite.Value {
+				v12, ok12 := e.Eval("shelf.surf", 9, 3, surfProgsShelf()[4], surf.Act(func(i int) cellite.Value {
 					return surfShelf{c}.Field(i - 1)
 				}))
-				if !ok7 {
+				if !ok12 {
 					break
 				}
-				v9 := v7
-				if v9.Kind() == cellite.NullKind {
+				v14 := v12
+				if v14.Kind() == cellite.NullKind {
 					break
 				}
-				s8 := surfInfoPanelOf(v9)
-				if s8 == nil {
-					e.NoComponent("shelf.surf", 8, 3, "info-panel", v9)
+				s13 := surfInfoPanelOf(v14)
+				if s13 == nil {
+					e.NoComponent("shelf.surf", 9, 3, "info-panel", v14)
 					break
 				}
-				start10 := len(k1)
-				k1 = surfRenderInfoPanel(e, k1, s8, nil)
-				for _, kn := range k1[start10:] {
+				start15 := len(k1)
+				k1 = surfRenderInfoPanel(e, k1, s13, nil)
+				for _, kn := range k1[start15:] {
 					kn.Key("main")
 				}
 			}
 			e.Leave()
 		}
-		for _, x11 := range c.Panels {
-			// shelf.surf:9:3 <info-panel>
-			if e.Enter("shelf.surf", 9, 3) {
+		for _, x16 := range c.Panels {
+			// shelf.surf:10:3 <info-panel>
+			if e.Enter("shelf.surf", 10, 3) {
 				switch {
 				default:
-					v12, ok12 := e.Eval("shelf.surf", 9, 3, surfProgsShelf()[3], surf.Act(func(i int) cellite.Value {
+					v17, ok17 := e.Eval("shelf.surf", 10, 3, surfProgsShelf()[6], surf.Act(func(i int) cellite.Value {
 						switch i {
 						case 5:
-							return surfInfoPanelValue(x11)
+							return surfInfoPanelValue(x16)
 						}
 						return surfShelf{c}.Field(i - 1)
 					}))
-					if !ok12 {
+					if !ok17 {
 						break
 					}
-					v14 := v12
-					if v14.Kind() == cellite.NullKind {
+					v19 := v17
+					if v19.Kind() == cellite.NullKind {
 						break
 					}
-					s13 := surfInfoPanelOf(v14)
-					if s13 == nil {
-						e.NoComponent("shelf.surf", 9, 3, "info-panel", v14)
+					s18 := surfInfoPanelOf(v19)
+					if s18 == nil {
+						e.NoComponent("shelf.surf", 10, 3, "info-panel", v19)
 						break
 					}
-					start15 := len(k1)
-					k1 = surfRenderInfoPanel(e, k1, s13, nil)
+					start20 := len(k1)
+					k1 = surfRenderInfoPanel(e, k1, s18, nil)
 					switch {
 					default:
-						p16 := x11
-						if p16 == nil {
-							e.Null("shelf.surf", 9, 3)
+						p21 := x16
+						if p21 == nil {
+							e.Null("shelf.surf", 10, 3)
 							break
 						}
-						for _, kn := range k1[start15:] {
-							kn.Key(p16.Title)
+						for _, kn := range k1[start20:] {
+							kn.Key(p21.Title)
 						}
 					}
 				}
 				e.Leave()
 			}
 		}
-		// shelf.surf:10:3 <info-panel>
-		if e.Enter("shelf.surf", 10, 3) {
+		// shelf.surf:11:3 <info-panel>
+		if e.Enter("shelf.surf", 11, 3) {
 			switch {
 			default:
-				v17, ok17 := e.Eval("shelf.surf", 10, 3, surfProgsShelf()[5], surf.Act(func(i int) cellite.Value {
+				v22, ok22 := e.Eval("shelf.surf", 11, 3, surfProgsShelf()[8], surf.Act(func(i int) cellite.Value {
 					return surfShelf{c}.Field(i - 1)
 				}))
-				if !ok17 {
+				if !ok22 {
 					break
 				}
-				v19 := v17
-				if v19.Kind() == cellite.NullKind {
+				v24 := v22
+				if v24.Kind() == cellite.NullKind {
 					break
 				}
-				s18 := surfInfoPanelOf(v19)
-				if s18 == nil {
-					e.NoComponent("shelf.surf", 10, 3, "info-panel", v19)
+				s23 := surfInfoPanelOf(v24)
+				if s23 == nil {
+					e.NoComponent("shelf.surf", 11, 3, "info-panel", v24)
 					break
 				}
-				start20 := len(k1)
-				k1 = surfRenderInfoPanel(e, k1, s18, nil)
-				for _, kn := range k1[start20:] {
+				start25 := len(k1)
+				k1 = surfRenderInfoPanel(e, k1, s23, nil)
+				for _, kn := range k1[start25:] {
 					kn.Key("wrong")
 				}
 			}
 			e.Leave()
 		}
-		// shelf.surf:11:3 <text>
-		if e.Enter("shelf.surf", 11, 3) {
-			n21 := surfui.Text(strconv.FormatInt(int64(len(c.Panels)), 10) + " panels")
-			surf.ModKey(n21, "status")
-			surf.ModMuted(n21, true)
-			k1 = append(k1, n21)
+		// shelf.surf:12:3 <text>
+		if e.Enter("shelf.surf", 12, 3) {
+			n26 := surfui.Text(strconv.FormatInt(int64(len(c.Panels)), 10) + " panels")
+			surf.ModKey(n26, "status")
+			surf.ModMuted(n26, true)
+			k1 = append(k1, n26)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)

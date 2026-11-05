@@ -416,6 +416,8 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 	case FormSection:
 		heading, _ := f.strOr(e, e.args[0], "")
 		n = surfui.Section(heading, kids...)
+	case FormFace:
+		n = f.faceOf(e)
 	}
 	for _, m := range e.mods {
 		f.apply(e, n, m)
@@ -454,6 +456,20 @@ func (f *frame) tip(e *elem, n *surfui.Node) {
 	if len(kids) > 0 {
 		n.Tip(surfui.Stack(kids...))
 	}
+}
+
+// faceOf builds a <face>: its icon, value and unit.
+//
+//go:noinline
+func (f *frame) faceOf(e *elem) *surfui.Node {
+	icon, _ := f.strOr(e, e.args[0], "")
+	val, _ := f.strOr(e, e.args[1], "")
+	unit, _ := f.strOr(e, e.args[2], "")
+	n, err := NewFace(icon, val, unit)
+	if err != nil {
+		f.fail(e, err)
+	}
+	return n
 }
 
 // icon builds an <icon>: its glyph, its text or its bound name's; and
@@ -737,6 +753,10 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModStrip(n, v)
 	case "grid":
 		ModGrid(n, v)
+	case "stale":
+		ModStale(n, v)
+	case "popover":
+		ModPopover(n, v)
 	case "nav":
 		ModNav(n, v)
 	case "entries":
@@ -768,6 +788,8 @@ func applyInt(name string, n *surfui.Node, v int64) {
 		ModHeight(n, v)
 	case "scale":
 		ModScale(n, v)
+	case "meter":
+		ModMeter(n, v)
 	case "count":
 		ModCount(n, v)
 	default:
