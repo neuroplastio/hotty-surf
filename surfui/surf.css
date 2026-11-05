@@ -206,6 +206,14 @@
   height: var(--u-row);
   overflow: clip;
 }
+.u-row.u-fit-start {
+  flex: 1 1 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-width: auto;
+  height: var(--u-row);
+  overflow: clip;
+}
 .u-width { flex: 0 0 auto; width: calc(var(--u-w) * var(--u-cw)); }
 .u-height { flex: 0 0 auto; height: calc(var(--u-h) * var(--u-row)); }
 .u-row.u-gap1, .u-item.u-gap1 { gap: var(--u-gx); }

@@ -172,3 +172,40 @@ func TestCompactPads(t *testing.T) {
 		t.Errorf("got\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
+
+// A FitStart row shows its children left to right from its start, each
+// whole, and leaves out those it has no room for, from the last. Its
+// first is cut only where it alone is wider than the row.
+func TestFitStartRow(t *testing.T) {
+	m := &model{render: func() *surfui.Node {
+		return surfui.Surface(surfui.Row(
+			surfui.Text("pane.new"),
+			surfui.Row(surfui.Text("Run"), surfui.Text("Copy"), surfui.Text("Remove")).Gap(2).FitStart(),
+		).Gap(2))
+	}}
+	for _, c := range []struct {
+		cols int
+		want string
+	}{
+		{40, "pane.new  Run  Copy  Remove"},
+		{22, "pane.new  Run  Copy"},
+		{17, "pane.new  Run"},
+		{13, "pane…  Run"},
+		{9, "…  Run"},
+	} {
+		s := show(m).Draw(c.cols, 1)
+		if got := strings.TrimRight(s.Text(), "\n"); got != c.want {
+			t.Errorf("at %d cells: %q, want %q", c.cols, got, c.want)
+		}
+	}
+	// Where the row's width is set, the first is cut if it alone is wider.
+	m = &model{render: func() *surfui.Node {
+		return surfui.Surface(surfui.Row(
+			surfui.Row(surfui.Text("Remove all"), surfui.Text("Copy")).Gap(2).FitStart().Width(6),
+		))
+	}}
+	s := show(m).Draw(12, 1)
+	if got := strings.TrimRight(s.Text(), "\n"); got != "Remov…" {
+		t.Errorf("a first wider than its row: %q", got)
+	}
+}

@@ -522,6 +522,14 @@ func (n *Node) Keep() *Node { return n.Class("u-keep") }
 // go, the least significant first.
 func (n *Node) Fit() *Node { return n.Class("u-fit") }
 
+// FitStart makes a Row show what fits in it from its start: its children
+// left to right, each whole, and those that don't fit left out, from the
+// last. It takes the room left in its own Row, but it is never narrower
+// than its widest child, so that the first is always shown. A footer's
+// hints, read in order, the least important last: those it has no room
+// for go, the least important first.
+func (n *Node) FitStart() *Node { return n.Class("u-fit-start") }
+
 // Gap puts steps of room between n's children, 0 to 6 of them: in a Row
 // or an Item, cells across on a dense surface, 0.25rem (the kit's
 // spacing step) in Compact; in a Stack, rows down on a dense surface,

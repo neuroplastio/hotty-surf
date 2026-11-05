@@ -84,6 +84,7 @@ var canonAttrs = map[string]string{
 	"grow":              `<text grow>x</text>`,
 	"keep":              `<row keep/>`,
 	"fit/row":           `<row fit/>`,
+	"fit-start/row":     `<row fit-start/>`,
 	"readline/surface":  `<surface readline/>`,
 	"program/surface":   `<surface program="ctrl+b"/>`,
 	"gap":               `<row gap="2"/>`,

@@ -53,7 +53,7 @@ const (
 )
 
 // flag is a box's look, from its classes.
-type flag uint32
+type flag uint64
 
 const (
 	fGrow flag = 1 << iota
@@ -83,9 +83,10 @@ const (
 	fSection
 	fKeep
 	fFit
+	fFitStart
 	fScale // drawn at a scale (CSS zoom)
 	fHolds // holds a scaled element
-	fGone  // a Fit row's child it has no room for
+	fGone  // a Fit or FitStart row's child it has no room for
 	fKeys  // a key's caps (surfkeys.SeqOf), drawn in the renderer's KeyStyle
 	fTip   // a tooltip's card (surfui.TipCard)
 )
@@ -364,6 +365,8 @@ func (b *box) look(d density) {
 			b.f |= fKeep
 		case c == "u-fit":
 			b.f |= fFit
+		case c == "u-fit-start":
+			b.f |= fFitStart
 		case c == "u-scale":
 			b.f |= fScale
 		case c == "u-bare":
@@ -464,7 +467,7 @@ func (b *box) look(d density) {
 			}
 		}
 	}
-	if b.f&fFit != 0 && b.fh < 0 {
+	if b.f&(fFit|fFitStart) != 0 && b.fh < 0 {
 		b.fh = 1 // a row's height, what wraps clipped
 	}
 	if b.f&fSection != 0 {
@@ -557,11 +560,11 @@ func (b *box) fixed() bool {
 	case badge, glyph, keycap, button, toggle, choose, cycle:
 		return true
 	}
-	return b.fw >= 0 || b.f&(fKeep|fFit) != 0
+	return b.fw >= 0 || b.f&(fKeep|fFit|fFitStart) != 0
 }
 
 // grows reports whether b takes the room left, flex: 1 1 0.
-func (b *box) grows() bool { return b.f&(fGrow|fScroll|fFit) != 0 || b.kind == spacer }
+func (b *box) grows() bool { return b.f&(fGrow|fScroll|fFit|fFitStart) != 0 || b.kind == spacer }
 
 // fitMin is a Fit row's least width: its widest child's, min-width: auto.
 func (b *box) fitMin() int {
@@ -680,7 +683,7 @@ func (b *box) widths(inner int) []int {
 		switch {
 		case k.fw >= 0:
 			ws[i] = k.fw
-		case k.f&fFit != 0:
+		case k.f&(fFit|fFitStart) != 0:
 			ws[i] = k.fitMin()
 			grow++
 		case k.grows():
@@ -956,6 +959,10 @@ func (b *box) placeRow() {
 		b.placeFit()
 		return
 	}
+	if b.f&fFitStart != 0 {
+		b.placeFitStart()
+		return
+	}
 	inner := b.w - b.pl - b.pr
 	ih := b.h - b.pt - b.pb
 	ws := b.widths(inner)
@@ -1003,6 +1010,37 @@ func (b *box) placeFit() {
 		kh := k.height(kw)
 		k.place(cx, b.y+b.pt+k.mt+max((ih-k.mt-kh)/2, 0), kw, kh)
 		cx -= k.ml
+	}
+}
+
+// placeFitStart puts a FitStart row's children left to right from its
+// start, each whole, the first cut only where it is wider than the row;
+// from the first that doesn't fit, they are gone.
+func (b *box) placeFitStart() {
+	inner := b.w - b.pl - b.pr
+	ih := b.h - b.pt - b.pb
+	right, cx := b.x+b.pl+inner, b.x+b.pl
+	gone := false
+	for i, k := range b.kids {
+		kw := k.natural()
+		if i == 0 {
+			kw = min(kw, max(inner, 0))
+		}
+		if i > 0 && cx+b.gap+k.ml+kw > right {
+			gone = true
+		}
+		if gone {
+			k.f |= fGone
+			continue
+		}
+		k.f &^= fGone
+		if i > 0 {
+			cx += b.gap
+		}
+		cx += k.ml
+		kh := k.height(kw)
+		k.place(cx, b.y+b.pt+k.mt+max((ih-k.mt-kh)/2, 0), kw, kh)
+		cx += kw
 	}
 }
 

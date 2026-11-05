@@ -184,6 +184,18 @@ var All = []Story{
 		}
 		return surfui.Stack(foot("pane.new"), foot("workspace.close-others"))
 	}},
+	{"row/fit-start", 40, func() *surfui.Node {
+		// A footer: its note, then the hints that fit, in order from the
+		// start, each whole; those there is no room for, the least
+		// important last, are left out.
+		hint := func(title, key string) *surfui.Node { return surfui.Row(surfui.Text(title), surfui.Key(key)).Gap(1) }
+		return surfui.Stack(
+			surfui.Row(surfui.Text("3 comments").Muted(),
+				surfui.Row(hint("next", "j"), hint("prev", "k"), hint("comment", "c"), hint("approve", "a"), hint("quit", "q")).FitStart().Gap(2)).Gap(3).Pad(3, 0),
+			surfui.Row(surfui.Text("Review").Muted(),
+				surfui.Row(hint("next", "j"), hint("prev", "k"), hint("comment", "c"), hint("approve", "a"), hint("quit", "q")).FitStart().Gap(2)).Gap(3).Pad(3, 0),
+		)
+	}},
 	{"badge/fills", 60, func() *surfui.Node {
 		return surfui.Row(surfui.Badge("devbox"), surfui.Badge("ok").Fill(surfui.OK), surfui.Badge("warn").Fill(surfui.Warn),
 			surfui.Badge("error").Fill(surfui.Error), surfui.Badge("info").Fill(surfui.Info), surfui.Badge("accent").Fill(surfui.Accent)).Gap(1)

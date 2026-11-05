@@ -253,6 +253,7 @@ component or a partial.
 | `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
 | `search` | bool | row | a row drawn as a search field: its `icon` and a `bare` field in one field's box |
 | `fit` | bool | row | a row of what fits: its children right to left, each whole, those it has no room for left out, the last first |
+| `fit-start` | bool | row | a row of what fits from its start: its children left to right, each whole, those it has no room for left out, the last first |
 | `readline` | bool | surface, field | the fields in it edit by a terminal's readline keys ("Field keys") |
 | `program` | string | surface | keys the host program keeps from the fields in it, apart by spaces ("Field keys") |
 | `drag` | bool | every widget with events | a drag handle ("Drag") |
@@ -291,7 +292,7 @@ component or a partial.
 - **What gives way** where a row is short of room: a `text` or a `line`
   is cut, with … at its end; one that `grow`s takes the room its
   neighbours leave, and gives way first; what `keep`s is never shrunk;
-  a `fit` row leaves out, whole, what it has no room for. So a row's
+  a `fit` or `fit-start` row leaves out, whole, what it has no room for. So a row's
   label is one `line` (its runs cut once, not each on its own), and the
   keys beside it, which keep whole as they are: `<item><line grow>…</line>
   <key>ctrl+b p</key></item>`.

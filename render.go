@@ -686,6 +686,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModKeep(n, v)
 	case "fit":
 		ModFit(n, v)
+	case "fit-start":
+		ModFitStart(n, v)
 	case "top":
 		ModTop(n, v)
 	case "selected":

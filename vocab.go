@@ -164,6 +164,7 @@ var Attrs = []Attr{
 	{Name: "grow", Type: TypeBool, Doc: "takes the room left in its row or stack", Func: "ModGrow"},
 	{Name: "keep", Type: TypeBool, Doc: "keeps it whole in its row or stack: what is beside it gives way first", Func: "ModKeep"},
 	{Name: "fit", Type: TypeBool, Doc: "shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFit"},
+	{Name: "fit-start", Type: TypeBool, Doc: "a row of what fits from its start: its children left to right, each whole, those it has no room for left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFitStart"},
 	{Name: "gap", Type: TypeInt, Doc: "steps of room between its children, 0 to 6", Func: "ModGap"},
 	{Name: "pad", Type: TypePad, Doc: "steps of room inside it, across and down", Func: "ModPad"},
 	{Name: "indent", Type: TypeInt, Doc: "moves it in by cells", Func: "ModIndent"},
@@ -382,6 +383,7 @@ func ModWrap(n *surfui.Node, v bool)      { flag(n, v, n.Wrap) }
 func ModGrow(n *surfui.Node, v bool)      { flag(n, v, n.Grow) }
 func ModKeep(n *surfui.Node, v bool)      { flag(n, v, n.Keep) }
 func ModFit(n *surfui.Node, v bool)       { flag(n, v, n.Fit) }
+func ModFitStart(n *surfui.Node, v bool)  { flag(n, v, n.FitStart) }
 func ModTop(n *surfui.Node, v bool)       { flag(n, v, n.Top) }
 func ModReveal(n *surfui.Node, v bool)    { flag(n, v, n.Reveal) }
 func ModFocusable(n *surfui.Node, v bool) { flag(n, v, n.Focusable) }
