@@ -655,6 +655,35 @@
 .u-row.u-grid > .u-btn.is-sel { color: var(--u-accent); background: var(--u-accent-soft); box-shadow: inset 0 0 0 1px var(--u-accent); }
 .u-row.u-grid > .u-btn:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
+/* A tool's count (Count, Q11's name): a pill 16px tall, at least as
+   wide, its number 600 at 10.5px in the accent's fill (Q12's lean: new),
+   or the warn's, the error's, the input's (muted); a dot 8px with no
+   number. On a button (WithCount) it sits over the corner, 3px above
+   and 4px past its edge, a dot 1px in, ringed 2px in the canvas. */
+.u-count {
+  flex: 0 0 auto;
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--u-r-pill);
+  text-align: center;
+  white-space: pre;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--u-on-solid);
+  background: var(--u-accent);
+}
+.u-count.u-tone-warn { color: var(--u-canvas); background: var(--u-warn); }
+.u-count.u-tone-error { color: var(--u-canvas); background: var(--u-error); }
+.u-count.u-tone-muted { color: var(--u-ink); background: var(--u-input); }
+.u-count.u-count-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
+.u-has-count { position: relative; }
+.u-has-count > .u-count { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }
+.u-has-count > .u-count.u-count-dot { top: 1px; right: 1px; }
+
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
    heading or an icon in the accent, as a link is; a badge or a key cap

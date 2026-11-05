@@ -429,6 +429,9 @@ The order is the maintainer's, via gov (2026-10-30):
   - [x] H7 (no open question): `--u-warn-soft` and `--u-error-soft`;
     borderless keys, `cap` for a sheet of them; `strip` and `grid` on a
     row; stories strip/zones and grid/picker.
+  - [x] H7, Q11 (the lean: "count"): `surfui.Count`, `CountDot`,
+    `Node.WithCount`, a tool's count on its button; story
+    count/states. Go only: no markup yet.
 
 ## v0
 
