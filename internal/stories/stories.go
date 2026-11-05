@@ -430,6 +430,32 @@ var All = []Story{
 			tool(surfui.Count(12).Tone(surfui.Muted)), tool(surfui.Count(120)), tool(surfui.CountDot()),
 			tool(nil).Selected(true)).Gap(5).Pad(2, 1).Chrome()
 	}},
+	{"widget/states", 140, func() *surfui.Node {
+		// A widget's face on a strip's canvas: a clock at rest and
+		// under the pointer, a branch whose popover shows, a build that
+		// failed and one that passed, a warm machine, a host gone stale,
+		// an icon alone and a value with a meter.
+		return surfui.Stack(
+			surfui.Row(surfui.Widget("", "14:32", ""), Force(surfui.Widget("", "14:32", ""), "hover"),
+				surfui.Widget(mdSourceBranch, "main", "+2").Selected(true),
+				surfui.Widget(mdCloseCircle, "make test", "").Tone(surfui.Error),
+				surfui.Widget(mdThermometer, "84°", "").Tone(surfui.Warn),
+				surfui.Widget(mdCheckCircle, "make test", "").Tone(surfui.OK)).Gap(5),
+			surfui.Row(surfui.Widget(mdServerOff, "—", "devbox offline").Stale(), surfui.Widget(mdRobotOutline, "", ""),
+				surfui.Widget(mdMemory, "23%", "").Meter(0.23)).Gap(5),
+		).Gap(1).Pad(2, 1).Chrome()
+	}},
+	{"pop/shown", 50, func() *surfui.Node {
+		// A popover a widget opens under it: its header (an icon, a
+		// title, an action), a rule, and its body, a list.
+		body := surfui.List(
+			surfui.Item(surfui.Dot().Tone(surfui.OK), surfui.Text("reviewer").Grow(), surfui.Text("2m").Small().Muted()).Gap(2),
+			surfui.Item(surfui.Dot().Tone(surfui.Warn), surfui.Text("builder").Grow(), surfui.Text("now").Small().Muted()).Gap(2),
+		)
+		head := surfui.Row(surfui.Icon(mdRobotOutline), surfui.Text("Agents").Semibold().Grow(),
+			surfui.IconButton(surfui.Icon(mdClose), "", false).Label("Close").Pill().Small()).Gap(2).Pad(1, 0)
+		return surfui.Row(surfui.Stack(surfui.Stack(head, surfui.Rule(), body.Pad(1, 1)).Popover()).Width(36))
+	}},
 	{"icon/svg", 50, func() *surfui.Node {
 		// An SVG icon where a glyph would be: beside an item's label, the
 		// search row's, at the icon's size and in its colour, the ink where
