@@ -118,7 +118,7 @@ func TestButtonIcon(t *testing.T) {
 		{`<button><icon name="restart"/>Restart</button>`, "\U000F0709 Restart",
 			"<button class=\"u-btn u-btn-icon\" type=\"button\"><span class=\"u-text u-icon\">\U000F0709</span>Restart</button>"},
 		{`<button>Next <icon name="arrow-right"/></button>`, "Next \U000F0054",
-			"<button class=\"u-btn u-btn-icon\" type=\"button\">Next<span class=\"u-text u-icon\">\U000F0054</span></button>"},
+			"<button class=\"u-btn u-btn-icon\" type=\"button\">Next<span class=\"u-text u-icon u-after\">\U000F0054</span></button>"},
 		{`<button label="Close"><icon name="close"/></button>`, "\U000F0156",
 			"<button class=\"u-btn u-btn-icon\" type=\"button\" aria-label=\"Close\"><span class=\"u-text u-icon\">\U000F0156</span></button>"},
 		{`<button :label="title"><icon svg="logo"/></button>`, "\U000F02D9", ""},

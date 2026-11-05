@@ -532,6 +532,43 @@
 .u-switch.is-on:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-on-solid) 45%, transparent); }
 .u-switch.is-on:focus { box-shadow: inset 0 0 0 1px var(--u-ground-line); }
 
+/* A chrome control (Pill), on a bar or a stripe: a pill with no fill at
+   rest and its label muted, 28px tall in Compact and Roomy (22 Small,
+   inside a bar or a header), a row in Dense; an icon alone a circle as
+   tall. The pointer over it the hover fill, what it opens shown the
+   selected fill, what it opens holding the keyboard (Current) the
+   accent's soft fill in the accent's ink, the keyboard on it the
+   focus-line; each in the ink. A raised pill (a bar's picker) is on
+   the selected fill, the input's under the pointer. */
+.u-btn.u-pill, .u-btn.u-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: var(--u-gx);
+  border-radius: 999px;
+  color: var(--u-muted);
+  background: transparent;
+  box-shadow: none;
+}
+.u-btn.u-iconbtn { width: var(--u-ctl); padding: 0; }
+.u-compact .u-btn.u-pill, .u-roomy .u-btn.u-pill { height: 28px; line-height: 28px; padding: 0 12px; column-gap: 6px; font-size: 13px; font-weight: 500; }
+.u-compact .u-btn.u-iconbtn, .u-roomy .u-btn.u-iconbtn { width: 28px; height: 28px; line-height: 28px; }
+.u-surface .u-btn.u-pill.u-small { height: 22px; line-height: 22px; padding: 0 10px; font-size: 12.5px; }
+.u-surface .u-btn.u-iconbtn.u-small { width: 22px; height: 22px; line-height: 22px; }
+.u-dense .u-btn.u-pill.u-small, .u-dense .u-btn.u-iconbtn.u-small { height: var(--u-row); line-height: var(--u-row); }
+.u-dense .u-btn.u-iconbtn.u-small { width: var(--u-row); }
+.u-compact .u-btn.u-iconbtn.u-small .u-icon, .u-roomy .u-btn.u-iconbtn.u-small .u-icon { width: 14px; font-size: 14px; }
+.u-btn.u-pill.u-raised { color: var(--u-ink); background: var(--u-selected); }
+.u-compact .u-btn.u-pill > .u-icon, .u-roomy .u-btn.u-pill > .u-icon { width: 16px; }
+.u-btn.u-pill > .u-after { color: var(--u-muted); }
+.u-compact .u-btn.u-pill > .u-after, .u-roomy .u-btn.u-pill > .u-after { width: 14px; font-size: 14px; margin-right: -4px; }
+.u-btn.u-pill:hover, .u-btn.u-iconbtn:hover { color: var(--u-ink); background: var(--u-hover); box-shadow: none; }
+.u-btn.u-pill.u-raised:hover { background: var(--u-input); }
+.u-btn.u-pill.is-sel, .u-btn.u-iconbtn.is-sel { color: var(--u-ink); background: var(--u-selected); }
+.u-btn.u-pill.is-cur, .u-btn.u-iconbtn.is-cur { color: var(--u-accent); background: var(--u-accent-soft); }
+.u-btn.u-pill:focus, .u-btn.u-iconbtn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-btn.u-pill[disabled], .u-btn.u-iconbtn[disabled] { color: var(--u-dim); background: transparent; box-shadow: none; }
+
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
    heading or an icon in the accent, as a link is; a badge or a key cap

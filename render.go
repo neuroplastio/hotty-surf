@@ -704,6 +704,12 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModBare(n, v)
 	case "chrome":
 		ModChrome(n, v)
+	case "pill":
+		ModPill(n, v)
+	case "raised":
+		ModRaised(n, v)
+	case "current":
+		ModCurrent(n, v)
 	case "card":
 		ModCard(n, v)
 	case "ring":

@@ -248,6 +248,7 @@ component or a partial.
 | `reveal`, `focusable`, `bare`, `scroll`, `autofocus` | bool | all | the floor's behaviours |
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
+| `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
 | `card` | bool | box | a group's panel: a fill a step lighter than the page, room across inside it, its rows split by `rule`s; a `semibold` text over it is its title, a `small muted` one under it its note |
 | `ring`, `target` | bool | dot | a dot's shape, so that a state is told by its shape as well as its tone: `ring` hollow (○), `target` a dot in a ring (◉), and the cells draw those glyphs. A host has no shape for ◌ (offline) until a dashed ring is proven, so offline there is a `ring`, told by its tone and its row's text |
 | `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
@@ -274,6 +275,15 @@ component or a partial.
   shorter than a control, but still a pixel taller than a row; with
   `small` too, it is a line tall. The cells draw every button a cell
   tall.
+- **Pills:** `pill` makes a `button` a control on a bar or a stripe:
+  a pill with no fill at rest, its label muted, 28px tall on a host
+  (`small`: 22, inside a bar or a header), a row in Dense. A button of
+  its `<icon>` alone is a circle, an icon button; an icon after the
+  label is a caret, as a picker's. `selected` says what it opens shows,
+  `current` that what it opens holds the keyboard (the accent's soft
+  fill), and `raised` makes it a bar's picker, on the selected fill:
+  `<button pill raised>{{ ws }}<icon name="menu-down"/></button>`. The
+  cells draw it as a button.
 - **Row actions without the list jumping:** give every row its actions
   with `reveal`, not only the selected one with `:if`. A revealed
   action keeps its room while hidden, so no row changes height or width
