@@ -56,6 +56,7 @@ var canonWidgets = map[string]string{
 	"rule":    `<rule/>`,
 	"box":     `<box/>`,
 	"dialog":  `<dialog/>`,
+	"face":    `<face icon="source-branch" value="main" unit="+2"/>`,
 }
 
 // canonAttrs is each attribute in a canonical instance, by its name and,
@@ -70,6 +71,11 @@ var canonAttrs = map[string]string{
 	"name/icon":         `<icon name="cog-outline"/>`,
 	"svg/icon":          `<icon svg="spec"/>`,
 	"path/icon":         `<icon name="hexagon-outline" path="M12 2L21 7V17L12 22L3 17V7Z"/>`,
+	"icon/face":         `<face icon="memory" value="23%"/>`,
+	"unit/face":         `<face value="84" unit="°C"/>`,
+	"meter/face":        `<face icon="memory" value="23%" meter="23"/>`,
+	"stale/face":        `<face icon="server-off" value="—" unit="offline" stale/>`,
+	"popover/box":       `<box popover/>`,
 	"theme/surface":     `<surface theme="paper"/>`,
 	"density/surface":   `<surface density="dense"/>`,
 	"key":               `<row><text key="a">x</text></row>`,
@@ -183,6 +189,8 @@ func formName(f Form) string {
 		return "section"
 	case FormIcon:
 		return "icon"
+	case FormFace:
+		return "face"
 	}
 	return "?"
 }

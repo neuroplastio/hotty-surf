@@ -34,6 +34,8 @@ const (
 	// FormIcon is an icon: its glyph, as its text or by its `name`, and an
 	// SVG a host draws in its place, by its `svg` or its `path`.
 	FormIcon
+	// FormFace is a widget's face: its `icon`, `value` and `unit`.
+	FormFace
 )
 
 // Widget is one tag of the floor's vocabulary.
@@ -141,17 +143,20 @@ var Widgets = []Widget{
 	{"rule", "a line across", FormNone, "surfui.Rule", nil},
 	{"box", "a raised panel", FormKids, "surfui.Box", events},
 	{"dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events},
+	{"face", "a widget's face on a strip: its icon, value and unit in a capsule, which opens a popover or runs its verb", FormFace, "NewFace", events},
 }
 
 // Attrs are the attributes, constructors' arguments first.
 var Attrs = []Attr{
 	{Name: "on", Type: TypeBool, Doc: "whether the switch is on", Tags: []string{"switch"}, Arg: true},
-	{Name: "value", Type: TypeString, Doc: "the option picked", Tags: []string{"select", "cycle"}, Arg: true},
+	{Name: "icon", Type: TypeString, Doc: "a widget's icon, muted: an MDI symbol's name, as source-branch", Tags: []string{"face"}, Arg: true},
+	{Name: "value", Type: TypeString, Doc: "the option picked; a widget's value", Tags: []string{"select", "cycle", "face"}, Arg: true},
 	{Name: "options", Type: TypeStrings, Doc: "the options, in order", Tags: []string{"select", "cycle"}, Arg: true},
 	{Name: "heading", Type: TypeString, Doc: "the section's heading", Tags: []string{"section"}, Arg: true},
 	{Name: "name", Type: TypeString, Doc: "an MDI symbol's name, as cog-outline: the glyph it draws, in the cells beside an svg", Tags: []string{"icon"}, Arg: true},
 	{Name: "svg", Type: TypeString, Doc: "an SVG a host draws: the name of an .svg file beside the templates", Tags: []string{"icon"}, Arg: true},
 	{Name: "path", Type: TypeString, Doc: "an SVG a host draws: one path's data, filled, in a 24×24 box", Tags: []string{"icon"}, Arg: true},
+	{Name: "unit", Type: TypeString, Doc: "a widget's unit after its value, muted", Tags: []string{"face"}, Arg: true},
 
 	{Name: "theme", Type: TypeString, Doc: "neuroplastio, terminal or paper", Tags: []string{"surface"}, Func: "ModTheme", Fails: true, Values: themes},
 	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},
@@ -201,6 +206,9 @@ var Attrs = []Attr{
 	{Name: "cap", Type: TypeBool, Doc: "a key drawn boxed, a cap: a sheet of keys", Tags: []string{"key"}, Func: "ModCap"},
 	{Name: "strip", Type: TypeBool, Doc: "a row that is a strip of chrome: its three rows its start, centre and end", Tags: []string{"row"}, Func: "ModStrip"},
 	{Name: "grid", Type: TypeBool, Doc: "a row that is a picker's grid: its buttons squares that wrap", Tags: []string{"row"}, Func: "ModGrid"},
+	{Name: "meter", Type: TypeInt, Doc: "a widget's meter after its value, filled to a percentage, 0 to 100", Tags: []string{"face"}, Func: "ModMeter"},
+	{Name: "stale", Type: TypeBool, Doc: "a widget whose value is old, its source gone: dimmed", Tags: []string{"face"}, Func: "ModStale"},
+	{Name: "popover", Type: TypeBool, Doc: "a box or a stack that is a popover's card, the root of what a widget or a strip's tool opens", Tags: []string{"box", "stack"}, Func: "ModPopover"},
 	{Name: "segmented", Type: TypeBool, Doc: "a row of buttons drawn as one control, a scope or a filter of two to four values, the selected one raised", Tags: []string{"row"}, Func: "ModSegmented"},
 	{Name: "search", Type: TypeBool, Doc: "a row drawn as a search field: its icon and a bare field in one field's box", Tags: []string{"row"}, Func: "ModSearch"},
 	{Name: "nav", Type: TypeBool, Doc: "a sidebar's list", Tags: []string{"list"}, Func: "ModNav"},
@@ -314,6 +322,18 @@ func MenuAction(ord int, label, icon, key string, disabled, danger bool, act sur
 	return it, nil
 }
 
+// NewFace is a widget's face (Q16's lean: a face the program draws
+// from what it is given): icon, one of MDI's names, as an <icon>'s, its
+// value and its unit, each left out where "". An icon IconGlyph refuses
+// is the help box, and the error.
+func NewFace(icon, value, unit string) (*surfui.Node, error) {
+	if icon == "" {
+		return surfui.Widget("", value, unit), nil
+	}
+	g, err := IconGlyph(icon)
+	return surfui.Widget(g, value, unit), err
+}
+
 // MenuSep is a menu's <sep/>, its id its place among its menu's items.
 func MenuSep(ord int) surfui.MenuItem {
 	return surfui.MenuItem{ID: strconv.Itoa(ord), Sep: true}
@@ -413,6 +433,8 @@ func ModSegmented(n *surfui.Node, v bool) { flag(n, v, n.Segmented) }
 func ModCap(n *surfui.Node, v bool)       { flag(n, v, n.Cap) }
 func ModStrip(n *surfui.Node, v bool)     { flag(n, v, n.Strip) }
 func ModGrid(n *surfui.Node, v bool)      { flag(n, v, n.Grid) }
+func ModStale(n *surfui.Node, v bool)     { flag(n, v, n.Stale) }
+func ModPopover(n *surfui.Node, v bool)   { flag(n, v, n.Popover) }
 func ModNav(n *surfui.Node, v bool)       { flag(n, v, n.Nav) }
 func ModEntries(n *surfui.Node, v bool)   { flag(n, v, n.Entries) }
 func ModScroll(n *surfui.Node, v bool)    { flag(n, v, n.Scroll) }
@@ -489,6 +511,9 @@ func ModDown(n *surfui.Node, v int64)   { n.Down(clampInt(v)) }
 func ModWidth(n *surfui.Node, v int64)  { n.Width(clampInt(v)) }
 func ModHeight(n *surfui.Node, v int64) { n.Height(clampInt(v)) }
 func ModScale(n *surfui.Node, v int64)  { n.Scale(clampInt(v)) }
+
+// ModMeter adds a widget's meter, filled to v percent (0 to 100).
+func ModMeter(n *surfui.Node, v int64) { n.Meter(float64(max(0, min(v, 100))) / 100) }
 
 // ModPad puts room inside a node.
 func ModPad(n *surfui.Node, v [2]int64) { n.Pad(clampInt(v[0]), clampInt(v[1])) }

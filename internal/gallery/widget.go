@@ -59,6 +59,10 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 		add(&Control{Name: "value", Kind: "select", Value: sample[1], Options: sample[:3]})
 	case surf.FormSection:
 		add(&Control{Name: "heading", Kind: "field", Value: "Section", text: true})
+	case surf.FormFace:
+		add(&Control{Name: "icon", Kind: "field", Value: "source-branch"})
+		add(&Control{Name: "value", Kind: "field", Value: "main", text: true})
+		add(&Control{Name: "unit", Kind: "field", Value: "+2", text: true})
 	}
 	if w.Form == surf.FormKids || w.Form == surf.FormSection {
 		add(&Control{Name: "children (count)", Kind: "cycle", Value: "3", Options: kidCounts})
@@ -133,6 +137,12 @@ func (ws *widgetStory) source() string {
 		b.WriteString(` value="` + escape(ws.by["value"].Value, true) + `" :options="['` + strings.Join(opts, "', '") + `']"`)
 	case surf.FormSection:
 		b.WriteString(` heading="` + escape(ws.by["heading"].Value, true) + `"`)
+	case surf.FormFace:
+		for _, k := range []string{"icon", "value", "unit"} {
+			if v := ws.by[k].Value; v != "" {
+				b.WriteString(" " + k + `="` + escape(v, true) + `"`)
+			}
+		}
 	}
 	for _, a := range ws.attrs() {
 		v := ws.by[a.Name].Value
@@ -213,7 +223,7 @@ type placement struct {
 var placements = func() map[string]placement {
 	inRow := placement{"<row>", "</row>", 0}
 	m := map[string]placement{"spacer": {"<row><text muted>start</text>", "<text muted>end</text></row>", 1}}
-	for _, tag := range []string{"badge", "glyph", "icon", "dot", "key", "button", "switch", "select", "cycle"} {
+	for _, tag := range []string{"badge", "glyph", "icon", "dot", "key", "button", "switch", "select", "cycle", "face"} {
 		m[tag] = inRow
 	}
 	return m

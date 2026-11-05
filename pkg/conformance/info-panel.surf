@@ -1,4 +1,4 @@
-<box key="panel">
+<box key="panel" :popover="open">
   <row gap="1">
     <switch :on="open" @click="toggle" label="Open"/>
     <text>{{ open ? title : 'closed' }}</text>

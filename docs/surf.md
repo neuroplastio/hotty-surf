@@ -227,12 +227,13 @@ component or a partial.
 | attribute | type | on | what |
 | --- | --- | --- | --- |
 | `on` | bool | switch | whether it is on |
-| `value` | string | select, cycle | the option picked |
+| `value` | string | select, cycle, face | the option picked; a face's value |
 | `options` | list(string) | select, cycle | the options (bound only: `:options="['a', 'b']"`) |
 | `heading` | string | section | its heading |
 | `name` | string | icon | an MDI symbol's name, as `cog-outline`: its glyph ("Icons") |
 | `svg` | string | icon | an SVG a host draws: the name of an `.svg` file beside the templates |
 | `path` | string | icon | an SVG a host draws: one path's data, filled, in a 24×24 box |
+| `icon`, `unit` | string | face | a face's icon, an MDI symbol's name, and its unit after its value ("A widget's face") |
 | `theme` | string | surface | `neuroplastio`, `terminal` or `paper` |
 | `density` | string | surface | `compact` (the default), `dense` or `roomy` |
 | `key` | string | all | its key among its siblings, which the diff follows: give a `:each`'s items one. Bound, any value with a text (an int `1` is `k1`) |
@@ -251,6 +252,8 @@ component or a partial.
 | `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
 | `count`, `count-dot`, `count-tone` | int, bool, string | button | a tool's count on its corner: a number (99+ past 99, none at 0), or a dot where it has none; its tone `accent` (the default), `warn`, `error` or `muted` ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
+| `meter`, `stale` | int, bool | face | a meter after its value, filled to a percentage (0 to 100); a face whose value is old, dimmed ("A widget's face") |
+| `popover` | bool | box, stack | a popover's card, the root of what a face or a strip's tool opens ("A widget's face") |
 | `strip`, `grid` | bool | row | a strip of chrome, its three rows its start, centre and end; a picker's grid of buttons, squares that wrap ("Pills") |
 | `attention` | bool | button, item | it waits for someone: its text in the warn, the warn's soft fill where it is current or the keyboard's row |
 | `cap` | bool | key | a key drawn boxed, a cap: a sheet of keys. A key is a muted glyph run elsewhere |
@@ -300,6 +303,16 @@ component or a partial.
   end zones, on the canvas, 40px tall on a host. **A picker** of icons
   or emoji is a `row grid` of buttons, 32px squares that wrap, the
   `selected` one in the accent's soft fill.
+- **A widget's face:** a `face` is a strip's item that shows something
+  live, as a clock, a branch or a load, where a tool would open
+  something: its `icon` (muted), its `value` and its `unit` (muted) in
+  a capsule on the hover ground, 28px tall on a host. `tone` colours
+  its icon and value (`ok` its icon alone), `selected` says its popover
+  shows (the accent's soft fill), `stale` dims it where its source is
+  gone, and `meter` adds a bar after it:
+  `<face icon="memory" :value="string(load) + '%'" :meter="load" @click="open()"/>`.
+  What it opens is a `popover`, a `box` or a `stack` at the root of a
+  surface of its own. The cells draw its glyph, value and unit in a row.
 - **A scope or a filter of two to four values** is a `row segmented` of
   buttons: one sunk pill, the `selected` button raised in it, each with
   its own `@click`. Past four, a `select`:

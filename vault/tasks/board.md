@@ -435,8 +435,10 @@ The order is the maintainer's, via gov (2026-10-30):
     on a `<button>`; the conformance fixtures' hide button has one.
   - [x] H7, Q16 (the lean: a widget is a face plx draws, its popover a
     surface): `surfui.Widget` (icon, value, unit, tone, `Meter`,
-    `Stale`) and `Node.Popover`; stories widget/states, pop/shown. Go
-    only; no sparkline yet.
+    `Stale`) and `Node.Popover`; stories widget/states, pop/shown. No
+    sparkline yet. Markup since: `<face icon value unit>` with `meter`
+    and `stale`, and `popover` on a box or a stack; in the conformance
+    fixtures (shelf.surf, info-panel.surf).
   - [x] H7, Q19 (the lean: attention is the warn tone):
     `attention` on a button or an item (surfui `Attention`): the warn,
     its soft fill where current, the keyboard's row on warn-soft with a
