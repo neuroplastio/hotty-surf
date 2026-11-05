@@ -192,6 +192,7 @@ var Attrs = []Attr{
 	{Name: "ring", Type: TypeBool, Doc: "a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven", Tags: []string{"dot"}, Func: "ModRing"},
 	{Name: "target", Type: TypeBool, Doc: "a dot in a ring (◉), a state that asks for someone", Tags: []string{"dot"}, Func: "ModTarget"},
 	{Name: "pulse", Type: TypeBool, Doc: "a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells", Tags: []string{"dot"}, Func: "ModPulse"},
+	{Name: "segmented", Type: TypeBool, Doc: "a row of buttons drawn as one control, a scope or a filter of two to four values, the selected one raised", Tags: []string{"row"}, Func: "ModSegmented"},
 	{Name: "search", Type: TypeBool, Doc: "a row drawn as a search field: its icon and a bare field in one field's box", Tags: []string{"row"}, Func: "ModSearch"},
 	{Name: "nav", Type: TypeBool, Doc: "a sidebar's list", Tags: []string{"list"}, Func: "ModNav"},
 	{Name: "entries", Type: TypeBool, Doc: "a list whose items are entries, each taking the keyboard", Tags: []string{"list"}, Func: "ModEntries"},
@@ -399,6 +400,7 @@ func ModRing(n *surfui.Node, v bool)      { flag(n, v, n.Ring) }
 func ModTarget(n *surfui.Node, v bool)    { flag(n, v, n.Target) }
 func ModPulse(n *surfui.Node, v bool)     { flag(n, v, n.Pulse) }
 func ModSearch(n *surfui.Node, v bool)    { flag(n, v, n.Search) }
+func ModSegmented(n *surfui.Node, v bool) { flag(n, v, n.Segmented) }
 func ModNav(n *surfui.Node, v bool)       { flag(n, v, n.Nav) }
 func ModEntries(n *surfui.Node, v bool)   { flag(n, v, n.Entries) }
 func ModScroll(n *surfui.Node, v bool)    { flag(n, v, n.Scroll) }

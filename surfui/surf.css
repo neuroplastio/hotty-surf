@@ -577,6 +577,33 @@
 .u-btn.u-pill:focus, .u-btn.u-iconbtn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 .u-btn.u-pill[disabled], .u-btn.u-iconbtn[disabled] { color: var(--u-dim); background: transparent; box-shadow: none; }
 
+/* A segmented control (Segmented): a row of buttons in one sunk pill,
+   2px inside it and apart, its hairline the border's; each button a
+   pill 4px shorter than a control, its text small and muted, the ink
+   under the pointer; the selected one raised on the selected fill with
+   the border's hairline; the keyboard on one its focus-line. In Dense
+   the buttons are a row tall, the pill round them. */
+.u-row.u-seg {
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--u-field);
+  box-shadow: inset 0 0 0 1px var(--u-border);
+}
+.u-dense .u-row.u-seg { padding: 0; }
+.u-row.u-seg > .u-btn {
+  padding: 0 var(--u-px);
+  border-radius: 999px;
+  color: var(--u-muted);
+  background: transparent;
+  box-shadow: none;
+}
+.u-compact .u-row.u-seg > .u-btn, .u-roomy .u-row.u-seg > .u-btn { height: 24px; line-height: 24px; padding: 0 10px; font-size: 12.5px; font-weight: 500; }
+.u-row.u-seg > .u-btn:hover { color: var(--u-ink); background: transparent; box-shadow: none; }
+.u-row.u-seg > .u-btn.is-sel { color: var(--u-ink); background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-row.u-seg > .u-btn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+
 /* What acts on a click and has no look of its own under the pointer says
    so there, and where the keyboard is on it, the same: a text, a line, a
    heading or an icon in the accent, as a link is; a badge or a key cap
