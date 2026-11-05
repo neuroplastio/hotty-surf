@@ -658,9 +658,9 @@ var All = []Story{
 			return surfui.Item(dot, surfui.Text(name).Grow(), end).Gap(2)
 		}
 		return surfui.Stack(
-			surfui.List(row(true, "studio", surfui.Badge("1 ws")),
-				Force(row(false, "build-02", surfui.Text("offline").Small().Muted()), "hover"),
-				row(true, "laptop", surfui.Badge("2 ws")).Selected(true)),
+			surfui.List(row(true, "devbox", surfui.Badge("1 ws")),
+				Force(row(false, "ci-runner", surfui.Text("offline").Small().Muted()), "hover"),
+				row(true, "spare", surfui.Badge("2 ws")).Selected(true)),
 			Force(surfui.List(row(true, "this machine", surfui.Badge("3 ws")).Selected(true)), "within"),
 		)
 	}},

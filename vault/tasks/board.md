@@ -449,6 +449,7 @@ The order is the maintainer's, via gov (2026-10-30):
   - A look question for the kit: in dark, the selected row's fill
     (#595a5e) leaves error red at about 2.3:1.
 - [ ] **The kit to plx-design's board** (Design Agent, from 2026-11-05;
+- [ ] **The kit to the design board** (Design Agent, from 2026-11-05;
   the design's Migration board's hotty legs, one commit each, in its
   order; journal 2026-11-05-kit). `make look` (scripts/look) draws a
   story in Chromium and Blitz beside the board, and compares them.
