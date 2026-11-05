@@ -6,9 +6,10 @@
 // takes the keyboard and the pointer as it does in a program; the calls
 // its handlers make are logged under it, and its props are controls
 // beside it. The toolbar's States switch draws it in each of its states
-// instead, one under another (matrix.go). The canvas is drawn at its
-// width whatever the window's: a window too narrow for it and the
-// columns beside it narrows them, then leaves them out, and says so
+// instead, one under another (matrix.go). A story's canvas is its width
+// where the window has room for it beside the stories, and narrower
+// where it hasn't, so that the stories stay; a width the user picks is
+// kept whatever the window's, and the frame says what it leaves out
 // (frame.go). Watching a checkout, the gallery reads its stories files,
 // templates and stylesheet from there, and again when they change
 // (source.go). gallery.surf draws it; cmd/surfgallery runs it.
@@ -54,6 +55,9 @@ type Gallery struct {
 	// and which keeps its room where the window has room for one.
 	noStories, noControls bool
 	keepControls          bool
+	// own: the canvas's width is the user's (SetWidth), not the frame's
+	// fit of the story's (fitWidth).
+	own bool
 
 	// Watching a checkout (Watch):
 	dir       string
@@ -241,7 +245,7 @@ func (g *Gallery) Pick(id string) {
 			return
 		}
 	}
-	g.Sel, g.Width, g.Cells = s.id, s.cols, false
+	g.Sel, g.Width, g.Cells, g.own = s.id, fitWidth(g.cols, s.cols), false, false
 	g.Log, g.matrix = nil, nil
 	g.cur = g.draw(s)
 	g.Controls = g.cur.controls
@@ -280,7 +284,7 @@ func (g *Gallery) SetDensity(d string) { g.Density = d }
 // whatever the window's.
 func (g *Gallery) SetWidth(w string) {
 	if n, err := strconv.Atoi(w); err == nil && n > 0 {
-		g.Width = n
+		g.Width, g.own = n, true
 		if g.cur != nil {
 			g.cur.resize(g.Width)
 		}

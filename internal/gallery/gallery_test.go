@@ -691,23 +691,20 @@ func TestNarrowWindow(t *testing.T) {
 			}
 
 			a.Resize(95, 50) // half the 1796-px window
-			a.Wait("the side columns left out at 95", func() bool { return !shown(sideID) && !shown(asideID) })
-			if width(c) != "80" || storyCols() != 80 {
-				t.Errorf("at 95 cells the canvas is %q cells, its story %d", width(c), storyCols())
-			}
-			if f := a.Surface().TextOf(fitID); !strings.Contains(f, "No room for the stories and the controls beside the 80-cell canvas in a 95-cell window") {
-				t.Errorf("at 95 cells the line says %q", f)
+			a.Wait("the canvas fitted beside the stories at 95", func() bool { return width(c) == "62" && shown(sideID) && !shown(asideID) })
+			if width(sideID) != "30" || storyCols() != 62 || shown(fitID) {
+				t.Errorf("at 95 cells the stories are %q cells, the story %d, the line %q", width(sideID), storyCols(), a.Surface().TextOf(fitID))
 			}
 			if !shown(barAt(0, "width")) || !shown(barAt(1, "cells")) || !shown(barAt(1, "controls")) {
 				t.Errorf("at 95 cells the toolbar isn't two rows:\n%s", a.Surface().HTML())
 			}
-			if _, off := a.Surface().Attr(barAt(1, "stories"), "disabled"); !off {
-				t.Error("at 95 cells the Stories switch can show them")
+			if _, off := a.Surface().Attr(barAt(1, "stories"), "disabled"); off {
+				t.Error("at 95 cells the Stories switch can't hide them")
 			}
 
 			a.Resize(120, 50)
-			a.Wait("the stories back at 120", func() bool { return shown(sideID) && !shown(asideID) })
-			if width(sideID) != "30" || !strings.Contains(a.Surface().TextOf(fitID), "switch Controls on in place of Stories") {
+			a.Wait("the story's own width at 120", func() bool { return width(c) == "80" && shown(sideID) && !shown(asideID) })
+			if width(sideID) != "30" || shown(fitID) {
 				t.Errorf("at 120 cells the stories are %q cells, and the line says %q", width(sideID), a.Surface().TextOf(fitID))
 			}
 			if err := a.Host.Click(a.Name, barAt(1, "controls")); err != nil {
@@ -729,6 +726,29 @@ func TestNarrowWindow(t *testing.T) {
 			if width(c) != "120" || !shown(barCtl("controls")) {
 				t.Errorf("at 200 cells the canvas is %q, and the toolbar:\n%s", width(c), a.Surface().HTML())
 			}
+		})
+	}
+}
+
+// A story wider than the window beside the stories (a settings page of
+// 180 cells in a 191-cell window, 1796px at 1.6) is drawn narrower, so
+// that the stories stay: the controls give way to it, and nothing says
+// the window is too narrow (the maintainer, 2026-11-05).
+func TestAWideStoryKeepsTheStories(t *testing.T) {
+	for _, mode := range modes {
+		t.Run(mode.name, func(t *testing.T) {
+			sel := "s-look-settings"
+			a, g := start(t, mode.of, sel)
+			c := canvasID(sel)
+			width := func(id string) string { w, _ := a.Surface().Var(id, "--u-w"); return w }
+			shown := func(id string) bool { _, ok := a.Surface().Element(id); return ok }
+			a.Resize(191, 55)
+			a.Wait("the stories beside the settings page", func() bool { return width(c) == "158" && width(sideID) == "30" })
+			if shown(asideID) || shown(fitID) {
+				t.Errorf("at 191 cells the controls are shown %v, the line says %q", shown(asideID), a.Surface().TextOf(fitID))
+			}
+			a.Call(func() { g.SetWidth("180") })
+			a.Wait("the user's width kept", func() bool { return width(c) == "180" && shown(fitID) })
 		})
 	}
 }

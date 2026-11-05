@@ -7,13 +7,17 @@ import (
 
 // The frame: the canvas at its width, with the stories' column at its
 // left and the controls' at its right (gallery.surf), and the toolbar
-// above them. The canvas is never drawn narrower than its width, which
-// the toolbar's Width shows and only the user changes: the frame gives
-// way round it. Where the window is short of room, the side columns are
-// narrowed, down to their least, and then left out, the controls first,
-// unless the controls were the last turned on; where it is narrower than
-// the canvas itself, the canvas runs past its edge. Either way the frame
-// says so, under the toolbar (Fit). The toolbar's rows take its groups
+// above them. A story's canvas is drawn at the story's width where the
+// window has room for it beside the stories' column, and narrower where
+// it hasn't, down to midMin, so that picking a wide story never takes
+// the stories away (the maintainer, 2026-11-05: a settings page opened
+// at 1796px left out the menu and said the window was too narrow). The
+// controls give way to it, unsaid: their switch shows them in place of
+// the stories. A width the user picks (Width) is kept: there the side
+// columns are narrowed, down to their least, and then left out, the
+// controls first, unless the controls were the last turned on; where the
+// window is narrower than the canvas itself, the canvas runs past its
+// edge, and the frame says so, under the toolbar (Fit). The toolbar's rows take its groups
 // as the window's width allows, so that no label is cut (Bar).
 //
 // A scrolling middle column would show a canvas wider than the window
@@ -45,6 +49,27 @@ type frame struct {
 	side, aside       int
 	sideOut, asideOut bool
 	cut               int
+}
+
+// fitWidth is a story's canvas width in a window cols wide (0: not yet
+// known): its own, cols wide, where it fits beside the stories' column
+// at its width; else the room beside it, or beside it at its least; else,
+// in a window too narrow for a canvas of midMin beside them, its own.
+func fitWidth(cols, story int) int {
+	if cols == 0 {
+		return story
+	}
+	full := cols - framePad - sideCols - 1
+	if story <= full {
+		return story
+	}
+	if full >= midMin {
+		return full
+	}
+	if least := cols - framePad - sideMin - 1; least >= midMin {
+		return min(story, least)
+	}
+	return story
 }
 
 // frame is g's frame in its window.
@@ -108,9 +133,21 @@ func share(room int, stories, controls bool) (side, aside int, ok bool) {
 	return side, aside, true
 }
 
-// Resize is the window's size, which the frame lays out in. The story
-// keeps the canvas's width: the window doesn't change it.
-func (g *Gallery) Resize(cols, rows int) { g.cols = cols }
+// Resize is the window's size, which the frame lays out in. A width the
+// user picked stays; a story's is fitted to the window again.
+func (g *Gallery) Resize(cols, rows int) {
+	g.cols = cols
+	if g.own || g.cur == nil {
+		return
+	}
+	if w := fitWidth(cols, g.cur.s.cols); w != g.Width {
+		g.Width = w
+		g.cur.resize(w)
+		for _, v := range g.matrix {
+			v.d.resize(w)
+		}
+	}
+}
 
 // ShowStories and ShowControls say the side column is shown; SideWidth
 // and AsideWidth are its width in cells.
@@ -179,6 +216,8 @@ func (g *Gallery) Fit() string {
 			s += ", and " + out + " are hidden"
 		}
 		return s + ". Narrow the canvas (Width) or widen the window."
+	case out != "" && !g.own && !f.sideOut:
+		return "" // the controls, giving way to a story's canvas: their switch says it
 	case out != "":
 		s := "No room for " + out + " beside the " + w + "-cell canvas in a " + cols + "-cell window: they are hidden. Narrow the canvas (Width), widen the window"
 		switch {
