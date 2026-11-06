@@ -564,9 +564,8 @@ and a `:if` chain goes on past it.
     program's mouse off there is no secondary press:** the terminal
     reports the mouse only while something on the screen acts on a press
     (a click handler, a field, a button), so on a screen with none only
-    `shift+f10` opens a menu. (The Menu key, `context_menu`, reaches a
-    program as a key only where its terminal library names it; hottyterm
-    does not yet.)
+    `shift+f10` opens a menu. (The Menu key reaches a program as
+    `context_menu`.)
 - **A host that asks for the menu itself** does so with
   `surfrun.Surface.Menu`, by an element's id, a cell's
   (`cells.Renderer.At`) or the focus: the innermost element's with a

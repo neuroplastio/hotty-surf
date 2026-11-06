@@ -320,8 +320,9 @@ The order is the maintainer's, via gov (2026-10-30):
     screen, a click on a row picks); `surftest`'s hosted host records the
     menu frames (`App.Menus`); `examples/files`; tests with hottytest and
     in the cells; docs/surf.md and the guide. No scroll closes it: the
-    Runtime sees none. `context_menu` does not reach a Runtime from
-    hottyterm (`KeyName` has no Menu key; a hotty-go gap).
+    Runtime sees none. A press-opened menu opens at the pointer
+    (`MenuView.PlaceAtPointer`); the Menu key is `context_menu` in
+    hottyterm's `KeyName` (hotty-go local 0.7).
   - [ ] **The felt check, hotty Agent's:** `examples/files` in hottyterm
     by hand: right click a row, pick with the mouse and the keys,
     Shift+F10 on a focused row, Escape, a click elsewhere; the placement,

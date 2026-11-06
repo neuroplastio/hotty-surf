@@ -40,8 +40,7 @@ func menuHi(a *surftest.App) int {
 }
 
 // openKey types shift+f10 as the terminal sends it: the test host has no
-// encoding for it. (hottyterm names no Menu key, so context_menu does not
-// reach a Runtime from a terminal: Surface's own tests have it.)
+// encoding for it, nor for the Menu key (Surface's own tests cover that).
 func openKey(a *surftest.App, key string) {
 	a.Host.Type("\x1b[21;2~")
 }

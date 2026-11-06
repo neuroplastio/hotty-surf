@@ -118,11 +118,16 @@ See `git log`: the code, then this entry.
 
 ## Where the task was silent
 
-- **`context_menu` on a real terminal.** hottyterm's `KeyName` names the
-  keys of ultraviolet's table; the Menu key (`uv.KeyMenu`) is past the
-  code points, so it reads as "". It never reaches the Runtime as a key
-  (shift+f10 does). Surface and the docs take it where a host passes it.
-  A hotty-go gap to fix there, not here.
+- **`context_menu` on a real terminal.** hottyterm's `KeyName` had no
+  name for the Menu key (`uv.KeyMenu`), so it read as "" and never reached
+  the Runtime. Fixed in hotty-go's local 0.7 (`hottyterm: the Menu key is
+  context_menu`), which go.work picks up. Still missing: the test host has
+  no encoding for it, so no Runtime test types it (Surface's tests do),
+  and `hotty.DecodeKeys` reads kitty's CSI 57363 u as "".
+- **Where a press-opened menu goes.** First `View.Place` (one row under
+  the pointer, a header menu's rule); a native menu opens at the pointer,
+  so `MenuView.PlaceAtPointer` (top left at the cell, flipped left and up
+  at the edges) is the Runtime's for a press, on a host and in the cells.
 - **Tab** in the menu's surface leaves it, as in any (SPEC §10.2): the
   host blurs it and the menu closes. A native menu wraps; this one
   closes. Not worked around.
