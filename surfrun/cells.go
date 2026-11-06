@@ -27,6 +27,7 @@ func (p program) Update() cells.Frame                         { return cellsFram
 func (p program) Tree() *surfui.Node                          { return p.s.Tree() }
 func (p program) Event(e hotty.Event) (took, redraw bool)     { return p.s.Event(e) }
 func (p program) ListEvent(e hotty.Event) (took, redraw bool) { return p.s.ListEvent(e) }
+func (p program) MenuEvent(e hotty.Event) (took, redraw bool) { return p.s.MenuEvent(e) }
 func (p program) Key(name string) (took, redraw bool)         { return p.s.Key(name) }
 func (p program) Keys() ([]cells.KeyUse, cells.Chars)         { return p.s.Keys() }
 
@@ -43,6 +44,13 @@ func cellsFrame(f Frame) cells.Frame {
 	}
 	if l := f.List; l != nil {
 		out.List = &cells.List{Closed: l.Closed, Tree: l.Tree, At: l.At}
+	}
+	if m := f.Menu; m != nil {
+		out.Menu = &cells.Menu{Closed: m.Closed, At: m.At}
+		if m.View.Tree != nil {
+			v := m.View
+			out.Menu.Cells, out.Menu.Cols, out.Menu.Rows, out.Menu.Point = v.Cells, v.Cols, v.Rows, m.Point
+		}
 	}
 	for _, o := range slices.Concat(f.Ops, f.Reveals) {
 		if o.Op == hotty.OpReveal(o.Target, "").Op {
@@ -111,18 +119,10 @@ const (
 func (r *Runtime) drawTree() {
 	r.rend.KeyStyle = r.s.keyStyle()
 	s := r.rend.Draw(r.cols, r.surfaceRows())
-	// An open menu is drawn over the screen, and reported the mouse for.
-	cm, open := r.cellsMenu()
-	sig := ""
-	if open {
-		sig = cm.sig()
-		s.Lines = cm.overlay(s.Lines)
-		s.Mouse = true
-	}
-	if s.Gen == r.gen && sig == r.menuSig {
+	if s.Gen == r.gen {
 		return
 	}
-	r.gen, r.menuSig = s.Gen, sig
+	r.gen = s.Gen
 	var b strings.Builder
 	b.WriteString("\x1b[?2026h")
 	r.headerTo(&b)
@@ -202,20 +202,25 @@ func blank(line []cells.Run) bool {
 }
 
 // cellsEvent is the mouse, or the terminal's focus, for the renderer: at
-// the surface's cells, below the header.
+// the surface's cells, below the header. An element's menu is the
+// renderer's (cells.Frame.Menu): the runtime gives it the terminal's
+// right button, which the renderer's mouse reporting gives the runtime
+// (button 2 of SGR, 1006) while something on the screen acts on the mouse
+// (cells.Screen.Mouse), and an open menu does. With the program's mouse
+// off, only the keys open a menu.
 func (r *Runtime) cellsEvent(ev hottyterm.Event) {
 	if r.rend == nil {
 		return
 	}
 	r.settled = true
-	if r.cellsMenuEvent(ev) {
-		r.settled = false // the menu may have opened, closed or picked
-		return
-	}
 	switch e := ev.(type) {
 	case uv.MouseClickEvent:
-		if e.Button == uv.MouseLeft {
+		switch e.Button {
+		case uv.MouseLeft:
 			r.rend.Press(e.X, e.Y-r.opts.Top, mods(e.Mod))
+		case uv.MouseRight:
+			// A secondary press, which opens an element's menu (Secondary).
+			r.rend.Secondary(e.X, e.Y-r.opts.Top, mods(e.Mod))
 		}
 	case uv.MouseMotionEvent:
 		if e.Button == uv.MouseLeft {

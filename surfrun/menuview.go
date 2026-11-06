@@ -71,14 +71,7 @@ func (v MenuView) Item(target string) (it MenuItem, ok bool) {
 // where there is no room below, to its left where there is none to the
 // right, and kept in the grid.
 func (v MenuView) Place(c, r, cols, rows int) (x, y int) {
-	x, y = c, r+1
-	if x+v.Cols > cols {
-		x = c + 1 - v.Cols
-	}
-	if y+v.Rows > rows {
-		y = r - v.Rows
-	}
-	return max(0, min(x, cols-v.Cols)), max(0, min(y, rows-v.Rows))
+	return cells.PlaceAt(c, r, v.Cols, v.Rows, cols, rows)
 }
 
 // PlaceAtPointer is where a menu a press opened goes, its top-left cell,
@@ -89,14 +82,7 @@ func (v MenuView) Place(c, r, cols, rows int) (x, y int) {
 // menu opened by a pointer (an element's, Frame.Menu); use Place for one
 // that opens under a button or a header, which it must not cover.
 func (v MenuView) PlaceAtPointer(c, r, cols, rows int) (x, y int) {
-	x, y = c, r
-	if x+v.Cols > cols {
-		x = c + 1 - v.Cols
-	}
-	if y+v.Rows > rows {
-		y = r + 1 - v.Rows
-	}
-	return max(0, min(x, cols-v.Cols)), max(0, min(y, rows-v.Rows))
+	return cells.PlaceAtPointer(c, r, v.Cols, v.Rows, cols, rows)
 }
 
 // MenuView is the menu m (from Menu) as its host shows it, in the theme

@@ -5,6 +5,7 @@ import (
 
 	"github.com/neuroplastio/hotty-go"
 
+	"github.com/neuroplastio/hotty-surf/pkg/cells"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
 
@@ -76,9 +77,5 @@ func (r *Runtime) menuPlacement(m *MenuFrame) (x, y int, p hotty.Placement) {
 // (c, r), h rows tall, on a grid cols × rows: under it, above it where
 // there is no room below and more above, and kept in the grid.
 func placeBelow(v MenuView, c, r, h, cols, rows int) (x, y int) {
-	x, y = c, r+h
-	if y+v.Rows > rows && r >= rows-(r+h) {
-		y = r - v.Rows
-	}
-	return max(0, min(x, cols-v.Cols)), max(0, min(y, rows-v.Rows))
+	return cells.PlaceBelow(c, r, h, v.Cols, v.Rows, cols, rows)
 }

@@ -238,8 +238,6 @@ type Runtime struct {
 	listSurface string // the surface a Select's open list shows in
 	menuSurface string // the surface an element's open menu shows in
 	listScrolls bool   // the open list is longer than its placement
-	menuSig     string // the menu as the cells drew it last (cellsMenu.sig)
-	menuHeld    bool   // a left press on the menu's cells, whose release picks
 
 	// The cells of a model that has no Cells: its tree, drawn by a
 	// renderer that hosts the surface there.
@@ -820,12 +818,6 @@ func (r *Runtime) key(name string) {
 	if name == "ctrl+c" {
 		// An open menu holds the keys but this one, which ends the run.
 		r.s.closeMenu(false)
-	} else if r.rend != nil && r.s.menu != nil {
-		// In the cells the menu has the keys, not the renderer's focus.
-		r.settled = false
-		if took, _ := r.s.Key(name); took {
-			return
-		}
 	}
 	// A binding's mod is the host's (SPEC §10.4); in the cells, ctrl.
 	r.s.Platform = hotty.Platform{}
