@@ -705,6 +705,20 @@ var All = []Story{
 		}
 		return surfui.List(row(false), row(true))
 	}},
+	{"list/warn", 50, func() *surfui.Node {
+		// A machine that is down and one that waits for you, at rest and
+		// selected: on dark a selected row's warn is the lighter amber
+		// (--u-warn-on-sel), so that it clears 4.5:1 on the selected
+		// fill; paper's warn clears it there as it is.
+		row := func(sel bool) *surfui.Node {
+			return surfui.Item(surfui.Dot().Tone(surfui.Warn), surfui.Text("lab").Grow(),
+				surfui.Text("down 4m").Small().Tone(surfui.Warn)).Gap(2).Selected(sel)
+		}
+		att := func(sel bool) *surfui.Node {
+			return surfui.Item(surfui.Text("builder").Grow(), surfui.Text("waiting").Small()).Gap(2).Attention(true).Selected(sel)
+		}
+		return surfui.List(row(false), row(true), att(false), att(true))
+	}},
 	{"list/keyboard", 50, func() *surfui.Node {
 		// A palette's rows: in Compact, the selection is the accent band
 		// while the List's container has the keyboard (the Field that

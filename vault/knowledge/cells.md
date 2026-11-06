@@ -110,7 +110,42 @@ in cells. Each is fixed in the renderer, for any screen:
   rounded down, and a cell at least. Gaps still round up.
   TestCompactPads has the palette's shape.
 
+## The pointer's motion
+
+What a cells host asks its terminal for, and what that costs
+(2026-11-06, for the menu's hover and the board's "Hover in a cells
+tool").
+
+- **Three levels, one at a time.**
+  - 1000 reports presses and releases.
+  - 1002 adds motion while a button is down.
+  - 1003 reports all motion; its SGR reports carry button 35.
+
+  Setting one replaces the others.
+- **Who asks for what.**
+  - surfrun's runtime asks for 1000 and 1002, in SGR (1006), while the
+    renderer has something a press or the wheel acts on. It asks for
+    1003 while `Renderer.Hovers()` is true, which is now while a menu is
+    open.
+  - plx asks for 1003 only while the focused pane's program asks for it
+    (`gesture.HostMode`). Its tools hear no bare motion until the hover
+    item's third leg.
+- **The cost.** 1003 sends a report for every cell the pointer crosses,
+  about 12 bytes each (`CSI < 35;c;r M`). A sweep across 200 columns is
+  about 2.4 KB: nothing on a local terminal, and a burst over SSH. The
+  renderer redraws per element, not per cell: `Hover` tells the program
+  only when the row under the pointer changes.
+- **Selection.** With any level on, the terminal's own selection takes
+  Shift, as it does now.
+- **Leaving.** No report says the pointer left the terminal or a part of
+  a host's screen. A host that routes motion to one part sends
+  `Hover(-1, -1)` when the pointer leaves it.
+
 ## Where it falls short
+
+- **Only an open menu's row lights under the pointer.** Nothing else in
+  the cells does, and no tooltip shows: the board's "Hover in a cells
+  tool".
 
 - **A screen's cells UI may take keys its tree doesn't.** The agents
   list's cells UI moves with the arrows; its tree has no binding of them,

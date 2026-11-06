@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-11-05
+Last updated: 2026-11-06
 
 **Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
 2026-10-30): candidate A (Live) with layout in `.surf` templates and
@@ -327,6 +327,54 @@ The order is the maintainer's, via gov (2026-10-30):
     by hand: right click a row, pick with the mouse and the keys,
     Shift+F10 on a focused row, Escape, a click elsewhere; the placement,
     the flip, the timing and the hover against a native menu.
+- [ ] **Context menus: a secondary press** (hotty 0.7's V7-01, accepted
+  by the maintainer 2026-11-05: "Program, hotty-surf does the whole
+  thing out of the box"). Built on the local branch `hotty-0.7`, which
+  plx's look loop builds from, and rides the 0.7 cut. Head 44db24f;
+  main is merged in at 8af8e8d.
+  - An element with a `<menu>` asks for `secondary` and `view` in its
+    `data-on`.
+  - `Surface` opens the menu on a secondary press, at the pointer, or on
+    `shift+f10` and the Menu key, under the element. On a host it is a
+    surface of its own (`Frame.Menu`).
+  - In the cells, `cells.Renderer` draws, places and routes it
+    (`cells.Frame.Menu`, `Menued`, `Renderer.Secondary`), so a host of
+    `Surface.Cells()` needs no code for it. The pointer lights a row,
+    the one the keys move (`Renderer.Hover`, `Hovers`).
+  - It closes when its element scrolls or leaves the view.
+  - An attribute both the app and surf set is written once, its tokens
+    merged.
+- [ ] **Hover in a cells tool** (the maintainer, 2026-11-06, via gov:
+  "(a)", light only the focused tool, not (b) any cells tool shown,
+  which would keep all motion on in cells mode). On a host the kit's
+  `:hover` rules light items, nav items, clickable lines, rows and
+  text, buttons, switches, selects, pills and the search. In the cells
+  only an open menu's row lights, and no tooltip shows, since a host's
+  tool hears no bare motion there (plx's `sdk/surfdk/tip.go`). One leg
+  at a time, in this order:
+  1. Design Agent: the cells' hover look, apart from the focus and
+     selection bands. Designed (2026-11-06):
+     [knowledge/cells-hover.md](../knowledge/cells-hover.md), the
+     `hover` role, a fill or, in sixteen colours, an underline; with a
+     menu's rows, whose selection follows the pointer.
+  2. hotty Agent, on `hotty-0.7` (eac86b0's `Renderer.Hover` is there),
+     after the look.
+     - With no menu open, the Renderer keeps the element under the
+       pointer from `Hover`, paints it in that look, and redraws only
+       when that element changes.
+     - `Hovers()` is true whenever the screen has something that lights
+       on hover. Tooltips follow, since `Tip` takes the cells' element
+       at the pointer.
+     - surfrun's runtime asks for all motion then too.
+  3. plx-look, in plx.
+     - plx asks its terminal for all motion (1003) while a focused cells
+       tool `Hovers()`, as it does for a focused pane whose program asks.
+     - It routes bare motion over the tool to `Hover`, and sends
+       `Hover(-1, -1)` when the pointer leaves the tool.
+
+  Not V7-01. It rides the 0.7 cut if it has landed by then. The cut
+  doesn't wait for it; otherwise it follows on main. What motion costs:
+  [knowledge/cells.md](../knowledge/cells.md#the-pointers-motion).
 - [x] **Icons by name, SVG icons, icons in buttons**: `<icon
   name="cog-outline"/>` and `:name`, MDI's names from Nerd Fonts
   3.5.1's glyphnames.json (`pkg/mdi`, generated; NOTICE), a literal
@@ -553,6 +601,19 @@ The order is the maintainer's, via gov (2026-10-30):
     longer shrinks; story box/scroll-text. A fixed-height stack that
     doesn't scroll still lets its text shrink: rows held whole there
     would spill over what comes after it.
+  - [x] Warn clears 4.5:1 where it fell short, from plx-frames' measures
+    via gov (2026-11-06). On dark a selected row's warn was 3.8:1 on
+    the selected fill (#595a5e), as the error was: `--u-warn-on-sel`,
+    #ffd27a, 4.84:1, takes a selected row's warn tone and attention, and
+    light and paper keep their warn there. Paper's warn on its own soft
+    fill (a current attention pill, a header's warn chip) was 3.99:1 and
+    on a selected row 4.01:1: paper's warn is #875a00 now (was #9a6700),
+    4.88:1 and 4.96:1, and 5.82:1 on the ground. Story list/warn, and
+    attention/states for the pill.
+  - [x] Paper's error on a selected row clears 4.5:1 (gov, 2026-11-06):
+    #cf222e was 4.42:1 on the selected fill (#e9e9eb). Paper's
+    `--u-error-on-sel` is #c21f2a, 4.92:1; other rows keep #cf222e.
+    Story list/error.
 
 ## v0
 
