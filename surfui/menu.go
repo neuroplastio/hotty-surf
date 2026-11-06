@@ -27,6 +27,12 @@ const MenuID = "m"
 // (MenuShadowBelow, MenuShadowSide), which its host's view counts in.
 func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 	card := El("div").Class("u-menu").Attr("role", "menu")
+	icons := false
+	for _, it := range items {
+		if _, ok := mdi.Glyph(it.Icon); ok && !it.Sep && !it.Heading {
+			icons = true
+		}
+	}
 	for i, it := range items {
 		switch {
 		case it.Sep:
@@ -37,6 +43,10 @@ func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 			icon := Icon("")
 			if g, ok := mdi.Glyph(it.Icon); ok {
 				icon = Icon(string(g))
+			} else if icons {
+				// In the cells a row with none keeps the icons' slot, a cell,
+				// so that the labels line up (a host's CSS gives the slot).
+				icon.cells = " "
 			}
 			row := Item(icon, Text(it.Label).Grow()).Class("u-menu-item").Attr("role", "menuitem")
 			// Its click is a pick (surfrun.Surface.MenuEvent), which a

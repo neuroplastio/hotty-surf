@@ -161,6 +161,9 @@ func build(n *surfui.Node, d density, caps keyCaps) *box {
 			if prev != nil && capLike(prev) && capLike(kb) {
 				kb.ml++ // .u-key + .u-key, .u-keys + .u-keys
 			}
+			if prev != nil && prev.text != "" && hasClass(prev.n, "u-icon") && hasClass(n, "u-menu-item") {
+				kb.ml++ // a cell between a menu row's icon and its label, as a host's slot gives
+			}
 			if kb.f&(fScale|fHolds) != 0 {
 				b.f |= fHolds
 			}
