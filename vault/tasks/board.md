@@ -297,41 +297,12 @@ The order is the maintainer's, via gov (2026-10-30):
   (`Surface.Pick`), a stale pick running nothing. docs/surf.md and the
   spec say it. `:each` in a `<menu>` is refused: an item's id is its
   place in the source.
-- [ ] **Context menus: a secondary press** (hotty 0.7, V7-01; the
-  maintainer's call: hotty-surf does the whole thing out of the box).
-  Leg 5a, in `surfrun.Surface`, so every host gets it:
-  - [x] `secondary` in the `data-on` of an element whose menu has an item
-    to pick (`surfui/html.go`, SPEC §9).
-  - [x] A secondary press (`Button` 2) opens the innermost menu at the
-    pointer's cell; `shift+f10` and `context_menu` open it under the
-    focused element, anchored to the area its last click or press said.
-  - [x] `Frame.Menu` (`MenuFrame`), `WriteFrame`'s `menu` func, and
-    `Surface.MenuEvent` and `CloseMenu`.
-  - [x] The menu's keys: Up, Down, Home, End, type-ahead, Enter, Escape;
-    any other key closes it and goes on. One menu at a time, closed by a
-    click or press elsewhere (which still does what it would), a blur,
-    and a re-render that drops its element.
-  - [x] **Leg 5b:** `surfrun.Runtime` shows the menu in a surface of its
-    own (`<name>-menu`, z 2, presses on, placed with `MenuView.Place` or
-    under the area, the keyboard given to it, its keys in `data-keys`);
-    `Surface.noMenu` is gone; it closes on a resize, `Swap`, `Hide` and
-    the run's end (`Surface.DropMenu`); the cells (a right press at
-    `cells.Renderer.At`, the menu drawn from `MenuView.Cells` over the
-    screen, a click on a row picks); `surftest`'s hosted host records the
-    menu frames (`App.Menus`); `examples/files`; tests with hottytest and
-    in the cells; docs/surf.md and the guide. No scroll closes it: the
-    Runtime sees none. A press-opened menu opens at the pointer
-    (`MenuView.PlaceAtPointer`); the Menu key is `context_menu` in
-    hottyterm's `KeyName` (hotty-go local 0.7).
-  - [ ] **The felt check, hotty Agent's:** `examples/files` in hottyterm
-    by hand: right click a row, pick with the mouse and the keys,
-    Shift+F10 on a focused row, Escape, a click elsewhere; the placement,
-    the flip, the timing and the hover against a native menu.
 - [ ] **Context menus: a secondary press** (hotty 0.7's V7-01, accepted
   by the maintainer 2026-11-05: "Program, hotty-surf does the whole
   thing out of the box"). Built on the local branch `hotty-0.7`, which
-  plx's look loop builds from, and rides the 0.7 cut. Head 44db24f;
-  main is merged in at 8af8e8d.
+  plx's look loop builds from, and landed on main with the 0.7 cut
+  (2026-11-06): main merged in at 3d6f38a, and go.mod on hotty-go's
+  pushed 0.7 (35d9fd4) at 66d703e.
   - An element with a `<menu>` asks for `secondary` and `view` in its
     `data-on`.
   - `Surface` opens the menu on a secondary press, at the pointer, or on
@@ -344,6 +315,10 @@ The order is the maintainer's, via gov (2026-10-30):
   - It closes when its element scrolls or leaves the view.
   - An attribute both the app and surf set is written once, its tokens
     merged.
+  - [ ] **The felt check, hotty Agent's:** `examples/files` in hottyterm
+    by hand: right click a row, pick with the mouse and the keys,
+    Shift+F10 on a focused row, Escape, a click elsewhere; the placement,
+    the flip, the timing and the hover against a native menu.
 - [ ] **Hover in a cells tool** (the maintainer, 2026-11-06, via gov:
   "(a)", light only the focused tool, not (b) any cells tool shown,
   which would keep all motion on in cells mode). On a host the kit's
