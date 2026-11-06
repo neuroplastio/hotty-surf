@@ -529,6 +529,30 @@ The order is the maintainer's, via gov (2026-10-30):
     - A field's tone and weight still don't show.
     - A look item: on dark, a tooltip over a row lets the row's red text
       show through its float (96%), as plx's Machines tool shows.
+  - [x] Dense menu separator, from hotty Agent at V7-01 via gov
+    (2026-11-06): in Dense a `<menu>`'s `<sep/>` has no room, the row
+    above ends at the rule and the row below starts under it. surf.css
+    gives `.u-menu > .u-menu-sep` a margin and `.u-menu` its 1px gap in
+    Compact and Roomy only, and `.u-rule` is a bare 1px. Compact measures
+    even, about 10px either side. hotty's lean: in Dense the rule takes a
+    whole cell row, `margin: calc(0.5 * var(--hotty-cell-h) - 0.5px) 0`;
+    the cells already draw it as a row and MenuView's Dense height counts
+    it, so the card keeps its size. Done as one row's height with the
+    line its background (half-row margins rounded apart in Blitz at
+    1.6×); story menu/shown in Dense. The card now fills the story, so
+    the listed shadow-at-the-end gap shows at Dense 1.6× too (baseline).
+  - [x] A mark's slot is one width (gov, 2026-11-06): in Compact a
+    glyph's slot was 2 cells or 1.25em against a dot's 16px, so a row's
+    name moved 4px right as its ● became ◌ ✗ or ⚠ (plx's Machines). A
+    Compact glyph is 16px now; story glyph/dot-slot.
+  - [x] A scroller's text rows keep their height, from hotty Agent via
+    gov (2026-11-06): on a host a `<stack scroll>` of plain `<text>`
+    rows squeezed each to about half a row instead of scrolling, where
+    the cells show them whole. `.u-text`'s `overflow: hidden` makes its
+    least height 0, and `.u-scroll` is a column. `.u-scroll > *` no
+    longer shrinks; story box/scroll-text. A fixed-height stack that
+    doesn't scroll still lets its text shrink: rows held whole there
+    would spill over what comes after it.
 
 ## v0
 

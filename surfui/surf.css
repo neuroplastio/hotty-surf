@@ -299,7 +299,9 @@
    hosts' Nerd Font (HOST.md §2.1) beside a label, muted; a state's dot. */
 .u-glyph { flex: 0 0 auto; display: inline-block; width: calc(2 * var(--u-cw)); text-align: center; white-space: pre; }
 .u-roomy .u-glyph { width: 1.5em; }
-.u-compact .u-glyph { min-width: 1.25em; }
+/* Compact's glyph slot is a dot's, 16px (.u-dot below), so a row's name
+   stays put as its mark turns from a dot (●) to a glyph (◌ ✗ ⚠). */
+.u-compact .u-glyph { width: 16px; }
 .u-roomy .u-glyph, .u-compact .u-glyph { font-family: "DejaVu Sans", "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); }
 .u-icon {
   flex: 0 0 auto;
@@ -863,6 +865,13 @@
 .u-menu > .u-item[disabled], .u-menu > .u-item[disabled] > .u-icon { color: var(--u-dim); background: transparent; cursor: default; }
 .u-menu-head { color: var(--u-muted); font-weight: 600; padding: 0 var(--u-px); }
 .u-compact .u-menu-head, .u-roomy .u-menu-head { font-size: 11.5px; line-height: 1; padding: 8px 8px 4px; }
+/* A rule takes a whole cell row in Dense, its line in the middle, as the
+   cells draw it and a menu's Dense height counts it: one row's height,
+   the line its background, so no half-row margin rounds apart. */
+.u-dense .u-menu > .u-menu-sep {
+  height: var(--hotty-cell-h);
+  background: linear-gradient(var(--u-border), var(--u-border)) 0 50% / 100% 1px no-repeat;
+}
 .u-compact .u-menu > .u-menu-sep, .u-roomy .u-menu > .u-menu-sep { margin: 4px 0; }
 
 .u-reveal { visibility: hidden; }
@@ -913,6 +922,10 @@
   scrollbar-width: thin;
   scrollbar-color: var(--u-input) transparent;
 }
+/* What a scroller holds keeps its height and the scroller scrolls it, as
+   the cells do: a text's overflow makes its least height 0, so in the
+   scroller's column it would squeeze to fit. */
+.u-scroll > * { flex-shrink: 0; }
 
 /* Drag and drop (surfui.Drag, Drop; surfrun keeps the drag): above, a
    drag handle shows the pointer, and the whole surface the closed hand

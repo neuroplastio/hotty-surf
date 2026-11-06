@@ -21,6 +21,9 @@ box-scroll-terminal-compact-1.6	142.2
 box-scroll-terminal-dense-1.6	158.2
 box-scroll-terminal-roomy-1.6	209.0
 box-scroll-terminal-roomy-2	65.8
+box-scroll-text-neuroplastio-roomy-1.6	17.6
+box-scroll-text-paper-roomy-1.6	18.4
+box-scroll-text-terminal-roomy-1.6	17.6
 button-bare-neuroplastio-compact-1.6	33.2
 button-bare-neuroplastio-roomy-1.6	113.3
 button-bare-neuroplastio-roomy-2	26.3
@@ -205,10 +208,12 @@ look-settings-terminal-dense-1.6	181.2
 look-settings-terminal-roomy-1.6	29.3
 look-settings-terminal-roomy-2	67.8
 menu-shown-neuroplastio-compact-2	49.5
+menu-shown-neuroplastio-dense-1.6	132.4
 menu-shown-neuroplastio-dense-2	66.5
 menu-shown-neuroplastio-roomy-2	103.8
 menu-shown-paper-dense-1.6	320.7
 menu-shown-terminal-compact-2	49.5
+menu-shown-terminal-dense-1.6	132.4
 menu-shown-terminal-dense-2	66.5
 menu-shown-terminal-roomy-2	103.8
 pill-icon-neuroplastio-compact-1.6	32.8
