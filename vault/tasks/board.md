@@ -311,12 +311,21 @@ The order is the maintainer's, via gov (2026-10-30):
     any other key closes it and goes on. One menu at a time, closed by a
     click or press elsewhere (which still does what it would), a blur,
     and a re-render that drops its element.
-  - [ ] **Leg 5b:** `surfrun.Runtime` places the menu (`MenuView.Place`,
-    its own surface above the element's, the keyboard given to it) and
-    draws no menu until then (`Surface.noMenu`); `CloseMenu` on a resize,
-    a scroll and the pointer leaving; the keyboard on a real terminal;
-    the cells (a right press at `cells.Renderer.At`, the menu drawn from
-    `MenuView.Cells`); `surftest`'s hosted host; the shots.
+  - [x] **Leg 5b:** `surfrun.Runtime` shows the menu in a surface of its
+    own (`<name>-menu`, z 2, presses on, placed with `MenuView.Place` or
+    under the area, the keyboard given to it, its keys in `data-keys`);
+    `Surface.noMenu` is gone; it closes on a resize, `Swap`, `Hide` and
+    the run's end (`Surface.DropMenu`); the cells (a right press at
+    `cells.Renderer.At`, the menu drawn from `MenuView.Cells` over the
+    screen, a click on a row picks); `surftest`'s hosted host records the
+    menu frames (`App.Menus`); `examples/files`; tests with hottytest and
+    in the cells; docs/surf.md and the guide. No scroll closes it: the
+    Runtime sees none. `context_menu` does not reach a Runtime from
+    hottyterm (`KeyName` has no Menu key; a hotty-go gap).
+  - [ ] **The felt check, hotty Agent's:** `examples/files` in hottyterm
+    by hand: right click a row, pick with the mouse and the keys,
+    Shift+F10 on a focused row, Escape, a click elsewhere; the placement,
+    the flip, the timing and the hover against a native menu.
 - [x] **Icons by name, SVG icons, icons in buttons**: `<icon
   name="cog-outline"/>` and `:name`, MDI's names from Nerd Fonts
   3.5.1's glyphnames.json (`pkg/mdi`, generated; NOTICE), a literal

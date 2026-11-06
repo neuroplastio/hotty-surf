@@ -54,3 +54,77 @@ template's `<menu>`) and nothing more.
 ## Commits
 
 See `git log`: the code, then this entry.
+
+# Leg 5b: the Runtime shows the menu, on a host and in the cells
+
+`surfrun.Runtime` opens nothing in 5a (`Surface.noMenu`). 5b removes
+`noMenu` and makes the Runtime and the cells show it; the maintainer's
+"native feel", with no menu code in a program (`examples/files`).
+
+## What changed
+
+- **The host's menu surface**, `<name>-menu`, beside `<name>-list`
+  (`surfrun/menurun.go`). On `MenuFrame.New` the Runtime sends
+  `View.HTML()` and places it at z 2 (the list's is 1) with presses on,
+  then gives it the keyboard (`hotty.Focus(menu, "m")`). A press-opened
+  menu goes at `View.Place(point.Col, Top+point.Row, cols, rows)`: the
+  surface's own origin plus `Point`, in the screen's grid. A key-opened
+  one goes under `Area`, above it where there is no room below and more
+  above; with no area known, at the surface's top left. `Closed` deletes
+  the surface, first where another opens in the same frame (a second press
+  replaces it); updates are the diff's `Ops`.
+- **Not kept ready.** The task offered keeping the surface and sending its
+  document once. It is sent fresh on each open and deleted on close: a
+  `Doc` and a `PlaceAt` per open, which is what the list costs. Kept
+  unplaced or hidden, the first open would have saved nothing on the wire
+  and a stale document (the theme, the items) would be one more thing to
+  keep right. Not detached either (a detached surface takes no input).
+- **The keys.** `Surface.MenuView`'s root is focusable and gives the
+  program the menu's keys in its `data-keys` (arrows, Home, End, Enter,
+  Space, `shift+f10`, `context_menu`; not Escape, which a host ignores in
+  a keymap and, by SPEC §10.2, never takes). Characters and Escape reach
+  the program as ordinary input from a focused element that uses them
+  not. Each ends in `Surface.Key`, which takes every key while a menu is
+  open. Escape and a pick give the element the keyboard back
+  (`Frame.Focus`); a click elsewhere takes it from the menu, and the blur
+  closes it (`MenuEvent`); the blur the menu's taking it causes on the
+  main surface closes nothing (5a).
+- **Closing from the host.** A resize, `Swap`, the alternate screen being
+  left, `drop()` (to the cells), and an ENOENT for the main surface or the
+  menu's call `Surface.DropMenu(refocus)` (new: the menu's `DropList`),
+  which reports whether the surface is up, so the Runtime deletes it
+  itself. `Hide` now forgets the menu (the Runtime calls `DropMenu` first,
+  so the surface is deleted). The Runtime sees no scroll of the main
+  surface, so none closes it.
+- **surftest.** `StartHosted`'s host draws no menu and passes
+  `WriteFrame` a func that records the frame (`App.Menus`), so a menu is
+  never opened undrawn. `Start`'s `App.MenuName` and `App.Menu()` read the
+  menu's surface.
+- **The cells** (`surfrun/cellsmenu.go`). A right press (SGR button 2) at
+  a cell is a secondary press at `cells.Renderer.At`; the Surface opens
+  the menu. The Runtime draws it over the renderer's screen: `MenuView.Cells`
+  spliced into the rows at `View.Place` (under the pointer, or under the
+  focused element, `Renderer.Where`), highlighted row included. While it
+  is open the mouse is reported, the keys go to `Surface.Key` (Tab too)
+  and not the renderer, a left press and its release on a row pick it, a
+  press elsewhere closes it and goes on, and so does the wheel. ctrl+c
+  closes it and quits. With the program's mouse off (nothing on screen
+  acts on a press) the terminal reports none, so only the keys open a
+  menu: docs/surf.md says so.
+- **`examples/files`**: rows with a `Node.Menu` (Open, Rename, Copy path,
+  a rule, Delete as danger, disabled on LICENSE) whose Acts set the status
+  line, about 50 lines, no menu code. Its one cell row of header (`Options.Top`)
+  is the terminal's, so the run can right-click plain cells.
+
+## Where the task was silent
+
+- **`context_menu` on a real terminal.** hottyterm's `KeyName` names the
+  keys of ultraviolet's table; the Menu key (`uv.KeyMenu`) is past the
+  code points, so it reads as "". It never reaches the Runtime as a key
+  (shift+f10 does). Surface and the docs take it where a host passes it.
+  A hotty-go gap to fix there, not here.
+- **Tab** in the menu's surface leaves it, as in any (SPEC §10.2): the
+  host blurs it and the menu closes. A native menu wraps; this one
+  closes. Not worked around.
+- **The test host** has no encoding for shift+f10: the Runtime tests type
+  its CSI sequence.
