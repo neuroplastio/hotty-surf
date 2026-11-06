@@ -508,6 +508,16 @@ The order is the maintainer's, via gov (2026-10-30):
     - A field's tone and weight still don't show.
     - A look item: on dark, a tooltip over a row lets the row's red text
       show through its float (96%), as plx's Machines tool shows.
+  - [ ] Dense menu separator, from hotty Agent at V7-01 via gov
+    (2026-11-06): in Dense a `<menu>`'s `<sep/>` has no room, the row
+    above ends at the rule and the row below starts under it. surf.css
+    gives `.u-menu > .u-menu-sep` a margin and `.u-menu` its 1px gap in
+    Compact and Roomy only, and `.u-rule` is a bare 1px. Compact measures
+    even, about 10px either side. hotty's lean: in Dense the rule takes a
+    whole cell row, `margin: calc(0.5 * var(--hotty-cell-h) - 0.5px) 0`;
+    the cells already draw it as a row and MenuView's Dense height counts
+    it, so the card keeps its size. A small main leg after plx's strip leg
+    ships.
 
 ## v0
 
