@@ -209,6 +209,21 @@ var All = []Story{
 			surfui.Row(surfui.Glyph("◉").Tone(surfui.Error), surfui.Glyph(""), surfui.Text("codex-1").Bold().Indent(1)),
 		)
 	}},
+	{"glyph/dot-slot", 40, func() *surfui.Node {
+		// A mark's slot is one width, a dot's or a glyph's, so the names
+		// stay in one column as a state turns from a dot to a glyph, as
+		// plx's Machines rows do (online ●, connecting ◌, failed ✗,
+		// mismatched ⚠).
+		row := func(mark *surfui.Node, name string) *surfui.Node {
+			return surfui.Item(mark, surfui.Text(name).Bold().Grow()).Gap(1)
+		}
+		return surfui.List(
+			row(surfui.Dot().Tone(surfui.OK), "build-01"),
+			row(surfui.Glyph("◌").Tone(surfui.Muted), "build-02"),
+			row(surfui.Glyph("✗").Tone(surfui.Error), "build-03"),
+			row(surfui.Glyph("⚠").Tone(surfui.Warn), "build-04"),
+		)
+	}},
 	{"dot/shapes", 40, func() *surfui.Node {
 		// A state told by its shape as well as its tone, as plx's agents
 		// roster: working a dot that pulses (still in the gate, live in
