@@ -97,6 +97,10 @@ terminal to see it in cells:
 go run ./examples/hello
 ```
 
+`examples/files` is a file list whose rows declare a context menu and
+nothing more: a right click, or Shift+F10, opens it, in a hotty host or in
+cells (`go run ./examples/files`).
+
 ## The gallery
 
 Every widget of the vocabulary and every story, drawn live in a terminal
