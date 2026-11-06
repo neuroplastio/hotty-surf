@@ -10,6 +10,7 @@ import (
 	"github.com/neuroplastio/hotty-go/hottyterm"
 	"github.com/neuroplastio/hotty-go/hottytest"
 
+	"github.com/neuroplastio/hotty-surf/pkg/cells"
 	"github.com/neuroplastio/hotty-surf/surfrun"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
@@ -144,5 +145,62 @@ func TestFailToTheTree(t *testing.T) {
 	r.Call(func() { s = out.String() })
 	if on, off := strings.LastIndex(s, "\x1b[?1000h"), strings.LastIndex(s, "\x1b[?1000l"); off < on {
 		t.Errorf("back on the host with the mouse reported: on at %d, off at %d", on, off)
+	}
+}
+
+// While an element's menu is open the runtime asks its terminal for all
+// the pointer's motion (1003), and the bare motion lights the row under
+// it; when the menu closes it goes back to the motion with a button down
+// (1002), and the end turns 1003 off too.
+func TestCellsMenuAsksForAllMotion(t *testing.T) {
+	m := &ctx{rows: []string{"a", "b", "plain"}, chosen: "red"}
+	h, r, stop := cellsRun(t, m)
+	waitScreen(t, h, "plain")
+	var y int
+	r.Call(func() { _, y, _ = r.Renderer().Where(rowA) })
+	if strings.Contains(h.Output(), "\x1b[?1003h") {
+		t.Error("all motion is asked for with no menu open")
+	}
+	h.Type(fmt.Sprintf("\x1b[<2;%d;%dM\x1b[<2;%d;%dm", 30, y+1, 30, y+1))
+	waitScreen(t, h, "Open in")
+	if !strings.Contains(h.Output(), "\x1b[?1003h") {
+		t.Fatal("all motion is not asked for with a menu open")
+	}
+	// The pointer moves, no button down (SGR 35), onto "Open in".
+	var cx, cy int
+	for yy, line := range strings.Split(h.Screen(), "\n") {
+		if i := strings.Index(line, "Open in"); i >= 0 {
+			cx, cy = len([]rune(line[:i])), yy
+		}
+	}
+	h.Type(fmt.Sprintf("\x1b[<35;%d;%dM", cx+1, cy+1))
+	lit := func() string {
+		var got string
+		r.Call(func() {
+			for _, line := range r.Renderer().Screen().Lines {
+				for _, run := range line {
+					if run.Bg == cells.Sel && strings.TrimSpace(run.Text) != "" {
+						got = strings.TrimSpace(run.Text)
+					}
+				}
+			}
+		})
+		return got
+	}
+	for end := time.Now().Add(30 * time.Second); !strings.HasPrefix(lit(), "Open in"); time.Sleep(2 * time.Millisecond) {
+		if time.Now().After(end) {
+			t.Fatalf("the row under the pointer is not lit: %q", lit())
+		}
+	}
+	// A click elsewhere closes the menu: 1003 goes off, 1002 is back.
+	h.Type(fmt.Sprintf("\x1b[<0;%d;%dM\x1b[<0;%d;%dm", 1, 1, 1, 1))
+	for end := time.Now().Add(30 * time.Second); !strings.Contains(h.Output(), "\x1b[?1003l\x1b[?1002h"); time.Sleep(2 * time.Millisecond) {
+		if time.Now().After(end) {
+			t.Fatalf("1003 is never dropped after the menu closed:\n%q", h.Output())
+		}
+	}
+	out := stop()
+	if on, off := strings.LastIndex(out, "\x1b[?1003h"), strings.LastIndex(out, "\x1b[?1003l"); off < on {
+		t.Errorf("all motion left on at the end: on at %d, off at %d", on, off)
 	}
 }

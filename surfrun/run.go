@@ -244,6 +244,7 @@ type Runtime struct {
 	rend    *cells.Renderer
 	gen     uint64 // the renderer's screen last written
 	mouse   bool   // the terminal reports the mouse, for the renderer
+	hover   bool   // and all its motion (1003), while a menu is open
 	caret   bool   // the cursor shows, as the renderer's caret
 	settled bool   // the renderer has updated the surface since the input
 

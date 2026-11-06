@@ -97,7 +97,7 @@ func (r *Runtime) leaveCells() {
 	var b strings.Builder
 	if r.mouse {
 		b.WriteString(mouseOff)
-		r.mouse = false
+		r.mouse, r.hover = false, false
 	}
 	if r.caret {
 		b.WriteString("\x1b[?25l\x1b[0 q")
@@ -121,7 +121,14 @@ func (r *Runtime) Renderer() *cells.Renderer { return r.rend }
 // wheel acts on, so that the terminal's own selection works otherwise.
 const (
 	mouseOn  = "\x1b[?1000h\x1b[?1006h\x1b[?1002h"
-	mouseOff = "\x1b[?1002l\x1b[?1006l\x1b[?1000l"
+	mouseOff = "\x1b[?1003l\x1b[?1002l\x1b[?1006l\x1b[?1000l"
+
+	// While a menu is open the renderer wants the pointer's bare motion
+	// too (cells.Renderer.Hovers), which lights the row under it: all
+	// motion (1003) replaces the motion with a button down (1002), and
+	// going back sets 1002 again.
+	hoverOn  = "\x1b[?1003h"
+	hoverOff = "\x1b[?1003l\x1b[?1002h"
 )
 
 // drawTree writes the renderer's screen, unless it is the one written
@@ -145,6 +152,15 @@ func (r *Runtime) drawTree() {
 			b.WriteString(mouseOn)
 		} else {
 			b.WriteString(mouseOff)
+			r.hover = false // mouseOff has 1003 off too
+		}
+	}
+	if hover := s.Mouse && r.rend.Hovers(); hover != r.hover {
+		r.hover = hover
+		if hover {
+			b.WriteString(hoverOn)
+		} else {
+			b.WriteString(hoverOff)
 		}
 	}
 	for i, row := range Paint(s) {
@@ -238,6 +254,10 @@ func (r *Runtime) cellsEvent(ev hottyterm.Event) {
 	case uv.MouseMotionEvent:
 		if e.Button == uv.MouseLeft {
 			r.rend.Move(e.X, e.Y-r.opts.Top, mods(e.Mod))
+		} else {
+			// No button (SGR 35), or one the renderer has no drag for: the
+			// pointer over an open menu's rows.
+			r.rend.Hover(e.X, e.Y-r.opts.Top)
 		}
 	case uv.MouseReleaseEvent:
 		if e.Button == uv.MouseLeft || e.Button == uv.MouseNone {
