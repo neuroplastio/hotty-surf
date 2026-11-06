@@ -38,8 +38,12 @@ func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 			if g, ok := mdi.Glyph(it.Icon); ok {
 				icon = Icon(string(g))
 			}
-			// Its click is a pick (surfrun.Surface.MenuEvent).
-			row := Item(icon, Text(it.Label).Grow()).Class("u-menu-item").Attr("role", "menuitem").On("click", nil)
+			row := Item(icon, Text(it.Label).Grow()).Class("u-menu-item").Attr("role", "menuitem")
+			// Its click is a pick (surfrun.Surface.MenuEvent), which a
+			// disabled row has none of, so it asks the host for none.
+			if !it.Disabled {
+				row.On("click", nil)
+			}
 			if it.Key != "" {
 				row.Add(Key(it.Key))
 			}

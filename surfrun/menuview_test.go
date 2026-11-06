@@ -31,6 +31,18 @@ func TestOpenMenu(t *testing.T) {
 			t.Errorf("the menu's HTML lacks %q:\n%s", want, html)
 		}
 	}
+	// A disabled row asks the host for no click; an enabled one does.
+	for label, wantClick := range map[string]bool{"Copy selection": false, "Split right": true} {
+		i := strings.Index(html, label)
+		open := strings.LastIndex(html[:i], `<div id="m.0.`)
+		if i < 0 || open < 0 {
+			t.Fatalf("the menu's HTML has no row for %q:\n%s", label, html)
+		}
+		row := html[open : open+strings.Index(html[open:], ">")]
+		if got := strings.Contains(row, `data-on="click"`); got != wantClick {
+			t.Errorf("the row of %q asks for a click: %v, want %v:\n%s", label, got, wantClick, row)
+		}
+	}
 	// 4+23.5+1+28+1+28+1+9+1+28+4 = 128.5 CSS px and 16 for the shadow
 	// under it, in rows of 21; at least 220 CSS px across and 10 for the
 	// shadow past its end.
