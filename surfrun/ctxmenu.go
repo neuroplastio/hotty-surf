@@ -1,6 +1,7 @@
 package surfrun
 
 import (
+	"slices"
 	"unicode"
 	"unicode/utf8"
 
@@ -299,9 +300,12 @@ func (s *Surface) menuKey(key string) bool {
 // MenuEvent routes an event of the open menu's surface: a click on an
 // item's row picks it and closes the menu, and the surface losing the
 // keyboard (blur) closes it. It reports whether the surface took the
-// event, and whether an Update is due. A hover moves nothing: the rows'
-// hover is the host's own (:hover), and the keys' highlight is the
-// program's.
+// event, and whether an Update is due. A hover is the cells' pointer
+// (cells.Renderer.Hover): it moves the keys' row to the item of the row
+// it is on, and to none (-1) on a row that can't be picked or off the
+// menu, so that the keys go on from there; an Update is due only when
+// that row changes. A host's own menu surface asks for no hover, and its
+// rows' :hover stays the host's.
 func (s *Surface) MenuEvent(e hotty.Event) (took, redraw bool) {
 	s.fresh()
 	m := s.menu
@@ -321,6 +325,23 @@ func (s *Surface) MenuEvent(e hotty.Event) (took, redraw bool) {
 		if it, ok := s.MenuView(cur, m.at).Item(e.Target); ok {
 			s.closeMenu(true)
 			s.Pick(cur.ID, it.ID)
+		}
+		return true, s.due
+	case hotty.EventHover:
+		cur, ok := s.menuNow()
+		if !ok {
+			s.closeMenu(false)
+			return true, s.due
+		}
+		at := -1
+		if it, ok := s.MenuView(cur, m.at).Item(e.Target); ok && it.pickable() {
+			if i := slices.IndexFunc(cur.Items, func(o MenuItem) bool { return o.ID == it.ID }); i >= 0 {
+				at = i
+			}
+		}
+		if at != m.at {
+			m.at = at
+			s.due = true
 		}
 		return true, s.due
 	case hotty.EventFocus, hotty.EventPress:

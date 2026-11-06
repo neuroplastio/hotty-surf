@@ -84,6 +84,9 @@ func (p *menuProg) Event(e hotty.Event) (took, redraw bool) {
 
 func (p *menuProg) MenuEvent(e hotty.Event) (took, redraw bool) {
 	p.menuEv = append(p.menuEv, e)
+	if e.Kind == hotty.EventHover {
+		return true, false // the pointer lights a row, and closes nothing
+	}
 	p.opened = false
 	p.next = &cells.Menu{Closed: true, At: -1}
 	return true, true
@@ -290,5 +293,67 @@ func TestMenuSecondaryNotTaken(t *testing.T) {
 	}
 	if taken, _ := r.Secondary(10, 2, 0); !taken {
 		t.Error("a right press that opened a menu: not taken")
+	}
+}
+
+// With a menu open, the pointer's bare motion is a hover on the row under
+// it, sent where the row changes; over a separator, a row the program
+// can't pick (no hit), or outside the menu it is a hover with no target.
+// Move, with a button down, does the same.
+func TestMenuHover(t *testing.T) {
+	p := newMenuProg()
+	r := menuRenderer(p)
+	if taken, redraw := r.Hover(12, 3); taken || redraw || len(p.menuEv) != 0 || r.Hovers() {
+		t.Fatalf("no menu: taken %v, redraw %v, hovers %v, menu events %+v", taken, redraw, r.Hovers(), p.menuEv)
+	}
+	r.Secondary(10, 2, 0)
+	r.Draw(40, 12)
+	if !r.Hovers() {
+		t.Fatal("Hovers is false with a menu open")
+	}
+	// The menu is at 10,2: rows Open (y 2), Copy (3), Drop (4).
+	if taken, _ := r.Hover(12, 3); !taken {
+		t.Error("a hover on a row: not taken")
+	}
+	r.Hover(15, 3) // within the row
+	if len(p.menuEv) != 1 || p.menuEv[0].Kind != hotty.EventHover || p.menuEv[0].Target != "m.Copy" {
+		t.Fatalf("menu events %+v, want one hover on m.Copy", p.menuEv)
+	}
+	if r.Hover(12, 4); len(p.menuEv) != 2 || p.menuEv[1].Target != "m.Drop" {
+		t.Fatalf("menu events %+v, want a hover on m.Drop", p.menuEv)
+	}
+	// Outside the menu: no target, once.
+	r.Hover(30, 9)
+	r.Hover(31, 9)
+	if len(p.menuEv) != 3 || p.menuEv[2].Kind != hotty.EventHover || p.menuEv[2].Target != "" {
+		t.Fatalf("menu events %+v, want one hover with no target", p.menuEv)
+	}
+	// The cell under the menu is outside it: none, after a row.
+	r.Hover(12, 3)
+	r.Hover(12, 5)
+	if n := len(p.menuEv); n != 5 || p.menuEv[4].Target != "" {
+		t.Fatalf("menu events %+v, want a hover on m.Copy then one with none", p.menuEv)
+	}
+	// Move with a button down is the same.
+	p.menuEv = nil
+	if taken, _ := r.Move(12, 2, 0); !taken || len(p.menuEv) != 1 || p.menuEv[0].Target != "m.Open" {
+		t.Errorf("Move: menu events %+v, want a hover on m.Open", p.menuEv)
+	}
+	r.Move(13, 2, 0)
+	if len(p.menuEv) != 1 {
+		t.Errorf("Move within the row: menu events %+v", p.menuEv)
+	}
+	// A hover heard before the first, outside, still sends one.
+	p.menuEv = nil
+	r.Press(30, 9, 0) // closes the menu
+	if r.Hovers() {
+		t.Error("Hovers with the menu closed")
+	}
+	p.menuEv = nil
+	r.Secondary(10, 2, 0)
+	r.Draw(40, 12)
+	r.Hover(30, 9)
+	if len(p.menuEv) != 1 || p.menuEv[0].Target != "" || p.menuEv[0].Kind != hotty.EventHover {
+		t.Errorf("a first hover outside: menu events %+v", p.menuEv)
 	}
 }

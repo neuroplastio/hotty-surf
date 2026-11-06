@@ -39,14 +39,14 @@ type dragging struct {
 }
 
 // Move is the pointer at x, y while the button pressed is down, mods
-// held: during a drag, a drag event where the element under it changed
+// held: with a menu open, Hover's; during a drag, a drag event where the element under it changed
 // (or, over none, the cell), or its step in the dragged element or in
 // the target did. It reports whether the drag took it.
 func (r *Renderer) Move(x, y, mods int) (taken, redraw bool) {
 	r.changed = false
 	d := r.drag
 	if r.menu != nil {
-		return true, false // the menu has the pointer
+		return r.Hover(x, y) // the menu has the pointer
 	}
 	if d == nil {
 		return false, false

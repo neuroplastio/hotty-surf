@@ -139,9 +139,10 @@ type Renderer struct {
 	fields   map[string]*fieldState
 	offsets  map[string]int // each Scroll box's, and the page's ("")
 	list     *openList
-	menu     *Menu // an element's open menu, nil for none (menu.go)
-	menuBox  rect  // where it is on the screen
-	menuHeld bool  // a left press on the menu, whose release picks
+	menu     *Menu   // an element's open menu, nil for none (menu.go)
+	menuBox  rect    // where it is on the screen
+	menuHeld bool    // a left press on the menu, whose release picks
+	menuRow  *string // the row the pointer is on, as the program last heard it; nil before any
 
 	reveals     []string // to bring into view at the next draw
 	revealFocus bool     // the focused element, too
@@ -268,6 +269,9 @@ func (r *Renderer) apply(f Frame) bool {
 			r.menu, r.menuHeld = nil, false
 		}
 		if len(m.Cells.Lines) > 0 {
+			if r.menu == nil {
+				r.menuRow = nil // a menu opens with the pointer on no row heard
+			}
 			c := *m
 			r.menu = &c
 		}

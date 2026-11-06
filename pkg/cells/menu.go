@@ -194,6 +194,41 @@ func (r *Renderer) menuRelease(x, y int) bool {
 	return true
 }
 
+// Hovers reports whether the renderer wants the pointer's bare motion
+// (Hover): while an element's menu is open. A host that has the
+// terminal's mouse asks it for all motion (DECSET 1003, whose SGR reports
+// carry button 35) while Hovers is true, and goes back to the motion
+// with a button down (1002) when it is not, since all motion reports every
+// cell the pointer crosses. Draw's Screen.Mouse says when to ask for the
+// mouse at all. Hovers changes only with a Draw's screen.
+func (r *Renderer) Hovers() bool { return r.menu != nil }
+
+// Hover is the pointer at cell x, y with no button down. With a menu open
+// it lights the row under it, as a native menu does: the program hears a
+// hover (hotty.EventHover) with Target the row's hit id where the pointer
+// moves onto a row it can pick, and none where it moves onto anything else
+// in the menu or out of it; moving within a row sends nothing. The menu has
+// the pointer, so it is taken, and it redraws when the program says an
+// update is due. With no menu open it does nothing and is not taken. Move,
+// the pointer with a button down, does the same with a menu open.
+func (r *Renderer) Hover(x, y int) (taken, redraw bool) {
+	r.changed = false
+	if r.menu == nil {
+		return false, false
+	}
+	id := ""
+	if r.menuBox.has(x, y) {
+		id = r.menu.Cells.HitAt(x-r.menuBox.x, y-r.menuBox.y)
+	}
+	if r.menuRow != nil && *r.menuRow == id {
+		return true, false
+	}
+	r.menuRow = &id
+	due := r.menuEvent(hotty.Event{Kind: hotty.EventHover, Target: id})
+	r.settle(due)
+	return true, due
+}
+
 // Secondary is a press of the secondary (right) button at x, y, mods
 // held: the program hears a press with Button 2, At the cell and Target
 // the innermost element drawn there (At), as a host sends it, and opens

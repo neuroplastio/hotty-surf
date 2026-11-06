@@ -353,8 +353,26 @@ func TestMenuEvent(t *testing.T) {
 	if len(m.picks) != 0 || s.Update().Menu != nil {
 		t.Fatalf("picks %q, or the menu closed", m.picks)
 	}
-	if took, _ := s.MenuEvent(hotty.Event{Kind: hotty.EventHover, Target: surfui.MenuItemID(4)}); took {
-		t.Error("a hover was taken")
+	// A hover (the cells' pointer) moves the keys' row to an item that can
+	// be picked, and to none off one; it is due only when the row changes.
+	if took, redraw := s.MenuEvent(hotty.Event{Kind: hotty.EventHover, Target: surfui.MenuItemID(4)}); !took || !redraw {
+		t.Errorf("a hover on an item: took %v, redraw %v", took, redraw)
+	}
+	if f := s.Update().Menu; f == nil || f.At != 4 {
+		t.Errorf("after a hover on item 4: %+v", f)
+	}
+	if _, redraw := s.MenuEvent(hotty.Event{Kind: hotty.EventHover, Target: surfui.MenuItemID(4) + ".1"}); redraw {
+		t.Error("a hover on the same item is due")
+	}
+	for _, id := range []string{surfui.MenuItemID(3), surfui.MenuItemID(2), ""} {
+		s.MenuEvent(hotty.Event{Kind: hotty.EventHover, Target: surfui.MenuItemID(4)})
+		s.Update()
+		if _, redraw := s.MenuEvent(hotty.Event{Kind: hotty.EventHover, Target: id}); !redraw {
+			t.Errorf("a hover on %q is not due", id)
+		}
+		if f := s.Update().Menu; f == nil || f.At != -1 {
+			t.Errorf("after a hover on %q: %+v", id, f)
+		}
 	}
 	if took, redraw := s.MenuEvent(hotty.Event{Kind: hotty.EventClick, Target: surfui.MenuItemID(4) + ".1"}); !took || !redraw {
 		t.Errorf("click on an item: took %v, redraw %v", took, redraw)
