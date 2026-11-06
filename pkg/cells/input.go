@@ -35,7 +35,10 @@ func (r *Renderer) Key(name string) (taken, redraw bool) {
 	if r.menu != nil {
 		// The menu has the keyboard: the program takes every key (the
 		// Keys it lists are the menu's only), but ctrl+c, which closes
-		// the menu and goes on.
+		// the menu and goes on. A key may move the lit row, so the row the
+		// pointer is on is forgotten: its next motion, even within the
+		// row, takes the lit row back, as a native menu's does.
+		r.menuRow = nil
 		if name == "ctrl+c" {
 			r.closeMenu()
 		} else if r.toProgram(name) {

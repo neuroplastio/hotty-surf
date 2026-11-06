@@ -357,3 +357,23 @@ func TestMenuHover(t *testing.T) {
 		t.Errorf("a first hover outside: menu events %+v", p.menuEv)
 	}
 }
+
+// A key that moves the lit row makes the pointer's next motion take it
+// back, even within the row it rests on.
+func TestMenuHoverAfterKey(t *testing.T) {
+	p := newMenuProg()
+	r := menuRenderer(p)
+	r.Secondary(10, 2, 0)
+	r.Draw(40, 12)
+	r.Hover(12, 3)
+	r.Key("arrow_down")
+	p.menuEv = nil
+	r.Hover(14, 3) // the same row, another cell
+	if len(p.menuEv) != 1 || p.menuEv[0].Kind != hotty.EventHover || p.menuEv[0].Target != "m.Copy" {
+		t.Fatalf("menu events %+v, want a hover on m.Copy again", p.menuEv)
+	}
+	r.Hover(15, 3)
+	if len(p.menuEv) != 1 {
+		t.Errorf("menu events %+v after a second move within the row", p.menuEv)
+	}
+}

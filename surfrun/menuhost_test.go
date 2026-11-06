@@ -145,3 +145,26 @@ func TestCellsHostMenuHover(t *testing.T) {
 		t.Errorf("lit row %q outside the menu", got)
 	}
 }
+
+// In the cells, once a key moves the lit row away, any motion of the
+// pointer takes it back to the row it rests on.
+func TestCellsHostMenuHoverAfterKey(t *testing.T) {
+	_, _, r := cellsOf(t)
+	_, y, _ := r.Where(rowA)
+	r.Secondary(wide, y, 0)
+	var cx, cy int
+	for yy, line := range strings.Split(r.Draw(60, 20).Text(), "\n") {
+		if i := strings.Index(line, "Open in"); i >= 0 {
+			cx, cy = len([]rune(line[:i])), yy
+		}
+	}
+	r.Hover(cx, cy)
+	r.Key("arrow_down")
+	if got := litRow(r); !strings.HasPrefix(got, "Delete") {
+		t.Fatalf("lit row %q after down, want Delete", got)
+	}
+	r.Hover(cx+1, cy)
+	if got := litRow(r); !strings.HasPrefix(got, "Open in") {
+		t.Errorf("lit row %q after a move in Open in, want it back", got)
+	}
+}
