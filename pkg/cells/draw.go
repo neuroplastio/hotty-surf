@@ -35,15 +35,27 @@ func (r *Renderer) Draw(cols, rows int) Screen {
 		p.focus = nil
 		p.paint(o, 0, rect{o.x, o.y, o.w, o.h}.cut(screen), ink{fg: Fg})
 	}
+	fresh := !r.drawn
+	r.drawn = true // the menu's place asks where an element is
+	r.placeMenu()
+	if r.menu != nil {
+		g.blit(r.menuBox.x, r.menuBox.y, r.menu.Cells)
+	}
 	s := Screen{Cols: cols, Rows: rows, Lines: g.lines(), Caret: p.caret}
 	for _, h := range r.hits {
 		s.Hits = append(s.Hits, Hit{X: h.r.x, Y: h.r.y, W: h.r.w, H: h.r.h, ID: surfui.IDOf(h.n)})
 	}
 	s.Mouse = len(s.Hits) > 0 || len(r.ports) > 0
-	if !r.drawn || !s.same(r.screen) {
+	if r.menu != nil {
+		// The menu is on top of everything, and is acted on.
+		for _, h := range r.menu.Cells.Hits {
+			s.Hits = append(s.Hits, Hit{X: r.menuBox.x + h.X, Y: r.menuBox.y + h.Y, W: h.W, H: h.H, ID: h.ID})
+		}
+		s.Mouse = true
+	}
+	if fresh || !s.same(r.screen) {
 		r.gen++
 	}
-	r.drawn = true
 	s.Gen = r.gen
 	r.screen = s
 	return s

@@ -45,6 +45,9 @@ type dragging struct {
 func (r *Renderer) Move(x, y, mods int) (taken, redraw bool) {
 	r.changed = false
 	d := r.drag
+	if r.menu != nil {
+		return true, false // the menu has the pointer
+	}
 	if d == nil {
 		return false, false
 	}

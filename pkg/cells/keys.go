@@ -63,6 +63,10 @@ const (
 // text field's while one is focused (CharsText), else as the program
 // says.
 func (r *Renderer) Keys() ([]KeyUse, Chars) {
+	if r.menu != nil {
+		// The menu has the keyboard: only the program's, which are its.
+		return r.p.Keys()
+	}
 	var keys []KeyUse
 	seen := map[string]bool{}
 	own := func(names ...string) {

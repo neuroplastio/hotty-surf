@@ -32,6 +32,16 @@ import (
 // "ctrl+a", "arrow_down", "enter").
 func (r *Renderer) Key(name string) (taken, redraw bool) {
 	r.changed = false
+	if r.menu != nil {
+		// The menu has the keyboard: the program takes every key (the
+		// Keys it lists are the menu's only), but ctrl+c, which closes
+		// the menu and goes on.
+		if name == "ctrl+c" {
+			r.closeMenu()
+		} else if r.toProgram(name) {
+			return true, true
+		}
+	}
 	taken = r.key(name)
 	return taken, r.changed || taken
 }
@@ -257,6 +267,9 @@ func tabbable(n *surfui.Node) bool {
 func (r *Renderer) Press(x, y, mods int) (taken, redraw bool) {
 	r.changed = false
 	r.press = nil
+	if r.menuPress(x, y, true) {
+		return true, true
+	}
 	h, ok := r.hitAt(x, y)
 	if ok && h.list {
 		_, due := r.p.ListEvent(hotty.Event{Kind: hotty.EventPress, Surface: surfui.ListID, Target: surfui.IDOf(h.n), Mods: mods})
@@ -307,6 +320,9 @@ func (r *Renderer) overRect() *rect {
 // handle it began on (drag.go).
 func (r *Renderer) Release(x, y, mods int) (taken, redraw bool) {
 	r.changed = false
+	if r.menuRelease(x, y) {
+		return true, true
+	}
 	p := r.press
 	r.press = nil
 	if r.drag != nil {
@@ -421,6 +437,9 @@ func holds(outer string, n *surfui.Node) bool {
 // that way, or one around it, or the page.
 func (r *Renderer) Wheel(x, y, notches int) (taken, redraw bool) {
 	r.changed = false
+	if r.menu != nil {
+		r.closeMenu() // and the wheel goes on
+	}
 	r.ensure()
 	if !r.scrolls() || notches == 0 {
 		return false, false

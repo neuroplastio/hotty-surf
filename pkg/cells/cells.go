@@ -72,11 +72,13 @@ type Program interface {
 type Hued interface{ Hues() surfui.Palette }
 
 // Frame is what a program asks of its host besides its tree, in this
-// order: each of Fields as an a=field (SPEC §6.4), the open list, Blur
+// order: each of Fields as an a=field (SPEC §6.4), the open list, the
+// open menu of an element (Menu, which a Menued program has), Blur
 // (a=blur), Focus (a=focus), then each of Reveals brought into view.
 type Frame struct {
 	Fields  []FieldSet
 	List    *List
+	Menu    *Menu
 	Blur    bool
 	Focus   string
 	Reveals []string
@@ -128,15 +130,18 @@ type Renderer struct {
 	// Paste.
 	Copy func(text string)
 
-	p       Program
-	tree    *surfui.Node
-	index   surfui.Index
-	focused string // the element with the keyboard, "" for none
-	kb      bool   // the surface has the keyboard
-	away    string // what was focused when the terminal lost the focus
-	fields  map[string]*fieldState
-	offsets map[string]int // each Scroll box's, and the page's ("")
-	list    *openList
+	p        Program
+	tree     *surfui.Node
+	index    surfui.Index
+	focused  string // the element with the keyboard, "" for none
+	kb       bool   // the surface has the keyboard
+	away     string // what was focused when the terminal lost the focus
+	fields   map[string]*fieldState
+	offsets  map[string]int // each Scroll box's, and the page's ("")
+	list     *openList
+	menu     *Menu // an element's open menu, nil for none (menu.go)
+	menuBox  rect  // where it is on the screen
+	menuHeld bool  // a left press on the menu, whose release picks
 
 	reveals     []string // to bring into view at the next draw
 	revealFocus bool     // the focused element, too
@@ -211,6 +216,7 @@ func (r *Renderer) Show() {
 	r.focused, r.kb, r.away = "", false, ""
 	r.fields, r.offsets = map[string]*fieldState{}, map[string]int{}
 	r.list, r.press, r.reveals, r.drag = nil, nil, nil, nil
+	r.menu, r.menuHeld = nil, false
 	r.settle(r.apply(r.p.Show()))
 }
 
@@ -255,6 +261,15 @@ func (r *Renderer) apply(f Frame) bool {
 		}
 		if l.Tree != nil {
 			r.list = &openList{tree: l.Tree, at: l.At}
+		}
+	}
+	if m := f.Menu; m != nil {
+		if m.Closed {
+			r.menu, r.menuHeld = nil, false
+		}
+		if len(m.Cells.Lines) > 0 {
+			c := *m
+			r.menu = &c
 		}
 	}
 	due := false
