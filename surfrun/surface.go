@@ -119,7 +119,6 @@ type Surface struct {
 	menu     *openMenu             // an element's open menu (ctxmenu.go)
 	menuGone bool                  // a menu that was shown closed: its surface goes
 	hits     map[string]hotty.Area // the elements' cells, as their last click or press said
-	noMenu   bool                  // the host draws no menu yet: the runtime's, until it places one
 
 	// What the next frame sends besides the model's changes.
 	blur     bool
@@ -175,7 +174,8 @@ type Frame struct {
 // their surfaces: WriteFrame calls list at the list's place in the order,
 // and only where f.List is set and list is not nil, and menu right after
 // it, where f.Menu is set and menu is not nil (a host that draws no menu
-// passes nil, and CloseMenu where one opens). Use it in a host of its own that
+// passes a func that does not draw it, and so never opens one it cannot
+// show: an open menu holds the keyboard). Use it in a host of its own that
 // writes each Frame (docs/guide.md, "Hosting without surfrun.Runtime");
 // surfrun.Runtime writes its Frames so.
 func WriteFrame(b *strings.Builder, name string, f Frame, list func(b *strings.Builder, l *List), menu func(b *strings.Builder, m *MenuFrame)) {
@@ -324,9 +324,11 @@ func flag(on bool) hotty.Flag {
 // Hide takes the surface off the host, as for the cells, until Show: the
 // keyboard and the open list are forgotten, Key takes the bindings only,
 // from the keys' home, and Update only renders. It reports whether the
-// list's surface is up, which the host deletes with its own.
+// list's surface is up, which the host deletes with its own; the open
+// menu is forgotten too, and a host deletes its surface first (DropMenu).
 func (s *Surface) Hide() (listShown bool) {
 	listShown = s.DropList()
+	s.menu, s.menuGone = nil, false // a host that had its surface up deletes it first (DropMenu)
 	s.shown, s.lent = false, false
 	s.drag, s.noClick = nil, ""
 	s.focused = ""

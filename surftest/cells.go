@@ -39,7 +39,7 @@ func StartCells(t testing.TB, m surfrun.Model, opts surfrun.Options, host ...hot
 	}
 	term := hottyterm.New(a.Host, a.Host, "t", a.Host.TermSize, &hottyterm.Known{})
 	a.Run = surfrun.New(term, m, opts)
-	a.Name, a.ListName, a.call = term.Surface(opts.Name), a.Run.ListSurface(), a.Run.Call
+	a.Name, a.ListName, a.MenuName, a.call = term.Surface(opts.Name), a.Run.ListSurface(), a.Run.MenuSurface(), a.Run.Call
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- a.Run.Loop(ctx) }()

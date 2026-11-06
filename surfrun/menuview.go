@@ -2,6 +2,7 @@ package surfrun
 
 import (
 	"math"
+	"slices"
 
 	"github.com/neuroplastio/hotty-surf/pkg/cells"
 	"github.com/neuroplastio/hotty-surf/surfkeys"
@@ -87,8 +88,18 @@ func (v MenuView) Place(c, r, cols, rows int) (x, y int) {
 func (s *Surface) MenuView(m Menu, hi int) MenuView {
 	s.fresh()
 	from := s.index[m.ID]
-	return menuView(from, m.Items, hi, surfkeys.OnPlatform(s.keyStyle(), s.Platform.Mod), s.Hues(), 0, 0)
+	v := menuView(from, m.Items, hi, surfkeys.OnPlatform(s.keyStyle(), s.Platform.Mod), s.Hues(), 0, 0)
+	// The surface takes the keyboard (Frame.Menu), so it can have it, and
+	// gives the program the keys the menu uses (SPEC §10.2): they reach it
+	// as keys, and Surface.Key takes them.
+	v.Tree.Focusable().Give(hostMenuKeys...)
+	return v
 }
+
+// hostMenuKeys are the keys the menu's document gives the program (its
+// data-keys): the menu's keys but Escape, which the host never takes
+// (SPEC §10.2), and characters, which reach it as keys.
+var hostMenuKeys = slices.DeleteFunc(slices.Clone(menuKeys), func(k string) bool { return k == "escape" })
 
 // OpenMenu is a menu a host program opens at a point of its own, not an
 // element's: items, drawn in look, hi the item the keyboard is on (-1

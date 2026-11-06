@@ -33,7 +33,7 @@ func NewRelay(t testing.TB, m surfrun.Model, opts surfrun.Options, host ...hotty
 		opts.Name = "app"
 	}
 	h := hottytest.New(t, host...)
-	o := newHosted(h, m, opts, func(surfrun.Update) {})
+	o := newHosted(h, m, opts, func(surfrun.Update) {}, nil)
 	o.frames = true
 	if sz, ok := m.(surfrun.Sizer); ok {
 		sz.Resize(o.cols, o.rows)

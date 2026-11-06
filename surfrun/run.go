@@ -236,6 +236,7 @@ type Runtime struct {
 	rows    int
 
 	listSurface string // the surface a Select's open list shows in
+	menuSurface string // the surface an element's open menu shows in
 	listScrolls bool   // the open list is longer than its placement
 
 	// The cells of a model that has no Cells: its tree, drawn by a
@@ -281,6 +282,7 @@ func (r *Runtime) Swap(m Model, tick Action, every time.Duration, scroll hotty.A
 	r.stopTick()
 	if r.Host() {
 		r.dropList()
+		r.dropMenu(false)
 		r.write(hotty.Del(r.surface, hotty.Q(hotty.NoReply)))
 	}
 	r.s.Close()
@@ -300,7 +302,6 @@ func (r *Runtime) Swap(m Model, tick Action, every time.Duration, scroll hotty.A
 // surfaceOf is m's surface, with the run's options, attached to r.
 func (r *Runtime) surfaceOf(m Model) *Surface {
 	s := NewSurface(m, r)
-	s.noMenu = true // 5b: the runtime places the menu
 	s.Scroll, s.Coarse, s.Density, s.Theme, s.KeyStyle = r.opts.Scroll, r.opts.Coarse, r.opts.Density, r.opts.Theme, r.opts.KeyStyle
 	s.Unhandled = r.opts.Unhandled
 	s.Palette, s.Warn = r.opts.Palette, r.warn
@@ -354,6 +355,7 @@ func New(t *hottyterm.Term, m Model, opts Options) *Runtime {
 	r := &Runtime{m: m, opts: opts, t: t, posted: make(chan func(), 64), done: make(chan struct{})}
 	r.surface = t.Surface(opts.Name)
 	r.listSurface = t.Surface(opts.Name + "-list")
+	r.menuSurface = t.Surface(opts.Name + "-menu")
 	r.s = r.surfaceOf(m)
 	return r
 }
@@ -582,6 +584,7 @@ func (r *Runtime) Loop(ctx context.Context) error {
 	defer func() {
 		if r.Host() {
 			r.dropList()
+			r.dropMenu(false)
 			r.write(hotty.Del(r.surface, hotty.Q(hotty.NoReply)))
 		}
 		r.leaveCells()
@@ -622,7 +625,10 @@ func (r *Runtime) Loop(ctx context.Context) error {
 			r.resize()
 			if r.Host() {
 				r.dropList()
+				r.dropMenu(true) // it was placed for the old size
 				r.place()
+			} else {
+				r.s.closeMenu(false)
 			}
 		case f := <-r.posted:
 			f()
@@ -685,6 +691,7 @@ func (r *Runtime) header() {
 
 // drop takes the surface off the screen, for the cells UI.
 func (r *Runtime) drop() {
+	r.dropMenu(false)
 	if r.s.Hide() {
 		r.write(hotty.Del(r.listSurface, hotty.Q(hotty.NoReply)))
 	}
@@ -728,7 +735,7 @@ func (r *Runtime) update() {
 
 // frame writes f to b, in Frame's order.
 func (r *Runtime) frame(b *strings.Builder, f Frame) {
-	WriteFrame(b, r.surface, f, r.list, nil)
+	WriteFrame(b, r.surface, f, r.list, r.menu)
 }
 
 func (r *Runtime) event(ev hottyterm.Event) {
@@ -767,10 +774,15 @@ func (r *Runtime) reply(rep hotty.Reply) {
 			r.s.DropList()
 			return
 		}
+		if rep.Surface == r.menuSurface {
+			r.s.DropMenu(true)
+			return
+		}
 		// The host lost the surface (S10).
 		if rep.Surface == r.surface && r.Host() {
 			if _, ok := r.m.(Cells); ok {
 				r.failed = true
+				r.dropMenu(false)
 				if r.s.Hide() {
 					r.write(hotty.Del(r.listSurface, hotty.Q(hotty.NoReply)))
 				}
@@ -782,13 +794,15 @@ func (r *Runtime) reply(rep hotty.Reply) {
 	}
 }
 
-// hostEvent is an event of the surface's, or of its open list's.
+// hostEvent is an event of the surface's, or of its open list's or menu's.
 func (r *Runtime) hostEvent(e hotty.Event) {
 	switch e.Surface {
 	case "", r.surface:
 		r.s.Event(e)
 	case r.listSurface:
 		r.s.ListEvent(e)
+	case r.menuSurface:
+		r.s.MenuEvent(e)
 	}
 }
 

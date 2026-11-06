@@ -49,12 +49,14 @@ type App struct {
 	Run      *surfrun.Runtime
 	Name     string // the surface's name on the host
 	ListName string // the name of the surface a Select's open list shows in
+	MenuName string // the name of the surface an element's open menu shows in
 
 	t    testing.TB
 	call func(func())    // f on the model's goroutine, waited for
 	term *hottyterm.Term // Start's, which Resize tells a new size
 	mu   sync.Mutex
 	ups  []surfrun.Update
+	menu []*surfrun.MenuFrame // StartHosted's: each menu frame its host drew nothing of
 
 	sent, synced atomic.Int64 // the keys Sync typed, and the runtime took (StartCells)
 }
@@ -72,7 +74,7 @@ func Start(t testing.TB, m surfrun.Model, opts surfrun.Options, host ...hottytes
 	term := hottyterm.New(a.Host, a.Host, "t", a.Host.TermSize, nil)
 	term.Sizes() // made now, so that a Resize before Loop takes it is kept
 	a.Run, a.term = surfrun.New(term, m, opts), term
-	a.Name, a.ListName, a.call = term.Surface(opts.Name), a.Run.ListSurface(), a.Run.Call
+	a.Name, a.ListName, a.MenuName, a.call = term.Surface(opts.Name), a.Run.ListSurface(), a.Run.MenuSurface(), a.Run.Call
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- a.Run.Loop(ctx) }()
@@ -103,6 +105,27 @@ func (a *App) record(stats func(surfrun.Update)) func(surfrun.Update) {
 		}
 	}
 }
+
+// recordMenu keeps a menu frame StartHosted's host did not draw.
+func (a *App) recordMenu(m *surfrun.MenuFrame) {
+	a.mu.Lock()
+	a.menu = append(a.menu, m)
+	a.mu.Unlock()
+}
+
+// Menus are the menu frames StartHosted's host has had so far, in order:
+// it draws no menu, so a test sees what a press opened here. Start's
+// runtime draws the menu in a surface of its own (Menu).
+func (a *App) Menus() []*surfrun.MenuFrame {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return slices.Clone(a.menu)
+}
+
+// Menu is the host's view of the open menu of an element, a surface of
+// its own: nil, or not Placed, while none is open. Its item i is
+// surfui.MenuItemID(i).
+func (a *App) Menu() *hottytest.Surface { return a.Host.Surface(a.MenuName) }
 
 // Wait polls ok until it holds, and fails the test if it doesn't within
 // Patience.

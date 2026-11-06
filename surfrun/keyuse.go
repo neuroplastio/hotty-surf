@@ -82,7 +82,7 @@ func (s *Surface) Keys() ([]KeyUse, Chars) {
 		own(selectKeys)
 		chars = CharsPick
 	}
-	if s.shown && s.menu == nil && !s.noMenu {
+	if s.shown && s.menu == nil {
 		if _, ok := s.Menu(MenuAt{Focus: true}); ok {
 			own([]string{"shift+f10", "context_menu"}) // menuKey
 		}

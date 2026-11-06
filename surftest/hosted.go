@@ -29,8 +29,8 @@ func StartHosted(t testing.TB, m surfrun.Model, opts surfrun.Options, host ...ho
 		opts.Name = "app"
 	}
 	a := &App{t: t, Host: hottytest.New(t, host...)}
-	o := newHosted(a.Host, m, opts, a.record(opts.Stats))
-	a.Name, a.ListName, a.call = o.name, o.list, o.call
+	o := newHosted(a.Host, m, opts, a.record(opts.Stats), a.recordMenu)
+	a.Name, a.ListName, a.MenuName, a.call = o.name, o.list, hotty.SurfaceName(opts.Name+"-menu"), o.call
 	ctx, cancel := context.WithCancel(context.Background())
 	go o.loop(ctx)
 	t.Cleanup(func() {
@@ -62,6 +62,7 @@ type hosted struct {
 	m          surfrun.Model
 	s          *surfrun.Surface
 	stats      func(surfrun.Update)
+	onMenu     func(*surfrun.MenuFrame) // hears each menu frame, which this host draws none of
 	css        string
 	res        []resource // what SetResource sent, which a new document needs again
 
@@ -72,9 +73,9 @@ type hosted struct {
 	frames      bool // a Relay's: no update after each event and key
 }
 
-func newHosted(h *hottytest.Host, m surfrun.Model, opts surfrun.Options, stats func(surfrun.Update)) *hosted {
+func newHosted(h *hottytest.Host, m surfrun.Model, opts surfrun.Options, stats func(surfrun.Update), menu func(*surfrun.MenuFrame)) *hosted {
 	o := &hosted{h: h, name: hotty.SurfaceName(opts.Name), list: hotty.SurfaceName(opts.Name + "-list"),
-		m: m, scroll: opts.Scroll, stats: stats, css: opts.CSS, posted: make(chan func(), 64), done: make(chan struct{})}
+		m: m, scroll: opts.Scroll, stats: stats, onMenu: menu, css: opts.CSS, posted: make(chan func(), 64), done: make(chan struct{})}
 	if o.css == "" {
 		o.css = surfui.CSS
 	}
@@ -288,7 +289,16 @@ func (o *hosted) send(f surfrun.Frame, took time.Duration) {
 
 // frame writes f to b, in surfrun.Frame's order.
 func (o *hosted) frame(b *strings.Builder, f surfrun.Frame) {
-	surfrun.WriteFrame(b, o.name, f, o.writeList, nil)
+	surfrun.WriteFrame(b, o.name, f, o.writeList, o.writeMenu)
+}
+
+// writeMenu draws no menu: this host has no surface for it. It records
+// the frame (App.Menus), so that a test sees the menu a press opened, and
+// the open menu then holds the keyboard as it would where it is drawn.
+func (o *hosted) writeMenu(_ *strings.Builder, m *surfrun.MenuFrame) {
+	if o.onMenu != nil {
+		o.onMenu(m)
+	}
 }
 
 // writeList writes the open list's part of a frame to b.

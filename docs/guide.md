@@ -1133,7 +1133,8 @@ A `Frame` goes in its order: `Ops` as a delta, each of `Fields` as an
 delta (with `Ops`, where no `Blur` or `Focus` comes between).
 `surfrun.WriteFrame(b, name, f, list, menu)` writes it so, with the host's
 `list` and `menu` funcs, which it calls at their places and only where
-`f.List` or `f.Menu` is set (nil, for a host that draws no menu). A `List` is a Select's
+`f.List` or `f.Menu` is set (nil, for a host that draws no list; a menu it
+does not draw still needs a func, as above). A `List` is a Select's
 list for the host to show in a surface of its own: `Closed` deletes the
 last one; `New` sends `surfui.Document(l.Tree)` and places it, with `Z`
 above the Select's surface and `Press: hotty.On`, so that a press on
@@ -1161,14 +1162,21 @@ draws in the cells, `At` the item the keys are on (-1 for none, as the
 pointer opens it). The surface keeps its keys (`Key` takes them while it is
 open, whatever surface has the keyboard) and its picks (`MenuEvent`);
 the host sends it the menu surface's click and blur events, and calls
-`CloseMenu` when the menu should not outlast its place.
+`CloseMenu` when the menu should not outlast its place. `DropMenu(refocus)`
+closes it at once and reports whether its surface is up, for the host to
+delete: for a resize, a host that goes away, or an ENOENT for its surface.
+`surfrun.Runtime` does all of this, on a host and in the cells
+([Context menus](surf.md#context-menus)); a host of its own that draws no
+menu still passes a `menu` func to `WriteFrame`, since a menu it does not
+show would hold the keyboard (`surftest.StartHosted` records the frames:
+`App.Menus`).
 
 ### Tooltips
 
 A template's `title` and `<title>` are tooltips, which the tree never
 draws: the host shows them, as it shows a context menu, and keeps the
-dwell and the placement. `surfrun.Runtime` shows none (it shows no
-context menu either), so this is the recipe for a host of its own:
+dwell and the placement. `surfrun.Runtime` shows none (it shows a
+context menu, but no tooltip), so this is the recipe for a host of its own:
 
 - **Ask for hover.** A frame's `Hover` is the surface's `v` (hotty SPEC
   §9.4): `hotty.On` where its view has a tooltip, `hotty.Off` where it

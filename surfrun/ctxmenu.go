@@ -80,7 +80,7 @@ func (s *Surface) secondaryPress(e hotty.Event) bool {
 
 // openMenu opens m, replacing the open menu and a Select's open list.
 func (s *Surface) openMenu(m Menu, at int, point *hotty.Cell, area *hotty.Area) bool {
-	if s.noMenu || !s.shown {
+	if !s.shown {
 		return false
 	}
 	s.closeList(false)
@@ -125,6 +125,20 @@ func (s *Surface) keyMenu() bool {
 func (s *Surface) CloseMenu() (redraw bool) {
 	s.closeMenu(false)
 	return s.due
+}
+
+// DropMenu closes the open menu at once, picking nothing, and reports
+// whether its surface is up, which the host then deletes itself: for a
+// host that takes the surface away (it ends, shows another model, or goes
+// to the cells), whose surface moved (a resize), or that lost the menu's
+// surface (ENOENT). refocus gives the keyboard back to the element that
+// had it, which the next Update says (Frame.Focus). The next Update draws
+// no menu.
+func (s *Surface) DropMenu(refocus bool) (shown bool) {
+	shown = s.menuGone || s.menu != nil && s.menu.tree != nil
+	s.closeMenu(refocus)
+	s.menuGone = false
+	return shown
 }
 
 // closeMenu closes the open menu; refocus gives the keyboard back to the
