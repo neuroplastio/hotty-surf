@@ -524,6 +524,14 @@ The order is the maintainer's, via gov (2026-10-30):
     glyph's slot was 2 cells or 1.25em against a dot's 16px, so a row's
     name moved 4px right as its ● became ◌ ✗ or ⚠ (plx's Machines). A
     Compact glyph is 16px now; story glyph/dot-slot.
+  - [x] A scroller's text rows keep their height, from hotty Agent via
+    gov (2026-11-06): on a host a `<stack scroll>` of plain `<text>`
+    rows squeezed each to about half a row instead of scrolling, where
+    the cells show them whole. `.u-text`'s `overflow: hidden` makes its
+    least height 0, and `.u-scroll` is a column. `.u-scroll > *` no
+    longer shrinks; story box/scroll-text. A fixed-height stack that
+    doesn't scroll still lets its text shrink: rows held whole there
+    would spill over what comes after it.
 
 ## v0
 

@@ -922,6 +922,10 @@
   scrollbar-width: thin;
   scrollbar-color: var(--u-input) transparent;
 }
+/* What a scroller holds keeps its height and the scroller scrolls it, as
+   the cells do: a text's overflow makes its least height 0, so in the
+   scroller's column it would squeeze to fit. */
+.u-scroll > * { flex-shrink: 0; }
 
 /* Drag and drop (surfui.Drag, Drop; surfrun keeps the drag): above, a
    drag handle shows the pointer, and the whole surface the closed hand

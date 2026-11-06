@@ -12,6 +12,7 @@
 package stories
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -812,6 +813,16 @@ var All = []Story{
 			body.Add(surfui.Text(s).Bold(), surfui.Text("What it does, in a line").Small().Muted(), surfui.Rule())
 		}
 		return surfui.Row(nav, surfui.Stack(surfui.Heading("Panes"), Force(surfui.Box(body).Pad(2, 0).Scroll(), "focus")).Grow()).Gap(2).Top()
+	}},
+	// A scroller of plain lines taller than its room, as plx's Lua tools
+	// list their rows: each keeps its row and the scroller scrolls them,
+	// as the cells do, where a text's overflow had let it squeeze to fit.
+	{"box/scroll-text", 40, func() *surfui.Node {
+		rows := surfui.Stack()
+		for i := range 20 {
+			rows.Add(surfui.Text(fmt.Sprintf("Build %02d   ok   %d.%ds", i+1, i%9+1, i%7)).Pad(1, 0))
+		}
+		return surfui.Stack(rows.Scroll()).Height(8)
 	}},
 	{"dialog/box", 50, func() *surfui.Node {
 		// Without caps, whose borders are a gap of their own (key/caps).

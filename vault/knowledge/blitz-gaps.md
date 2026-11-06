@@ -137,7 +137,7 @@ plx draws it with the same Blitz, so plx shows it alike.
 | dialog/box, field/focus (Compact, 15–21) | ❯ (U+276F, the palette's chip) is small | both | As ◉ above: Inter lacks it, and Blitz's fallback is its own AdwaitaMono | Cosmetic; plx's chip is the same |
 | glyph/column, list/two-line (Compact and roomy, 1.6×: 19–29) | Colour emoji (🦀 🐙) differ by a few pixels, as in dense (under the threshold, below), but over it now that a Glyph centres an emoji in its slot. Until 2026-10-31 these were ◉ (104–167, the fallback above) and the text after it moved left, a Compact Glyph being as wide as its symbol; a Glyph is two cells now, its symbol in DejaVu Sans in both engines, and the 2× cases pass | 1.6× | Noto Color Emoji is a bitmap font, resampled with another filter | None |
 | text/tones (Compact, 1.6×: 377) | A wrapped line whose last word ends within a pixel of its box's edge breaks a word earlier | 1.6× | Box widths rounded to whole CSS px (`round.rs`), against proportional text measured in fractions | Cosmetic, but it can move a settings description's wrap by a line |
-| button/bare, box/scroll (Compact, 1.6×: 17–19) | Text 1 CSS px off | 1.6× | The half-leading under the threshold for roomy: Compact is Inter on a terminal row too | Cosmetic |
+| button/bare, box/scroll (Compact, 1.6×: 17–19); box/scroll-text (roomy, 1.6×: 17.6–18.4) | Text 1 CSS px off | 1.6× | The half-leading under the threshold for roomy: Compact is Inter on a terminal row too | Cosmetic |
 | paper, Compact, 1.6× | The hairline under the surface, in the new densities' cases | 1.6× | As above (`round.rs`) | Cosmetic |
 
 Proven by the new stories, in every theme and density at both scales
