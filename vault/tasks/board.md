@@ -323,7 +323,10 @@ The order is the maintainer's, via gov (2026-10-30):
   tool hears no bare motion there (plx's `sdk/surfdk/tip.go`). One leg
   at a time, in this order:
   1. Design Agent: the cells' hover look, apart from the focus and
-     selection bands.
+     selection bands. Designed (2026-11-06):
+     [knowledge/cells-hover.md](../knowledge/cells-hover.md), the
+     `hover` role, a fill or, in sixteen colours, an underline; with a
+     menu's rows, whose selection follows the pointer.
   2. hotty Agent, on `hotty-0.7` (eac86b0's `Renderer.Hover` is there),
      after the look.
      - With no menu open, the Renderer keeps the element under the
