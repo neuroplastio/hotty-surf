@@ -111,10 +111,18 @@ const (
 func (r *Runtime) drawTree() {
 	r.rend.KeyStyle = r.s.keyStyle()
 	s := r.rend.Draw(r.cols, r.surfaceRows())
-	if s.Gen == r.gen {
+	// An open menu is drawn over the screen, and reported the mouse for.
+	cm, open := r.cellsMenu()
+	sig := ""
+	if open {
+		sig = cm.sig()
+		s.Lines = cm.overlay(s.Lines)
+		s.Mouse = true
+	}
+	if s.Gen == r.gen && sig == r.menuSig {
 		return
 	}
-	r.gen = s.Gen
+	r.gen, r.menuSig = s.Gen, sig
 	var b strings.Builder
 	b.WriteString("\x1b[?2026h")
 	r.headerTo(&b)
@@ -200,6 +208,10 @@ func (r *Runtime) cellsEvent(ev hottyterm.Event) {
 		return
 	}
 	r.settled = true
+	if r.cellsMenuEvent(ev) {
+		r.settled = false // the menu may have opened, closed or picked
+		return
+	}
 	switch e := ev.(type) {
 	case uv.MouseClickEvent:
 		if e.Button == uv.MouseLeft {

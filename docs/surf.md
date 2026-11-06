@@ -537,6 +537,36 @@ and a `:if` chain goes on past it.
   picks it; a click or press elsewhere closes the menu first and does what
   it would have; one menu is open at a time, and it closes with its
   element.
+- **`surfrun.Runtime` shows it, on a host and in the cells,** so a
+  program that declares a menu has a native-feeling one and no code of its
+  own (`examples/files`).
+  - *On a hotty host* the menu is a surface of its own, `<name>-menu`, at
+    a higher z than a Select's list (2, with presses on), placed with
+    `MenuView.Place` at the pointer's cell from the surface's own origin,
+    or under the element's cells for a key (flipped above where there is
+    no room, at the surface's top left where no click said where the
+    element is). Its document is sent fresh on each open and the surface
+    deleted on close; it takes the keyboard (`a=focus`), so the arrows,
+    Home, End, Enter, Space, `shift+f10` and characters reach the program
+    as keys (its `data-keys` give them to it, SPEC §10.2) and Escape, which
+    a host never takes, does too. Escape or a pick gives the element the
+    keyboard back; a click elsewhere takes it from the menu, and its blur
+    closes it. A resize closes the menu (the element has the keyboard
+    back), so does the surface leaving the host or the run ending. The
+    runtime sees no scroll of the surface, so the menu stays through one.
+    Tab leaves the menu's surface as it leaves any: it closes the menu.
+  - *In the cells* a press of the terminal's right button is a secondary
+    press at the element drawn at the cell (`cells.Renderer.At`). The
+    runtime draws the open menu (`MenuView.Cells`) over the screen at
+    `MenuView.Place`, with the keys' row highlighted, takes the keys for
+    it (Tab too), and takes a click on a row to pick it; a click or the
+    wheel elsewhere closes it and goes on as it would have. **With the
+    program's mouse off there is no secondary press:** the terminal
+    reports the mouse only while something on the screen acts on a press
+    (a click handler, a field, a button), so on a screen with none only
+    `shift+f10` opens a menu. (The Menu key, `context_menu`, reaches a
+    program as a key only where its terminal library names it; hottyterm
+    does not yet.)
 - **A host that asks for the menu itself** does so with
   `surfrun.Surface.Menu`, by an element's id, a cell's
   (`cells.Renderer.At`) or the focus: the innermost element's with a
