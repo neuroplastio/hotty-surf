@@ -276,3 +276,19 @@ func TestMenuMouse(t *testing.T) {
 		t.Error("the menu stays after the wheel")
 	}
 }
+
+// A secondary press on an element whose program opens no menu is heard
+// by the program, and not taken: the host may go on with it.
+func TestMenuSecondaryNotTaken(t *testing.T) {
+	p := newMenuProg()
+	r := menuRenderer(p)
+	if taken, _ := r.Secondary(10, 0, 0); taken {
+		t.Error("a right press on a row with no menu: taken")
+	}
+	if len(p.events) != 1 || p.events[0].Button != 2 || p.events[0].Target != "r.ka" {
+		t.Errorf("events %+v, want the press on r.ka heard", p.events)
+	}
+	if taken, _ := r.Secondary(10, 2, 0); !taken {
+		t.Error("a right press that opened a menu: not taken")
+	}
+}

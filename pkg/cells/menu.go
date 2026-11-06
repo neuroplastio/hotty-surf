@@ -193,7 +193,11 @@ func (r *Renderer) menuRelease(x, y int) bool {
 // the innermost element drawn there (At), as a host sends it, and opens
 // that element's menu, if it has one. It does so with a menu open too,
 // which a press outside it closes first. Nothing is sent where the
-// screen draws no element.
+// screen draws no element. It reports taken when the menu took the press
+// (on it, or a press outside it that closed it and went on to press) or
+// the program did, as a press that opened a menu is; a press the program
+// leaves (an element with no menu) is not taken, so that a host may go on
+// with it as its own click.
 func (r *Renderer) Secondary(x, y, mods int) (taken, redraw bool) {
 	r.changed = false
 	if r.menuPress(x, y, false) {
@@ -203,8 +207,8 @@ func (r *Renderer) Secondary(x, y, mods int) (taken, redraw bool) {
 	if id == "" {
 		return false, r.changed
 	}
-	_, due := r.p.Event(hotty.Event{Kind: hotty.EventPress, Target: id, Button: 2, Mods: mods, At: &hotty.Cell{Col: x, Row: y}})
+	took, due := r.p.Event(hotty.Event{Kind: hotty.EventPress, Target: id, Button: 2, Mods: mods, At: &hotty.Cell{Col: x, Row: y}})
 	r.changed = true
 	r.settle(due)
-	return true, true
+	return took, true
 }
