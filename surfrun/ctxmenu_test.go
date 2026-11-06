@@ -7,6 +7,8 @@ import (
 
 	"github.com/neuroplastio/hotty-go"
 
+	"github.com/neuroplastio/hotty-surf/pkg/cells"
+
 	"github.com/neuroplastio/hotty-surf/surfrun"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
@@ -544,5 +546,97 @@ func TestMenuFollowsView(t *testing.T) {
 		if s.Focused() != rowB {
 			t.Errorf("%s: focused %q", name, s.Focused())
 		}
+	}
+}
+
+func cellsOf(t *testing.T) (*ctx, *surfrun.Surface, *cells.Renderer) {
+	t.Helper()
+	m := &ctx{rows: []string{"a", "b", "plain"}, chosen: "red"}
+	s := surfrun.NewSurface(m, nil)
+	r := cells.New(s.Cells())
+	r.Show()
+	r.Draw(60, 20)
+	return m, s, r
+}
+
+func drawn(r *cells.Renderer, text string) bool {
+	for _, line := range r.Draw(60, 20).Lines {
+		var b strings.Builder
+		for _, run := range line {
+			b.WriteString(run.Text)
+		}
+		if strings.Contains(b.String(), text) {
+			return true
+		}
+	}
+	return false
+}
+
+// In the cells, a right press on another element while a menu is open
+// closes it and opens the other's in the same call, with no Draw between.
+func TestCellsSecondaryElsewhereOpensTheOther(t *testing.T) {
+	_, _, r := cellsOf(t)
+	bx, by, _ := r.Where(rowB)
+	ix, iy, _ := r.Where(btnIn)
+	if taken, _ := r.Secondary(bx, by, 0); !taken || !drawn(r, "Delete") || drawn(r, "Inner") {
+		t.Fatal("B's menu did not open")
+	}
+	// The button in row a has a menu of its own, one item "Inner".
+	if taken, _ := r.Secondary(ix, iy, 0); !taken {
+		t.Error("the right press on the button: not taken")
+	}
+	if !drawn(r, "Inner") || drawn(r, "Delete") {
+		t.Error("the button's menu is not open after the press")
+	}
+}
+
+// DropMenu closes the menu in the cells too, picking nothing.
+func TestCellsDropMenu(t *testing.T) {
+	_, s, r := cellsOf(t)
+	ax, ay, _ := r.Where(rowA)
+	r.Secondary(ax, ay, 0)
+	if !drawn(r, "Open in") {
+		t.Fatal("the menu did not open")
+	}
+	s.DropMenu(true)
+	r.Update()
+	if drawn(r, "Open in") {
+		t.Error("the menu stays drawn after DropMenu")
+	}
+}
+
+// A key-opened menu draws the row the keys are on selected, and it moves
+// with the arrows.
+func TestCellsMenuKeyedRowIsSelected(t *testing.T) {
+	_, s, r := cellsOf(t)
+	r.Focus(true)
+	s.Event(hotty.Event{Kind: hotty.EventFocus, Target: rowB})
+	r.Update()
+	sel := func() string {
+		var out []string
+		for _, line := range r.Draw(60, 20).Lines {
+			var b strings.Builder
+			hit := false
+			for _, run := range line {
+				b.WriteString(run.Text)
+				if run.Bg == cells.Sel {
+					hit = true
+				}
+			}
+			if hit {
+				out = append(out, strings.TrimSpace(b.String()))
+			}
+		}
+		return strings.Join(out, "|")
+	}
+	if taken, _ := r.Key("shift+f10"); !taken {
+		t.Fatal("shift+f10 not taken")
+	}
+	if got := sel(); !strings.Contains(got, "Open") || strings.Contains(got, "Open in") {
+		t.Errorf("selected after opening: %q", got)
+	}
+	r.Key("arrow_down") // the separator and the disabled row are skipped
+	if got := sel(); !strings.Contains(got, "Open in") {
+		t.Errorf("selected after Down: %q", got)
 	}
 }

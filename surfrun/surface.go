@@ -116,9 +116,10 @@ type Surface struct {
 	areas     map[string]hotty.Area // the Selects in view, where the host's last view put them
 	hover     bool                  // the view has a tooltip, as the last frame said
 
-	menu     *openMenu             // an element's open menu (ctxmenu.go)
-	menuGone bool                  // a menu that was shown closed: its surface goes
-	hits     map[string]hotty.Area // the elements' cells, as their last click or press said
+	menu      *openMenu             // an element's open menu (ctxmenu.go)
+	menuGone  bool                  // a menu that was shown closed: its surface goes
+	cellsGone bool                  // a menu DropMenu dropped, which the cells' renderer hears of
+	hits      map[string]hotty.Area // the elements' cells, as their last click or press said
 
 	// What the next frame sends besides the model's changes.
 	blur     bool
@@ -288,7 +289,7 @@ func (s *Surface) Show() Frame {
 	if m := s.menu; m != nil && m.tree != nil || s.menuGone {
 		f.Menu = &MenuFrame{Closed: true, At: -1}
 	}
-	s.menu, s.menuGone, s.hits = nil, false, nil
+	s.menu, s.menuGone, s.hits, s.cellsGone = nil, false, nil, false
 	s.drag, s.noClick = nil, ""
 	s.render()
 	// The document gives each control its value: what the host has, so

@@ -23,7 +23,7 @@ func (s *Surface) Cells() cells.Program { return program{s} }
 type program struct{ s *Surface }
 
 func (p program) Show() cells.Frame                           { return cellsFrame(p.s.Show()) }
-func (p program) Update() cells.Frame                         { return cellsFrame(p.s.Update()) }
+func (p program) Update() cells.Frame                         { return p.s.cellsDropped(cellsFrame(p.s.Update())) }
 func (p program) Tree() *surfui.Node                          { return p.s.Tree() }
 func (p program) Event(e hotty.Event) (took, redraw bool)     { return p.s.Event(e) }
 func (p program) ListEvent(e hotty.Event) (took, redraw bool) { return p.s.ListEvent(e) }
@@ -34,6 +34,19 @@ func (p program) Keys() ([]cells.KeyUse, cells.Chars)         { return p.s.Keys(
 // Hues are the surface's, which the renderer draws each in its terminal
 // colour (cells.Hued).
 func (p program) Hues() surfui.Palette { return p.s.Hues() }
+
+// cellsDropped says in f that the menu DropMenu dropped is closed, which
+// a renderer has no surface to be told by.
+func (s *Surface) cellsDropped(f cells.Frame) cells.Frame {
+	if s.cellsGone {
+		s.cellsGone = false
+		if f.Menu == nil {
+			f.Menu = &cells.Menu{At: -1}
+		}
+		f.Menu.Closed = true
+	}
+	return f
+}
 
 // cellsFrame is f for a renderer: its ops are in the tree it draws, and
 // its reveals the ids it brings into view.

@@ -273,6 +273,12 @@ func (p *painter) item(b *box, in *ink, bg *Role) {
 		}
 		return
 	}
+	if b.f&fSel != 0 && hasClass(b.n, "u-menu-item") {
+		// A menu's row the keys are on (surfrun's MenuView hi): the
+		// row's selected fill, as the host's .u-menu-item.is-sel.
+		*bg = Sel
+		return
+	}
 	list := surfui.Parent(b.n)
 	if b.f&fSel == 0 || list == nil || !hasClass(list, "u-list") {
 		return

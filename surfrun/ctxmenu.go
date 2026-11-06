@@ -138,9 +138,13 @@ func (s *Surface) CloseMenu() (redraw bool) {
 // to the cells), whose surface moved (a resize), or that lost the menu's
 // surface (ENOENT). refocus gives the keyboard back to the element that
 // had it, which the next Update says (Frame.Focus). The next Update draws
-// no menu.
+// no menu; for the cells' renderer (Cells), which has no surface to
+// delete, it says the menu is Closed, as after CloseMenu.
 func (s *Surface) DropMenu(refocus bool) (shown bool) {
 	shown = s.menuGone || s.menu != nil && s.menu.tree != nil
+	// The cells' renderer has no surface to delete: it hears the menu is
+	// closed in the next frame (Cells), as after CloseMenu.
+	s.cellsGone = s.cellsGone || s.menu != nil || s.menuGone
 	s.closeMenu(refocus)
 	s.menuGone = false
 	return shown

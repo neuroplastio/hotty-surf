@@ -166,6 +166,12 @@ func (r *Renderer) menuPress(x, y int, left bool) bool {
 		return true
 	}
 	r.closeMenu()
+	// The close may have changed the tree, and the hit map and the
+	// elements' cells are the old tree's until the next Draw: lay out
+	// afresh, so that the press goes on to what is there now.
+	if r.drawn {
+		r.Draw(r.cols, r.rows)
+	}
 	return false
 }
 
