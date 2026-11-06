@@ -71,25 +71,97 @@ func writeAttr(b *strings.Builder, k, v string) {
 // attrsOf is every attribute n renders with but its id, in a fixed order:
 // class, the author's, the style that holds its vars, data-on,
 // data-steps and data-keys.
+//
+// An attribute is written once. Where an app set (Attr) one that surf
+// computes too, they merge, so that a parser, which keeps the first of
+// two, loses neither: class, data-on and data-keys are the union of the
+// app's tokens and the computed ones, each once, the app's first (a
+// data-keys key the app binds is its own: the computed binding of the
+// same key goes); style is the vars, then the app's declarations. For
+// data-steps, which is one value, the app's wins: it is what a parser
+// kept before, and the author who sets it by hand means it. DataOn,
+// DataKeys and DataSteps stay the computed ones alone.
 func attrsOf(n *Node) []attr {
 	out := make([]attr, 0, len(n.attrs)+4)
-	if len(n.class) > 0 {
-		out = append(out, attr{"class", strings.Join(n.class, " ")})
+	var mine = map[string]string{}
+	for _, a := range n.attrs {
+		switch a.k {
+		case "class", "style", "data-on", "data-keys":
+			mine[a.k] = a.v
+		}
 	}
-	out = append(out, n.attrs...)
-	if s := styleOf(n); s != "" {
+	if c := mergeTokens(mine["class"], strings.Join(n.class, " ")); c != "" || len(n.class) > 0 {
+		out = append(out, attr{"class", c})
+	}
+	steps := false
+	for _, a := range n.attrs {
+		switch a.k {
+		case "class", "style", "data-on", "data-keys":
+			continue
+		case "data-steps":
+			steps = true
+		}
+		out = append(out, a)
+	}
+	if s := mergeStyle(styleOf(n), mine["style"]); s != "" {
 		out = append(out, attr{"style", s})
 	}
-	if on := dataOn(n); on != "" {
+	if on := mergeTokens(mine["data-on"], dataOn(n)); on != "" {
 		out = append(out, attr{"data-on", on})
 	}
-	if steps := dataSteps(n); steps != "" {
-		out = append(out, attr{"data-steps", steps})
+	if s := dataSteps(n); s != "" && !steps {
+		out = append(out, attr{"data-steps", s})
 	}
-	if keys := dataKeys(n); keys != "" {
+	if keys := mergeKeys(mine["data-keys"], dataKeys(n)); keys != "" {
 		out = append(out, attr{"data-keys", keys})
 	}
 	return out
+}
+
+// mergeTokens is the tokens of a, then those of b that a lacks, once each.
+func mergeTokens(a, b string) string {
+	if a == "" {
+		return b
+	}
+	var out []string
+	for _, t := range strings.Fields(a + " " + b) {
+		out = appendOnce(out, t)
+	}
+	return strings.Join(out, " ")
+}
+
+// mergeKeys is mine's bindings, then those of computed whose key mine
+// does not bind.
+func mergeKeys(mine, computed string) string {
+	if mine == "" {
+		return computed
+	}
+	if computed == "" {
+		return mine
+	}
+	bound := map[string]bool{}
+	out := strings.Fields(mine)
+	for _, t := range out {
+		bound[strings.SplitN(t, "=", 2)[0]] = true
+	}
+	for _, t := range strings.Fields(computed) {
+		if !bound[strings.SplitN(t, "=", 2)[0]] {
+			out = append(out, t)
+		}
+	}
+	return strings.Join(out, " ")
+}
+
+// mergeStyle is the vars' declarations, then the app's.
+func mergeStyle(vars, mine string) string {
+	mine = strings.Trim(mine, "; \t\n")
+	switch {
+	case mine == "":
+		return vars
+	case vars == "":
+		return mine
+	}
+	return vars + ";" + mine
 }
 
 func styleOf(n *Node) string {

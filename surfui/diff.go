@@ -80,7 +80,10 @@ func diffAttrs(o, n *Node, ops *[]hotty.Op) {
 	oa, na := attrsOf(o), attrsOf(n)
 	// Vars go as `var` ops while every one the old style had is still
 	// there; otherwise the style goes whole.
-	varsOnly := len(o.vars) > 0 || len(n.vars) > 0
+	// The app's own style is in that style too: if it changed, whole.
+	os, _ := AttrOf(o, "style")
+	ns, _ := AttrOf(n, "style")
+	varsOnly := (len(o.vars) > 0 || len(n.vars) > 0) && os == ns
 	if varsOnly {
 		for _, v := range o.vars {
 			if !hasAttr(n.vars, v.k) {

@@ -363,3 +363,30 @@ func TestDotShapes(t *testing.T) {
 		t.Errorf("a Text pulses: %q", surfui.Classes(n))
 	}
 }
+
+// An attribute an app sets and surf computes is written once, merged:
+// data-on's tokens, data-keys' bindings (the app's own key wins), a
+// style's vars then the app's declarations, and the app's data-steps.
+func TestAppAttrsMergeWithComputed(t *testing.T) {
+	n := surfui.Row(surfui.Text("x")).
+		Menu(surfui.MenuItem{ID: "a", Label: "A", Act: func() {}}).
+		Var("p", "1").
+		Attr("data-on", "drag drop").Attr("data-steps", "0 1").
+		Attr("style", "opacity:.5;").Attr("class", "k").Class("c")
+	surfui.Resolve(surfui.Surface(n), "r")
+	want := surfui.DataOn(n)
+	if want != "secondary" {
+		t.Fatalf("DataOn changed: %q", want)
+	}
+	h := surfui.HTML(n)
+	for _, w := range []string{`data-on="drag drop secondary"`, `style="--p:1;opacity:.5"`, `class="k u-row c"`, `data-steps="0 1"`} {
+		if strings.Count(h, w) != 1 {
+			t.Errorf("want one %s in %s", w, h)
+		}
+	}
+	for _, k := range []string{"data-on=", "style=", "data-steps="} {
+		if strings.Count(h, k) != 1 {
+			t.Errorf("%s written %d times in %s", k, strings.Count(h, k), h)
+		}
+	}
+}
