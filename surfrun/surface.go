@@ -439,10 +439,12 @@ func (s *Surface) event(e hotty.Event) bool {
 		// The host's, for a tooltip's dwell (Tip): no handler hears it.
 		return false
 	case hotty.EventView:
-		// A Select asks where it is (surfui's data-on), so that a key
-		// that opens its list places it as a click does.
+		// A Select, and an element with a menu, ask where they are
+		// (surfui's data-on), so that a key that opens the list or the
+		// menu places it as a click does.
 		if e.View != nil {
 			s.areas = e.View.Areas
+			s.viewMenu(e.View.Areas)
 		}
 		return true
 	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:

@@ -364,6 +364,19 @@ func TestDotShapes(t *testing.T) {
 	}
 }
 
+// An element with a menu asks for view (where it is, for a key that opens
+// the menu) and secondary.
+func TestMenuAsksForViewAndSecondary(t *testing.T) {
+	n := surfui.Row(surfui.Text("x")).Menu(surfui.MenuItem{ID: "a", Label: "A", Act: func() {}})
+	surfui.Resolve(surfui.Surface(n), "r")
+	if got := surfui.DataOn(n); got != "view secondary" {
+		t.Errorf("DataOn = %q", got)
+	}
+	if h := surfui.HTML(n); strings.Count(h, "data-on=") != 1 || !strings.Contains(h, `data-on="view secondary"`) {
+		t.Errorf("html: %s", h)
+	}
+}
+
 // An attribute an app sets and surf computes is written once, merged:
 // data-on's tokens, data-keys' bindings (the app's own key wins), a
 // style's vars then the app's declarations, and the app's data-steps.
@@ -375,11 +388,11 @@ func TestAppAttrsMergeWithComputed(t *testing.T) {
 		Attr("style", "opacity:.5;").Attr("class", "k").Class("c")
 	surfui.Resolve(surfui.Surface(n), "r")
 	want := surfui.DataOn(n)
-	if want != "secondary" {
+	if want != "view secondary" {
 		t.Fatalf("DataOn changed: %q", want)
 	}
 	h := surfui.HTML(n)
-	for _, w := range []string{`data-on="drag drop secondary"`, `style="--p:1;opacity:.5"`, `class="k u-row c"`, `data-steps="0 1"`} {
+	for _, w := range []string{`data-on="drag drop view secondary"`, `style="--p:1;opacity:.5"`, `class="k u-row c"`, `data-steps="0 1"`} {
 		if strings.Count(h, w) != 1 {
 			t.Errorf("want one %s in %s", w, h)
 		}

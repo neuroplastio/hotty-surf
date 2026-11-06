@@ -83,7 +83,7 @@ func TestMenuNotDrawn(t *testing.T) {
 	}
 	hm, cm := draw(menuRows)
 	hp, cp := draw(plainRows)
-	hm = strings.NewReplacer(` data-on="secondary"`, ``, ` secondary"`, `"`).Replace(hm)
+	hm = strings.NewReplacer(` data-on="view secondary"`, ``, ` view secondary"`, `"`).Replace(hm)
 	if hm != hp {
 		t.Errorf("HTML with a menu:\n%s\nwithout:\n%s", hm, hp)
 	}
@@ -109,7 +109,7 @@ func TestMenuAsksForSecondary(t *testing.T) {
 	}
 	got := on(menuRows)
 	for id, want := range map[string]string{
-		"r.kn1": "click secondary", "r.kn2": "click secondary", "r.kn1.kb": "secondary", "r.kf": "secondary", "r": "",
+		"r.kn1": "click view secondary", "r.kn2": "click view secondary", "r.kn1.kb": "view secondary", "r.kf": "view secondary", "r": "",
 	} {
 		if got[id] != want {
 			t.Errorf("%s data-on %q, want %q", id, got[id], want)

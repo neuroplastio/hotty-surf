@@ -229,8 +229,12 @@ func dataOn(n *Node) string {
 		on = append(on, "drop")
 	}
 	// A menu opts in to the secondary press (SPEC §9), the host's press
-	// with the secondary button, which opens it (surfrun.Surface).
+	// with the secondary button, which opens it (surfrun.Surface). It asks
+	// where it is (SPEC §9.5) too: a key that opens it, which carries no
+	// area as a press does, places it under the element, and a menu closes
+	// when its element scrolls away.
 	if menuPickable(n.menu) {
+		on = appendOnce(on, "view")
 		on = appendOnce(on, "secondary")
 	}
 	return strings.Join(on, " ")

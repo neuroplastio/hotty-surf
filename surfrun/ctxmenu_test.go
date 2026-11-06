@@ -500,3 +500,49 @@ func TestWriteFrameMenu(t *testing.T) {
 		t.Errorf("got %q, want %q", b.String(), want)
 	}
 }
+
+// view puts the host's areas to the surface, as a host that sends view does
+// (the hottytest host sends none).
+func view(s *surfrun.Surface, areas map[string]hotty.Area) {
+	s.Event(hotty.Event{Kind: hotty.EventView, View: &hotty.View{Areas: areas}})
+}
+
+// A key opens the menu of an element the host only reported through view
+// under that area; a view that moves the element, or leaves it out, closes
+// the open menu, picking nothing, and gives the keyboard back.
+func TestMenuFollowsView(t *testing.T) {
+	area := hotty.Area{Col: 1, Row: 2, W: 20, H: 1}
+	open := func() *surfrun.Surface {
+		_, s := startCtx(t)
+		view(s, map[string]hotty.Area{rowB: area})
+		s.Event(hotty.Event{Kind: hotty.EventFocus, Target: rowB})
+		keys(t, s, "shift+f10")
+		if f := frameMenu(t, s); f == nil || !f.New || f.Area == nil || *f.Area != area {
+			t.Fatalf("the anchor: %+v", f)
+		}
+		return s
+	}
+
+	// The same view again keeps it open.
+	s := open()
+	view(s, map[string]hotty.Area{rowB: area, rowA: {Row: 1, W: 20, H: 1}})
+	if f := frameMenu(t, s); f != nil && f.Closed {
+		t.Errorf("the same area closed the menu: %+v", f)
+	}
+
+	for name, areas := range map[string]map[string]hotty.Area{
+		"moved":    {rowB: {Col: 1, Row: 1, W: 20, H: 1}},
+		"left":     {rowA: {Row: 1, W: 20, H: 1}},
+		"no views": nil,
+	} {
+		s := open()
+		view(s, areas)
+		f := frameMenu(t, s)
+		if f == nil || !f.Closed {
+			t.Errorf("%s: the menu did not close: %+v", name, f)
+		}
+		if s.Focused() != rowB {
+			t.Errorf("%s: focused %q", name, s.Focused())
+		}
+	}
+}

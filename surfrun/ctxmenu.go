@@ -29,6 +29,7 @@ type openMenu struct {
 	point *hotty.Cell  // the pointer's cell, for a press
 	area  *hotty.Area  // the element's cells, for a key
 	tree  *surfui.Node // the menu's tree as last sent, nil before
+	seen  *hotty.Area  // the element's cells as the host's view last put them, nil before
 }
 
 // MenuFrame is an element's open menu (Surface.Menu), which the host
@@ -86,6 +87,9 @@ func (s *Surface) openMenu(m Menu, at int, point *hotty.Cell, area *hotty.Area) 
 	s.closeList(false)
 	s.closeMenu(false)
 	s.menu = &openMenu{id: m.ID, at: at, point: point, area: area}
+	if a, ok := s.areas[m.ID]; ok {
+		s.menu.seen = &a
+	}
 	s.due = true
 	return true
 }
@@ -102,11 +106,12 @@ func (s *Surface) keyMenu() bool {
 	}
 	var area *hotty.Area
 	for n := s.menuStart(MenuAt{Focus: true}); n != nil; n = surfui.Parent(n) {
-		if a, ok := s.hits[surfui.IDOf(n)]; ok {
+		// The host's view first: it says again each time an area changes.
+		if a, ok := s.areas[surfui.IDOf(n)]; ok {
 			area = &a
 			break
 		}
-		if a, ok := s.areas[surfui.IDOf(n)]; ok {
+		if a, ok := s.hits[surfui.IDOf(n)]; ok {
 			area = &a
 			break
 		}
@@ -156,6 +161,25 @@ func (s *Surface) closeMenu(refocus bool) {
 	if refocus && s.focused != "" && s.index[s.focused] != nil && !s.lent {
 		s.blur, s.focus = false, s.focused
 	}
+}
+
+// viewMenu is what the host's view says to the open menu: it closes,
+// picking nothing, when its element is no longer in view or its cells
+// moved or changed size, as a native menu closes when the page scrolls.
+// The keyboard goes back to the element, as it does when Escape closes
+// the menu; the next Update says the menu is closed (Frame.Menu.Closed),
+// as CloseMenu does. areas is the view's, every element in it that asked.
+func (s *Surface) viewMenu(areas map[string]hotty.Area) {
+	m := s.menu
+	if m == nil {
+		return
+	}
+	a, ok := areas[m.id]
+	if !ok || m.seen != nil && *m.seen != a {
+		s.closeMenu(true)
+		return
+	}
+	m.seen = &a
 }
 
 // menuNow is the open menu's items, as the tree has them now.
