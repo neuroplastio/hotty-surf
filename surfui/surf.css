@@ -68,7 +68,7 @@
   --u-bg: #fbfbfd;
   --u-accent: #5b4bd6;
   --u-ok: #1a7f37;
-  --u-warn: #9a6700;
+  --u-warn: #875a00;
   --u-error: #cf222e;
   --u-info: #0b6e99;
   --u-ink: #1b1b1e;
@@ -95,7 +95,9 @@
    The error on a selected row (the maintainer, 2026-11-05: "Selected-row
    red >= 4.5:1"): on dark the selected fill (#595a5e on a dark ground)
    leaves the terminal's red at about 2.3:1, so a selected row's error is
-   a lighter red, 4.56:1 there; other rows keep the terminal's. */
+   a lighter red, 4.56:1 there; other rows keep the terminal's. Its warn
+   is the same (3.8:1 there): a lighter amber, 4.84:1. Paper's warn is
+   dark enough for its soft fill and a selected row, 4.9:1 on both. */
 .u-surface {
   --u-canvas: color-mix(in srgb, var(--u-bg) 72%, black);
   --u-popover: color-mix(in srgb, var(--u-bg) 90%, white);
@@ -106,6 +108,7 @@
   --u-warn-soft: color-mix(in srgb, var(--u-warn) 14%, transparent);
   --u-error-soft: color-mix(in srgb, var(--u-error) 16%, transparent);
   --u-error-on-sel: #ffc4c0;
+  --u-warn-on-sel: #ffd27a;
   --u-solid: var(--u-ink);
   --u-solid-hover: white;
   --u-on-solid: var(--u-canvas);
@@ -121,6 +124,7 @@
     --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
     --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
     --u-error-on-sel: var(--u-error);
+    --u-warn-on-sel: var(--u-warn);
     --u-solid-hover: black;
     --u-on-solid: #ffffff;
   }
@@ -135,6 +139,7 @@
   --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
   --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
   --u-error-on-sel: var(--u-error);
+  --u-warn-on-sel: var(--u-warn);
   --u-solid-hover: black;
   --u-on-solid: #ffffff;
 }
@@ -294,6 +299,7 @@
    GPUI's tight leading, not the row's. */
 .u-compact .u-small.u-wrap, .u-roomy .u-small.u-wrap { line-height: 1.5; }
 .u-item.is-sel.u-tone-error, .u-item.is-sel .u-tone-error { color: var(--u-error-on-sel); }
+.u-item.is-sel.u-tone-warn, .u-item.is-sel .u-tone-warn { color: var(--u-warn-on-sel); }
 
 /* Marks: a glyph in a slot of its own; an icon, an MDI glyph from the
    hosts' Nerd Font (HOST.md §2.1) beside a label, muted; a state's dot. */
@@ -725,7 +731,8 @@
    and a warn marker. */
 .u-btn.u-pill.is-att, .u-btn.u-iconbtn.is-att { color: var(--u-warn); }
 .u-btn.u-pill.is-att.is-cur, .u-btn.u-iconbtn.is-att.is-cur { color: var(--u-warn); background: var(--u-warn-soft); }
-.u-item.is-att, .u-item.is-sel.is-att { color: var(--u-warn); }
+.u-item.is-att { color: var(--u-warn); }
+.u-item.is-sel.is-att { color: var(--u-warn-on-sel); }
 .u-item.is-att .u-tone-muted { color: color-mix(in srgb, var(--u-warn) 80%, var(--u-muted)); }
 .u-list:focus-within > .u-item.is-sel.is-att, :focus-within > .u-list > .u-item.is-sel.is-att {
   background: linear-gradient(var(--u-warn), var(--u-warn)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-warn-soft);

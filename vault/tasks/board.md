@@ -568,6 +568,16 @@ The order is the maintainer's, via gov (2026-10-30):
     longer shrinks; story box/scroll-text. A fixed-height stack that
     doesn't scroll still lets its text shrink: rows held whole there
     would spill over what comes after it.
+  - [x] Warn clears 4.5:1 where it fell short, from plx-frames' measures
+    via gov (2026-11-06). On dark a selected row's warn was 3.8:1 on
+    the selected fill (#595a5e), as the error was: `--u-warn-on-sel`,
+    #ffd27a, 4.84:1, takes a selected row's warn tone and attention, and
+    light and paper keep their warn there. Paper's warn on its own soft
+    fill (a current attention pill, a header's warn chip) was 3.99:1 and
+    on a selected row 4.01:1: paper's warn is #875a00 now (was #9a6700),
+    4.88:1 and 4.96:1, and 5.82:1 on the ground. Story list/warn, and
+    attention/states for the pill. Paper's error on a selected row is
+    4.42:1, not yet asked for.
 
 ## v0
 
