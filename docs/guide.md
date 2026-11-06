@@ -1154,8 +1154,10 @@ as a list is, above the element's with `Press: hotty.On`, and to give
 the keyboard (`hotty.Focus`): `Closed` deletes the last one; `New` sends
 `View.HTML()` and places it, otherwise its `Ops` are a delta (the
 highlighted row). `Point` is the pointer's cell for a press, and
-`View.Place(col, row, cols, rows)` puts the menu under it and to its
-right, flipped where the grid ends; `Area` is the element's cells for a
+`View.PlaceAtPointer(col, row, cols, rows)` puts the menu's top left at it,
+flipped left and up where the grid ends (`View.Place` puts a menu under a
+button or header instead, to its right: use that where the menu must not
+cover what opened it); `Area` is the element's cells for a
 key, under which the host puts it; with neither, the host places it where
 it likes. `View.Cols` and `Rows` are its cells, `View.Cells` what it
 draws in the cells, `At` the item the keys are on (-1 for none, as the

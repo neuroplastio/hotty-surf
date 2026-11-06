@@ -66,7 +66,7 @@ func TestCellsMenuOpensAndPicks(t *testing.T) {
 	if !ok {
 		t.Fatalf("no menu after the right press:\n%s", a.Host.Screen())
 	}
-	if cx < x+3 || cy <= y {
+	if cx < x+3 || cy < y {
 		t.Errorf("the menu's item is at %d,%d, want it under the pointer (%d,%d) and to its right", cx, cy, x+3, y)
 	}
 	if _, _, ok := find(a, "Delete"); !ok {

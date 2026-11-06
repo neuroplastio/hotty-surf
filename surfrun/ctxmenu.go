@@ -50,8 +50,8 @@ type MenuFrame struct {
 	New bool
 	Ops []hotty.Op
 	// Point is the pointer's cell, from the surface's top left cell, for a
-	// menu a secondary press opened: View.Place puts the menu under it and
-	// to its right. Area is the element's cells, as its last click or press
+	// menu a secondary press opened: View.PlaceAtPointer puts the menu at it
+	// (View.Place, under it). Area is the element's cells, as its last click or press
 	// said (hotty.Event.Area), for one a key opened: the host puts the menu
 	// under it. Both are nil where the surface knows no place for a key's
 	// menu, and the host then places it where it likes (the focused

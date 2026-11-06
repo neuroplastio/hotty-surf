@@ -542,7 +542,7 @@ and a `:if` chain goes on past it.
   own (`examples/files`).
   - *On a hotty host* the menu is a surface of its own, `<name>-menu`, at
     a higher z than a Select's list (2, with presses on), placed with
-    `MenuView.Place` at the pointer's cell from the surface's own origin,
+    `MenuView.PlaceAtPointer` at the pointer's cell from the surface's own origin,
     or under the element's cells for a key (flipped above where there is
     no room, at the surface's top left where no click said where the
     element is). Its document is sent fresh on each open and the surface
@@ -558,7 +558,7 @@ and a `:if` chain goes on past it.
   - *In the cells* a press of the terminal's right button is a secondary
     press at the element drawn at the cell (`cells.Renderer.At`). The
     runtime draws the open menu (`MenuView.Cells`) over the screen at
-    `MenuView.Place`, with the keys' row highlighted, takes the keys for
+    `MenuView.PlaceAtPointer`, with the keys' row highlighted, takes the keys for
     it (Tab too), and takes a click on a row to pick it; a click or the
     wheel elsewhere closes it and goes on as it would have. **With the
     program's mouse off there is no secondary press:** the terminal
@@ -572,7 +572,8 @@ and a `:if` chain goes on past it.
   (`cells.Renderer.At`) or the focus: the innermost element's with a
   menu. It shows them in surf's look, `Surface.MenuView`: a surface of
   its own, with its HTML, its size in cells for a host
-  (`MenuView.Place` puts it at the point) and its cells, and
+  (`MenuView.PlaceAtPointer` puts it at the pointer, `Place` under a
+  button or header) and its cells, and
   `MenuView.Item` says which item a press in it picks. It hands that
   item to `Surface.Pick`, which runs it as a click runs a handler. A
   pick of an item gone since (its row, or the item, or disabled now)

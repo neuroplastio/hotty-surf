@@ -112,3 +112,30 @@ func TestSurfaceMenuView(t *testing.T) {
 		t.Errorf("a press on the third row picks %+v, %v", it, ok)
 	}
 }
+
+// A menu a press opens has its top left at the pointer, its right edge
+// there where it has no room to the right, its bottom row there where it
+// has none below, and stays in the grid; Place is under the point.
+func TestPlaceAtPointer(t *testing.T) {
+	v := surfrun.OpenMenu(paneItems, -1, surfrun.MenuLook{})
+	cols, rows := 80, 24
+	for _, c := range []struct {
+		c, r, x, y int
+		what       string
+	}{
+		{10, 5, 10, 5, "room both ways"},
+		{cols - 1, 5, cols - v.Cols, 5, "no room to the right"},
+		{10, rows - 1, 10, rows - v.Rows, "no room below"},
+		{cols - 1, rows - 1, cols - v.Cols, rows - v.Rows, "neither"},
+	} {
+		if x, y := v.PlaceAtPointer(c.c, c.r, cols, rows); x != c.x || y != c.y {
+			t.Errorf("%s: at %d,%d, want %d,%d", c.what, x, y, c.x, c.y)
+		}
+	}
+	if x, y := v.PlaceAtPointer(0, 0, v.Cols-3, v.Rows-1); x != 0 || y != 0 {
+		t.Errorf("a grid too small: %d,%d", x, y)
+	}
+	if x, y := v.Place(10, 5, cols, rows); x != 10 || y != 6 {
+		t.Errorf("Place: %d,%d, want 10,6", x, y)
+	}
+}

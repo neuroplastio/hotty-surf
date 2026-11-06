@@ -81,6 +81,24 @@ func (v MenuView) Place(c, r, cols, rows int) (x, y int) {
 	return max(0, min(x, cols-v.Cols)), max(0, min(y, rows-v.Rows))
 }
 
+// PlaceAtPointer is where a menu a press opened goes, its top-left cell,
+// for a pointer at cell (c, r) of a grid cols × rows, as a native menu
+// opens: at the pointer's cell, with its right edge at the pointer's cell
+// where there is no room to the right, and its bottom row at the
+// pointer's row where there is none below, kept in the grid. Use it for a
+// menu opened by a pointer (an element's, Frame.Menu); use Place for one
+// that opens under a button or a header, which it must not cover.
+func (v MenuView) PlaceAtPointer(c, r, cols, rows int) (x, y int) {
+	x, y = c, r
+	if x+v.Cols > cols {
+		x = c + 1 - v.Cols
+	}
+	if y+v.Rows > rows {
+		y = r + 1 - v.Rows
+	}
+	return max(0, min(x, cols-v.Cols)), max(0, min(y, rows-v.Rows))
+}
+
 // MenuView is the menu m (from Menu) as its host shows it, in the theme
 // and density of its element, its keys in the surface's key style: in
 // Compact, in cells of 10×21 CSS px. hi is the item the keyboard is on,

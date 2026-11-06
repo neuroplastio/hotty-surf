@@ -54,14 +54,14 @@ func (r *Runtime) dropMenu(refocus bool) {
 }
 
 // menuPlacement is where the menu goes, in the screen's grid: for a
-// press, View.Place at the pointer's cell, from the surface's own top
+// press, View.PlaceAtPointer at the pointer's cell, from the surface's own top
 // left; for a key, under the element's cells (placeBelow); with neither,
 // at the surface's top left.
 func (r *Runtime) menuPlacement(m *MenuFrame) (x, y int, p hotty.Placement) {
 	top := r.opts.Top
 	switch {
 	case m.Point != nil:
-		x, y = m.View.Place(m.Point.Col, top+m.Point.Row, r.cols, r.rows)
+		x, y = m.View.PlaceAtPointer(m.Point.Col, top+m.Point.Row, r.cols, r.rows)
 	case m.Area != nil:
 		a := m.Area
 		x, y = placeBelow(m.View, a.Col, top+a.Row, a.H, r.cols, r.rows)

@@ -12,7 +12,7 @@ import (
 )
 
 // In the cells an element's menu is drawn by the runtime over the
-// renderer's screen, from MenuView.Cells at the place MenuView.Place
+// renderer's screen, from MenuView.Cells at the place MenuView.PlaceAtPointer
 // gives, since the terminal has no surfaces. A secondary press is the
 // terminal's right button, which the renderer's mouse reporting gives the
 // runtime (button 2 of SGR, 1006), at the innermost element drawn at the
@@ -56,7 +56,7 @@ func (r *Runtime) cellsMenu() (cm cellsMenu, ok bool) {
 	cm = cellsMenu{view: v, at: m.at}
 	switch {
 	case m.point != nil:
-		cm.x, cm.y = v.Place(m.point.Col, m.point.Row, cols, rows)
+		cm.x, cm.y = v.PlaceAtPointer(m.point.Col, m.point.Row, cols, rows)
 	default:
 		// Under the focused element, its first cell where the renderer
 		// has it; at the top left with none.

@@ -67,8 +67,8 @@ func TestRuntimeMenuOpensAndPicks(t *testing.T) {
 	if p.Z <= 1 || !menu.Press() || p.Cols == 0 || p.Rows == 0 {
 		t.Errorf("placement %+v, press %v: want a z above the list's (1) and presses on", p, menu.Press())
 	}
-	if c, r := menu.At(); c != 7 || r != 4 {
-		t.Errorf("at %d,%d, want 7,4: under the pointer's cell (7,3), and to its right", c, r)
+	if c, r := menu.At(); c != 7 || r != 3 {
+		t.Errorf("at %d,%d, want 7,4: the pointer's cell (7,3)", c, r)
 	}
 	a.Wait("the menu has the keyboard", func() bool { return menu.Focused() == surfui.MenuID })
 	if hi := menuHi(a); hi != -1 {
@@ -203,7 +203,7 @@ func TestRuntimeMenuSecondPressReplaces(t *testing.T) {
 			return false
 		}
 		c, r := s.At()
-		return c == 20 && r == 11
+		return c == 20 && r == 10
 	})
 	a.Wait("the menu has the keyboard", func() bool { return a.Menu().Focused() == surfui.MenuID })
 	a.Host.Key("arrow_down")
