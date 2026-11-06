@@ -97,7 +97,9 @@
    leaves the terminal's red at about 2.3:1, so a selected row's error is
    a lighter red, 4.56:1 there; other rows keep the terminal's. Its warn
    is the same (3.8:1 there): a lighter amber, 4.84:1. Paper's warn is
-   dark enough for its soft fill and a selected row, 4.9:1 on both. */
+   dark enough for its soft fill and a selected row, 4.9:1 on both;
+   paper's error on a selected row is a darker red, 4.92:1 (its own,
+   4.42:1 there). */
 .u-surface {
   --u-canvas: color-mix(in srgb, var(--u-bg) 72%, black);
   --u-popover: color-mix(in srgb, var(--u-bg) 90%, white);
@@ -138,7 +140,7 @@
   --u-accent-strong: color-mix(in srgb, var(--u-accent) 28%, transparent);
   --u-warn-soft: color-mix(in srgb, var(--u-warn) 12%, transparent);
   --u-error-soft: color-mix(in srgb, var(--u-error) 10%, transparent);
-  --u-error-on-sel: var(--u-error);
+  --u-error-on-sel: #c21f2a;
   --u-warn-on-sel: var(--u-warn);
   --u-solid-hover: black;
   --u-on-solid: #ffffff;

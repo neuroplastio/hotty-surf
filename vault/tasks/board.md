@@ -576,8 +576,11 @@ The order is the maintainer's, via gov (2026-10-30):
     fill (a current attention pill, a header's warn chip) was 3.99:1 and
     on a selected row 4.01:1: paper's warn is #875a00 now (was #9a6700),
     4.88:1 and 4.96:1, and 5.82:1 on the ground. Story list/warn, and
-    attention/states for the pill. Paper's error on a selected row is
-    4.42:1, not yet asked for.
+    attention/states for the pill.
+  - [x] Paper's error on a selected row clears 4.5:1 (gov, 2026-11-06):
+    #cf222e was 4.42:1 on the selected fill (#e9e9eb). Paper's
+    `--u-error-on-sel` is #c21f2a, 4.92:1; other rows keep #cf222e.
+    Story list/error.
 
 ## v0
 
