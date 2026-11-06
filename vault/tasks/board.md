@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-11-05
+Last updated: 2026-11-06
 
 **Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
 2026-10-30): candidate A (Live) with layout in `.surf` templates and
@@ -297,15 +297,51 @@ The order is the maintainer's, via gov (2026-10-30):
   (`Surface.Pick`), a stale pick running nothing. docs/surf.md and the
   spec say it. `:each` in a `<menu>` is refused: an item's id is its
   place in the source.
-- [ ] **Context menus: a secondary press** (hotty 0.7 proposal V7-01,
-  pending; the maintainer's call): a `press` whose detail has
-  `"button": 2` and the pointer's cell (`"c"`, `"r"`), on an element
-  that opts in by a token in its `data-on`, whose name the spec has not
-  settled. Until then no element asks for it, and the host finds the
-  menu itself. Where it goes is marked `SECONDARY PRESS` in
-  `surfui/html.go` (`dataOn`); then `Surface.Event` hands the host the
-  menu of such a press's target, and the cells' renderer sends one on a
-  right press.
+- [ ] **Context menus: a secondary press** (hotty 0.7's V7-01, accepted
+  by the maintainer 2026-11-05: "Program, hotty-surf does the whole
+  thing out of the box"). Built on the local branch `hotty-0.7`, which
+  plx's look loop builds from, and rides the 0.7 cut. Head 44db24f;
+  main is merged in at 8af8e8d.
+  - An element with a `<menu>` asks for `secondary` and `view` in its
+    `data-on`.
+  - `Surface` opens the menu on a secondary press, at the pointer, or on
+    `shift+f10` and the Menu key, under the element. On a host it is a
+    surface of its own (`Frame.Menu`).
+  - In the cells, `cells.Renderer` draws, places and routes it
+    (`cells.Frame.Menu`, `Menued`, `Renderer.Secondary`), so a host of
+    `Surface.Cells()` needs no code for it. The pointer lights a row,
+    the one the keys move (`Renderer.Hover`, `Hovers`).
+  - It closes when its element scrolls or leaves the view.
+  - An attribute both the app and surf set is written once, its tokens
+    merged.
+- [ ] **Hover in a cells tool** (the maintainer, 2026-11-06, via gov:
+  "(a)", light only the focused tool, not (b) any cells tool shown,
+  which would keep all motion on in cells mode). On a host the kit's
+  `:hover` rules light items, nav items, clickable lines, rows and
+  text, buttons, switches, selects, pills and the search. In the cells
+  only an open menu's row lights, and no tooltip shows, since a host's
+  tool hears no bare motion there (plx's `sdk/surfdk/tip.go`). One leg
+  at a time, in this order:
+  1. Design Agent: the cells' hover look, apart from the focus and
+     selection bands.
+  2. hotty Agent, on `hotty-0.7` (eac86b0's `Renderer.Hover` is there),
+     after the look.
+     - With no menu open, the Renderer keeps the element under the
+       pointer from `Hover`, paints it in that look, and redraws only
+       when that element changes.
+     - `Hovers()` is true whenever the screen has something that lights
+       on hover. Tooltips follow, since `Tip` takes the cells' element
+       at the pointer.
+     - surfrun's runtime asks for all motion then too.
+  3. plx-look, in plx.
+     - plx asks its terminal for all motion (1003) while a focused cells
+       tool `Hovers()`, as it does for a focused pane whose program asks.
+     - It routes bare motion over the tool to `Hover`, and sends
+       `Hover(-1, -1)` when the pointer leaves the tool.
+
+  Not V7-01. It rides the 0.7 cut if it has landed by then. The cut
+  doesn't wait for it; otherwise it follows on main. What motion costs:
+  [knowledge/cells.md](../knowledge/cells.md#the-pointers-motion).
 - [x] **Icons by name, SVG icons, icons in buttons**: `<icon
   name="cog-outline"/>` and `:name`, MDI's names from Nerd Fonts
   3.5.1's glyphnames.json (`pkg/mdi`, generated; NOTICE), a literal
