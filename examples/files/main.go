@@ -4,11 +4,12 @@
 // arrows, a letter, Enter or a click pick; Escape or a click elsewhere
 // closes it. An item's Act only says what it picked, on the status line.
 //
-//	go run ./examples/files
+//	go run ./examples/files [-density dense|compact|roomy]
 package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 
@@ -48,8 +49,10 @@ func (f *files) menu(name string) []surfui.MenuItem {
 }
 
 func main() {
+	density := flag.String("density", "", "draw at this density (dense, compact or roomy); the default is dense")
+	flag.Parse()
 	// The header is cells above the surface, which are the terminal's own.
-	opts := surfrun.Options{Name: "files", Top: 1, Header: func(int) string { return " Files: right-click a row, or Shift+F10" }}
+	opts := surfrun.Options{Name: "files", Density: surfui.Density(*density), Top: 1, Header: func(int) string { return " Files: right-click a row, or Shift+F10" }}
 	if err := surfrun.Run(context.Background(), surflive.New(&files{}), opts); err != nil {
 		fmt.Fprintln(os.Stderr, "files:", err)
 		os.Exit(1)
