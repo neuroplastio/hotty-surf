@@ -1,7 +1,7 @@
 # F5's known failures (scripts/gate/gate.cjs --baseline): every case here
 # is a Blitz gap on vault/knowledge/blitz-gaps.md, with its score in CSS
 # px². Written by --write-baseline, again only when a Blitz fix lands or
-# a gap is listed. Last written with hotty built 2026-11-07 14:13 UTC (checkout at b7cbf17), Chromium 153.0.8010.12.
+# a gap is listed. Last written with hotty built 2026-11-07 14:13 UTC (checkout at unknown), Chromium 153.0.8010.12.
 attention-states-graphite-dense-1.6	28.9
 attention-states-neuroplastio-dense-1.6	28.9
 attention-states-paper-dense-1.6	28.9
@@ -70,11 +70,11 @@ dialog-box-graphite-compact-1.6	21.1
 dialog-box-graphite-compact-2	17.3
 dialog-box-graphite-roomy-1.6	20.3
 dialog-box-graphite-roomy-2	19.3
-dialog-box-neuroplastio-compact-1.6	308.6
+dialog-box-neuroplastio-compact-1.6	21.1
 dialog-box-neuroplastio-compact-2	17.3
 dialog-box-neuroplastio-roomy-1.6	20.3
 dialog-box-neuroplastio-roomy-2	19.0
-dialog-box-paper-compact-1.6	308.2
+dialog-box-paper-compact-1.6	20.7
 dialog-box-paper-compact-2	17.3
 dialog-box-paper-roomy-1.6	20.7
 dialog-box-paper-roomy-2	19.0
@@ -82,7 +82,7 @@ dialog-box-stone-compact-1.6	20.7
 dialog-box-stone-compact-2	17.3
 dialog-box-stone-roomy-1.6	314.5
 dialog-box-stone-roomy-2	19.0
-dialog-box-terminal-compact-1.6	308.6
+dialog-box-terminal-compact-1.6	21.1
 dialog-box-terminal-compact-2	17.3
 dialog-box-terminal-roomy-1.6	20.3
 dialog-box-terminal-roomy-2	19.0
@@ -100,19 +100,19 @@ field-states-neuroplastio-dense-1.6	41.0
 field-states-paper-dense-1.6	34.0
 field-states-stone-dense-1.6	332.4
 field-states-terminal-dense-1.6	41.0
-key-caps-graphite-compact-1.6	100.0
+key-caps-graphite-compact-1.6	47.7
 key-caps-graphite-dense-1.6	78.5
 key-caps-graphite-roomy-1.6	46.1
-key-caps-neuroplastio-compact-1.6	101.2
+key-caps-neuroplastio-compact-1.6	47.7
 key-caps-neuroplastio-dense-1.6	78.9
 key-caps-neuroplastio-roomy-1.6	46.9
-key-caps-paper-compact-1.6	80.1
+key-caps-paper-compact-1.6	27.7
 key-caps-paper-dense-1.6	19.5
 key-caps-paper-roomy-1.6	21.1
-key-caps-stone-compact-1.6	99.2
+key-caps-stone-compact-1.6	47.3
 key-caps-stone-dense-1.6	79.3
 key-caps-stone-roomy-1.6	46.1
-key-caps-terminal-compact-1.6	101.2
+key-caps-terminal-compact-1.6	47.7
 key-caps-terminal-dense-1.6	78.9
 key-caps-terminal-roomy-1.6	46.9
 key-styles-graphite-compact-1.6	14.5
@@ -150,16 +150,11 @@ line-paragraph-terminal-compact-2	1737.3
 line-paragraph-terminal-dense-1.6	1390.6
 line-paragraph-terminal-dense-2	1909.5
 line-paragraph-terminal-roomy-2	995.0
-line-runs-graphite-compact-1.6	105.1
-line-runs-neuroplastio-compact-1.6	107.0
-line-runs-paper-compact-1.6	105.5
-line-runs-stone-compact-1.6	103.9
-line-runs-terminal-compact-1.6	107.8
-list-drop-graphite-compact-1.6	39.8
-list-drop-neuroplastio-compact-1.6	42.2
-list-drop-paper-compact-1.6	38.7
-list-drop-stone-compact-1.6	37.9
-list-drop-terminal-compact-1.6	42.2
+list-drop-graphite-compact-1.6	29.3
+list-drop-neuroplastio-compact-1.6	30.1
+list-drop-paper-compact-1.6	29.3
+list-drop-stone-compact-1.6	29.3
+list-drop-terminal-compact-1.6	30.1
 list-entries-graphite-compact-1.6	73.0
 list-entries-graphite-roomy-1.6	16.8
 list-entries-neuroplastio-compact-1.6	75.4
@@ -170,24 +165,19 @@ list-entries-stone-compact-1.6	75.4
 list-entries-stone-roomy-1.6	20.7
 list-entries-terminal-compact-1.6	75.4
 list-entries-terminal-roomy-1.6	15.6
-list-nav-graphite-compact-1.6	14.5
-list-nav-neuroplastio-compact-1.6	13.7
-list-nav-paper-compact-1.6	14.1
-list-nav-stone-compact-1.6	14.1
-list-nav-terminal-compact-1.6	13.7
 list-selection-neuroplastio-compact-1.6	27.0
 list-selection-stone-roomy-1.6	16.8
 list-selection-terminal-compact-1.6	27.0
-list-states-graphite-compact-1.6	307.4
+list-states-graphite-compact-1.6	303.5
 list-states-graphite-dense-1.6	262.5
 list-states-graphite-roomy-1.6	17.6
-list-states-neuroplastio-compact-1.6	305.9
+list-states-neuroplastio-compact-1.6	303.5
 list-states-neuroplastio-dense-1.6	281.2
 list-states-neuroplastio-roomy-1.6	16.8
 list-states-paper-roomy-1.6	17.6
+list-states-stone-compact-1.6	303.5
 list-states-stone-dense-1.6	262.5
 list-states-stone-roomy-1.6	28.1
-list-states-terminal-compact-1.6	306.6
 list-states-terminal-dense-1.6	262.5
 list-states-terminal-roomy-1.6	16.8
 look-agents-graphite-compact-1.6	469.1
@@ -262,15 +252,15 @@ row-fit-paper-dense-1.6	33.2
 row-fit-stone-dense-1.6	33.6
 row-fit-stone-roomy-1.6	18.4
 row-fit-terminal-dense-1.6	32.8
-scale-zoom-graphite-compact-1.6	73.8
+scale-zoom-graphite-compact-1.6	18.7
 scale-zoom-graphite-roomy-1.6	14.5
-scale-zoom-neuroplastio-compact-1.6	84.4
+scale-zoom-neuroplastio-compact-1.6	30.1
 scale-zoom-neuroplastio-roomy-1.6	14.8
-scale-zoom-paper-compact-1.6	74.6
+scale-zoom-paper-compact-1.6	21.5
 scale-zoom-paper-roomy-1.6	15.6
-scale-zoom-stone-compact-1.6	77.3
+scale-zoom-stone-compact-1.6	18.7
 scale-zoom-stone-roomy-1.6	14.8
-scale-zoom-terminal-compact-1.6	84.0
+scale-zoom-terminal-compact-1.6	30.1
 scale-zoom-terminal-roomy-1.6	14.8
 segmented-states-graphite-compact-1.6	101.2
 segmented-states-graphite-roomy-1.6	125.8

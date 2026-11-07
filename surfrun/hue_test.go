@@ -177,6 +177,9 @@ func TestPaletteWarnsOnce(t *testing.T) {
 			a.Wait("the stylesheet without it", func() bool {
 				return strings.Contains(css(), ".u-hue-coral") && !strings.Contains(css(), "--u-hue-faint")
 			})
+			// The warnings can come after the stylesheet: wait for the
+			// fourth, then look at them all.
+			a.Wait("the hue's warnings", func() bool { return len(w.all()) >= 4 })
 			if got := w.all(); len(got) != 4 || !strings.Contains(got[2], "lower-case identifier") || !strings.Contains(got[3], `"faint" is in no palette`) {
 				t.Errorf("a hue that is none, warnings %q", got)
 			}

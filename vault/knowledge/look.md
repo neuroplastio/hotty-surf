@@ -82,7 +82,8 @@ Kept as R-24 changed them on purpose:
 
 Taken:
 - A selected row keeps a hairline round its fill when its list doesn't
-  have the keyboard (herdr UI).
+  have the keyboard (herdr UI). Dropped 2026-11-07 for plx's chrome
+  contract (A0), where a selected row is its fill alone.
 - Hover lifts a nav row's text and an item's icon to the ink (GPUI Kit).
 - Small wrapping text has 1.5 leading, not the row's.
 - A dialog's group captions line up with its rows' content.
