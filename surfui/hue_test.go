@@ -42,7 +42,7 @@ func TestContrastOf(t *testing.T) {
 		t.Error("a colour that is no hex has a contrast")
 	}
 	// A hue that passes on both grounds: the Q-0001 examples.
-	for _, c := range []struct{ dark, light string }{{"#ff8e7a", "#b4321f"}, {"#4fd1c5", "#0f766e"}} {
+	for _, c := range []struct{ dark, light string }{{"#ff8e7a", "#a42d1c"}, {"#4fd1c5", "#0d645d"}} {
 		d, _ := ContrastOf(c.dark, DarkGround)
 		l, _ := ContrastOf(c.light, PaperGround)
 		if d < TextContrast || l < TextContrast {
@@ -54,13 +54,13 @@ func TestContrastOf(t *testing.T) {
 // No single colour is text on both grounds: their own contrast is under
 // 4.5 squared, so a value= is a dot's, or refused.
 func TestNoValueIsText(t *testing.T) {
-	for _, v := range []string{"#000", "#fff", "#808a9c", "#777", "#9a9aa0"} {
+	for _, v := range []string{"#000", "#fff", "#757575", "#777", "#9a9aa0"} {
 		weak := Palette{"v": {Value: v}}.Contrast()
 		if len(weak) == 0 {
 			t.Errorf("%s reads as text on both grounds", v)
 		}
 	}
-	if weak := (Palette{"v": {Value: "#808a9c"}}).ContrastAt(func(string) float64 { return DotContrast }); len(weak) != 0 {
+	if weak := (Palette{"v": {Value: "#757575"}}).ContrastAt(func(string) float64 { return DotContrast }); len(weak) != 0 {
 		t.Errorf("a mid grey fails as a dot's: %v", weak)
 	}
 }
@@ -90,9 +90,9 @@ func TestHueCheck(t *testing.T) {
 		h    Hue
 		err  string
 	}{
-		{"coral", Hue{Dark: "#ff8e7a", Light: "#b4321f"}, ""},
-		{"coral", Hue{Dark: "#ff8e7a", Light: "#b4321f", Cells: Cell(9)}, ""},
-		{"coral", Hue{Dark: "#ff8e7a", Light: "#b4321f", Cells: Cell(0)}, ""},
+		{"coral", Hue{Dark: "#ff8e7a", Light: "#a42d1c"}, ""},
+		{"coral", Hue{Dark: "#ff8e7a", Light: "#a42d1c", Cells: Cell(9)}, ""},
+		{"coral", Hue{Dark: "#ff8e7a", Light: "#a42d1c", Cells: Cell(0)}, ""},
 		{"sea_green2", Hue{Value: "#2e8b57"}, ""},
 		{"Coral", Hue{Value: "#fff"}, "a hue's name is a lower-case identifier"},
 		{"sea-green", Hue{Value: "#fff"}, "a hue's name is a lower-case identifier"},
@@ -119,7 +119,7 @@ func TestHueCheck(t *testing.T) {
 // A contrast failure says its number the way Q-0001 has it, cut where it
 // would round up to what is asked.
 func TestWeakMessage(t *testing.T) {
-	weak := Palette{"coral": {Dark: "#a33", Light: "#b4321f"}}.Contrast()
+	weak := Palette{"coral": {Dark: "#a33", Light: "#a42d1c"}}.Contrast()
 	if len(weak) != 1 {
 		t.Fatalf("weak: %v", weak)
 	}
@@ -129,7 +129,7 @@ func TestWeakMessage(t *testing.T) {
 		t.Errorf("%q, want %q", got, want)
 	}
 	paper := Palette{"x": {Dark: "#ff8e7a", Light: "#fff"}}.Contrast()
-	if len(paper) != 1 || paper[0].String() != "x's light #fff is 1.0:1 on paper; text needs 4.5" {
+	if len(paper) != 1 || paper[0].String() != "x's light #fff is 1.5:1 on stone; text needs 4.5" {
 		t.Errorf("paper: %v", paper)
 	}
 	dot := Palette{"x": {Value: "#222"}}.ContrastAt(func(string) float64 { return DotContrast })
@@ -144,14 +144,14 @@ func TestWeakMessage(t *testing.T) {
 
 func TestPaletteCSS(t *testing.T) {
 	p := Palette{
-		"teal":  {Dark: "#4fd1c5", Light: "#0f766e"},
-		"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: Cell(9)},
+		"teal":  {Dark: "#4fd1c5", Light: "#0d645d"},
+		"coral": {Dark: "#ff8e7a", Light: "#a42d1c", Cells: Cell(9)},
 	}
 	css := p.CSS()
 	for _, want := range []string{
 		".u-surface {\n  --u-hue-coral: #ff8e7a;\n  --u-hue-teal: #4fd1c5;\n}",
-		"@media (prefers-color-scheme: light) {\n  .u-surface {\n    --u-hue-coral: #b4321f;\n    --u-hue-teal: #0f766e;\n  }\n}",
-		".u-surface.u-theme-paper, .u-surface.u-theme-stone {\n  --u-hue-coral: #b4321f;\n  --u-hue-teal: #0f766e;\n}",
+		"@media (prefers-color-scheme: light) {\n  .u-surface {\n    --u-hue-coral: #a42d1c;\n    --u-hue-teal: #0d645d;\n  }\n}",
+		".u-surface.u-theme-paper, .u-surface.u-theme-stone {\n  --u-hue-coral: #a42d1c;\n  --u-hue-teal: #0d645d;\n}",
 		".u-hue-coral { color: var(--u-hue-coral); }",
 		".u-hue-teal { color: var(--u-hue-teal); }",
 		// A hue's dot is a thing's own colour, 8px, where a state's is 6.
@@ -173,14 +173,14 @@ func TestPaletteCSS(t *testing.T) {
 // and the dot's keeps the hue; a hue that is no hue is left out whole.
 func TestPaletteCSSFaint(t *testing.T) {
 	p := Palette{
-		"ok":    {Dark: "#ff8e7a", Light: "#b4321f"},
-		"faint": {Dark: "#7a8499", Light: "#b4321f"},
+		"ok":    {Dark: "#ff8e7a", Light: "#a42d1c"},
+		"faint": {Dark: "#7a8499", Light: "#a42d1c"},
 		"junk":  {Value: "red}"},
 	}
 	css := p.CSS()
 	for _, want := range []string{
 		"  --u-hue-faint: #7a8499;\n  --u-hue-faint-ink: var(--u-ink);\n",
-		"    --u-hue-faint: #b4321f;\n    --u-hue-faint-ink: var(--u-hue-faint);\n",
+		"    --u-hue-faint: #a42d1c;\n    --u-hue-faint-ink: var(--u-hue-faint);\n",
 		".u-hue-faint { color: var(--u-hue-faint-ink); }",
 		".u-dot.u-hue-faint { --u-dw: 8px; color: var(--u-hue-faint); }",
 		".u-hue-ok { color: var(--u-hue-ok); }",
@@ -199,7 +199,7 @@ func TestPaletteCSSFaint(t *testing.T) {
 	if len(faults) != 2 || !strings.Contains(faults[0], "junk") || !strings.Contains(faults[1], "faint's dark #7a8499 is 3.7:1 on the dark ground; text needs 4.5; its text draws in the ink there, its dots keep the hue") {
 		t.Errorf("faults: %q", faults)
 	}
-	if f := (Palette{"dim": {Dark: "#a33", Light: "#b4321f"}}).Faults(); len(f) != 1 || !strings.HasSuffix(f[0], "its text draws in the ink there, and a dot in it is faint (it needs 3)") {
+	if f := (Palette{"dim": {Dark: "#a33", Light: "#a42d1c"}}).Faults(); len(f) != 1 || !strings.HasSuffix(f[0], "its text draws in the ink there, and a dot in it is faint (it needs 3)") {
 		t.Errorf("a faint dot: %q", f)
 	}
 }

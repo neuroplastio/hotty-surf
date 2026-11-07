@@ -18,10 +18,14 @@ import (
 // The reference grounds a hue's contrast is checked against. The dark
 // ground is the terminal's, which a host sets (--hotty-bg), so no value
 // is certain: DarkGround is hotty-blitz's default theme's, which the
-// fidelity gate draws on. Paper's is the paper theme's own (surf.css).
+// fidelity gate draws on. A light value is checked on LightGround, the
+// darkest light ground the kit has, Stone's (surf.css): what clears it
+// clears paper's (PaperGround) too.
 const (
 	DarkGround  = "#282c34"
 	PaperGround = "#fbfbfd"
+	StoneGround = "#d2d2d2"
+	LightGround = StoneGround
 )
 
 // The contrast a hue needs on both grounds (WCAG 2.x): text 4.5:1, a
@@ -292,7 +296,7 @@ type Weak struct {
 	Hue    string
 	Side   string // "dark", "light" or "value"
 	Colour string
-	Paper  bool // the ground is paper's, not the dark one
+	Paper  bool // the ground is the light one (LightGround), not the dark one
 	Ratio  float64
 	Need   float64 // what was asked of it: TextContrast, or DotContrast of a hue only dots use
 }
@@ -307,7 +311,7 @@ func (w Weak) Dot() bool { return w.Ratio < DotContrast }
 func (w Weak) String() string {
 	ground := "the dark ground"
 	if w.Paper {
-		ground = "paper"
+		ground = "stone"
 	}
 	need := "text needs 4.5"
 	if w.Need == DotContrast {
@@ -337,8 +341,8 @@ func (p Palette) Faults() []string {
 }
 
 // Contrast lists each colour of the palette that text can't be read in,
-// against the dark ground and paper's: a dark value on the first, a light
-// one on the second, a single value on both. It is the names' order. Call
+// against the dark ground and the light one (Stone's): a dark value on the
+// first, a light one on the second, a single value on both. It is the names' order. Call
 // it on a palette that Check passes.
 func (p Palette) Contrast() []Weak { return p.ContrastAt(nil) }
 
@@ -352,7 +356,7 @@ func (p Palette) ContrastAt(need func(name string) float64) []Weak {
 		for _, c := range h.grounds() {
 			ground := DarkGround
 			if c.paper {
-				ground = PaperGround
+				ground = LightGround
 			}
 			want := TextContrast
 			if need != nil {
@@ -397,7 +401,7 @@ func (p Palette) CSS() string {
 	if len(p) == 0 {
 		return ""
 	}
-	weak := map[string][2]bool{} // the hue's text is faint: on the dark ground, on paper
+	weak := map[string][2]bool{} // the hue's text is faint: on the dark ground, on the light one
 	for _, w := range p.Contrast() {
 		f := weak[w.Hue]
 		if w.Paper {

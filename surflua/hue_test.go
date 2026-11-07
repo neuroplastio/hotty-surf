@@ -29,7 +29,7 @@ func TestLuaHues(t *testing.T) {
 	warned := stderr(t)
 	write(t, map[string]string{
 		"crew.surf": `<palette>
-  <hue name="coral" dark="#ff8e7a" light="#b4321f" cells="9"/>
+  <hue name="coral" dark="#ff8e7a" light="#a42d1c" cells="9"/>
 </palette>
 <surface>
   <text hue="coral">literal</text>
@@ -62,7 +62,7 @@ func TestLuaHues(t *testing.T) {
 	// floor's with every hue's rules, and surf.css is that now. The
 	// template's coral stays.
 	r := eval(t, L, `local surf = require("surf")
-		local css = surf.palette{ ochre = { dark = "#f2c14e", light = "#8a5a00", cells = 3 } }
+		local css = surf.palette{ ochre = { dark = "#f2c14e", light = "#7b5000", cells = 3 } }
 		return css, surf.css`)
 	css := r[0].String()
 	if r[1].String() != css || !strings.HasPrefix(css, surfui.CSS) {
@@ -85,7 +85,7 @@ func TestLuaHues(t *testing.T) {
 
 	// Declared again, it replaces the set; a hue whose text can't be read
 	// warns once, however often it is declared.
-	faint := `require("surf").palette{ plum = { value = "#808a9c" } }`
+	faint := `require("surf").palette{ plum = { value = "#757575" } }`
 	for range 2 {
 		r = eval(t, L, "return "+faint)
 	}
@@ -95,8 +95,8 @@ func TestLuaHues(t *testing.T) {
 	if got := strings.Join(v.Palette().Names(), ","); got != "coral,plum" {
 		t.Errorf("the view's hues %s", got)
 	}
-	want := "surf: hue plum's value #808a9c is 4.0:1 on the dark ground; text needs 4.5; its text draws in the ink there, its dots keep the hue\n"
-	if got := warned.String(); strings.Count(got, want) != 1 || !strings.Contains(got, "is 3.3:1 on paper") {
+	want := "surf: hue plum's value #757575 is 3.0:1 on the dark ground; text needs 4.5; its text draws in the ink there, its dots keep the hue\n"
+	if got := warned.String(); strings.Count(got, want) != 1 || !strings.Contains(got, "is 3.0:1 on stone") {
 		t.Errorf("warnings:\n%s", got)
 	}
 

@@ -47,15 +47,15 @@ hits
 }
 @media (prefers-color-scheme: light) {
   .u-surface {
-    --u-hue-coral: #b4321f;
+    --u-hue-coral: #a42d1c;
     --u-hue-plum: #6b3fa0;
-    --u-hue-teal: #0f766e;
+    --u-hue-teal: #0d645d;
   }
 }
 .u-surface.u-theme-paper, .u-surface.u-theme-stone {
-  --u-hue-coral: #b4321f;
+  --u-hue-coral: #a42d1c;
   --u-hue-plum: #6b3fa0;
-  --u-hue-teal: #0f766e;
+  --u-hue-teal: #0d645d;
 }
 .u-hue-coral { color: var(--u-hue-coral); }
 .u-dot.u-hue-coral { --u-dw: 8px; }

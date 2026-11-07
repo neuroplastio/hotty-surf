@@ -10,7 +10,7 @@ template: used as a partial, it says so. (The refusals that read a
 palette itself, a hue's name or hex, are hue-palette's.)
 -- crew.surf --
 <palette>
-  <hue name="coral" dark="#ff8e7a" light="#b4321f"/>
+  <hue name="coral" dark="#ff8e7a" light="#a42d1c"/>
 </palette>
 <surface>
   <pal-ok/>
@@ -23,11 +23,11 @@ palette itself, a hue's name or hex, are hue-palette's.)
 </surface>
 -- pal-ok.surf --
 <palette>
-  <hue name="sky" dark="#7cc4ff" light="#0b62a8"/>
+  <hue name="sky" dark="#7cc4ff" light="#0a5b9c"/>
 </palette>
 -- pal-dup.surf --
 <palette>
-  <hue name="coral" dark="#ff8e7a" light="#b4321f"/>
+  <hue name="coral" dark="#ff8e7a" light="#a42d1c"/>
 </palette>
 -- pal-faint.surf --
 <palette>
@@ -50,6 +50,6 @@ crew.surf:8:14: hue "cora" is in no <palette>; the palettes declare coral, faint
 crew.surf:9:11: <button> takes no hue; it takes attention, autofocus, badge, badge-dot, badge-tone, bare, bold, checked, chrome, current, disabled, down, drag, drop, fill, focusable, gap, grow, height, indent, invalid, keep, key, label, muted, name, pad, pill, raised, reveal, scale, scroll, selected, semibold, small, title, tone, top, width or wrap
 crew.surf:10:9: hue takes a value
 pal-faint.surf:2:3: faint's dark #a33 is 2.1:1 on the dark ground; text needs 4.5
-pal-faint.surf:2:3: faint's light #fff is 1.0:1 on paper; text needs 4.5
+pal-faint.surf:2:3: faint's light #fff is 1.5:1 on stone; text needs 4.5
 pal-mid.surf:2:3: mid's value #808a9c is 4.0:1 on the dark ground; text needs 4.5
-pal-mid.surf:2:3: mid's value #808a9c is 3.3:1 on paper; text needs 4.5
+pal-mid.surf:2:3: mid's value #808a9c is 2.3:1 on stone; text needs 4.5

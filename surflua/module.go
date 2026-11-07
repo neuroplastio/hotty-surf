@@ -74,8 +74,8 @@ func registryOf(L *lua.LState) *registry {
 	return r
 }
 
-// surf.palette{ coral = { dark = "#ff8e7a", light = "#b4321f", cells = 9 },
-// teal = { value = "#0f766e" } } declares hues at run time: a colour from a
+// surf.palette{ coral = { dark = "#ff8e7a", light = "#a42d1c", cells = 9 },
+// teal = { value = "#0d645d" } } declares hues at run time: a colour from a
 // user's configuration (docs/surf.md, "Colours from data"). Declared
 // again, it replaces the set the last call declared, and returns the
 // stylesheet to send again, as surfrun.Runtime.SetCSS sends one: the floor's

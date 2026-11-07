@@ -2,8 +2,8 @@
      here and nowhere else. cells is the terminal colour the cells draw a
      hue in; teal's is its own, coral's and plum's are the nearest by hue. -->
 <palette>
-  <hue name="coral" dark="#ff8e7a" light="#b4321f" cells="9"/>
-  <hue name="teal" dark="#4fd1c5" light="#0f766e" cells="6"/>
+  <hue name="coral" dark="#ff8e7a" light="#a42d1c" cells="9"/>
+  <hue name="teal" dark="#4fd1c5" light="#0d645d" cells="6"/>
   <hue name="plum" dark="#c9a0ff" light="#6b3fa0"/>
 </palette>
 <surface>

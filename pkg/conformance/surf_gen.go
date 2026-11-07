@@ -2982,9 +2982,9 @@ func surfCompiledShelf(c *Shelf) surflive.Component {
 
 // surfPalette is the templates' hues, <palette>s as written.
 var surfPalette = surfui.Palette{
-	"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: surfui.Cell(9)},
+	"coral": {Dark: "#ff8e7a", Light: "#a42d1c", Cells: surfui.Cell(9)},
 	"plum":  {Dark: "#c9a0ff", Light: "#6b3fa0"},
-	"teal":  {Dark: "#4fd1c5", Light: "#0f766e", Cells: surfui.Cell(6)},
+	"teal":  {Dark: "#4fd1c5", Light: "#0d645d", Cells: surfui.Cell(6)},
 }
 
 // surfList1 is a []*Note as a list.

@@ -571,11 +571,13 @@ but in a palette.
 - **On a host** the palette follows the stylesheet, in the same resource:
   each hue is the custom property `--u-hue-<name>` on `.u-surface`, its
   dark value, and its light one under `prefers-color-scheme: light` and in
-  `.u-surface.u-theme-paper`; `.u-hue-<name>` colours from it. A theme
+  `.u-surface.u-theme-paper` and `.u-surface.u-theme-stone`;
+  `.u-hue-<name>` colours from it. A theme
   overrides a hue by setting the property in a rule of its own. A runtime
   declares more at run time and sends the stylesheet again.
 - **Contrast** is checked against the two grounds: the dark one, taken
-  as `#282c34` (hotty-blitz's default theme's), and paper's, `#fbfbfd`.
+  as `#282c34` (hotty-blitz's default theme's), and the light one,
+  Stone's `#d2d2d2`, the darkest light ground the kit has.
   Text needs 4.5:1, a dot 3:1; a hue that only dots are drawn in (a
   literal `hue=` on dots, and no bound `:hue` on anything else) is asked
   a dot's, any other, text's. A palette in a file that fails is refused

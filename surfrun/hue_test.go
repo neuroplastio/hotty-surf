@@ -57,10 +57,10 @@ func (w *warnings) all() []string {
 }
 
 var (
-	coral = surfui.Hue{Dark: "#ff8e7a", Light: "#b4321f", Cells: surfui.Cell(9)}
-	teal  = surfui.Hue{Dark: "#4fd1c5", Light: "#0f766e"}
+	coral = surfui.Hue{Dark: "#ff8e7a", Light: "#a42d1c", Cells: surfui.Cell(9)}
+	teal  = surfui.Hue{Dark: "#4fd1c5", Light: "#0d645d"}
 	// faint's dark value is 3.7:1 on the dark ground: a dot, not text.
-	faint = surfui.Hue{Dark: "#7a8499", Light: "#b4321f"}
+	faint = surfui.Hue{Dark: "#7a8499", Light: "#a42d1c"}
 )
 
 // On either host, Options.Palette puts each hue's rules after the
@@ -151,7 +151,7 @@ func TestPaletteWarnsOnce(t *testing.T) {
 			}
 			for _, c := range []string{
 				"  --u-hue-faint: #7a8499;\n  --u-hue-faint-ink: var(--u-ink);\n",
-				"    --u-hue-faint: #b4321f;\n    --u-hue-faint-ink: var(--u-hue-faint);\n",
+				"    --u-hue-faint: #a42d1c;\n    --u-hue-faint-ink: var(--u-hue-faint);\n",
 				".u-hue-faint { color: var(--u-hue-faint-ink); }",
 				".u-dot.u-hue-faint { --u-dw: 8px; color: var(--u-hue-faint); }",
 				".u-hue-coral { color: var(--u-hue-coral); }",
@@ -167,7 +167,7 @@ func TestPaletteWarnsOnce(t *testing.T) {
 			if got := w.all(); len(got) != 1 {
 				t.Errorf("declared and drawn again, warnings %q", got)
 			}
-			other := surfui.Hue{Dark: "#778099", Light: "#b4321f"}
+			other := surfui.Hue{Dark: "#778099", Light: "#a42d1c"}
 			a.Call(func() { m.rn.(palSender).SetPalette(surfui.Palette{"faint": other}) })
 			if got := w.all(); len(got) != 2 || !strings.Contains(got[1], "faint's dark #778099") {
 				t.Errorf("another colour, warnings %q", got)
@@ -254,7 +254,7 @@ func TestHuesInCells(t *testing.T) {
 	// there changes with no other change on the screen.
 	r.Call(func() {
 		m.colour = "coral"
-		r.SetPalette(surfui.Palette{"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: surfui.Cell(4)}})
+		r.SetPalette(surfui.Palette{"coral": {Dark: "#ff8e7a", Light: "#a42d1c", Cells: surfui.Cell(4)}})
 	})
 	r.Call(func() {})
 	if !has("\x1b[0;34m") {

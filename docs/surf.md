@@ -785,8 +785,8 @@ no way to write a colour anywhere else.
 ```html
 <!-- agents.surf -->
 <palette>
-  <hue name="coral" dark="#ff8e7a" light="#b4321f" cells="9"/>
-  <hue name="teal"  dark="#4fd1c5" light="#0f766e" cells="6"/>
+  <hue name="coral" dark="#ff8e7a" light="#a42d1c" cells="9"/>
+  <hue name="teal"  dark="#4fd1c5" light="#0d645d" cells="6"/>
 </palette>
 
 <stack>
@@ -810,11 +810,11 @@ no way to write a colour anywhere else.
   palette declares, or an empty one, draws the ink: the first is warned of
   once for each name, on stderr or `Options.Warn`.
 - **A pair is a dark and a light value:** the dark one where the ground is
-  dark, the light one on `paper` and under a light terminal. A single
+  dark, the light one on `stone`, `paper` and under a light terminal. A single
   `value` has to read on both grounds, which few colours do: see below.
 - **On a host,** the stylesheet gains each hue as the custom property
   `--u-hue-<name>` on the surface, its dark value, and its light one
-  under `prefers-color-scheme: light` and in the `paper` theme, and an
+  under `prefers-color-scheme: light` and in the `stone` and `paper` themes, and an
   element of a hue has the class `u-hue-<name>`, which colours its text,
   and a dot's fill, from it. A theme (or the host's stylesheet) overrides a
   hue as it overrides `--u-accent`, by setting the property in a rule of
@@ -832,8 +832,11 @@ no way to write a colour anywhere else.
   red: write `cells`). The terminal's palette draws it, so the terminal's
   theme keeps control there too. There is no truecolor.
 - **Contrast** is checked against the dark ground, `#282c34` (hotty-blitz's
-  default theme's, which the terminal's own may differ from), and paper's,
-  `#fbfbfd`: text needs 4.5:1, a dot 3:1. A palette in a `.surf` file that
+  default theme's, which the terminal's own may differ from), and the
+  light one, Stone's `#d2d2d2`, the darkest light ground the kit has
+  (what clears it clears paper's `#fbfbfd` too): text needs 4.5:1, a dot
+  3:1. Stone's ground is a mid grey, so a single `value` reads as a dot
+  on both grounds only near `#757575`. A palette in a `.surf` file that
   fails is refused at load, with the number:
 
   ```
@@ -856,13 +859,13 @@ declared in Go with `surf.Palette`, and in Lua with `surf.palette`:
 
 ```go
 rt.SetPalette(surf.Palette{
-	"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: surf.Cell(9)},
+	"coral": {Dark: "#ff8e7a", Light: "#a42d1c", Cells: surf.Cell(9)},
 	"slate": {Value: "#808a9c"},
 })
 ```
 
 ```lua
-surf.palette{ coral = { dark = "#ff8e7a", light = "#b4321f", cells = 9 } }
+surf.palette{ coral = { dark = "#ff8e7a", light = "#a42d1c", cells = 9 } }
 ```
 
 - **`surfrun.Options.Palette`** declares the set a run begins with, and
@@ -1163,7 +1166,7 @@ The module:
 | `view:event(ev)` | routes the host's event `ev.kind` on `ev.target` as the runtime does, `ev.value` the handler's `$value` and `ev` its `$event`: true if the view took it. Also `view:event(id, kind, value)` |
 | `view:key(name)` | routes a key that reached the program (`enter`, `ctrl+k`) as the runtime does: true if the view took it |
 | `view:reload()` | the shapes built again from `t`'s keys and the classes', and the templates loaded: true, or nil and why |
-| `surf.palette(t)` | declares hues at run time, `{ coral = { dark = "#ff8e7a", light = "#b4321f", cells = 9 } }` (or `value`), replacing those the last call declared: returns the stylesheet to send again, and raises where a hue is no hue ([Colours from data](#colours-from-data)) |
+| `surf.palette(t)` | declares hues at run time, `{ coral = { dark = "#ff8e7a", light = "#a42d1c", cells = 9 } }` (or `value`), replacing those the last call declared: returns the stylesheet to send again, and raises where a hue is no hue ([Colours from data](#colours-from-data)) |
 | `surf.css` | the floor's stylesheet, which the markup is drawn with, and the hues' rules once the script has declared some |
 
 `view:html`, `view:event` and `view:key` are a host of the script's

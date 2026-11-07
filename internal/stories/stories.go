@@ -44,10 +44,10 @@ var forced = strings.NewReplacer(
 // the palette is declared here, and the stylesheet of the gate's documents
 // and the gallery's runtime carry it.
 var Palette = surfui.Palette{
-	"coral": {Dark: "#ff8e7a", Light: "#b4321f", Cells: surfui.Cell(9)},
-	"amber": {Dark: "#f2c14e", Light: "#8a5a00"},
-	"lime":  {Dark: "#a3d977", Light: "#3f6b12"},
-	"teal":  {Dark: "#4fd1c5", Light: "#0f766e", Cells: surfui.Cell(6)},
+	"coral": {Dark: "#ff8e7a", Light: "#a42d1c", Cells: surfui.Cell(9)},
+	"amber": {Dark: "#f2c14e", Light: "#7b5000"},
+	"lime":  {Dark: "#a3d977", Light: "#3b6411"},
+	"teal":  {Dark: "#4fd1c5", Light: "#0d645d", Cells: surfui.Cell(6)},
 	"plum":  {Dark: "#c9a0ff", Light: "#6b3fa0"},
 }
 

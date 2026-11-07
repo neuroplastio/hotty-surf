@@ -167,7 +167,7 @@
 //   - view:reload() builds the shapes again, from t's keys and the
 //     classes' now, and loads the templates: true, or nil and why.
 //   - surf.palette(t) declares hues at run time, t = { coral = { dark =
-//     "#ff8e7a", light = "#b4321f", cells = 9 } } (or value = for one colour
+//     "#ff8e7a", light = "#a42d1c", cells = 9 } } (or value = for one colour
 //     on both grounds), in place of those the last call declared: it
 //     returns the stylesheet to send again, and raises where a hue is no
 //     hue (a name that isn't lower-case, a colour that isn't #rgb or

@@ -20,8 +20,8 @@ func hueOf(colour string) dynObj {
 }
 
 const huePair = `<palette>
-  <hue name="coral" dark="#ff8e7a" light="#b4321f" cells="9"/>
-  <hue name="teal" dark="#4fd1c5" light="#0f766e"/>
+  <hue name="coral" dark="#ff8e7a" light="#a42d1c" cells="9"/>
+  <hue name="teal" dark="#4fd1c5" light="#0d645d"/>
 </palette>
 `
 
@@ -37,7 +37,7 @@ func TestPaletteLoads(t *testing.T) {
 	if got := strings.Join(p.Names(), ","); got != "coral,plum,teal" {
 		t.Errorf("hues %s", got)
 	}
-	if h := p["coral"]; h.Dark != "#ff8e7a" || h.Light != "#b4321f" || h.CellsIndex() != 9 {
+	if h := p["coral"]; h.Dark != "#ff8e7a" || h.Light != "#a42d1c" || h.CellsIndex() != 9 {
 		t.Errorf("coral %+v", h)
 	}
 	// teal has no cells: the nearest chromatic colour by its angle (cyan).
@@ -139,22 +139,22 @@ func TestHueRefusals(t *testing.T) {
 
 // What the load says of a palette that can't be read, with the number.
 func TestPaletteContrast(t *testing.T) {
-	dot := `<palette><hue name="slate" value="#808a9c"/></palette>` // 4.0 and 3.4: a dot's, not text
+	dot := `<palette><hue name="slate" value="#757575"/></palette>` // 3.0 and 3.0: a dot's, not text
 	for _, c := range []struct {
 		name, src, want string
 	}{
 		{"dots only, a literal", dot + `<surface><dot hue="slate"/></surface>`, ""},
 		{"dots only, bound", dot + `<surface><dot :hue="colour"/></surface>`, ""},
-		{"a literal on text", dot + `<surface><dot hue="slate"/><text hue="slate">x</text></surface>`, "crew.surf:1:10: slate's value #808a9c is 4.0:1 on the dark ground; text needs 4.5\ncrew.surf:1:10: slate's value #808a9c is 3.3:1 on paper; text needs 4.5"},
-		{"a bound hue on text asks text of all", dot + `<surface><dot hue="slate"/><text :hue="colour">x</text></surface>`, "crew.surf:1:10: slate's value #808a9c is 4.0:1 on the dark ground; text needs 4.5\ncrew.surf:1:10: slate's value #808a9c is 3.3:1 on paper; text needs 4.5"},
-		{"an icon and a glyph are not dots", dot + `<surface><icon name="cog-outline" hue="slate"/></surface>`, "slate's value #808a9c is 4.0:1 on the dark ground; text needs 4.5"},
+		{"a literal on text", dot + `<surface><dot hue="slate"/><text hue="slate">x</text></surface>`, "crew.surf:1:10: slate's value #757575 is 3.0:1 on the dark ground; text needs 4.5\ncrew.surf:1:10: slate's value #757575 is 3.0:1 on stone; text needs 4.5"},
+		{"a bound hue on text asks text of all", dot + `<surface><dot hue="slate"/><text :hue="colour">x</text></surface>`, "crew.surf:1:10: slate's value #757575 is 3.0:1 on the dark ground; text needs 4.5\ncrew.surf:1:10: slate's value #757575 is 3.0:1 on stone; text needs 4.5"},
+		{"an icon and a glyph are not dots", dot + `<surface><icon name="cog-outline" hue="slate"/></surface>`, "slate's value #757575 is 3.0:1 on the dark ground; text needs 4.5"},
 		{"a hue no template draws asks text", dot + `<surface><dot hue="slate"/></surface>` + "\n", ""},
 		{"too faint for a dot", `<palette><hue name="faint" value="#555"/></palette><surface><dot hue="faint"/></surface>`, "faint's value #555 is 1.8:1 on the dark ground; a dot needs 3"},
 		{"a pair that reads", huePair + `<surface><text :hue="colour">x</text></surface>`, ""},
-		{"the dark one is faint", `<palette><hue name="a" dark="#a33" light="#b4321f"/></palette><surface><text hue="a">x</text></surface>`,
+		{"the dark one is faint", `<palette><hue name="a" dark="#a33" light="#a42d1c"/></palette><surface><text hue="a">x</text></surface>`,
 			"crew.surf:1:10: a's dark #a33 is 2.1:1 on the dark ground; text needs 4.5"},
 		{"the light one is faint", `<palette><hue name="a" dark="#ff8e7a" light="#ffeedd"/></palette><surface><text hue="a">x</text></surface>`,
-			"crew.surf:1:10: a's light #ffeedd is 1.0:1 on paper; text needs 4.5"},
+			"crew.surf:1:10: a's light #ffeedd is 1.3:1 on stone; text needs 4.5"},
 	} {
 		got := refused(t, fstest.MapFS{"crew.surf": {Data: []byte(c.src)}})
 		if c.want == "" && got != "" || !strings.Contains(got, c.want) {
@@ -165,7 +165,7 @@ func TestPaletteContrast(t *testing.T) {
 	// hue= doesn't make it text, a bound one does.
 	if got := refused(t, fstest.MapFS{
 		"crew.surf": {Data: []byte(dot + `<surface><dot hue="slate"/><text hue="teal">x</text></surface>`)},
-		"b.surf":    {Data: []byte(`<palette><hue name="teal" dark="#4fd1c5" light="#0f766e"/></palette>`)},
+		"b.surf":    {Data: []byte(`<palette><hue name="teal" dark="#4fd1c5" light="#0d645d"/></palette>`)},
 	}); got != "" {
 		t.Errorf("a dot's hue beside a text's: %s", got)
 	}
@@ -175,7 +175,7 @@ func TestPaletteContrast(t *testing.T) {
 func TestPaletteOnlyFile(t *testing.T) {
 	files := fstest.MapFS{
 		"crew.surf":    {Data: []byte(`<surface><text hue="sky">x</text></surface>`)},
-		"palette.surf": {Data: []byte(`<palette><hue name="sky" dark="#7cc4ff" light="#0b62a8"/></palette>`)},
+		"palette.surf": {Data: []byte(`<palette><hue name="sky" dark="#7cc4ff" light="#0a5b9c"/></palette>`)},
 	}
 	set, err := Load(files, []*Shape{hueShape})
 	if err != nil {
