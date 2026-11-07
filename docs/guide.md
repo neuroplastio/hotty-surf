@@ -711,8 +711,10 @@ density gives the units.
   height in rows (`Height`) is lines, so on a host a list that height
   shows fewer rows; a dialog's is the least it takes. A Select's open
   list keeps an option a cell, its surface placed in cells.
-- **Themes:** `neuroplastio` (the default: the terminal's ground with
-  neuroplastio's violet), `terminal`, `paper` (light). The UI's text is a
+- **Themes:** `graphite` (the default: fixed neutral grounds and opaque
+  states, and Stone on a light terminal), `stone` (light), `neuroplastio`
+  (the terminal's ground with neuroplastio's violet), `terminal`, `paper`
+  (light). The UI's text is a
   neutral ink, not the terminal's foreground, which stays for terminals.
 - **The look** is GPUI's, by roles (gov R-24): a sidebar's chrome is a
   step darker than the content, a dialog a step lighter, and a menu

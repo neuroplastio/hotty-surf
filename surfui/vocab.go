@@ -46,14 +46,15 @@ const (
 // Surface is a surface's root: its density and theme are its classes,
 // and every token below them follows.
 func Surface(kids ...*Node) *Node {
-	return El("div", kids...).Class("u-surface", "u-dense", "u-theme-neuroplastio")
+	return El("div", kids...).Class("u-surface", "u-dense", "u-theme-graphite")
 }
 
-// Theme sets a surface's theme: "neuroplastio" (the terminal's colours
-// with neuroplastio's violet), "terminal" (the terminal's alone), "paper"
-// (gov's light tokens, whatever the terminal's), "graphite" (fixed
-// neutral grounds and opaque states, dark, and Stone on a light
-// terminal), or "stone" (Graphite's light half, whatever the terminal's).
+// Theme sets a surface's theme. A surface is "graphite" unless it says:
+// fixed neutral grounds and opaque states, dark, and Stone on a light
+// terminal (plx's chrome contract). The others: "stone" (Graphite's light
+// half, whatever the terminal's), "neuroplastio" (the terminal's colours
+// with neuroplastio's violet), "terminal" (the terminal's alone), and
+// "paper" (gov's light tokens, whatever the terminal's).
 func (n *Node) Theme(name string) *Node {
 	n.replaceClass("u-theme-", "u-theme-"+name)
 	return n

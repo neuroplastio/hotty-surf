@@ -127,7 +127,7 @@ func reference(t *testing.T, start starter) {
 	if err := os.MkdirAll(filepath.Join(gate, "work"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	id := "button-states-neuroplastio-compact-2"
+	id := "button-states-graphite-compact-2"
 	report := "| [" + id + "](" + id + ".png) | 1/1 | 2.6% | 0.056% | 7.0 | pass |  |\n"
 	if err := os.WriteFile(filepath.Join(gate, "report.md"), []byte(report), 0o644); err != nil {
 		t.Fatal(err)

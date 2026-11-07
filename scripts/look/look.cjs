@@ -13,7 +13,7 @@
 // written by internal/cmd/stories) in Chromium, as the gate does (the
 // host's stylesheet in a layer below the document's, hotty-blitz's
 // font, unhinted), and in Blitz, by `hotty render`. dark is the
-// neuroplastio theme on the host's dark ground, light the paper theme.
+// graphite theme, the default, light the stone theme.
 // --state forces a pseudo-class's look (stories.Force) on what --at
 // selects, in the document both engines draw. --crop cuts both shots to
 // the box of what the selector picks, as Chromium lays it out.
@@ -60,7 +60,7 @@ const ROOT = path.resolve(__dirname, "..", "..");
 const FONT = "AdwaitaMono Nerd Font Propo"; // hotty-blitz's own (fonts.rs)
 const FONT_FILE = "AdwaitaMonoNerdFontPropo";
 const ORIGIN = "https://look.invalid";
-const THEMES = { dark: "neuroplastio", light: "paper" };
+const THEMES = { dark: "graphite", light: "stone" };
 
 // What `hotty render --scale S` uses without --cell (as gate.cjs).
 const cell = (s) => ({ w: Math.round(10 * s), h: Math.round(21 * s) });

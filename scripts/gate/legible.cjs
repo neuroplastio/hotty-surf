@@ -8,7 +8,7 @@
 // caps run out of the dialog, and every check passed (2026-10-30).
 //
 //   node scripts/gate/legible.cjs --hotty <hotty> --fonts <hotty-blitz fonts/> --stories <stories> --out <dir>
-//        [--densities compact,dense,roomy] [--themes neuroplastio] [--width N] [--only <substr>]
+//        [--densities compact,dense,roomy] [--themes graphite] [--width N] [--only <substr>]
 //        [--known <file>] [--jobs N]
 //
 // `stories -gallery` (internal/cmd/stories) writes each story of the gallery's
@@ -79,7 +79,7 @@ const MIN = 4; // the characters an ellipsized text keeps at least
 const TOL = 0.5; // CSS px a box may run past an edge: rounding
 
 function args() {
-  const a = { jobs: Math.max(2, Math.min(6, os.cpus().length >> 2)), densities: "compact,dense,roomy", themes: "neuroplastio" };
+  const a = { jobs: Math.max(2, Math.min(6, os.cpus().length >> 2)), densities: "compact,dense,roomy", themes: "graphite" };
   const v = process.argv.slice(2);
   for (let i = 0; i < v.length; i += 2) a[v[i].replace(/^--/, "")] = v[i + 1];
   for (const k of ["hotty", "fonts", "stories", "out"]) if (!a[k]) throw new Error(`legible: --${k} is needed`);

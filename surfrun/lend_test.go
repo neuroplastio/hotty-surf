@@ -149,7 +149,7 @@ func TestSurfaceTheme(t *testing.T) {
 	s := surfrun.NewSurface(m, nil)
 	s.Theme = "terminal"
 	s.Show()
-	if c := surfui.Classes(s.Tree()); !slices.Contains(c, "u-theme-terminal") || slices.Contains(c, "u-theme-neuroplastio") {
+	if c := surfui.Classes(s.Tree()); !slices.Contains(c, "u-theme-terminal") || slices.Contains(c, "u-theme-graphite") {
 		t.Errorf("the root's classes %q", c)
 	}
 	m.theme = "nord"

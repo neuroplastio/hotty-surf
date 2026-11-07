@@ -34,7 +34,7 @@ func main() {
 	compiled := flag.Bool("compiled", false, "draw the gallery by its templates compiled into Go")
 	story := flag.String("story", "", "open the story whose id is `text`, or else the first whose component or name has it in it")
 	list := flag.Bool("list", false, "print every story's id, one a line, in the sidebar's order, and exit")
-	theme := flag.String("theme", "neuroplastio", "the canvas's theme")
+	theme := flag.String("theme", "graphite", "the canvas's theme")
 	density := flag.String("density", "compact", "the canvas's density")
 	width := flag.Int("width", 0, "the canvas's width in `cells` (default the story's)")
 	states := flag.Bool("states", false, "draw the story in each of its states")

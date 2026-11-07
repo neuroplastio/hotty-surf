@@ -540,7 +540,7 @@ func TestEmbed(t *testing.T) {
 		t.Fatal(errs)
 	}
 	surfui.Resolve(n, "r")
-	want := `<div id="r" class="u-surface u-theme-neuroplastio u-compact"><div id="r.kin" class="u-row"><span id="r.kin.0" class="u-text">inset</span></div>` +
+	want := `<div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kin" class="u-row"><span id="r.kin.0" class="u-text">inset</span></div>` +
 		`<div id="r.ks" class="u-stack"><div id="r.ks.kx" class="u-row"><span id="r.ks.kx.0" class="u-text">inset</span></div></div></div>`
 	if got := surfui.HTML(n); got != want {
 		t.Errorf("drew\n%s\nwant\n%s", got, want)

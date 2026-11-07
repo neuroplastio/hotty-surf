@@ -100,7 +100,7 @@ const logLines = 8
 // New is the gallery with its first story picked: its stories files,
 // templates and stylesheet the ones it was built with.
 func New() *Gallery {
-	g := &Gallery{Theme: "neuroplastio", Density: "compact", src: builtIn()}
+	g := &Gallery{Theme: "graphite", Density: "compact", src: builtIn()}
 	g.index(catalog(g.src))
 	if len(g.all) > 0 {
 		g.Pick(g.all[0].id)

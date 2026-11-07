@@ -3,7 +3,7 @@
 // focused and hovered states forced (stories.Force).
 //
 //	stories -list
-//	stories -out DIR [-theme neuroplastio] [-density dense]
+//	stories -out DIR [-theme graphite] [-density dense]
 //
 // With -gallery it writes the gallery's stories instead, every story its
 // catalog lists (each widget's own, stories.All's, and the stories
@@ -12,7 +12,7 @@
 // in each of the gallery's modes, interpreted and compiled. The legible
 // gate (scripts/gate/legible.cjs) measures them.
 //
-//	stories -gallery -out DIR [-theme neuroplastio] [-density compact] [-width N]
+//	stories -gallery -out DIR [-theme graphite] [-density compact] [-width N]
 //
 // writes DIR/<mode>/<story id>.html and DIR/index.tsv, a line for each:
 // its mode, id, file, declared width, canvas width, window (cols and
@@ -38,7 +38,7 @@ import (
 func main() {
 	list := flag.Bool("list", false, "list the stories and their widths")
 	out := flag.String("out", "", "write every story to DIR/<name>.html")
-	theme := flag.String("theme", "neuroplastio", "the theme: neuroplastio, terminal, paper, graphite, stone")
+	theme := flag.String("theme", "graphite", "the theme: neuroplastio, terminal, paper, graphite, stone")
 	density := flag.String("density", "dense", "the density: dense, roomy, compact (with -gallery, compact, the gallery's)")
 	ofGallery := flag.Bool("gallery", false, "write the gallery's stories, each as the gallery draws it, in each of its modes")
 	width := flag.Int("width", 0, "with -gallery, draw every canvas `cells` wide, not at its story's width")

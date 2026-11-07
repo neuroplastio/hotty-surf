@@ -41,7 +41,7 @@ const maxCols = 100
 
 func main() {
 	start := time.Now()
-	theme := flag.String("theme", "neuroplastio", "the look's `theme`: neuroplastio, terminal, paper, graphite or stone")
+	theme := flag.String("theme", "graphite", "the look's `theme`: neuroplastio, terminal, paper, graphite or stone")
 	useFixture := flag.Bool("fixture", false, "show a made-up machine, for shots and tests")
 	forceCells := flag.Bool("cells", false, "draw in cells, without asking the terminal")
 	cols := flag.Int("cols", 0, "draw this many `columns` wide, not the terminal's width")

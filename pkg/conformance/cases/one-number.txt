@@ -28,7 +28,7 @@ arithmetic is CEL's: double(one) is how a whole number becomes one.
 -- state.json --
 {"one": 1.0, "three": 3, "two": 2.0, "half": 1.5, "big": 9223372036854775808}
 -- document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-neuroplastio u-compact"><span id="r.kd1" class="u-text">1.5</span><span id="r.kd3" class="u-text">3.5</span><span id="r.ki2" class="u-text">2 3</span><span id="r.kihalf" class="u-text">0 1</span><span id="r.kibig" class="u-text">0 1</span><span id="r.kx1" class="u-text">2</span><span id="r.ktwice" class="u-text">2</span></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><span id="r.kd1" class="u-text">1.5</span><span id="r.kd3" class="u-text">3.5</span><span id="r.ki2" class="u-text">2 3</span><span id="r.kihalf" class="u-text">0 1</span><span id="r.kibig" class="u-text">0 1</span><span id="r.kx1" class="u-text">2</span><span id="r.ktwice" class="u-text">2</span></div></body></html>
 -- cells --
 cells 64x32
 text

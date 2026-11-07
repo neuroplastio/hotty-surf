@@ -175,9 +175,9 @@ func TestCompactNodesHTML(t *testing.T) {
 		{"Down(0)", surfui.Row().Down(0), `<div id="r" class="u-row"></div>`},
 		{"Height", surfui.Stack().Height(7), `<div id="r" class="u-stack u-height" style="--u-h:7"></div>`},
 		{"Height(-1)", surfui.Stack().Height(-1), `<div id="r" class="u-stack u-height" style="--u-h:0"></div>`},
-		{"Compact", surfui.Surface().Density(surfui.Compact), `<div id="r" class="u-surface u-theme-neuroplastio u-compact"></div>`},
+		{"Compact", surfui.Surface().Density(surfui.Compact), `<div id="r" class="u-surface u-theme-graphite u-compact"></div>`},
 		{"Compact, then Roomy", surfui.Surface().Density(surfui.Compact).Density(surfui.Roomy),
-			`<div id="r" class="u-surface u-theme-neuroplastio u-roomy"></div>`},
+			`<div id="r" class="u-surface u-theme-graphite u-roomy"></div>`},
 	} {
 		surfui.Resolve(c.n, "r")
 		if got := surfui.HTML(c.n); got != c.want {

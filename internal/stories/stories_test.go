@@ -19,7 +19,7 @@ func TestEveryStoryDraws(t *testing.T) {
 			t.Errorf("two stories are named %s", s.Name)
 		}
 		names[s.Name] = true
-		for _, theme := range []string{"neuroplastio", "terminal", "paper"} {
+		for _, theme := range []string{"graphite", "stone", "neuroplastio", "terminal", "paper"} {
 			for _, d := range []surfui.Density{surfui.Dense, surfui.Roomy, surfui.Compact} {
 				root := stories.Surface(s, theme, d)
 				surfui.Resolve(root, "r")

@@ -25,7 +25,7 @@ var paneItems = []surfrun.MenuItem{
 func TestOpenMenu(t *testing.T) {
 	v := surfrun.OpenMenu(paneItems, 1, surfrun.MenuLook{})
 	html := v.HTML()
-	for _, want := range []string{`class="u-surface u-menu-surface u-theme-neuroplastio u-compact"`, `class="u-menu"`, "u-menu-head", "u-menu-sep",
+	for _, want := range []string{`class="u-surface u-menu-surface u-theme-graphite u-compact"`, `class="u-menu"`, "u-menu-head", "u-menu-sep",
 		"u-menu-item u-danger", "is-sel", "disabled", "Split right"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("the menu's HTML lacks %q:\n%s", want, html)

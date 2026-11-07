@@ -371,7 +371,7 @@ func TestToolbar(t *testing.T) {
 			a, _ := start(t, mode.of, sel)
 			c := canvasID(sel)
 			a.Pick(barCtl("theme"), "paper")
-			a.Wait("the canvas in paper", func() bool { return a.Has(c, "u-theme-paper") && a.Has("r", "u-theme-neuroplastio") })
+			a.Wait("the canvas in paper", func() bool { return a.Has(c, "u-theme-paper") && a.Has("r", "u-theme-graphite") })
 			a.Pick(barCtl("density"), "roomy")
 			a.Wait("the canvas roomy", func() bool { return a.Has(c, "u-roomy") && a.Has("r", "u-dense") })
 			if w, _ := a.Surface().Var(c, "--u-w"); w != "80" {
