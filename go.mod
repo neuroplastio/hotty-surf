@@ -7,10 +7,10 @@ require (
 	github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886
 	github.com/clipperhouse/displaywidth v0.11.0
 	github.com/neuroplastio/cel-lite v0.1.1
-	github.com/neuroplastio/hotty-go v0.6.1-0.20261106212216-35d9fd4e8f0e
-	github.com/neuroplastio/hotty-go/hottyedit v0.6.1-0.20261106212216-35d9fd4e8f0e
-	github.com/neuroplastio/hotty-go/hottyterm v0.6.1-0.20261106212216-35d9fd4e8f0e
-	github.com/neuroplastio/hotty-go/hottytest v0.6.1-0.20261106212216-35d9fd4e8f0e
+	github.com/neuroplastio/hotty-go v0.7.0
+	github.com/neuroplastio/hotty-go/hottyedit v0.7.0
+	github.com/neuroplastio/hotty-go/hottyterm v0.7.0
+	github.com/neuroplastio/hotty-go/hottytest v0.7.0
 	github.com/neuroplastio/myelin/myelinkey v0.1.0
 	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/sys v0.49.0
