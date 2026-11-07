@@ -3,10 +3,15 @@
 # px². Written by --write-baseline, again only when a Blitz fix lands or
 # a gap is listed. Last written with hotty built 2026-11-07 14:13 UTC (checkout at unknown), Chromium 153.0.8010.12.
 attention-states-graphite-dense-1.6	28.9
+attention-states-graphite-roomy-1.6	16.8
 attention-states-neuroplastio-dense-1.6	28.9
+attention-states-neuroplastio-roomy-1.6	17.2
 attention-states-paper-dense-1.6	28.9
+attention-states-paper-roomy-1.6	16.0
 attention-states-stone-dense-1.6	28.9
+attention-states-stone-roomy-1.6	16.0
 attention-states-terminal-dense-1.6	28.9
+attention-states-terminal-roomy-1.6	17.2
 badge-states-graphite-dense-1.6	31.2
 badge-states-graphite-roomy-1.6	18.7
 badge-states-neuroplastio-dense-1.6	31.2
@@ -165,17 +170,13 @@ list-entries-terminal-roomy-1.6	15.6
 list-selection-neuroplastio-roomy-1.6	14.1
 list-selection-paper-roomy-1.6	13.3
 list-selection-terminal-roomy-1.6	14.1
-list-states-graphite-compact-1.6	302.7
-list-states-graphite-dense-1.6	262.5
 list-states-graphite-roomy-1.6	17.6
-list-states-neuroplastio-compact-1.6	302.7
-list-states-neuroplastio-dense-1.6	289.1
+list-states-neuroplastio-dense-1.6	26.6
 list-states-neuroplastio-roomy-1.6	27.0
 list-states-paper-roomy-1.6	27.0
 list-states-stone-compact-1.6	302.7
-list-states-stone-dense-1.6	262.5
+list-states-stone-dense-1.6	288.7
 list-states-stone-roomy-1.6	17.6
-list-states-terminal-dense-1.6	289.1
 list-states-terminal-roomy-1.6	26.6
 look-agents-graphite-compact-1.6	468.7
 look-agents-neuroplastio-compact-1.6	468.0

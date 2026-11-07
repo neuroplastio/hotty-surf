@@ -406,3 +406,17 @@ plx's chrome contract (A0), on hotty-blitz 0.7.0.
 | look/agents (paper: Dense 2×, Compact 2×, Roomy: 307–393), dialog/box (paper Roomy 2×: 253.5) | A dialog's lower edge a device row off: its input hairline, darker than the border it had, now counts where the border's didn't | both | A box's height rounded to whole CSS px, where Chromium keeps the fraction (`round.rs`, [under the threshold](#under-the-threshold)) | Cosmetic |
 | chip/fills (Dense 1.6×: up to 182), list/selection, row/fit (Roomy 1.6×: 13–19), scale/zoom (Dense 1.6×: 20.3), list/states | A chip on the hover fill, where it had a hairline: its text a device px off, its edge a device row off, now counted over a fill | both | The text's place and the painted box's snap ([above](#hotty-blitz-070-2026-11-07)) | Cosmetic |
 | segmented/states (Compact and Roomy 1.6×: up to 327) | The box and its buttons' edges at radius 8 and 6 a device row off; the buttons' text a device px off | 1.6× | As above | Cosmetic |
+
+**Motion (2026-11-07).** The kit's rows fade (background-color 160ms,
+color 180ms) and the keyboard row's marker, now a `::before`, fades in
+and grows (opacity 160ms, scaleY(.55) to 1 over 200ms), by the chrome
+contract. The gate's still renders prove the marker and the states.
+Live, hottyterm 26.11.07 (hotty-blitz 0.7.0) runs none of it: with
+every duration at 3s linear, a frame 0.6s after a Down key in the
+palette shows the new row at its end values (the fill #262d38, the
+marker #8facdb at full). The delta is `attr class` on the two rows'
+own elements, with the footer's text, a remove and an insert. The
+library runs the same change: a class change, alone or with an insert
+or a text change in the same render, transitions over its duration in
+hotty-blitz's test harness. So the gap is the host's path, not
+Stylo's or Blitz's; it is hotty's to find. Not worked around.

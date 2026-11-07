@@ -877,11 +877,7 @@
 .u-item.is-att .u-tone-muted { color: color-mix(in srgb, var(--u-warn) 80%, var(--u-muted)); }
 .u-list:focus-within > .u-item.is-sel.is-att, :focus-within > .u-list > .u-item.is-sel.is-att {
   color: var(--u-warn);
-  background: linear-gradient(var(--u-warn), var(--u-warn)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-warn-soft);
-}
-.u-compact .u-list:focus-within > .u-item.is-sel.is-att, .u-compact :focus-within > .u-list > .u-item.is-sel.is-att,
-.u-roomy .u-list:focus-within > .u-item.is-sel.is-att, .u-roomy :focus-within > .u-list > .u-item.is-sel.is-att {
-  background: linear-gradient(var(--u-warn), var(--u-warn)) 0 50% / 2px calc(100% - 16px) no-repeat, var(--u-warn-soft);
+  background: var(--u-warn-soft);
 }
 
 /* What acts on a click and has no look of its own under the pointer says
@@ -919,27 +915,50 @@
    fill with a 2px accent marker at its start, never a solid accent
    fill, in every list (the palette, settings, hosts, agents, menus),
    its text and icons in the accent (plx's chrome contract: a current
-   row is the soft fill and the accent). The marker is a layer of the
-   row's background, so that it moves nothing: a straight bar inside the
-   row's start, half its radius in and a radius short of either end,
-   which the radius doesn't bend into a "("; in Compact and Roomy at the
-   row's very start, 8px short of either end, as the contract's. A
-   selected row is its fill alone, with no hairline. A nav's rows are
-   muted but the selected one, and the one the pointer is on. */
+   row is the soft fill and the accent). The marker is the row's
+   ::before, out of its flow, so that it moves nothing: a 2px bar,
+   rounded, half the row's radius in and a radius short of either end;
+   in Compact and Roomy at the row's very start, 8px short of either
+   end, as the contract's. A selected row is its fill alone, with no
+   hairline. A nav's rows are muted but the selected one, and the one
+   the pointer is on.
+
+   Motion, the contract's: a row's fill fades in 160ms and its text in
+   180ms, ease-out; the marker fades in over 160ms and grows from 55%
+   of its length over 200ms (cubic-bezier(.2,.8,.2,1)), from its middle.
+   Where motion is reduced, nothing moves: the states snap, and the
+   marker is whole. */
 .u-list { display: flex; flex-direction: column; min-width: 0; }
-.u-item { display: flex; flex-direction: row; align-items: center; min-width: 0; padding: var(--u-iy) var(--u-px); border-radius: var(--u-r); }
+.u-item { position: relative; display: flex; flex-direction: row; align-items: center; min-width: 0; padding: var(--u-iy) var(--u-px); border-radius: var(--u-r); transition: background-color 160ms ease-out, color 180ms ease-out; }
+.u-list > .u-item::before {
+  content: "";
+  position: absolute;
+  left: calc(0.5 * var(--u-r));
+  top: var(--u-r);
+  bottom: var(--u-r);
+  width: 2px;
+  border-radius: 2px;
+  background: var(--u-accent);
+  opacity: 0;
+  transform: scaleY(0.55);
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 200ms cubic-bezier(.2, .8, .2, 1);
+}
+.u-compact .u-list > .u-item::before, .u-roomy .u-list > .u-item::before { left: 0; top: 8px; bottom: 8px; }
+.u-list:focus-within > .u-item.is-sel::before, :focus-within > .u-list > .u-item.is-sel::before { opacity: 1; transform: none; }
+.u-list > .u-item.is-att::before { background: var(--u-warn); }
+@media (prefers-reduced-motion: reduce) {
+  .u-item, .u-list > .u-item::before { transition: none; }
+  .u-list > .u-item::before { transform: none; }
+}
 .u-item + .u-item { margin-top: var(--u-ig); }
 .u-item:hover { background: var(--u-hover); }
 .u-item.is-sel { background: var(--u-selected); color: var(--u-ink); }
 .u-list:focus-within > .u-item.is-sel, :focus-within > .u-list > .u-item.is-sel {
   color: var(--u-accent);
-  background: linear-gradient(var(--u-accent), var(--u-accent)) calc(0.5 * var(--u-r)) 50% / 2px calc(100% - 2 * var(--u-r)) no-repeat, var(--u-accent-soft);
+  background: var(--u-accent-soft);
 }
 .u-list:focus-within > .u-item.is-sel .u-icon, :focus-within > .u-list > .u-item.is-sel .u-icon { color: var(--u-accent); }
-.u-compact .u-list:focus-within > .u-item.is-sel, .u-compact :focus-within > .u-list > .u-item.is-sel,
-.u-roomy .u-list:focus-within > .u-item.is-sel, .u-roomy :focus-within > .u-list > .u-item.is-sel {
-  background: linear-gradient(var(--u-accent), var(--u-accent)) 0 50% / 2px calc(100% - 16px) no-repeat, var(--u-accent-soft);
-}
 .u-nav > .u-item { padding-top: var(--u-ny); padding-bottom: var(--u-ny); color: var(--u-muted); }
 .u-nav > .u-item.is-sel { color: var(--u-ink); }
 .u-compact .u-nav > .u-item:hover, .u-roomy .u-nav > .u-item:hover { color: var(--u-ink); }
@@ -1092,8 +1111,7 @@
    after it, a 2px line in the accent at its top or its bottom edge,
    inside it, so that it takes no room and nothing under the pointer
    moves; into it, an outline in the accent. The line is a background
-   layer, as a focused list's marker is, kept off the corners by the
-   radius; it and the outline win over a row's own fill layers and
+   layer, kept off the corners by the radius; it and the outline win over a row's own fill layers and
    hairline while they show (!important), the fill's colour staying.
    While a drag is on, the runtime marks the root
    (surfui.DraggingClass), and the closed hand shows over all of it, links,
