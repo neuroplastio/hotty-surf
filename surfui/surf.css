@@ -505,8 +505,8 @@
 .u-dot.u-pulse { animation: u-pulse 1.6s ease-in-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) { .u-dot.u-pulse { animation: none; } }
 
-/* A chip: outlined, its text muted, no fill; a chip in a tone's fill
-   keeps that. A chip a row tall but in Compact, where Blitz places a
+/* A chip: on the hover fill, its text muted, no hairline (plx's chrome
+   contract); a chip in a tone's fill keeps that. A chip a row tall but in Compact, where Blitz places a
    shorter one's text as Chromium does. A key: a muted glyph run, no box
    (the maintainer, 2026-11-05, on a tooltip's caps: "too claustrophobic
    inside. Too many borders"), in the hosts' Nerd Font, which has the
@@ -519,11 +519,10 @@
   padding: 0 0.5ch;
   border-radius: var(--u-radius);
   color: var(--u-muted);
-  box-shadow: inset 0 0 0 1px var(--u-border);
+  background: var(--u-hover);
 }
 .u-compact .u-chip { padding: 0 6px; font-size: 11.5px; line-height: calc(var(--u-row) - 6 * var(--hotty-px, 1px)); }
 .u-roomy .u-chip { padding: 0 6px; font-size: 12.5px; }
-.u-chip[class*="u-fill-"] { box-shadow: none; }
 .u-key {
   flex: 0 0 auto;
   display: inline-block;
@@ -556,7 +555,8 @@
 .u-roomy .u-then { margin: 0 4px; font-size: 12.5px; }
 
 /* Controls: a field, a select and a cycle sunk, with the input's
-   hairline; a button a step up with the border's, the primary (Fill
+   hairline; a button on the selected fill with the border's (plx's chrome
+   contract), the primary (Fill
    Accent) solid ink on paper, a bare one only its text; a switch a track
    in the input, in the accent when on. A control is a row tall in Dense,
    --u-ctl in Compact and Roomy. */
@@ -607,7 +607,7 @@
   flex: 0 0 auto;
   padding: 0 var(--u-px);
   white-space: pre;
-  background: var(--u-hover);
+  background: var(--u-selected);
   box-shadow: inset 0 0 0 1px var(--u-border);
 }
 .u-compact .u-btn, .u-roomy .u-btn { padding: 0 calc(1.5 * var(--u-px)); font-weight: 500; }
@@ -730,31 +730,32 @@
 .u-btn.u-pill:focus, .u-btn.u-iconbtn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 .u-btn.u-pill[disabled], .u-btn.u-iconbtn[disabled] { color: var(--u-dim); background: transparent; box-shadow: none; }
 
-/* A segmented control (Segmented): a row of buttons in one sunk pill,
-   2px inside it and apart, its hairline the border's; each button a
-   pill 4px shorter than a control, its text small and muted, the ink
-   under the pointer; the selected one raised on the selected fill with
-   the border's hairline; the keyboard on one its focus-line. In Dense
-   the buttons are a row tall, the pill round them. */
+/* A segmented control (Segmented), as plx's chrome contract has it: a
+   row of buttons in one sunk box of the field's fill, radius 8, its
+   hairline the border's, 3px inside it and 2px apart; each button radius
+   6 and 6px shorter than a control, its text small and muted, the ink
+   under the pointer; the selected one on the selected fill in the ink;
+   the keyboard on one its focus-line. In Dense the buttons are a row
+   tall, the box round them. */
 .u-row.u-seg {
   flex: 0 0 auto;
   gap: 2px;
-  padding: 2px;
-  border-radius: var(--u-r-pill);
+  padding: 3px;
+  border-radius: var(--u-r-md);
   background: var(--u-field);
   box-shadow: inset 0 0 0 1px var(--u-border);
 }
 .u-dense .u-row.u-seg { padding: 0; }
 .u-row.u-seg > .u-btn {
   padding: 0 var(--u-px);
-  border-radius: var(--u-r-pill);
+  border-radius: var(--u-r-sm);
   color: var(--u-muted);
   background: transparent;
   box-shadow: none;
 }
-.u-compact .u-row.u-seg > .u-btn, .u-roomy .u-row.u-seg > .u-btn { height: 24px; line-height: 24px; padding: 0 10px; font-size: 12.5px; font-weight: 500; }
+.u-compact .u-row.u-seg > .u-btn, .u-roomy .u-row.u-seg > .u-btn { height: 22px; line-height: 22px; padding: 0 12px; font-size: 12px; font-weight: 500; }
 .u-row.u-seg > .u-btn:hover { color: var(--u-ink); background: transparent; box-shadow: none; }
-.u-row.u-seg > .u-btn.is-sel { color: var(--u-ink); background: var(--u-selected); box-shadow: inset 0 0 0 1px var(--u-border); }
+.u-row.u-seg > .u-btn.is-sel { color: var(--u-ink); background: var(--u-selected); box-shadow: none; }
 .u-row.u-seg > .u-btn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
 /* A strip (Strip): a flat edge's row of chrome on the canvas, 40px tall
