@@ -420,3 +420,8 @@ library runs the same change: a class change, alone or with an insert
 or a text change in the same render, transitions over its duration in
 hotty-blitz's test harness. So the gap is the host's path, not
 Stylo's or Blitz's; it is hotty's to find. Not worked around.
+
+Stylo in Servo mode has no `prefers-reduced-motion` media feature, so
+the kit's reduced-motion rule never matches on Blitz: a host that
+reduces motion can't ask for it yet. Hotty's to add, with the host's
+setting behind it.
