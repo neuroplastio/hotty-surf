@@ -410,16 +410,12 @@ plx's chrome contract (A0), on hotty-blitz 0.7.0.
 **Motion (2026-11-07).** The kit's rows fade (background-color 160ms,
 color 180ms) and the keyboard row's marker, now a `::before`, fades in
 and grows (opacity 160ms, scaleY(.55) to 1 over 200ms), by the chrome
-contract. The gate's still renders prove the marker and the states.
-Live, hottyterm 26.11.07 (hotty-blitz 0.7.0) runs none of it: with
-every duration at 3s linear, a frame 0.6s after a Down key in the
-palette shows the new row at its end values (the fill #262d38, the
-marker #8facdb at full). The delta is `attr class` on the two rows'
-own elements, with the footer's text, a remove and an insert. The
-library runs the same change: a class change, alone or with an insert
-or a text change in the same render, transitions over its duration in
-hotty-blitz's test harness. So the gap is the host's path, not
-Stylo's or Blitz's; it is hotty's to find. Not worked around.
+contract. The gate's still renders prove the marker and the states, and
+hottyterm 26.11.07 (hotty-blitz 0.7.0) runs them live: with every
+duration at 3s linear, frames 0.65s and 1.2s after a Down key in the
+palette show both rows part of the way (six runs). One earlier run
+showed the new row at its end values 1.2s after the key; it never came
+again, and isn't a gap here.
 
 Stylo in Servo mode has no `prefers-reduced-motion` media feature, so
 the kit's reduced-motion rule never matches on Blitz: a host that
