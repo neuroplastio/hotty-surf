@@ -21,6 +21,8 @@ hotty-blitz's tests.
 Updated 2026-10-31 for the look (gov R-24), the sheet by roles: 28
 stories, 504 cases, with hotty-blitz 0.5.8 (cff9a62), the Blitz the
 hosts ship (hottyterm 26.10.31), which the gate renders with from then.
+Since 2026-11-07 the gate renders with hotty-blitz 0.7.0 (b7cbf17),
+hottyterm's since 26.11.06 ([gaps](blitz-gaps.md#hotty-blitz-070-2026-11-07)).
 
 ## Properties
 
@@ -42,7 +44,7 @@ hosts ship (hottyterm 26.10.31), which the gate renders with from then.
 | `background-clip` | `content-box` (a Target's centre, with 3px of padding: the gap round it clear, the fill under it showing) | proven | dot/shapes, on a selected row's fill |
 | `box-shadow` | after the hairline, `0 1px 2px` (raised: a Select's list) and `0 12px 24px -4px` (modal: a dialog) | proven but where it meets the story's end | select/open (Dense, 84–250), dialog/box (paper at 2×, 224–237): the shadow's last row at the root's bottom ([gap](blitz-gaps.md#the-look-2026-10-31)) |
 | `box-shadow` | `inset 2px 0 0` (an inset shadow with an offset) | **gap**, not used | Blitz draws a hairline round the rest of the box: the marker is a background layer instead ([gap](blitz-gaps.md#the-look-2026-10-31)) |
-| `border-left` | `2px solid` on a box with a radius | **gap**, not used | hotty-blitz 0.5.8 draws no border whose sides differ on a box with a radius ([gap](blitz-gaps.md#the-look-2026-10-31)) |
+| `border-left` | `2px solid` on a box with a radius | **gap**, not used | hotty-blitz 0.5.8 drew no border whose sides differ on a box with a radius; not checked since ([gap](blitz-gaps.md#the-look-2026-10-31)) |
 | `zoom` | `var(--u-zoom)` (Scale) | proven for boxes and monospace text; **gap** for proportional text | scale/zoom: in Compact and roomy the text sits 1.5 CSS px lower in its line |
 | `overflow-y: auto`, `scrollbar-width`, `scrollbar-color` | a scrolling box | the clip proven; the scrollbar unknown | box/scroll: neither engine draws a scrollbar in a still render |
 | `align-self` | `stretch` (a Stack in a Top Row) | proven | box/scroll |
@@ -69,7 +71,7 @@ hosts ship (hottyterm 26.10.31), which the gate renders with from then.
 | `overflow-wrap` | `anywhere` | proven | text/tones |
 | `text-align` | `center` | proven | glyph/column, key/caps |
 | `visibility` | `hidden`, `visible` (`.u-reveal`) | unknown | no story uses `Reveal()` |
-| `animation`, `opacity` | a `pulse` dot: `u-pulse 1.6s ease-in-out infinite alternate`, opacity 1 to 0.4 | unknown: runs from hotty-blitz 0.6.1, which the gate doesn't render with | the gate renders still documents: a story's sheet sets `animation: none` on `.u-pulse` (`stories.CSS`), and Chromium's shot disables animations, so dot/shapes shows the dot at rest in both. Whether it pulses is the host's to show, live |
+| `animation`, `opacity` | a `pulse` dot: `u-pulse 1.6s ease-in-out infinite alternate`, opacity 1 to 0.4 | unknown: runs from hotty-blitz 0.6.1; the gate renders still documents | the gate renders still documents: a story's sheet sets `animation: none` on `.u-pulse` (`stories.CSS`), and Chromium's shot disables animations, so dot/shapes shows the dot at rest in both. Whether it pulses is the host's to show, live |
 | `color-scheme` | `dark`; `light` (paper) | proven | the paper stories' controls |
 | `cursor` | `default` (the surface, so text shows the arrow), `pointer` (Button, Switch, Select, Cycle, a Nav's and Entries' Items, `[data-on~="click"]`, links), `text` (Field) | draws nothing; reaches the pointer | no story can show it: a still render has no pointer. hotty-blitz computes it from Stylo's style (blitz-dom `get_cursor`, `document.rs:2373`: a non-`auto` value wins; `auto` is the text caret over any text) and hottyterm shows it (`hotty_host_cursor`, `ffi.rs:875`, to `MouseShape.fromString`, hottyterm `mods/ghostty/0001…patch:1033`). Pinned by hotty-blitz's `the_pointer_shape_follows_the_document` and `a_detached_surface_shows_a_hand_only_over_a_hyperlink` (`tests/host.rs`), and here by `ui`'s `TestCursorOverTheVocabulary`, which reads the cascade of `surfui.CSS` |
 

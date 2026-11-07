@@ -290,14 +290,13 @@ function measure({ canvas, min, tol }) {
 
   // What ORIGIN serves: the fonts, and each document with the host's
   // stylesheet, as gate.cjs serves them: AdwaitaMono and IBM Plex Sans
-  // from --fonts. Chromium's side is machine-independent so; Blitz's is
-  // not yet (HOTTY is v0.5.8, which takes Plex from the system), until
-  // the re-baseline after the kit. gate.cjs says more.
+  // from --fonts, the faces hotty-blitz draws with, so both sides are
+  // machine-independent. gate.cjs says more.
   const hostCSS = execFileSync(a.hotty, ["css", "--cell", `${CELL.w}x${CELL.h}`, "--scale", String(SCALE), "--font", FONT], { encoding: "utf8" });
   const faces = [["Regular", 400, "normal"], ["Bold", 700, "normal"], ["Italic", 400, "italic"], ["BoldItalic", 700, "italic"]];
   const plex = [["Regular", 400], ["Medium", 500], ["SemiBold", 600]];
   const havePlex = plex.every(([f]) => fs.existsSync(path.join(a.fonts, `IBMPlexSans-${f}.woff2`)));
-  if (!havePlex) console.error(`legible: no IBM Plex Sans in ${a.fonts}: Chromium takes the system's Plex or a fallback; point HOTTY_FONTS at hotty-blitz 0.6.9's fonts/`);
+  if (!havePlex) console.error(`legible: no IBM Plex Sans in ${a.fonts}: Chromium takes the system's Plex or a fallback; point HOTTY_FONTS at hotty-blitz's fonts/ (0.6.9 or later)`);
   const fontCSS = faces
     .map(([f, w, st]) => `@font-face { font-family: "${FONT}"; src: url(/fonts/${FONT_FILE}-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: ${st}; }`)
     .concat(havePlex ? plex.map(([f, w]) => `@font-face { font-family: "IBM Plex Sans"; src: url(/fonts/IBMPlexSans-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: normal; }`) : [])

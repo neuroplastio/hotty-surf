@@ -156,14 +156,12 @@ wasm-tinygo:
 # button-states, or --inject <css>.
 #
 # HOTTY is the hotty-blitz the hosts ship: the baseline is written with
-# v0.5.8, hottyterm 26.10.31's, so build that tag (make blitz and make
+# v0.7.0, hottyterm's since 26.11.06, so build that tag (make blitz and make
 # release in a hotty-blitz checkout). HOTTY_BLITZ is the checkout, next to
 # this one by default. HOTTY_FONTS is the fonts/ Chromium loads: AdwaitaMono
-# and, from hotty-blitz 0.6.9, IBM Plex Sans, which the kit draws Compact and
-# Roomy in. Chromium's side is machine-independent with them. Blitz's is not
-# yet: HOTTY is v0.5.8, which takes Plex from the system, so a machine
-# without Plex falls back to Inter or Noto in Blitz and fails those cases,
-# until HOTTY moves to 0.6.9 (a re-baseline, after the kit).
+# and IBM Plex Sans, which the kit draws Compact and Roomy in, the same
+# faces hotty-blitz draws with (it ships Plex from 0.6.9), so both sides are
+# machine-independent.
 HOTTY_BLITZ   ?= $(abspath $(patsubst %/Cargo.toml,%,$(firstword $(wildcard ../hotty-blitz/Cargo.toml))))
 HOTTY         ?= $(HOTTY_BLITZ)/target/release/hotty
 HOTTY_FONTS   ?= $(HOTTY_BLITZ)/crates/hotty-blitz/fonts

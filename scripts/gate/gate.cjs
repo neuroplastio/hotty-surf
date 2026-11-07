@@ -261,11 +261,8 @@ async function sheet(page, file, c, files) {
   // and Chromium loads the faces from hotty-blitz's fonts/.
   //
   // So does IBM Plex Sans, which the kit draws Compact and Roomy in
-  // (400, 500, 600), from hotty-blitz 0.6.9's fonts/. That makes Chromium's
-  // side machine-independent. Blitz's is not yet: HOTTY is v0.5.8, which
-  // takes Plex from the system, so a machine without Plex falls back to
-  // Inter or Noto in Blitz while Chromium draws Plex, and Compact and Roomy
-  // cases fail. HOTTY moves to 0.6.9 in a re-baseline after the kit.
+  // (400, 500, 600), from hotty-blitz's fonts/ (0.6.9 and later), the faces
+  // hotty-blitz itself draws with. So both sides are machine-independent.
   const hostCSS = {};
   for (const s of SCALES) {
     const c = cell(s);

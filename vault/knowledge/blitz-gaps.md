@@ -13,7 +13,8 @@ with the first batch of fixes, on `r23/blitz-gaps` ([below](#the-first-batch-r23
 since 2026-10-30: 147 of 414 cases, after the Compact stories, 129
 since 2026-10-31, when a Glyph took a face of its own and box/rule its
 padding (the widgets leg), and 230 of 504 since the look, on hotty-blitz
-0.5.8 ([below](#the-look-2026-10-31))
+0.5.8 ([below](#the-look-2026-10-31)), and 376 of 1710 since the gate
+moved to hotty-blitz 0.7.0 ([below](#hotty-blitz-070-2026-11-07))
 ([below](#compact-the-kits-looks-in-the-gate-2026-10-30)). Before them it
 was 36 of 132, not 30. The six that came then are
 `list/selection` roomy at both scales (12.3–16.8 against about 3.5): the
@@ -329,8 +330,8 @@ here. `surfui.CSS` stays away from each:
   and its cause found, [above](#compact-the-kits-looks-in-the-gate-2026-10-30));
 - no `filter`, no `text-shadow`;
 - no CSS transitions or animations (no frames are scheduled), up to
-  hotty-blitz 0.6.1, which runs them; the gate renders with 0.5.8 and
-  still documents, so a `pulse` dot is shown at rest (css-subset.md);
+  hotty-blitz 0.6.1, which runs them; the gate renders still
+  documents, so a `pulse` dot is shown at rest (css-subset.md);
 - no range, progress or meter; `:placeholder-shown` and `:invalid` never
   match; `resize` is ignored.
 
@@ -360,3 +361,36 @@ contract): 684 cases more, of which 248 fail.
 | select-open-graphite-compact-1.6 (66.4), select-open-stone-compact-1.6 (66.8) | The Select's lower hairline a device row off; the label a CSS px low; the list's edges within tolerance | The inset hairline, and the text's place ([above](#the-look-2026-10-31)) |
 | menu-shown-stone-compact-1.6 (123.0), menu-shown-stone-roomy-1.6 (100.4) | The card's lower hairline a device row off; its shadow within tolerance | The inset hairline ([above](#the-look-2026-10-31)) |
 | pill-icon-stone-roomy-2 (12.3, threshold 12) | Glyphs a device px low, the focus-line's dashes | pill/icon (above) |
+
+## hotty-blitz 0.7.0 (2026-11-07)
+
+The gate renders with hotty-blitz 0.7.0 (b7cbf17) in place of 0.5.8:
+hottyterm's builds pin it since 26.11.06, so it is the Blitz the hosts
+ship. It draws IBM Plex Sans from its own fonts/ (since 0.6.9), so Blitz
+no longer takes Plex from the system, and the gate's two sides are
+machine-independent. The baseline is 376 of 1710 cases, from 586.
+
+- **261 pass that failed.** hotty-blitz paints a box on device pixels,
+  and an inset ring whole device pixels wide on every side (0.6.6,
+  mods/blitz 0051). The `100vh` hairline under the surface is gone (paper
+  Dense 1.6×; widget/states Stone 1751.6 to 23.0), and so is most of the
+  inset hairline a device row off.
+- **51 fail now, and 74 score more.** Each of the 29 stories is a gap
+  above, looked at in its gate sheet (its worst case):
+  - At 1.6×, an edge a whole device row off where 0.5.8 drew it within
+    tolerance: text/clickable (Dense 295, the case hotty-blitz's own
+    vault names for it), chip/fills (Dense 143), list/states (Compact
+    306), row/fit, button/states, attention/states, key/caps,
+    segmented/states, scale/zoom, list/entries, select/closed,
+    select/open, cycle/states, field/states, tip/shown, look/settings,
+    look/agents, line/runs, widget/states, dialog/box, strip/zones. The
+    snap of the painted box turns the sub-pixel gap between Blitz's
+    layout, on whole CSS px (`round.rs`, [above](#over-the-threshold-30-of-132-cases)),
+    and Chromium's into a whole device row where the edge rounds the
+    other way.
+  - Text a device px off: glyphs are not hinted above a scale of 1
+    (0.6.5, mods/blitz 0050), where Chromium's are. text/type and
+    text/clickable Roomy (14–48), button/icon Roomy 2× (13.3),
+    button/small, badge/states, pill/icon; text/path's and
+    line/paragraph's known breaks score 1–8% more.
+  - switch/focus: the ring's flatter ends ([above](#compact-the-kits-looks-in-the-gate-2026-10-30)).
