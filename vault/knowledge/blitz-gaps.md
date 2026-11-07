@@ -394,3 +394,13 @@ machine-independent. The baseline is 376 of 1710 cases, from 586.
     button/small, badge/states, pill/icon; text/path's and
     line/paragraph's known breaks score 1–8% more.
   - switch/focus: the ring's flatter ends ([above](#compact-the-kits-looks-in-the-gate-2026-10-30)).
+
+## The chrome contract's components (2026-11-07)
+
+A2's legs restyle the kit's list rows, popovers, menus and dialogs to
+plx's chrome contract (A0), on hotty-blitz 0.7.0.
+
+| Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
+| --- | --- | --- | --- | --- |
+| list/states (Stone Compact 1.6×: 303.5) | The selected and the keyboard's rows' shared edge a device row off | 1.6× | The painted box's snap ([above](#hotty-blitz-070-2026-11-07)), as neuroplastio's same case | Cosmetic |
+| look/agents (paper: Dense 2×, Compact 2×, Roomy: 307–393), dialog/box (paper Roomy 2×: 253.5) | A dialog's lower edge a device row off: its input hairline, darker than the border it had, now counts where the border's didn't | both | A box's height rounded to whole CSS px, where Chromium keeps the fraction (`round.rs`, [under the threshold](#under-the-threshold)) | Cosmetic |

@@ -849,8 +849,9 @@
 .u-wg-fill { display: block; width: calc(var(--u-m) * 100%); height: 100%; border-radius: 2px; background: var(--u-muted); }
 
 /* A popover (Popover): what a widget or a top strip's tool opens under
-   it, a card of the page's ground in a surface of its own, radius 10,
-   the input's hairline and the raised shadow, what it holds clipped. */
+   it, a card of the popover's ground in a surface of its own, radius 10,
+   the input's hairline and the raised shadow, what it holds clipped
+   (plx's chrome contract). */
 .u-pop {
   flex: 1 0 auto;
   display: flex;
@@ -858,7 +859,8 @@
   min-width: 0;
   overflow: hidden;
   border-radius: var(--u-r-lg);
-  background: var(--u-bg);
+  --u-bg: var(--u-popover);
+  background: var(--u-popover);
   box-shadow: inset 0 0 0 1px var(--u-input), var(--u-shadow-raised);
 }
 
@@ -979,8 +981,10 @@
 .u-menu-surface > .u-menu { flex: none; }
 .u-compact.u-menu-surface, .u-roomy.u-menu-surface { padding: 0 10px 16px 0; }
 
-/* A menu (surfui.MenuCard), one look for every menu: raised, radius 8,
-   the border's hairline and the raised shadow; in Compact and Roomy 4px
+/* A menu (surfui.MenuCard), one look for every menu, a popover's frame
+   (plx's chrome contract): the popover's ground, radius 10, the input's
+   hairline and the raised shadow, so that its rows' radius 6 sits 4px
+   inside it, concentric; in Compact and Roomy 4px
    of room round its rows, each 28px tall, all 1px apart, 8px across, its
    icon muted, its label 13px, its keys at its end; the pointer or the
    keyboard on one the selected fill, its icon in the ink. A heading a
@@ -988,16 +992,16 @@
    action that destroys in the error's colour; one that can't be picked
    dim. In Dense its rows are a cell tall, as a Select's open list's. */
 .u-menu {
-  --u-bg: var(--u-raised);
+  --u-bg: var(--u-popover);
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
   padding: calc(0.5 * var(--hotty-cell-h)) 0;
-  border-radius: var(--u-r-md);
+  border-radius: var(--u-r-lg);
   color: var(--u-ink);
-  background: var(--u-raised);
-  box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-raised);
+  background: var(--u-popover);
+  box-shadow: inset 0 0 0 1px var(--u-input), var(--u-shadow-raised);
 }
 .u-compact .u-menu, .u-roomy .u-menu { padding: 4px; gap: 1px; }
 .u-menu > .u-item { column-gap: var(--u-gx); color: var(--u-ink); cursor: pointer; }
@@ -1034,8 +1038,9 @@
 
 /* Layers: a rule a hairline; a box a hairline round flat content; the
    chrome (a sidebar) on the canvas, darker than the content, with a
-   hairline at its end; a dialog a popover, modal, a half row and a cell and a half
-   inside in Dense, the scale's 8px in Compact and Roomy. */
+   hairline at its end; a dialog a popover, modal, radius 12, the
+   input's hairline (plx's chrome contract), a half row and a cell and a
+   half inside in Dense, the scale's 8px in Compact and Roomy. */
 .u-rule { flex: 0 0 auto; height: 1px; background: var(--u-border); }
 .u-compact .u-rule { margin: 4px 0; }
 .u-box { border-radius: var(--u-r-md); box-shadow: inset 0 0 0 1px var(--u-border); }
@@ -1056,7 +1061,7 @@
   border-radius: var(--u-r-xl);
   color: var(--u-ink);
   background: var(--u-popover);
-  box-shadow: inset 0 0 0 1px var(--u-border), var(--u-shadow-modal);
+  box-shadow: inset 0 0 0 1px var(--u-input), var(--u-shadow-modal);
 }
 .u-compact .u-dialog, .u-roomy .u-dialog { padding: 8px; }
 .u-dialog .u-rule { margin: 0; }
