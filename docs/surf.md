@@ -234,7 +234,7 @@ component or a partial.
 | `svg` | string | icon | an SVG a host draws: the name of an `.svg` file beside the templates |
 | `path` | string | icon | an SVG a host draws: one path's data, filled, in a 24×24 box |
 | `icon`, `unit` | string | face | a face's icon, an MDI symbol's name, and its unit after its value ("A widget's face") |
-| `theme` | string | surface | `neuroplastio`, `terminal` or `paper` |
+| `theme` | string | surface | `neuroplastio`, `terminal`, `paper`, `graphite` or `stone` |
 | `density` | string | surface | `compact` (the default), `dense` or `roomy` |
 | `key` | string | all | its key among its siblings, which the diff follows: give a `:each`'s items one. Bound, any value with a text (an int `1` is `k1`) |
 | `tone` | string | all | the text's colour: `accent`, `ok`, `warn`, `error`, `info`, `muted`, `plain` |

@@ -50,8 +50,10 @@ func Surface(kids ...*Node) *Node {
 }
 
 // Theme sets a surface's theme: "neuroplastio" (the terminal's colours
-// with neuroplastio's violet), "terminal" (the terminal's alone), or
-// "paper" (gov's light tokens, whatever the terminal's).
+// with neuroplastio's violet), "terminal" (the terminal's alone), "paper"
+// (gov's light tokens, whatever the terminal's), "graphite" (fixed
+// neutral grounds and opaque states, dark, and Stone on a light
+// terminal), or "stone" (Graphite's light half, whatever the terminal's).
 func (n *Node) Theme(name string) *Node {
 	n.replaceClass("u-theme-", "u-theme-"+name)
 	return n

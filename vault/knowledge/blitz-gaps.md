@@ -333,3 +333,23 @@ here. `surfui.CSS` stays away from each:
   still documents, so a `pulse` dot is shown at rest (css-subset.md);
 - no range, progress or meter; `:placeholder-shown` and `:invalid` never
   match; `resize` is ignored.
+
+## Graphite and Stone (2026-11-07)
+
+The gate draws two themes more, graphite and stone (plx's chrome
+contract): 684 cases more, of which 248 fail.
+
+- 237 fail where the same story, density and scale already fails in
+  neuroplastio, terminal or paper, at a like score (at most 1.5 times
+  its peer's, plus 10): the gaps above, carried over.
+- 11 score higher than their peers, or have none: widget/states,
+  field/states, dialog/box, hue/palette, dot/shapes, menu/shown,
+  select/open, cycle/states, pill/icon (stone; select/open and
+  hue/palette in graphite too).
+  - The four looked at (widget/states, dialog/box, hue/palette,
+    dot/shapes) are a document's end: the `100vh` hairline, and the
+    shadow where it meets the story's end (both above). Stone's ground
+    is a mid grey (#d2d2d2) on the terminal's dark one, so the hairline
+    the root leaves counts for more than paper's.
+  - The other seven are not verified; they are in the baseline as the
+    same.

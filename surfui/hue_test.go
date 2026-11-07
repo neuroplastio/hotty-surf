@@ -151,7 +151,7 @@ func TestPaletteCSS(t *testing.T) {
 	for _, want := range []string{
 		".u-surface {\n  --u-hue-coral: #ff8e7a;\n  --u-hue-teal: #4fd1c5;\n}",
 		"@media (prefers-color-scheme: light) {\n  .u-surface {\n    --u-hue-coral: #b4321f;\n    --u-hue-teal: #0f766e;\n  }\n}",
-		".u-surface.u-theme-paper {\n  --u-hue-coral: #b4321f;\n  --u-hue-teal: #0f766e;\n}",
+		".u-surface.u-theme-paper, .u-surface.u-theme-stone {\n  --u-hue-coral: #b4321f;\n  --u-hue-teal: #0f766e;\n}",
 		".u-hue-coral { color: var(--u-hue-coral); }",
 		".u-hue-teal { color: var(--u-hue-teal); }",
 		// A hue's dot is a thing's own colour, 8px, where a state's is 6.

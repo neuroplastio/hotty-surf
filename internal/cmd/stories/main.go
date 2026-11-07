@@ -38,7 +38,7 @@ import (
 func main() {
 	list := flag.Bool("list", false, "list the stories and their widths")
 	out := flag.String("out", "", "write every story to DIR/<name>.html")
-	theme := flag.String("theme", "neuroplastio", "the theme: neuroplastio, terminal, paper")
+	theme := flag.String("theme", "neuroplastio", "the theme: neuroplastio, terminal, paper, graphite, stone")
 	density := flag.String("density", "dense", "the density: dense, roomy, compact (with -gallery, compact, the gallery's)")
 	ofGallery := flag.Bool("gallery", false, "write the gallery's stories, each as the gallery draws it, in each of its modes")
 	width := flag.Int("width", 0, "with -gallery, draw every canvas `cells` wide, not at its story's width")

@@ -52,7 +52,7 @@ hits
     --u-hue-teal: #0f766e;
   }
 }
-.u-surface.u-theme-paper {
+.u-surface.u-theme-paper, .u-surface.u-theme-stone {
   --u-hue-coral: #b4321f;
   --u-hue-plum: #6b3fa0;
   --u-hue-teal: #0f766e;

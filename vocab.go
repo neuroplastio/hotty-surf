@@ -89,7 +89,7 @@ type Attr struct {
 
 // The values of the attributes that take only some.
 var (
-	themes    = []string{"neuroplastio", "terminal", "paper"}
+	themes    = []string{"neuroplastio", "terminal", "paper", "graphite", "stone"}
 	densities = []string{"compact", "dense", "roomy"}
 	tones     = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
 	drops     = []string{"whole", "halves", "thirds"}
@@ -159,7 +159,7 @@ var Attrs = []Attr{
 	{Name: "path", Type: TypeString, Doc: "an SVG a host draws: one path's data, filled, in a 24×24 box", Tags: []string{"icon"}, Arg: true},
 	{Name: "unit", Type: TypeString, Doc: "a widget's unit after its value, muted", Tags: []string{"face"}, Arg: true},
 
-	{Name: "theme", Type: TypeString, Doc: "neuroplastio, terminal or paper", Tags: []string{"surface"}, Func: "ModTheme", Fails: true, Values: themes},
+	{Name: "theme", Type: TypeString, Doc: "neuroplastio, terminal, paper, graphite or stone", Tags: []string{"surface"}, Func: "ModTheme", Fails: true, Values: themes},
 	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},
 	{Name: "key", Type: TypeString, Doc: "the node's key among its siblings, which the diff follows", Func: "ModKey"},
 	{Name: "tone", Type: TypeString, Doc: "the text's colour: accent, ok, warn, error, info, muted or plain", Func: "ModTone", Fails: true, Values: tones},
@@ -352,11 +352,11 @@ func MenuSep(ord int) surfui.MenuItem {
 // ModTheme sets a surface's theme.
 func ModTheme(n *surfui.Node, v string) error {
 	switch v {
-	case "neuroplastio", "terminal", "paper":
+	case "neuroplastio", "terminal", "paper", "graphite", "stone":
 		n.Theme(v)
 		return nil
 	}
-	return fmt.Errorf("theme is neuroplastio, terminal or paper, not %q", v)
+	return fmt.Errorf("theme is neuroplastio, terminal, paper, graphite or stone, not %q", v)
 }
 
 // ModDensity sets a surface's density.

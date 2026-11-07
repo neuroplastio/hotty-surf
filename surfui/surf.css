@@ -112,6 +112,9 @@
   --u-error-on-sel: #ffc4c0;
   --u-warn-on-sel: #ffd27a;
   --u-solid: var(--u-ink);
+  --u-chrome-ink: var(--u-ink);
+  --u-on-accent: var(--u-on-solid);
+  --u-badge-muted: var(--u-input);
   --u-solid-hover: white;
   --u-on-solid: var(--u-canvas);
 }
@@ -145,6 +148,133 @@
   --u-solid-hover: black;
   --u-on-solid: #ffffff;
 }
+/* Graphite and Stone (plx's chrome contract, A0, 2026-11-07): fixed,
+   achromatic grounds and opaque states, so that a pair's contrast is a
+   number, not the terminal's. Graphite is dark, and Stone where the
+   terminal is light; stone is Stone on any terminal, as paper is paper.
+   Measured in surfui's theme test: text 4.5:1 on every ground and state
+   fill, an input's edge 3:1; a muted badge is on a grey of its own,
+   since the ink fails on the input's (2.2:1). The tip is on the canvas,
+   opaque, so that nothing under it shows through. Info is the
+   contract's method at hue 210, which it has no tone for. */
+.u-surface.u-theme-graphite {
+  --u-canvas: #191919;
+  --u-bg: #202020;
+  --u-raised: #262626;
+  --u-popover: #2a2a2a;
+  --u-float: #191919;
+  --u-field: #1c1c1c;
+  --u-ink: #b4b4b4;
+  --u-accent: #8facdb;
+  --u-accent-soft: #262d38;
+  --u-accent-edge: #607598;
+  --u-ok: #84b99c;
+  --u-warn: #d1af75;
+  --u-error: #e69089;
+  --u-info: #74b7c3;
+  --u-error-on-sel: var(--u-error);
+  --u-warn-on-sel: var(--u-warn);
+  --u-border: #404040;
+  --u-input: #777777;
+  --u-hover: #292929;
+  --u-selected: #303030;
+  --u-solid: #2e3b50;
+  --u-solid-hover: #364358;
+  --u-on-solid: #bebebe;
+  --u-on-accent: #191919;
+  --u-badge-muted: #404040;
+  --u-shadow-modal: 0 12px 32px #0006;
+  --u-tile-agent: #9b9b9b;
+  --u-tile-shell: #28372e;
+  --u-tile-code: #9389a7;
+  --u-tile-branch: #7b9787;
+  --u-tile-book: #8d9aa8;
+  --u-tile-server: #7b92a6;
+  --u-tile-settings: #9691a9;
+  --u-tile-ink: #232323;
+  --u-tile-shell-ink: #84b99c;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  .u-surface.u-theme-graphite {
+    --u-canvas: #c4c4c4;
+    --u-bg: #d2d2d2;
+    --u-raised: #d7d7d7;
+    --u-popover: #dedede;
+    --u-float: #c4c4c4;
+    --u-field: #d9d9d9;
+    --u-ink: #3a3a3a;
+    --u-accent: #2e4a78;
+    --u-accent-soft: #b6c0d0;
+    --u-accent-edge: #596d8c;
+    --u-ok: #1f533a;
+    --u-warn: #624413;
+    --u-error: #7e302d;
+    --u-info: #03545f;
+    --u-error-on-sel: var(--u-error);
+    --u-warn-on-sel: var(--u-warn);
+    --u-border: #9b9b9b;
+    --u-input: #696969;
+    --u-hover: #c9c9c9;
+    --u-selected: #bebebe;
+    --u-solid: #34435b;
+    --u-solid-hover: #2d3b52;
+    --u-on-solid: #d6d6d6;
+    --u-on-accent: #d6d6d6;
+  --u-badge-muted: #a8a8a8;
+    --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12), 0 6px 16px -6px rgb(0 0 0 / 0.18);
+    --u-shadow-modal: 0 12px 32px #29292926;
+    --u-tile-agent: #aeaeae;
+    --u-tile-shell: #aec0b5;
+    --u-tile-code: #b2a8c7;
+    --u-tile-branch: #99b6a5;
+    --u-tile-book: #acb9c7;
+    --u-tile-server: #9ab1c6;
+    --u-tile-settings: #b5b0c9;
+    --u-tile-ink: #2e2e2e;
+    --u-tile-shell-ink: #204633;
+    color-scheme: light;
+  }
+}
+.u-surface.u-theme-stone {
+  --u-canvas: #c4c4c4;
+  --u-bg: #d2d2d2;
+  --u-raised: #d7d7d7;
+  --u-popover: #dedede;
+  --u-float: #c4c4c4;
+  --u-field: #d9d9d9;
+  --u-ink: #3a3a3a;
+  --u-accent: #2e4a78;
+  --u-accent-soft: #b6c0d0;
+  --u-accent-edge: #596d8c;
+  --u-ok: #1f533a;
+  --u-warn: #624413;
+  --u-error: #7e302d;
+  --u-info: #03545f;
+  --u-error-on-sel: var(--u-error);
+  --u-warn-on-sel: var(--u-warn);
+  --u-border: #9b9b9b;
+  --u-input: #696969;
+  --u-hover: #c9c9c9;
+  --u-selected: #bebebe;
+  --u-solid: #34435b;
+  --u-solid-hover: #2d3b52;
+  --u-on-solid: #d6d6d6;
+  --u-on-accent: #d6d6d6;
+  --u-badge-muted: #a8a8a8;
+  --u-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12), 0 6px 16px -6px rgb(0 0 0 / 0.18);
+  --u-shadow-modal: 0 12px 32px #29292926;
+  --u-tile-agent: #aeaeae;
+  --u-tile-shell: #aec0b5;
+  --u-tile-code: #b2a8c7;
+  --u-tile-branch: #99b6a5;
+  --u-tile-book: #acb9c7;
+  --u-tile-server: #9ab1c6;
+  --u-tile-settings: #b5b0c9;
+  --u-tile-ink: #2e2e2e;
+  --u-tile-shell-ink: #204633;
+  color-scheme: light;
+}
 /* What is mixed with the ground is mixed again where a layer sets its
    own (a dialog, a menu). */
 .u-surface, .u-dialog, .u-options, .u-menu, .u-card {
@@ -154,6 +284,12 @@
   --u-focus-line: color-mix(in srgb, var(--u-ink) 58%, transparent);
   --u-ground-line: color-mix(in srgb, var(--u-on-solid) 85%, transparent);
 }
+/* Graphite's and Stone's muted and dim are their own, not mixed. */
+.u-theme-graphite.u-surface, .u-theme-graphite .u-dialog, .u-theme-graphite .u-options, .u-theme-graphite .u-menu, .u-theme-graphite .u-card { --u-muted: #9b9b9b; --u-dim: #989898; }
+@media (prefers-color-scheme: light) {
+  .u-theme-graphite.u-surface, .u-theme-graphite .u-dialog, .u-theme-graphite .u-options, .u-theme-graphite .u-menu, .u-theme-graphite .u-card { --u-muted: #484848; --u-dim: #494949; }
+}
+.u-theme-stone.u-surface, .u-theme-stone .u-dialog, .u-theme-stone .u-options, .u-theme-stone .u-menu, .u-theme-stone .u-card { --u-muted: #484848; --u-dim: #494949; }
 .u-surface {
   display: flex;
   flex-direction: column;
@@ -672,12 +808,12 @@
   font-size: 10.5px;
   font-weight: 600;
   line-height: 16px;
-  color: var(--u-on-solid);
+  color: var(--u-on-accent);
   background: var(--u-accent);
 }
 .u-surface .u-badge.u-tone-warn { color: var(--u-canvas); background: var(--u-warn); }
 .u-surface .u-badge.u-tone-error { color: var(--u-canvas); background: var(--u-error); }
-.u-surface .u-badge.u-tone-muted { color: var(--u-ink); background: var(--u-input); }
+.u-surface .u-badge.u-tone-muted { color: var(--u-ink); background: var(--u-badge-muted); }
 .u-badge.u-badge-dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
 .u-has-badge { position: relative; }
 .u-has-badge > .u-badge { position: absolute; top: -3px; right: -4px; box-shadow: 0 0 0 2px var(--u-canvas); }

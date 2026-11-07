@@ -382,7 +382,7 @@ func (h Hue) grounds() []groundOf {
 // CSS is the palette as rules to follow the stylesheet:
 //   - each hue is a custom property on the surface, --u-hue-<name>: its
 //     dark value, its light one where the ground is light (under
-//     prefers-color-scheme: light, and the paper theme), so that a theme
+//     prefers-color-scheme: light, and the paper and stone themes), so that a theme
 //     sets it again as it sets --u-accent, in a rule of its own;
 //   - an element of the hue (class u-hue-<name>) is coloured from it, and
 //     a dot of a hue is 8px, a thing's own colour (a machine's), where a
@@ -432,7 +432,7 @@ func (p Palette) CSS() string {
 	var b strings.Builder
 	b.WriteString("\n/* The palette's hues (surfui.Palette). */\n.u-surface {\n" + dark.String() + "}\n")
 	b.WriteString("@media (prefers-color-scheme: light) {\n  .u-surface {\n" + indent(light.String()) + "  }\n}\n")
-	b.WriteString(".u-surface.u-theme-paper {\n" + light.String() + "}\n")
+	b.WriteString(".u-surface.u-theme-paper, .u-surface.u-theme-stone {\n" + light.String() + "}\n")
 	b.WriteString(rules.String())
 	return b.String()
 }

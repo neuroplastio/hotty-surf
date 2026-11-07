@@ -36,7 +36,7 @@ const { Worker, isMainThread, parentPort } = require("worker_threads");
 const { PNG } = require("pngjs");
 const { diff } = require("./diff.cjs");
 
-const THEMES = ["neuroplastio", "terminal", "paper"];
+const THEMES = ["neuroplastio", "terminal", "paper", "graphite", "stone"];
 const DENSITIES = ["dense", "roomy", "compact"];
 const SCALES = [1.6, 2];
 const FONT = "AdwaitaMono Nerd Font Propo"; // hotty-blitz's own (fonts.rs)
