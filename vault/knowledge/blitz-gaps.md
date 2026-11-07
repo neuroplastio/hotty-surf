@@ -342,14 +342,21 @@ contract): 684 cases more, of which 248 fail.
 - 237 fail where the same story, density and scale already fails in
   neuroplastio, terminal or paper, at a like score (at most 1.5 times
   its peer's, plus 10): the gaps above, carried over.
-- 11 score higher than their peers, or have none: widget/states,
-  field/states, dialog/box, hue/palette, dot/shapes, menu/shown,
-  select/open, cycle/states, pill/icon (stone; select/open and
-  hue/palette in graphite too).
-  - The four looked at (widget/states, dialog/box, hue/palette,
-    dot/shapes) are a document's end: the `100vh` hairline, and the
-    shadow where it meets the story's end (both above). Stone's ground
-    is a mid grey (#d2d2d2) on the terminal's dark one, so the hairline
-    the root leaves counts for more than paper's.
-  - The other seven are not verified; they are in the baseline as the
-    same.
+- 11 score higher than their peers, or have none. Each was looked at
+  in its gate sheet, and none is a gap of its own. The cases below fail
+  where the old themes pass because Graphite's and Stone's edges are
+  opaque (Stone's input #696969 on #d2d2d2, its border #9b9b9b), where
+  the old themes' edges are mixed from the ink. An edge a device row
+  off counts for more there, though it is the same edge.
+
+| Case (score) | What differs | Gap |
+| --- | --- | --- |
+| widget-states-stone-compact-1.6 (1751.6) | The chrome's lower edge a device row off, across the story's width | The `100vh` hairline ([above](#over-the-threshold-30-of-132-cases)), as widget/states (above) |
+| dialog-box-stone-roomy-1.6 (309.0) | The shadow where it meets the story's end | The shadow at the root's end, as menu/shown (above) |
+| hue-palette-graphite-dense-1.6 (289.1) | The hairline under the surface | The `100vh` hairline |
+| dot-shapes-stone-compact-1.6 (248.8) | The hairline under the surface | The `100vh` hairline |
+| field-states-stone-dense-1.6 (666.4) | The hairline under the surface, and a Field's lower hairline a device row off | The `100vh` hairline, and the inset hairline ([above](#the-look-2026-10-31)) |
+| cycle-states-stone-compact-1.6 (53.9) | The focused Cycle's lower hairline a device row off (Blitz's row darker, 105 against 133 of 255) | The inset hairline |
+| select-open-graphite-compact-1.6 (66.4), select-open-stone-compact-1.6 (66.8) | The Select's lower hairline a device row off; the label a CSS px low; the list's edges within tolerance | The inset hairline, and the text's place ([above](#the-look-2026-10-31)) |
+| menu-shown-stone-compact-1.6 (123.0), menu-shown-stone-roomy-1.6 (100.4) | The card's lower hairline a device row off; its shadow within tolerance | The inset hairline ([above](#the-look-2026-10-31)) |
+| pill-icon-stone-roomy-2 (12.3, threshold 12) | Glyphs a device px low, the focus-line's dashes | pill/icon (above) |
