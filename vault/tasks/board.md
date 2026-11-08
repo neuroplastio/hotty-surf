@@ -193,7 +193,6 @@ The order is the maintainer's, via gov (2026-10-30):
     - `fit`: the palette reads from 80 cells to 20, with the vocabulary
       words `line`, `keep` and `fit`.
   - Left:
-    - Roomy's palette footer cuts Actions (legible-known.tsv).
     - For the maintainer: the new words, DejaVu Sans for glyph marks, a
       story's `about`, and `.u-box` as a column.
 - [x] **The gallery** (merge 20f8f7a), alongside: the live story
@@ -211,16 +210,16 @@ The order is the maintainer's, via gov (2026-10-30):
       `SetResource` and `Surface.Unhandled`;
     - surfgen's `Field.Go`;
     - a Compact field's ring inside a Dense surface.
-  - [ ] The legible gate (branch `legible`, in `make check` after the
+  - [x] The legible gate (in `make check` after the
     gate). The gallery kept its canvas at 20 cells, the palette was
     unreadable, and no check saw it. `make legible` draws every story of
     the gallery's catalog as the gallery does, at its own width, in both
     modes and every density (`stories -gallery`). Headless Chromium
     measures each one (`scripts/gate/legible.cjs`). The gate fails on
     what runs past its box, and on a text cut to under 4 characters.
-    13 failures at the story's own width are known, in
-    `scripts/gate/legible-known.tsv`: foot-hint's long title, and the
-    palette's footer in dense and roomy. That list is to be empty.
+    `scripts/gate/legible-known.tsv` has been empty since 2026-10-31,
+    when narrower key caps gave the palette footer room for Actions. The
+    2026-11-08 check passed all 684 documents with no failures.
 - [x] **The public prep:** a README, docs that stand alone, Apache-2.0,
   CI on GitHub-hosted runners, a tidy go.mod, surflua importable;
   v0.1.0 after review and the maintainer's yes.
