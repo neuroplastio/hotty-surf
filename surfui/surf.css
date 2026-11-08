@@ -1296,3 +1296,5 @@
 .u-surface .u-btn.u-pill.u-small { height: 1.29411765rem; line-height: 1.29411765rem; }
 .u-surface .u-btn.u-iconbtn.u-small { height: 1.29411765rem; line-height: 1.29411765rem; }
 .u-dense .u-btn.u-pill.u-small, .u-dense .u-btn.u-iconbtn.u-small { height: var(--u-row); line-height: var(--u-row); }
+/* A dot is also a glyph; keep its size instead of the glyph slot width. */
+.u-compact .u-dot, .u-roomy .u-dot { width: var(--u-dw); }

@@ -13,7 +13,7 @@ test('compact controls scale with the terminal font', async () => {
     await page.setContent(`<style>${css}</style><div class="u-surface u-compact">
       <div class="u-nav"><div class="u-item" id="row">Example</div></div>
       <div class="u-switch" id="switch"><span class="u-knob"></span></div>
-      <span class="u-icon" id="icon">x</span>
+      <span class="u-icon" id="icon">x</span><span class="u-glyph u-dot" id="dot"></span>
       <div class="u-item" id="plain">Plain</div><div class="u-item" id="with-button">Plain<button class="u-btn u-small u-bare">Reset</button></div></div>`);
     async function metrics(font, cell) {
       return page.evaluate(({font, cell}) => {
@@ -21,6 +21,8 @@ test('compact controls scale with the terminal font', async () => {
         const row = getComputedStyle(document.querySelector('#row'));
         const sw = document.querySelector('#switch').getBoundingClientRect();
         const icon = document.querySelector('#icon').getBoundingClientRect();
+        const dot = document.querySelector('#dot').getBoundingClientRect();
+        if (Math.abs(dot.width - dot.height) > 0.02) throw new Error(`status dot is not round: ${dot.width} × ${dot.height}`);
         assertRows();
         function assertRows() {
           const a = document.querySelector('#plain').getBoundingClientRect().height;
