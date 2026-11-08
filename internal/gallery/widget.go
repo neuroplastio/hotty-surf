@@ -123,6 +123,10 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 // only take effect on a pill, so they follow its control as it changes.
 func (ws *widgetStory) shown() []*Control {
 	var out []*Control
+	badge := 0
+	if c := ws.by["badge"]; c != nil {
+		badge, _ = strconv.Atoi(c.Value)
+	}
 	for _, c := range ws.ctls {
 		switch c.Name {
 		case "checked":
@@ -163,6 +167,14 @@ func (ws *widgetStory) shown() []*Control {
 			}
 		case "raised", "current":
 			if ws.by["pill"] == nil || ws.by["pill"].Value != "true" {
+				continue
+			}
+		case "badge-dot":
+			if badge > 0 {
+				continue
+			}
+		case "badge-tone":
+			if badge <= 0 && (ws.by["badge-dot"] == nil || ws.by["badge-dot"].Value != "true") {
 				continue
 			}
 		}

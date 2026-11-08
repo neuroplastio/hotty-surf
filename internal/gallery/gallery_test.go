@@ -396,6 +396,33 @@ func TestPillControlsAppearInTheLiveGallery(t *testing.T) {
 	}
 }
 
+func TestBadgeControlsFollowTheVisibleBadge(t *testing.T) {
+	g := New()
+	g.Pick("w-button")
+	index := func(name string) int {
+		return slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == name })
+	}
+	if index("badge-tone") >= 0 {
+		t.Fatal("tone offered with no badge")
+	}
+	g.Flip(index("badge-dot"))
+	if index("badge-tone") < 0 {
+		t.Fatal("dot badge lacks its tone")
+	}
+	g.Choose(index("badge"), "2")
+	if index("badge-dot") >= 0 || index("badge-tone") < 0 {
+		t.Fatal("count badge offers a dot or lacks its tone")
+	}
+	g.Choose(index("badge"), "0")
+	if index("badge-dot") < 0 || index("badge-tone") < 0 {
+		t.Fatal("dot setting was not retained")
+	}
+	g.Flip(index("badge-dot"))
+	if index("badge-tone") >= 0 {
+		t.Fatal("tone remained with no badge")
+	}
+}
+
 // A handler the story calls is logged, with its arguments: a click's
 // $event by its fields, a field's $value, a pick's, and a partial's call
 // of its user's method with a struct, which the method still gets.
