@@ -227,6 +227,13 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 		if b.f&fBare != 0 {
 			bg = ""
 		}
+		// A segment or grid button's selected state is its value, even
+		// while another control has the keyboard. The ordinary button's
+		// tonal fill is unpainted on a sixteen-colour terminal.
+		parent := surfui.Parent(n)
+		if b.f&fSel != 0 && parent != nil && (hasClass(parent, "u-seg") || hasClass(parent, "u-grid")) {
+			bg = Selected
+		}
 		switch {
 		case off && bg != "":
 			bg = Surface

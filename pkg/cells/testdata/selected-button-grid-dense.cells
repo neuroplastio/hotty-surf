@@ -1,0 +1,16 @@
+cells 60x5
+text
+>  plain  chosen  locked
+>                            other
+style
+= aaaaaaabbbbbbbbcddddddc
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+. fg/bg
+a fg/tonal
+b fg/selected
+c fg/surface
+d faint/surface
+hits
+@ 0,0 7x1 r.0.0
+@ 7,0 8x1 r.0.1
+@ 0,1 60x1 r.1
