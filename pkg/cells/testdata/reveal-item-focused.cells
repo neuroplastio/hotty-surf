@@ -3,10 +3,11 @@ text
 >  ItemSecret Action
 >                Elsewhere
 style
-= ...........aaaaaaaa
-= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaabbbbbbbbaaaaaaaaaaaaaaaaaaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 . fg/bg
-a fg/tonal
+a fg/selected
+b fg/tonal
 hits
 @ 0,0 40x1 r.0
 @ 11,0 8x1 r.0.2

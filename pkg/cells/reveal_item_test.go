@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/neuroplastio/hotty-surf/pkg/cells"
 	"github.com/neuroplastio/hotty-surf/surfui"
 )
 
@@ -18,9 +19,13 @@ func TestRevealFollowsItsItemsKeyboardFocus(t *testing.T) {
 		t.Fatalf("revealed before the item has focus: %q", s)
 	}
 	r.Key("tab")
-	golden(t, "reveal-item-focused", r.Draw(40, 4))
-	if s := r.Draw(40, 4).Text(); !strings.Contains(s, "Secret") {
+	focused := r.Draw(40, 4)
+	golden(t, "reveal-item-focused", focused)
+	if s := focused.Text(); !strings.Contains(s, "Secret") {
 		t.Fatalf("hidden while the item has focus: %q", s)
+	}
+	if len(focused.Lines) == 0 || focused.Lines[0][0].Bg != cells.Selected {
+		t.Fatalf("focused item lacks the quiet selection role: %s", focused.Golden())
 	}
 	r.Key("tab")
 	if s := r.Draw(40, 4).Text(); !strings.Contains(s, "Secret") {

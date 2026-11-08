@@ -64,6 +64,9 @@ in cells. Each is fixed in the renderer, for any screen:
   and in cells, an item's revealed contents now show while focus is in
   the item as well as while it is selected; a host also shows them on
   hover. The gallery's reveal example provides such an item to try.
+- **A standalone item hid keyboard focus.** A focusable item outside a
+  list now has the existing inset focus line on a host and the quiet
+  selected fill in cells. List selection keeps its own treatment.
 - **A focused list's selection was the loudest thing on the screen.**
   It was `sel`, reverse video: a white block across the row, which hid
   a focused entry's ▎. On a host the look gives it the quiet selected

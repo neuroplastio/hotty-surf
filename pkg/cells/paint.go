@@ -287,6 +287,12 @@ func (p *painter) item(b *box, in *ink, bg *Role) {
 		return
 	}
 	list := surfui.Parent(b.n)
+	// A standalone focusable item has no list selection to mark where
+	// the keyboard is. Use the quiet list-selection role for its row.
+	if p.focus == b.n && (list == nil || !hasClass(list, "u-list")) {
+		*bg = Selected
+		return
+	}
 	if b.f&fSel == 0 || list == nil || !hasClass(list, "u-list") {
 		return
 	}
