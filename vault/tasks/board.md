@@ -483,8 +483,12 @@ The order is the maintainer's, via gov (2026-10-30):
     - **A tooltip in a tool's own view** (#1, for plx's `sdk/surfdk`):
       `surfrun.Surface.Tip` exists (b52c261), so first find what a
       tool's view lacks to use it.
-    - For the kit branch: MenuCard's `flex: 1 0 auto` clips its own
-      shadow (#4); the dot is 6 px where the board has 8 (#5).
+    - MenuCard's `flex: 1 0 auto` clipped its shadow (#4): fixed in
+      593de3d, which gives the menu surface room and stops the card
+      growing. The renderer's shadow-at-the-story-end difference remains
+      in `knowledge/blitz-gaps.md`.
+    - The workspace-menu dot is 6 px in the kit where the board has 8
+      (#5); the reusable menu slot remains open with #2 above.
     - Answered: a row that keeps keys from the left and drops the
       trailing ones (#6) is `<row fit-start>`.
     - A question for the maintainer: `<key>` draws "C" and "Enter",
