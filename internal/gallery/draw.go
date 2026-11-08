@@ -37,8 +37,8 @@ func (g *Gallery) draw(s *story) *drawn {
 		d.tree = s.tree
 	case s.widget != nil:
 		ws := newWidgetStory(d, s.widget)
-		d.controls = ws.ctls
 		ws.load()
+		d.controls = ws.shown()
 	case s.file != nil:
 		d.fileStory()
 	}

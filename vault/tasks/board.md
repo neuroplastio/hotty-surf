@@ -547,6 +547,9 @@ The order is the maintainer's, via gov (2026-10-30):
     - The gallery offers every attribute for every widget, and some draw
       nothing on it (checked on a text, gap on a leaf, raised or current
       off a pill, a switch's tone). Show only those that draw on it.
+      The named cases, and top, invalid, bare, selected, wrap and scroll
+      where they cannot apply, are filtered in the gallery. Pill-only
+      controls follow the pill switch. Audit the remaining controls.
     - Modifiers win since 096fd21: once plx pins the kit, wherever it
       sets one its widget used to beat, it shows. Look at plx then.
     - The field example starts empty, so its tone and weight cannot be

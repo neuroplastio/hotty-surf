@@ -45,7 +45,15 @@ var (
 func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 	ws := &widgetStory{d: d, w: w, by: map[string]*Control{}}
 	add := func(c *Control) {
-		c.set = func(string) bool { ws.load(); return true }
+		c.Key = slug(c.Name)
+		c.set = func(string) bool {
+			ws.load()
+			ws.d.controls = ws.shown()
+			if ws.d.g.cur == ws.d {
+				ws.d.g.Controls = ws.d.controls
+			}
+			return true
+		}
 		ws.ctls = append(ws.ctls, c)
 		ws.by[c.Name] = c
 	}
@@ -109,6 +117,58 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 		}
 	}
 	return ws
+}
+
+// shown leaves out controls which cannot affect this example. Pill fills
+// only take effect on a pill, so they follow its control as it changes.
+func (ws *widgetStory) shown() []*Control {
+	var out []*Control
+	for _, c := range ws.ctls {
+		switch c.Name {
+		case "checked":
+			if ws.w.Tag != "switch" {
+				continue
+			}
+		case "gap":
+			if !slices.Contains([]string{"stack", "row", "item"}, ws.w.Tag) {
+				continue
+			}
+		case "top":
+			if !slices.Contains([]string{"row", "item"}, ws.w.Tag) {
+				continue
+			}
+		case "wrap":
+			if !slices.Contains([]string{"text", "line"}, ws.w.Tag) {
+				continue
+			}
+		case "scroll":
+			if ws.w.Form != surf.FormKids && ws.w.Form != surf.FormSection {
+				continue
+			}
+		case "invalid":
+			if ws.w.Tag != "field" {
+				continue
+			}
+		case "bare":
+			if !slices.Contains([]string{"field", "button"}, ws.w.Tag) {
+				continue
+			}
+		case "selected":
+			if ws.w.Tag != "item" && ws.w.Tag != "face" && (ws.w.Tag != "button" || ws.by["pill"].Value != "true") {
+				continue
+			}
+		case "tone":
+			if ws.w.Tag == "switch" {
+				continue
+			}
+		case "raised", "current":
+			if ws.by["pill"] == nil || ws.by["pill"].Value != "true" {
+				continue
+			}
+		}
+		out = append(out, c)
+	}
+	return out
 }
 
 // attrs are the modifiers the widget takes, in Attrs' order: all but

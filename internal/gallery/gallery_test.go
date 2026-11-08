@@ -333,6 +333,69 @@ func TestFieldStoryStartsWithEditableText(t *testing.T) {
 	}
 }
 
+func TestWidgetControlsFollowWhatTheExampleCanShow(t *testing.T) {
+	g := New()
+	has := func(name string) bool {
+		return slices.ContainsFunc(g.Controls, func(c *Control) bool { return c.Name == name })
+	}
+	for _, tc := range []struct{ story, absent, present string }{
+		{"w-text", "checked", "tone"},
+		{"w-text", "invalid", "wrap"},
+		{"w-field", "gap", "value"},
+		{"w-field", "wrap", "value"},
+		{"w-field", "scroll", "value"},
+		{"w-field", "top", "bare"},
+		{"w-row", "checked", "gap"},
+		{"w-row", "bare", "top"},
+		{"w-switch", "tone", "checked"},
+		{"w-item", "invalid", "selected"},
+	} {
+		g.Pick(tc.story)
+		if has(tc.absent) || !has(tc.present) {
+			t.Errorf("%s: %s present = %v, %s present = %v", tc.story, tc.absent, has(tc.absent), tc.present, has(tc.present))
+		}
+	}
+	g.Pick("w-button")
+	if has("raised") || has("current") || has("selected") {
+		t.Fatal("non-pill button offers pill fills")
+	}
+	pill := slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == "pill" })
+	if pill < 0 {
+		t.Fatal("button has no pill control")
+	}
+	g.Flip(pill)
+	if !has("raised") || !has("current") || !has("selected") {
+		t.Fatal("pill lacks its fill controls")
+	}
+	raised := slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == "raised" })
+	g.Flip(raised)
+	variants := g.variants()
+	if len(variants) < 2 || !slices.ContainsFunc(variants[1].d.controls, func(c *Control) bool { return c.Name == "raised" && c.Value == "true" }) {
+		t.Fatal("states matrix lost the pill's raised setting")
+	}
+	pill = slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == "pill" })
+	g.Flip(pill)
+	if has("raised") || has("current") || has("selected") {
+		t.Fatal("pill fills remained on a non-pill")
+	}
+}
+
+func TestPillControlsAppearInTheLiveGallery(t *testing.T) {
+	for _, mode := range modes {
+		t.Run(mode.name, func(t *testing.T) {
+			a, _ := start(t, mode.of, "w-button")
+			raised := controlID("w-button", "raised")
+			if _, ok := a.Surface().Element(raised); ok {
+				t.Fatal("raised is visible before pill")
+			}
+			if err := a.Host.Click(a.Name, controlID("w-button", "pill")); err != nil {
+				t.Fatal(err)
+			}
+			a.Wait("pill controls", func() bool { _, ok := a.Surface().Element(raised); return ok })
+		})
+	}
+}
+
 // A handler the story calls is logged, with its arguments: a click's
 // $event by its fields, a field's $value, a pick's, and a partial's call
 // of its user's method with a struct, which the method still gets.
