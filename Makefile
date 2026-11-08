@@ -177,6 +177,7 @@ GATE_FLAGS    ?=
 
 gate: scripts/gate/node_modules   ## F5: every story in Blitz and Chromium, diffed, against the known failures: .shots/gate/report.md
 	@test -x "$(HOTTY)" || { echo "no hotty at $(HOTTY): run make release in hotty-blitz, or set HOTTY_BLITZ"; exit 1; }
+	$(CAP) $(PIN) $(NODE) node --test scripts/gate/font-scale.test.cjs
 	$(GO) build -o bin/stories ./internal/cmd/stories
 	$(CAP) $(PIN) $(NODE) node scripts/gate/gate.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
 	  --stories bin/stories --out .shots/gate $(if $(GATE_BASELINE),--baseline $(GATE_BASELINE)) $(GATE_FLAGS)

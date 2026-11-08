@@ -421,3 +421,16 @@ Stylo in Servo mode has no `prefers-reduced-motion` media feature, so
 the kit's reduced-motion rule never matches on Blitz: a host that
 reduces motion can't ask for it yet. Hotty's to add, with the host's
 setting behind it.
+
+## Font-relative kit dimensions (2026-11-08)
+
+The kit now sizes controls and type from the host root font. In the 0.7.0
+Blitz/Chromium gate the resulting fractional lengths move some existing
+rounding and text-rendering differences across the area threshold. At
+scale 2 the grid's icons differ by 12.5–16.3 CSS px²; the 1.6× Stone
+popover has a one-device-pixel line at its lower edge (209 CSS px²). The
+paper dialog and agents cases show that edge and their existing shadow and
+text differences; the compact paragraph scores change slightly. The gap is
+between the two renderers, not a different intended size in the document.
+The baseline records these cases and their new scores, and removes cases
+that now pass. The 1.6× and 2× comparisons remain in the gate.

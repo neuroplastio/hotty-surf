@@ -1190,3 +1190,109 @@
 .u-surface .u-fill-error, .u-surface.u-fill-error { background: color-mix(in srgb, var(--u-error) 24%, var(--u-bg)); color: var(--u-ink); }
 .u-surface .u-fill-info, .u-surface.u-fill-info { background: color-mix(in srgb, var(--u-info) 24%, var(--u-bg)); color: var(--u-ink); }
 .u-surface .u-fill-muted, .u-surface.u-fill-muted { background: var(--u-selected); color: var(--u-muted); }
+
+/* Compact and roomy dimensions scale from the host's root font. At the
+   17px reference these retain the established gallery appearance. */
+.u-surface {
+  --u-r-xs: 0.23529412rem;
+  --u-r-sm: 0.35294118rem;
+  --u-r-md: 0.47058824rem;
+  --u-r-lg: 0.58823529rem;
+  --u-r-xl: 0.70588235rem;
+}
+.u-compact {
+  --u-gx: 0.23529412rem;
+  --u-px: 0.47058824rem;
+  --u-iy: 0.23529412rem;
+  --u-ny: 0.35294118rem;
+  --u-ig: 0.11764706rem;
+  --u-ctl: 1.64705882rem;
+  font-size: 0.82352941rem;
+}
+.u-roomy {
+  --u-px: 0.58823529rem;
+  --u-iy: 0.23529412rem;
+  --u-ny: 0.35294118rem;
+  --u-ig: 0.11764706rem;
+  --u-ctl: 1.88235294rem;
+  font-size: 0.88235294rem;
+}
+.u-compact .u-nav > .u-item { font-size: 0.82352941rem; }
+.u-switch { width: 1.64705882rem; height: 0.94117647rem; padding: 0 0.11764706rem; }
+.u-dense .u-switch { width: calc(3 * var(--u-cw)); }
+.u-roomy .u-switch { width: 1.88235294rem; height: 1.05882353rem; }
+.u-knob { width: 0.70588235rem; height: 0.70588235rem; }
+.u-roomy .u-knob { width: 0.82352941rem; height: 0.82352941rem; }
+.u-compact .u-icon { width: 1.05882353rem; font-size: 0.94117647rem; }
+.u-roomy .u-icon { width: 1.17647059rem; font-size: 1rem; }
+.u-compact .u-small { font-size: 0.73529412rem; }
+.u-roomy .u-small { font-size: 0.76470588rem; }
+.u-compact .u-heading { font-size: 0.88235294rem; }
+.u-roomy .u-heading { font-size: 1rem; }
+.u-compact .u-caption { font-size: 0.70588235rem; padding: 0.35294118rem 0 0.11764706rem; }
+.u-roomy .u-caption { font-size: 0.73529412rem; padding: 0.35294118rem 0 0.11764706rem; }
+.u-compact .u-chrome { font-size: 0.76470588rem; }
+.u-roomy .u-chrome { font-size: 0.82352941rem; }
+.u-compact .u-glyph { width: 0.94117647rem; }
+.u-dot { --u-dw: 0.35294118rem; }
+.u-compact .u-dot, .u-roomy .u-dot { margin: 0 calc(0.47058824rem - 0.5 * var(--u-dw)); }
+.u-dot.u-target { --u-dw: 0.58823529rem; padding: 0.17647059rem; }
+.u-compact .u-chip { padding: 0 0.35294118rem; font-size: 0.67647059rem; }
+.u-roomy .u-chip { padding: 0 0.35294118rem; font-size: 0.73529412rem; }
+.u-compact .u-key { font-size: 0.70588235rem; }
+.u-roomy .u-key { font-size: 0.73529412rem; }
+.u-compact .u-key + .u-key, .u-roomy .u-key + .u-key { margin-left: 0.29411765rem; }
+.u-compact .u-key.u-cap, .u-compact .u-cap > .u-key { min-width: 1.05882353rem; padding: 0 0.29411765rem; font-size: 0.67647059rem; }
+.u-roomy .u-key.u-cap, .u-roomy .u-cap > .u-key { min-width: 1.17647059rem; padding: 0 0.35294118rem; }
+.u-compact .u-key.u-cap + .u-key.u-cap, .u-compact .u-cap > .u-key + .u-key, .u-compact .u-keys + .u-keys { margin-left: 0.17647059rem; }
+.u-roomy .u-key.u-cap + .u-key.u-cap, .u-roomy .u-cap > .u-key + .u-key, .u-roomy .u-keys + .u-keys { margin-left: 0.23529412rem; }
+.u-compact .u-then { margin: 0 0.17647059rem; font-size: 0.67647059rem; }
+.u-roomy .u-then { margin: 0 0.23529412rem; font-size: 0.73529412rem; }
+.u-compact .u-field, .u-compact .u-select { padding: 0 0.58823529rem; }
+.u-compact .u-select, .u-roomy .u-select { column-gap: 0.47058824rem; }
+.u-compact .u-cycle, .u-roomy .u-cycle { padding: 0 0.23529412rem; column-gap: 0.23529412rem; }
+.u-compact .u-btn.u-bare, .u-roomy .u-btn.u-bare { padding: 0 0.35294118rem; }
+.u-compact .u-btn.u-bare { height: 1.29411765rem; line-height: 1.29411765rem; }
+.u-field.u-bare, .u-field.u-bare:hover, .u-field.u-bare:focus { padding: 0 0 0.17647059rem; line-height: calc(var(--u-row) - 0.17647059rem); }
+.u-compact .u-query { height: 1.88235294rem; }
+.u-roomy .u-query { height: 2.11764706rem; }
+.u-compact .u-btn.u-pill, .u-roomy .u-btn.u-pill { height: 1.64705882rem; line-height: 1.64705882rem; padding: 0 0.70588235rem; column-gap: 0.35294118rem; font-size: 0.76470588rem; }
+.u-compact .u-btn.u-iconbtn, .u-roomy .u-btn.u-iconbtn { width: 1.64705882rem; height: 1.64705882rem; line-height: 1.64705882rem; }
+.u-surface .u-btn.u-pill.u-small { height: 1.29411765rem; line-height: 1.29411765rem; padding: 0 0.58823529rem; font-size: 0.73529412rem; }
+.u-surface .u-btn.u-iconbtn.u-small { width: 1.29411765rem; height: 1.29411765rem; line-height: 1.29411765rem; }
+.u-compact .u-btn.u-iconbtn.u-small .u-icon, .u-roomy .u-btn.u-iconbtn.u-small .u-icon { width: 0.82352941rem; font-size: 0.82352941rem; }
+.u-compact .u-btn.u-pill > .u-icon, .u-roomy .u-btn.u-pill > .u-icon { width: 0.94117647rem; }
+.u-compact .u-btn.u-pill > .u-after, .u-roomy .u-btn.u-pill > .u-after { width: 0.82352941rem; font-size: 0.82352941rem; margin-right: -0.23529412rem; }
+.u-row.u-seg { gap: 0.11764706rem; padding: 0.17647059rem; }
+.u-compact .u-row.u-seg > .u-btn, .u-roomy .u-row.u-seg > .u-btn { height: 1.29411765rem; line-height: 1.29411765rem; padding: 0 0.70588235rem; font-size: 0.70588235rem; }
+.u-compact .u-row.u-strip, .u-roomy .u-row.u-strip { height: 2.35294118rem; padding: 0 0.47058824rem; column-gap: 0.47058824rem; }
+.u-compact .u-row.u-strip > .u-row, .u-roomy .u-row.u-strip > .u-row { column-gap: 0.23529412rem; }
+.u-row.u-grid { gap: 0.11764706rem; }
+.u-compact .u-row.u-grid > .u-btn, .u-roomy .u-row.u-grid > .u-btn { width: 1.88235294rem; height: 1.88235294rem; line-height: 1.88235294rem; font-size: 1.05882353rem; }
+.u-compact .u-row.u-grid > .u-btn > .u-icon, .u-roomy .u-row.u-grid > .u-btn > .u-icon { width: 1.05882353rem; font-size: 1.05882353rem; }
+.u-badge { min-width: 0.94117647rem; height: 0.94117647rem; padding: 0 0.23529412rem; font-size: 0.61764706rem; line-height: 0.94117647rem; }
+.u-badge.u-badge-dot { min-width: 0.47058824rem; width: 0.47058824rem; height: 0.47058824rem; }
+.u-has-badge > .u-badge { top: -0.17647059rem; right: -0.23529412rem; }
+.u-compact .u-row.u-wg, .u-roomy .u-row.u-wg { height: 1.64705882rem; padding: 0 0.58823529rem; column-gap: 0.35294118rem; font-size: 0.76470588rem; }
+.u-compact .u-wg > .u-icon, .u-roomy .u-wg > .u-icon { width: 0.94117647rem; }
+.u-wg-meter { height: 0.23529412rem; border-radius: 0.11764706rem; }
+.u-compact .u-wg-meter, .u-roomy .u-wg-meter { width: 1.64705882rem; }
+.u-wg-fill { border-radius: 0.11764706rem; }
+.u-compact .u-list > .u-item::before, .u-roomy .u-list > .u-item::before { top: 0.47058824rem; bottom: 0.47058824rem; }
+.u-compact .u-menu-head, .u-roomy .u-menu-head { font-size: 0.67647059rem; padding: 0.47058824rem 0.47058824rem 0.23529412rem; }
+.u-compact .u-menu > .u-menu-sep, .u-roomy .u-menu > .u-menu-sep { margin: 0.23529412rem 0; }
+.u-compact .u-rule { margin: 0.23529412rem 0; }
+.u-compact .u-card + .u-small, .u-roomy .u-card + .u-small { padding-top: 0.35294118rem; }
+.u-compact .u-dialog, .u-roomy .u-dialog { padding: 0.47058824rem; }
+.u-compact .u-tip, .u-roomy .u-tip { padding: 0.17647059rem 0.47058824rem; line-height: 1.05882353rem; }
+.u-compact .u-tip > .u-stack, .u-roomy .u-tip > .u-stack { gap: 0.17647059rem; padding: 0.17647059rem 0; }
+.u-compact .u-menu, .u-roomy .u-menu { padding: 0.23529412rem; gap: 0.05882353rem; }
+.u-compact .u-menu > .u-menu-item, .u-roomy .u-menu > .u-menu-item { height: 1.64705882rem; padding: 0 0.47058824rem; column-gap: 0.47058824rem; font-size: 0.76470588rem; line-height: 1.64705882rem; }
+.u-compact .u-menu > .u-menu-item > .u-icon, .u-roomy .u-menu > .u-menu-item > .u-icon { width: 0.94117647rem; }
+.u-compact .u-options, .u-roomy .u-options { padding-left: 0.23529412rem; padding-right: 0.23529412rem; }
+.u-compact.u-menu-surface, .u-roomy.u-menu-surface { padding: 0 0.58823529rem 0.94117647rem 0; }
+/* A small bare button must still fit the terminal's row. */
+.u-surface .u-btn.u-small { height: var(--u-row); line-height: var(--u-row); }
+.u-surface .u-btn.u-pill.u-small { height: 1.29411765rem; line-height: 1.29411765rem; }
+.u-surface .u-btn.u-iconbtn.u-small { height: 1.29411765rem; line-height: 1.29411765rem; }
+.u-dense .u-btn.u-pill.u-small, .u-dense .u-btn.u-iconbtn.u-small { height: var(--u-row); line-height: var(--u-row); }
