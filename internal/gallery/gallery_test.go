@@ -333,6 +333,27 @@ func TestFieldStoryStartsWithEditableText(t *testing.T) {
 	}
 }
 
+func TestRowStoryUsesChildrenTheLayoutCanShow(t *testing.T) {
+	for _, mode := range modes {
+		for _, tc := range []struct{ control, childClass, selected string }{
+			{"segmented", "u-btn", "is-sel"},
+			{"grid", "u-btn", "is-sel"},
+			{"strip", "u-row", ""},
+		} {
+			t.Run(mode.name+"/"+tc.control, func(t *testing.T) {
+				a, _ := start(t, mode.of, "w-row")
+				if err := a.Host.Click(a.Name, controlID("w-row", tc.control)); err != nil {
+					t.Fatal(err)
+				}
+				root := storyID("w-row") + ".0"
+				a.Wait("layout's sample children", func() bool {
+					return a.Has(root+".0", tc.childClass) && (tc.selected == "" || a.Has(root+".1", tc.selected))
+				})
+			})
+		}
+	}
+}
+
 func TestWidgetControlsFollowWhatTheExampleCanShow(t *testing.T) {
 	g := New()
 	has := func(name string) bool {

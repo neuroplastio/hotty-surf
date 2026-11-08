@@ -244,7 +244,22 @@ func (ws *widgetStory) source() string {
 	case surf.FormKids, surf.FormSection:
 		n, _ := strconv.Atoi(ws.by["children (count)"].Value)
 		for i := range n {
-			kids += sampleKid(w.Tag, i)
+			switch {
+			case w.Tag == "row" && (ws.by["segmented"].Value == "true" || ws.by["grid"].Value == "true"):
+				selected := ""
+				if i == 1 {
+					selected = " selected"
+				}
+				label := sample[i]
+				if ws.by["grid"].Value == "true" {
+					label = strconv.Itoa(i + 1)
+				}
+				kids += "<button" + selected + ">" + label + "</button>"
+			case w.Tag == "row" && ws.by["strip"].Value == "true":
+				kids += "<row><text>" + sample[i] + "</text></row>"
+			default:
+				kids += sampleKid(w.Tag, i)
+			}
 		}
 		if w.Tag == "box" && kids != "" {
 			kids = "<stack>" + kids + "</stack>" // a box's lines, as a card's
