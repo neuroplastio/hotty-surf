@@ -349,6 +349,9 @@ func sampleKid(tag string, i int) string {
 	n := strconv.Itoa(i + 1)
 	switch tag {
 	case "list":
+		if i == 0 {
+			return "<item selected>Item " + n + "</item>"
+		}
 		return "<item>Item " + n + "</item>"
 	case "item":
 		if i == 0 {

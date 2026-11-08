@@ -333,6 +333,22 @@ func TestFieldStoryStartsWithEditableText(t *testing.T) {
 	}
 }
 
+func TestListStoryShowsASelection(t *testing.T) {
+	for _, mode := range modes {
+		t.Run(mode.name, func(t *testing.T) {
+			a, _ := start(t, mode.of, "w-list")
+			item := storyID("w-list") + ".0.0"
+			if !a.Has(item, "is-sel") {
+				t.Fatal("list example has no selected item")
+			}
+			if err := a.Host.Click(a.Name, controlID("w-list", "nav")); err != nil {
+				t.Fatal(err)
+			}
+			a.Wait("selected navigation item", func() bool { return a.Has(item, "is-sel") && a.Has(storyID("w-list")+".0", "u-nav") })
+		})
+	}
+}
+
 func TestRowStoryUsesChildrenTheLayoutCanShow(t *testing.T) {
 	for _, mode := range modes {
 		for _, tc := range []struct{ control, childClass, selected string }{
