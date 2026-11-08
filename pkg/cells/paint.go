@@ -188,6 +188,10 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	switch {
 	case b.f&fSurface != 0:
 		bg = Bg
+	case hasClass(n, "u-search") || hasClass(n, "u-query"):
+		// The field belongs to the whole row, including its icon and the
+		// bare text field inside it, as it does on a host.
+		bg = Field
 	case b.f&(fDialog|fOptions|fTip) != 0:
 		bg = Surface
 	case b.f&fBox != 0 && b.d == compact:
