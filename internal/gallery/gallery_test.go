@@ -412,6 +412,12 @@ func TestWidgetControlsFollowWhatTheExampleCanShow(t *testing.T) {
 		{"w-row", "bare", "top"},
 		{"w-switch", "tone", "checked"},
 		{"w-item", "invalid", "selected"},
+		{"w-heading", "bold", "text"},
+		{"w-heading", "semibold", "text"},
+		{"w-heading", "small", "text"},
+		{"w-text", "checked", "bold"},
+		{"w-text", "checked", "semibold"},
+		{"w-text", "checked", "small"},
 	} {
 		g.Pick(tc.story)
 		if has(tc.absent) || !has(tc.present) {

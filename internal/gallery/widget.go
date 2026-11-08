@@ -129,6 +129,10 @@ func (ws *widgetStory) shown() []*Control {
 	}
 	for _, c := range ws.ctls {
 		switch c.Name {
+		case "bold", "semibold", "small":
+			if ws.w.Tag == "heading" {
+				continue // headings already have this weight and their own size
+			}
 		case "checked":
 			if ws.w.Tag != "switch" {
 				continue
