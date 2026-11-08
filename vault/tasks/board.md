@@ -549,7 +549,9 @@ The order is the maintainer's, via gov (2026-10-30):
       off a pill, a switch's tone). Show only those that draw on it.
     - Modifiers win since 096fd21: once plx pins the kit, wherever it
       sets one its widget used to beat, it shows. Look at plx then.
-    - A field's tone and weight still don't show.
+    - The field example starts empty, so its tone and weight cannot be
+      seen. Done 2026-11-08: it starts with editable sample text; tone and
+      weight show on that text in the host gallery.
     - A look item: on dark, a tooltip over a row lets the row's red text
       show through its float (96%), as plx's Machines tool shows.
   - [x] Dense menu separator, from hotty Agent at V7-01 via gov

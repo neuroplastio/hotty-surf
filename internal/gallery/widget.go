@@ -88,6 +88,9 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 		ws.by["gap"].Value = "2"
 	case "box":
 		ws.by["pad"].Value = "3 1"
+	case "field":
+		// A field needs text for its tone and weight to be visible.
+		ws.by["value"].Value = "Sample text"
 	}
 	// A count of options keeps the value's select to them.
 	if c := ws.by["options (count)"]; c != nil {

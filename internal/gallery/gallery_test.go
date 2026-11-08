@@ -313,6 +313,26 @@ func TestControls(t *testing.T) {
 	}
 }
 
+func TestFieldStoryStartsWithEditableText(t *testing.T) {
+	for _, mode := range modes {
+		t.Run(mode.name, func(t *testing.T) {
+			a, _ := start(t, mode.of, "w-field")
+			control := controlID("w-field", "value")
+			field := storyID("w-field") + ".0"
+			if got, _ := a.Surface().Value(field); got != "Sample text" {
+				t.Fatalf("example field = %q", got)
+			}
+			if err := a.Host.Fill(a.Name, control, "Edited"); err != nil {
+				t.Fatal(err)
+			}
+			a.Wait("the field's edited value", func() bool {
+				v, _ := a.Surface().Value(field)
+				return v == "Edited"
+			})
+		})
+	}
+}
+
 // A handler the story calls is logged, with its arguments: a click's
 // $event by its fields, a field's $value, a pick's, and a partial's call
 // of its user's method with a struct, which the method still gets.
