@@ -129,6 +129,10 @@ func (ws *widgetStory) shown() []*Control {
 	}
 	for _, c := range ws.ctls {
 		switch c.Name {
+		case "children (count)":
+			if ws.w.Tag == "row" && ws.by["search"].Value == "true" {
+				continue // the search sample has an icon and an editable field
+			}
 		case "bold", "semibold", "small":
 			if ws.w.Tag == "heading" {
 				continue // headings already have this weight and their own size
@@ -251,8 +255,17 @@ func (ws *widgetStory) source() string {
 		kids = escape(ws.by["text"].Value, false)
 	case surf.FormKids, surf.FormSection:
 		n, _ := strconv.Atoi(ws.by["children (count)"].Value)
+		if w.Tag == "row" && ws.by["search"].Value == "true" {
+			n = 2
+		}
 		for i := range n {
 			switch {
+			case w.Tag == "row" && ws.by["search"].Value == "true":
+				if i == 0 {
+					kids += "<icon>&#xF0349;</icon>"
+				} else {
+					kids += `<field bare width="24" placeholder="Search settings" label="Search settings" @input="input($value)"/>`
+				}
 			case w.Tag == "row" && (ws.by["segmented"].Value == "true" || ws.by["grid"].Value == "true"):
 				selected := ""
 				if i == 1 {

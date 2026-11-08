@@ -339,6 +339,7 @@ func TestRowStoryUsesChildrenTheLayoutCanShow(t *testing.T) {
 			{"segmented", "u-btn", "is-sel"},
 			{"grid", "u-btn", "is-sel"},
 			{"strip", "u-row", ""},
+			{"search", "u-icon", ""},
 		} {
 			t.Run(mode.name+"/"+tc.control, func(t *testing.T) {
 				a, _ := start(t, mode.of, "w-row")
@@ -349,6 +350,15 @@ func TestRowStoryUsesChildrenTheLayoutCanShow(t *testing.T) {
 				a.Wait("layout's sample children", func() bool {
 					return a.Has(root+".0", tc.childClass) && (tc.selected == "" || a.Has(root+".1", tc.selected))
 				})
+				if tc.control == "search" && !a.Has(root+".1", "u-field") {
+					t.Fatal("search has no editable field")
+				}
+				if tc.control == "search" {
+					if err := a.Host.Fill(a.Name, root+".1", "palette"); err != nil {
+						t.Fatal(err)
+					}
+					a.Wait("search input", func() bool { return strings.Contains(a.Surface().TextOf(logID), "palette") })
+				}
 			})
 		}
 	}
@@ -423,6 +433,20 @@ func TestWidgetControlsFollowWhatTheExampleCanShow(t *testing.T) {
 		if has(tc.absent) || !has(tc.present) {
 			t.Errorf("%s: %s present = %v, %s present = %v", tc.story, tc.absent, has(tc.absent), tc.present, has(tc.present))
 		}
+	}
+	g.Pick("w-row")
+	search := slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == "search" })
+	if search < 0 || !has("children (count)") {
+		t.Fatal("row lacks search or its normal child count")
+	}
+	g.Flip(search)
+	if has("children (count)") {
+		t.Fatal("search offers a child count that cannot affect its fixed sample")
+	}
+	search = slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == "search" })
+	g.Flip(search)
+	if !has("children (count)") {
+		t.Fatal("row did not restore its child count after search")
 	}
 	g.Pick("w-button")
 	if has("raised") || has("current") || has("selected") {
