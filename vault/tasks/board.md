@@ -555,7 +555,9 @@ The order is the maintainer's, via gov (2026-10-30):
       controls follow the pill switch; badge tone follows a badge, and
       badge-dot gives way to a count. The row's segmented and grid
       controls now give it buttons, and strip gives it zone rows, so
-      each layout can be seen. Audit the remaining controls.
+      each layout can be seen. Reveal puts the example in a hoverable,
+      focusable item; it is omitted for a spacer, which draws nothing.
+      Audit the remaining controls.
     - Modifiers win since 096fd21: once plx pins the kit, wherever it
       sets one its widget used to beat, it shows. Look at plx then.
     - The field example starts empty, so its tone and weight cannot be

@@ -60,6 +60,10 @@ in cells. Each is fixed in the renderer, for any screen:
   marks the chosen button, but the cells ignored its selected state.
   Those buttons now use the existing `selected` fill; focus and disabled
   styling still take precedence. Other buttons keep their usual fill.
+- **A reveal stayed hidden when its item had the keyboard.** On a host
+  and in cells, an item's revealed contents now show while focus is in
+  the item as well as while it is selected; a host also shows them on
+  hover. The gallery's reveal example provides such an item to try.
 - **A focused list's selection was the loudest thing on the screen.**
   It was `sel`, reverse video: a white block across the row, which hid
   a focused entry's ▎. On a host the look gives it the quiet selected

@@ -1051,7 +1051,7 @@
 .u-compact .u-menu > .u-menu-sep, .u-roomy .u-menu > .u-menu-sep { margin: 4px 0; }
 
 .u-reveal { visibility: hidden; }
-.u-item:hover .u-reveal, .u-item.is-sel .u-reveal, .u-reveal:focus { visibility: visible; }
+.u-item:hover .u-reveal, .u-item:focus-within .u-reveal, .u-item.is-sel .u-reveal, .u-reveal:focus { visibility: visible; }
 
 .u-section { display: flex; flex-direction: column; min-width: 0; }
 .u-section .u-section { margin-left: calc(2 * var(--u-cw)); }

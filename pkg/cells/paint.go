@@ -148,7 +148,7 @@ func (p *painter) revealed(n *surfui.Node) bool {
 		return true
 	}
 	for q := surfui.Parent(n); q != nil; q = surfui.Parent(q) {
-		if hasClass(q, "u-item") && hasClass(q, "is-sel") {
+		if hasClass(q, "u-item") && (hasClass(q, "is-sel") || p.within[q]) {
 			return true
 		}
 	}

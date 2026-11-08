@@ -354,6 +354,48 @@ func TestRowStoryUsesChildrenTheLayoutCanShow(t *testing.T) {
 	}
 }
 
+func TestRevealExamplesHaveAnItemToPointAt(t *testing.T) {
+	g := New()
+	for _, w := range surf.Widgets {
+		g.Pick("w-" + w.Tag)
+		i := slices.IndexFunc(g.Controls, func(c *Control) bool { return c.Name == "reveal" })
+		if w.Tag == "spacer" {
+			if i >= 0 {
+				t.Error("a spacer offers reveal despite having no visible content")
+			}
+			continue
+		}
+		if i < 0 {
+			t.Errorf("%s has no reveal control", w.Tag)
+			continue
+		}
+		g.Flip(i)
+		if g.cur.err != "" {
+			t.Errorf("%s with reveal: %s", w.Tag, g.cur.err)
+			continue
+		}
+		root := g.cur.render(nil)
+		if root == nil || g.cur.node(root) == root || !strings.Contains(surfui.HTML(root), "Hover or focus") {
+			t.Errorf("%s has no reveal context and target", w.Tag)
+		}
+	}
+}
+
+func TestRevealContextInTheLiveGallery(t *testing.T) {
+	for _, mode := range modes {
+		t.Run(mode.name, func(t *testing.T) {
+			a, _ := start(t, mode.of, "w-text")
+			if err := a.Host.Click(a.Name, controlID("w-text", "reveal")); err != nil {
+				t.Fatal(err)
+			}
+			root := storyID("w-text") + ".0"
+			a.Wait("reveal's item and target", func() bool {
+				return a.Has(root, "u-item") && a.Has(root+".1", "u-reveal") && strings.Contains(a.Surface().TextOf(root), "Hover or focus")
+			})
+		})
+	}
+}
+
 func TestWidgetControlsFollowWhatTheExampleCanShow(t *testing.T) {
 	g := New()
 	has := func(name string) bool {

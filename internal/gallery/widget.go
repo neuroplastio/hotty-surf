@@ -165,6 +165,10 @@ func (ws *widgetStory) shown() []*Control {
 			if ws.w.Tag == "switch" {
 				continue
 			}
+		case "reveal":
+			if ws.w.Tag == "spacer" {
+				continue // a spacer has no visible content to reveal
+			}
 		case "raised", "current":
 			if ws.by["pill"] == nil || ws.by["pill"].Value != "true" {
 				continue
@@ -271,7 +275,11 @@ func (ws *widgetStory) source() string {
 		b.WriteString(">" + kids + "</" + w.Tag + ">")
 	}
 	src := b.String()
-	if p, ok := placements[w.Tag]; ok {
+	if ws.by["reveal"] != nil && ws.by["reveal"].Value == "true" {
+		// Reveal needs an item to hover or focus; without one the whole
+		// example vanishes and there is nothing to reveal it from.
+		src = `<item focusable gap="2"><text>Hover or focus</text>` + src + `</item>`
+	} else if p, ok := placements[w.Tag]; ok {
 		src = p.open + src + p.close
 	}
 	if h := ws.by["hue"]; h != nil && h.Value != "" && h.Value != none {
@@ -344,7 +352,9 @@ func (ws *widgetStory) load() {
 		return
 	}
 	ws.d.err, ws.d.at = "", -1
-	if p, ok := placements[ws.w.Tag]; ok {
+	if ws.by["reveal"] != nil && ws.by["reveal"].Value == "true" {
+		ws.d.at = 1
+	} else if p, ok := placements[ws.w.Tag]; ok {
 		ws.d.at = p.at
 	}
 	ws.d.viewOf(set, widgetOwner{ws})

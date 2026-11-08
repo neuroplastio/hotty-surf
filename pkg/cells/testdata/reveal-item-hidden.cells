@@ -1,0 +1,13 @@
+cells 40x4
+text
+>  Item       Action
+>                Elsewhere
+style
+= ...........aaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+. fg/bg
+a fg/tonal
+hits
+@ 0,0 40x1 r.0
+@ 11,0 8x1 r.0.2
+@ 0,1 40x1 r.1
