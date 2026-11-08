@@ -16,7 +16,11 @@ STATICCHECK ?= honnef.co/go/tools/cmd/staticcheck@v0.8.1
 
 .PHONY: check fmt tidy gen vet lint test bench print-cap clean
 
-check: fmt tidy gen vet lint test wasm stack gate legible   ## the gate
+check: fmt tidy gen vet lint test look-test wasm stack gate legible   ## the gate
+
+.PHONY: look-test
+look-test:   ## the look loop passes each producer its theme names
+	$(CAP) $(NODE) node --test scripts/look/look.test.cjs
 
 fmt:   ## fails, listing them, when gofmt would change files
 	@out="$$($(GOFMT) -l $$(git ls-files -co --exclude-standard '*.go'))"; \

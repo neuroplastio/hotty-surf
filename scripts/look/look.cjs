@@ -118,7 +118,7 @@ function storySize(a, name) {
 
 // The story's document as both engines draw it, with --state forced.
 async function storyDoc(a, name) {
-  const theme = THEMES[a.theme];
+  const theme = a.gallery ? a.theme : THEMES[a.theme];
   const dir = path.join(a.out, "work", `${theme}-${a.density || "own"}`);
   execFileSync(storiesBin(a), ["-out", dir, "-theme", theme, ...(a.density ? ["-density", a.density] : []), ...(a.width ? ["-width", String(a.width)] : [])]);
   const file = path.join(dir, name.replaceAll("/", "-") + ".html");
