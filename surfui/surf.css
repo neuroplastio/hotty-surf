@@ -1207,7 +1207,7 @@
   --u-ny: 0.35294118rem;
   --u-ig: 0.11764706rem;
   --u-ctl: 1.64705882rem;
-  font-size: 0.82352941rem;
+  font-size: 0.94117647rem;
 }
 .u-roomy {
   --u-px: 0.58823529rem;
@@ -1215,9 +1215,9 @@
   --u-ny: 0.35294118rem;
   --u-ig: 0.11764706rem;
   --u-ctl: 1.88235294rem;
-  font-size: 0.88235294rem;
+  font-size: 1rem;
 }
-.u-compact .u-nav > .u-item { font-size: 0.82352941rem; }
+.u-compact .u-nav > .u-item { font-size: 0.94117647rem; }
 .u-switch { width: 1.64705882rem; height: 0.94117647rem; padding: 0 0.11764706rem; }
 .u-dense .u-switch { width: calc(3 * var(--u-cw)); }
 .u-roomy .u-switch { width: 1.88235294rem; height: 1.05882353rem; }
