@@ -99,7 +99,7 @@ Sizes as the board's: S one leg, M two or three.
   A11). Already reviewed; a rebase, the goldens again, and A6's `change`
   event if the maintainer wants the list's `@change` over the branch's
   `@click`. S.
-- [ ] **L4. The natural height and where an element is** (B7, B6).
+- [x] **L4. The natural height and where an element is** (merge 23bd0c1) (B7, B6).
   `cells.Renderer.Draw(cols, 0)` lays out to the full height and returns
   the lines with every element's box; `Measure(cols)`; `Box(id)` for any
   element; `BoxOf(keys...)` by key path; an element's first and last
