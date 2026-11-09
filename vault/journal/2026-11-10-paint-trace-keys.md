@@ -38,3 +38,11 @@ vocabulary and no change to how anything looks.
 
 - A sequence of three or more letters (`gcc`) is not split, as margin's
   isn't: only two. Say if a program needs more.
+
+## make check
+
+fmt, tidy, gen, vet, lint, test (-race), look-test, wasm and stack pass.
+`gate` (111 against the baseline) and `legible` (2 documents, 4 failures)
+fail here, and `legible` fails the same on 3e58549 without these
+commits: it is this machine's Blitz and fonts, not the leg. Nothing in
+the leg changes a look.
