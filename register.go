@@ -119,7 +119,7 @@ func checkWidget(w *Widget) error {
 		return err
 	}
 	if w.Pkg == "" || w.Func == "" {
-		return errors.New("Pkg and Func say where the compiled mode finds the constructor")
+		return errors.New("the Pkg and Func say where the compiled mode finds the constructor")
 	}
 	var ok bool
 	switch w.Form {
@@ -191,10 +191,10 @@ func checkAttr(a Attr) error {
 		return errors.New("Type is TypeString, TypeBool or TypeInt")
 	}
 	if !ok {
-		return fmt.Errorf("Apply is %T, not a func(*surfui.Node, T) for its type (Attr.Apply)", a.Apply)
+		return fmt.Errorf("its Apply is %T, not a func(*surfui.Node, T) for its type (Attr.Apply)", a.Apply)
 	}
 	if len(a.Values) > 0 && a.Type != TypeString {
-		return errors.New("Values are a string attribute's")
+		return errors.New("its Values are a string attribute's")
 	}
 	return nil
 }
