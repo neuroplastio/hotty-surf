@@ -170,7 +170,7 @@ Sizes as the board's: S one leg, M two or three.
   `HardWraps`, `GFM`, `Compact`, `Highlight`, `Anchors`, `Node`; and
   `<markdown :text hard-wraps compact>` registered through L8. Its own
   module, with goldmark; the core stays TinyGo-clean. M.
-- [ ] **L13. Painting in given colours** (B8): `cells.PaintWith(screen,
+- [x] **L13. Painting in given colours** (merge bbac3b9) (B8): `cells.PaintWith(screen,
   palette)` in truecolour, and the runtime's terminal colour query and
   its parse exported. S.
 
@@ -183,7 +183,7 @@ hotty-go v0.7.1; margin can move its thread pane.
   stylesheet per Session, selects and menus placed as surfaces of their
   own, `CellsClick`; margin's adapter replaced; a guide section and an
   example with two surfaces in one program, shown to share no state. M.
-- [ ] **L15. Trace and key names** (B10, B12): `Surface.Trace(in, out)`,
+- [x] **L15. Trace and key names** (merge bbac3b9; `Trace(in TraceIn, out)`) (B10, B12): `Surface.Trace(in, out)`,
   off and free unless set; `surfkeys.FromTea` and `ToTea`, with the
   rule that `J` is `shift+j`. S.
 - [ ] **L16. Forms** (A7): `form @submit`, `button submit`, `field
