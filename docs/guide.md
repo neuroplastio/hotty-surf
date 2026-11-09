@@ -492,7 +492,10 @@ a handler, as `@click`'s. `:key` and `:label` bind, and a `<bind>` takes
   macOS), in lower case (`ctrl+c`, `esc`, `f5`) with Enter as the return
   glyph (`↵` in cells); `Case: "title"` brings back `Ctrl+C` and `Esc`. Keys shown in a style that isn't the surface's, such as a
   slide that shows a sample of each style, are `surfkeys.Node(style, host,
-  seq)`, which a renderer draws as they are.
+  seq)`, which a renderer draws as they are. A program that has Bubble
+  Tea's key names (`J`, `esc`, `pgdown`, `yr`) turns them into myelin's
+  with `surfkeys.FromTea`, and back with `surfkeys.ToTea`: `J` is
+  `shift+j`, `yr` is `y r`, and `j` is never `J`.
 - **Quitting:** `do` calls a method, so a method ends the run. A struct
   that implements `surfrun.Attacher` learns its runner when the run starts
   (`surfrun.Runtime`, or a host of its own), and `Runner.Quit()` ends the run
@@ -1007,7 +1010,12 @@ for {
   and its attributes (`cells.Run`), never colours. Paint each role in
   your palette. `surfrun.Paint` paints a screen in the terminal's sixteen
   colours, as the runtime does, one string per row; `surfrun.Lines` is
-  the same for printing once, without the blank rows at the end. `Hits` are the cells a press acts on, by element id,
+  the same for printing once, without the blank rows at the end.
+  `cells.PaintWith(screen, palette)` paints in truecolour from a
+  `cells.Palette` of roles to RGB, the roles it lacks mixed from `Fg` and
+  `Bg`; a program asks the terminal for its colours by writing
+  `cells.QueryColors` (OSC 10, 11 and 4) and builds the palette from the
+  reply with `cells.ParseColors`. `Hits` are the cells a press acts on, by element id,
   the later on top; `Caret` is where the caret shows; `Gen` changes
   only when the screen does; `Mouse` says the mouse acts on something.
 - **`r.Focus(in)`** is the terminal's focus coming and going: going,
@@ -1077,7 +1085,10 @@ What the host calls, and what it gets back:
 - **`Event(e)`** is an event of the surface (`hotty.EventOf`, by
   `e.Surface`); **`ListEvent(e)`** is one of the open list's surface.
   An event on an element with no handler for it goes to the Surface's
-  `Unhandled`, if set (a tool's, as `Options.Unhandled`).
+  `Unhandled`, if set (a tool's, as `Options.Unhandled`). `Trace`, if
+  set, hears each `Update` with the event that started it (a key as
+  `Kind: "key"`, its name in `Value`) and the ops it sent; unset it costs
+  a comparison.
   **`Key(name)`** is a key that reached the program (`hotty.DecodeKeys`,
   SPEC §10.4's names). Each reports whether the surface took it, and
   whether a redraw is due; a key it didn't take is the host's (ctrl+c).
