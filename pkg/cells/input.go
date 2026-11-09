@@ -31,6 +31,7 @@ import (
 // Key takes a key, by myelin's name (SPEC §10.4: "a", "shift+tab",
 // "ctrl+a", "arrow_down", "enter").
 func (r *Renderer) Key(name string) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	if r.menu != nil {
 		// The menu has the keyboard: the program takes every key (the
@@ -180,6 +181,7 @@ func (r *Renderer) fieldKey(n *surfui.Node, name string, keymaps []string) bool 
 // Paste types text into the focused text field, as a paste does there:
 // a field of one line leaves its newlines out. Elsewhere nothing takes it.
 func (r *Renderer) Paste(text string) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	n := r.index[r.focused]
 	st := r.fields[r.focused]
@@ -199,6 +201,7 @@ func (r *Renderer) Paste(text string) (taken, redraw bool) {
 // loses the keyboard, as a host's does (blur, and the field commits);
 // coming back, what had it has it again.
 func (r *Renderer) Focus(in bool) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	switch {
 	case !in && r.kb:
@@ -268,6 +271,7 @@ func tabbable(n *surfui.Node) bool {
 // surface loses it; a press on the open list goes to the list. The click
 // comes with the Release.
 func (r *Renderer) Press(x, y, mods int) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	r.press = nil
 	if r.menuPress(x, y, true) {
@@ -322,6 +326,7 @@ func (r *Renderer) overRect() *rect {
 // a drag, dragend first, and the click only where the drag ended on the
 // handle it began on (drag.go).
 func (r *Renderer) Release(x, y, mods int) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	if r.menuRelease(x, y) {
 		return true, true
@@ -439,6 +444,7 @@ func holds(outer string, n *surfui.Node) bool {
 // rows a notch. It scrolls the innermost Scroll box there that can move
 // that way, or one around it, or the page.
 func (r *Renderer) Wheel(x, y, notches int) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	if r.menu != nil {
 		r.closeMenu() // and the wheel goes on

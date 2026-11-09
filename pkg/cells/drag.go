@@ -43,6 +43,7 @@ type dragging struct {
 // (or, over none, the cell), or its step in the dragged element or in
 // the target did. It reports whether the drag took it.
 func (r *Renderer) Move(x, y, mods int) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	d := r.drag
 	if r.menu != nil {

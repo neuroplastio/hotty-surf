@@ -1403,6 +1403,18 @@ for a host draws in cells unchanged.
   select's list, `reveal`. So the same acts make the same calls of the
   model's, with the same arguments, as on a host: a case's `N.log` holds
   in cells.
+- **The natural height, and where an element is.** `Draw(cols, 0)` lays
+  the tree out to its full height: the screen is as tall as the content
+  and nothing scrolls. `Measure(cols)` is that height alone. `Box(id)`
+  and `BoxOf(keys...)` (the `:key` path from the root, as an `:each`'s
+  rows are keyed) say where any element is, not only one a press
+  reaches: x, y, w and h in document coordinates, before the scroll and
+  over the whole height; a wrapped element's box covers all its rows,
+  and `Rows(id)` and `RowsOf(keys...)` say its first and its last. An
+  unchanged tree drawn again at a size it was drawn at, with no input
+  between, is a lookup (up to 16 sizes of a tree are kept). It adds no
+  vocabulary and changes no look: both modes, and the hits, agree with
+  the boxes (`TestBoxInBothModes`).
 - **The layout** is [the stylesheet](#the-stylesheet)'s in cells, as far
   as the vocabulary uses it. A `stack`, a `list`, a `section`, a `box`
   and a `dialog` lay their children out top to bottom, each as wide as

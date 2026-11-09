@@ -2,7 +2,12 @@ package conformance
 
 import (
 	"strconv"
+	"strings"
 	"testing"
+
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // benchBoard is a board of n notes, with its panel, which renders with
@@ -28,4 +33,73 @@ func BenchmarkRender(b *testing.B) {
 			}
 		})
 	}
+}
+
+// page is a long synthetic page of n paragraphs, each a wrapping line of
+// words and a chip, which a model gives as its tree.
+type page struct{ n int }
+
+func (p page) Render() *surfui.Node {
+	var kids []*surfui.Node
+	for i := range p.n {
+		kids = append(kids, surfui.Stack(
+			surfui.Heading("Section "+strconv.Itoa(i)),
+			surfui.Line(
+				surfui.Text(strings.Repeat("a paragraph of prose that wraps over rows, ", 6)),
+				surfui.Chip("tag"),
+				surfui.Text(strings.Repeat("and goes on after the chip. ", 4)),
+			).Class("u-wrap"),
+		).Key("s"+strconv.Itoa(i)))
+	}
+	return surfui.Surface(surfui.Stack(kids...))
+}
+
+func (page) Do(surfui.Action, surfrun.Event) {}
+
+// pageWidths are what a site's prerender draws a page at.
+var pageWidths = []int{40, 60, 80, 100, 120, 160}
+
+// BenchmarkFullDraw is a long page drawn to its full height (Draw at
+// rows 0) at six widths: cold, a renderer new for each page as a
+// prerender has it, and cached, the same tree again, which is a lookup
+// (make bench; not in check).
+func BenchmarkFullDraw(b *testing.B) {
+	show := func() *cells.Renderer {
+		r := cells.New(surfrun.NewSurface(page{n: 200}, nil).Cells())
+		r.Show()
+		return r
+	}
+	b.Run("cold", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			r := show()
+			for _, w := range pageWidths {
+				r.Draw(w, 0)
+			}
+		}
+	})
+	b.Run("cached", func(b *testing.B) {
+		r := show()
+		for _, w := range pageWidths {
+			r.Draw(w, 0)
+		}
+		b.ReportAllocs()
+		for b.Loop() {
+			for _, w := range pageWidths {
+				r.Draw(w, 0)
+			}
+		}
+	})
+	b.Run("measure", func(b *testing.B) {
+		r := show()
+		for _, w := range pageWidths {
+			r.Measure(w)
+		}
+		b.ReportAllocs()
+		for b.Loop() {
+			for _, w := range pageWidths {
+				r.Measure(w)
+			}
+		}
+	})
 }

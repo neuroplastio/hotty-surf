@@ -212,6 +212,7 @@ func (r *Renderer) Hovers() bool { return r.menu != nil }
 // update is due. With no menu open it does nothing and is not taken. Move,
 // the pointer with a button down, does the same with a menu open.
 func (r *Renderer) Hover(x, y int) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	if r.menu == nil {
 		return false, false
@@ -242,6 +243,7 @@ func (r *Renderer) Hover(x, y int) (taken, redraw bool) {
 // click. The Renderer has no press of the middle button (Press and
 // Secondary are the buttons it hears), so none closes a menu here.
 func (r *Renderer) Secondary(x, y, mods int) (taken, redraw bool) {
+	r.dirty = true
 	r.changed = false
 	if r.menuPress(x, y, false) {
 		return true, true
