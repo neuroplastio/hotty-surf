@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-11-06
+Last updated: 2026-11-09
 
 **Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
 2026-10-30): candidate A (Live) with layout in `.surf` templates and
@@ -446,6 +446,12 @@ The order is the maintainer's, via gov (2026-10-30):
     cells, `cells.Renderer.At` and `tip.Cells.Lines` where it draws a
     menu.
 
+- [ ] **Dropping hotty-a2ui** (Docs Agent and Margin Agent, 2026-11-09):
+  what the website and margin need. The plan is
+  [a2ui-exit.md](a2ui-exit.md), in legs L1–L17; it takes in the kit gaps
+  below (G1 is L5, G5 L6, G2 L7, G3 L12) and the tour branch. Open:
+  Q-0002 (table and tree shapes), Q-0003 (code), Q-0004 (where prose
+  lives).
 - [ ] **Kit gaps, after the kit** (gov, 2026-11-05; none started). They
   wait for `design/2026-11-05-kit`. The order: G1, G5, G2, G3, then
   menu slots and columns, colours from data. Sizes: S is one leg, M two
