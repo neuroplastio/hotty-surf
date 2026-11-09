@@ -307,6 +307,7 @@ func (s *Surface) menuKey(key string) bool {
 // that row changes. A host's own menu surface asks for no hover, and its
 // rows' :hover stays the host's.
 func (s *Surface) MenuEvent(e hotty.Event) (took, redraw bool) {
+	s.note(e)
 	s.fresh()
 	m := s.menu
 	if m == nil {

@@ -141,6 +141,7 @@ func (s *Surface) selectTo(n *surfui.Node, value string) {
 // an option, which picks it. It reports whether the surface took the
 // event, and whether an Update is due.
 func (s *Surface) ListEvent(e hotty.Event) (took, redraw bool) {
+	s.note(e)
 	s.fresh()
 	l := s.list
 	if l == nil {

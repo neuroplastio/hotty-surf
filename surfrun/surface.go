@@ -82,6 +82,17 @@ type Surface struct {
 	Palette surfui.Palette
 	// Warn, if set, hears each such warning; nil writes it to Stderr.
 	Warn func(msg string)
+	// Trace, if set, is called after each Update with what started it
+	// (TraceIn) and the ops it sent: the first Event, ListEvent,
+	// MenuEvent or Key since the last Update, or the zero TraceIn where
+	// a posted function started it. out is the frame's Ops, valid only
+	// during the call. It is for a log or a test of what an event costs.
+	// Nil costs a comparison and nothing else.
+	Trace func(in TraceIn, out []hotty.Op)
+
+	cause  TraceIn     // what Trace is given, the first since the last Update
+	causeE hotty.Event // the event cause.Event points to
+	caused bool
 
 	m     Model
 	rn    Runner
@@ -342,6 +353,40 @@ func (s *Surface) Hide() (listShown bool) {
 // the model (one whose call reported a redraw due). While the surface is
 // hidden it only renders, for the bindings, and returns nothing.
 func (s *Surface) Update() Frame {
+	f := s.update()
+	if s.Trace != nil {
+		in := s.cause
+		s.cause, s.caused = TraceIn{}, false
+		s.Trace(in, f.Ops)
+		s.causeE = hotty.Event{}
+	}
+	return f
+}
+
+// note notes e as what started the next Update, for Trace.
+func (s *Surface) note(e hotty.Event) {
+	if s.Trace != nil && !s.caused {
+		s.causeE = e
+		s.cause, s.caused = TraceIn{Event: &s.causeE}, true
+	}
+}
+
+// noteKey notes a key as what started the next Update, for Trace.
+func (s *Surface) noteKey(name string) {
+	if s.Trace != nil && !s.caused {
+		s.cause, s.caused = TraceIn{Key: name}, true
+	}
+}
+
+// TraceIn is what started an Update, for Surface.Trace: the host's event
+// (Event, valid only during the call) or a key (Key, SPEC §10.4's name);
+// exactly one is set, and neither where a posted function started it.
+type TraceIn struct {
+	Event *hotty.Event
+	Key   string
+}
+
+func (s *Surface) update() Frame {
 	s.due = false
 	if !s.shown {
 		s.render()
@@ -404,6 +449,7 @@ func (s *Surface) Update() Frame {
 // draws in frames does: each goes where it would with an Update after
 // each, and one Update then sends what they changed (fresh).
 func (s *Surface) Event(e hotty.Event) (took, redraw bool) {
+	s.note(e)
 	s.fresh()
 	took = s.event(e)
 	return took, s.due
@@ -529,6 +575,7 @@ func (s *Surface) Key(name string) (took, redraw bool) {
 	if name == "" {
 		return false, s.due
 	}
+	s.noteKey(name)
 	s.fresh()
 	if name == "escape" && s.Dragging() {
 		s.cancelDrag()
