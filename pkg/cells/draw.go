@@ -1,17 +1,73 @@
 package cells
 
 import (
+	"maps"
+
 	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/surfkeys"
 	"neuroplast.io/hotty-surf/surfui"
 )
 
+// snap is a draw as it was left, for the same again: what its screen
+// depends on besides what input and updates change (Renderer.dirty), and
+// the state it left the renderer's last draw in.
+type snap struct {
+	tree    *surfui.Node
+	hues    surfui.Palette
+	offsets map[string]int
+
+	cols, rows int
+	root, over *box
+	pageBar    bool
+	hits       []hit
+	ports      []port
+	rects      map[*surfui.Node]rect
+	menuBox    rect
+	screen     Screen
+}
+
+// snapKey says which draw: the layout's, and the rows as asked, where 0
+// is the full height.
+type snapKey struct {
+	layoutKey
+	ask int
+}
+
 // Draw lays the tree out at cols×rows and draws it: the screen, with the
 // open list over it, under its Select. It brings into view what the
 // program revealed and what took the keyboard since the last draw.
+//
+// Where rows is 0 the tree is laid out to its full height (Measure): the
+// screen is as tall as the content, and nothing scrolls. Box and the
+// rest say where each element is in it.
+//
+// An unchanged tree drawn again at a size it was drawn at, with no input,
+// update or reveal since, is the screen drawn then, as a lookup, with the
+// layout Box reports; a changed tree, or one drawn at a new size, is laid
+// out and drawn again (a tree's layouts at up to 16 sizes are kept).
 func (r *Renderer) Draw(cols, rows int) Screen {
-	cols, rows = max(cols, 1), max(rows, 1)
+	cols = max(cols, 1)
+	ask := rows
+	if rows <= 0 {
+		rows = r.Measure(cols)
+	}
+	rows = max(rows, 1)
+	if r.dirty || len(r.reveals) > 0 || r.revealFocus {
+		clear(r.snaps) // something but the tree may differ now
+		r.dirty = false
+	}
+	sk := snapKey{r.layoutKey(cols, rows), ask}
+	hues := r.hues()
+	if sn := r.snaps[sk]; sn != nil && r.drawn && sn.tree == r.tree && sn.hues.Equal(hues) &&
+		sameStyle(r.cache.style, r.KeyStyle) && maps.Equal(sn.offsets, r.offsets) {
+		r.cols, r.rows, r.root, r.over, r.pageBar = sn.cols, sn.rows, sn.root, sn.over, sn.pageBar
+		r.hits, r.ports, r.rects, r.menuBox, r.screen = sn.hits, sn.ports, sn.rects, sn.menuBox, sn.screen
+		return sn.screen
+	}
+	if len(r.snaps) >= maxLayouts {
+		clear(r.snaps)
+	}
 	r.cols, r.rows = cols, rows
 	r.layout()
 	r.keepInView()
@@ -58,10 +114,23 @@ func (r *Renderer) Draw(cols, rows int) Screen {
 	}
 	s.Gen = r.gen
 	r.screen = s
+	if r.snaps == nil {
+		r.snaps = map[snapKey]*snap{}
+	}
+	r.snaps[sk] = &snap{tree: r.tree, hues: hues, offsets: maps.Clone(r.offsets), cols: r.cols, rows: r.rows,
+		root: r.root, over: r.over, pageBar: r.pageBar, hits: r.hits, ports: r.ports, rects: r.rects,
+		menuBox: r.menuBox, screen: s}
 	return s
 }
 
-// scrolls reports whether the document scrolls down.
+// hues are the hues the renderer draws in: its own, or the program's.
+func (r *Renderer) hues() surfui.Palette {
+	if h, ok := r.p.(Hued); ok && r.Palette == nil {
+		return h.Hues()
+	}
+	return r.Palette
+}
+
 // keyCaps draws a key's sequence in KeyStyle, as cells draw keys: text
 // caps, unless KeyStyle says glyphs, labelled for the Platform's system
 // where KeyStyle leaves it.
@@ -70,6 +139,7 @@ func (r *Renderer) keyCaps() keyCaps {
 	return func(seq string) ([]string, string) { return surfkeys.Caps(st, false, seq), surfkeys.Between(st) }
 }
 
+// scrolls reports whether the document scrolls down.
 func (r *Renderer) scrolls() bool { return r.Scroll&hotty.ScrollVertical != 0 }
 
 // layout builds the boxes and places them: the root as tall as the
@@ -80,7 +150,32 @@ func (r *Renderer) layout() {
 		return
 	}
 	d := densityOf(r.tree)
-	r.root = build(r.tree, d, r.keyCaps())
+	c := r.cache.of(r.tree, r.KeyStyle)
+	k := r.layoutKey(r.cols, r.rows)
+	if l, ok := c.lays[k]; ok {
+		r.root, r.pageBar = l.root, l.pageBar
+	} else {
+		r.lay(d, k)
+		c.lays[k] = laid{root: r.root, pageBar: r.pageBar}
+	}
+	r.offsets[""] = r.clamp(r.offsets[""], r.root.h, r.rows)
+	if r.list != nil && r.list.tree != nil {
+		r.placeList(d)
+	}
+}
+
+// lay builds the boxes of the tree and places them.
+func (r *Renderer) lay(d density, k layoutKey) {
+	c := &r.cache
+	// Measure built them, at this width, and there they are.
+	mk := k
+	mk.rows = 0
+	if sp := c.spare[mk]; sp != nil {
+		delete(c.spare, mk)
+		r.root = sp
+	} else {
+		r.root = build(r.tree, d, r.keyCaps())
+	}
 	w := r.cols
 	h := r.root.height(w)
 	if r.scrolls() && h > r.rows && w > 1 {
@@ -94,10 +189,6 @@ func (r *Renderer) layout() {
 	if !r.scrolls() && r.endAtScreen() {
 		walk(r.root, func(b *box) bool { b.memoW = -1; return true })
 		r.root.place(0, 0, w, max(r.root.height(w), r.rows))
-	}
-	r.offsets[""] = r.clamp(r.offsets[""], r.root.h, r.rows)
-	if r.list != nil && r.list.tree != nil {
-		r.placeList(d)
 	}
 }
 

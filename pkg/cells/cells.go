@@ -160,6 +160,13 @@ type Renderer struct {
 
 	changed bool // since the input began: the screen may differ
 
+	cache layouts // the layouts of the tree (measure.go)
+	// dirty says that anything but the tree may differ from the last draw
+	// (input, an update); snaps are the draws since, so that one of the
+	// same, with nothing in between, is the screen it drew.
+	dirty bool
+	snaps map[snapKey]*snap
+
 	press *pressed
 	drag  *dragging // a drag in progress (drag.go)
 	click struct {
@@ -214,6 +221,7 @@ func New(p Program) *Renderer {
 // whenever the renderer takes over from a host. What was focused, typed
 // and scrolled goes, as with a new document on a host.
 func (r *Renderer) Show() {
+	r.dirty = true
 	r.focused, r.kb, r.away = "", false, ""
 	r.fields, r.offsets = map[string]*fieldState{}, map[string]int{}
 	r.list, r.press, r.reveals, r.drag = nil, nil, nil, nil
@@ -223,7 +231,7 @@ func (r *Renderer) Show() {
 
 // Update brings the renderer up to the program, after anything off its
 // input that may have changed the model: a posted function, a tick.
-func (r *Renderer) Update() { r.settle(true) }
+func (r *Renderer) Update() { r.dirty = true; r.settle(true) }
 
 // Focused is the element with the keyboard, "" for none.
 func (r *Renderer) Focused() string { return r.focused }
@@ -247,7 +255,7 @@ func (r *Renderer) settle(due bool) {
 func (r *Renderer) apply(f Frame) bool {
 	r.tree = r.p.Tree()
 	r.reindex()
-	r.changed = true
+	r.changed, r.dirty = true, true
 	for _, fs := range f.Fields {
 		// What the user typed since wins (SPEC §6.4).
 		if st := r.fields[fs.ID]; st != nil && fs.Change.Rev == st.rev && fs.Change.Value != nil {
