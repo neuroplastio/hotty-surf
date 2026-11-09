@@ -1,4 +1,4 @@
-package main
+package surfgen
 
 import (
 	"io/fs"
@@ -29,7 +29,7 @@ func TestConformanceLoad(t *testing.T) {
 		}
 		ran++
 		t.Run(strings.TrimSuffix(path.Base(file), ".txt"), func(t *testing.T) {
-			_, err := generateFS("../../pkg/conformance", conformance.Overlay(ar), false)
+			_, err := generateFS("../conformance", conformance.Overlay(ar), false)
 			got := "<nil>\n"
 			if err != nil {
 				got = err.Error() + "\n"

@@ -39,15 +39,34 @@ const (
 	FormFace
 )
 
-// Widget is one tag of the floor's vocabulary.
+// Widget is one tag of the vocabulary: the floor's, in the table below,
+// or a widget another package registers (Register, register.go), which
+// has the fields after Events as well.
 type Widget struct {
 	Tag  string
 	Doc  string
 	Form Form
-	// Func is the constructor in this package, which both modes call.
+	// Func is the constructor in this package, which both modes call; a
+	// registered widget's, its name in Pkg.
 	Func string
 	// Events are the events a handler may be bound to on it (@click …).
 	Events []string
+
+	// Pkg is the import path of the package that registers the widget,
+	// whose Func and whose attributes' Funcs the compiled mode calls.
+	// Empty for the floor's.
+	Pkg string
+	// Attrs are a registered widget's own attributes: modifiers, applied
+	// after the widget is built. Register gives each the widget's tag.
+	Attrs []Attr
+	// CSS is a registered widget's stylesheet, sent after surf.css's, once
+	// (surfui.AddCSS). It reads surf.css's `--u-*` tokens.
+	CSS string
+	// New is the constructor the interpreter calls, the same function as
+	// Pkg's Func: a func(...*surfui.Node) *surfui.Node for FormKids, a
+	// func(string) *surfui.Node for FormText, a func() *surfui.Node for
+	// FormNone. Nil for the floor's.
+	New any
 }
 
 // Type is what an attribute takes.
@@ -81,6 +100,12 @@ type Attr struct {
 	// [2]int64), or func(*surfui.Node, T) error where Fails says so.
 	Func  string
 	Fails bool
+	// Pkg and Apply are a registered widget's attribute's: the package
+	// that holds Func, which the compiled mode calls, and the function the
+	// interpreter calls, the same: func(*surfui.Node, T) with T string,
+	// bool or int64, with an error result where Fails says so.
+	Pkg   string
+	Apply any
 	// Values are the values a string attribute takes, where it takes only
 	// some (tone, fill, theme, density): a literal of another is a load
 	// error, and a bound one a render error. Nil for any string.
@@ -118,33 +143,39 @@ var pointed = func() []string {
 	return out
 }()
 
-// Widgets are the tags, by name.
+// floor is one of the floor's widgets.
+func floor(tag, doc string, form Form, fn string, events []string) Widget {
+	return Widget{Tag: tag, Doc: doc, Form: form, Func: fn, Events: events}
+}
+
+// Widgets are the tags, by name: the floor's, then those registered
+// (Register), in the order they were.
 var Widgets = []Widget{
-	{"surface", "a surface's root: its theme and density, Compact unless it says", FormKids, "NewSurface", events},
-	{"stack", "its children top to bottom", FormKids, "surfui.Stack", events},
-	{"row", "its children left to right, centred on the line", FormKids, "surfui.Row", events},
-	{"spacer", "the room left in its row or stack", FormNone, "surfui.Spacer", nil},
-	{"text", "a line of text, cut with … where it doesn't fit (wrap lets it wrap)", FormText, "surfui.Text", events},
-	{"line", "one line of texts side by side, each in its own tone and weight, cut once with … at its end where they don't fit; with wrap, a paragraph of its texts and keys", FormKids, "surfui.Line", events},
-	{"heading", "a section's or a screen's title", FormText, "surfui.Heading", events},
-	{"caption", "a group's title over its rows, small and dim", FormText, "surfui.Caption", events},
-	{"chip", "a short label on a fill", FormText, "surfui.Chip", events},
-	{"glyph", "one symbol in a fixed slot: a status's dot", FormText, "surfui.Glyph", events},
-	{"icon", "a mark beside a label, muted: an MDI symbol of the hosts' Nerd Font, its glyph or its name; or an SVG on a host, its glyph in the cells", FormIcon, "IconNode", events},
-	{"dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil},
-	{"key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events},
-	{"button", "a button, its text its label, with an icon before or after it", FormText, "surfui.Button", events},
-	{"field", "a one-line text field", FormNone, "surfui.Field", []string{"click", "focus", "change", "input"}},
-	{"switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events},
-	{"select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}},
-	{"cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}},
-	{"list", "a column of items with a selection", FormKids, "surfui.List", events},
-	{"item", "a row of a list", FormKids, "surfui.Item", events},
-	{"section", "a group under a heading", FormSection, "surfui.Section", events},
-	{"rule", "a line across", FormNone, "surfui.Rule", nil},
-	{"box", "a raised panel", FormKids, "surfui.Box", events},
-	{"dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events},
-	{"face", "a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb", FormFace, "NewFace", events},
+	floor("surface", "a surface's root: its theme and density, Compact unless it says", FormKids, "NewSurface", events),
+	floor("stack", "its children top to bottom", FormKids, "surfui.Stack", events),
+	floor("row", "its children left to right, centred on the line", FormKids, "surfui.Row", events),
+	floor("spacer", "the room left in its row or stack", FormNone, "surfui.Spacer", nil),
+	floor("text", "a line of text, cut with … where it doesn't fit (wrap lets it wrap)", FormText, "surfui.Text", events),
+	floor("line", "one line of texts side by side, each in its own tone and weight, cut once with … at its end where they don't fit; with wrap, a paragraph of its texts and keys", FormKids, "surfui.Line", events),
+	floor("heading", "a section's or a screen's title", FormText, "surfui.Heading", events),
+	floor("caption", "a group's title over its rows, small and dim", FormText, "surfui.Caption", events),
+	floor("chip", "a short label on a fill", FormText, "surfui.Chip", events),
+	floor("glyph", "one symbol in a fixed slot: a status's dot", FormText, "surfui.Glyph", events),
+	floor("icon", "a mark beside a label, muted: an MDI symbol of the hosts' Nerd Font, its glyph or its name; or an SVG on a host, its glyph in the cells", FormIcon, "IconNode", events),
+	floor("dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil),
+	floor("key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events),
+	floor("button", "a button, its text its label, with an icon before or after it", FormText, "surfui.Button", events),
+	floor("field", "a one-line text field", FormNone, "surfui.Field", []string{"click", "focus", "change", "input"}),
+	floor("switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events),
+	floor("select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}),
+	floor("cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}),
+	floor("list", "a column of items with a selection", FormKids, "surfui.List", events),
+	floor("item", "a row of a list", FormKids, "surfui.Item", events),
+	floor("section", "a group under a heading", FormSection, "surfui.Section", events),
+	floor("rule", "a line across", FormNone, "surfui.Rule", nil),
+	floor("box", "a raised panel", FormKids, "surfui.Box", events),
+	floor("dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events),
+	floor("face", "a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb", FormFace, "NewFace", events),
 }
 
 // Attrs are the attributes, constructors' arguments first.
@@ -232,6 +263,12 @@ func widget(tag string) (*Widget, bool) {
 		}
 	}
 	return nil, false
+}
+
+// registered says tag is a widget registered from outside (Register).
+func registered(tag string) bool {
+	w, ok := widget(tag)
+	return ok && w.New != nil
 }
 
 // attrOf is the attribute name on tag: an argument of its constructor
