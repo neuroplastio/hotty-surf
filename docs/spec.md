@@ -412,8 +412,10 @@ A `{{ }}`, and a key, write a value as CEL's `string()` does:
 
 ## Widgets
 
-A tag with no dash is a widget of the floor's vocabulary (`surfui`). Its
-**form** is what it is built from:
+A tag with no dash is a widget of the floor's vocabulary (`surfui`); one
+with a dash is a component, a partial or a registered widget
+([Widgets from outside](#widgets-from-outside)). Its **form** is what it
+is built from:
 
 - **kids**: its children. A text among them is a `text` widget of it:
   `<row>Hello</row>` is `<row><text>Hello</text></row>`.
@@ -483,6 +485,36 @@ the floor's constructors (both modes call the same ones). `data-on` and
   runtime must draw it the same is not settled (open).
 - A `field`'s value, once drawn, is the host's: the runtime sends a
   change to it as `a=field` (hotty SPEC §6.4), not as an op.
+
+### Widgets from outside
+
+A runtime may let a program add tags to this vocabulary (in Go,
+`surf.Register`). The tables above are the floor's, and a registered
+widget is read as theirs are:
+
+- **Its tag** has a dash, is lowercase letters, digits and dashes from a
+  letter, and is no other widget's, no template's (a load error: a tag
+  is a widget's or a template's) and no component's.
+- **Its form** is kids, text or none, as above, and nothing else.
+- **Its attributes** are modifiers of type string, bool or int, applied
+  after the widget is built, in the order the widget lists them, with
+  the floor's global attributes as on any widget. They may not take a
+  name every widget takes, nor `if`, `else-if`, `else`, `each`, `slot` or
+  `key`. A literal one is checked at load, by the same function that
+  applies it (a string's `values` too); a bound one at render, with the
+  errors a floor attribute's have. Its events are those it lists, and it
+  takes no `drag` or `drop`.
+- **Its stylesheet** goes after the floor's in the one resource
+  `surf-css` ([The stylesheet](#the-stylesheet)), once, and reads the
+  floor's `--u-*` tokens. The palette's rules follow it.
+- **Both modes build it by one function,** the widget's constructor,
+  which the interpreter holds as a value and the compiled mode calls by
+  its package's import path and its name. There is no lookup by name at
+  run time. In Go: `Widget.New` and `Widget.Pkg` + `Widget.Func`; a
+  package that uses one generates its bindings with a `surfgen` that
+  links the registering package (`surfgen.Main`).
+- **In cells** it is drawn from the nodes it makes, as far as the cells
+  know them.
 
 ### Icons
 
@@ -1210,8 +1242,10 @@ give, and the rest renders:
 ## The stylesheet
 
 - **One stylesheet draws every widget:** the floor's `surfui.CSS`, in
-  `surfui/css.go`. A widget's look is its classes (`u-row`, `u-gap2`,
-  `is-sel`…); a template writes no CSS.
+  `surfui/css.go`, then the stylesheets of the widgets registered from
+  outside, each once, in the order they were registered
+  (`surfui.Sheet`), then the palette's rules. A widget's look is its
+  classes (`u-row`, `u-gap2`, `is-sel`…); a template writes no CSS.
 - **It is sent once a session,** as the resource `surf-css`, `text/css`
   (hotty SPEC §7.1), and the document links it: `cid:surf-css`.
 - **A runtime ships the same CSS,** byte for byte, from `surfui/css.go` at
@@ -1501,6 +1535,14 @@ and in cells on both: `surfrun.Runtime` on a terminal that is no host
 (`conformance.PlayCells`), and a `cells.Renderer` hosting a
 `surfrun.Surface` (`conformance.PlayCellsHosted`).
 
+A package that registers widgets runs its own cases the same way, with
+its own fixtures: `conformance.Suite{Cases, Dir, Update, Modes}.Run(t)`
+plays each `cases/*.txt` in each of its modes (a mode makes a case's root
+from its `root` and `state.json`), on the runtime and a host of its own,
+and in cells on both, and fails where the modes' documents, ops, logs,
+cells or errors differ from the case's or from each other
+(`examples/widgets` is the example).
+
 ### A case
 
 A case is a txtar archive. Its comment says what it shows. Its files:
@@ -1530,7 +1572,7 @@ A case is a txtar archive. Its comment says what it shows. Its files:
   runtime's messages are the file's (messages are no part of the spec).
   Its compiled mode's load is its generator's: surfgen, run on the
   fixtures with the case's templates, fails with the same errors
-  (`cmd/surfgen`'s `TestConformanceLoad`).
+  (`pkg/surfgen`'s `TestConformanceLoad`).
 - **`typed`**: a case only a host whose parameters have types runs; its
   text says why. A host whose parameters are all `dyn` (Lua's) skips
   it.

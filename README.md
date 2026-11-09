@@ -144,7 +144,7 @@ What an app imports:
 | `surfkeys` | keys drawn as the person reads them, in their style |
 | `surflua` | `require("surf")` for gopher-lua: templates drawn for Lua tables |
 | `surftest` | a host in the process for tests, and a screen drawn in cells |
-| `cmd/surfgen` | the generator behind `go generate` |
+| `cmd/surfgen` | the generator behind `go generate` (`pkg/surfgen`, for a program that links widgets registered from outside) |
 
 What a host or another runtime needs, under `pkg/`:
 

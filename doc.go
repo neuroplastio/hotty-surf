@@ -13,6 +13,10 @@
 // nothing is looked up by reflection, and the package builds under
 // TinyGo and js/wasm. A render nests at most MaxDepth levels.
 //
+// A package that isn't this one's adds widgets to the vocabulary with
+// Register (docs/surf.md, "Widgets from outside"), which both modes and
+// surflua read alike.
+//
 //	//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 //
 //	m := surflive.New(surfInterpHello(&Hello{Name: "world"}))

@@ -1,0 +1,111 @@
+Widgets from outside (examples/widgets/gauge): a gauge, a callout and a
+tagline, which both modes draw alike, and the cells with what they know:
+the text. A click on the gauge's button fills it ten more; a click on the
+callout runs its handler.
+-- state.json --
+{"Title": "Dash", "Level": 30, "Note": "disk is full"}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level:0.3"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">30%</span></div><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">30 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
+-- cells --
+cells 64x32
+text
+> Dash
+>
+> 40%
+>
+> 30%
+> Heads up
+> disk is full
+> 30 of 100
+>                              Raise
+style
+= aaaa
+=
+=
+=
+=
+=
+=
+=
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+. fg/bg
+a fg/bg bold
+b fg/tonal
+hits
+@ 0,5 64x2 r.knote
+@ 0,8 64x1 r.kraise
+-- 1.event --
+click r.kraise
+-- 1.log --
+raise
+-- 1.ops --
+var r.klevel x-level "0.4"
+text r.klevel.1 "40%"
+text r.ktag "40 of 100"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level: 0.4"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">40%</span></div><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">40 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+> Dash
+>
+> 40%
+>
+> 40%
+> Heads up
+> disk is full
+> 40 of 100
+>                              Raise
+style
+= aaaa
+=
+=
+=
+=
+=
+=
+=
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+. fg/bg
+a fg/bg bold
+b fg/accent
+c on-accent/accent
+hits
+@ 0,5 64x2 r.knote
+@ 0,8 64x1 r.kraise
+-- 2.event --
+click r.knote
+-- 2.log --
+pick note
+-- 2.ops --
+
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level: 0.4"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">40%</span></div><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">40 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+> Dash
+>
+> 40%
+>
+> 40%
+> Heads up
+> disk is full
+> 40 of 100
+>                              Raise
+style
+= aaaa
+=
+=
+=
+=
+=
+=
+=
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+. fg/bg
+a fg/bg bold
+b fg/tonal
+hits
+@ 0,5 64x2 r.knote
+@ 0,8 64x1 r.kraise
