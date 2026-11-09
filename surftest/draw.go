@@ -1,8 +1,8 @@
 package surftest
 
 import (
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // Screen is a screen drawn in cells (pkg/cells' Screen): Text is its

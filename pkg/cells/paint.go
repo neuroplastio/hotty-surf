@@ -6,8 +6,8 @@ import (
 
 	"github.com/clipperhouse/displaywidth"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The look is surf.css's in cells: each fill a role (a box's surface, a

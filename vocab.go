@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The vocabulary: what each tag of a template is, and each attribute it

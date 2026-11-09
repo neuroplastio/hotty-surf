@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/internal/gallery"
+	"neuroplast.io/hotty-surf/internal/gallery"
 )
 
 // -list's ids are the sidebar's stories, each once, and -story with one

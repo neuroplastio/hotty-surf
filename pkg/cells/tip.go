@@ -1,8 +1,8 @@
 package cells
 
 import (
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // DrawTip draws a tooltip in cells: tree is its surface's root

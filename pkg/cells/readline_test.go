@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // lineModel is a surface with one field that commits, readline on the

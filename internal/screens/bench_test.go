@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyterm"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The render cost of each screen, both ways: interpreted and compiled

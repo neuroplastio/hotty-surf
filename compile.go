@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/pkg/markup"
-	"github.com/neuroplastio/hotty-surf/pkg/mdi"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	cellite "neuroplast.io/cel-lite"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/pkg/markup"
+	"neuroplast.io/hotty-surf/pkg/mdi"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Set is a program's templates and the shapes they name, compiled: what

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/pkg/markup"
+	"neuroplast.io/hotty-surf/pkg/markup"
 )
 
 // storyFile is a stories file (stories.Files): a component's stories.

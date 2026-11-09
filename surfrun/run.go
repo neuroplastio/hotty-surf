@@ -19,12 +19,12 @@ import (
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyterm"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Event is what an action hears: a host's event, or a key.

@@ -16,9 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Story is one state of one component, at a width in cells.

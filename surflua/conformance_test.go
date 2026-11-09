@@ -9,12 +9,12 @@ import (
 	"testing"
 	"testing/fstest"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/pkg/conformance"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
 	lua "github.com/yuin/gopher-lua"
 	"golang.org/x/tools/txtar"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/pkg/conformance"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // formLua is the conformance suite's Form fixture (pkg/conformance/fixtures.go)

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
 )
 
 // at is where text first shows on s: its column and row, from 0.

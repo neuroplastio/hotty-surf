@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
-	"github.com/neuroplastio/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/surflive"
 )
 
 // The agents tool's parts, by id.

@@ -65,11 +65,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
-//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 
 // Hello is the screen. Its fields are what it shows, and its methods are
 // what the user's acts do. Its template is hello.surf.
@@ -168,7 +168,7 @@ as `text r.0.kcount "1 clicks"`.
 
 1. Write the struct, and its template beside it, named in kebab case:
    `type AgentList struct` is `agent-list.surf`.
-2. Put `//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen`
+2. Put `//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen`
    in one file of the package, and run `go generate`.
 3. Run it: `surfrun.Run(ctx, surflive.New(surfInterpAgentList(s)), surfrun.Options{Name: "agents"})`.
 4. Test it on `surftest` ([Testing a screen](#testing-a-screen)).
@@ -1309,9 +1309,9 @@ package main
 import (
 	"time"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // reloading is h drawn by the templates in dir, which it reads again

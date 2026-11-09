@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The reference: a story of stories.All as F5's gate drew it (make gate,

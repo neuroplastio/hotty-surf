@@ -5,9 +5,9 @@ import (
 	"strings"
 	"unicode"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	cellite "neuroplast.io/cel-lite"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // Func is a helper an expression may call: a Go function, with its

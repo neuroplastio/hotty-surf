@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	"golang.org/x/tools/txtar"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The fixtures' tooltips (board.surf's heading, a title=, and its

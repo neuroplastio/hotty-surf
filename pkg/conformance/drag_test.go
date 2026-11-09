@@ -4,10 +4,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // A drag in the cells is a press, the pointer's moves and the release, which

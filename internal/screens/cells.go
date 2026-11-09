@@ -3,7 +3,7 @@ package screens
 import (
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The cells UIs' drawing (F7): plain lines, with ANSI colours for the

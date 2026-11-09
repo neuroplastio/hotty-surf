@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	lua "github.com/yuin/gopher-lua"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // stderr is what a test's run writes of its warnings.

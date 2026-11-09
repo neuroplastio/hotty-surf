@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // menuProg is a Program with an element's menu: a column of ten rows,

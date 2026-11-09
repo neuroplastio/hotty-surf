@@ -38,9 +38,9 @@ is what a render hands you (for timers).
 
 ```go
 import (
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 err := surfrun.Run(ctx, surflive.New(newHosts()), surfrun.Options{Name: "hosts"})
@@ -295,9 +295,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // screen is the root: the filter, the rows and the selection.

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // A list the keyboard drives from beside it, as plx's palette's rows from

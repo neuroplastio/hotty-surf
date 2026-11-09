@@ -5,9 +5,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // An element's menu opens itself (SPEC §9's secondary press, SDK.md §4.7):

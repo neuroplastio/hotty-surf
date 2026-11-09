@@ -10,14 +10,14 @@ import (
 	"testing"
 	"testing/fstest"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	"github.com/neuroplastio/hotty-go"
+	cellite "neuroplast.io/cel-lite"
+	"neuroplast.io/hotty-go"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // depth is how deep the measured trees go, in a render's levels, as deep

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // owner is a stories file's story's owner: its Go state's instance,

@@ -2,7 +2,7 @@
 // its .surf templates read and call of its Go types, with no reflection
 // (gov NEIO-15), and the templates compiled into Go.
 //
-//	//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//	//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 //
 // in a package whose directory holds .surf files. A template named for a
 // type (agent-row.surf for AgentRow, notices.surf for notices) is that

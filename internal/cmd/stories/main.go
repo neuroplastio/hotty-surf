@@ -28,11 +28,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/internal/gallery"
-	"github.com/neuroplastio/hotty-surf/internal/stories"
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/gallery"
+	"neuroplast.io/hotty-surf/internal/stories"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 func main() {

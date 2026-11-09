@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 
 // Fetch is the greeting: its template is fetch.surf. Its fields are what
 // it shows, already written out, so that the template only lays them out.

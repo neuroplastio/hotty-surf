@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	lua "github.com/yuin/gopher-lua"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 const painted = 256 << 10

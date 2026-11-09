@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // In the cells a menu row's icon has one cell between it and its label,

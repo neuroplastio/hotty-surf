@@ -8,11 +8,11 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // form is a screen of controls: a field that commits, a button, a

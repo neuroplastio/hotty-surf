@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/internal/stories"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/stories"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // state is a row of the states matrix: the story with some of its

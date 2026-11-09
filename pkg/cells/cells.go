@@ -42,11 +42,11 @@ import (
 	"time"
 
 	"github.com/clipperhouse/displaywidth"
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyedit"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyedit"
 
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Program is the program's side of a surface, which the renderer hosts:

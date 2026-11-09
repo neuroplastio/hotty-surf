@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	uv "github.com/charmbracelet/ultraviolet"
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyterm"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Cells is the surface as a cells.Program, for a renderer that hosts it

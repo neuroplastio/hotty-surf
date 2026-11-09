@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing/fstest"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/screens"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/screens"
 )
 
 // pack is a package whose components the stories files draw: its

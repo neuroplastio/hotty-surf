@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 )
 
 // keymap is the keymap a host reads for n while n is focused (SPEC

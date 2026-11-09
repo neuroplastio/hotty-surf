@@ -8,9 +8,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/pkg/markup"
-	"github.com/neuroplastio/hotty-surf/pkg/mdi"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/markup"
+	"neuroplast.io/hotty-surf/pkg/mdi"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // An <icon> is a glyph: its text (&#xF08BB;), or an MDI symbol's name

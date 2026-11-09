@@ -25,9 +25,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/neuroplastio/hotty-surf/internal/gallery"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/internal/gallery"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 func main() {

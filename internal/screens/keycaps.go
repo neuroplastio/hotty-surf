@@ -1,6 +1,6 @@
 package screens
 
-import "github.com/neuroplastio/hotty-surf/surfkeys"
+import "neuroplast.io/hotty-surf/surfkeys"
 
 // The key caps (S6, H5): a key sequence in myelin's names ("ctrl+b p
 // shift+x"), drawn one cap a chord in the settings' style by package

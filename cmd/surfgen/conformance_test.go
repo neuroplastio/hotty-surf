@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/pkg/conformance"
 	"golang.org/x/tools/txtar"
+	"neuroplast.io/hotty-surf/pkg/conformance"
 )
 
 // The compiled mode loads its templates when surfgen runs: given a

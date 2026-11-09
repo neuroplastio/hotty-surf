@@ -1,10 +1,10 @@
 package cells
 
 import (
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Draw lays the tree out at cols×rows and draws it: the screen, with the

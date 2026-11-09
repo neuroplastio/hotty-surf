@@ -266,7 +266,7 @@ at the condition; the rest of its chain is still compiled, once.
 ## Expressions
 
 Expressions are CEL, through **cel-lite**: the module
-`github.com/neuroplastio/cel-lite`, whose package documentation
+`neuroplast.io/cel-lite`, whose package documentation
 (`doc.go`) says what its subset holds, what it refuses by name
 (timestamps and durations, regular expressions, the macros, type values,
 message construction, optional syntax) and that an expression means

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // chooser is a setting drawn as a Select, which takes the keyboard at

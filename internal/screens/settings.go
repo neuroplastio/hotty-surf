@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
 )
 
 // Settings is a terminal workspace's settings page (S1, S7), on

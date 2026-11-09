@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/pkg/markup"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/pkg/markup"
 )
 
 // prop is one of a partial's props in a story: what the story gives it,

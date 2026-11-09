@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyedit"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyedit"
 )
 
 // readlineCases are the readline keys: what each does to "one two three",

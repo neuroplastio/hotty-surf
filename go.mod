@@ -1,17 +1,17 @@
 // hotty-surf: a framework for hotty apps (gov NEIO-15).
-module github.com/neuroplastio/hotty-surf
+module neuroplast.io/hotty-surf
 
 go 1.26.0
 
 require (
 	github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886
 	github.com/clipperhouse/displaywidth v0.11.0
-	github.com/neuroplastio/cel-lite v0.1.1
-	github.com/neuroplastio/hotty-go v0.7.0
-	github.com/neuroplastio/hotty-go/hottyedit v0.7.0
-	github.com/neuroplastio/hotty-go/hottyterm v0.7.0
-	github.com/neuroplastio/hotty-go/hottytest v0.7.0
-	github.com/neuroplastio/myelin/myelinkey v0.1.0
+	neuroplast.io/cel-lite v0.2.0
+	neuroplast.io/hotty-go v0.7.1
+	neuroplast.io/hotty-go/hottyedit v0.7.1
+	neuroplast.io/hotty-go/hottyterm v0.7.1
+	neuroplast.io/hotty-go/hottytest v0.7.1
+	neuroplast.io/myelin/myelinkey v0.2.0
 	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/sys v0.49.0
 	golang.org/x/tools v0.52.0

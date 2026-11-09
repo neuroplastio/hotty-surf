@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
 )
 
 // Hues are the named colours a view draws data in: an agent's own, a

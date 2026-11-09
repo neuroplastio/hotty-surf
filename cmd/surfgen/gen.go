@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
 	"golang.org/x/tools/go/packages"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
 )
 
 // gen is one package's generation.
@@ -351,9 +351,9 @@ func runtimeMethods(ms *types.MethodSet) map[string]string {
 }
 
 const (
-	runPath  = "github.com/neuroplastio/hotty-surf/surfrun"
-	uiPath   = "github.com/neuroplastio/hotty-surf/surfui"
-	keysPath = "github.com/neuroplastio/hotty-surf/surfkeys"
+	runPath  = "neuroplast.io/hotty-surf/surfrun"
+	uiPath   = "neuroplast.io/hotty-surf/surfui"
+	keysPath = "neuroplast.io/hotty-surf/surfkeys"
 )
 
 // isEvent reports whether t is surfrun.Event.
@@ -362,7 +362,7 @@ func isEvent(t types.Type) bool {
 	return ok && n.Obj().Name() == "Event" && n.Obj().Pkg() != nil && n.Obj().Pkg().Path() == runPath
 }
 
-const livePath = "github.com/neuroplastio/hotty-surf/surflive"
+const livePath = "neuroplast.io/hotty-surf/surflive"
 
 // isComponent reports whether t is surflive.Component: a component a template
 // draws with <embed>.
@@ -639,12 +639,12 @@ func (g *gen) write(set *surf.Set) ([]byte, error) {
 	for _, p := range std {
 		imps = append(imps, strconv.Quote(p))
 	}
-	imps = append(imps, `cellite "github.com/neuroplastio/cel-lite"`,
-		`surf "github.com/neuroplastio/hotty-surf"`, `"github.com/neuroplastio/hotty-surf/surflive"`)
+	imps = append(imps, `cellite "neuroplast.io/cel-lite"`,
+		`surf "neuroplast.io/hotty-surf"`, `"neuroplast.io/hotty-surf/surflive"`)
 	if _, named := g.imports[runPath]; named || g.usesRun {
-		imps = append(imps, `"github.com/neuroplastio/hotty-surf/surfrun"`)
+		imps = append(imps, `"neuroplast.io/hotty-surf/surfrun"`)
 	}
-	imps = append(imps, `"github.com/neuroplastio/hotty-surf/surfui"`)
+	imps = append(imps, `"neuroplast.io/hotty-surf/surfui"`)
 	paths := make([]string, 0, len(g.imports))
 	for p := range g.imports {
 		paths = append(paths, p)
@@ -652,7 +652,7 @@ func (g *gen) write(set *surf.Set) ([]byte, error) {
 	sort.Strings(paths)
 	for _, p := range paths {
 		switch p {
-		case "github.com/neuroplastio/hotty-surf/surfrun", "github.com/neuroplastio/hotty-surf/surflive", "github.com/neuroplastio/hotty-surf/surfui":
+		case "neuroplast.io/hotty-surf/surfrun", "neuroplast.io/hotty-surf/surflive", "neuroplast.io/hotty-surf/surfui":
 			continue
 		}
 		imps = append(imps, g.imports[p]+" "+strconv.Quote(p))

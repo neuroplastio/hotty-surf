@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
 )
 
 // The settings page's parts, by id.

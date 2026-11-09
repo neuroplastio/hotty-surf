@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // A Fit row shows its children right to left from its end, each whole,

@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/neuroplastio/hotty-go"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	lua "github.com/yuin/gopher-lua"
+	"neuroplast.io/hotty-go"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Preload makes require("surf") the module in L, which reads its

@@ -13,7 +13,7 @@
 // nothing is looked up by reflection, and the package builds under
 // TinyGo and js/wasm. A render nests at most MaxDepth levels.
 //
-//	//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//	//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 //
 //	m := surflive.New(surfInterpHello(&Hello{Name: "world"}))
 //	err := surfrun.Run(ctx, m, surfrun.Options{Name: "hello"})

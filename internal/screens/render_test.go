@@ -3,9 +3,9 @@ package screens
 import (
 	"testing"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // No expression fails as a screen renders, in either mode, in the states

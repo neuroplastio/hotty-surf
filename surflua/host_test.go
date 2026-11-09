@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	lua "github.com/yuin/gopher-lua"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // toolFiles are a tool's templates and its script: a field that adds

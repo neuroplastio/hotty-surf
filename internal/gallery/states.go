@@ -1,8 +1,8 @@
 package gallery
 
 import (
-	"github.com/neuroplastio/hotty-surf/internal/screens"
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/internal/screens"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
 )
 
 // states are the stories files' Go state, by file: the value a story of

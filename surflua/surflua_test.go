@@ -6,9 +6,9 @@ import (
 	"testing"
 	"testing/fstest"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	lua "github.com/yuin/gopher-lua"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // files are each test's files, by path in the fs the module reads: what

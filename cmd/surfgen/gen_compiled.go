@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/pkg/mdi"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/pkg/mdi"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The compiled mode (docs/spec.md, "Modes"). Each template, for each

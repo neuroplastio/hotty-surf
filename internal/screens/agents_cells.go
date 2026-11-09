@@ -3,8 +3,8 @@ package screens
 import (
 	"cmp"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // DrawCells is the roster in cells (F7), from the same state: each entry's

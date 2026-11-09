@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottyterm"
 )
 
 // A SIGWINCH is the window's new size, which Sizes delivers to Loop; once

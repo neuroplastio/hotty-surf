@@ -5,7 +5,7 @@ package surfrun
 import (
 	"fmt"
 
-	"github.com/neuroplastio/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottyterm"
 )
 
 // open is Run's terminal, which js/wasm has none of: no /dev/tty, so

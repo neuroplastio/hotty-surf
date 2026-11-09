@@ -63,8 +63,8 @@ jobs:
           dir=$(mktemp -d)
           cd "$dir"
           go mod init example.com/importer
-          go mod edit -require=github.com/neuroplastio/hotty-surf@v0.0.0 \
-            -replace=github.com/neuroplastio/hotty-surf="$GITHUB_WORKSPACE"
+          go mod edit -require=neuroplast.io/hotty-surf@v0.0.0 \
+            -replace=neuroplast.io/hotty-surf="$GITHUB_WORKSPACE"
           cat >main.go <<'GO'
           package main
 
@@ -72,8 +72,8 @@ jobs:
           	"fmt"
           	"testing/fstest"
 
-          	surf "github.com/neuroplastio/hotty-surf"
-          	"github.com/neuroplastio/hotty-surf/surflua"
+          	surf "neuroplast.io/hotty-surf"
+          	"neuroplast.io/hotty-surf/surflua"
           	lua "github.com/yuin/gopher-lua"
           )
 

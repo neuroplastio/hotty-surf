@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // reloading is h drawn by the templates in dir, which it reads again

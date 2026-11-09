@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 var names = []string{"README.md", "build.zig", "notes.md", "LICENSE", "main.go", "todo.txt"}

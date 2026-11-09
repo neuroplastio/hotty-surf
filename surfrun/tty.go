@@ -2,7 +2,7 @@
 
 package surfrun
 
-import "github.com/neuroplastio/hotty-go/hottyterm"
+import "neuroplast.io/hotty-go/hottyterm"
 
 // open is Run's terminal: the process's, /dev/tty. Its size follows the
 // window's (onResize): hottyterm.Open leaves SIGWINCH to the program, and

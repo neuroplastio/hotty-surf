@@ -3,7 +3,7 @@ package surfrun
 import (
 	"strconv"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // A context menu is an element's (surfui.Node.Menu, a template's <menu>):

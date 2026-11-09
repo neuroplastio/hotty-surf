@@ -7,14 +7,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottytest"
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	"golang.org/x/tools/txtar"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottytest"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The cells a case is drawn in, at this size (docs/spec.md, "Cells").

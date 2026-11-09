@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Drags in the cells (SPEC §9.1). A cell frame has no elements on the

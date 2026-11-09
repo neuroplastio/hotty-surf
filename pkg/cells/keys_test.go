@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	keystyle "github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	keystyle "neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // keySamples are the keys each style draws: a chord, a sequence, mod,

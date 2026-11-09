@@ -6,9 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/stories"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/stories"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // story is one of the gallery's stories, from one of three sources.

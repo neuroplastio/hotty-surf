@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // Agents is an agents list, a tool in a dock (S2, S3, S4): an entry per

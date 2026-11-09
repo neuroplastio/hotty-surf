@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // plx's seed style: glyph caps, lower case, glue on, then a space.

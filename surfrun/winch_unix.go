@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/neuroplastio/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottyterm"
 )
 
 // onResize tells t its size (Term.Resized) at each SIGWINCH, until t

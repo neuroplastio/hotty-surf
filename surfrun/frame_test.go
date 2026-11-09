@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 )
 
 func TestWriteFrame(t *testing.T) {

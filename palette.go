@@ -1,6 +1,6 @@
 package surf
 
-import "github.com/neuroplastio/hotty-surf/surfui"
+import "neuroplast.io/hotty-surf/surfui"
 
 // Palette is a set of named colours, hues, declared at run time: a colour
 // from a user's configuration, which a template's <palette> can't know.

@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottytest"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/screens"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/screens"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Every story draws, with no error, in a gallery that draws with none,

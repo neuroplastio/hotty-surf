@@ -36,7 +36,7 @@ surface in step with them.
 ## Install
 
 ```sh
-go get github.com/neuroplastio/hotty-surf
+go get neuroplast.io/hotty-surf
 ```
 
 It needs Go 1.26 or later.
@@ -79,7 +79,7 @@ The template, named for the struct, lays it out:
 </surface>
 ```
 
-A `//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen`
+A `//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen`
 line in the package, and `go generate`, write `surf_gen.go`: what the
 template may read and call, checked against the struct, and
 `surfInterpHello`, which draws a `*Hello` by its template. Then the
@@ -107,7 +107,7 @@ Every widget of the vocabulary and every story, drawn live in a terminal
 that speaks hotty (hottyterm, say):
 
 ```sh
-go run github.com/neuroplastio/hotty-surf/cmd/surfgallery@latest
+go run neuroplast.io/hotty-surf/cmd/surfgallery@latest
 ```
 
 A widget comes with a control for each attribute it takes, and a story
@@ -129,7 +129,7 @@ the stylesheet as you edit them
 - [The spec](docs/spec.md): the exact rules, for other runtimes.
 
 The API reference is on
-[pkg.go.dev](https://pkg.go.dev/github.com/neuroplastio/hotty-surf).
+[pkg.go.dev](https://pkg.go.dev/neuroplast.io/hotty-surf).
 
 ## Packages
 
@@ -156,7 +156,9 @@ What a host or another runtime needs, under `pkg/`:
 
 ## Status
 
-Version 0.1.0. Below 1.0, a minor version may break the API.
+Below 1.0, a minor version may break the API. Up to v0.2.0 the module
+was `github.com/neuroplastio/hotty-surf`; from v0.3.0 it is
+`neuroplast.io/hotty-surf`, so upgrading changes the import paths.
 
 ## License
 

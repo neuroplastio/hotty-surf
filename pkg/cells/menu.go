@@ -1,6 +1,6 @@
 package cells
 
-import "github.com/neuroplastio/hotty-go"
+import "neuroplast.io/hotty-go"
 
 // An element's menu in the cells. The program draws the menu (its rows
 // as a Screen, Menu.Cells) and keeps its picks and its keys; the

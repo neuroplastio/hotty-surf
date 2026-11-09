@@ -7,10 +7,10 @@ import (
 	"testing/fstest"
 	"time"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	cellite "neuroplast.io/cel-lite"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // A component and a data struct, with the instances surfgen would write.

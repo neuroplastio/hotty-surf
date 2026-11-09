@@ -36,7 +36,7 @@ R-23, picked by the maintainer (gov NEIO-15).
 ```
 
 ```go
-//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 
 type notices struct {
 	Rows []*Notice
@@ -1062,7 +1062,7 @@ case of a generated switch.
 ## Running the generator
 
 ```go
-//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 ```
 
 - Put it in one file of the package, and run `go generate`, or

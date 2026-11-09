@@ -2,7 +2,7 @@
 
 package main
 
-import "github.com/neuroplastio/hotty-surf/surflive"
+import "neuroplast.io/hotty-surf/surflive"
 
 // mode is how this build draws the counter: by its template, interpreted.
 const mode = "interpreted"

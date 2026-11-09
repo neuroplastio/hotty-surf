@@ -3,7 +3,7 @@ package surfui_test
 import (
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // TakesFocus is what a host gives the keyboard to (SPEC §10.1).

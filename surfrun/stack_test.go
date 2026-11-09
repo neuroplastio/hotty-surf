@@ -5,9 +5,9 @@ package surfrun
 import (
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/pkg/markup"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/pkg/markup"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // depth is how many elements deep the measured tree goes: as deep as a

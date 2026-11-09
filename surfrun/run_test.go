@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyterm"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // keyed is a surface with one binding, which counts its presses.

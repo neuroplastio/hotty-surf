@@ -1,7 +1,7 @@
 package surfkeys
 
 import (
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The classes and the attribute a tree's keys have.

@@ -3,10 +3,10 @@ package surftest
 import (
 	"testing"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // Relay is StartHosted's host with no goroutine of its own, for a test

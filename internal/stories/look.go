@@ -1,8 +1,8 @@
 package stories
 
 import (
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // The look's two screens (gov R-24, the mock the maintainer took): a

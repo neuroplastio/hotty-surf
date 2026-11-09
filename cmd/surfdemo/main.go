@@ -24,13 +24,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyterm"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens"
-	"github.com/neuroplastio/hotty-surf/surfkeys"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/screens"
+	"neuroplast.io/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 func main() {

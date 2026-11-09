@@ -4,10 +4,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/myelin/myelinkey"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Input is the terminal's, at the cells of the last Draw. Each call

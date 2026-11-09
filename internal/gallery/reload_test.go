@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-surf/internal/screens"
-	"github.com/neuroplastio/hotty-surf/internal/stories"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/internal/screens"
+	"neuroplast.io/hotty-surf/internal/stories"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // checkout is a directory of the test's with the files a checkout has

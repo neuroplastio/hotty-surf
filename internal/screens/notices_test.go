@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-go/hottyterm"
-	"github.com/neuroplastio/hotty-go/hottytest"
-	"github.com/neuroplastio/hotty-surf/internal/screens/demodata"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottytest"
+	"neuroplast.io/hotty-surf/internal/screens/demodata"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // noticesRun is the notices screen running on a test host.

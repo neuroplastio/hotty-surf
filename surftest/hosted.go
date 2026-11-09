@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // StartHosted is Start with no surfrun.Runtime: m runs on a host of surftest's

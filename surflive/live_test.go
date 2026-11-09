@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-go/hottyterm"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 type agent struct {

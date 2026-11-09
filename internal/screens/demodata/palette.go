@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/neuroplastio/hotty-surf/surfkeys"
+	"neuroplast.io/hotty-surf/surfkeys"
 )
 
 // The kinds of palette row.

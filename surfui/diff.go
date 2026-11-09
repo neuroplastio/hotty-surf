@@ -1,9 +1,9 @@
 package surfui
 
 import (
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
 )
 
 // Diff is what turns the document old shows into the one next shows, as

@@ -3,8 +3,8 @@ package surf
 import (
 	"sort"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	"github.com/neuroplastio/hotty-surf/pkg/markup"
+	cellite "neuroplast.io/cel-lite"
+	"neuroplast.io/hotty-surf/pkg/markup"
 )
 
 // The compiled tree, read-only, for a generator: surfgen writes the

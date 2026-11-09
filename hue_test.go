@@ -5,8 +5,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	cellite "neuroplast.io/cel-lite"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Named colours (docs/surf.md, "Colours from data"): a <palette> in a

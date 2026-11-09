@@ -6,9 +6,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // A Select (surfui.Select) is no host control either. A host may show no list

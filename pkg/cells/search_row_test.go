@@ -3,8 +3,8 @@ package cells_test
 import (
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 func TestSearchRowsPaintTheFieldAroundTheirContents(t *testing.T) {

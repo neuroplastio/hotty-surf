@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
 )
 
 // HTML is the markup of a resolved tree.

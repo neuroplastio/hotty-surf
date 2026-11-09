@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	"golang.org/x/tools/txtar"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 var update = flag.Bool("update", false, "write each case's document, ops and log as the interpreter gives them (Cases, for the next build)")

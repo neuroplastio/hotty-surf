@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // form is a field that commits and empties, a Select, a Cycle, a button

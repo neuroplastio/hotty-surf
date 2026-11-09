@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // Tasks is the guide's second screen (tasks.surf): a list of tasks with

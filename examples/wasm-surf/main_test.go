@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surflive"
 )
 
 // The example runs natively too, in each mode, with the race detector in

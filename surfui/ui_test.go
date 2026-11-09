@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 func TestResolveGivesKeyPaths(t *testing.T) {

@@ -1,6 +1,6 @@
 package surfrun
 
-import "github.com/neuroplastio/hotty-surf/surfui"
+import "neuroplast.io/hotty-surf/surfui"
 
 // A Field with an OnChange commits what the user typed (surfui.Commits): on
 // Enter, which the field gives the program, and when the user leaves it,

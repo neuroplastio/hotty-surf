@@ -3,7 +3,7 @@ package surfrun
 import (
 	"testing"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/pkg/cells"
 )
 
 // In the terminal's sixteen colours, tonal is no fill, so that a pane of

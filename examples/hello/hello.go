@@ -13,11 +13,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
-//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 
 // Hello is the screen. Its fields are what it shows, and its methods are
 // what the user's acts do. Its template is hello.surf.

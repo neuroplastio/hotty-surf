@@ -3,10 +3,10 @@ package cells
 import (
 	"strings"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/myelin/myelinkey"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/myelin/myelinkey"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // KeyUse is a key Key would take (Program.Keys, Renderer.Keys).

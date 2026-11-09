@@ -8,11 +8,11 @@ import (
 	"sort"
 	"strings"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
-	"github.com/neuroplastio/hotty-surf/surfrun"
 	lua "github.com/yuin/gopher-lua"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
 // Table is a Lua table as a component's instance (surf.Instance): its

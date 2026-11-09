@@ -21,14 +21,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/neuroplastio/hotty-go/hottyterm"
-	"github.com/neuroplastio/hotty-go/hottytest"
+	"neuroplast.io/hotty-go/hottyterm"
+	"neuroplast.io/hotty-go/hottytest"
 
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
 )
 
-//go:generate go run github.com/neuroplastio/hotty-surf/cmd/surfgen
+//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
 
 // clicks is how many times the example clicks.
 const clicks = 3

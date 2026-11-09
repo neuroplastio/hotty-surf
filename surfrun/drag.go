@@ -1,9 +1,9 @@
 package surfrun
 
 import (
-	"github.com/neuroplastio/hotty-go"
+	"neuroplast.io/hotty-go"
 
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // A drag (SPEC §9.1) of a drag handle (surfui.Node.Drag) onto a place to

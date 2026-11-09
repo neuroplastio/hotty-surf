@@ -110,7 +110,7 @@ done
 # rodata and data: what the module holds); and from the symbols of a
 # native Go build of the same program (go tool nm reads no wasm module),
 # but for fips140's 32 MiB DRBG buffer, which takes no bytes of the file.
-parts=(github.com/neuroplastio/cel-lite github.com/neuroplastio/hotty-surf github.com/neuroplastio/hotty-surf/pkg/markup crypto)
+parts=(neuroplast.io/cel-lite neuroplast.io/hotty-surf neuroplast.io/hotty-surf/pkg/markup crypto)
 # tinygoKiB PROG PKG: PKG's flash in PROG's TinyGo report (its columns:
 # code rodata data bss | flash ram | package); crypto is every crypto
 # package's.

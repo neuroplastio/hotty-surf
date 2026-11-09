@@ -23,14 +23,14 @@ import (
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottyterm"
 	"golang.org/x/sys/unix"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottyterm"
 
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // uvDA1 is the terminal's answer to DA1, as hottyterm reads it.

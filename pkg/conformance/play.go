@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/neuroplastio/hotty-go"
-	"github.com/neuroplastio/hotty-go/hottytest"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/surflive"
-	"github.com/neuroplastio/hotty-surf/surfrun"
-	"github.com/neuroplastio/hotty-surf/surftest"
-	"github.com/neuroplastio/hotty-surf/surfui"
 	"golang.org/x/tools/txtar"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-go/hottytest"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surflive"
+	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Play runs a case's steps on c, its root drawn from the case's

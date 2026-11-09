@@ -3,7 +3,7 @@ package surfui
 import (
 	"strconv"
 
-	"github.com/neuroplastio/hotty-surf/pkg/mdi"
+	"neuroplast.io/hotty-surf/pkg/mdi"
 )
 
 // A menu, drawn: every menu in one look, an element's context menu

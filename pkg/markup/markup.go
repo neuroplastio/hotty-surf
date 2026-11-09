@@ -36,7 +36,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/neuroplastio/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/internal/stackprobe"
 )
 
 // MaxDepth is how deep a file nests its elements: an element inside

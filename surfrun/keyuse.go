@@ -1,8 +1,8 @@
 package surfrun
 
 import (
-	"github.com/neuroplastio/hotty-surf/pkg/cells"
-	"github.com/neuroplastio/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // KeyUse is a key the surface's Key would take (Surface.Keys): Name as

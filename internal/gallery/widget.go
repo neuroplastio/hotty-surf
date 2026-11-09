@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing/fstest"
 
-	cellite "github.com/neuroplastio/cel-lite"
-	surf "github.com/neuroplastio/hotty-surf"
-	"github.com/neuroplastio/hotty-surf/internal/stories"
+	cellite "neuroplast.io/cel-lite"
+	surf "neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/stories"
 )
 
 // widgetStory is a widget's own story: its tag with a control for each
