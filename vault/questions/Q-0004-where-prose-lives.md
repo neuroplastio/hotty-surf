@@ -1,6 +1,6 @@
 # Q-0004 — Where prose, the Markdown converter and the Bubble Tea adapter live
 
-Status: open
+Status: answered, 2026-11-09: the lean
 Blocks: a2ui-exit L8–L12, L14
 Raised: 2026-11-09
 
@@ -27,3 +27,11 @@ moving them later is a migration.
    and two programs don't write the same walk.
 3. A hotty-surf sub-module: hotty-go stays protocol-only and depends on
    nothing of surf's, and the adapter is mostly surfrun.
+
+## Answer
+
+The maintainer, 2026-11-09: "Agreed" to the lean. A1–A5 are hotty-surf's
+vocabulary; B1–B3 are still built. `surfmd` and `surftea` are sub-modules
+of hotty-surf (`neuroplast.io/hotty-surf/surfmd`, `…/surftea`); the core
+takes no goldmark or Bubble Tea dependency, and hotty-go stays
+protocol-only.

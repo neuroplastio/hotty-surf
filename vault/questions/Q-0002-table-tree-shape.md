@@ -1,6 +1,6 @@
 # Q-0002 — The table's and the tree's shapes
 
-Status: open
+Status: answered, 2026-11-09: the lean
 Blocks: a2ui-exit L6 (table), L7 (tree); margin's threads view, tree pane
 and palette; the website's docs nav and Markdown tables
 Raised: 2026-11-09
@@ -43,3 +43,11 @@ static table is the same widget with no selection, and an `item` row
 reuses what `list` already does in both renderings. `expanded` becomes
 `open` and `indent` stays a size. The model still owns sort, selection
 and what is open, as answered on 2026-11-07.
+
+## Answer
+
+The maintainer, 2026-11-09: "OK" to the lean, option 2. Table rows and
+tree items are `item`s with columns declared once (`col`), as G5 and G2;
+the model owns sort, selection and what is open. `expanded` is `open`.
+It replaces the `tablehead`/`tablerow`/`cell` and `tree`/`treeitem` tags
+of 2026-11-07.

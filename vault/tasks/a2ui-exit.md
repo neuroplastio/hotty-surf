@@ -35,11 +35,11 @@ hotty-a2ui is archived, and two programs still draw with it:
 - **Hosting:** `surfrun.WriteFrame` and `Paint`, `<row fit-start>`;
   margin's own adapter of about 190 lines.
 
-The list's shapes for the table and the tree differ from both the
-branch's (answered) and the board's. Q-0002 settles that before either
-is built.
+The list's shapes for the table and the tree differ from the branch's
+2026-11-07 tags. Q-0002 (answered 2026-11-09) takes the list's: the
+branch's table and tree are reshaped, not landed as they are.
 
-## Questions first (block the legs named)
+## Questions (all answered 2026-11-09: the lean, each)
 
 - **Q-0002, table and tree shapes** (blocks L5, L6). The maintainer's
   2026-11-07 tags against the list's `col` + `item` rows and `list nav`
@@ -88,7 +88,7 @@ Sizes as the board's: S one leg, M two or three.
 
 ### Phase 1: the shared base
 
-- [ ] **L1. Intake** (this plan, Q-0002 to Q-0004, the board's pointer).
+- [x] **L1. Intake** (e1b0f54: this plan, Q-0002 to Q-0004, the board's pointer).
 - [ ] **L2. The tour branch, rebased; code and its roles** (A3, B4;
   after Q-0003). The branch on main at the new path. `code` lands in
   Q-0003's shape with the approved syntax tokens (`syn.*` roles in

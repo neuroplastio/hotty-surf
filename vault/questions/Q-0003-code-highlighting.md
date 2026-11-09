@@ -1,6 +1,6 @@
 # Q-0003 — A code block: its own highlighter, or the caller's spans
 
-Status: open
+Status: answered, 2026-11-09: the lean
 Blocks: a2ui-exit L2 (code and its roles); fenced code in the docs and in
 margin's comments; a diff later
 Raised: 2026-11-09
@@ -29,3 +29,10 @@ It is the widget's shape and its name, and a diff (A13) builds on it.
 
 3, keeping the branch's name and approved syntax tokens. No chroma
 dependency in hotty-surf.
+
+## Answer
+
+The maintainer, 2026-11-09: "OK" to the lean, option 3. One widget,
+`code`, taking `language` (the built-in Go and surf tokenizer) or
+`:spans` in the same syntax roles, with `wrap`, `numbers` and `from`;
+tabs to four spaces; no chroma in hotty-surf.
