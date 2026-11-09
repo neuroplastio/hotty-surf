@@ -122,18 +122,22 @@ func checkWidget(w *Widget) error {
 		return errors.New("the Pkg and Func say where the compiled mode finds the constructor")
 	}
 	var ok bool
+	var want string
 	switch w.Form {
 	case FormKids:
 		_, ok = w.New.(func(...*surfui.Node) *surfui.Node)
+		want = "FormKids's func(...*surfui.Node) *surfui.Node"
 	case FormText:
 		_, ok = w.New.(func(string) *surfui.Node)
+		want = "FormText's func(string) *surfui.Node"
 	case FormNone:
 		_, ok = w.New.(func() *surfui.Node)
+		want = "FormNone's func() *surfui.Node"
 	default:
 		return errors.New("Form is FormKids, FormText or FormNone")
 	}
 	if !ok {
-		return fmt.Errorf("New is %T, not the constructor a form %d takes (Widget.New)", w.New, w.Form)
+		return fmt.Errorf("New is not %s (Widget.New)", want)
 	}
 	seen := map[string]bool{}
 	for _, a := range w.Attrs {
@@ -191,7 +195,7 @@ func checkAttr(a Attr) error {
 		return errors.New("Type is TypeString, TypeBool or TypeInt")
 	}
 	if !ok {
-		return fmt.Errorf("its Apply is %T, not a func(*surfui.Node, T) for its type (Attr.Apply)", a.Apply)
+		return errors.New("its Apply is not a func(*surfui.Node, T) for its type, with an error result where it Fails (Attr.Apply)")
 	}
 	if len(a.Values) > 0 && a.Type != TypeString {
 		return errors.New("its Values are a string attribute's")
