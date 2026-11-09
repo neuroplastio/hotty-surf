@@ -82,6 +82,17 @@ type Surface struct {
 	Palette surfui.Palette
 	// Warn, if set, hears each such warning; nil writes it to Stderr.
 	Warn func(msg string)
+	// Trace, if set, is called after each Update with the event that
+	// started it and the ops it sent: the first Event, ListEvent or
+	// MenuEvent since the last Update, or a Key as Event{Kind: "key",
+	// Value: name}, its Kind no hotty kind, or the zero Event where a posted function or a Show's
+	// follow-up started it. out is the frame's Ops, valid only during
+	// the call. It is for a log or a test of what an event costs. Nil
+	// costs a comparison and nothing else.
+	Trace func(in hotty.Event, out []hotty.Op)
+
+	cause  hotty.Event // what Trace is given, the first since the last Update
+	caused bool
 
 	m     Model
 	rn    Runner
@@ -342,6 +353,23 @@ func (s *Surface) Hide() (listShown bool) {
 // the model (one whose call reported a redraw due). While the surface is
 // hidden it only renders, for the bindings, and returns nothing.
 func (s *Surface) Update() Frame {
+	f := s.update()
+	if s.Trace != nil {
+		in := s.cause
+		s.cause, s.caused = hotty.Event{}, false
+		s.Trace(in, f.Ops)
+	}
+	return f
+}
+
+// note notes e as what started the next Update, for Trace.
+func (s *Surface) note(e hotty.Event) {
+	if s.Trace != nil && !s.caused {
+		s.cause, s.caused = e, true
+	}
+}
+
+func (s *Surface) update() Frame {
 	s.due = false
 	if !s.shown {
 		s.render()
@@ -404,6 +432,7 @@ func (s *Surface) Update() Frame {
 // draws in frames does: each goes where it would with an Update after
 // each, and one Update then sends what they changed (fresh).
 func (s *Surface) Event(e hotty.Event) (took, redraw bool) {
+	s.note(e)
 	s.fresh()
 	took = s.event(e)
 	return took, s.due
@@ -528,6 +557,9 @@ func (s *Surface) event(e hotty.Event) bool {
 func (s *Surface) Key(name string) (took, redraw bool) {
 	if name == "" {
 		return false, s.due
+	}
+	if s.Trace != nil {
+		s.note(hotty.Event{Kind: "key", Value: name})
 	}
 	s.fresh()
 	if name == "escape" && s.Dragging() {
