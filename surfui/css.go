@@ -1,6 +1,10 @@
 package surfui
 
-import _ "embed"
+import (
+	_ "embed"
+	"strings"
+	"sync"
+)
 
 // StyleID is the resource the stylesheet is sent as, once a session
 // (SPEC §7.1), so that a document refers to it and doesn't carry it.
@@ -46,3 +50,40 @@ const StyleID = "surf-css"
 //
 //go:embed surf.css
 var CSS string
+
+var (
+	extraMu  sync.Mutex
+	extraCSS []string
+)
+
+// AddCSS adds a widget's stylesheet (surf.Register) to what a run sends
+// as the stylesheet resource (StyleID): Sheet is CSS, then each added
+// sheet in the order they were added, once each (the same text added
+// twice is one). It is for a program's start, before a run begins, and
+// reads CSS's tokens (`--u-*`); a sheet that is blank is not kept.
+func AddCSS(css string) {
+	css = strings.TrimSpace(css)
+	if css == "" {
+		return
+	}
+	extraMu.Lock()
+	defer extraMu.Unlock()
+	for _, c := range extraCSS {
+		if c == css {
+			return
+		}
+	}
+	extraCSS = append(extraCSS, css)
+}
+
+// Sheet is the stylesheet a run sends: CSS, then the sheets of the
+// widgets registered from outside (AddCSS), each on lines of its own.
+// The palette's rules (Palette.CSS) follow it.
+func Sheet() string {
+	extraMu.Lock()
+	defer extraMu.Unlock()
+	if len(extraCSS) == 0 {
+		return CSS
+	}
+	return CSS + "\n" + strings.Join(extraCSS, "\n") + "\n"
+}

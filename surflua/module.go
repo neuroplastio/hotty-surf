@@ -46,7 +46,7 @@ func loader(L *lua.LState, fsys fs.FS) int {
 		"component": func(L *lua.LState) int { return luaComponent(L, r) },
 	})
 	mod.RawSetString("palette", L.NewClosure(func(L *lua.LState) int { return luaPalette(L, r, mod) }))
-	mod.RawSetString("css", lua.LString(surfui.CSS+r.palette.CSS()))
+	mod.RawSetString("css", lua.LString(surfui.Sheet()+r.palette.CSS()))
 	L.Push(mod)
 	return 1
 }
@@ -139,7 +139,7 @@ func luaPalette(L *lua.LState, r *registry, mod *lua.LTable) int {
 			fmt.Fprintln(surfrun.Stderr, "surf:", msg)
 		}
 	}
-	css := surfui.CSS + p.CSS()
+	css := surfui.Sheet() + p.CSS()
 	mod.RawSetString("css", lua.LString(css))
 	L.Push(lua.LString(css))
 	return 1

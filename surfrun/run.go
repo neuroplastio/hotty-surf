@@ -197,8 +197,10 @@ type Options struct {
 	// host (Surface.KeyStyle) and in cells (cells.Renderer's): the
 	// person's key style. The zero Style is the defaults.
 	KeyStyle surfkeys.Style
-	// CSS, if set, is the stylesheet the run sends in place of surfui.CSS: a
-	// tool's own rules beside it (the gallery's forced states).
+	// CSS, if set, is the stylesheet the run sends in place of
+	// surfui.Sheet (surfui.CSS, then the sheets of the widgets
+	// registered from outside): a tool's own rules beside it (the
+	// gallery's forced states).
 	CSS string
 	// Unhandled, if set, is the surface's (Surface.Unhandled): it hears
 	// each event on an element with no handler for it.
@@ -363,7 +365,7 @@ func New(t *hottyterm.Term, m Model, opts Options) *Runtime {
 
 // css is the stylesheet the run sends: the base, then the palette's rules.
 func (r *Runtime) css() string {
-	base := surfui.CSS
+	base := surfui.Sheet()
 	if r.opts.CSS != "" {
 		base = r.opts.CSS
 	}

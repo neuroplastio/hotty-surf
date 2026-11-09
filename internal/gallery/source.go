@@ -25,7 +25,7 @@ type source struct {
 // builtIn is what the gallery was built with: stories.Files, each
 // package's embedded templates, and surfui.CSS.
 func builtIn() *source {
-	src := &source{stories: stories.Files, css: surfui.CSS}
+	src := &source{stories: stories.Files, css: surfui.Sheet()}
 	for _, p := range packages {
 		src.packs = append(src.packs, &pack{Package: p.pkg()})
 	}
