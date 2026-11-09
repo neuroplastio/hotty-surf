@@ -1,4 +1,4 @@
-package main
+package surfgen
 
 import (
 	"bytes"
@@ -68,8 +68,8 @@ type listInfo struct {
 	elem types.Type
 }
 
-// generate is dir's surf_gen.go; with export, SurfPackage too.
-func generate(dir string, export bool) ([]byte, error) {
+// Generate is dir's surf_gen.go; with export, SurfPackage too.
+func Generate(dir string, export bool) ([]byte, error) {
 	return generateFS(dir, os.DirFS(dir), export)
 }
 
@@ -463,6 +463,33 @@ func (g *gen) qual(p *types.Package) string {
 		}
 	}
 	g.imports[p.Path()] = n
+	return n
+}
+
+// widgetPkg is the name the generated code imports a widget's package
+// under, surfw and its last path element, numbered where that is taken.
+func (g *gen) widgetPkg(path string) string {
+	if n, ok := g.imports[path]; ok {
+		return n
+	}
+	base := path[strings.LastIndex(path, "/")+1:]
+	var b strings.Builder
+	for _, r := range base {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		}
+	}
+	n := "surfw" + b.String()
+	for taken, i := true, 1; taken; i++ {
+		taken = false
+		for _, used := range g.imports {
+			taken = taken || used == n
+		}
+		if taken {
+			n = "surfw" + b.String() + strconv.Itoa(i)
+		}
+	}
+	g.imports[path] = n
 	return n
 }
 

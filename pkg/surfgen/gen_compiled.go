@@ -1,4 +1,4 @@
-package main
+package surfgen
 
 import (
 	"bytes"
@@ -498,7 +498,10 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	}
 	b.Write(kids.Bytes())
 	fn := wd.Func
-	if !strings.HasPrefix(fn, "surfui.") {
+	switch {
+	case wd.Pkg != "":
+		fn = w.widgetFunc(wd.Tag, wd.Pkg, fn)
+	case !strings.HasPrefix(fn, "surfui."):
 		fn = "surf." + fn
 	}
 	kidsArg := ""
@@ -576,6 +579,19 @@ func (w *fw) widget(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 	fmt.Fprintf(b, "%s = append(%s, %s)\ne.Leave()\n}\n", tg.out, tg.out, n)
 }
 
+// widgetFunc is fn of a package a widget registered from outside
+// (surf.Register) names, as generated code calls it: the package is
+// imported under a name of its own. A widget of the package being
+// generated can't be: the code would import its own package, and the
+// registration is run by the generator's own program.
+func (w *fw) widgetFunc(tag, pkg, fn string) string {
+	if pkg == w.c.g.pkg.Path() {
+		w.err = fmt.Errorf("<%s> is registered by this package, %s, whose bindings are being written: register it from a package of its own", tag, pkg)
+		return fn
+	}
+	return w.c.g.widgetPkg(pkg) + "." + fn
+}
+
 // icon writes an <icon>'s node, n, as the interpreter builds it: its
 // glyph, a literal the load resolved or its bound name's (surf.IconGlyph,
 // which links MDI's names only here); then its path, or its bound svg's
@@ -650,6 +666,9 @@ func (w *fw) arg(b *bytes.Buffer, el *surf.Elem, sc *scope, v surf.AttrValue, c 
 func (w *fw) mod(b *bytes.Buffer, el *surf.Elem, sc *scope, n string, m surf.Mod) {
 	at, v := m.Attr(), m.Value()
 	fn := "surf." + at.Func
+	if at.Pkg != "" {
+		fn = w.widgetFunc(el.Widget().Tag, at.Pkg, at.Func)
+	}
 	var c ctx
 	switch at.Type {
 	case surf.TypeString:

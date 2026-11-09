@@ -77,7 +77,7 @@ func newHosted(h *hottytest.Host, m surfrun.Model, opts surfrun.Options, stats f
 	o := &hosted{h: h, name: hotty.SurfaceName(opts.Name), list: hotty.SurfaceName(opts.Name + "-list"),
 		m: m, scroll: opts.Scroll, stats: stats, onMenu: menu, css: opts.CSS, posted: make(chan func(), 64), done: make(chan struct{})}
 	if o.css == "" {
-		o.css = surfui.CSS
+		o.css = surfui.Sheet()
 	}
 	o.cols, o.rows = h.TermSize()
 	o.s = surfrun.NewSurface(m, o)

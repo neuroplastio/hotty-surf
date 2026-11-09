@@ -176,7 +176,9 @@
 //     the ink there. The view draws with these and its templates' own
 //     <palette>s (View.Palette).
 //   - surf.css is the floor's stylesheet, which the markup is drawn with,
-//     and the hues' rules once surf.palette has been called.
+//     then the stylesheets of the widgets Go registered (surf.Register),
+//     and the hues' rules once surf.palette has been called. Those widgets'
+//     tags are in the templates as the floor's are.
 //
 // view:html, view:event and view:key are the script's own host of the
 // view: a surfrun.Surface, which html shows and updates and the others route

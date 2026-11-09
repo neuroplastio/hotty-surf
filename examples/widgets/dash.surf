@@ -1,0 +1,11 @@
+<surface>
+  <heading>{{ title }}</heading>
+  <x-gauge level="40" key="fixed"/>
+  <x-gauge :level="level" key="level"/>
+  <x-callout kind="warn" key="note" @click="pick('note')">
+    <x-tagline loud>Heads up</x-tagline>
+    <text>{{ note }}</text>
+  </x-callout>
+  <x-tagline key="tag">{{ level }} of 100</x-tagline>
+  <button @click="raise" key="raise">Raise</button>
+</surface>

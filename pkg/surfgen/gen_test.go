@@ -1,4 +1,4 @@
-package main
+package surfgen
 
 import (
 	"os"
@@ -20,7 +20,7 @@ func TestUnexported(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	out, err := generate(dir, false)
+	out, err := Generate(dir, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func TestUnexported(t *testing.T) {
 	if strings.Contains(string(out), "SurfPackage") {
 		t.Errorf("surf_gen.go exports SurfPackage without -export")
 	}
-	out, err = generate(dir, true)
+	out, err = Generate(dir, true)
 	if err != nil {
 		t.Fatal(err)
 	}

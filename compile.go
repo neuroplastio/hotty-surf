@@ -113,6 +113,7 @@ func (s *Set) load() error {
 	}
 	c := &compiler{set: s, files: files, tmpls: map[string]*tmpl{}, svgs: svgs}
 	c.palette = c.mergePalettes()
+	c.clashes()
 	c.hueDot, c.hueText = map[string]bool{}, map[string]bool{}
 	names := make([]string, 0, len(s.shapes))
 	for n, sh := range s.shapes {
@@ -137,6 +138,21 @@ func (s *Set) load() error {
 	s.files, s.tmpls, s.stamp, s.svgs, s.palette = files, c.tmpls, stamps, svgs, c.palette
 	s.mu.Unlock()
 	return nil
+}
+
+// clashes fails each template that has the tag of a widget registered
+// from outside: a tag is a widget's or a template's, not both.
+func (c *compiler) clashes() {
+	names := make([]string, 0, len(c.files))
+	for n := range c.files {
+		if registered(n) {
+			names = append(names, n)
+		}
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		c.errs = append(c.errs, &markup.Error{File: c.files[n].path, Msg: fmt.Sprintf("%s.surf: <%s> is a registered widget's tag (surf.Register); a template can't take it", n, n)})
+	}
 }
 
 // Palette is the hues the templates' <palette>s declare, every file's
@@ -1053,7 +1069,7 @@ func (s *scope) bare(n *markup.Node) *elem {
 	case n.Tag == "title":
 		s.c.fail(s.t.file, n.Pos, "<title> goes in a widget, whose tooltip it is")
 		return nil
-	case strings.Contains(n.Tag, "-"):
+	case strings.Contains(n.Tag, "-") && !registered(n.Tag):
 		return s.use(n)
 	}
 	e := s.widgetEl(n)
@@ -1807,6 +1823,15 @@ func (c *compiler) checkHue(name string) error {
 
 // checkLiteral is what a string modifier says of the literal v.
 func checkLiteral(at *Attr, v string) error {
+	if at.Apply != nil { // a registered widget's: its own check, on a node thrown away
+		if len(at.Values) > 0 && !contains(at.Values, v) {
+			return fmt.Errorf("%s is %s, not %q", at.Name, orList(at.Values), v)
+		}
+		if f, ok := at.Apply.(func(*surfui.Node, string) error); ok {
+			return f(surfui.Stack(), v)
+		}
+		return nil
+	}
 	switch at.Name {
 	case "tone", "fill":
 		_, err := tone(v)

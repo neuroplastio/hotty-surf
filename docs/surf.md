@@ -179,7 +179,8 @@ An empty `<text>` has no height of its own: in a stack it takes no row
 
 A tag without a dash is a widget of the floor's vocabulary (`surfui`, which
 draws it with the stylesheet the gate checks). A tag with a dash is a
-component or a partial.
+component, a partial, or a widget a package registered from outside
+("Widgets from outside").
 
 | tag | what | takes |
 | --- | --- | --- |
@@ -212,6 +213,103 @@ component or a partial.
 - A widget that takes nothing may still hold `<bind>`s.
 - Text in a container is a `text` of it: `<row>Hello</row>` is
   `<row><text>Hello</text></row>`.
+
+## Widgets from outside
+
+A package that isn't hotty-surf's adds a tag to the vocabulary with
+`surf.Register`, from its `init`. Both modes and surflua read the entry as
+they read the floor's, so the tag is in every template of a program that
+imports the package. The package
+[`examples/widgets/gauge`](../examples/widgets/gauge/gauge.go) registers
+three, and the screen over them is `examples/widgets`.
+
+```go
+func init() {
+	surf.MustRegister(surf.Widget{
+		Tag: "x-gauge", Doc: "a level, 0 to 100, in a bar",
+		Form: surf.FormNone,
+		Pkg:  "example.com/gauge", Func: "Gauge", New: Gauge,
+		Attrs: []surf.Attr{{
+			Name: "level", Type: surf.TypeInt, Doc: "how full it is",
+			Func: "SetLevel", Apply: SetLevel,
+		}},
+		CSS: css, // sent after surf.css, once
+	})
+}
+
+func Gauge() *surfui.Node                   { … }
+func SetLevel(n *surfui.Node, v int64)      { … }
+```
+
+- **The tag has a dash,** and is lowercase letters, digits and dashes
+  from a letter. A floor widget's tag has none, so a registered one never
+  takes a floor widget's name. A tag registered twice is refused by
+  `Register` (an error, and `MustRegister` panics), and so is a tag whose
+  template exists: `x-gauge.surf` beside a registered `x-gauge` is a load
+  error, since a tag is a widget's or a component's, not both.
+- **The constructor is given twice, and is one function.** `Pkg` is the
+  import path of the package and `Func` the function's name in it: the
+  compiled mode (surfgen) imports `Pkg` and calls `Pkg.Func`. `New` is the
+  same function as a value, which the interpreter calls: no reflection
+  looks a name up. Its type is the form's: `FormKids` is a
+  `func(...*surfui.Node) *surfui.Node`, `FormText` a
+  `func(string) *surfui.Node` (the text, `{{ }}` joined) and `FormNone` a
+  `func() *surfui.Node`. No other form can be registered. `Register`
+  checks `New`'s type, but can't check that `Func` names it: two
+  functions that differ show as two modes that draw differently, which
+  the package's own conformance cases find (below).
+- **Attributes are modifiers,** applied after the node is built, in the
+  order of `Attrs`, with the floor's global ones (`gap`, `grow`, `tone`,
+  `key`…) taken as they are on any tag. `Type` is `TypeString`,
+  `TypeBool` or `TypeInt`, `Func` the function in `Pkg` and `Apply` the
+  same as a value: a `func(*surfui.Node, T)`, `T` the string, the bool or
+  the `int64`; for a string, `Fails: true` makes it a `func(*surfui.Node,
+  string) error`, and an error is a load error for a literal and a render
+  error for a bound value. `Values` limits a string literal to some
+  values. An attribute may not take the name of one every widget takes,
+  nor `if`, `else-if`, `else`, `each`, `slot` or `key`. Its tag is the
+  widget's, set by `Register`.
+- **`Events`** are the events a handler may be bound to (`@click`…). None
+  by default. A registered widget takes no `drag` or `drop`.
+- **`CSS` goes after surf.css** in the one stylesheet resource
+  (`surfui.Sheet`: `surfui.CSS`, each registered sheet in the order of
+  registration, then the palette's rules), once however many widgets
+  hold it. It reads surf.css's tokens (`--u-*`), so the widget takes the
+  theme and the density, and uses only what hotty-blitz is shown to draw
+  (`vault/knowledge/css-subset.md`). A custom property a node carries is
+  `Node.Var("x-level", …)`, which writes `--x-level`.
+- **In cells** a registered widget has only the nodes it made (`surfui.El`
+  and its text), which the cells draw as far as they know them: the
+  text. A widget that needs more waits for the hook that draws a custom
+  element in cells.
+
+The generator has to know the widgets, which are Go values run by the
+packages' `init`. So a package that uses one writes its own `surfgen`: a
+`main` that links the registering packages, and calls `surfgen.Main`, the
+same as `cmd/surfgen`'s.
+
+```go
+// cmd/surfgen/main.go
+package main
+
+import (
+	_ "example.com/gauge"
+	"neuroplast.io/hotty-surf/pkg/surfgen"
+)
+
+func main() { surfgen.Main() }
+```
+
+```go
+//go:generate go run ./cmd/surfgen
+```
+
+The generated code imports each widget's `Pkg` (under a name of its own,
+`surfwgauge`) and calls its `Func` and its attributes' `Func`s. A widget
+can't be registered by the package whose bindings are being written:
+surfgen fails, saying to put it in a package of its own. A package that
+registers widgets runs its own cases with `conformance.Suite`
+("Conformance" in the spec), in both modes and the cells.
 
 ## Attributes
 

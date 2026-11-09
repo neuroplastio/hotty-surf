@@ -389,7 +389,13 @@ func (f *frame) widget(e *elem, out *[]*surfui.Node) {
 //go:noinline
 func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surfui.Node {
 	var n *surfui.Node
-	switch e.w.Form {
+	form := e.w.Form
+	if e.w.New != nil {
+		form = formRegistered
+	}
+	switch form {
+	case formRegistered:
+		n = f.registered(e, kids)
 	case FormKids:
 		n = build(e.w.Tag, kids)
 	case FormText:
@@ -439,6 +445,31 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 	}
 	if e.tip != nil {
 		f.tip(e.tip, n)
+	}
+	return n
+}
+
+// formRegistered is the form a widget with a New has, for node.
+const formRegistered Form = 0
+
+// registered builds a widget registered from outside, by the constructor
+// it registered. One that gives no node is a render error, and a stack
+// in its place.
+//
+//go:noinline
+func (f *frame) registered(e *elem, kids []*surfui.Node) *surfui.Node {
+	var n *surfui.Node
+	switch c := e.w.New.(type) {
+	case func(...*surfui.Node) *surfui.Node:
+		n = c(kids...)
+	case func(string) *surfui.Node:
+		n = c(f.text(e, e.text))
+	case func() *surfui.Node:
+		n = c()
+	}
+	if n == nil {
+		f.fail(e, fmt.Errorf("<%s>'s constructor gave no node", e.w.Tag))
+		n = surfui.Stack()
 	}
 	return n
 }
@@ -612,13 +643,13 @@ func (f *frame) apply(e *elem, n *surfui.Node, m mod) {
 		if !ok {
 			return
 		}
-		err = applyString(m.attr.Name, n, s)
+		err = applyStringOf(m.attr, n, s)
 	case TypeBool:
 		b, ok := f.boolOf(e, m.v, false)
 		if !ok {
 			return
 		}
-		applyBool(m.attr.Name, n, b)
+		applyBoolOf(m.attr, n, b)
 	case TypeInt:
 		v := m.v.lit
 		if m.v.prog != nil {
@@ -631,7 +662,7 @@ func (f *frame) apply(e *elem, n *surfui.Node, m mod) {
 			f.fail(e, fmt.Errorf("%s is an int, not %s", m.attr.Name, kindName(v)))
 			return
 		}
-		applyInt(m.attr.Name, n, v.Int())
+		applyIntOf(m.attr, n, v.Int())
 	case TypePad:
 		p := m.v.pad
 		if m.v.prog != nil {
@@ -649,6 +680,36 @@ func (f *frame) apply(e *elem, n *surfui.Node, m mod) {
 	if err != nil {
 		f.fail(e, err)
 	}
+}
+
+// applyStringOf, applyBoolOf and applyIntOf apply a modifier: the
+// function a registered widget's attribute brought, or the floor's by
+// its name.
+func applyStringOf(a *Attr, n *surfui.Node, v string) error {
+	switch f := a.Apply.(type) {
+	case func(*surfui.Node, string) error:
+		return f(n, v)
+	case func(*surfui.Node, string):
+		f(n, v)
+		return nil
+	}
+	return applyString(a.Name, n, v)
+}
+
+func applyBoolOf(a *Attr, n *surfui.Node, v bool) {
+	if f, ok := a.Apply.(func(*surfui.Node, bool)); ok {
+		f(n, v)
+		return
+	}
+	applyBool(a.Name, n, v)
+}
+
+func applyIntOf(a *Attr, n *surfui.Node, v int64) {
+	if f, ok := a.Apply.(func(*surfui.Node, int64)); ok {
+		f(n, v)
+		return
+	}
+	applyInt(a.Name, n, v)
 }
 
 // applyString, applyBool and applyInt apply a modifier by its name: the

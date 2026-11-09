@@ -54,7 +54,8 @@ mode from the same files.
   prefix: the root package (`surf`), `surfui`, `surfrun`, `surflive`,
   `surfkeys`, `surflua` and `surftest`. What only a host, a tool or
   another runtime needs is under `pkg/`: `cells`, `markup` and
-  `conformance`. `cmd/surfgen` generates the compiled mode. What nobody
+  `conformance` and `surfgen`. `cmd/surfgen` (`pkg/surfgen`'s `Main`)
+  generates the compiled mode. What nobody
   outside imports is under `internal/`.
 - `internal/screens/`: four demo apps (a palette, settings, an agents list,
   notices) on `internal/screens/demodata`'s made-up data; `cmd/surfdemo` shows
