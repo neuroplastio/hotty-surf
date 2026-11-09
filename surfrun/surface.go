@@ -82,16 +82,16 @@ type Surface struct {
 	Palette surfui.Palette
 	// Warn, if set, hears each such warning; nil writes it to Stderr.
 	Warn func(msg string)
-	// Trace, if set, is called after each Update with the event that
-	// started it and the ops it sent: the first Event, ListEvent or
-	// MenuEvent since the last Update, or a Key as Event{Kind: "key",
-	// Value: name}, its Kind no hotty kind, or the zero Event where a posted function or a Show's
-	// follow-up started it. out is the frame's Ops, valid only during
-	// the call. It is for a log or a test of what an event costs. Nil
-	// costs a comparison and nothing else.
-	Trace func(in hotty.Event, out []hotty.Op)
+	// Trace, if set, is called after each Update with what started it
+	// (TraceIn) and the ops it sent: the first Event, ListEvent,
+	// MenuEvent or Key since the last Update, or the zero TraceIn where
+	// a posted function started it. out is the frame's Ops, valid only
+	// during the call. It is for a log or a test of what an event costs.
+	// Nil costs a comparison and nothing else.
+	Trace func(in TraceIn, out []hotty.Op)
 
-	cause  hotty.Event // what Trace is given, the first since the last Update
+	cause  TraceIn     // what Trace is given, the first since the last Update
+	causeE hotty.Event // the event cause.Event points to
 	caused bool
 
 	m     Model
@@ -356,8 +356,9 @@ func (s *Surface) Update() Frame {
 	f := s.update()
 	if s.Trace != nil {
 		in := s.cause
-		s.cause, s.caused = hotty.Event{}, false
+		s.cause, s.caused = TraceIn{}, false
 		s.Trace(in, f.Ops)
+		s.causeE = hotty.Event{}
 	}
 	return f
 }
@@ -365,8 +366,24 @@ func (s *Surface) Update() Frame {
 // note notes e as what started the next Update, for Trace.
 func (s *Surface) note(e hotty.Event) {
 	if s.Trace != nil && !s.caused {
-		s.cause, s.caused = e, true
+		s.causeE = e
+		s.cause, s.caused = TraceIn{Event: &s.causeE}, true
 	}
+}
+
+// noteKey notes a key as what started the next Update, for Trace.
+func (s *Surface) noteKey(name string) {
+	if s.Trace != nil && !s.caused {
+		s.cause, s.caused = TraceIn{Key: name}, true
+	}
+}
+
+// TraceIn is what started an Update, for Surface.Trace: the host's event
+// (Event, valid only during the call) or a key (Key, SPEC §10.4's name);
+// exactly one is set, and neither where a posted function started it.
+type TraceIn struct {
+	Event *hotty.Event
+	Key   string
 }
 
 func (s *Surface) update() Frame {
@@ -558,9 +575,7 @@ func (s *Surface) Key(name string) (took, redraw bool) {
 	if name == "" {
 		return false, s.due
 	}
-	if s.Trace != nil {
-		s.note(hotty.Event{Kind: "key", Value: name})
-	}
+	s.noteKey(name)
 	s.fresh()
 	if name == "escape" && s.Dragging() {
 		s.cancelDrag()

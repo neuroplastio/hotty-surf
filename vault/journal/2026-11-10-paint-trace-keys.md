@@ -21,12 +21,12 @@ vocabulary and no change to how anything looks.
   `ansi-n` roles and the tones the runtime maps to them (accent 5, ok 10,
   warn 11, error 9, info 14, border and line 8). ultraviolet decodes OSC
   10 and 11 as events but not OSC 4, so the parser reads bytes.
-- **`surfrun.Surface.Trace(in hotty.Event, out []hotty.Op)`**, called by
-  `Update`. `in` is the first Event, ListEvent or MenuEvent since the
-  last Update, or a key as `Event{Kind: "key", Value: name}` (hotty.Event
-  has no key field; "key" is no SPEC kind, so it says so in its
-  comment), or the zero Event. Unset, it is one comparison; the test
-  shows a set one allocates nothing more.
+- **`surfrun.Surface.Trace(in TraceIn, out []hotty.Op)`**, called by
+  `Update`. `TraceIn` is `{Event *hotty.Event; Key string}`, exactly one
+  set: the first Event, ListEvent or MenuEvent since the last Update, or
+  the first Key, and neither where a posted function started it. No
+  invented event kind: a key is a key. Unset, it is one comparison; the
+  test shows a set one allocates nothing more.
 - **`surfkeys.FromTea` and `ToTea`**, a table of names, no Bubble Tea.
   Margin's `surfKey` is the model (`J`, `esc`, `pgdown`, arrows, space, a
   two-letter sequence), with `pgup`, `menu`, `meta`, modifier order and

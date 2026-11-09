@@ -9,19 +9,24 @@ import (
 )
 
 // Trace hears each Update with the event that started it and the ops it
-// sent: the first since the last Update, a key as a "key" event.
+// sent: the first since the last Update, a key as Key.
 func TestSurfaceTrace(t *testing.T) {
 	m := &cycler{value: "auto"}
 	s := surfrun.NewSurface(m, nil)
 	s.Show()
 	type call struct {
-		in  hotty.Event
+		in  surfrun.TraceIn
+		ev  hotty.Event
 		ops int
 		ok  bool
 	}
 	var calls []call
-	s.Trace = func(in hotty.Event, out []hotty.Op) {
-		calls = append(calls, call{in, len(out), opOn(out, "text", valueID)})
+	s.Trace = func(in surfrun.TraceIn, out []hotty.Op) {
+		var ev hotty.Event
+		if in.Event != nil {
+			ev = *in.Event
+		}
+		calls = append(calls, call{in, ev, len(out), opOn(out, "text", valueID)})
 	}
 	s.Key("arrow_right")
 	s.Update()
@@ -33,13 +38,13 @@ func TestSurfaceTrace(t *testing.T) {
 	if len(calls) != 3 {
 		t.Fatalf("%d calls, want 3: %+v", len(calls), calls)
 	}
-	if c := calls[0]; c.in.Kind != "key" || c.in.Value != "arrow_right" || !c.ok {
+	if c := calls[0]; c.in.Event != nil || c.in.Key != "arrow_right" || !c.ok {
 		t.Errorf("the key's call: %+v", c)
 	}
-	if c := calls[1]; c.in.Kind != hotty.EventClick || c.in.Target != lessID || !c.ok {
+	if c := calls[1]; c.ev.Kind != hotty.EventClick || c.ev.Target != lessID || c.in.Key != "" || !c.ok {
 		t.Errorf("the click's call: %+v", c)
 	}
-	if c := calls[2]; c.in.Kind != "" || c.ops != 0 {
+	if c := calls[2]; c.in.Event != nil || c.in.Key != "" || c.ops != 0 {
 		t.Errorf("an Update with no cause: %+v", c)
 	}
 }
@@ -54,7 +59,7 @@ func TestSurfaceTraceUnsetFree(t *testing.T) {
 	run := func() { s.Event(click); s.Update() }
 	run()
 	base := testing.AllocsPerRun(100, run)
-	s.Trace = func(hotty.Event, []hotty.Op) {}
+	s.Trace = func(surfrun.TraceIn, []hotty.Op) {}
 	traced := testing.AllocsPerRun(100, run)
 	if traced > base {
 		t.Errorf("a Trace that does nothing allocates: %v against %v", traced, base)

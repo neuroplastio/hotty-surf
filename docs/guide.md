@@ -1086,8 +1086,8 @@ What the host calls, and what it gets back:
   `e.Surface`); **`ListEvent(e)`** is one of the open list's surface.
   An event on an element with no handler for it goes to the Surface's
   `Unhandled`, if set (a tool's, as `Options.Unhandled`). `Trace`, if
-  set, hears each `Update` with the event that started it (a key as
-  `Kind: "key"`, its name in `Value`) and the ops it sent; unset it costs
+  set, hears each `Update` with what started it (`surfrun.TraceIn`: the
+  host's `Event`, or the `Key` name) and the ops it sent; unset it costs
   a comparison.
   **`Key(name)`** is a key that reached the program (`hotty.DecodeKeys`,
   SPEC §10.4's names). Each reports whether the surface took it, and
