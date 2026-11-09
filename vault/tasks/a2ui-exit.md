@@ -109,7 +109,7 @@ Sizes as the board's: S one leg, M two or three.
 
 ### Phase 2: margin's composer (M1, its first pane)
 
-- [ ] **L5a. Soft wrap in hottyedit** (in hotty-go): visual rows, Home
+- [x] **L5a. Soft wrap in hottyedit** (hotty-go 015191f, local, unpublished: v0.7.2 waits for the maintainer) (in hotty-go): visual rows, Home
   and End and Up and Down by visual row with the column kept, a
   multi-line paste kept whole (CRLF to LF, tabs to spaces), undo by
   typing run. A hotty-go PATCH, published on the maintainer's word. M.
@@ -144,7 +144,7 @@ Sizes as the board's: S one leg, M two or three.
 
 ### Phase 4: prose (closes the website's P1; margin's comments)
 
-- [ ] **L8. Widgets from outside** (B1, B3): `surf.Register`, read alike
+- [x] **L8. Widgets from outside** (merge 94499f1; surfgen is a library, `pkg/surfgen`) (B1, B3): `surf.Register`, read alike
   by the interpreter, surfgen (imports `Pkg`, calls `Func`) and surflua;
   dashed tags only; a clash with a component is a load error; the
   widget's CSS after surf.css; the conformance suite runnable by a
@@ -202,6 +202,10 @@ and timer, app-ticked (A11). Dropped from this list if the gallery step
 shows what hotty-surf has.
 
 ### margin's M2, after its M1
+
+- A `code` block that scrolls sideways in the cells, by the program
+  (`h`, `l` through hotty's scroll ops): L2 clips at the edge in the
+  cells and scrolls only on a host (2026-11-09).
 
 `prose` per block with block events and op-toggled states, in-band
 images, mermaid as a graphic, `mark.*` roles. Kept possible by L11's
