@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf crew.surf deck.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
+//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -245,6 +245,69 @@ func (o surfDeck) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpDeck is c drawn by its template, interpreted.
 func surfInterpDeck(c *Deck) surflive.Component { return surf.Component(surfSet(), surfDeck{c}) }
+
+// surfShapeDraft is Draft's shape, a component.
+var surfShapeDraft = surf.Shape{Name: "Draft", Component: true,
+	Fields: []surf.Field{{Name: "text", Type: cellite.String}, {Name: "height", Type: cellite.Int}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "grew", Args: []cellite.Type{cellite.Int}},
+		{Name: "keep"},
+		{Name: "send"},
+		{Name: "typed", Args: []cellite.Type{cellite.String}},
+	},
+}
+
+// surfDraft is a *Draft as its templates read it.
+type surfDraft struct{ p *Draft }
+
+// surfDraftValue is p as a value: null for nil.
+func surfDraftValue(p *Draft) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Draft", surfDraft{p})
+}
+
+// surfDraftOf is a value's *Draft: nil for any other.
+func surfDraftOf(v cellite.Value) *Draft {
+	if o, ok := v.Object().(surfDraft); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfDraft) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Text))
+	case 1:
+		return cellite.IntValue(int64(o.p.Height))
+	case 2:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfDraft) Shape() *surf.Shape { return &surfShapeDraft }
+
+func (o surfDraft) Unwrap() any { return o.p }
+
+func (o surfDraft) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Grew(int(args[0].Int()))
+	case 1:
+		o.p.Keep()
+	case 2:
+		o.p.Send()
+	case 3:
+		o.p.Typed(string(args[0].String()))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpDraft is c drawn by its template, interpreted.
+func surfInterpDraft(c *Draft) surflive.Component { return surf.Component(surfSet(), surfDraft{c}) }
 
 // surfShapeForm is Form's shape, a component.
 var surfShapeForm = surf.Shape{Name: "Form", Component: true,
@@ -1195,6 +1258,77 @@ func surfRenderDeck(e *surf.Errs, out []*surfui.Node, c *Deck, fill surf.Fill) [
 			surf.ModKey(n31, "none")
 			surf.ModMuted(n31, true)
 			k1 = append(k1, n31)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
+// surfRenderDraft draws draft.surf for Draft.
+func surfRenderDraft(e *surf.Errs, out []*surfui.Node, c *Draft, fill surf.Fill) []*surfui.Node {
+	// draft.surf:3:1 <surface>
+	if e.Enter("draft.surf", 3, 1) {
+		var k1 []*surfui.Node
+		// draft.surf:4:3 <stack>
+		if e.Enter("draft.surf", 4, 3) {
+			var k2 []*surfui.Node
+			// draft.surf:5:5 <field>
+			if e.Enter("draft.surf", 5, 5) {
+				var b3 []surfui.Binding
+				b3 = append(b3, surfui.Binding{Key: "ctrl+s", Title: "Send", Act: func() { c.Send() }})
+				n3 := surfui.Field()
+				surf.ModKey(n3, "text")
+				surf.ModValue(n3, c.Text)
+				surf.ModPlaceholder(n3, "Write a comment")
+				surf.ModRows(n3, "2..4")
+				surf.ModCaret(n3, "end")
+				surf.ModAutofocus(n3, true)
+				for _, kb := range b3 {
+					n3.AddBinding(kb)
+				}
+				n3.On("input", func(ev surfrun.Event) { c.Typed(ev.Value) })
+				n3.On("height", func(ev surfrun.Event) { c.Grew(int(ev.Rows)) })
+				k2 = append(k2, n3)
+				e.Leave()
+			}
+			// draft.surf:9:5 <row>
+			if e.Enter("draft.surf", 9, 5) {
+				var k4 []*surfui.Node
+				// draft.surf:10:7 <button>
+				if e.Enter("draft.surf", 10, 7) {
+					n5 := surfui.Button("Save")
+					surf.ModKey(n5, "save")
+					n5.On("click", func() { c.Send() })
+					k4 = append(k4, n5)
+					e.Leave()
+				}
+				// draft.surf:11:7 <button>
+				if e.Enter("draft.surf", 11, 7) {
+					n6 := surfui.Button("Keep draft")
+					surf.ModKey(n6, "keep")
+					n6.On("click", func() { c.Keep() })
+					k4 = append(k4, n6)
+					e.Leave()
+				}
+				n4 := surfui.Row(k4...)
+				surf.ModGap(n4, 1)
+				k2 = append(k2, n4)
+				e.Leave()
+			}
+			n2 := surfui.Stack(k2...)
+			surf.ModTrap(n2, true)
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// draft.surf:14:3 <text>
+		if e.Enter("draft.surf", 14, 3) {
+			n7 := surfui.Text(strconv.FormatInt(int64(c.Height), 10))
+			surf.ModKey(n7, "rows")
+			surf.ModMuted(n7, true)
+			k1 = append(k1, n7)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)
@@ -2958,6 +3092,11 @@ func surfCompiledCrew(c *Crew) surflive.Component {
 // surfCompiledDeck is c drawn by its templates compiled into Go.
 func surfCompiledDeck(c *Deck) surflive.Component {
 	return surf.Compiled(c, "deck.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderDeck(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledDraft is c drawn by its templates compiled into Go.
+func surfCompiledDraft(c *Draft) surflive.Component {
+	return surf.Compiled(c, "draft.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderDraft(e, nil, c, nil) }, surfPalette)
 }
 
 // surfCompiledForm is c drawn by its templates compiled into Go.

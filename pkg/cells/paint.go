@@ -376,6 +376,10 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 			p.g.put(r.x+r.w-1, y, "]", 1, br, clip)
 		}
 	case field:
+		if b.area != nil {
+			p.area(b, x, y, w, st, clip)
+			break
+		}
 		p.field(b, x, y, w, st, clip)
 	case toggle:
 		// Words, not a knob: a knob of a cell or two is too small to read

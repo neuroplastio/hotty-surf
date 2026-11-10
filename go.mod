@@ -10,10 +10,10 @@ require (
 	golang.org/x/sys v0.49.0
 	golang.org/x/tools v0.52.0
 	neuroplast.io/cel-lite v0.2.0
-	neuroplast.io/hotty-go v0.7.1
-	neuroplast.io/hotty-go/hottyedit v0.7.1
-	neuroplast.io/hotty-go/hottyterm v0.7.1
-	neuroplast.io/hotty-go/hottytest v0.7.1
+	neuroplast.io/hotty-go v0.7.2
+	neuroplast.io/hotty-go/hottyedit v0.7.2
+	neuroplast.io/hotty-go/hottyterm v0.7.2
+	neuroplast.io/hotty-go/hottytest v0.7.2
 	neuroplast.io/myelin/myelinkey v0.2.0
 )
 

@@ -434,3 +434,18 @@ text differences; the compact paragraph scores change slightly. The gap is
 between the two renderers, not a different intended size in the document.
 The baseline records these cases and their new scores, and removes cases
 that now pass. The 1.6× and 2× comparisons remain in the gate.
+
+## A field of several lines (2026-11-09, L5c)
+
+`field rows="3..8"` is a `<textarea class="u-field u-area">` on a host,
+`--u-rows` rows tall (its least) with `overflow-y: auto`, the surface's
+font, `resize: none`. Both engines draw it alike in the story field/rows
+(look, Graphite and paper, 2×).
+
+| What | Gap | Cause | How bad |
+| --- | --- | --- | --- |
+| Growing with the text up to the most rows | The CSS says `field-sizing: content` with `min-height` and `max-height` in rows; a Blitz without L5b's mods (stylo 0005, blitz 0054; hotty-blitz branch a2ui/field-sizing, 2f52995) ignores it, so a field there is its least rows tall and scrolls. **Stays here until the gate runs against a Blitz built with those mods.** The field's `@height` is the cells' alone until L5d's fit plumbing | Feature: a long comment scrolls in a 3-row box |
+| A long word with no break in a textarea | It doesn't wrap: it runs past the field's edge (seen by blitz-field-sizing, 2026-11-09) | Blitz's textarea layout; unmeasured beyond that report | Bug: a long URL in a comment is cut or overflows (the cells and Chromium break it anywhere) |
+| Tab kept inside a `trap` stack | The host moves Tab itself, so the keyboard leaves the surface past the last button | A field can't give the program `tab` until hotty's V6-02 (accepted, in 0.8); a binding of `tab` is dropped by `Keymap.Bind` | Feature: the cells do it; `data-trap` is on the element for a host that gets V6-02 |
+| The scrollbar of a field that overflows | None drawn in a still render, by either engine | As for a `scroll` box ([css-subset](css-subset.md)) | Cosmetic |
+| field/rows at 1.6× (Compact 594–595, Roomy 585–586; Dense 2× 16–18) | Opened in the gate's images (2026-11-10, 0.7.0 Blitz): both engines draw the same rows (Compact 20, Roomy 24 against 20 and 24) and the same text; the diff is the boxes' edges, a device row off in a thin line along the bottom of a field (and the top of the next), and the text's place a device px | The painted box's snap and a fractional height, as the dialog's and the chips' above: a field is `rows × --u-row + 8px`, fractional at 1.6× (Compact's cell height, Roomy's 1.6em), which Blitz rounds to whole CSS px and Chromium keeps. **Not field-sizing:** none of the story's fields grows past its least rows (the long one is `rows="4"`), so the 0.7.0 Blitz ignoring `field-sizing` isn't in these numbers | Cosmetic |

@@ -70,6 +70,14 @@ func (r *Renderer) Draw(cols, rows int) Screen {
 	}
 	r.cols, r.rows = cols, rows
 	r.layout()
+	for range 3 {
+		// A field of several lines tells its program its height; the
+		// program may answer with another view.
+		if !r.heights() {
+			break
+		}
+		r.layout()
+	}
 	r.keepInView()
 	g := newGrid(cols, rows)
 	r.hits, r.ports, r.rects = nil, nil, map[*surfui.Node]rect{}
@@ -174,7 +182,7 @@ func (r *Renderer) lay(d density, k layoutKey) {
 		delete(c.spare, mk)
 		r.root = sp
 	} else {
-		r.root = build(r.tree, d, r.keyCaps())
+		r.root = r.build(r.tree, d)
 	}
 	w := r.cols
 	h := r.root.height(w)
@@ -182,7 +190,7 @@ func (r *Renderer) lay(d density, k layoutKey) {
 		// The page's bar takes its last column.
 		r.pageBar = true
 		w--
-		r.root = build(r.tree, d, r.keyCaps())
+		r.root = r.build(r.tree, d)
 		h = r.root.height(w)
 	}
 	r.root.place(0, 0, w, max(h, r.rows))

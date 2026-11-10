@@ -189,6 +189,12 @@ func (n *Node) OnChange(act Action) *Node { return n.On("change", act) }
 // OnInput runs act on every edit of a field.
 func (n *Node) OnInput(act Action) *Node { return n.On("input", act) }
 
+// OnHeight runs act when a Field of several lines (Rows) has another
+// height, as the cells wrap it: its rows are the event's Value, in
+// decimal, and it comes once when the field first shows. A host tells
+// no height yet, so a host's field never runs it (the cells do).
+func (n *Node) OnHeight(act Action) *Node { return n.On("height", act) }
+
 // Bind takes key while focus is in n, or n is the keyboard's home: n's
 // handler runs, then its parents' if n has none.
 func (n *Node) Bind(key, title string, act Action) *Node {

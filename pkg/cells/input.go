@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -152,6 +153,7 @@ func (r *Renderer) fieldKey(n *surfui.Node, name string, keymaps []string) bool 
 	a, changed := st.ed.Key(km, name)
 	switch {
 	case a == "":
+		r.flush(n, st)
 		return r.toProgram(name)
 	case a == hotty.Paste:
 		// The clipboard is the program's to read: it calls Paste.
@@ -178,6 +180,16 @@ func (r *Renderer) fieldKey(n *surfui.Node, name string, keymaps []string) bool 
 	return true
 }
 
+// flush gives the program what the user typed in a multi-row field before
+// it hears a key of its own: a field that reports no input (@input) is
+// committed (change), so that ctrl+s submits what is on screen. Where the
+// program hears every edit, it has it already.
+func (r *Renderer) flush(n *surfui.Node, st *fieldState) {
+	if _, hears := surfui.Handler(n, "input"); surfui.Tag(n) == "textarea" && st.dirty && !hears {
+		r.settle(r.commit())
+	}
+}
+
 // Paste types text into the focused text field, as a paste does there:
 // a field of one line leaves its newlines out. Elsewhere nothing takes it.
 func (r *Renderer) Paste(text string) (taken, redraw bool) {
@@ -188,9 +200,14 @@ func (r *Renderer) Paste(text string) (taken, redraw bool) {
 	if n == nil || st == nil {
 		return false, false
 	}
-	if surfui.Tag(n) != "textarea" {
-		text = strings.NewReplacer("\r\n", "", "\n", "", "\r", "").Replace(text)
+	if surfui.Tag(n) == "textarea" {
+		// Whole, as one step of the history: CRLF and CR are LF, a tab is spaces.
+		if st.ed.Paste(text) {
+			r.settle(r.edited())
+		}
+		return true, true
 	}
+	text = strings.NewReplacer("\r\n", "", "\n", "", "\r", "").Replace(text)
 	if st.ed.Type(text) {
 		r.settle(r.edited())
 	}
@@ -240,6 +257,23 @@ func (r *Renderer) tab(back bool) bool {
 			todo = append(todo, kids[i])
 		}
 	}
+	trap := r.trap()
+	if trap != nil {
+		// Inside a trap, Tab goes round its elements and never out.
+		order = slices.DeleteFunc(order, func(n *surfui.Node) bool { return !within(n, trap) })
+		at = slices.IndexFunc(order, func(n *surfui.Node) bool { return surfui.IDOf(n) == r.focused })
+		if len(order) > 0 && at >= 0 {
+			if back {
+				at = (at + len(order) - 1) % len(order)
+			} else {
+				at = (at + 1) % len(order)
+			}
+			return r.take(surfui.IDOf(order[at]), true)
+		}
+		if len(order) > 0 { // the keyboard is on the trap's own, or beside it
+			return r.take(surfui.IDOf(order[0]), true)
+		}
+	}
 	in := at >= 0 && at < len(order) && surfui.IDOf(order[at]) == r.focused
 	i := at
 	switch {
@@ -256,6 +290,27 @@ func (r *Renderer) tab(back bool) bool {
 		return r.blur()
 	}
 	return r.take(surfui.IDOf(order[i]), true)
+}
+
+// trap is the element that keeps the keyboard where it is: the
+// innermost with Trap above the focused element, nil for none.
+func (r *Renderer) trap() *surfui.Node {
+	for q := r.index[r.focused]; q != nil; q = surfui.Parent(q) {
+		if surfui.Traps(q) {
+			return q
+		}
+	}
+	return nil
+}
+
+// within reports whether n is t or in it.
+func within(n, t *surfui.Node) bool {
+	for ; n != nil; n = surfui.Parent(n) {
+		if n == t {
+			return true
+		}
+	}
+	return false
 }
 
 // tabbable reports whether Tab reaches n: not a negative tabindex.

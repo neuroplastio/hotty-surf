@@ -1662,7 +1662,7 @@ func (s *scope) actionEl(n *markup.Node) *elem {
 				s.c.fail(s.t.file, a.Pos, "do is a handler: do=\"method(args)\"")
 				continue
 			}
-			if h, ok := s.handler(a.Value, a.ValuePos, false, false); ok {
+			if h, ok := s.handler(a.Value, a.ValuePos, false, false, ""); ok {
 				e.do, e.hasHandler = h, true
 			}
 		case name == "icon":
@@ -1838,6 +1838,10 @@ func checkLiteral(at *Attr, v string) error {
 		return err
 	case "badge-tone":
 		return ModBadgeTone(surfui.Button(""), v)
+	case "caret":
+		return ModCaret(surfui.Field(), v)
+	case "rows":
+		return ModRows(surfui.Field(), v)
 	case "theme":
 		return ModTheme(NewSurface(), v)
 	case "density":
@@ -1878,7 +1882,7 @@ func (s *scope) event(e *elem, n *markup.Node, a markup.Attr) {
 		s.c.fail(s.t.file, a.Pos, "<%s> has no %s event", n.Tag, kind)
 		return
 	}
-	if h, ok := s.handler(a.Value, a.ValuePos, true, contains(dragEvents, kind)); ok {
+	if h, ok := s.handler(a.Value, a.ValuePos, true, contains(dragEvents, kind), kind); ok {
 		e.evs = append(e.evs, event{kind, h})
 	}
 }
@@ -1888,7 +1892,7 @@ func (s *scope) event(e *elem, n *markup.Node, a markup.Attr) {
 // $event, each a whole argument: it takes them out of the source, and
 // knows the null left in each's place by its offset. A <bind>'s may not.
 // A drag's handler's (drag) may be $drag's names too.
-func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool) (handler, bool) {
+func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool, kind string) (handler, bool) {
 	parsed, fills, off, msg := eventArgs(src, onEvent, drag)
 	if msg != "" {
 		s.c.fail(s.t.file, at0(at, src, off), "%s", msg)
@@ -1919,6 +1923,9 @@ func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool) (handler,
 		if i < 0 {
 			s.c.fail(s.t.file, at0(at, src, f.off), "$%s is a whole argument, not part of an expression", eventName(f.k))
 			return handler{}, false
+		}
+		if f.k == ArgValue && kind == "height" {
+			f.k = ArgRows // a height's $value is its rows, an int
 		}
 		from[i], given[f.k] = f.k, true
 	}
@@ -1958,6 +1965,9 @@ func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool) (handler,
 			return handler{}, false
 		case (from[i] == ArgValue || from[i] == ArgDragFrom || from[i] == ArgDragWhere) && want.Kind != cellite.StringKind && want.Kind != cellite.DynKind:
 			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $%s, which is a string", name, i+1, cellite.FormatType(want), eventName(from[i]))
+			return handler{}, false
+		case from[i] == ArgRows && want.Kind != cellite.IntKind && want.Kind != cellite.DynKind:
+			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $value of @height, which is an int", name, i+1, cellite.FormatType(want))
 			return handler{}, false
 		case from[i] == ArgDragCancel && want.Kind != cellite.BoolKind && want.Kind != cellite.DynKind:
 			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $drag.cancel, which is a bool", name, i+1, cellite.FormatType(want))
@@ -2226,7 +2236,7 @@ func (s *scope) bind(n *markup.Node) *elem {
 				s.c.fail(s.t.file, a.Pos, "do is a handler: do=\"method(args)\"")
 				continue
 			}
-			if h, ok := s.handler(a.Value, a.ValuePos, false, false); ok {
+			if h, ok := s.handler(a.Value, a.ValuePos, false, false, ""); ok {
 				e.bindDo, e.hasHandler = h, true
 			}
 		case "scroll":

@@ -40,11 +40,21 @@ func write(b *strings.Builder, n *Node) {
 		writeAttr(b, "id", n.id)
 	}
 	for _, a := range attrsOf(n) {
+		if n.tag == "textarea" && a.k == "value" {
+			continue // a textarea's value is its content
+		}
 		writeAttr(b, a.k, a.v)
 	}
 	b.WriteByte('>')
 	if void[n.tag] {
 		return
+	}
+	if n.tag == "textarea" {
+		v, _ := AttrOf(n, "value")
+		if strings.HasPrefix(v, "\n") || strings.HasPrefix(v, "\r") {
+			b.WriteByte('\n') // the parser drops a textarea's first newline
+		}
+		b.WriteString(html.EscapeString(v))
 	}
 	if n.isRaw {
 		b.WriteString(n.raw)
@@ -216,6 +226,12 @@ func dataOn(n *Node) string {
 	}
 	if Commits(n) {
 		on = appendOnce(on, "input")
+	}
+	if n.tag == "textarea" {
+		// Where its caret is (SPEC §9), so that a document the host loses
+		// comes back with the value and the caret, and a value the
+		// program sets keeps the caret (Caret).
+		on = appendOnce(on, "caret")
 	}
 	if n.choice != nil {
 		// Where it is (SPEC §9.5): a key that opens its list, which

@@ -577,6 +577,24 @@
 .u-field { min-width: 0; }
 .u-field::placeholder { color: var(--u-dim); }
 .u-compact .u-field::placeholder, .u-roomy .u-field::placeholder { color: var(--u-muted); }
+/* A field of several lines: a textarea min rows tall (--u-rows) of the
+   page's row, with 4px of room above and below, in the surface's own font
+   (a comment is prose). It grows with its text, from --u-rows to
+   --u-rows-max rows (field-sizing: content), then scrolls. A Blitz without
+   hotty-blitz's L5b mods (stylo 0005, blitz 0054) ignores field-sizing and
+   draws the least rows, as `rows` says. */
+.u-field.u-area {
+  box-sizing: border-box;
+  field-sizing: content;
+  height: auto;
+  min-height: calc(var(--u-rows) * var(--u-row) + 8px);
+  max-height: calc(var(--u-rows-max) * var(--u-row) + 8px);
+  padding: 4px var(--u-px);
+  line-height: var(--u-row);
+  resize: none;
+  overflow-y: auto;
+}
+.u-compact .u-field.u-area { padding: 4px 10px; }
 .u-field.is-invalid { box-shadow: inset 0 0 0 1px var(--u-error); }
 .u-compact .u-field, .u-compact .u-select { padding: 0 10px; }
 .u-select {

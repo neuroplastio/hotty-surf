@@ -896,6 +896,13 @@ func (w *fw) action(el *surf.Elem, sc *scope, h surf.Handler) ([]string, string)
 			}
 			args = append(args, v)
 			continue
+		case surf.ArgRows: // a height's rows, an int
+			v := "int64(ev.Rows)"
+			if !types.Identical(m.params[i], types.Typ[types.Int64]) {
+				v = w.c.g.goType(m.params[i]) + "(ev.Rows)"
+			}
+			args = append(args, v)
+			continue
 		case surf.ArgEvent:
 			args = append(args, "ev")
 			continue

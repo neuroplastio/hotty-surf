@@ -115,6 +115,32 @@ return function(state)
 end
 `
 
+// draftLua is the Draft fixture in Lua: a composer, a field of several
+// lines with its height reported (draft.surf).
+const draftLua = `
+local Draft = {}
+Draft.__index = Draft
+function Draft:typed(v)
+  self.text = v
+  table.insert(self.log, "typed " .. string.format("%q", v))
+end
+function Draft:grew(h)
+  self.height = h
+end
+function Draft:send()
+  table.insert(self.log, "send " .. string.format("%q", self.text))
+end
+function Draft:keep()
+  table.insert(self.log, "keep")
+end
+return function(state)
+  state.text = state.text or ""
+  state.height = state.height or 0
+  state.log = state.log or {}
+  return setmetatable(state, Draft)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
 // as Lua values, a table drawn by the first template; the Form's, the
@@ -158,7 +184,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -168,6 +194,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = deckLua, "deck"
 			case "Crew":
 				src, tmpl = crewLua, "crew"
+			case "Draft":
+				src, tmpl = draftLua, "draft"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any

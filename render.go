@@ -732,6 +732,10 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModValue(n, v)
 	case "placeholder":
 		ModPlaceholder(n, v)
+	case "rows":
+		return ModRows(n, v)
+	case "caret":
+		return ModCaret(n, v)
 	case "name":
 		ModName(n, v)
 	case "label":
@@ -832,6 +836,10 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModDrag(n, v)
 	case "readline":
 		ModReadline(n, v)
+	case "spellcheck":
+		ModSpellcheck(n, v)
+	case "trap":
+		ModTrap(n, v)
 	default:
 		panic("surf: no bool modifier " + name)
 	}
@@ -1015,6 +1023,8 @@ func (f *frame) action(e *elem, h handler) (surfui.Action, bool) {
 				switch k {
 				case ArgValue:
 					a[i] = cellite.StringValue(ev.Value)
+				case ArgRows:
+					a[i] = cellite.IntValue(int64(ev.Rows))
 				case ArgEvent:
 					a[i] = EventValue(ev)
 				case ArgDragFrom:

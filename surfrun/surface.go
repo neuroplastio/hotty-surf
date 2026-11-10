@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"neuroplast.io/hotty-go"
 
@@ -115,6 +116,7 @@ type Surface struct {
 
 	heard map[string]heard // a field's value and rev, as the user left it
 	sent  map[string]string
+	sels  map[string][2]int // a text field's selection, anchor then caret, in bytes, as the host last said (caret, input)
 	edits map[string]heard  // a committing field's value and rev, as typed
 	base  map[string]string // a committing field's value before the user's edits
 
@@ -260,7 +262,7 @@ type List struct {
 // nil, for a model that posts nothing.
 func NewSurface(m Model, rn Runner) *Surface {
 	s := &Surface{m: m, rn: rn, heard: map[string]heard{}, sent: map[string]string{},
-		edits: map[string]heard{}, base: map[string]string{}}
+		edits: map[string]heard{}, base: map[string]string{}, sels: map[string][2]int{}}
 	if rn != nil {
 		attach(m, rn)
 	}
@@ -311,6 +313,7 @@ func (s *Surface) Show() Frame {
 			s.sent[id], s.base[id] = v, v
 		}
 	}
+	f.Fields = s.restored()
 	s.shown = true
 	s.blur, s.focus, s.due = false, "", false
 	if s.home != "" {
@@ -323,6 +326,47 @@ func (s *Surface) Show() Frame {
 	s.hover = surfui.HasTip(s.prev)
 	f.Hover = flag(s.hover)
 	return f
+}
+
+// restored are the a=field commands that give a field of several lines
+// back to a host that has the document again (Show): what the user wrote
+// in it, with the caret where they had it. The model's value is the
+// truth where the field has one (:value); a field without one gets what
+// the user typed, which the document can't have. The new document's rev
+// is 0, and so is the rev the surface holds from now.
+func (s *Surface) restored() []Field {
+	var out []Field
+	for id, n := range s.index {
+		if surfui.Tag(n) != "textarea" {
+			continue
+		}
+		v, _ := surfui.ValueOf(n)
+		val, sel := v, s.sels[id]
+		h, typed := s.heard[id]
+		_, bound := surfui.AttrOf(n, "value")
+		if typed && !bound {
+			val = h.value
+		}
+		_, known := s.sels[id]
+		if typed {
+			s.heard[id] = heard{value: val}
+		}
+		if val == v && !known {
+			continue
+		}
+		ch := hotty.FieldChange{}
+		if val != v {
+			ch.Value = &val
+			s.sent[id] = v
+		}
+		if known {
+			c := clampSel(val, sel)
+			ch.Sel = &c
+		}
+		out = append(out, Field{ID: id, Change: ch})
+	}
+	slices.SortFunc(out, func(a, b Field) int { return strings.Compare(a.ID, b.ID) })
+	return out
 }
 
 // flag is on as a placement's flag: On or Off.
@@ -481,7 +525,15 @@ func (s *Surface) event(e hotty.Event) bool {
 		}
 	}
 	took := false
+	if e.Sel != nil && (e.Kind == hotty.EventInput || e.Kind == hotty.EventChange || e.Kind == hotty.EventCaret) {
+		s.sels[e.Target] = *e.Sel
+	}
 	switch e.Kind {
+	case hotty.EventCaret:
+		// Where a field's caret is: kept, for a value the model sets
+		// (caret="keep") and for a document the host loses. No handler
+		// hears it.
+		return true
 	case hotty.EventHover:
 		// The host's, for a tooltip's dwell (Tip): no handler hears it.
 		return false
@@ -558,6 +610,24 @@ func (s *Surface) event(e hotty.Event) bool {
 	}
 	s.do(act, ev)
 	return true
+}
+
+// Height runs the @height handler of the field id with its rows: the
+// cells' wrap says how tall a field of several lines is, and a host says
+// nothing of it, so this is the runtime's own call, not a host's event.
+// It reports whether the field has a handler, and an Update is due.
+func (s *Surface) Height(id string, rows int) (took, redraw bool) {
+	s.fresh()
+	n, ok := s.index[id]
+	if !ok {
+		return false, s.due
+	}
+	act, ok := surfui.Handler(n, "height")
+	if !ok {
+		return false, s.due
+	}
+	s.do(act, Event{Kind: "height", Target: id, Rows: rows})
+	return true, s.due
 }
 
 // Key routes a key that reached the program (SPEC §10.4's name): Enter
@@ -950,6 +1020,35 @@ func autofocused(n *surfui.Node) string {
 	return ""
 }
 
+// caretFor is the selection a field's value v is set with (SPEC §6.4's
+// Sel), by its caret attribute: nil for the end, which a host's field
+// does by itself; the start; or, to keep, where the user had the caret,
+// as far as v goes. A field whose caret isn't known keeps nothing.
+func (s *Surface) caretFor(n *surfui.Node, id, v string) *[2]int {
+	switch surfui.CaretOf(n) {
+	case surfui.CaretStart:
+		return &[2]int{0, 0}
+	case surfui.CaretKeep:
+		if sel, ok := s.sels[id]; ok && surfui.Tag(n) == "textarea" {
+			sel = clampSel(v, sel)
+			return &sel
+		}
+	}
+	return nil
+}
+
+// clampSel is sel within v, each end at a character's start.
+func clampSel(v string, sel [2]int) [2]int {
+	for i, p := range sel {
+		p = min(max(p, 0), len(v))
+		for p > 0 && p < len(v) && !utf8.RuneStart(v[p]) {
+			p--
+		}
+		sel[i] = p
+	}
+	return sel
+}
+
 // fields are the a=field commands for the controls (text fields and
 // selects) whose value the model changed from what the user left in them
 // (SPEC §6.4).
@@ -977,7 +1076,7 @@ func (s *Surface) fields() []Field {
 			continue
 		}
 		val := v
-		out = append(out, Field{ID: id, Change: hotty.FieldChange{Rev: h.rev, Value: &val}})
+		out = append(out, Field{ID: id, Change: hotty.FieldChange{Rev: h.rev, Value: &val, Sel: s.caretFor(n, id, v)}})
 		s.sent[id], s.base[id] = v, v
 		delete(s.edits, id) // it holds the model's value: Enter commits nothing until the user types
 	}

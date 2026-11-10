@@ -1,0 +1,22 @@
+cells 40x8
+caret 2,0 bar
+text
+>  it.
+>
+>  Fix: take the lock after the first
+>  attempt, not before; and put the
+>  Save  Keep
+style
+= abaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= cccccccccccc
+. fg/bg
+a fg/field
+b fg/sel
+c fg/tonal
+hits
+@ 0,0 40x4 r.0.ktext
+@ 0,4 6x1 r.0.1.ksave
+@ 6,4 6x1 r.0.1.kkeep

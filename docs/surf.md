@@ -198,7 +198,7 @@ component, a partial, or a widget a package registered from outside
 | `dot` | a state's mark: a small dot in its `tone` | nothing |
 | `key` | a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style, lower case by default, Enter as `↵` | text |
 | `button` | a button, its text its label, with an `<icon>` before or after it ("Icons") | text, an `icon` |
-| `field` | a one-line text field | nothing |
+| `field` | a text field: one line, or with `rows` several ("A field of several lines") | nothing |
 | `switch` | a boolean as a track with a knob: it shows `:on`, and its `@click` handler changes the state `:on` reads | nothing |
 | `select` | a pick of one of `:options`, `:value` picked | nothing |
 | `cycle` | `‹ value ›`, stepping through `:options` | nothing |
@@ -342,6 +342,9 @@ registers widgets runs its own cases with `conformance.Suite`
 | `pad` | `"x y"` or `"n"` | all | room inside, across and down; bound, a list of one or two ints |
 | `selected`, `checked`, `disabled`, `invalid` | bool | all | states |
 | `value`, `placeholder` | string | field | a field's value and placeholder |
+| `rows`, `caret` | string | field | a field's rows, `"8"` or `"3..8"`, and where its caret goes when the program sets its value: `start`, `end` or `keep` ("A field of several lines") |
+| `spellcheck` | bool | field | a host checks the spelling of a field of several lines, unless `spellcheck="false"` |
+| `trap` | bool | stack | keeps Tab inside the stack while it shows (the cells; "A field of several lines") |
 | `name`, `label` | string | all | a control's name (an `icon`'s is its symbol's), an accessible label |
 | `title` | string | all | its tooltip, this text wrapped ("Tooltips"); never an HTML `title` |
 | `reveal`, `focusable`, `bare`, `scroll`, `autofocus` | bool | all | the floor's behaviours |
@@ -498,7 +501,8 @@ registers widgets runs its own cases with `conformance.Suite`
 - **The events:**
   - `click` and `focus` on every widget but `spacer` and `rule`, which
     take none;
-  - `change` and `input` on a `field`;
+  - `change` and `input` on a `field`, and `height` on a field of
+    several lines (cells only; its `$value` is the rows, an int);
   - `change` on a `select` and a `cycle`;
   - `dragstart` and `dragend` on a drag handle, and `drop` on a place
     to drop on ("Drag");
@@ -578,6 +582,68 @@ it runs on. On a Mac, for one, `ctrl+backspace` is not a word delete, and
   field's `char-backward`, which would eat a leader key. A field gives
   those keys up, before `readline` and the platform's default, and the
   program hears them. In Go, `surfrun.Surface.Program` does the same.
+
+## A field of several lines
+
+`rows` makes a `field` a text area: `rows="8"` is always that tall,
+`rows="3..8"` starts at 3 rows, grows with its text and scrolls past 8,
+and `rows="1"` is the one-line field. The composer of a review tool is
+one:
+
+```html
+<surface program="ctrl+s ctrl+enter escape">
+  <stack trap>
+    <field key="text" rows="3..8" autofocus caret="end"
+           :value="text" placeholder="Write a comment" label="Comment"
+           @input="typed($value)" @height="grew($value)"/>
+    <row gap="1">
+      <button tone="accent" @click="send()">Send</button>
+      <button @click="keep()">Keep draft</button>
+    </row>
+  </stack>
+</surface>
+```
+
+- **Enter and Shift+Enter type a newline.** What sends is the program's:
+  `program=` gives keys back to it, or a `<bind key="ctrl+s" do="send()"/>`
+  on the field runs in the template.
+- **It wraps** at its width, where a line is too long, after its last
+  space that fits, or anywhere once none is left (a long URL), and
+  `wrap="false"` turns that off: the lines then scroll sideways. Home and
+  End, and Up and Down, go by the visual row, Up and Down keeping the
+  column; Shift with a move selects, across rows; undo and redo (Ctrl+Z,
+  Ctrl+Shift+Z) take back a run of typing as one step. A paste, bracketed
+  in the cells, goes in whole: CRLF is a newline, a tab is four spaces.
+- **`caret`** is where the caret goes when the program sets another
+  value: `end` after the text (a draft resumed), `start` before it, `keep`
+  where the user had it, as far as the new text goes. `keep` is the
+  default here; a one-line field's is `end`, as a browser's. A field
+  that first shows has its caret at the start, or at the end with
+  `caret="end"`. **The same `:value` moves nothing**: not the caret, not
+  the selection, not the undo history.
+- **`@height`** runs with the field's height in rows (an int)
+  when it first shows and as it grows, so that a program that places the
+  surface can give it the room. The cells tell it, from the wrap. A host
+  tells none yet: a field there grows by `field-sizing: content`, between
+  its least rows and its most (hotty-blitz's L5b; a Blitz without it draws
+  the least rows and scrolls).
+- **`spellcheck`** is on for a host's field, `spellcheck="false"` turns
+  it off. The cells have no spell check.
+- **`trap`** on a `stack` keeps Tab and Shift+Tab inside it while it shows:
+  past its last element that takes the keyboard Tab goes to its first, so
+  from the buttons back to the field. The cells do it; a host keeps Tab
+  until hotty lets a field give it to the program (V6-02).
+- **It never loses words.** The model's value is the truth, and every edit
+  reaches it (`@input`) before any key the program handles next, so a
+  Ctrl+S that comes right after the last keystroke sends what was on
+  screen: a field that only has `@change` is committed first, for a key
+  that is the program's. A host that lost its document gets the field back
+  with the model's value (or what the user typed, where the field has no
+  `:value`) and its caret. A value from the model for a field the user
+  edited since is stale, and the host refuses it (hotty SPEC §6.4's `rev`,
+  `ESTALE`).
+- **In Go:** `surfui.Field().Rows(3, 8).Wrap().Caret(surfui.CaretEnd)`,
+  `.Spellcheck(false)`, `.OnHeight(...)`, and `.Trap()` on a `Stack`.
 
 ## Context menus
 

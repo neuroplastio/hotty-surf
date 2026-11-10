@@ -177,6 +177,9 @@ const (
 	ArgValue
 	// ArgEvent is $event: the event (EventValue).
 	ArgEvent
+	// ArgRows is $value in a @height handler: the field's rows, an int
+	// (surfrun.Event's Rows).
+	ArgRows
 	// ArgDragFrom is $drag.from: the dragged element's key, a string
 	// (surfrun.Drag's From).
 	ArgDragFrom

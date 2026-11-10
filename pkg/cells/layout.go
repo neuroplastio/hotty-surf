@@ -125,8 +125,9 @@ type box struct {
 
 	// Where the layout put it, as if nothing scrolled.
 	x, y, w, h int
-	contentH   int  // a Scroll box's content
-	bar        bool // a Scroll box's last column is its bar's, as wide as it is
+	area       *areaBox // a field of several lines (area.go)
+	contentH   int      // a Scroll box's content
+	bar        bool     // a Scroll box's last column is its bar's, as wide as it is
 }
 
 // keyCaps draws a key's sequence (surfkeys.SeqOf) as the renderer has keys
@@ -481,6 +482,9 @@ func (b *box) look(d density) {
 	if b.kind == text || b.kind == chip || b.kind == glyph || b.kind == keycap || b.kind == button {
 		b.text = textOf(n)
 	}
+	if b.kind == field {
+		b.area = areaOf(n)
+	}
 }
 
 // byTag is the look of an element the vocabulary didn't make: by its
@@ -766,6 +770,10 @@ func (b *box) leafHeight(w int) int {
 		return len(b.textLines(w))
 	case spacer:
 		return 0
+	case field:
+		if b.area != nil {
+			return b.area.height(w)
+		}
 	}
 	return 1
 }
