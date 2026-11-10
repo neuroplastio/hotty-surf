@@ -716,6 +716,31 @@ var All = []Story{
 			surfui.Field().Key("e").Rows(3, 3).Value("Locked while it posts").Disabled(true),
 		).Gap(1)
 	}},
+	{"form/signup", 50, func() *surfui.Node {
+		// A sign-up form: each field's label above it (before it in
+		// Dense), a password masked, a Strategy choice and the submit
+		// button. The checkbox and the slider of the tour's form join it
+		// when they are on main.
+		return surfui.Form(
+			surfui.Field().Key("name").Name("name").Label("Name").Value("Ada Lovelace"),
+			Force(surfui.Field().Key("email").Name("email").Label("Email").Placeholder("you@example.org"), "focus"),
+			surfui.Field().Key("pass").Name("pass").Label("Password").Password().Value("hunter22"),
+			surfui.Row(surfui.Text("Strategy").Muted().Width(10), surfui.Select("rolling", "rolling", "canary", "all at once")).Gap(1),
+			surfui.Row(surfui.Spacer(), surfui.Button("Sign up").Key("go").Submit()),
+		).Key("form").Gap(1)
+	}},
+	{"form/errors", 50, func() *surfui.Node {
+		// A form the program refused: each field it checked says why in
+		// the error tone under it and is invalid; the one it took has no
+		// message. A long message wraps under its field.
+		return surfui.Form(
+			surfui.Field().Key("name").Name("name").Label("Name").Error("Name is required"),
+			surfui.Field().Key("email").Name("email").Label("Email").Value("ada@example").Error("That is not an address: there is no domain after the @, so nothing could be sent to it."),
+			surfui.Field().Key("pass").Name("pass").Label("Password").Password().Value("hunter"),
+			surfui.Field().Key("notes").Name("notes").Label("Notes").Rows(2, 2).Value("Two hosts, no canary").Error("Keep notes under 20 characters"),
+			surfui.Row(surfui.Spacer(), surfui.Button("Sign up").Key("go").Submit()),
+		).Key("form").Gap(1)
+	}},
 	{"switch/states", 40, func() *surfui.Node {
 		return surfui.Stack(
 			surfui.Row(surfui.Switch(true), surfui.Text("On")).Gap(1),
