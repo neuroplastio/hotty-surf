@@ -112,7 +112,9 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 				l := a.List()
 				return k > nlog && (l == nil || !l.Placed())
 			}
-			return k > nlog || a.Surface().HTML() != doc
+			// A step may change neither, and send an op: a link to an
+			// anchor, which the host scrolls to.
+			return k > nlog || a.Surface().HTML() != doc || len(a.Ops()) > nops
 		})
 		// A step of several events logs as many lines as the case says:
 		// the first is no sign the rest are in. A release logs two when

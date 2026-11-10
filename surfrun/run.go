@@ -173,6 +173,10 @@ type Options struct {
 	// scroll mode off meanwhile, so that a wheel past what scrolls types
 	// no arrow keys.
 	Scroll hotty.Axes
+	// NoLinks leaves the hyperlinks (OSC 8) out of the cells the runtime
+	// paints: a link (surfui.Link) is its text underlined in the link
+	// tone and no more. For a program whose host keeps the links itself.
+	NoLinks bool
 	// Stream, if set, gets a copy of everything written to the terminal,
 	// for `hotty replay`.
 	Stream io.Writer

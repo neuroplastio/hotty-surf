@@ -39,7 +39,7 @@
 //     takes a template's argument, $value and $event too, whatever its
 //     name. $event is the host's own event table where view:event routes
 //     the handler's own event (its kind, on its target), else a table of
-//     the event's kind, target, key, value and checked. A function
+//     the event's kind, target, key, value, checked, mods and count. A function
 //     written in Go, or the ... of a vararg one, takes nothing from a
 //     template.
 //   - **Every other key is a field,** typed dyn. A field the table gains

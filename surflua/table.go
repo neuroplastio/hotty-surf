@@ -193,6 +193,8 @@ func (h *host) event(ev surfrun.Event) *lua.LTable {
 	set("key", ev.Key)
 	t.RawSetString("value", lua.LString(ev.Value))
 	t.RawSetString("checked", lua.LBool(ev.Checked))
+	t.RawSetString("mods", lua.LNumber(ev.Mods))
+	t.RawSetString("count", lua.LNumber(ev.Count))
 	if ev.Drag != (surfrun.Drag{}) {
 		d := h.L.NewTable()
 		d.RawSetString("from", lua.LString(ev.Drag.From))

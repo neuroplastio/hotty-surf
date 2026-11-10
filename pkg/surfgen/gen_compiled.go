@@ -430,7 +430,11 @@ func (w *fw) render(b *bytes.Buffer, el *surf.Elem, sc *scope, tg target) {
 		fmt.Fprintf(b, "if e.Enter(%s) {\n", w.pos(el))
 		b.WriteString(pre)
 		w.used[tg.out] = true
-		fmt.Fprintf(b, "%s = append(%s, surfui.Text(%s))\ne.Leave()\n}\n", tg.out, tg.out, s)
+		mk := "surfui.Text"
+		if el.Plain() {
+			mk = "surfui.Str"
+		}
+		fmt.Fprintf(b, "%s = append(%s, %s(%s))\ne.Leave()\n}\n", tg.out, tg.out, mk, s)
 	case surf.ElemIf:
 		w.cond(b, el, sc, tg)
 	case surf.ElemEach:

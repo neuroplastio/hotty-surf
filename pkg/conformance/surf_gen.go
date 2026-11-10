@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf note-row.surf shelf.surf mark.svg ring.svg
+//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf shelf.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -490,6 +490,56 @@ func (o surfInfoPanel) Call(m int, args []cellite.Value) cellite.Value {
 func surfInterpInfoPanel(c *InfoPanel) surflive.Component {
 	return surf.Component(surfSet(), surfInfoPanel{c})
 }
+
+// surfShapeLinks is Links's shape, a component.
+var surfShapeLinks = surf.Shape{Name: "Links", Component: true,
+	Fields: []surf.Field{{Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "go", Args: []cellite.Type{cellite.String, surf.EventType}},
+	},
+}
+
+// surfLinks is a *Links as its templates read it.
+type surfLinks struct{ p *Links }
+
+// surfLinksValue is p as a value: null for nil.
+func surfLinksValue(p *Links) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Links", surfLinks{p})
+}
+
+// surfLinksOf is a value's *Links: nil for any other.
+func surfLinksOf(v cellite.Value) *Links {
+	if o, ok := v.Object().(surfLinks); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfLinks) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfLinks) Shape() *surf.Shape { return &surfShapeLinks }
+
+func (o surfLinks) Unwrap() any { return o.p }
+
+func (o surfLinks) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Go(string(args[0].String()), surf.EventOf(args[1]))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpLinks is c drawn by its template, interpreted.
+func surfInterpLinks(c *Links) surflive.Component { return surf.Component(surfSet(), surfLinks{c}) }
 
 // surfShapeShelf is Shelf's shape, a component.
 var surfShapeShelf = surf.Shape{Name: "Shelf", Component: true,
@@ -2480,6 +2530,139 @@ func surfRenderBoard_LabTree(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 	return out
 }
 
+// surfRenderLinks draws links.surf for Links.
+func surfRenderLinks(e *surf.Errs, out []*surfui.Node, c *Links, fill surf.Fill) []*surfui.Node {
+	// links.surf:1:1 <surface>
+	if e.Enter("links.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// links.surf:2:3 <line>
+		if e.Enter("links.surf", 2, 3) {
+			var k2 []*surfui.Node
+			if e.Enter("links.surf", 2, 25) {
+				k2 = append(k2, surfui.Text("See"+" "))
+				e.Leave()
+			}
+			// links.surf:2:29 <link>
+			if e.Enter("links.surf", 2, 29) {
+				var k3 []*surfui.Node
+				if e.Enter("links.surf", 2, 96) {
+					k3 = append(k3, surfui.Str("the install guide"))
+					e.Leave()
+				}
+				n3 := surf.NewLink(k3...)
+				surf.ModHref(n3, "/docs/install")
+				surf.ModKey(n3, "docs")
+				n3.On("follow", func(ev surfrun.Event) { c.Go(ev.Value, ev) })
+				k2 = append(k2, n3)
+				e.Leave()
+			}
+			if e.Enter("links.surf", 2, 120) {
+				k2 = append(k2, surfui.Text(","+" "))
+				e.Leave()
+			}
+			// links.surf:2:122 <link>
+			if e.Enter("links.surf", 2, 122) {
+				var k4 []*surfui.Node
+				if e.Enter("links.surf", 2, 177) {
+					k4 = append(k4, surfui.Str("the site"))
+					e.Leave()
+				}
+				n4 := surf.NewLink(k4...)
+				surf.ModHref(n4, "https://example.com/x")
+				surf.ModExternal(n4, true)
+				surf.ModKey(n4, "site")
+				k2 = append(k2, n4)
+				e.Leave()
+			}
+			if e.Enter("links.surf", 2, 192) {
+				k2 = append(k2, surfui.Text(","+" "))
+				e.Leave()
+			}
+			// links.surf:2:194 <link>
+			if e.Enter("links.surf", 2, 194) {
+				var k5 []*surfui.Node
+				if e.Enter("links.surf", 2, 228) {
+					k5 = append(k5, surfui.Str("usage"))
+					e.Leave()
+				}
+				n5 := surf.NewLink(k5...)
+				surf.ModHref(n5, "#usage")
+				surf.ModKey(n5, "tousage")
+				k2 = append(k2, n5)
+				e.Leave()
+			}
+			if e.Enter("links.surf", 2, 240) {
+				k2 = append(k2, surfui.Text(" "+"or"+" "))
+				e.Leave()
+			}
+			// links.surf:2:244 <link>
+			if e.Enter("links.surf", 2, 244) {
+				var k6 []*surfui.Node
+				if e.Enter("links.surf", 2, 306) {
+					k6 = append(k6, surfui.Str("a fragment nobody has"))
+					e.Leave()
+				}
+				n6 := surf.NewLink(k6...)
+				surf.ModHref(n6, "#nowhere")
+				surf.ModKey(n6, "gone")
+				n6.On("follow", func(ev surfrun.Event) { c.Go(ev.Value, ev) })
+				k2 = append(k2, n6)
+				e.Leave()
+			}
+			if e.Enter("links.surf", 2, 334) {
+				k2 = append(k2, surfui.Text("."))
+				e.Leave()
+			}
+			n2 := surfui.Line(k2...)
+			surf.ModKey(n2, "para")
+			surf.ModWrap(n2, true)
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// links.surf:3:3 <row>
+		if e.Enter("links.surf", 3, 3) {
+			var k7 []*surfui.Node
+			// links.surf:3:20 <link>
+			if e.Enter("links.surf", 3, 20) {
+				var k8 []*surfui.Node
+				if e.Enter("links.surf", 3, 83) {
+					k8 = append(k8, surfui.Str("API"))
+					e.Leave()
+				}
+				n8 := surf.NewLink(k8...)
+				surf.ModHref(n8, "/docs/api")
+				surf.ModKey(n8, "solo")
+				n8.On("follow", func(ev surfrun.Event) { c.Go(ev.Value, ev) })
+				k7 = append(k7, n8)
+				e.Leave()
+			}
+			n7 := surfui.Row(k7...)
+			surf.ModKey(n7, "alone")
+			k1 = append(k1, n7)
+			e.Leave()
+		}
+		// links.surf:4:3 <heading>
+		if e.Enter("links.surf", 4, 3) {
+			n9 := surfui.Heading("Usage")
+			surf.ModAnchor(n9, "usage")
+			surf.ModKey(n9, "usage")
+			k1 = append(k1, n9)
+			e.Leave()
+		}
+		// links.surf:5:3 <text>
+		if e.Enter("links.surf", 5, 3) {
+			n10 := surfui.Text("The end.")
+			surf.ModKey(n10, "end")
+			k1 = append(k1, n10)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfRenderBoard_NoteRow draws note-row.surf for Board.
 func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill, prop10 *Note, prop11 bool) []*surfui.Node {
 	// note-row.surf:2:1 <item>
@@ -3112,6 +3295,11 @@ func surfCompiledFrame(c *Frame) surflive.Component {
 // surfCompiledInfoPanel is c drawn by its templates compiled into Go.
 func surfCompiledInfoPanel(c *InfoPanel) surflive.Component {
 	return surf.Compiled(c, "info-panel.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderInfoPanel(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledLinks is c drawn by its templates compiled into Go.
+func surfCompiledLinks(c *Links) surflive.Component {
+	return surf.Compiled(c, "links.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderLinks(e, nil, c, nil) }, surfPalette)
 }
 
 // surfCompiledShelf is c drawn by its templates compiled into Go.

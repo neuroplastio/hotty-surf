@@ -683,13 +683,16 @@ type scope struct {
 	// where white space was trimmed at its ends, as runs of a paragraph
 	// are apart.
 	inLine bool
+	// inProse says its texts are the plain runs of a paragraph's or a
+	// link's text (surfui.Str), which flow and wrap with it.
+	inProse bool
 	// inMenu says what it compiles is a <menu>'s items.
 	inMenu bool
 }
 
 // with is s with locals added, in the next slots.
 func (s *scope) with(locals ...cellite.Var) *scope {
-	n := &scope{c: s.c, t: s.t, vars: append([]cellite.Var(nil), s.vars...), around: s.around, inLine: s.inLine}
+	n := &scope{c: s.c, t: s.t, vars: append([]cellite.Var(nil), s.vars...), around: s.around, inLine: s.inLine, inProse: s.inProse}
 	for _, l := range locals {
 		n.vars = declare(n.vars, s.t.nfields, l)
 	}
@@ -910,6 +913,7 @@ type elem struct {
 	bindScroll string // the scroll action's name ("down"), for one with no do
 	hasHandler bool
 	dynState   bool // kComponent: its :state is dyn, checked at render
+	plain      bool // kText: a surfui.Str, in a paragraph's or a link's text
 	after      bool // a <button>'s: its <icon>, its kid, is after its text
 
 	// A widget's <menu> (kMenu), whose kids are its items: kAction, kSep,
@@ -996,7 +1000,7 @@ func (s *scope) element(n *markup.Node, next []*markup.Node) *elem {
 //
 //go:noinline
 func (s *scope) textEl(n *markup.Node) *elem {
-	return &elem{kind: kText, pos: n.Pos, text: s.run(n, s.parts(n.Parts))}
+	return &elem{kind: kText, pos: n.Pos, text: s.run(n, s.parts(n.Parts)), plain: s.inProse}
 }
 
 // run is a text's parts, with a space at an end where white space was
@@ -1077,16 +1081,18 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return nil
 	}
 	ks := s.tipOf(e, n, s.menuOf(e, n))
-	was, wasLine := s.around, s.inLine
+	was, wasLine, wasProse := s.around, s.inLine, s.inProse
 	s.around = true // a <bind> in it binds on it
 	if e.w.Form == FormKids || e.w.Form == FormSection || e.w.Form == FormFace {
-		s.inLine = e.w.Tag == "line"
+		s.inProse = proseTags[e.w.Tag]
+		s.inLine = e.w.Tag == "line" || s.inProse
 		e.kids = s.kids(ks)
 	} else {
 		s.inLine = s.inLine && e.w.Tag == "text"
+		s.inProse = s.inProse && e.w.Tag == "text"
 		s.leafKids(e, n.Tag, ks)
 	}
-	s.around, s.inLine = was, wasLine
+	s.around, s.inLine, s.inProse = was, wasLine, wasProse
 	return e
 }
 

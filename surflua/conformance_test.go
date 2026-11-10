@@ -141,6 +141,18 @@ return function(state)
 end
 `
 
+// linksLua is the Links fixture in Lua: a component of links, whose
+// follow logs the href and the modifiers held.
+const linksLua = `
+local Links = {}
+Links.__index = Links
+function Links:go(href, ev) table.insert(self.log, "follow " .. href .. " mods " .. math.floor(ev.mods)) end
+return function(state)
+  state.log = state.log or {}
+  return setmetatable(state, Links)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
 // as Lua values, a table drawn by the first template; the Form's, the
@@ -184,7 +196,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -196,6 +208,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = crewLua, "crew"
 			case "Draft":
 				src, tmpl = draftLua, "draft"
+			case "Links":
+				src, tmpl = linksLua, "links"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any

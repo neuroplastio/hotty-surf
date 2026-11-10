@@ -208,6 +208,7 @@ component, a partial, or a widget a package registered from outside
 | `rule` | a line across | nothing |
 | `box` | a raised panel | children |
 | `dialog` | the box plx draws round its palette | children |
+| `link` | a link, inline in a `line` or on a row of its own: its text underlined in the link tone, which Enter and a click follow ("Links"); `href`, `external`, `@follow` | text, inline children |
 
 - "Text" means literal text and `{{ }}`, with no elements in it.
 - A widget that takes nothing may still hold `<bind>`s.
@@ -501,6 +502,7 @@ registers widgets runs its own cases with `conformance.Suite`
 - **The events:**
   - `click` and `focus` on every widget but `spacer` and `rule`, which
     take none;
+  - `follow` on a `link` ("Links"), beside its `click` and `focus`;
   - `change` and `input` on a `field`, and `height` on a field of
     several lines (cells only; its `$value` is the rows, an int);
   - `change` on a `select` and a `cycle`;
@@ -517,6 +519,39 @@ registers widgets runs its own cases with `conformance.Suite`
   `row` or a `stack` the hover fill, as a list's row. With `focusable`,
   the keyboard on it shows the same. A `dot` and a `glyph` keep their
   tone, which is a state. The cells show neither look.
+
+## Links
+
+`<link href="/docs/install" @follow="go($value)">Install</link>` is a link:
+inline in a `line` that wraps (and in a paragraph), or on a row of its own.
+
+- **`href`** is where it goes: a URL, a path, or `#name`, the `anchor` of
+  an element (`<heading anchor="usage">`; any element takes `anchor`,
+  which is its `id` on a host and what the cells' `Box` finds it by).
+- **`@follow`** runs when the user follows the link: a click, or Enter or
+  Space on it. `$value` is the href, and `$event.Mods` the modifiers
+  held, as a press's, so a program may give `mod`+click a meaning of
+  its own: `@follow="go($value, $event)"` on `Go(href string, e
+  surfrun.Event)`. The event's `Kind` is `follow`.
+- **With no `@follow`:**
+  - an `external` link is a hyperlink and nothing more: a host opens it in
+    a new tab (`target="_blank"`, no press on the surface, no focus), and
+    a terminal opens it by the OSC 8 the cells carry;
+  - a `#fragment` that an `anchor` names scrolls to that element and
+    reveals it (a `reveal` op at the start, as the host or the cells
+    carry it out);
+  - a `#fragment` no element has does nothing. With a `@follow` it is the
+    program's, which is how a program follows a link into its own
+    document, or another's: `@follow` is taken before the scroll.
+- **A link with `@follow` is no new tab,** `external` or not: the program
+  follows it.
+- **In cells** a link is underlined in the `accent`, its muted block's
+  colour where `muted` holds it, and takes the keyboard (Tab, Shift+Tab,
+  Enter follows). Its text is the cells' `Run.Href`, and the runtime
+  writes it as an OSC 8 hyperlink round it. A program whose host keeps
+  the links itself sets `surfrun.Options.NoLinks`, or paints
+  `Screen.NoLinks()`; the runs stay split as they were.
+- **Go:** `surfui.Link(href, kids...)`, `.External()`, `.OnFollow(func())`.
 
 ## Keys
 

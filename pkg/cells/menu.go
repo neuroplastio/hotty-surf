@@ -118,7 +118,7 @@ func (g *grid) blit(x, y int, s Screen) {
 			continue
 		}
 		for _, run := range line {
-			st := style{run.Fg, run.Bg, run.Attr, run.Ul}
+			st := style{run.Fg, run.Bg, run.Attr, run.Ul, run.Href}
 			xx := x + run.Col
 			for _, cl := range run.Clusters {
 				if xx >= 0 && xx+max(cl.Width, 1) <= g.cols {

@@ -28,6 +28,7 @@ type widgetStory struct {
 var widgetShape = &surf.Shape{Name: "WidgetStory", Component: true, Methods: []surf.Method{
 	{Name: "click", Args: []cellite.Type{surf.EventType}},
 	{Name: "focus", Args: []cellite.Type{surf.EventType}},
+	{Name: "follow", Args: []cellite.Type{cellite.String, surf.EventType}},
 	{Name: "change", Args: []cellite.Type{cellite.String}},
 	{Name: "input", Args: []cellite.Type{cellite.String}},
 	{Name: "height", Args: []cellite.Type{cellite.Int}},
@@ -79,7 +80,7 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 	for _, a := range ws.attrs() {
 		// A string it draws: not its name, its label or its tooltip,
 		// which it doesn't draw in place.
-		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "hue" && a.Name != "title"}
+		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "hue" && a.Name != "title" && a.Name != "anchor"}
 		switch {
 		case a.Name == "hue": // one of the stories' palette's, which the story declares
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, stories.Palette.Names()...)
@@ -102,6 +103,8 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 	case "field":
 		// A field needs text for its tone and weight to be visible.
 		ws.by["value"].Value = "Sample text"
+	case "link":
+		ws.by["href"].Value = "/docs/install"
 	}
 	// A count of options keeps the value's select to them.
 	if c := ws.by["options (count)"]; c != nil {
@@ -250,6 +253,9 @@ func (ws *widgetStory) source() string {
 		if e == "click" || e == "focus" {
 			arg = "$event"
 		}
+		if e == "follow" {
+			arg = "$value, $event"
+		}
 		b.WriteString(" @" + e + `="` + e + "(" + arg + `)"`)
 	}
 	kids := ""
@@ -361,6 +367,8 @@ func sampleKid(tag string, i int) string {
 			return "<glyph>●</glyph>"
 		}
 		return "<text>Part " + n + "</text>"
+	case "link":
+		return "Install guide " + n + " "
 	}
 	return "<text>Child " + n + "</text>"
 }
