@@ -1,0 +1,8 @@
+# Stories surfui.Rows is off by more than the rows gate's tolerance, each
+# for a reason that is no estimate's to fix: `<story> <density> <reason>`.
+# tip/shown draws each tip card as wide as its text, to the cell (the
+# host's own width, cells.DrawTip), so a run of text fits in its card or
+# wraps on a fraction of a pixel, in Chromium and Blitz alike: a rounding
+# of the font's advance the estimate cannot see.
+tip/shown dense a tip card exactly as wide as its text: wraps or not on a fraction of a pixel
+tip/shown roomy a tip card exactly as wide as its text: wraps or not on a fraction of a pixel

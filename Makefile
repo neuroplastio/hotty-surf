@@ -197,6 +197,21 @@ gate-baseline: scripts/gate/node_modules   ## writes the known failures again: w
 	-$(CAP) $(PIN) $(NODE) node scripts/gate/gate.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
 	  --stories bin/stories --out .shots/gate --write-baseline $(GATE_BASELINE)
 
+# The rows gate (scripts/gate/rows.cjs): surfui.Rows against the rows
+# Chromium and Blitz lay every story out to, at each density, in two
+# themes, at 1.6x and 2x and at a smaller root font. It is not in check:
+# it needs the same hotty and Chromium as gate, and the estimate's
+# tolerance is the journal's. ROWS_FLAGS: e.g. --only palette, --tol 0.
+ROWS_FLAGS ?=
+
+.PHONY: rows
+
+rows: scripts/gate/node_modules   ## surfui.Rows against the host's layout: .shots/rows/report.md
+	@test -x "$(HOTTY)" || { echo "no hotty at $(HOTTY): run make release in hotty-blitz, or set HOTTY_BLITZ"; exit 1; }
+	$(GO) build -o bin/stories ./internal/cmd/stories
+	$(CAP) $(PIN) $(NODE) node scripts/gate/rows.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
+	  --stories bin/stories --out .shots/rows $(ROWS_FLAGS)
+
 # The legible gate (scripts/gate/legible.cjs says how): every story the
 # gallery lists, drawn as the gallery draws it at the story's own width,
 # in both modes and every density, and measured in Chromium. It fails
