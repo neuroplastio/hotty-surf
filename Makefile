@@ -233,6 +233,18 @@ legible: scripts/gate/node_modules   ## the gallery's stories at their widths, m
 	$(CAP) $(PIN) $(NODE) node scripts/gate/legible.cjs --hotty $(HOTTY) --fonts $(HOTTY_FONTS) \
 	  --stories bin/stories --out .shots/legible $(if $(LEGIBLE_KNOWN),--known $(LEGIBLE_KNOWN)) $(LEGIBLE_FLAGS)
 
+# The gallery of stories (cmd/surfgallery), built from the working tree
+# as it is and opened in a hottyterm window of its own
+# (scripts/gallery.sh): an edit of a stories file, a template or the
+# stylesheet is in the window at once, the story kept. GALLERY_FLAGS:
+# e.g. -story field, -theme terminal, or --web first for a browser tab.
+GALLERY_FLAGS ?=
+
+.PHONY: gallery
+
+gallery:   ## the gallery of stories from the working tree, in a window of its own, reloading as .surf and .css change
+	CAP='$(CAP)' sh scripts/gallery.sh $(GALLERY_FLAGS)
+
 # The look loop (scripts/look/README.md): a story drawn in Chromium and in
 # Blitz, a board of the design (or one element of it) drawn in Chromium
 # with its kit.css, and the sheets that compare them, in .shots/look/.

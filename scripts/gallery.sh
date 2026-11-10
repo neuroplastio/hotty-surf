@@ -10,26 +10,27 @@
 #   sh scripts/gallery.sh -reference -story button/states
 #                                              under it, as make gate drew it in Blitz and Chromium
 #   sh scripts/gallery.sh --web                then open the URL it says
-#   sh scripts/gallery.sh --build              build only, and print the directory
-#                                              its bin/hottyterm and bin/gallery are in
+#   sh scripts/gallery.sh --build              build only, and print the file built
+#
+# make gallery runs it (GALLERY_FLAGS for its flags).
 #
 # It reloads as this checkout changes (gallery -dev): an edit of a
 # stories file (internal/stories/*.surf), a template (internal/screens/*.surf) or the
 # stylesheet (surfui/surf.css) is in the window at once, with the story,
-# the toolbar and the controls as they were. A Go change needs a commit,
-# and the script again.
+# the toolbar and the controls as they were. A Go change needs the
+# script again.
 #
 # In the window: the arrows move in the stories, Tab moves on to the
 # story and its controls, the wheel scrolls each. ctrl+c, or closing the
 # window, ends it.
 #
-# It builds once per commit (the checkout's HEAD), into
-# ${XDG_CACHE_HOME:-$HOME/.cache}/hotty-surf/gallery/<commit>-installed/:
-# cmd/surfgallery from that commit, built under the Makefile's CAP, beside a link to the installed hottyterm (SURF_HOTTYTERM,
-# /usr/lib/hottyterm), which draws with its own Blitz. Later runs open at
-# once. SURF_BLITZ_LIB=FILE draws with that Blitz instead, for patches
-# not yet released: the build is then a copy of the hottyterm with FILE
-# over its own, in <commit>-blitz-<FILE's checksum>/.
+# It builds cmd/surfgallery from the working tree, as it is now, into
+# bin/surfgallery, under the Makefile's CAP, each time it runs. The
+# window is the installed hottyterm's (SURF_HOTTYTERM, /usr/lib/hottyterm),
+# which draws with its own Blitz. SURF_BLITZ_LIB=FILE draws with that
+# Blitz instead, for patches not yet released: the terminal is then a
+# copy of the hottyterm with FILE over its own, in
+# ${XDG_CACHE_HOME:-$HOME/.cache}/hotty-surf/gallery/blitz-<FILE's checksum>/.
 #
 # The window's environment is this one without PLX_*, SURF_*, GHOSTTY_*
 # and TERM_PROGRAM*, so that nothing of the terminal it was started
@@ -65,44 +66,39 @@ if [ "${1:-}" = --build ]; then
   shift
 fi
 
-rev=$(git -C "$repo" rev-parse --verify 'HEAD^{commit}') || die "no commit in $repo"
 cache=${XDG_CACHE_HOME:-$HOME/.cache}/hotty-surf/gallery
 term=${SURF_HOTTYTERM:-/usr/lib/hottyterm}
 [ -x "$term/bin/hottyterm" ] || die "no hottyterm in $term (set SURF_HOTTYTERM)"
 blitz=${SURF_BLITZ_LIB:-}
 if [ -n "$blitz" ]; then
   [ -f "$blitz" ] || die "no Blitz at $blitz (SURF_BLITZ_LIB)"
-  dir=$cache/$rev-blitz-$(cksum <"$blitz" | cut -d' ' -f1)
-else
-  dir=$cache/$rev-installed
-fi
-if [ ! -x "$dir/bin/gallery" ]; then
-  gobin=$(gobin)
-  [ -n "$gobin" ] || die "no go on PATH and no mise to find one"
-  echo "gallery.sh: building cmd/surfgallery at $(printf %.8s "$rev"), once"
-  tmp=$cache/.build-$$
-  rm -rf "$tmp" && mkdir -p "$tmp/src"
-  trap 'rm -rf "$tmp"' EXIT
-  if [ -n "$blitz" ]; then
+  dir=$cache/blitz-$(cksum <"$blitz" | cut -d' ' -f1)
+  if [ ! -x "$dir/bin/hottyterm" ]; then
+    tmp=$cache/.build-$$
+    rm -rf "$tmp" && mkdir -p "$tmp"
+    trap 'rm -rf "$tmp"' EXIT
     cp -RL --preserve=mode,timestamps "$term/." "$tmp/"
-    mkdir -p "$tmp/lib" "$tmp/bin"
+    mkdir -p "$tmp/lib"
     cp -L --preserve=mode,timestamps "$blitz" "$tmp/lib/libhotty_blitz.so"
-  else
-    mkdir -p "$tmp/bin"
-    ln -s "$(cd "$term/bin" && pwd)/hottyterm" "$tmp/bin/hottyterm"
+    rm -rf "$dir"
+    mv "$tmp" "$dir"
+    trap - EXIT
   fi
-  git -C "$repo" archive "$rev" | tar -x -C "$tmp/src"
-  # The build runs under the Makefile's CAP (this machine's, if it sets
-  # one), or $CAP.
-  cap=${CAP-$(make -s --no-print-directory -C "$repo" print-cap 2>/dev/null)}
-  (cd "$tmp/src" && $cap "$gobin/go" build -o "$tmp/bin/gallery" ./cmd/surfgallery)
-  rm -rf "$tmp/src" "$dir"
-  mv "$tmp" "$dir"
-  trap - EXIT
+  term=$dir
 fi
 
+# The gallery is built from the working tree, as it is now, each time:
+# go's cache makes it quick. The build runs under the Makefile's CAP
+# (this machine's, if it sets one), or $CAP.
+gobin=$(gobin)
+[ -n "$gobin" ] || die "no go on PATH and no mise to find one"
+cap=${CAP-$(make -s --no-print-directory -C "$repo" print-cap 2>/dev/null)}
+gallery=$repo/bin/surfgallery
+# shellcheck disable=SC2086 # cap is a command's words
+(cd "$repo" && $cap "$gobin/go" build -o "$gallery" ./cmd/surfgallery)
+
 if [ -n "$build" ]; then
-  echo "$dir"
+  echo "$gallery"
   exit 0
 fi
 
@@ -120,8 +116,8 @@ if [ -n "$web" ]; then
   [ -f "$addon/dist/demo.js" ] || die "no $addon/dist/demo.js: npm run build there first"
   echo "gallery.sh: open http://127.0.0.1:$port/ (ctrl+c here stops it)"
   # shellcheck disable=SC2086 # scrub is env's -u words
-  exec env $scrub python3 "$addon/serve.py" --port "$port" -- "$dir/bin/gallery" -dev "$repo" "$@"
+  exec env $scrub python3 "$addon/serve.py" --port "$port" -- "$gallery" -dev "$repo" "$@"
 fi
 # shellcheck disable=SC2086 # scrub is env's -u words
-exec env $scrub setsid -f "$dir/bin/hottyterm" --gtk-single-instance=false --title="gallery $repo" \
-  -e "$dir/bin/gallery" -dev "$repo" "$@" >/dev/null 2>&1
+exec env $scrub setsid -f "$term/bin/hottyterm" --gtk-single-instance=false --title="gallery $repo" \
+  -e "$gallery" -dev "$repo" "$@" >/dev/null 2>&1
