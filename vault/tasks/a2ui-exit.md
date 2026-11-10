@@ -186,7 +186,7 @@ hotty-go v0.7.1; margin can move its thread pane.
 - [x] **L15. Trace and key names** (merge bbac3b9; `Trace(in TraceIn, out)`) (B10, B12): `Surface.Trace(in, out)`,
   off and free unless set; `surfkeys.FromTea` and `ToTea`, with the
   rule that `J` is `shift+j`. S.
-- [ ] **L16. Forms** (A7): `form @submit`, `button submit`, `field
+- [x] **L16. Forms** (A7; merge bfbb480; `label` is a drawn caption, `aria-label` the accessible one: a call to confirm): `form @submit`, `button submit`, `field
   label`, `type="password"` (`•` in the cells), `error`; a multi-row
   field never submits on Enter. M.
 - [x] **L17. Slider and chips** (merge 937ee07) (A8 slider, A9): the branch's slider
