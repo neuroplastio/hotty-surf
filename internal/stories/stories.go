@@ -464,7 +464,7 @@ var All = []Story{
 		}
 		return Force(surfui.Table(
 			surfui.Col("").Width(2),
-			surfui.Col("document").Max(0, 40),
+			surfui.Col("document").ColMax(0, 40),
 			surfui.Col("thread").FillCol(),
 			surfui.Col("age").Align("end").Muted().Sort("descending"),
 			row(false, "●", "warn", "README.md", "Is this still true after the rename?", "3h", ""),
