@@ -1,0 +1,16 @@
+cells 40x5
+text
+> Replicas ───●──────────────── 3
+> Amount ───────●──────────── 150
+> Locked ────────●─────────── 40
+style
+= .........aaa.bbbbbbbbbbbbbbbb
+= .......aaaaaaa.bbbbbbbbbbbb
+= .......cccccccccccccccccccc.cc
+. fg/bg
+a accent/bg
+b muted/bg
+c faint/bg
+hits
+@ 9,0 23x1 r.0.0.kreplicas
+@ 7,1 24x1 r.0.1.kamount

@@ -174,6 +174,7 @@ var Widgets = []Widget{
 	floor("key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events),
 	floor("button", "a button, its text its label, with an icon before or after it", FormText, "surfui.Button", events),
 	floor("field", "a text field: one line, or with rows several, wrapped, whose Enter types a newline", FormNone, "surfui.Field", []string{"click", "focus", "change", "input", "height"}),
+	floor("slider", "an integer from min to max in steps of step, a track with a thumb: a drag, ← → ↑ ↓ and Home and End move it, each new value its @input (a string), and its @change when a key or the drag's end commits it; the cells draw ───●─── and the value after it", FormNone, "NewSlider", []string{"focus", "input", "change"}),
 	floor("switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events),
 	floor("select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}),
 	floor("cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}),
@@ -249,6 +250,10 @@ var Attrs = []Attr{
 	{Name: "disabled", Type: TypeBool, Doc: "a control that can't be used", Func: "ModDisabled"},
 	{Name: "invalid", Type: TypeBool, Doc: "a field whose value isn't taken", Func: "ModInvalid"},
 	{Name: "value", Type: TypeString, Doc: "a field's value", Tags: []string{"field"}, Func: "ModValue"},
+	{Name: "value", Type: TypeInt, Doc: "a slider's value, snapped to its steps and held between its ends", Tags: []string{"slider"}, Func: "ModSliderValue"},
+	{Name: "min", Type: TypeInt, Doc: "a slider's least value (0 unless it says)", Tags: []string{"slider"}, Func: "ModMin"},
+	{Name: "max", Type: TypeInt, Doc: "a slider's greatest value (100 unless it says)", Tags: []string{"slider"}, Func: "ModMax"},
+	{Name: "step", Type: TypeInt, Doc: "the distance between a slider's values, from its min: 1 or more (1 unless it says)", Tags: []string{"slider"}, Func: "ModStep"},
 	{Name: "placeholder", Type: TypeString, Doc: "a field's placeholder", Tags: []string{"field"}, Func: "ModPlaceholder"},
 	{Name: "rows", Type: TypeString, Doc: "a field's rows: \"8\" always that tall, \"3..8\" from 3 growing with its text to 8, then scrolling; \"1\" is a one-line field. Enter and Shift+Enter type a newline in more than one", Tags: []string{"field"}, Func: "ModRows", Fails: true},
 	{Name: "caret", Type: TypeString, Doc: "where a field's caret goes when the program sets its value: start, end, or keep it where the user had it (the default of a field of several lines; a one-line field's is end). The same value again moves nothing", Tags: []string{"field"}, Func: "ModCaret", Fails: true, Values: carets},
@@ -279,6 +284,7 @@ var Attrs = []Attr{
 	{Name: "stale", Type: TypeBool, Doc: "a widget whose value is old, its source gone: dimmed", Tags: []string{"face"}, Func: "ModStale"},
 	{Name: "popover", Type: TypeBool, Doc: "a box or a stack that is a popover's card, the root of what a widget or a strip's tool opens", Tags: []string{"box", "stack"}, Func: "ModPopover"},
 	{Name: "segmented", Type: TypeBool, Doc: "a row of buttons drawn as one control, a scope or a filter of two to four values, the selected one raised", Tags: []string{"row"}, Func: "ModSegmented"},
+	{Name: "chips", Type: TypeBool, Doc: "a row of buttons that are chips, several picked at once: each a pill, the selected ones on the accent's soft fill, and a press (or Space) toggles it; the cells draw each in brackets. One pick of two to four is segmented", Tags: []string{"row"}, Func: "ModChips"},
 	{Name: "search", Type: TypeBool, Doc: "a row drawn as a search field: its icon and a bare field in one field's box", Tags: []string{"row"}, Func: "ModSearch"},
 	{Name: "nav", Type: TypeBool, Doc: "a sidebar's list", Tags: []string{"list"}, Func: "ModNav"},
 	{Name: "entries", Type: TypeBool, Doc: "a list whose items are entries, each taking the keyboard", Tags: []string{"list"}, Func: "ModEntries"},
@@ -386,6 +392,10 @@ func NewAlert(kids ...*surfui.Node) *surfui.Node { return surfui.Alert("note", k
 
 // NewImg is an image with no source and no alt text yet.
 func NewImg() *surfui.Node { return surfui.Img("", "") }
+
+// NewSlider is a slider at 0, from 0 to 100 in steps of 1, until its
+// min, max, step and value say otherwise.
+func NewSlider() *surfui.Node { return surfui.Slider(0) }
 
 // NewCycle is a cycle through options, value showing.
 func NewCycle(value string, options []string) *surfui.Node { return surfui.Cycle(value, options...) }
@@ -567,6 +577,7 @@ func ModTarget(n *surfui.Node, v bool)    { flag(n, v, n.Target) }
 func ModPulse(n *surfui.Node, v bool)     { flag(n, v, n.Pulse) }
 func ModSearch(n *surfui.Node, v bool)    { flag(n, v, n.Search) }
 func ModSegmented(n *surfui.Node, v bool) { flag(n, v, n.Segmented) }
+func ModChips(n *surfui.Node, v bool)     { flag(n, v, n.Chips) }
 func ModCap(n *surfui.Node, v bool)       { flag(n, v, n.Cap) }
 func ModStrip(n *surfui.Node, v bool)     { flag(n, v, n.Strip) }
 func ModGrid(n *surfui.Node, v bool)      { flag(n, v, n.Grid) }
@@ -648,6 +659,12 @@ func ModDown(n *surfui.Node, v int64)   { n.Down(clampInt(v)) }
 func ModWidth(n *surfui.Node, v int64)  { n.Width(clampInt(v)) }
 func ModHeight(n *surfui.Node, v int64) { n.Height(clampInt(v)) }
 func ModScale(n *surfui.Node, v int64)  { n.Scale(clampInt(v)) }
+
+// The integers of a slider (surfui.Slider).
+func ModSliderValue(n *surfui.Node, v int64) { n.SliderValue(v) }
+func ModMin(n *surfui.Node, v int64)         { n.Min(v) }
+func ModMax(n *surfui.Node, v int64)         { n.Max(v) }
+func ModStep(n *surfui.Node, v int64)        { n.Step(v) }
 
 // ModMeter adds a widget's meter, filled to v percent (0 to 100).
 func ModMeter(n *surfui.Node, v int64) { n.Meter(float64(max(0, min(v, 100))) / 100) }

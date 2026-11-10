@@ -168,6 +168,35 @@ return function(state)
 end
 `
 
+// tuneLua is the Tune fixture in Lua: a slider's value, which its input
+// keeps, and chips picked, several at once.
+const tuneLua = `
+local Tune = {}
+Tune.__index = Tune
+function Tune:input(v) self.replicas = tonumber(v); table.insert(self.log, "input " .. v) end
+function Tune:commit(v) table.insert(self.log, "commit " .. v) end
+function Tune:isPicked(name)
+  for _, p in ipairs(self.picked) do if p == name then return true end end
+  return false
+end
+function Tune:toggle(name)
+  for i, p in ipairs(self.picked) do
+    if p == name then
+      table.remove(self.picked, i)
+      table.insert(self.log, "off " .. name)
+      return
+    end
+  end
+  table.insert(self.picked, name)
+  table.insert(self.log, "on " .. name)
+end
+return function(state)
+  state.log = state.log or {}
+  state.picked = state.picked or {}
+  return setmetatable(state, Tune)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
 // as Lua values, a table drawn by the first template; the Form's, the
@@ -211,7 +240,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Prose":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Prose", strings.TrimSpace(string(root)) == "Tune":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -227,6 +256,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = linksLua, "links"
 			case "Prose":
 				src, tmpl = proseLua, "prose"
+			case "Tune":
+				src, tmpl = tuneLua, "tune"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any

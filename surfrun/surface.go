@@ -700,7 +700,7 @@ func (s *Surface) Key(name string) (took, redraw bool) {
 		return true, s.due
 	}
 	took = s.fieldEnter(name)
-	if s.selectKey(name) || s.cycleKey(name) {
+	if s.selectKey(name) || s.cycleKey(name) || s.sliderKey(name) {
 		return true, s.due
 	}
 	if s.menu == nil && (name == "shift+f10" || name == "context_menu") && s.menuKey(name) {

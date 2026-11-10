@@ -809,6 +809,44 @@
 .u-row.u-grid > .u-btn.is-sel { color: var(--u-accent); background: var(--u-accent-soft); box-shadow: inset 0 0 0 1px var(--u-accent); }
 .u-row.u-grid > .u-btn:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
+/* Chips (Chips): a row of buttons that are chips, several picked at
+   once: each a pill, a button's own fill and hairline with its text
+   muted, 4px from the next, wrapping; the pointer on one the ink and
+   the hover line; a selected one the accent's soft fill with its line,
+   in the accent; the keyboard on one its focus-line. In Compact and
+   Roomy a chip is 22px tall, 12px of room in it; in Dense a row, a cell
+   each side. */
+.u-row.u-chips { flex-wrap: wrap; gap: 4px; align-items: flex-start; }
+.u-row.u-chips > .u-btn {
+  padding: 0 var(--u-px);
+  border-radius: var(--u-r-pill);
+  color: var(--u-muted);
+}
+.u-compact .u-row.u-chips > .u-btn, .u-roomy .u-row.u-chips > .u-btn { height: 22px; line-height: 22px; padding: 0 12px; font-size: 12px; font-weight: 500; }
+.u-row.u-chips > .u-btn:hover { color: var(--u-ink); }
+.u-row.u-chips > .u-btn.is-sel { color: var(--u-accent); background: var(--u-accent-soft); box-shadow: inset 0 0 0 1px var(--u-accent); }
+.u-row.u-chips > .u-btn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-row.u-chips > .u-btn.is-sel:focus { color: var(--u-accent); }
+
+/* A slider (Slider): a track 16 cells long, a row tall (a control's
+   height in Compact and Roomy): its fill in the accent 4px thick up to
+   the thumb, a 12px circle in the accent, the rest on the input's fill.
+   The fill is the thumb's place of the track less its width (--u-s, 0
+   to 1), so the thumb stays in it at both ends. The keyboard on it the
+   thumb's ring; disabled, dim. */
+.u-slider {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  width: calc(16 * var(--u-cw));
+  height: var(--u-ctl);
+}
+.u-slider-fill { display: block; flex: 0 0 auto; width: calc(var(--u-s) * (100% - 12px)); height: 4px; border-radius: 2px 0 0 2px; background: var(--u-accent); }
+.u-slider-thumb { display: block; flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: var(--u-accent); }
+.u-slider-rest { display: block; flex: 1 1 0; min-width: 0; height: 4px; border-radius: 0 2px 2px 0; background: var(--u-input); }
+.u-slider:focus .u-slider-thumb { box-shadow: inset 0 0 0 2px var(--u-ground-line); }
+.u-slider[disabled] .u-slider-fill, .u-slider[disabled] .u-slider-thumb { background: var(--u-dim); }
+
 /* A tool's badge (Badge, Q11's name): a pill 16px tall, at least as
    wide, its number 600 at 10.5px in the accent's fill (Q12's lean: new),
    or the warn's, the error's, the input's (muted); a dot 8px with no
@@ -916,7 +954,7 @@
 .u-row[data-on~="click"]:focus-visible, .u-stack[data-on~="click"]:focus-visible { border-radius: var(--u-r); background: var(--u-hover); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
 .u-surface { cursor: default; }
-.u-btn, .u-switch, .u-select, .u-cycle, [data-on~="click"], .u-nav > .u-item, .u-entries > .u-item, .u-surface a[href], .u-surface summary, [data-on~="drag"] { cursor: pointer; }
+.u-btn, .u-switch, .u-select, .u-cycle, .u-slider, [data-on~="click"], .u-nav > .u-item, .u-entries > .u-item, .u-surface a[href], .u-surface summary, [data-on~="drag"] { cursor: pointer; }
 .u-field { cursor: text; }
 .u-surface [disabled], .u-surface .is-disabled { cursor: default; }
 
@@ -1372,3 +1410,8 @@
 .u-dense .u-btn.u-pill.u-small, .u-dense .u-btn.u-iconbtn.u-small { height: var(--u-row); line-height: var(--u-row); }
 /* A dot is also a glyph; keep its size instead of the glyph slot width. */
 .u-compact .u-dot, .u-roomy .u-dot { width: var(--u-dw); }
+.u-slider-fill { width: calc(var(--u-s) * (100% - 0.70588235rem)); height: 0.23529412rem; border-radius: 0.11764706rem 0 0 0.11764706rem; }
+.u-slider-thumb { width: 0.70588235rem; height: 0.70588235rem; }
+.u-slider-rest { height: 0.23529412rem; border-radius: 0 0.11764706rem 0.11764706rem 0; }
+.u-compact .u-row.u-chips > .u-btn, .u-roomy .u-row.u-chips > .u-btn { height: 1.29411765rem; line-height: 1.29411765rem; padding: 0 0.70588235rem; font-size: 0.70588235rem; }
+.u-row.u-chips { gap: 0.23529412rem; }

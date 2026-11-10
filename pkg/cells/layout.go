@@ -49,6 +49,7 @@ const (
 	toggle // a Switch
 	choose // a Select
 	cycle
+	slider // a Slider: a track, a thumb and its value
 	rule
 	spacer
 	custom // an element that draws its own cells (Node.Cells)
@@ -523,6 +524,8 @@ func (b *box) look(d density) {
 			b.kind, known = choose, true
 		case c == "u-cycle":
 			b.kind, known = cycle, true
+		case c == "u-slider":
+			b.kind, known = slider, true
 		case c == "u-rule":
 			b.kind, known = rule, true
 		case c == "u-grow":
@@ -589,6 +592,8 @@ func (b *box) look(d density) {
 	}
 	// Gap works on a Row, an Item and a Stack only.
 	switch {
+	case b.kind == across && hasClass(n, "u-chips"):
+		b.gap = d.across(max(b.gap, 1)) // chips are apart, as the sheet's 4px
 	case b.kind == across:
 		b.gap = d.across(b.gap)
 	case b.kind == column && hasClass(n, "u-stack"):
@@ -617,7 +622,7 @@ func (b *box) look(d density) {
 		if b.f&fBare != 0 {
 			b.pl, b.pr = 0, 0
 		}
-	case toggle, cycle, glyph:
+	case toggle, cycle, glyph, slider:
 		b.pl, b.pr, b.pt, b.pb = 0, 0, 0, 0
 	}
 	switch {
@@ -813,6 +818,8 @@ func (b *box) leafWidth() int {
 		return b.block(cellblock.Unbounded).Width() + b.pl + b.pr
 	case choose, cycle:
 		return valueWidth(b.n) + 4
+	case slider:
+		return sliderTrack + 1 + surfui.SliderWidth(b.n)
 	}
 	return 0
 }

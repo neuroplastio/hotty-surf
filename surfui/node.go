@@ -71,6 +71,7 @@ type Node struct {
 	readline bool       // a Surface or Field whose fields edit by hotty.TerminalKeys (Readline)
 
 	cycle   *cycle  // a Cycle's value and options
+	slider  *slider // a Slider's bounds and value
 	choice  *choice // a Select's value and options
 	part    int8    // which part of a Cycle n is: partLess, partValue, partMore
 	entries bool    // a List of Entries: the Items added to it are focusable

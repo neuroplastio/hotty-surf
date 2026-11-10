@@ -752,6 +752,42 @@ var All = []Story{
 			row("Keys case", Force(surfui.Cycle("lower", "auto", "title", "lower", "shifted"), "hover")),
 		)
 	}},
+	{"slider/states", 50, func() *surfui.Node {
+		// The tour's Replicas (1 to 12) and a range of steps of 50, as a
+		// form draws them: at the ends, in the middle, the keyboard on
+		// one, and one that can't be used; the cells draw the value after
+		// the track, a host leaves it to the app.
+		row := func(label string, c *surfui.Node) *surfui.Node {
+			return surfui.Row(surfui.Text(label).Bold().Width(12), c).Gap(2)
+		}
+		return surfui.Stack(
+			row("Replicas", surfui.Slider(1).Min(1).Max(12)),
+			row("Replicas", surfui.Slider(6).Min(1).Max(12)),
+			row("Replicas", surfui.Slider(12).Min(1).Max(12)),
+			row("Amount", Force(surfui.Slider(150).Max(400).Step(50), "focus")),
+			row("Locked", surfui.Slider(40).Disabled(true)),
+		)
+	}},
+	{"chips/filters", 60, func() *surfui.Node {
+		// A filter of several values picked at once, as the gallery's: the
+		// picked ones on the accent's soft fill, the pointer on one, the
+		// keyboard on one.
+		chips := func(hover, focus int) *surfui.Node {
+			row := surfui.Row().Chips()
+			for i, s := range []string{"Errors", "Warnings", "Slow", "Cached", "Retried"} {
+				b := surfui.Button(s).Selected(i == 0 || i == 2)
+				switch i {
+				case hover:
+					b = Force(b, "hover")
+				case focus:
+					b = Force(b, "focus")
+				}
+				row.Add(b)
+			}
+			return row
+		}
+		return surfui.Stack(chips(1, -1), chips(-1, 3)).Gap(1)
+	}},
 	{"list/selection", 50, func() *surfui.Node {
 		return surfui.List(
 			surfui.Item(surfui.Text("pane.split").Grow(), surfui.Chip("ctrl+b %")),

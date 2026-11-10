@@ -386,3 +386,35 @@ func (p *Prose) Toggle() {
 	p.Open = !p.Open
 	p.Log = append(p.Log, "toggle")
 }
+
+// Tune is a component of a slider and a filter of chips: Replicas, from 1
+// to 12, which the slider's input sets and its change commits, and the
+// chips picked, several at once. Its log is what each handler heard.
+type Tune struct {
+	Replicas int
+	Picked   []string
+	Log      []string
+}
+
+// Input is the slider's input: the value, a string, which Tune keeps.
+func (t *Tune) Input(v string) {
+	t.Replicas, _ = strconv.Atoi(v)
+	t.Log = append(t.Log, "input "+v)
+}
+
+// Commit is the slider's change: the value, a string.
+func (t *Tune) Commit(v string) { t.Log = append(t.Log, "commit "+v) }
+
+// IsPicked says the chip is picked.
+func (t *Tune) IsPicked(name string) bool { return slices.Contains(t.Picked, name) }
+
+// Toggle picks the chip, or lets it go.
+func (t *Tune) Toggle(name string) {
+	if i := slices.Index(t.Picked, name); i >= 0 {
+		t.Picked = slices.Delete(t.Picked, i, i+1)
+		t.Log = append(t.Log, "off "+name)
+		return
+	}
+	t.Picked = append(t.Picked, name)
+	t.Log = append(t.Log, "on "+name)
+}

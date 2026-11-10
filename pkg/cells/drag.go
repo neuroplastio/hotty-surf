@@ -150,6 +150,9 @@ func (r *Renderer) stepIn(n *surfui.Node, x, y int) (sx int, hasX bool, sy int, 
 		cs[i] = v
 	}
 	vis := r.rects[n]
+	if _, _, _, _, ok := surfui.SliderOf(n); ok {
+		vis.w = trackWidth(n, vis.w) // the value after the track is no part of it
+	}
 	if cs[0] > 0 {
 		sx, hasX = step(cs[0], x-vis.x, vis.w), true
 	}
@@ -188,6 +191,26 @@ func (r *Renderer) WhereStep(id string, ty int) (x, y int, ok bool) {
 	for yy := vis.y; yy < vis.y+vis.h; yy++ {
 		if _, _, sy, has := r.stepIn(n, vis.x, yy); has && sy == ty {
 			return vis.x, yy, true
+		}
+	}
+	return 0, 0, false
+}
+
+// WhereStepX is a cell of the element id where the pointer is at step x of
+// its data-steps' first count (a slider's, SPEC §9.1): the first such cell,
+// left to right, of those it shows, on its first row. ok is false where id
+// is not on the screen, or no cell of it is at that step. For a test, or a
+// host that drags by id.
+func (r *Renderer) WhereStepX(id string, x int) (cx, cy int, ok bool) {
+	r.ensure()
+	n := r.index[id]
+	vis, seen := r.rects[n]
+	if n == nil || !seen {
+		return 0, 0, false
+	}
+	for xx := vis.x; xx < vis.x+vis.w; xx++ {
+		if sx, has, _, _ := r.stepIn(n, xx, vis.y); has && sx == x {
+			return xx, vis.y, true
 		}
 	}
 	return 0, 0, false

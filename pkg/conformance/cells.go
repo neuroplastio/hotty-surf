@@ -62,12 +62,31 @@ func PlayCells(t testing.TB, ar *txtar.Archive, c surflive.Component, log func()
 		x, y := at(id, ty)
 		a.Host.Type(fmt.Sprintf("\x1b[<%d;%d;%d%s", b, x+1, y+1, final))
 	}
+	atX := func(id string, step int) (x, y int) {
+		var ok bool
+		a.Call(func() {
+			if r := a.Run.Renderer(); r != nil {
+				x, y, ok = r.WhereStepX(id, step)
+			}
+		})
+		if !ok {
+			t.Fatalf("%s is not on the screen at x step %d:\n%s", id, step, a.Cells().Text())
+		}
+		return x, y
+	}
+	sgrX := func(id string, step int, b int, final string) {
+		x, y := atX(id, step)
+		a.Host.Type(fmt.Sprintf("\x1b[<%d;%d;%d%s", b, x+1, y+1, final))
+	}
 	out := playCells(t, ar, a.Cells, logged, cellsUser{
-		press:   func(id string) { sgr(id, -1, 0, "M") },
-		over:    func(id string, ty int) { sgr(id, ty, 32, "M") },
-		release: func(id string, ty int) { sgr(id, ty, 0, "m") },
-		click:   func(id string) { a.Press(id) },
-		choose:  func(id, value string) { a.Choose(id, value) },
+		press:     func(id string) { sgr(id, -1, 0, "M") },
+		over:      func(id string, ty int) { sgr(id, ty, 32, "M") },
+		release:   func(id string, ty int) { sgr(id, ty, 0, "m") },
+		pressAt:   func(id string, x int) { sgrX(id, x, 0, "M") },
+		moveAt:    func(id string, x int) { sgrX(id, x, 32, "M") },
+		releaseAt: func(id string, x int) { sgrX(id, x, 0, "m") },
+		click:     func(id string) { a.Press(id) },
+		choose:    func(id, value string) { a.Choose(id, value) },
 		fill: func(id, text string) {
 			a.Press(id)
 			a.Host.Key("ctrl+a")
@@ -139,7 +158,17 @@ func PlayCellsModel(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard
 		}
 		return x, y
 	}
+	atX := func(id string, step int) (x, y int) {
+		x, y, ok := r.WhereStepX(id, step)
+		if !ok {
+			t.Fatalf("%s is not on the screen at x step %d:\n%s", id, step, r.Screen().Text())
+		}
+		return x, y
+	}
 	out := playCells(t, ar, r.Screen, func() []string { return slices.Clone(log()) }, cellsUser{
+		pressAt:   func(id string, x int) { cx, cy := atX(id, x); r.Press(cx, cy, 0) },
+		moveAt:    func(id string, x int) { cx, cy := atX(id, x); r.Move(cx, cy, 0) },
+		releaseAt: func(id string, x int) { cx, cy := atX(id, x); r.Release(cx, cy, 0) },
 		press: func(id string) {
 			x, y := at(id, -1)
 			r.Press(x, y, 0)
@@ -202,7 +231,10 @@ type cellsUser struct {
 	choose, fill  func(id, text string)
 	press         func(id string)
 	over, release func(id string, ty int)
-	sync          func()
+	// pressAt, moveAt and releaseAt are a drag of an element with steps of
+	// its own (a slider's), the pointer at step x of it.
+	pressAt, moveAt, releaseAt func(id string, x int)
+	sync                       func()
 }
 
 // dragCell is where a drag's step puts the pointer in the cells: a cell of
@@ -247,6 +279,19 @@ func playCells(t testing.TB, ar *txtar.Archive, screen func() cells.Screen, log 
 				u.over(f[1], ty)
 			case (len(f) == 2 || len(f) == 3) && f[0] == "release":
 				u.release(f[1], ty)
+			case len(f) == 3 && (f[0] == "pressat" || f[0] == "moveat" || f[0] == "releaseat"):
+				x, err := strconv.Atoi(f[2])
+				if err != nil {
+					t.Fatalf("%s.event %q: %v", n, ev, err)
+				}
+				switch f[0] {
+				case "pressat":
+					u.pressAt(f[1], x)
+				case "moveat":
+					u.moveAt(f[1], x)
+				default:
+					u.releaseAt(f[1], x)
+				}
 			default:
 				t.Fatalf("%s.event: %q is no event", n, ev)
 			}

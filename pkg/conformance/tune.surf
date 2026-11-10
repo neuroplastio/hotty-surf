@@ -1,0 +1,12 @@
+<surface>
+  <row key="replicas" gap="1">
+    <text key="label">Replicas</text>
+    <slider key="slider" min="1" max="12" :value="replicas" @input="input($value)" @change="commit($value)"/>
+    <text key="shown" muted>{{ replicas }}</text>
+  </row>
+  <row key="filters" chips gap="1">
+    <button key="errors" :selected="isPicked('errors')" @click="toggle('errors')">Errors</button>
+    <button key="warnings" :selected="isPicked('warnings')" @click="toggle('warnings')">Warnings</button>
+    <button key="slow" :selected="isPicked('slow')" @click="toggle('slow')">Slow</button>
+  </row>
+</surface>

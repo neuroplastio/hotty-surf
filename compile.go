@@ -1463,7 +1463,7 @@ func (s *scope) tipEl(n *markup.Node) *elem {
 }
 
 // acting are the widgets a tooltip may not hold: the controls.
-var acting = []string{"button", "field", "switch", "select", "cycle"}
+var acting = []string{"button", "field", "switch", "select", "cycle", "slider"}
 
 // inert fails what acts in a tooltip's e: a control, a handler, a
 // <bind>, a <menu>, focusable, autofocus, drag or drop, an <embed>, or a
