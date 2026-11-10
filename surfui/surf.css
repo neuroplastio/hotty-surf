@@ -316,6 +316,9 @@
   background: var(--u-bg);
 }
 .u-surface * { box-sizing: border-box; }
+/* A surface in a surface is a part of its page, a pane in its own theme
+   or density: it is as tall as its place, not the window. */
+.u-surface .u-surface { min-height: 0; }
 
 /* The radii, by elevation, and the pill: a key cap and a chip (xs), a
    row, a field, a button and a tip (sm), a menu and a query (md), a
@@ -400,6 +403,11 @@
 .u-row.u-top > .u-stack { align-self: stretch; }
 .u-grow { flex: 1 1 0; min-width: 0; }
 .u-keep { flex: 0 0 auto; }
+/* A row that wraps (wrap on a row): flexbox's flex-wrap. A child goes on
+   to the next line where it doesn't fit whole, and the row's gap is
+   between the lines as it is between the children. Its white space is
+   not a text's wrap's: the row's children keep their own. */
+.u-row.u-wrap { flex-wrap: wrap; white-space: inherit; overflow-wrap: inherit; }
 .u-row.u-fit {
   flex: 1 1 0;
   flex-direction: row-reverse;
@@ -1056,8 +1064,10 @@
 }
 /* A Scroll box takes the keyboard (Tab, to scroll by keys): it shows it
    as an entry does, by the focus line inset on its edge, the keyboard's
-   only (a click on a page draws none). */
-.u-scroll:focus-visible { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+   only (a click on a page draws none). A surface that scrolls shows
+   nothing: a surface has no focus outline (the maintainer, 2026-11-10:
+   a focus line is an input's, and used with care). */
+.u-scroll:not(.u-surface):focus-visible { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
 /* A Select's open list: a menu, raised, an option a cell tall, as the
    cells place its surface (rows: the options and one); the keys' option

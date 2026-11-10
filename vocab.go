@@ -261,7 +261,7 @@ var Attrs = []Attr{
 	{Name: "semibold", Type: TypeBool, Doc: "text at weight 600", Func: "ModSemibold"},
 	{Name: "muted", Type: TypeBool, Doc: "the muted colour", Func: "ModMuted"},
 	{Name: "small", Type: TypeBool, Doc: "smaller text; a button a line tall, to fit its row", Func: "ModSmall"},
-	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph; a field of several lines wraps unless wrap is false", Func: "ModWrap"},
+	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph; a row whose children go on to the next line where they don't fit, as flexbox's flex-wrap, its gap between the lines too; a field of several lines wraps unless wrap is false", Func: "ModWrap"},
 	{Name: "grow", Type: TypeBool, Doc: "takes the room left in its row or stack", Func: "ModGrow"},
 	{Name: "keep", Type: TypeBool, Doc: "keeps it whole in its row or stack: what is beside it gives way first", Func: "ModKeep"},
 	{Name: "fit", Type: TypeBool, Doc: "shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFit"},

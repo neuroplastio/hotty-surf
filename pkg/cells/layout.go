@@ -104,6 +104,7 @@ const (
 	fItem2  // a table's header, which has an Item's padding but is no Item
 	fShrink // a table's Auto cell: its width is a basis, which shrinks where the row is too narrow
 	fRuled  // a table's row with a hairline under it
+	fLines  // a Row that wraps: its children go on to the next line where one is full
 )
 
 // density is the surface's, for the steps.
@@ -180,6 +181,9 @@ func build(n *surfui.Node, d density, caps keyCaps, bc *blockCache) *box {
 	}
 	if b.kind == across && (b.f&fWrap != 0 && hasClass(n, "u-line") || b.f&(fFlow|fInline) != 0) {
 		b.kind = flow
+	}
+	if b.kind == across && b.f&fWrap != 0 && hasClass(n, "u-row") && b.f&(fFit|fFitStart) == 0 {
+		b.f |= fLines
 	}
 	if b.kind == flow {
 		for _, k := range surfui.Kids(n) {
@@ -957,11 +961,65 @@ func (b *box) natural0() int {
 }
 
 // widths are the widths of a row's children in inner cells.
-func (b *box) widths(inner int) []int {
-	ws := make([]int, len(b.kids))
+func (b *box) widths(inner int) []int { return b.widthsOf(b.kids, inner) }
+
+// rowLine is a line of a Row that wraps: its children, from kid at to
+// kid end, their widths, and its height.
+type rowLine struct {
+	at, end int
+	ws      []int
+	h       int
+}
+
+// lines are the lines of a Row that wraps, at inner cells, as flex-wrap
+// lays them out: a child goes on to the next line where it doesn't fit
+// whole after those before it, and each line shares its own room, so a
+// child that grows takes what its line has left. A child wider than the
+// row has a line to itself, and is cut as in a row of one. No row is
+// between the lines: the sheet's gap there is under a row's height.
+func (b *box) lines(inner int) []rowLine {
+	var out []rowLine
+	at, x := 0, 0
+	flush := func(end int) {
+		if end == at {
+			return
+		}
+		l := rowLine{at: at, end: end, ws: b.widthsOf(b.kids[at:end], inner)}
+		for i, k := range b.kids[at:end] {
+			l.h = max(l.h, k.mt+k.height(l.ws[i]))
+		}
+		out = append(out, l)
+		at, x = end, 0
+	}
+	for i, k := range b.kids {
+		w := k.ml
+		switch {
+		case k.fw >= 0:
+			w += k.fw
+		case k.grows():
+			// It takes what is left, and needs none to stay on the line.
+		default:
+			w += k.natural()
+		}
+		if i > at && x+b.gap+w > inner {
+			flush(i)
+		}
+		if i > at {
+			x += b.gap
+		}
+		x += w
+	}
+	flush(len(b.kids))
+	return out
+}
+
+// widthsOf are the widths of kids, a row's children or a line's of
+// them, in inner cells.
+func (b *box) widthsOf(kids []*box, inner int) []int {
+	ws := make([]int, len(kids))
 	total := 0
 	grow := 0
-	for i, k := range b.kids {
+	for i, k := range kids {
 		switch {
 		case k.fw >= 0:
 			ws[i] = k.fw
@@ -986,7 +1044,7 @@ func (b *box) widths(inner int) []int {
 	switch {
 	case free > 0 && grow > 0:
 		share, extra := free/grow, free%grow
-		for i, k := range b.kids {
+		for i, k := range kids {
 			if k.grows() && k.fw < 0 {
 				ws[i] += share
 				if extra > 0 {
@@ -996,7 +1054,7 @@ func (b *box) widths(inner int) []int {
 			}
 		}
 	case free < 0:
-		shrink(b.kids, ws, -free)
+		shrink(kids, ws, -free)
 	}
 	return ws
 }
@@ -1095,6 +1153,11 @@ func (b *box) height(w int) int {
 		h = b.leafHeight(w-b.pl-b.pr) + b.pt + b.pb
 	case b.kind == flow:
 		h = len(b.flowLines(w-b.pl-b.pr)) + b.pt + b.pb
+	case b.kind == across && b.f&fLines != 0:
+		for _, l := range b.lines(w - b.pl - b.pr) {
+			h += l.h
+		}
+		h += b.pt + b.pb
 	case b.kind == across:
 		ws := b.widths(w - b.pl - b.pr)
 		for i, k := range b.kids {
@@ -1362,6 +1425,24 @@ func (b *box) placeRow() {
 		return
 	}
 	inner := b.w - b.pl - b.pr
+	if b.f&fLines != 0 {
+		y := b.y + b.pt
+		for _, l := range b.lines(inner) {
+			cx := b.x + b.pl
+			for i, k := range b.kids[l.at:l.end] {
+				cx += k.ml
+				kh := k.height(l.ws[i])
+				ky := y + k.mt
+				if b.f&fTop == 0 {
+					ky += max((l.h-k.mt-kh)/2, 0)
+				}
+				k.place(cx, ky, l.ws[i], max(kh, 0))
+				cx += l.ws[i] + b.gap
+			}
+			y += l.h
+		}
+		return
+	}
 	ih := b.h - b.pt - b.pb
 	ws := b.widths(inner)
 	cx := b.x + b.pl

@@ -209,3 +209,30 @@ func TestFitStartRow(t *testing.T) {
 		t.Errorf("a first wider than its row: %q", got)
 	}
 }
+
+// A Row that wraps puts a child on the next line where it doesn't fit
+// whole after those before it, as flexbox's flex-wrap does, and what is
+// under the row comes after its last line. A child wider than the row
+// has a line to itself, cut at its end.
+func TestWrapRow(t *testing.T) {
+	m := &model{render: func() *surfui.Node {
+		return surfui.Surface(
+			surfui.Row(surfui.Text("Deploy"), surfui.Text("Save draft"), surfui.Text("Cancel")).Gap(2).Wrap(),
+			surfui.Text("below"),
+		)
+	}}
+	for _, c := range []struct {
+		cols int
+		want string
+	}{
+		{40, "Deploy  Save draft  Cancel\nbelow"},
+		{20, "Deploy  Save draft\nCancel\nbelow"},
+		{12, "Deploy\nSave draft\nCancel\nbelow"},
+		{8, "Deploy\nSave dr…\nCancel\nbelow"},
+	} {
+		s := show(m).Draw(c.cols, 6)
+		if got := strings.TrimRight(s.Text(), "\n"); got != c.want {
+			t.Errorf("at %d cells: %q, want %q", c.cols, got, c.want)
+		}
+	}
+}

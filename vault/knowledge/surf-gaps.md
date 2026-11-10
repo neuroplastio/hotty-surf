@@ -14,6 +14,15 @@ Found writing the button's scene (`internal/stories/button.surf`,
 | A scene has no state. | Its buttons call nothing: `@click` has no method to name, so a toggle (a chip, a segment) can't change in the scene. A click is logged as the host sends it. | A partial's stories file takes its Go state from `internal/gallery/states.go`, by the file's name. |
 | The states matrix has no rows for a scene. | The toolbar's States switch is off on a scene: its rows are made from a story's controls, and a scene has none. | Widget `attributes` stories and partials' stories. |
 
+Found when the scene was drawn narrow (the maintainer, 2026-11-10: at
+Width 80 the fourth button of a row was cut at the canvas's edge):
+
+| Gap | What it stops | State |
+| --- | --- | --- |
+| A `<row>` never wrapped: only `chips`, `grid` and `fit` rows did, each a special case. | A row of buttons ran past a narrow canvas and was clipped. | **Closed**, by the maintainer's word (flexbox's own model): `wrap` on a row is `flex-wrap: wrap`, with the row's gap between the lines, on a host and in the cells. The scene's rows use it. |
+| An `<item>`'s children can't wrap: it is a list's row, one line. | At Width 24 the scene's list rows cut their status text with … and squeeze the name out. Nothing runs past the edge. | Open. It may be right as it is: a list's row is a line. |
+| One child wider than its row. | A button whose label is wider than the canvas stays on a line of its own; a host clips it at the canvas's edge, the cells cut it with …. None in the scene at any width the Width control offers (24 is the least). | Open: flexbox's answer is `min-width: 0` and an ellipsis in the label, which a button doesn't have. |
+
 Not gaps: every attribute of the button (`fill`, `tone`, `bare`, `small`,
 `pill`, `raised`, `current`, `badge`, `badge-dot`, `badge-tone`,
 `attention`, `disabled`, `selected`, an `<icon>` before or after the

@@ -71,6 +71,14 @@ whole surface:
 
 Kept as R-24 changed them on purpose:
 - focus is a hairline, never a ring;
+- **a surface has no focus outline, and a focus line is an input's**
+  (the maintainer, 2026-11-10, for hotty-surf in general: reserved for
+  inputs, and used with care). A surface that scrolls took the scroll
+  box's inset line when Tab reached it, a hairline round the whole
+  page; `surf.css` now leaves a surface out of that rule. Still drawn,
+  and for the maintainer to rule on: the same line round any other
+  scroll box that Tab reaches (a stack or a list with `scroll`; the
+  gate has a fixture of a focused scroll box, a preview's pane, which shows it on purpose);
 - a bare field's text is lifted 3px;
 - key caps are in the terminal's Nerd Font, for the modifiers' symbols;
 - hairlines are inset shadows;

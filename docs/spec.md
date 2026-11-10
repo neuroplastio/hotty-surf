@@ -913,7 +913,7 @@ but in a palette.
 | 32 | `semibold` | bool | every widget | modifier | text at weight 600 | `<text semibold>x</text>` | `<span id="r" class="u-text u-semi">x</span>` |
 | 33 | `muted` | bool | every widget | modifier | the muted colour | `<text muted>x</text>` | `<span id="r" class="u-text u-tone-muted">x</span>` |
 | 34 | `small` | bool | every widget | modifier | smaller text; a button a line tall, to fit its row | `<text small>x</text>` | `<span id="r" class="u-text u-small">x</span>` |
-| 35 | `wrap` | bool | every widget | modifier | a text that wraps; a line that is a paragraph; a field of several lines wraps unless wrap is false | `<text wrap>x</text>` | `<span id="r" class="u-text u-wrap">x</span>` |
+| 35 | `wrap` | bool | every widget | modifier | a text that wraps; a line that is a paragraph; a row whose children go on to the next line where they don't fit, as flexbox's flex-wrap, its gap between the lines too; a field of several lines wraps unless wrap is false | `<text wrap>x</text>` | `<span id="r" class="u-text u-wrap">x</span>` |
 | 36 | `grow` | bool | every widget | modifier | takes the room left in its row or stack | `<text grow>x</text>` | `<span id="r" class="u-text u-grow">x</span>` |
 | 37 | `keep` | bool | every widget | modifier | keeps it whole in its row or stack: what is beside it gives way first | `<row keep/>` | `<div id="r" class="u-row u-keep"></div>` |
 | 38 | `fit` | bool | `row` | modifier | shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first | `<row fit/>` | `<div id="r" class="u-row u-fit"></div>` |

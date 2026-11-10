@@ -272,9 +272,12 @@ func IsSelected(n *Node) bool {
 }
 
 // Reveals are the ops that bring into view (SPEC §6.1, reveal) each
-// element of next that is selected and was not in old, the index of the
+// Item of next that is selected and was not in old, the index of the
 // last tree: an Item the selection moved to, by as little as brings it
-// into view, as a browser's list box keeps its selection in view. They
+// into view, as a browser's list box keeps its selection in view. A
+// selected button (a segment, a chip, a tab) is a value, not a place:
+// it is not revealed, or a page with chips at its foot would open
+// scrolled down to them. They
 // are in document order, and go after the ops that make next. A new
 // document's are Reveals(nil, root). The walk keeps a stack of its own:
 // no recursion, for TinyGo's stacks.
@@ -287,7 +290,7 @@ func Reveals(old Index, next *Node) []hotty.Op {
 		if n.tag == "" {
 			continue
 		}
-		if IsSelected(n) {
+		if IsSelected(n) && has(n, "u-item") {
 			if o := old[n.id]; o == nil || !IsSelected(o) {
 				ops = append(ops, hotty.OpReveal(n.id, hotty.RevealNearest))
 			}
