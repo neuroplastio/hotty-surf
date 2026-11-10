@@ -709,7 +709,7 @@ var All = []Story{
 		// the cells grow it with the text).
 		long := "The loop keeps the lock while it retries, so a second\nrun waits behind it.\n\nFix: take the lock after the first attempt, not before; and put the retry's reason in the error, or no one will know why it waited."
 		return surfui.Stack(
-			surfui.Field().Key("a").Rows(3, 8).Placeholder("Write a comment").Label("Comment"),
+			surfui.Field().Key("a").Rows(3, 8).Placeholder("Write a comment").AriaLabel("Comment"),
 			surfui.Field().Key("b").Rows(3, 8).Value("Looks good to me, one nit on the name."),
 			Force(surfui.Field().Key("c").Rows(4, 4).Value(long), "focus"),
 			surfui.Field().Key("d").Rows(3, 8).Value("Needs a test").Invalid(true),
