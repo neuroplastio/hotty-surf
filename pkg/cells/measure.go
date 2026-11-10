@@ -27,6 +27,7 @@ type layoutKey struct {
 	cols, rows int
 	scrolls    bool
 	mod        string
+	fields     uint64 // the text fields' edits (Renderer.fgen): a field of several lines is as tall as its text wraps
 }
 
 // sameStyle is whether a and b cap keys alike.
@@ -76,7 +77,7 @@ func (c *layouts) of(tree *surfui.Node, style surfkeys.Style) *layouts {
 }
 
 func (r *Renderer) layoutKey(cols, rows int) layoutKey {
-	return layoutKey{cols: cols, rows: rows, scrolls: r.scrolls(), mod: r.Platform.Mod}
+	return layoutKey{cols: cols, rows: rows, scrolls: r.scrolls(), mod: r.Platform.Mod, fields: r.fgen}
 }
 
 // Measure is the natural height of the tree at cols cells: how many rows
@@ -93,7 +94,7 @@ func (r *Renderer) Measure(cols int) int {
 	if h, ok := c.heigh[k]; ok {
 		return h
 	}
-	root := build(r.tree, densityOf(r.tree), r.keyCaps())
+	root := r.build(r.tree, densityOf(r.tree))
 	h := root.height(cols)
 	c.heigh[k], c.spare[k] = h, root
 	return h

@@ -158,7 +158,8 @@ type Renderer struct {
 	gen        uint64
 	drawn      bool
 
-	changed bool // since the input began: the screen may differ
+	fgen    uint64 // counts the changes of a text field's value, for the layout's key
+	changed bool   // since the input began: the screen may differ
 
 	cache layouts // the layouts of the tree (measure.go)
 	// dirty says that anything but the tree may differ from the last draw
@@ -183,6 +184,45 @@ type fieldState struct {
 	rev   int
 	dirty bool   // edited since its last commit
 	attr  string // its value as the tree last had it
+	top   int    // a field of several lines: its first row shown
+	// height is the rows a field of several lines had when its program
+	// last heard (@height), -1 for never.
+	height int
+}
+
+// newState is the state of a text field n that holds v: the caret at the
+// end of a one-line field's, as a host's, and where caret says in a field
+// of several lines (the start, for keep).
+func newState(n *surfui.Node, v string) *fieldState {
+	t, _ := surfui.AttrOf(n, "type")
+	st := &fieldState{attr: v, height: -1}
+	st.ed = hottyedit.Field{Value: v, Password: t == "password", Multiline: surfui.Tag(n) == "textarea"}
+	at := 0
+	if surfui.CaretOf(n) == surfui.CaretEnd || !st.ed.Multiline {
+		at = chars(v)
+	}
+	st.ed.Select(at, at)
+	return st
+}
+
+// set puts the value the program gave in the field, as a host's field
+// takes one: the caret where n's caret says (surfui.Node.Caret), nothing
+// selected, the history kept. The value it already has moves nothing.
+func (st *fieldState) set(n *surfui.Node, v string) (changed bool) {
+	st.ed.Multiline = surfui.Tag(n) == "textarea"
+	if v == st.ed.Value {
+		return false
+	}
+	at := min(st.ed.Caret, chars(v))
+	switch surfui.CaretOf(n) {
+	case surfui.CaretStart:
+		at = 0
+	case surfui.CaretEnd:
+		at = chars(v)
+	}
+	st.ed.Value = v
+	st.ed.Select(at, at)
+	return true
 }
 
 // openList is a Select's open list, as the program last drew it.
@@ -259,9 +299,14 @@ func (r *Renderer) apply(f Frame) bool {
 	for _, fs := range f.Fields {
 		// What the user typed since wins (SPEC §6.4).
 		if st := r.fields[fs.ID]; st != nil && fs.Change.Rev == st.rev && fs.Change.Value != nil {
-			st.ed.Value = *fs.Change.Value
-			end := chars(st.ed.Value)
-			st.ed.Select(end, end)
+			n := r.index[fs.ID]
+			if st.set(n, *fs.Change.Value) {
+				r.fgen++
+			}
+			if sel := fs.Change.Sel; sel != nil {
+				// Where the program put the selection, in bytes of the value.
+				st.ed.Select(charAt(st.ed.Value, sel[0]), charAt(st.ed.Value, sel[1]))
+			}
 		}
 	}
 	if l := f.List; l != nil {
@@ -321,16 +366,15 @@ func (r *Renderer) reindex() {
 			delete(r.fields, id)
 		} else if v, _ := surfui.ValueOf(n); v != st.attr {
 			st.attr = v
-			if st.rev == 0 {
-				st.ed = hottyedit.Field{Value: v, Caret: chars(v), Password: st.ed.Password}
+			if st.rev == 0 && st.set(n, v) {
+				r.fgen++
 			}
 		}
 	}
 	for id, n := range r.index {
 		if _, ok := r.fields[id]; !ok && surfui.IsTextField(n) {
 			v, _ := surfui.ValueOf(n)
-			t, _ := surfui.AttrOf(n, "type")
-			r.fields[id] = &fieldState{attr: v, ed: hottyedit.Field{Value: v, Caret: chars(v), Password: t == "password"}}
+			r.fields[id] = newState(n, v)
 		}
 	}
 	if r.focused != "" && r.index[r.focused] == nil {
@@ -392,11 +436,17 @@ func (r *Renderer) edited() bool {
 	}
 	st.rev++
 	st.dirty = true
+	r.fgen++
 	n := r.index[r.focused]
 	if n == nil || !listens(n, "input") {
 		return false
 	}
-	return r.send(hotty.Event{Kind: hotty.EventInput, Target: r.focused, Value: st.ed.Value, Rev: st.rev})
+	e := hotty.Event{Kind: hotty.EventInput, Target: r.focused, Value: st.ed.Value, Rev: st.rev}
+	if surfui.Tag(n) == "textarea" {
+		anchor, _ := st.ed.Anchor()
+		e.Sel = &[2]int{byteAt(st.ed.Value, anchor), byteAt(st.ed.Value, st.ed.Caret)}
+	}
+	return r.send(e)
 }
 
 // selected is f's selected text, as a host's field copies it: ok is
@@ -415,6 +465,26 @@ func selected(f *hottyedit.Field) (text string, ok bool) {
 		}
 	}
 	return b.String(), true
+}
+
+// byteAt is where character i of v starts, in bytes: the end of v for one
+// past its last.
+func byteAt(v string, i int) int {
+	at := 0
+	for g := displaywidth.StringGraphemes(v); i > 0 && g.Next(); i-- {
+		at += len(g.Value())
+	}
+	return at
+}
+
+// charAt is the character that the byte at off of v is in: the count of
+// those before it.
+func charAt(v string, off int) int {
+	n, at := 0, 0
+	for g := displaywidth.StringGraphemes(v); g.Next() && at+len(g.Value()) <= off; n++ {
+		at += len(g.Value())
+	}
+	return n
 }
 
 // chars is how many characters (grapheme clusters) s has, as a field's
