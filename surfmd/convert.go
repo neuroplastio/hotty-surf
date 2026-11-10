@@ -1,6 +1,7 @@
 package surfmd
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -298,43 +299,49 @@ func (cv *converter) item(n ast.Node) *surfui.Node {
 	return li
 }
 
-// table is a GFM table as main has it: a column of rows, each cell a text
-// as wide as its column's widest, the header bold. L6's table will
-// replace it.
+// table is a GFM table as surfui's Table: a Col a column, its heading the
+// header cell's text and its alignment the table's, a row an Item whose
+// cells are texts, or a line of runs where a cell holds markup.
 func (cv *converter) table(n *east.Table) *surfui.Node {
-	var rows [][]string
-	var head []bool
+	var cols, rows []*surfui.Node
 	for r := n.FirstChild(); r != nil; r = r.NextSibling() {
-		var row []string
+		var cells []*surfui.Node
 		for c := r.FirstChild(); c != nil; c = c.NextSibling() {
-			row = append(row, cv.plain(c))
+			cells = append(cells, cv.cell(c))
 		}
-		rows = append(rows, row)
-		_, isHead := r.(*east.TableHeader)
-		head = append(head, isHead)
-	}
-	var widths []int
-	for _, row := range rows {
-		for i, c := range row {
-			for len(widths) <= i {
-				widths = append(widths, 0)
+		if _, head := r.(*east.TableHeader); head {
+			for i, c := range cells {
+				col := surfui.Col(surfui.TextOf(c))
+				if i < len(n.Alignments) {
+					switch n.Alignments[i] {
+					case east.AlignRight:
+						col.Align("end")
+					case east.AlignCenter:
+						col.Align("center")
+					}
+				}
+				cols = append(cols, col)
 			}
-			widths[i] = max(widths[i], len([]rune(c)))
+			continue
+		}
+		rows = append(rows, surfui.Item(cells...).Key(strconv.Itoa(len(rows))))
+	}
+	return surfui.Table(append(cols, rows...)...)
+}
+
+// cell is a table cell: a text, or a line of runs where it holds markup.
+func (cv *converter) cell(n ast.Node) *surfui.Node {
+	runs := cv.inlines(n)
+	plain := true
+	for _, r := range runs {
+		if surfui.Tag(r) != "" {
+			plain = false
 		}
 	}
-	var out []*surfui.Node
-	for i, row := range rows {
-		cells := make([]*surfui.Node, len(row))
-		for j, c := range row {
-			t := surfui.Text(c).Width(widths[j])
-			if head[i] {
-				t.Bold()
-			}
-			cells[j] = t
-		}
-		out = append(out, surfui.Row(cells...).Gap(2))
+	if plain {
+		return surfui.Text(cv.plain(n))
 	}
-	return surfui.Stack(out...)
+	return surfui.Line(runs...)
 }
 
 // plain is the text of n's inlines, without their markup.

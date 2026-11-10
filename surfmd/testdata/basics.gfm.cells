@@ -1,4 +1,4 @@
-cells 60x56
+cells 60x59
 text
 > Install guide
 >
@@ -43,9 +43,12 @@ text
 > ☑ a task
 > ☐ an open task
 >
-> Name   Count
-> alpha  3
-> beta   12
+>  Name   Count
+> ────────────────────────────────────────────────────────────
+>  alpha      3
+> ────────────────────────────────────────────────────────────
+>  beta      12
+> ────────────────────────────────────────────────────────────
 >
 > ▎ 󰋽 Note
 > ▎ Useful information.
@@ -100,9 +103,12 @@ style
 =
 =
 =
-= aaaa...aaaaa
+= .kkkk...kkkkk
+= hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 =
+= hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 =
+= hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 =
 = l.m.mmmm
 = l

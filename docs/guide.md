@@ -826,9 +826,10 @@ doc := surfmd.Convert(src, surfmd.GFM(), surfmd.Anchors(github))
   converter tokenizes nothing. Where `f` returns nil, a `go` or `surf`
   block is lexed by the block's own lexer and any other is plain. In
   `Compact` prose a block wraps, since its box is narrow.
-- **Until `table` is in the vocabulary** (the plan's L6), a table is a column
-  of rows of `text`s as wide as their columns' widest: one function in
-  `surfmd/convert.go` (`table`), to be replaced.
+- **A GFM table** is surfui's `table`: a `col` for each column (its
+  heading from the header row, its alignment from the delimiter row) and an
+  `item` for each row, its cells `text`s, or a `line` of runs where a cell
+  has markup (a link, code).
 
 ### In a template
 

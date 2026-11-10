@@ -1,4 +1,4 @@
-cells 60x25
+cells 60x29
 text
 > hotty-surf
 >
@@ -9,10 +9,14 @@ text
 >
 > Features
 >
-> Feature  Status
-> Links    done
-> Prose    done
-> Tables   table
+>  Feature  Status
+> ────────────────────────────────────────────────────────────
+>  Links    done
+> ────────────────────────────────────────────────────────────
+>  Prose    done
+> ────────────────────────────────────────────────────────────
+>  Tables   table
+> ────────────────────────────────────────────────────────────
 >
 > ☑ Links
 > ☑ Prose
@@ -35,10 +39,14 @@ style
 =
 = aaaaaaaa
 =
-= aaaaaaa..aaaaaa
+= .eeeeeee..eeeeee
+= ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 =
+= ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 =
-=
+= ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+= ..........ggggg
+= ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 =
 =
 =
@@ -47,20 +55,22 @@ style
 = aaaaaaa.aa
 =
 =
-= .......eeeeeeeeeeee
+= .......gggggggggggg
 =
-= f.g.ggggggg
-= f.................eeee.......dddd
+= h.i.iiiiiii
+= h.................gggg.......dddd
 . fg/bg
 a fg/bg bold
 b accent/bg
 c accent/bg bold
 d accent/bg underline
-e fg/code-ground
-f error/bg
-g error/bg bold
+e muted/bg
+f line/bg
+g fg/code-ground
+h error/bg
+i error/bg bold
 hits
 @ 11,5 5x1 r.0.2.1.0.1
 links
 @ 11,5 5x1 guide.md
-@ 29,24 4x1 https://example.com
+@ 29,28 4x1 https://example.com
