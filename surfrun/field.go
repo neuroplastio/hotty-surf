@@ -42,8 +42,8 @@ func (s *Surface) fieldEnter(key string) bool {
 		return false
 	}
 	n := s.index[s.focused]
-	if n == nil || !surfui.Commits(n) {
-		return false
+	if n == nil || !surfui.Commits(n) || surfui.Tag(n) == "textarea" {
+		return false // Enter is a newline in a field of several lines
 	}
 	h, ok := s.edits[s.focused]
 	if ok {

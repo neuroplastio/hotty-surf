@@ -29,6 +29,7 @@ func (p program) Event(e hotty.Event) (took, redraw bool)     { return p.s.Event
 func (p program) ListEvent(e hotty.Event) (took, redraw bool) { return p.s.ListEvent(e) }
 func (p program) MenuEvent(e hotty.Event) (took, redraw bool) { return p.s.MenuEvent(e) }
 func (p program) Key(name string) (took, redraw bool)         { return p.s.Key(name) }
+func (p program) Height(id string, rows int) bool             { _, due := p.s.Height(id, rows); return due }
 func (p program) Keys() ([]cells.KeyUse, cells.Chars)         { return p.s.Keys() }
 
 // Hues are the surface's, which the renderer draws each in its terminal

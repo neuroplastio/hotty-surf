@@ -46,6 +46,10 @@ type Event struct {
 	Mods int
 	// Count is a click's place in its run of clicks.
 	Count int
+	// Rows is a "height"'s: the rows a field of several lines has now. It
+	// comes from the cells' wrap (Surface.Height), never from a host's
+	// event.
+	Rows int
 	// Drag is a drag's, in the events its handlers hear: "dragstart" and
 	// "dragend" on the dragged element, "drop" on the target.
 	Drag Drag
