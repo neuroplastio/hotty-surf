@@ -204,9 +204,16 @@ The order is the maintainer's, via gov (2026-10-30):
     (`vault/journal/2026-11-10-gallery-button-scene.md`): `make gallery`
     from the working tree, and the button as a scene
     (`internal/stories/button.surf`).
+  - [x] The second slice, on the same branch, not landed
+    (`vault/journal/2026-11-10-gallery-second-slice.md`), from the
+    maintainer's try of the first: a scene's top no longer cut off, a
+    row that wraps (`wrap`), no focus outline on a surface, dense out
+    of the Density control, the sidebar a Compact tree, and no switch
+    or column that can do nothing for the story.
   - Proposed, none started: the other components as scenes; the Go
-    loop; surfaces beside cells; the frame; the gates on the `.surf`
-    stories.
+    loop; surfaces beside cells; the toolbar, the default theme and a
+    key bar; the gates on the `.surf` stories; the layout vocabulary
+    against flexbox; Dense's dependents (`vault/knowledge/dense.md`).
 - [x] **The gallery** (merge 20f8f7a), alongside: the live story
   browser, `cmd/surfgallery`, `sh scripts/gallery.sh [--web]`.
   - Its sidebar has stories.All, a generated story for every widget,
