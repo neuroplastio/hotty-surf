@@ -253,3 +253,5 @@ blitz-gaps.
   and the accessible name is a new `aria-label` (six uses in the repo
   moved to it); new attributes `type`, `submit`, `error`, `aria-label`; a
   field with a label or an error is wrapped in a stack and keeps its id.
+- **margin's feedback (2026-11-10)** drained (merge bba4dbd):
+  `Surface.NoMenu` for a host that draws no menu; surfgen pinned by mise.
