@@ -4,6 +4,7 @@ import (
 	"html"
 	"slices"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -234,6 +235,105 @@ func SVGIcon(glyph, path string) *Node {
 
 // Field is a one-line text field.
 func Field() *Node { return El("input").Class("u-field").Attr("type", "text") }
+
+// Rows makes n, a Field, a field of several lines, a textarea: it starts
+// lo rows tall and grows with its text up to hi, then scrolls; where lo
+// is hi it is that tall always. Rows(1, 1) is a one-line Field. A field
+// of several lines wraps at its width (ModWrap(n, false) turns that
+// off), Enter and Shift+Enter type a newline in it, and a host
+// spell-checks it (Spellcheck turns that off). The cells grow it by the
+// wrap; a host grows it with field-sizing: content, between lo and hi rows
+// (hotty-blitz's L5b; vault/knowledge/blitz-gaps.md).
+func (n *Node) Rows(lo, hi int) *Node {
+	lo = max(lo, 1)
+	hi = max(hi, lo)
+	if n.tag == "input" && hi > 1 {
+		n.tag = "textarea"
+		n.dropAttr("type")
+		if _, ok := AttrOf(n, "spellcheck"); !ok {
+			n.Attr("spellcheck", "true")
+		}
+		if _, ok := AttrOf(n, "wrap"); !ok {
+			n.Attr("wrap", "soft")
+		}
+	}
+	if n.tag == "textarea" {
+		n.Attr("rows", strconv.Itoa(lo)).Attr("data-rows", strconv.Itoa(lo)+".."+strconv.Itoa(hi))
+		n.Var("u-rows", strconv.Itoa(lo)).Var("u-rows-max", strconv.Itoa(hi)).Class("u-area")
+	}
+	return n
+}
+
+func (n *Node) dropAttr(k string) {
+	n.attrs = slices.DeleteFunc(n.attrs, func(a attr) bool { return a.k == k })
+}
+
+// RowsOf is the rows a field has: its least and its most, 1 and 1 for a
+// field of one line.
+func RowsOf(n *Node) (lo, hi int) {
+	v, ok := AttrOf(n, "data-rows")
+	if !ok {
+		return 1, 1
+	}
+	a, b, _ := strings.Cut(v, "..")
+	lo, _ = strconv.Atoi(a)
+	hi, _ = strconv.Atoi(b)
+	lo = max(lo, 1)
+	return lo, max(hi, lo)
+}
+
+// Spellcheck sets whether a host checks the spelling of a field of
+// several lines: on by default, a comment being prose. The cells have no
+// spell check.
+func (n *Node) Spellcheck(on bool) *Node {
+	return n.Attr("spellcheck", strconv.FormatBool(on))
+}
+
+// Where a field's caret is when it first shows, and when its value is
+// set by the program: after it re-renders with another value.
+const (
+	// CaretStart puts it before the text.
+	CaretStart = "start"
+	// CaretEnd puts it after the text: a resumed draft opens so.
+	CaretEnd = "end"
+	// CaretKeep leaves it where the user had it, clamped to the new
+	// text; the default.
+	CaretKeep = "keep"
+)
+
+// Caret says where a text field's caret goes when its value is set by the
+// program (CaretStart, CaretEnd, CaretKeep). The same value again moves
+// nothing, whichever it is.
+func (n *Node) Caret(at string) *Node { return n.Attr("data-caret", at) }
+
+// CaretOf is where n's caret goes when the program sets its value:
+// CaretStart, CaretEnd or CaretKeep. A field that doesn't say gets
+// CaretKeep where it has several lines, and CaretEnd where it has one, as
+// a host's field does.
+func CaretOf(n *Node) string {
+	v, _ := AttrOf(n, "data-caret")
+	switch v {
+	case CaretStart, CaretEnd, CaretKeep:
+		return v
+	}
+	if lo, hi := RowsOf(n); max(lo, hi) > 1 {
+		return CaretKeep
+	}
+	return CaretEnd
+}
+
+// Trap keeps the keyboard in a Stack while it shows: Tab and Shift+Tab
+// go from its last element that takes it to its first, and back, and
+// never out. The cells do it. A host keeps Tab for itself (SPEC §10.2),
+// so there the keyboard leaves the surface until hotty's V6-02 lets a
+// field give the program Tab; the attribute is on the element for then.
+func (n *Node) Trap() *Node { return n.Attr("data-trap", "") }
+
+// Traps reports whether n keeps the keyboard in (Trap).
+func Traps(n *Node) bool {
+	_, ok := AttrOf(n, "data-trap")
+	return ok
+}
 
 // Switch is a boolean, drawn as a track with a knob: a button, so that
 // a click, Space and Enter flip it alike. Its OnClick flips it.
@@ -508,7 +608,12 @@ func (n *Node) Muted() *Node { return n.Class("u-tone-muted") }
 func (n *Node) Small() *Node { return n.Class("u-small") }
 
 // Wrap lets a Text wrap at its box's edge.
-func (n *Node) Wrap() *Node { return n.Class("u-wrap") }
+func (n *Node) Wrap() *Node {
+	if n.tag == "textarea" {
+		n.Attr("wrap", "soft")
+	}
+	return n.Class("u-wrap")
+}
 
 // Grow lets n take the room left in its Row or Stack.
 func (n *Node) Grow() *Node { return n.Class("u-grow") }
