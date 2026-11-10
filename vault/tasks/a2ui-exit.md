@@ -89,13 +89,13 @@ Sizes as the board's: S one leg, M two or three.
 ### Phase 1: the shared base
 
 - [x] **L1. Intake** (e1b0f54: this plan, Q-0002 to Q-0004, the board's pointer).
-- [ ] **L2. The tour branch, rebased; code and its roles** (A3, B4;
+- [x] **L2. The tour branch, rebased; code and its roles** (A3, B4;
   after Q-0003). The branch on main at the new path. `code` lands in
   Q-0003's shape with the approved syntax tokens (`syn.*` roles in
   surf.css and `cells.Role`, a theme default for each, and
   `code.ground`). Wrap at a space with a hanging indent; scroll across
   without it. M.
-- [ ] **L3. checkbox, tabs, progress, from the branch** (A6, A10, part of
+- [x] **L3. checkbox, tabs, progress, from the branch** (A6, A10, part of
   A11). Already reviewed; a rebase, the goldens again, and A6's `change`
   event if the maintainer wants the list's `@change` over the branch's
   `@click`. S.
