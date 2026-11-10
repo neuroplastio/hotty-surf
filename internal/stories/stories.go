@@ -437,6 +437,61 @@ var All = []Story{
 			surfui.Row(surfui.Text("On a row:").Muted(), surfui.Link("/docs/api", surfui.Str("API reference"))).Gap(2),
 		).Gap(1)
 	}},
+	{"table/static", 56, func() *surfui.Node {
+		// A Markdown table, one to one: its columns' headings and
+		// alignment, rows that are items with no selection, so they are
+		// split by hairlines.
+		row := func(flag, def, what string) *surfui.Node {
+			return surfui.Item(surfui.Line(surfui.Str(flag)).Semibold(), surfui.Text(def), surfui.Text(what)).Key(flag)
+		}
+		return surfui.Table(
+			surfui.Col("Flag"), surfui.Col("Default").Align("end"), surfui.Col("What it does").FillCol(),
+			row("--theme", "graphite", "The surface's colours"),
+			row("--density", "compact", "How much room a line takes"),
+			row("--no-links", "false", "Leaves OSC 8 hyperlinks out of the cells"),
+		)
+	}},
+	{"table/threads", 72, func() *surfui.Node {
+		// A threads view: columns declared once, one selected row on a
+		// focused table, a muted resolved row, a chip in a cell, a sort
+		// chevron on the age. The data is made up.
+		row := func(sel bool, state, tone, doc, summary, age string, chip string) *surfui.Node {
+			cell := surfui.Line(surfui.Text(summary))
+			if chip != "" {
+				cell.Add(surfui.Chip(chip).Fill(surfui.Warn))
+			}
+			return surfui.Item(surfui.Glyph(state).Tone(surfui.Tone(tone)), surfui.Text(doc), cell, surfui.Text(age)).Key(doc + summary).Selected(sel)
+		}
+		return Force(surfui.Table(
+			surfui.Col("").Width(2),
+			surfui.Col("document").Max(0, 40),
+			surfui.Col("thread").FillCol(),
+			surfui.Col("age").Align("end").Muted().Sort("descending"),
+			row(false, "●", "warn", "README.md", "Is this still true after the rename?", "3h", ""),
+			row(true, "●", "warn", "docs/surf.md", "The table's max wants an example", "5h", "block gone"),
+			row(false, "✓", "ok", "docs/spec.md", "Typo in the second paragraph", "2d", ""),
+			row(false, "●", "warn", "internal/cmd/long-name-of-a-directory/main.go", "Why is this one so long", "3d", ""),
+		).Focusable(), "within")
+	}},
+	{"table/empty", 56, func() *surfui.Node {
+		return surfui.Table(
+			surfui.Col("document"), surfui.Col("thread").FillCol(),
+			surfui.Empty(surfui.Text("No threads yet. Comment on any block to start one.").Muted()),
+		)
+	}},
+	{"table/scroll", 56, func() *surfui.Node {
+		// A table of twenty made-up files a Height of ten rows tall, whose
+		// rows scroll under a header that stays, the selected one in view,
+		// with its range in the foot. A story is still: it draws the rows
+		// from the top, as the selection implies.
+		t := surfui.Table(surfui.Col("file"), surfui.Col("size").Align("end"), surfui.Col("changed").Align("end").Muted())
+		for i := range 20 {
+			t.Add(surfui.Item(surfui.Text(fmt.Sprintf("internal/part-%02d.go", i)), surfui.Text(fmt.Sprintf("%d.%d KB", i/3+1, i%10)),
+				surfui.Text(fmt.Sprintf("%dh", i+1))).Key(strconv.Itoa(i)).Selected(i == 3))
+		}
+		t.Add(surfui.Text(surfui.RangeText()).Muted().Small().Key("range"))
+		return Force(t.Height(10).Scroll(), "within")
+	}},
 	{"button/states", 60, func() *surfui.Node {
 		return surfui.Row(surfui.Button("Restart"), surfui.Button("Focus").Fill(surfui.Accent), surfui.Button("Disabled").Disabled(true)).Gap(1)
 	}},

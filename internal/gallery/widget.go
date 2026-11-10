@@ -29,6 +29,7 @@ var widgetShape = &surf.Shape{Name: "WidgetStory", Component: true, Methods: []s
 	{Name: "click", Args: []cellite.Type{surf.EventType}},
 	{Name: "focus", Args: []cellite.Type{surf.EventType}},
 	{Name: "follow", Args: []cellite.Type{cellite.String, surf.EventType}},
+	{Name: "activate", Args: []cellite.Type{cellite.String}},
 	{Name: "change", Args: []cellite.Type{cellite.String}},
 	{Name: "input", Args: []cellite.Type{cellite.String}},
 	{Name: "height", Args: []cellite.Type{cellite.Int}},
@@ -81,7 +82,7 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 	for _, a := range ws.attrs() {
 		// A string it draws: not its name, its label or its tooltip,
 		// which it doesn't draw in place.
-		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "aria-label" && a.Name != "error" && a.Name != "hue" && a.Name != "title" && a.Name != "anchor"}
+		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "aria-label" && a.Name != "error" && a.Name != "hue" && a.Name != "title" && a.Name != "anchor" && a.Name != "max"}
 		switch {
 		case a.Name == "hue": // one of the stories' palette's, which the story declares
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, stories.Palette.Names()...)
@@ -356,7 +357,12 @@ type placement struct {
 // root.
 var placements = func() map[string]placement {
 	inRow := placement{"<row>", "</row>", 0}
-	m := map[string]placement{"spacer": {"<row><text muted>start</text>", "<text muted>end</text></row>", 1}}
+	m := map[string]placement{
+		"spacer": {"<row><text muted>start</text>", "<text muted>end</text></row>", 1},
+		// A column is read by its table, which draws it over a row.
+		"col":   {"<table><col width=\"12\">File</col>", "<item selected><text>alpha.go</text><text>Ready</text></item></table>", 1},
+		"empty": {"<table><col>File</col>", "</table>", 1},
+	}
 	for _, tag := range []string{"chip", "glyph", "icon", "dot", "key", "button", "switch", "select", "cycle", "face"} {
 		m[tag] = inRow
 	}
@@ -372,6 +378,16 @@ func sampleKid(tag string, i int) string {
 			return "<item selected>Item " + n + "</item>"
 		}
 		return "<item>Item " + n + "</item>"
+	case "table":
+		switch i {
+		case 0:
+			return "<col width=\"12\">File</col>"
+		case 1:
+			return "<col fill>State</col>"
+		case 2:
+			return "<item selected><text>alpha.go</text><text>Ready</text></item>"
+		}
+		return "<item><text>Row " + n + "</text><text>Ready</text></item>"
 	case "item":
 		if i == 0 {
 			return "<glyph>●</glyph>"

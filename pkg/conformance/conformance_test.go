@@ -21,24 +21,25 @@ var update = flag.Bool("update", false, "write each case's document, ops and log
 
 // mode is a way a root is drawn, for each fixture.
 type mode struct {
-	name  string
-	view  func(*Board) surflive.Component
-	form  func(*Form) surflive.Component
-	frame func(*Frame) surflive.Component
-	shelf func(*Shelf) surflive.Component
-	deck  func(*Deck) surflive.Component
-	crew  func(*Crew) surflive.Component
-	draft func(*Draft) surflive.Component
-	links func(*Links) surflive.Component
-	prose func(*Prose) surflive.Component
-	tune  func(*Tune) surflive.Component
-	sign  func(*Signup) surflive.Component
+	name    string
+	view    func(*Board) surflive.Component
+	form    func(*Form) surflive.Component
+	frame   func(*Frame) surflive.Component
+	shelf   func(*Shelf) surflive.Component
+	deck    func(*Deck) surflive.Component
+	crew    func(*Crew) surflive.Component
+	draft   func(*Draft) surflive.Component
+	links   func(*Links) surflive.Component
+	prose   func(*Prose) surflive.Component
+	tune    func(*Tune) surflive.Component
+	sign    func(*Signup) surflive.Component
+	threads func(*Threads) surflive.Component
 }
 
 // modes are the ways a root is drawn: each case holds in both, alike.
 var modes = []mode{
-	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew, surfInterpDraft, surfInterpLinks, surfInterpProse, surfInterpTune, surfInterpSignup},
-	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew, surfCompiledDraft, surfCompiledLinks, surfCompiledProse, surfCompiledTune, surfCompiledSignup},
+	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew, surfInterpDraft, surfInterpLinks, surfInterpProse, surfInterpTune, surfInterpSignup, surfInterpThreads},
+	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew, surfCompiledDraft, surfCompiledLinks, surfCompiledProse, surfCompiledTune, surfCompiledSignup, surfCompiledThreads},
 }
 
 // suite runs the cases in the fixtures' two modes.
@@ -104,6 +105,10 @@ func fixtureRoot(t testing.TB, root string, state []byte, m mode) (surflive.Comp
 		g := &Signup{}
 		read(g)
 		return m.sign(g), func() []string { return g.Log }
+	case "Threads":
+		th := &Threads{}
+		read(th)
+		return m.threads(th), func() []string { return th.Log }
 	}
 	t.Fatalf("root: no fixture %s", root)
 	return nil, nil
