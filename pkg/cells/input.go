@@ -219,6 +219,35 @@ func (r *Renderer) Paste(text string) (taken, redraw bool) {
 	return true, true
 }
 
+// Take gives the keyboard to the element id, as a press on it does (the
+// program hears focus, and a field that had it commits), and reports
+// whether id is on the screen and can take it. For a host that acts by id
+// (a page's "skip to"), and for a test.
+func (r *Renderer) Take(id string) (taken, redraw bool) {
+	r.ensure()
+	n := r.index[id]
+	if n == nil || !focusable(n) {
+		return false, false
+	}
+	r.dirty = true
+	r.changed = false
+	r.settle(r.take(id, true))
+	return true, true
+}
+
+// Blur takes the keyboard from the surface, as a press on what takes no
+// focus does: the focused field commits and the program hears blur. It
+// reports whether the surface had it.
+func (r *Renderer) Blur() (taken, redraw bool) {
+	if !r.kb {
+		return false, false
+	}
+	r.dirty = true
+	r.changed = false
+	r.settle(r.blur())
+	return true, true
+}
+
 // Focus is the terminal's focus coming (in) or going: going, the surface
 // loses the keyboard, as a host's does (blur, and the field commits);
 // coming back, what had it has it again.

@@ -437,3 +437,27 @@ func TestAreaWheelScrollsRows(t *testing.T) {
 		t.Errorf("the wheel at the field's end still taken")
 	}
 }
+
+// Take gives a field the keyboard by id, and Blur takes it back.
+func TestTakeAndBlur(t *testing.T) {
+	c := newComposer("one")
+	r := show(c)
+	r.Draw(20, 6)
+	id := r.Focused() // the composer's field has the keyboard from the start
+	if id == "" {
+		t.Fatal("the field does not start with the keyboard")
+	}
+	r.Blur()
+	if s := r.Draw(20, 6); s.Caret.Visible {
+		t.Fatalf("the caret is shown with no keyboard: %+v", s.Caret)
+	}
+	if taken, _ := r.Take("r.knothing"); taken {
+		t.Errorf("Take took an id that is not there")
+	}
+	if taken, _ := r.Take(id); !taken {
+		t.Fatalf("Take did not take the field")
+	}
+	if s := r.Draw(20, 6); !s.Caret.Visible {
+		t.Errorf("no caret after Take")
+	}
+}
