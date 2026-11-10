@@ -61,6 +61,7 @@
       </stack>
       <stack grow key="mid">
         <heading key="title">{{ title() }}</heading>
+        <text :if="about() != ''" muted wrap key="about">{{ about() }}</text>
         <embed :of="canvas()" :key="'c-' + sel"/>
         <row gap="2" key="loghead">
           <text bold grow>Actions</text>

@@ -39,6 +39,7 @@ var surfShapes = []*surf.Shape{&surfShapeGallery, &surfShapeControl, &surfShapeB
 var surfShapeGallery = surf.Shape{Name: "Gallery", Component: true,
 	Fields: []surf.Field{{Name: "filter", Type: cellite.String}, {Name: "sel", Type: cellite.String}, {Name: "theme", Type: cellite.String}, {Name: "density", Type: cellite.String}, {Name: "width", Type: cellite.Int}, {Name: "cells", Type: cellite.Bool}, {Name: "states", Type: cellite.Bool}, {Name: "reference", Type: cellite.Bool}, {Name: "controls", Type: cellite.ListOf(cellite.StructOf("Control"))}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
 	Methods: []surf.Method{
+		{Name: "about", Result: surf.TypeOf(cellite.String)},
 		{Name: "asideWidth", Result: surf.TypeOf(cellite.Int)},
 		{Name: "bar", Result: surf.TypeOf(cellite.ListOf(cellite.StructOf("BarRow")))},
 		{Name: "bare"},
@@ -130,76 +131,78 @@ func (o surfGallery) Shape() *surf.Shape { return &surfShapeGallery }
 func (o surfGallery) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
 	case 0:
-		return cellite.IntValue(int64(o.p.AsideWidth()))
+		return cellite.StringValue(string(o.p.About()))
 	case 1:
-		return cellite.ListValue(surfList3(o.p.Bar()))
+		return cellite.IntValue(int64(o.p.AsideWidth()))
 	case 2:
-		o.p.Bare()
+		return cellite.ListValue(surfList3(o.p.Bar()))
 	case 3:
-		return cellite.BoolValue(bool(o.p.CanShowControls()))
+		o.p.Bare()
 	case 4:
-		return cellite.BoolValue(bool(o.p.CanShowStories()))
+		return cellite.BoolValue(bool(o.p.CanShowControls()))
 	case 5:
-		return surf.ComponentValue(o.p.Canvas())
+		return cellite.BoolValue(bool(o.p.CanShowStories()))
 	case 6:
-		o.p.Choose(int(args[0].Int()), string(args[1].String()))
+		return surf.ComponentValue(o.p.Canvas())
 	case 7:
-		o.p.ClearLog()
+		o.p.Choose(int(args[0].Int()), string(args[1].String()))
 	case 8:
-		return cellite.ListValue(surfList2(o.p.Densities()))
+		o.p.ClearLog()
 	case 9:
-		return cellite.StringValue(string(o.p.Fit()))
+		return cellite.ListValue(surfList2(o.p.Densities()))
 	case 10:
-		o.p.Flip(int(args[0].Int()))
+		return cellite.StringValue(string(o.p.Fit()))
 	case 11:
-		o.p.FlipCells()
+		o.p.Flip(int(args[0].Int()))
 	case 12:
-		o.p.FlipControls()
+		o.p.FlipCells()
 	case 13:
-		o.p.FlipReference()
+		o.p.FlipControls()
 	case 14:
-		o.p.FlipStates()
+		o.p.FlipReference()
 	case 15:
-		o.p.FlipStories()
+		o.p.FlipStates()
 	case 16:
-		return cellite.BoolValue(bool(o.p.HasCells()))
+		o.p.FlipStories()
 	case 17:
-		return cellite.BoolValue(bool(o.p.HasReference()))
+		return cellite.BoolValue(bool(o.p.HasCells()))
 	case 18:
-		return cellite.BoolValue(bool(o.p.HasStates()))
+		return cellite.BoolValue(bool(o.p.HasReference()))
 	case 19:
-		o.p.Move(int(args[0].Int()))
+		return cellite.BoolValue(bool(o.p.HasStates()))
 	case 20:
-		return cellite.IntValue(int64(o.p.NameWidth()))
+		o.p.Move(int(args[0].Int()))
 	case 21:
-		o.p.Pick(string(args[0].String()))
+		return cellite.IntValue(int64(o.p.NameWidth()))
 	case 22:
-		return cellite.StringValue(string(o.p.Quiet()))
+		o.p.Pick(string(args[0].String()))
 	case 23:
-		o.p.SetDensity(string(args[0].String()))
+		return cellite.StringValue(string(o.p.Quiet()))
 	case 24:
-		o.p.SetFilter(string(args[0].String()))
+		o.p.SetDensity(string(args[0].String()))
 	case 25:
-		o.p.SetTheme(string(args[0].String()))
+		o.p.SetFilter(string(args[0].String()))
 	case 26:
-		o.p.SetWidth(string(args[0].String()))
+		o.p.SetTheme(string(args[0].String()))
 	case 27:
-		return cellite.BoolValue(bool(o.p.ShowControls()))
+		o.p.SetWidth(string(args[0].String()))
 	case 28:
-		return cellite.BoolValue(bool(o.p.ShowStories()))
+		return cellite.BoolValue(bool(o.p.ShowControls()))
 	case 29:
-		return cellite.ListValue(surfList4(o.p.Shown()))
+		return cellite.BoolValue(bool(o.p.ShowStories()))
 	case 30:
-		return cellite.IntValue(int64(o.p.SideWidth()))
+		return cellite.ListValue(surfList4(o.p.Shown()))
 	case 31:
-		return cellite.ListValue(surfList2(o.p.Tail()))
+		return cellite.IntValue(int64(o.p.SideWidth()))
 	case 32:
-		return cellite.ListValue(surfList2(o.p.Themes()))
+		return cellite.ListValue(surfList2(o.p.Tail()))
 	case 33:
-		return cellite.StringValue(string(o.p.Title()))
+		return cellite.ListValue(surfList2(o.p.Themes()))
 	case 34:
-		return cellite.StringValue(string(o.p.Uncontrolled()))
+		return cellite.StringValue(string(o.p.Title()))
 	case 35:
+		return cellite.StringValue(string(o.p.Uncontrolled()))
+	case 36:
 		return cellite.ListValue(surfList2(o.p.Widths()))
 	}
 	return cellite.NullValue()
@@ -948,95 +951,106 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 						k48 = append(k48, n49)
 						e.Leave()
 					}
-					// gallery.surf:64:9 <embed>
-					if e.Enter("gallery.surf", 64, 9) {
-						start50 := len(k48)
-						k48 = e.Embed("gallery.surf", 64, 9, surf.ComponentValue(c.Canvas()), k48)
-						for _, kn := range k48[start50:] {
+					if c.About() != "" {
+						// gallery.surf:64:9 <text>
+						if e.Enter("gallery.surf", 64, 9) {
+							n50 := surfui.Text(c.About())
+							surf.ModKey(n50, "about")
+							surf.ModMuted(n50, true)
+							surf.ModWrap(n50, true)
+							k48 = append(k48, n50)
+							e.Leave()
+						}
+					}
+					// gallery.surf:65:9 <embed>
+					if e.Enter("gallery.surf", 65, 9) {
+						start51 := len(k48)
+						k48 = e.Embed("gallery.surf", 65, 9, surf.ComponentValue(c.Canvas()), k48)
+						for _, kn := range k48[start51:] {
 							kn.Key(("c-" + c.Sel))
 						}
 						e.Leave()
 					}
-					// gallery.surf:65:9 <row>
-					if e.Enter("gallery.surf", 65, 9) {
-						var k51 []*surfui.Node
-						// gallery.surf:66:11 <text>
-						if e.Enter("gallery.surf", 66, 11) {
-							n52 := surfui.Text("Actions")
-							surf.ModBold(n52, true)
-							surf.ModGrow(n52, true)
-							k51 = append(k51, n52)
-							e.Leave()
-						}
+					// gallery.surf:66:9 <row>
+					if e.Enter("gallery.surf", 66, 9) {
+						var k52 []*surfui.Node
 						// gallery.surf:67:11 <text>
 						if e.Enter("gallery.surf", 67, 11) {
-							n53 := surfui.Text(strconv.FormatInt(int64(len(c.Log)), 10) + " calls")
-							surf.ModMuted(n53, true)
-							surf.ModSmall(n53, true)
-							k51 = append(k51, n53)
+							n53 := surfui.Text("Actions")
+							surf.ModBold(n53, true)
+							surf.ModGrow(n53, true)
+							k52 = append(k52, n53)
 							e.Leave()
 						}
-						// gallery.surf:68:11 <button>
+						// gallery.surf:68:11 <text>
 						if e.Enter("gallery.surf", 68, 11) {
-							n54 := surfui.Button("Clear")
-							surf.ModKey(n54, "clear")
-							surf.ModBare(n54, true)
-							n54.On("click", func() { c.ClearLog() })
-							k51 = append(k51, n54)
+							n54 := surfui.Text(strconv.FormatInt(int64(len(c.Log)), 10) + " calls")
+							surf.ModMuted(n54, true)
+							surf.ModSmall(n54, true)
+							k52 = append(k52, n54)
 							e.Leave()
 						}
-						n51 := surfui.Row(k51...)
-						surf.ModKey(n51, "loghead")
-						surf.ModGap(n51, 2)
-						k48 = append(k48, n51)
+						// gallery.surf:69:11 <button>
+						if e.Enter("gallery.surf", 69, 11) {
+							n55 := surfui.Button("Clear")
+							surf.ModKey(n55, "clear")
+							surf.ModBare(n55, true)
+							n55.On("click", func() { c.ClearLog() })
+							k52 = append(k52, n55)
+							e.Leave()
+						}
+						n52 := surfui.Row(k52...)
+						surf.ModKey(n52, "loghead")
+						surf.ModGap(n52, 2)
+						k48 = append(k48, n52)
 						e.Leave()
 					}
-					// gallery.surf:70:9 <stack>
-					if e.Enter("gallery.surf", 70, 9) {
-						var k55 []*surfui.Node
-						for i56, x56 := range c.Tail() {
-							// gallery.surf:71:11 <text>
-							if e.Enter("gallery.surf", 71, 11) {
-								n57 := surfui.Text(x56)
+					// gallery.surf:71:9 <stack>
+					if e.Enter("gallery.surf", 71, 9) {
+						var k56 []*surfui.Node
+						for i57, x57 := range c.Tail() {
+							// gallery.surf:72:11 <text>
+							if e.Enter("gallery.surf", 72, 11) {
+								n58 := surfui.Text(x57)
 								switch {
 								default:
-									v58, ok58 := e.Eval("gallery.surf", 71, 11, surfProgsGallery()[45], surf.Act(func(i int) cellite.Value {
+									v59, ok59 := e.Eval("gallery.surf", 72, 11, surfProgsGallery()[47], surf.Act(func(i int) cellite.Value {
 										switch i {
 										case 12:
-											return cellite.IntValue(int64(i56))
+											return cellite.IntValue(int64(i57))
 										}
 										return surfGallery{c}.Field(i - 1)
 									}))
-									if !ok58 {
-										break
-									}
-									v59, ok59 := e.AsText("gallery.surf", 71, 11, v58)
 									if !ok59 {
 										break
 									}
-									surf.ModKey(n57, v59)
+									v60, ok60 := e.AsText("gallery.surf", 72, 11, v59)
+									if !ok60 {
+										break
+									}
+									surf.ModKey(n58, v60)
 								}
-								surf.ModSmall(n57, true)
-								k55 = append(k55, n57)
+								surf.ModSmall(n58, true)
+								k56 = append(k56, n58)
 								e.Leave()
 							}
 						}
 						if int64(len(c.Log)) == int64(0) {
-							// gallery.surf:72:11 <text>
-							if e.Enter("gallery.surf", 72, 11) {
-								n60 := surfui.Text(c.Quiet())
-								surf.ModKey(n60, "quiet")
-								surf.ModMuted(n60, true)
-								surf.ModSmall(n60, true)
-								surf.ModWrap(n60, true)
-								k55 = append(k55, n60)
+							// gallery.surf:73:11 <text>
+							if e.Enter("gallery.surf", 73, 11) {
+								n61 := surfui.Text(c.Quiet())
+								surf.ModKey(n61, "quiet")
+								surf.ModMuted(n61, true)
+								surf.ModSmall(n61, true)
+								surf.ModWrap(n61, true)
+								k56 = append(k56, n61)
 								e.Leave()
 							}
 						}
-						n55 := surfui.Stack(k55...)
-						surf.ModKey(n55, "log")
-						surf.ModHeight(n55, 8)
-						k48 = append(k48, n55)
+						n56 := surfui.Stack(k56...)
+						surf.ModKey(n56, "log")
+						surf.ModHeight(n56, 8)
+						k48 = append(k48, n56)
 						e.Leave()
 					}
 					n48 := surfui.Stack(k48...)
@@ -1046,61 +1060,61 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 					e.Leave()
 				}
 				if c.ShowControls() {
-					// gallery.surf:75:7 <stack>
-					if e.Enter("gallery.surf", 75, 7) {
-						var k61 []*surfui.Node
-						// gallery.surf:76:9 <text>
-						if e.Enter("gallery.surf", 76, 9) {
-							n62 := surfui.Text("Controls")
-							surf.ModKey(n62, "head")
-							surf.ModBold(n62, true)
-							k61 = append(k61, n62)
+					// gallery.surf:76:7 <stack>
+					if e.Enter("gallery.surf", 76, 7) {
+						var k62 []*surfui.Node
+						// gallery.surf:77:9 <text>
+						if e.Enter("gallery.surf", 77, 9) {
+							n63 := surfui.Text("Controls")
+							surf.ModKey(n63, "head")
+							surf.ModBold(n63, true)
+							k62 = append(k62, n63)
 							e.Leave()
 						}
-						// gallery.surf:77:9 <stack>
-						if e.Enter("gallery.surf", 77, 9) {
-							var k63 []*surfui.Node
-							for i64, x64 := range c.Controls {
-								// gallery.surf:78:11 <control-row>
-								if e.Enter("gallery.surf", 78, 11) {
-									start65 := len(k63)
-									k63 = surfRenderGallery_ControlRow(e, k63, c, nil, x64, int64(i64))
+						// gallery.surf:78:9 <stack>
+						if e.Enter("gallery.surf", 78, 9) {
+							var k64 []*surfui.Node
+							for i65, x65 := range c.Controls {
+								// gallery.surf:79:11 <control-row>
+								if e.Enter("gallery.surf", 79, 11) {
+									start66 := len(k64)
+									k64 = surfRenderGallery_ControlRow(e, k64, c, nil, x65, int64(i65))
 									switch {
 									default:
-										p66 := x64
-										if p66 == nil {
-											e.Null("gallery.surf", 78, 11)
+										p67 := x65
+										if p67 == nil {
+											e.Null("gallery.surf", 79, 11)
 											break
 										}
-										for _, kn := range k63[start65:] {
-											kn.Key(p66.Key)
+										for _, kn := range k64[start66:] {
+											kn.Key(p67.Key)
 										}
 									}
 									e.Leave()
 								}
 							}
 							if int64(len(c.Controls)) == int64(0) {
-								// gallery.surf:79:11 <text>
-								if e.Enter("gallery.surf", 79, 11) {
-									n67 := surfui.Text(c.Uncontrolled())
-									surf.ModKey(n67, "none")
-									surf.ModMuted(n67, true)
-									surf.ModSmall(n67, true)
-									surf.ModWrap(n67, true)
-									k63 = append(k63, n67)
+								// gallery.surf:80:11 <text>
+								if e.Enter("gallery.surf", 80, 11) {
+									n68 := surfui.Text(c.Uncontrolled())
+									surf.ModKey(n68, "none")
+									surf.ModMuted(n68, true)
+									surf.ModSmall(n68, true)
+									surf.ModWrap(n68, true)
+									k64 = append(k64, n68)
 									e.Leave()
 								}
 							}
-							n63 := surfui.Stack(k63...)
-							surf.ModKey(n63, ("p-" + c.Sel))
-							surf.ModScroll(n63, true)
-							k61 = append(k61, n63)
+							n64 := surfui.Stack(k64...)
+							surf.ModKey(n64, ("p-" + c.Sel))
+							surf.ModScroll(n64, true)
+							k62 = append(k62, n64)
 							e.Leave()
 						}
-						n61 := surfui.Stack(k61...)
-						surf.ModKey(n61, "aside")
-						surf.ModWidth(n61, int64(c.AsideWidth()))
-						k35 = append(k35, n61)
+						n62 := surfui.Stack(k62...)
+						surf.ModKey(n62, "aside")
+						surf.ModWidth(n62, int64(c.AsideWidth()))
+						k35 = append(k35, n62)
 						e.Leave()
 					}
 				}

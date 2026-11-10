@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-11-09
+Last updated: 2026-11-10
 
 **Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
 2026-10-30): candidate A (Live) with layout in `.surf` templates and
@@ -195,6 +195,18 @@ The order is the maintainer's, via gov (2026-10-30):
   - Left:
     - For the maintainer: the new words, DejaVu Sans for glyph marks, a
       story's `about`, and `.u-box` as a column.
+- [ ] **The gallery for a person** (the maintainer, 2026-11-10, through
+  hotty-pm: its stories are the gate's fixtures, which nobody can judge
+  the look by). One slice at a time, each on the maintainer's go-ahead.
+  The gallery is to show `.surf` stories files only; what one can't
+  show is in `vault/knowledge/surf-gaps.md`.
+  - [x] The first slice, on branch `gallery-human`, not landed
+    (`vault/journal/2026-11-10-gallery-button-scene.md`): `make gallery`
+    from the working tree, and the button as a scene
+    (`internal/stories/button.surf`).
+  - Proposed, none started: the other components as scenes; the Go
+    loop; surfaces beside cells; the frame; the gates on the `.surf`
+    stories.
 - [x] **The gallery** (merge 20f8f7a), alongside: the live story
   browser, `cmd/surfgallery`, `sh scripts/gallery.sh [--web]`.
   - Its sidebar has stories.All, a generated story for every widget,

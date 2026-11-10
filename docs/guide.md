@@ -1780,7 +1780,7 @@ and picks the filter through the select's list:
 
 ## Writing a story
 
-The gallery (`scripts/gallery.sh`, or `go run ./cmd/surfgallery`) draws each
+The gallery (`make gallery`, or `go run ./cmd/surfgallery`) draws each
 component live, with a control for each prop, and logs the calls its
 handlers make. A partial's stories are a file in `internal/stories/`: its tag,
 with its props, once for each story.
@@ -1815,8 +1815,27 @@ with its props, once for each story.
 - The toolbar's States switch draws the story in each of its states,
   made from its controls. A `<state>` adds one, by the values it gives
   the controls: here, the notice at the error level.
-- Run as `scripts/gallery.sh` runs it (`-dev`), the gallery reads the
-  files again as they change.
+- Run as `make gallery` runs it (`-dev`), from the working tree, the
+  gallery reads the files again as they change, the story kept.
+
+A file of a widget of the vocabulary is a scene file: the component as a
+person judges it, with real labels. Each story's children are the scene,
+drawn as wide as the window allows, with no Go state. The file's
+`title` names the component in the list, a story's `name` is its title,
+and its `about` the sentence under it.
+
+```html
+<!-- internal/stories/button.surf -->
+<stories of="button" title="Button">
+  <story name="Buttons on a release page"
+         about="Every kind of button, with a program's labels.">
+    <row gap="1">
+      <button fill="accent">Deploy to production</button>
+      <button bare>Cancel</button>
+    </row>
+  </story>
+</stories>
+```
 
 ## What fails where
 

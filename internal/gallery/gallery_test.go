@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottytest"
@@ -21,7 +22,7 @@ import (
 
 // Every story draws, with no error, in a gallery that draws with none,
 // in both modes: each widget's own, stories.All's, and each stories
-// file's. Each screen with a cells UI draws by it too, and each story
+// file's, the scenes among them. Each screen with a cells UI draws by it too, and each story
 // with states in each of them.
 func TestEveryStoryDraws(t *testing.T) {
 	for _, mode := range modes {
@@ -81,13 +82,15 @@ func TestEveryStoryDraws(t *testing.T) {
 					kinds["widget"]++
 				case s.tree != nil:
 					kinds["tree"]++
+				case s.file.scene:
+					kinds["scene"]++
 				case s.file.screen():
 					kinds["screen"]++
 				default:
 					kinds["composite"]++
 				}
 			}
-			if kinds["widget"] != len(surf.Widgets) || kinds["tree"] == 0 || kinds["composite"] < 15 || kinds["screen"] < 10 || kinds["cells"] < 6 ||
+			if kinds["widget"] != len(surf.Widgets) || kinds["tree"] == 0 || kinds["composite"] < 15 || kinds["scene"] == 0 || kinds["screen"] < 10 || kinds["cells"] < 6 ||
 				kinds["states"] != kinds["widget"]+kinds["composite"] {
 				t.Errorf("the stories drawn: %v", kinds)
 			}
@@ -1015,4 +1018,39 @@ func TestPlaced(t *testing.T) {
 			})
 		})
 	}
+}
+
+// A stories file of a widget is a scene file: the gallery opens on its
+// first story, under Components, with its name as the title, its tag
+// and its sentence under it, and its children drawn as wide as the
+// window leaves beside the stories. An edit of the file in a checkout
+// is in the canvas, the story kept.
+func TestScene(t *testing.T) {
+	dir := checkout(t)
+	g := New()
+	if err := g.Watch(dir, 5*time.Millisecond); err != nil {
+		t.Fatal(err)
+	}
+	sel := "f-button-buttons-on-a-release-page"
+	if g.Sel != sel || g.Shown()[0].Label != "Components" || g.Shown()[1].Label != "Button" {
+		t.Fatalf("the gallery opens on %s, under %v", g.Sel, g.Shown()[:2])
+	}
+	a, _ := startOn(t, surftest.Start, g, Interpreted, sel)
+	if v := a.Surface().TextOf(titleID); v != "Buttons on a release page" {
+		t.Errorf("the title: %q", v)
+	}
+	if v := a.Surface().TextOf("r.kpage.kmain.kmid.kabout"); !strings.HasPrefix(v, "<button>  Every kind of button") {
+		t.Errorf("the line under the title: %q", v)
+	}
+	if !strings.Contains(a.Surface().TextOf(storyID(sel)), "Deploy to production") {
+		t.Errorf("the scene: %q", a.Surface().TextOf(storyID(sel)))
+	}
+	if want := 200 - framePad - sideCols - 1; g.Width != want {
+		t.Errorf("the canvas is %d cells wide in a window of 200, not %d", g.Width, want)
+	}
+	a.Pick(barCtl("theme"), "paper")
+	edit(t, dir, "internal/stories/button.surf", "Save as draft", "Keep as a draft")
+	a.Wait("the scene's new label, in the story and the theme it had", func() bool {
+		return strings.Contains(a.Surface().TextOf(storyID(sel)), "Keep as a draft") && a.Has(canvasID(sel), "u-theme-paper")
+	})
 }

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"testing/fstest"
 
 	surf "neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surflive"
@@ -59,6 +60,18 @@ func (d *drawn) fileStory() {
 		return
 	}
 	st := &f.stories[d.s.at]
+	if f.scene {
+		// A scene has no Go state: its template is the story's children.
+		o := newOwner(d, nil, nil, true)
+		set, err := surf.Load(fstest.MapFS{surf.TemplateName(o.shape.Name) + ".surf": &fstest.MapFile{Data: []byte(sceneTemplate(st))}},
+			[]*surf.Shape{o.shape})
+		if err != nil {
+			d.fail(fmt.Errorf("%s.surf: story %q: %v", f.name, st.name, err))
+			return
+		}
+		d.viewOf(set, o)
+		return
+	}
 	if err := f.pkg.load(); err != nil {
 		d.fail(err)
 		return

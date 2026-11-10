@@ -17,7 +17,8 @@ type story struct {
 	section string // Widgets, Stories, Composites or Screens
 	group   string // its component's: a widget's tag, a template's name
 	name    string
-	cols    int // the canvas's width, in cells
+	about   string // a scene's sentence, under its title
+	cols    int    // the canvas's width, in cells
 	// One of:
 	tree   func() *surfui.Node // a story of stories.All, drawn as it is
 	widget *surf.Widget        // a widget's own, made from its attributes
@@ -27,6 +28,7 @@ type story struct {
 
 // The sections, in the sidebar's order.
 const (
+	scenes     = "Components" // the scenes: a component as a person judges it
 	widgets    = "Widgets"
 	others     = "Stories" // stories.All's that are no widget's
 	composites = "Composites"
@@ -73,6 +75,19 @@ func catalog(src *source) []*story {
 		}
 	}
 	files := readStoryFiles(src.stories, src.packs)
+	// The scenes come first: the gallery opens on one.
+	var first []*story
+	for _, f := range files {
+		if !f.scene {
+			continue
+		}
+		for i, st := range f.stories {
+			first = append(first, &story{id: "f-" + slug(f.name+"-"+st.name), section: scenes, group: cmp.Or(f.title, f.of), name: st.name,
+				about: st.about, cols: cmp.Or(st.cols, f.cols, sceneCols), file: f, at: i})
+		}
+	}
+	out = append(first, out...)
+	files = slices.DeleteFunc(files, func(f *storyFile) bool { return f.scene && f.err == nil })
 	for _, sec := range []struct {
 		name  string
 		order []string
@@ -100,6 +115,10 @@ func catalog(src *source) []*story {
 	}
 	return out
 }
+
+// sceneCols is the width of a scene that names none: wider than any
+// window, so that it takes the room the window has (fitWidth).
+const sceneCols = 400
 
 // orderOf is name's place in order, after all of it where it isn't there.
 func orderOf(order []string, name string) int {

@@ -19,6 +19,12 @@ import "embed"
 // nothing by design is (about="No keys: no caps."). A story of a
 // component (a screen) gives none of these: its Go state is its own.
 //
+// A file of a widget of the vocabulary (of="button") is a scene file: a
+// component as a person judges it. Each story's children are the scene
+// itself, drawn at the window's width with no Go state; its name is its
+// title, its about the sentence under it, and the file's title the
+// component's name in the list (title="Button").
+//
 // The gallery's states matrix draws a story in each of its states, which
 // it makes from the story's controls (default, hover, focus, disabled,
 // error, empty, long text). A <state> names a row of the file's own, by

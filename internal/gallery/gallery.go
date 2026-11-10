@@ -143,7 +143,12 @@ func (g *Gallery) Shown() []Entry {
 	var out []Entry
 	section, group := "", ""
 	for _, s := range g.all {
-		if q != "" && !strings.Contains(strings.ToLower(s.group+"/"+s.name), q) {
+		// A scene is found by its words, not as component/name.
+		find := s.group + "/" + s.name
+		if s.section == scenes {
+			find = s.group + " " + s.name
+		}
+		if q != "" && !strings.Contains(strings.ToLower(find), q) {
 			continue
 		}
 		if s.section != section {
@@ -184,12 +189,29 @@ func (g *Gallery) Widths() []string {
 	return out
 }
 
-// Title is the picked story's name, its component's first.
+// Title is the picked story's name, its component's first; a scene's
+// is its own, as a person reads it.
 func (g *Gallery) Title() string {
-	if g.cur == nil {
+	switch {
+	case g.cur == nil:
 		return "No story"
+	case g.cur.s.section == scenes:
+		return g.cur.s.name
 	}
 	return g.cur.s.group + " / " + g.cur.s.name
+}
+
+// About is a scene's line under its title: its component's tag, and
+// the sentence that says what the scene shows; "" for any other story.
+func (g *Gallery) About() string {
+	if g.cur == nil || g.cur.s.section != scenes {
+		return ""
+	}
+	tag := "<" + g.cur.s.file.of + ">"
+	if g.cur.s.about == "" {
+		return tag
+	}
+	return tag + "  " + g.cur.s.about
 }
 
 // HasCells says the story's component has a cells UI, which the
@@ -207,6 +229,9 @@ func (g *Gallery) Quiet() string {
 	if g.cur != nil && g.cur.tree != nil {
 		return "A story of stories.All has no handlers: a click or a focus on it is logged as the host sends it."
 	}
+	if g.cur != nil && g.cur.s.section == scenes {
+		return "A scene has no handlers: a click or a focus on it is logged as the host sends it."
+	}
 	return "No calls yet: click, type or pick in the story."
 }
 
@@ -217,6 +242,8 @@ func (g *Gallery) Uncontrolled() string {
 		return ""
 	case g.cur.tree != nil:
 		return "A story of stories.All is a Go tree: it has no props."
+	case g.cur.s.section == scenes:
+		return "A scene has no controls: edit its stories file, and it draws again."
 	case g.cur.s.file != nil && g.cur.s.file.screen():
 		return "A screen takes no props: its stories are its Go state's."
 	}
@@ -347,7 +374,7 @@ func (g *Gallery) logf(line string) {
 // unhandled logs an event the host sent on a story of stories.All,
 // which has no handlers, as it came: a click, a focus.
 func (g *Gallery) unhandled(e surfrun.Event) {
-	if g.cur == nil || g.cur.tree == nil || !strings.Contains(e.Target+".", ".kc-"+g.Sel+".") {
+	if g.cur == nil || g.cur.tree == nil && g.cur.s.section != scenes || !strings.Contains(e.Target+".", ".kc-"+g.Sel+".") {
 		return
 	}
 	g.logf("(no handler) " + eventText(e))

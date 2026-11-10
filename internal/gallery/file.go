@@ -17,6 +17,8 @@ type storyFile struct {
 	stories []fileStory
 	states  []state // its rows of the states matrix
 	pkg     *pack   // the package whose template of is
+	scene   bool    // of is a widget of the vocabulary: each story's children are its scene
+	title   string  // a scene file's component as a person names it: Button
 	err     error   // why its stories draw nothing
 }
 
@@ -24,7 +26,7 @@ type storyFile struct {
 type fileStory struct {
 	name  string
 	cols  int
-	about string        // a muted line drawn under it, if any
+	about string        // a muted line drawn under it, if any; a scene's sentence, under its title
 	props []markup.Attr // its other attributes: the props it gives
 	kids  []*markup.Node
 }
@@ -65,15 +67,26 @@ func parseStoryFile(file, src string, packs []*pack) *storyFile {
 				return fail(a.ValuePos, "cols is a width in cells, not %q", a.Value)
 			}
 			f.cols = n
+		case "title":
+			f.title = a.Value
 		default:
-			return fail(a.Pos, "<stories> takes of, in and cols, not %s", a.Name)
+			return fail(a.Pos, "<stories> takes of, title, in and cols, not %s", a.Name)
 		}
 	}
 	if f.of == "" {
 		return fail(root[0].Pos, "<stories> has no of: the component's template")
 	}
 	if f.pkg = packOf(packs, f.of); f.pkg == nil {
-		return fail(root[0].Pos, "no package has a template %s.surf", f.of)
+		if _, ok := widgetOf(f.of); !ok {
+			return fail(root[0].Pos, "no package has a template %s.surf, and the vocabulary has no <%s>", f.of, f.of)
+		}
+		f.scene = true
+		if f.in != "" {
+			return fail(root[0].Pos, "<%s> is a widget: its stories are scenes, drawn in nothing (in)", f.of)
+		}
+	}
+	if f.title != "" && !f.scene {
+		return fail(root[0].Pos, "title is a scene file's: %s is a template", f.of)
 	}
 	for _, n := range elements(root[0].Kids) {
 		if n.Tag == "state" {
@@ -113,6 +126,9 @@ func parseStoryFile(file, src string, packs []*pack) *storyFile {
 		}
 		if st.name == "" {
 			return fail(n.Pos, "a <story> has a name")
+		}
+		if f.scene && (len(st.props) > 0 || len(elements(st.kids)) == 0) {
+			return fail(n.Pos, "<%s> is a widget: a story of it is a scene, its children, and gives no props", f.of)
 		}
 		if f.screen() && (len(st.props) > 0 || len(elements(st.kids)) > 0 || st.about != "") {
 			return fail(n.Pos, "%s is a component: a story of it gives no props, no children and no about, its Go state is its own", f.of)
@@ -212,3 +228,15 @@ var (
 	textEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;")
 	attrEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", `"`, "&quot;")
 )
+
+// sceneTemplate is the template a scene is drawn by: the story's
+// children, one under another.
+func sceneTemplate(st *fileStory) string {
+	var b strings.Builder
+	b.WriteString("<stack>")
+	for _, k := range st.kids {
+		writeNode(&b, k)
+	}
+	b.WriteString("</stack>")
+	return b.String()
+}
