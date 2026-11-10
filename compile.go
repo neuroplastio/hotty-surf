@@ -1091,8 +1091,11 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return nil
 	}
 	ks := s.tipOf(e, n, s.menuOf(e, n))
-	was, wasLine, wasProse, wasTable := s.around, s.inLine, s.inProse, s.inTable
-	s.inTable = s.inTable || n.Tag == "table"
+	if e.w.Tag == "table" {
+		s.tableKids(e, ks)
+		return e
+	}
+	was, wasLine, wasProse := s.around, s.inLine, s.inProse
 	s.around = true // a <bind> in it binds on it
 	if e.w.Form == FormKids || e.w.Form == FormSection || e.w.Form == FormFace {
 		s.inProse = proseTags[e.w.Tag]
@@ -1103,8 +1106,20 @@ func (s *scope) bare(n *markup.Node) *elem {
 		s.inProse = s.inProse && e.w.Tag == "text"
 		s.leafKids(e, n.Tag, ks)
 	}
-	s.around, s.inLine, s.inProse, s.inTable = was, wasLine, wasProse, wasTable
+	s.around, s.inLine, s.inProse = was, wasLine, wasProse
 	return e
+}
+
+// tableKids compiles a <table>'s children, in a scope where $range is
+// allowed. It is bare's for a table, kept out of bare's frame, which every
+// level of a deep template pays for.
+//
+//go:noinline
+func (s *scope) tableKids(e *elem, ks []*markup.Node) {
+	was, wasLine, wasProse, wasTable := s.around, s.inLine, s.inProse, s.inTable
+	s.around, s.inLine, s.inProse, s.inTable = true, false, false, true
+	e.kids = s.kids(ks)
+	s.around, s.inLine, s.inProse, s.inTable = was, wasLine, wasProse, wasTable
 }
 
 // widgetEl compiles a widget's tag and attributes: nil where n is no
