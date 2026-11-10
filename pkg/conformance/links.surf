@@ -1,0 +1,6 @@
+<surface>
+  <line key="para" wrap>See <link key="docs" href="/docs/install" @follow="go($value, $event)">the install guide</link>, <link key="site" href="https://example.com/x" external>the site</link>, <link key="tousage" href="#usage">usage</link> or <link key="gone" href="#nowhere" @follow="go($value, $event)">a fragment nobody has</link>.</line>
+  <row key="alone"><link key="solo" href="/docs/api" @follow="go($value, $event)">API</link></row>
+  <heading key="usage" anchor="usage">Usage</heading>
+  <text key="end">The end.</text>
+</surface>

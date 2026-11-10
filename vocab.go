@@ -145,6 +145,11 @@ var pointed = func() []string {
 	return out
 }()
 
+// proseTags are the tags whose texts are the plain runs of one text
+// (surfui.Str), where a text is a run of a paragraph: a link's, and those
+// of the prose elements (prose.go in surfui).
+var proseTags = map[string]bool{"link": true}
+
 // floor is one of the floor's widgets.
 func floor(tag, doc string, form Form, fn string, events []string) Widget {
 	return Widget{Tag: tag, Doc: doc, Form: form, Func: fn, Events: events}
@@ -177,6 +182,7 @@ var Widgets = []Widget{
 	floor("rule", "a line across", FormNone, "surfui.Rule", nil),
 	floor("box", "a raised panel", FormKids, "surfui.Box", events),
 	floor("dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events),
+	floor("link", "a link, inline in a line or on a row of its own: its text underlined in the link tone, which Enter and a click follow; a #fragment an anchor names scrolls to it", FormKids, "NewLink", []string{"click", "focus", "follow"}),
 	floor("face", "a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb", FormFace, "NewFace", events),
 }
 
@@ -194,6 +200,9 @@ var Attrs = []Attr{
 
 	{Name: "theme", Type: TypeString, Doc: "neuroplastio, terminal, paper, graphite or stone", Tags: []string{"surface"}, Func: "ModTheme", Fails: true, Values: themes},
 	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},
+	{Name: "href", Type: TypeString, Doc: "where a link goes: a URL, a path, or #name for the element whose anchor it is", Tags: []string{"link"}, Func: "ModHref"},
+	{Name: "external", Type: TypeBool, Doc: "a link to somewhere else: a host opens it in a new tab, a terminal by its OSC 8, and it takes no press on the surface unless it has a follow", Tags: []string{"link"}, Func: "ModExternal"},
+	{Name: "anchor", Type: TypeString, Doc: "the name a link's #fragment finds the element by: its id on a host", Func: "ModAnchor"},
 	{Name: "key", Type: TypeString, Doc: "the node's key among its siblings, which the diff follows", Func: "ModKey"},
 	{Name: "tone", Type: TypeString, Doc: "the text's colour: accent, ok, warn, error, info, muted or plain", Func: "ModTone", Fails: true, Values: tones},
 	{Name: "hue", Type: TypeString, Doc: "the text's colour as a hue a palette names, not a tone; bound, a name no palette declares draws the ink and warns once", Tags: []string{"text", "dot", "glyph", "icon"}, Func: "ModHue"},
@@ -341,6 +350,9 @@ func NewSurface(kids ...*surfui.Node) *surfui.Node {
 // NewSelect is a select of options, value picked.
 func NewSelect(value string, options []string) *surfui.Node { return surfui.Select(value, options...) }
 
+// NewLink is a link with no href yet, which its `href` gives.
+func NewLink(kids ...*surfui.Node) *surfui.Node { return surfui.Link("", kids...) }
+
 // NewCycle is a cycle through options, value showing.
 func NewCycle(value string, options []string) *surfui.Node { return surfui.Cycle(value, options...) }
 
@@ -411,6 +423,15 @@ func ModDensity(n *surfui.Node, v string) error {
 	}
 	return fmt.Errorf("density is compact, dense or roomy, not %q", v)
 }
+
+// ModHref sets a link's href.
+func ModHref(n *surfui.Node, v string) { n.Attr("href", v) }
+
+// ModExternal makes a link a hyperlink to somewhere else.
+func ModExternal(n *surfui.Node, v bool) { flag(n, v, n.External) }
+
+// ModAnchor names a node for a link's #fragment.
+func ModAnchor(n *surfui.Node, v string) { n.Anchor(v) }
 
 // ModKey sets a node's key.
 func ModKey(n *surfui.Node, v string) { n.Key(v) }

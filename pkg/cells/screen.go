@@ -94,6 +94,25 @@ type Run struct {
 	// Ul is the colour of an Underline or an Overline, "" for the text's:
 	// a drop's line is the accent's whatever the text's colour (SGR 58).
 	Ul Role
+	// Href is the link the cells belong to, "" for none: a hyperlink
+	// (surfrun.Paint writes it as OSC 8, unless NoLinks takes it off).
+	// Runs split where it changes.
+	Href string
+}
+
+// NoLinks is s with its runs' Href taken off, for a host that keeps the
+// links itself and has the terminal open none: the runs that were split
+// for a link stay split. s is not changed.
+func (s Screen) NoLinks() Screen {
+	lines := make([][]Run, len(s.Lines))
+	for i, l := range s.Lines {
+		lines[i] = slices.Clone(l)
+		for j := range lines[i] {
+			lines[i][j].Href = ""
+		}
+	}
+	s.Lines = lines
+	return s
 }
 
 // Hit is a rectangle of cells, X and Y from the screen's top left, that
@@ -169,7 +188,7 @@ func (s Screen) same(o Screen) bool {
 	}
 	for i := range s.Lines {
 		if !slices.EqualFunc(s.Lines[i], o.Lines[i], func(a, b Run) bool {
-			return a.Col == b.Col && a.Width == b.Width && a.Text == b.Text && a.Fg == b.Fg && a.Bg == b.Bg && a.Attr == b.Attr && a.Ul == b.Ul
+			return a.Col == b.Col && a.Width == b.Width && a.Text == b.Text && a.Fg == b.Fg && a.Bg == b.Bg && a.Attr == b.Attr && a.Ul == b.Ul && a.Href == b.Href
 		}) {
 			return false
 		}
@@ -182,6 +201,7 @@ type style struct {
 	fg, bg Role
 	attr   Attr
 	ul     Role // the line's colour (Run.Ul)
+	href   string
 }
 
 // cell is one cell of the grid: the cluster that starts in it, or "" in
@@ -253,7 +273,7 @@ func (g *grid) put(x, y int, s string, w int, st style, clip rect) {
 	if st.bg != "" {
 		bg = st.bg
 	}
-	g.cells[i] = cell{text: s, width: w, style: style{fg: st.fg, bg: bg, attr: st.attr}}
+	g.cells[i] = cell{text: s, width: w, style: style{fg: st.fg, bg: bg, attr: st.attr, ul: st.ul, href: st.href}}
 	if w == 2 {
 		g.cells[i+1] = cell{text: "", width: 0, style: g.cells[i].style}
 	}
@@ -279,7 +299,7 @@ func (g *grid) lines() [][]Run {
 		row := g.cells[y*g.cols : (y+1)*g.cols]
 		for x := 0; x < g.cols; {
 			st := row[x].style
-			r := Run{Col: x, Fg: st.fg, Bg: st.bg, Attr: st.attr, Ul: st.ul}
+			r := Run{Col: x, Fg: st.fg, Bg: st.bg, Attr: st.attr, Ul: st.ul, Href: st.href}
 			var b strings.Builder
 			for x < g.cols && row[x].style == st {
 				c := row[x]
@@ -347,7 +367,7 @@ func (s Screen) Golden() string {
 	for _, l := range s.Lines {
 		var row strings.Builder
 		for _, r := range l {
-			st := style{r.Fg, r.Bg, r.Attr, r.Ul}
+			st := style{r.Fg, r.Bg, r.Attr, r.Ul, ""}
 			c, ok := letters[st]
 			if !ok {
 				c = '?'
@@ -380,6 +400,19 @@ func (s Screen) Golden() string {
 	b.WriteString("hits\n")
 	for _, h := range s.Hits {
 		b.WriteString("@ " + strconv.Itoa(h.X) + "," + strconv.Itoa(h.Y) + " " + strconv.Itoa(h.W) + "x" + strconv.Itoa(h.H) + " " + h.ID + "\n")
+	}
+	linked := false
+	for y, l := range s.Lines {
+		for _, r := range l {
+			if r.Href == "" {
+				continue
+			}
+			if !linked {
+				b.WriteString("links\n")
+				linked = true
+			}
+			b.WriteString("@ " + strconv.Itoa(r.Col) + "," + strconv.Itoa(y) + " " + strconv.Itoa(r.Width) + "x1 " + r.Href + "\n")
+		}
 	}
 	return b.String()
 }

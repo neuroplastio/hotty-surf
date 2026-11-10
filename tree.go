@@ -78,6 +78,10 @@ func (e *elem) Do() Handler         { return e.do }
 // After says a <button>'s <icon>, among its Kids, is after its text.
 func (e *elem) After() bool { return e.after }
 
+// Plain says a text is a surfui.Str, the run of a paragraph's or a
+// link's text, not a surfui.Text of its own.
+func (e *elem) Plain() bool { return e.plain }
+
 // Templates are the Set's compiled templates, by Key.
 func (s *Set) Templates() []*Template {
 	s.mu.Lock()

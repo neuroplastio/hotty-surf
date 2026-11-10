@@ -1,0 +1,199 @@
+Links in a paragraph that wraps, and on a row of their own. A link the
+program follows runs its handler with the href as its value and the
+modifiers held; an external link is a hyperlink (target=_blank) and no
+press on the surface; a link to #usage, an anchor of the document,
+scrolls to it (a reveal at the start) with no handler; a #fragment no
+element has runs the handler that follows it. In the cells the same
+links are underlined in the link tone, and each carries its href.
+-- root --
+Links
+-- state.json --
+{}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><span id="r.kpara" class="u-line u-wrap"><span id="r.kpara.0" class="u-text">See </span><a class="u-link" href="/docs/install" id="r.kpara.kdocs">the install guide</a><span id="r.kpara.2" class="u-text">, </span><a class="u-link is-external" href="https://example.com/x" id="r.kpara.ksite" rel="noopener noreferrer" target="_blank">the site</a><span id="r.kpara.4" class="u-text">, </span><a class="u-link" href="#usage" id="r.kpara.ktousage">usage</a><span id="r.kpara.6" class="u-text"> or </span><a class="u-link" href="#nowhere" id="r.kpara.kgone">a fragment nobody has</a><span id="r.kpara.8" class="u-text">.</span></span><div id="r.kalone" class="u-row"><a class="u-link" href="/docs/api" id="r.kalone.ksolo">API</a></div><div id="usage" class="u-heading">Usage</div><span id="r.kend" class="u-text">The end.</span></div></body></html>
+-- cells --
+cells 64x32
+text
+> See the install guide, the site, usage or a fragment nobody has.
+> API
+> Usage
+> The end.
+style
+= ....aaaaaaaaaaaaaaaaa..aaaaaaaa..aaaaa....aaaaaaaaaaaaaaaaaaaaa
+= aaa
+= bbbbb
+. fg/bg
+a accent/bg underline
+b fg/bg bold
+hits
+@ 4,0 3x1 r.kpara.kdocs
+@ 7,0 8x1 r.kpara.kdocs
+@ 15,0 6x1 r.kpara.kdocs
+@ 33,0 5x1 r.kpara.ktousage
+@ 42,0 1x1 r.kpara.kgone
+@ 43,0 9x1 r.kpara.kgone
+@ 52,0 7x1 r.kpara.kgone
+@ 59,0 4x1 r.kpara.kgone
+@ 0,1 3x1 r.kalone.ksolo
+links
+@ 4,0 17x1 /docs/install
+@ 23,0 8x1 https://example.com/x
+@ 33,0 5x1 #usage
+@ 42,0 21x1 #nowhere
+@ 0,1 3x1 /docs/api
+-- 1.event --
+click r.kpara.kdocs
+-- 1.log --
+follow /docs/install mods 0
+-- 1.ops --
+
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><span id="r.kpara" class="u-line u-wrap"><span id="r.kpara.0" class="u-text">See </span><a class="u-link" href="/docs/install" id="r.kpara.kdocs">the install guide</a><span id="r.kpara.2" class="u-text">, </span><a class="u-link is-external" href="https://example.com/x" id="r.kpara.ksite" rel="noopener noreferrer" target="_blank">the site</a><span id="r.kpara.4" class="u-text">, </span><a class="u-link" href="#usage" id="r.kpara.ktousage">usage</a><span id="r.kpara.6" class="u-text"> or </span><a class="u-link" href="#nowhere" id="r.kpara.kgone">a fragment nobody has</a><span id="r.kpara.8" class="u-text">.</span></span><div id="r.kalone" class="u-row"><a class="u-link" href="/docs/api" id="r.kalone.ksolo">API</a></div><div id="usage" class="u-heading">Usage</div><span id="r.kend" class="u-text">The end.</span></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+> See the install guide, the site, usage or a fragment nobody has.
+> API
+> Usage
+> The end.
+style
+= ....aaaaaaaaaaaaaaaaa..bbbbbbbb..bbbbb....bbbbbbbbbbbbbbbbbbbbb
+= bbb
+= ccccc
+. fg/bg
+a accent/sel underline
+b accent/bg underline
+c fg/bg bold
+hits
+@ 4,0 3x1 r.kpara.kdocs
+@ 7,0 8x1 r.kpara.kdocs
+@ 15,0 6x1 r.kpara.kdocs
+@ 33,0 5x1 r.kpara.ktousage
+@ 42,0 1x1 r.kpara.kgone
+@ 43,0 9x1 r.kpara.kgone
+@ 52,0 7x1 r.kpara.kgone
+@ 59,0 4x1 r.kpara.kgone
+@ 0,1 3x1 r.kalone.ksolo
+links
+@ 4,0 17x1 /docs/install
+@ 23,0 8x1 https://example.com/x
+@ 33,0 5x1 #usage
+@ 42,0 21x1 #nowhere
+@ 0,1 3x1 /docs/api
+-- 2.event --
+click r.kpara.ksite; click r.kalone.ksolo
+-- 2.log --
+follow /docs/api mods 0
+-- 2.ops --
+
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><span id="r.kpara" class="u-line u-wrap"><span id="r.kpara.0" class="u-text">See </span><a class="u-link" href="/docs/install" id="r.kpara.kdocs">the install guide</a><span id="r.kpara.2" class="u-text">, </span><a class="u-link is-external" href="https://example.com/x" id="r.kpara.ksite" rel="noopener noreferrer" target="_blank">the site</a><span id="r.kpara.4" class="u-text">, </span><a class="u-link" href="#usage" id="r.kpara.ktousage">usage</a><span id="r.kpara.6" class="u-text"> or </span><a class="u-link" href="#nowhere" id="r.kpara.kgone">a fragment nobody has</a><span id="r.kpara.8" class="u-text">.</span></span><div id="r.kalone" class="u-row"><a class="u-link" href="/docs/api" id="r.kalone.ksolo">API</a></div><div id="usage" class="u-heading">Usage</div><span id="r.kend" class="u-text">The end.</span></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+> See the install guide, the site, usage or a fragment nobody has.
+> API
+> Usage
+> The end.
+style
+= ....aaaaaaaaaaaaaaaaa..aaaaaaaa..aaaaa....aaaaaaaaaaaaaaaaaaaaa
+= bbb
+= ccccc
+. fg/bg
+a accent/bg underline
+b accent/sel underline
+c fg/bg bold
+hits
+@ 4,0 3x1 r.kpara.kdocs
+@ 7,0 8x1 r.kpara.kdocs
+@ 15,0 6x1 r.kpara.kdocs
+@ 33,0 5x1 r.kpara.ktousage
+@ 42,0 1x1 r.kpara.kgone
+@ 43,0 9x1 r.kpara.kgone
+@ 52,0 7x1 r.kpara.kgone
+@ 59,0 4x1 r.kpara.kgone
+@ 0,1 3x1 r.kalone.ksolo
+links
+@ 4,0 17x1 /docs/install
+@ 23,0 8x1 https://example.com/x
+@ 33,0 5x1 #usage
+@ 42,0 21x1 #nowhere
+@ 0,1 3x1 /docs/api
+-- 3.event --
+click r.kpara.ktousage
+-- 3.log --
+
+-- 3.ops --
+reveal usage "start"
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><span id="r.kpara" class="u-line u-wrap"><span id="r.kpara.0" class="u-text">See </span><a class="u-link" href="/docs/install" id="r.kpara.kdocs">the install guide</a><span id="r.kpara.2" class="u-text">, </span><a class="u-link is-external" href="https://example.com/x" id="r.kpara.ksite" rel="noopener noreferrer" target="_blank">the site</a><span id="r.kpara.4" class="u-text">, </span><a class="u-link" href="#usage" id="r.kpara.ktousage">usage</a><span id="r.kpara.6" class="u-text"> or </span><a class="u-link" href="#nowhere" id="r.kpara.kgone">a fragment nobody has</a><span id="r.kpara.8" class="u-text">.</span></span><div id="r.kalone" class="u-row"><a class="u-link" href="/docs/api" id="r.kalone.ksolo">API</a></div><div id="usage" class="u-heading">Usage</div><span id="r.kend" class="u-text">The end.</span></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+> See the install guide, the site, usage or a fragment nobody has.
+> API
+> Usage
+> The end.
+style
+= ....aaaaaaaaaaaaaaaaa..aaaaaaaa..bbbbb....aaaaaaaaaaaaaaaaaaaaa
+= aaa
+= ccccc
+. fg/bg
+a accent/bg underline
+b accent/sel underline
+c fg/bg bold
+hits
+@ 4,0 3x1 r.kpara.kdocs
+@ 7,0 8x1 r.kpara.kdocs
+@ 15,0 6x1 r.kpara.kdocs
+@ 33,0 5x1 r.kpara.ktousage
+@ 42,0 1x1 r.kpara.kgone
+@ 43,0 9x1 r.kpara.kgone
+@ 52,0 7x1 r.kpara.kgone
+@ 59,0 4x1 r.kpara.kgone
+@ 0,1 3x1 r.kalone.ksolo
+links
+@ 4,0 17x1 /docs/install
+@ 23,0 8x1 https://example.com/x
+@ 33,0 5x1 #usage
+@ 42,0 21x1 #nowhere
+@ 0,1 3x1 /docs/api
+-- 4.event --
+click r.kpara.kgone
+-- 4.log --
+follow #nowhere mods 0
+-- 4.ops --
+
+-- 4.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><span id="r.kpara" class="u-line u-wrap"><span id="r.kpara.0" class="u-text">See </span><a class="u-link" href="/docs/install" id="r.kpara.kdocs">the install guide</a><span id="r.kpara.2" class="u-text">, </span><a class="u-link is-external" href="https://example.com/x" id="r.kpara.ksite" rel="noopener noreferrer" target="_blank">the site</a><span id="r.kpara.4" class="u-text">, </span><a class="u-link" href="#usage" id="r.kpara.ktousage">usage</a><span id="r.kpara.6" class="u-text"> or </span><a class="u-link" href="#nowhere" id="r.kpara.kgone">a fragment nobody has</a><span id="r.kpara.8" class="u-text">.</span></span><div id="r.kalone" class="u-row"><a class="u-link" href="/docs/api" id="r.kalone.ksolo">API</a></div><div id="usage" class="u-heading">Usage</div><span id="r.kend" class="u-text">The end.</span></div></body></html>
+-- 4.cells --
+cells 64x32
+text
+> See the install guide, the site, usage or a fragment nobody has.
+> API
+> Usage
+> The end.
+style
+= ....aaaaaaaaaaaaaaaaa..aaaaaaaa..aaaaa....bbbbbbbbbbbbbbbbbbbbb
+= aaa
+= ccccc
+. fg/bg
+a accent/bg underline
+b accent/sel underline
+c fg/bg bold
+hits
+@ 4,0 3x1 r.kpara.kdocs
+@ 7,0 8x1 r.kpara.kdocs
+@ 15,0 6x1 r.kpara.kdocs
+@ 33,0 5x1 r.kpara.ktousage
+@ 42,0 1x1 r.kpara.kgone
+@ 43,0 9x1 r.kpara.kgone
+@ 52,0 7x1 r.kpara.kgone
+@ 59,0 4x1 r.kpara.kgone
+@ 0,1 3x1 r.kalone.ksolo
+links
+@ 4,0 17x1 /docs/install
+@ 23,0 8x1 https://example.com/x
+@ 33,0 5x1 #usage
+@ 42,0 21x1 #nowhere
+@ 0,1 3x1 /docs/api

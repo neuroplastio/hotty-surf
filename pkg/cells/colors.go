@@ -85,19 +85,62 @@ func (p Palette) Derive() Palette {
 // asked the terminal for them (QueryColors). A tone's fill carries the
 // ground's colour as text; a run with no fill keeps the terminal's own.
 // No cursor moves, no modes.
+//
+// The runs that carry a link (Run.Href) are written as OSC 8 hyperlinks,
+// as surfrun.Paint writes them; s.NoLinks() leaves them out, for a
+// program whose host keeps the links itself.
 func PaintWith(s Screen, p Palette) []string {
 	p = p.Derive()
 	out := make([]string, len(s.Lines))
 	for i, line := range s.Lines {
 		var b strings.Builder
+		link := ""
 		for _, run := range line {
+			link = SetLink(&b, link, run.Href)
 			b.WriteString(sgrWith(run, p))
 			b.WriteString(run.Text)
 		}
+		SetLink(&b, link, "")
 		b.WriteString("\x1b[0m")
 		out[i] = b.String()
 	}
 	return out
+}
+
+// SetLink writes to b what takes a row's text from the link it is in
+// (from, "" for none) to the link next is: an OSC 8 that closes one and
+// opens the other, nothing where they are the same. It returns next,
+// the link the text after it is in. A painter of a screen's rows calls
+// it before each run, and once more with "" at the row's end, so that a
+// link never reaches into the next row's cells.
+func SetLink(b *strings.Builder, from, next string) string {
+	if from == next {
+		return next
+	}
+	b.WriteString("\x1b]8;;")
+	b.WriteString(linkURI(next))
+	b.WriteString("\x1b\\")
+	return next
+}
+
+// linkURI is href as an OSC 8's URI has it: printable ASCII only. A
+// control character, which would end the sequence early, and a byte
+// outside it, are written as % and their two hex digits, so that an href
+// from a program or a peer can write no other escape sequence.
+func linkURI(href string) string {
+	const hex = "0123456789ABCDEF"
+	var b strings.Builder
+	for i := 0; i < len(href); i++ {
+		c := href[i]
+		if c <= 0x20 || c >= 0x7f {
+			b.WriteByte('%')
+			b.WriteByte(hex[c>>4])
+			b.WriteByte(hex[c&15])
+			continue
+		}
+		b.WriteByte(c)
+	}
+	return b.String()
 }
 
 var sgrAttrs = [...]struct {

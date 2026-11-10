@@ -1196,6 +1196,11 @@
 .u-surface .u-down, .u-surface.u-down { margin-top: calc(var(--u-dn) * var(--u-row)); }
 .u-surface .u-bold, .u-surface.u-bold { font-weight: 600; }
 .u-surface .u-semi, .u-surface.u-semi { font-weight: 600; }
+/* A link: its text underlined in the accent, which a tone on it (or a
+   muted block holding it) takes over; the keyboard on it a soft fill, no
+   ring. Placed before the tones, which win at the same weight. */
+.u-surface .u-link { color: var(--u-accent); text-decoration: underline; border-radius: var(--u-r-xs); }
+.u-surface .u-link:focus-visible { background: var(--u-accent-soft); }
 .u-surface .u-tone-accent, .u-surface.u-tone-accent { color: var(--u-accent); }
 .u-surface .u-tone-ok, .u-surface.u-tone-ok { color: var(--u-ok); }
 .u-surface .u-tone-warn, .u-surface.u-tone-warn { color: var(--u-warn); }

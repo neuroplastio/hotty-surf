@@ -57,6 +57,7 @@ var canonWidgets = map[string]string{
 	"box":     `<box/>`,
 	"dialog":  `<dialog/>`,
 	"face":    `<face icon="source-branch" value="main" unit="+2"/>`,
+	"link":    `<link href="/docs/install">Install</link>`,
 }
 
 // canonAttrs is each attribute in a canonical instance, by its name and,
@@ -78,6 +79,9 @@ var canonAttrs = map[string]string{
 	"popover/box":       `<box popover/>`,
 	"theme/surface":     `<surface theme="paper"/>`,
 	"density/surface":   `<surface density="dense"/>`,
+	"href/link":         `<link href="/docs/install">Install</link>`,
+	"external/link":     `<link href="https://example.com" external>Site</link>`,
+	"anchor":            `<text anchor="usage">x</text>`,
 	"key":               `<row><text key="a">x</text></row>`,
 	"tone":              `<text tone="warn">x</text>`,
 	"hue/text":          `<text :hue="'coral'">x</text>`,

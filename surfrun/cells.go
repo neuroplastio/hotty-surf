@@ -164,6 +164,9 @@ func (r *Runtime) drawTree() {
 			b.WriteString(hoverOff)
 		}
 	}
+	if r.opts.NoLinks {
+		s = s.NoLinks()
+	}
 	for i, row := range Paint(s) {
 		fmt.Fprintf(&b, "\x1b[%d;1H", r.opts.Top+1+i)
 		b.WriteString(row)
@@ -199,7 +202,10 @@ func Lines(s cells.Screen) []string {
 }
 
 // Paint is a screen as the runtime paints it, one string a row: each run
-// in the terminal's colours (cellsSGR), the row ending in a reset. It is
+// in the terminal's colours (cellsSGR), the row ending in a reset. A run
+// that carries a link (cells.Run.Href) is in an OSC 8 hyperlink, which
+// the terminal may open; s.NoLinks() leaves them out, for a host that
+// keeps the links itself (Options.NoLinks does so for the runtime). It is
 // for a program that places a screen's rows itself, such as a View drawn
 // in lines. It keeps every row, so the screen's height holds; Lines
 // leaves out the blank ones at the end. No cursor moves, no modes.
@@ -207,10 +213,13 @@ func Paint(s cells.Screen) []string {
 	out := make([]string, len(s.Lines))
 	for i, line := range s.Lines {
 		var b strings.Builder
+		link := ""
 		for _, run := range line {
+			link = cells.SetLink(&b, link, run.Href)
 			b.WriteString(cellsSGR(run))
 			b.WriteString(run.Text)
 		}
+		cells.SetLink(&b, link, "")
 		b.WriteString("\x1b[0m")
 		out[i] = b.String()
 	}

@@ -464,6 +464,7 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | `rule` | none | nothing | none | a line across | `<rule/>` | `<div id="r" class="u-rule"></div>` |
 | `box` | kids | children | click, focus | a raised panel | `<box/>` | `<div id="r" class="u-box"></div>` |
 | `dialog` | kids | children | click, focus | the box plx draws round its palette | `<dialog/>` | `<div id="r" class="u-dialog" role="dialog"></div>` |
+| `link` | kids | children | click, focus, follow | a link, inline in a line or on a row of its own: its text underlined in the link tone, which Enter and a click follow; a #fragment an anchor names scrolls to it | `<link href="/docs/install">Install</link>` | `<a id="r" class="u-link" href="/docs/install">Install</a>` |
 | `face` | face | `icon`, `value`, `unit` | click, focus | a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb | `<face icon="source-branch" value="main" unit="+2"/>` | `<div id="r" class="u-row u-wg"><span id="r.0" class="u-text u-icon">󰘬</span><span id="r.1" class="u-text u-wg-v">main</span><span id="r.2" class="u-text u-wg-u">+2</span></div>` |
 <!-- end widgets table -->
 
@@ -516,6 +517,37 @@ widget is read as theirs are:
 - **In cells** it is drawn from the nodes it makes, as far as the cells
   know them.
 
+### Links
+
+A `<link>` is an `a` with its `href` (`class="u-link"`): inline in a
+`line` that wraps or on a row of its own.
+
+- **`href`** is a URL, a path or `#name`; **`external`** makes it a
+  hyperlink to somewhere else, `target="_blank"` and `rel="noopener
+  noreferrer"` on a host, which takes no focus there and is no press on
+  the surface; **`anchor`**, on any element, is its `id`, what `#name`
+  finds.
+- **`@follow`** runs on a click, or Enter or Space, on the link. The
+  event's `Kind` is `follow`, its `Value` the `href` and its `Mods` the
+  modifiers held. A link with a `@follow` is no new tab, `external` or
+  not. Where a link has none, an `external` link is only a hyperlink, and
+  `#name` where an element's `anchor` is `name` has the next frame
+  reveal it (`reveal` with `start`); `#name` with no such element does
+  nothing. `@follow` is taken before the scroll, which is how a program
+  follows a link to a fragment of another document.
+- **In cells** the link's runs are underlined in `accent` (`muted` where
+  a muted block holds them), the space between two of its words too;
+  each carries `Run.Href`, and the runtime writes it as an OSC 8
+  hyperlink (`surfrun.Paint`, `cells.PaintWith`; `Screen.NoLinks()` and
+  `Options.NoLinks` leave it out, the runs staying split). The runtime
+  writes the sequence itself, as it writes SGR; its href is made
+  printable first (`%` and two hex digits for a control character or a
+  byte past ASCII), so that it can write no other. A link takes the
+  keyboard in Tab's order, except an `external` one with no `@follow`
+  (which the terminal opens, as a host's own link), and Enter follows
+  it. Where nothing but such links acts on a press, the terminal's mouse
+  stays the terminal's.
+
 ### Icons
 
 - An `<icon>`'s glyph is its text or its `name`, MDI's name of a symbol
@@ -564,7 +596,7 @@ widget is read as theirs are:
   render.
 - **An attribute the tag doesn't take is a load error,** which names
   every attribute the tag takes, in alphabetical order: `<text> takes no
-  w; it takes autofocus, bare, bold, …, width or wrap`. There is no
+  w; it takes anchor, autofocus, bare, bold, …, width or wrap`. There is no
   `class`, `style`, `id` or raw HTML in a template.
 - **The canonical order:** the arguments (*as* argument) build the
   widget; the modifiers then apply in the table's order, whatever the
@@ -634,71 +666,74 @@ but in a palette.
 | 9 | `unit` | string | `face` | argument | a widget's unit after its value, muted | `<face value="84" unit="°C"/>` | `<div id="r" class="u-row u-wg"><span id="r.0" class="u-text u-wg-v">84</span><span id="r.1" class="u-text u-wg-u">°C</span></div>` |
 | 10 | `theme` | string | `surface` | modifier | neuroplastio, terminal, paper, graphite or stone | `<surface theme="paper"/>` | `<div id="r" class="u-surface u-compact u-theme-paper"></div>` |
 | 11 | `density` | string | `surface` | modifier | compact (the default), dense or roomy | `<surface density="dense"/>` | `<div id="r" class="u-surface u-theme-graphite u-dense"></div>` |
-| 12 | `key` | string | every widget | modifier | the node's key among its siblings, which the diff follows | `<row><text key="a">x</text></row>` | `<div id="r" class="u-row"><span id="r.ka" class="u-text">x</span></div>` |
-| 13 | `tone` | string | every widget | modifier | the text's colour: accent, ok, warn, error, info, muted or plain | `<text tone="warn">x</text>` | `<span id="r" class="u-text u-tone-warn">x</span>` |
-| 14 | `hue` | string | `text`, `dot`, `glyph`, `icon` | modifier | the text's colour as a hue a palette names, not a tone; bound, a name no palette declares draws the ink and warns once | `<text :hue="'coral'">x</text>` | `<span id="r" class="u-text u-hue-coral">x</span>` |
-| 15 | `fill` | string | every widget | modifier | a fill in a tone's colour: accent, ok, warn, error, info, muted or plain | `<chip fill="ok">x</chip>` | `<span id="r" class="u-chip u-fill-ok">x</span>` |
-| 16 | `bold` | bool | every widget | modifier | bold text | `<text bold>x</text>` | `<span id="r" class="u-text u-bold">x</span>` |
-| 17 | `semibold` | bool | every widget | modifier | text at weight 600 | `<text semibold>x</text>` | `<span id="r" class="u-text u-semi">x</span>` |
-| 18 | `muted` | bool | every widget | modifier | the muted colour | `<text muted>x</text>` | `<span id="r" class="u-text u-tone-muted">x</span>` |
-| 19 | `small` | bool | every widget | modifier | smaller text; a button a line tall, to fit its row | `<text small>x</text>` | `<span id="r" class="u-text u-small">x</span>` |
-| 20 | `wrap` | bool | every widget | modifier | a text that wraps; a line that is a paragraph; a field of several lines wraps unless wrap is false | `<text wrap>x</text>` | `<span id="r" class="u-text u-wrap">x</span>` |
-| 21 | `grow` | bool | every widget | modifier | takes the room left in its row or stack | `<text grow>x</text>` | `<span id="r" class="u-text u-grow">x</span>` |
-| 22 | `keep` | bool | every widget | modifier | keeps it whole in its row or stack: what is beside it gives way first | `<row keep/>` | `<div id="r" class="u-row u-keep"></div>` |
-| 23 | `fit` | bool | `row` | modifier | shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first | `<row fit/>` | `<div id="r" class="u-row u-fit"></div>` |
-| 24 | `fit-start` | bool | `row` | modifier | a row of what fits from its start: its children left to right, each whole, those it has no room for left out from the last; it takes the room left, and keeps its first | `<row fit-start/>` | `<div id="r" class="u-row u-fit-start"></div>` |
-| 25 | `gap` | int | every widget | modifier | steps of room between its children, 0 to 6 | `<row gap="2"/>` | `<div id="r" class="u-row u-gap2"></div>` |
-| 26 | `pad` | pad | every widget | modifier | steps of room inside it, across and down | `<box pad="2 1"/>` | `<div id="r" class="u-box u-px2 u-py1"></div>` |
-| 27 | `indent` | int | every widget | modifier | moves it in by cells | `<text indent="2">x</text>` | `<span id="r" class="u-text u-indent" style="--u-in:2">x</span>` |
-| 28 | `down` | int | every widget | modifier | moves it down by rows | `<box down="4"/>` | `<div id="r" class="u-box u-down" style="--u-dn:4"></div>` |
-| 29 | `top` | bool | every widget | modifier | aligns a row's children to its top | `<row top/>` | `<div id="r" class="u-row u-top"></div>` |
-| 30 | `width` | int | every widget | modifier | its width in cells | `<chip width="6">x</chip>` | `<span id="r" class="u-chip u-width" style="--u-w:6">x</span>` |
-| 31 | `height` | int | every widget | modifier | its height in rows | `<stack height="3"/>` | `<div id="r" class="u-stack u-height" style="--u-h:3"></div>` |
-| 32 | `selected` | bool | every widget | modifier | an item that is its list's selection, kept in view where the document scrolls | `<item selected/>` | `<div id="r" class="u-item is-sel" role="option" aria-selected="true"></div>` |
-| 33 | `checked` | bool | every widget | modifier | a switch's state, set in place | `<switch checked/>` | `<button id="r" class="u-switch is-on" type="button" role="switch" aria-checked="true"><span id="r.0" class="u-knob"></span></button>` |
-| 34 | `disabled` | bool | every widget | modifier | a control that can't be used | `<button disabled>x</button>` | `<button id="r" class="u-btn is-disabled" type="button" disabled>x</button>` |
-| 35 | `invalid` | bool | every widget | modifier | a field whose value isn't taken | `<field invalid/>` | `<input id="r" class="u-field is-invalid" type="text" aria-invalid="true">` |
-| 36 | `value` | string | `field` | modifier | a field's value | `<field value="hi"/>` | `<input id="r" class="u-field" type="text" value="hi">` |
-| 37 | `placeholder` | string | `field` | modifier | a field's placeholder | `<field placeholder="Find"/>` | `<input id="r" class="u-field" type="text" placeholder="Find">` |
-| 38 | `rows` | string | `field` | modifier | a field's rows: "8" always that tall, "3..8" from 3 growing with its text to 8, then scrolling; "1" is a one-line field. Enter and Shift+Enter type a newline in more than one | `<field rows="3..8" value="a"/>` | `<textarea id="r" class="u-field u-area" spellcheck="true" wrap="soft" rows="3" data-rows="3..8" style="--u-rows:3;--u-rows-max:8" data-on="caret">a</textarea>` |
-| 39 | `caret` | string | `field` | modifier | where a field's caret goes when the program sets its value: start, end, or keep it where the user had it (the default of a field of several lines; a one-line field's is end). The same value again moves nothing | `<field rows="3..8" caret="end"/>` | `<textarea id="r" class="u-field u-area" spellcheck="true" wrap="soft" rows="3" data-rows="3..8" data-caret="end" style="--u-rows:3;--u-rows-max:8" data-on="caret"></textarea>` |
-| 40 | `spellcheck` | bool | `field` | modifier | whether a host checks the spelling of a field of several lines: on unless spellcheck is false; the cells have none | `<field rows="3..8" spellcheck="false"/>` | `<textarea id="r" class="u-field u-area" spellcheck="false" wrap="soft" rows="3" data-rows="3..8" style="--u-rows:3;--u-rows-max:8" data-on="caret"></textarea>` |
-| 41 | `trap` | bool | `stack` | modifier | keeps the keyboard in a stack while it shows: Tab and Shift+Tab go from its last element that takes it to its first and back, never out (the cells; a host keeps Tab until hotty's V6-02) | `<stack trap/>` | `<div id="r" class="u-stack" data-trap></div>` |
-| 42 | `name` | string | every widget | modifier | a control's name | `<field name="q"/>` | `<input id="r" class="u-field" type="text" name="q">` |
-| 43 | `label` | string | every widget | modifier | its accessible label | `<button label="Close">x</button>` | `<button id="r" class="u-btn" type="button" aria-label="Close">x</button>` |
-| 44 | `title` | string | every widget | modifier | its tooltip, this text wrapped, which the host shows while the pointer rests on it; a <title> child is one of any elements | `<text title="Copies the row">x</text>` | `<span id="r" class="u-text">x</span>` |
-| 45 | `reveal` | bool | every widget | modifier | shown only while its item is pointed at, selected or focused | `<button reveal>x</button>` | `<button id="r" class="u-btn u-reveal" type="button">x</button>` |
-| 46 | `focusable` | bool | every widget | modifier | takes the keyboard on a click and by Tab | `<list focusable/>` | `<div id="r" class="u-list" role="listbox" tabindex="0"></div>` |
-| 47 | `bare` | bool | every widget | modifier | a field or a button with no border and no fill | `<button bare>x</button>` | `<button id="r" class="u-btn u-bare" type="button">x</button>` |
-| 48 | `pill` | bool | `button` | modifier | a button on a bar: a pill, no fill at rest; its icon alone, a circle | `<button pill>app</button>` | `<button id="r" class="u-btn u-pill" type="button">app</button>` |
-| 49 | `raised` | bool | `button` | modifier | a pill on the selected fill: a bar's picker | `<button pill raised>main</button>` | `<button id="r" class="u-btn u-pill u-raised" type="button">main</button>` |
-| 50 | `current` | bool | `button` | modifier | a pill whose thing holds the keyboard: the accent's soft fill | `<button pill current>editor</button>` | `<button id="r" class="u-btn u-pill is-cur" type="button" aria-current="true">editor</button>` |
-| 51 | `badge` | int | `button` | modifier | a tool's badge on the button's corner: its count, 99+ past 99; none at 0 | `<button pill badge="3">Tests</button>` | `<button id="r" class="u-btn u-pill u-has-badge" type="button">Tests<span id="r.1" class="u-badge">3</span></button>` |
-| 52 | `badge-dot` | bool | `button` | modifier | a badge with no number on the button's corner, a dot: something new | `<button pill badge-dot>Files</button>` | `<button id="r" class="u-btn u-pill u-has-badge" type="button">Files<span id="r.1" class="u-badge u-badge-dot"></span></button>` |
-| 53 | `badge-tone` | string | `button` | modifier | the badge's tone: accent (the default), warn, error or muted | `<button pill badge="1" badge-tone="warn">Agents</button>` | `<button id="r" class="u-btn u-pill u-has-badge" type="button">Agents<span id="r.1" class="u-badge u-tone-warn">1</span></button>` |
-| 54 | `chrome` | bool | every widget | modifier | a sidebar's ground: a darker fill with a hairline at its end | `<stack chrome/>` | `<div id="r" class="u-stack u-chrome"></div>` |
-| 55 | `card` | bool | `box` | modifier | a group's panel: a fill a step lighter than the page, its rows split by rules | `<box card/>` | `<div id="r" class="u-box u-card"></div>` |
-| 56 | `ring` | bool | `dot` | modifier | a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven | `<dot ring/>` | `<span id="r" class="u-glyph u-dot u-ring">○</span>` |
-| 57 | `target` | bool | `dot` | modifier | a dot in a ring (◉), a state that asks for someone | `<dot target/>` | `<span id="r" class="u-glyph u-dot u-target">◉</span>` |
-| 58 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
-| 59 | `attention` | bool | `button`, `item` | modifier | it waits for someone: drawn in the warn tone | `<button pill attention>build</button>` | `<button id="r" class="u-btn u-pill is-att" type="button">build</button>` |
-| 60 | `cap` | bool | `key` | modifier | a key drawn boxed, a cap: a sheet of keys | `<key cap>ctrl+b</key>` | `<kbd id="r" class="u-key u-cap">ctrl+b</kbd>` |
-| 61 | `strip` | bool | `row` | modifier | a row that is a strip of chrome: its three rows its start, centre and end | `<row strip><row/><row/><row/></row>` | `<div id="r" class="u-row u-strip"><div id="r.0" class="u-row"></div><div id="r.1" class="u-row"></div><div id="r.2" class="u-row"></div></div>` |
-| 62 | `grid` | bool | `row` | modifier | a row that is a picker's grid: its buttons squares that wrap | `<row grid><button>a</button></row>` | `<div id="r" class="u-row u-grid"><button id="r.0" class="u-btn" type="button">a</button></div>` |
-| 63 | `meter` | int | `face` | modifier | a widget's meter after its value, filled to a percentage, 0 to 100 | `<face icon="memory" value="23%" meter="23"/>` | `<div id="r" class="u-row u-wg"><span id="r.0" class="u-text u-icon">󰍛</span><span id="r.1" class="u-text u-wg-v">23%</span><span id="r.2" class="u-wg-meter" style="--u-m:0.23"><span id="r.2.0" class="u-wg-fill"></span></span></div>` |
-| 64 | `stale` | bool | `face` | modifier | a widget whose value is old, its source gone: dimmed | `<face icon="server-off" value="—" unit="offline" stale/>` | `<div id="r" class="u-row u-wg u-stale"><span id="r.0" class="u-text u-icon">󰒏</span><span id="r.1" class="u-text u-wg-v">—</span><span id="r.2" class="u-text u-wg-u">offline</span></div>` |
-| 65 | `popover` | bool | `box`, `stack` | modifier | a box or a stack that is a popover's card, the root of what a widget or a strip's tool opens | `<box popover/>` | `<div id="r" class="u-box u-pop"></div>` |
-| 66 | `segmented` | bool | `row` | modifier | a row of buttons drawn as one control, a scope or a filter of two to four values, the selected one raised | `<row segmented><button selected>All</button><button>Errors</button></row>` | `<div id="r" class="u-row u-seg"><button id="r.0" class="u-btn is-sel" type="button" aria-selected="true">All</button><button id="r.1" class="u-btn" type="button">Errors</button></div>` |
-| 67 | `search` | bool | `row` | modifier | a row drawn as a search field: its icon and a bare field in one field's box | `<row search><field bare/></row>` | `<div id="r" class="u-row u-search"><input id="r.0" class="u-field u-bare" type="text"></div>` |
-| 68 | `nav` | bool | `list` | modifier | a sidebar's list | `<list nav/>` | `<div id="r" class="u-list u-nav" role="listbox" tabindex="0"></div>` |
-| 69 | `entries` | bool | `list` | modifier | a list whose items are entries, each taking the keyboard | `<list entries><item/></list>` | `<div id="r" class="u-list u-entries" role="listbox"><div id="r.0" class="u-item" role="option" tabindex="0"></div></div>` |
-| 70 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
-| 71 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
-| 72 | `readline` | bool | `surface`, `field` | modifier | the fields in it edit by the readline keys of a terminal (ctrl+w, ctrl+u, ctrl+k, alt+b, …), whatever the platform | `<surface readline/>` | `<div id="r" class="u-surface u-theme-graphite u-compact" data-keys="arrow_left=char-backward ctrl+b=char-backward arrow_right=char-forward ctrl+f=char-forward alt+arrow_left=word-backward ctrl+arrow_left=word-backward alt+b=word-backward alt+arrow_right=word-forward ctrl+arrow_right=word-forward alt+f=word-forward home=line-start end=line-end ctrl+e=line-end backspace=delete-char-backward ctrl+h=delete-char-backward delete=delete-char-forward ctrl+d=delete-char-forward alt+backspace=delete-word-backward ctrl+w=delete-word-backward ctrl+backspace=delete-word-backward alt+delete=delete-word-forward alt+d=delete-word-forward ctrl+delete=delete-word-forward ctrl+u=delete-to-line-start ctrl+k=delete-to-line-end arrow_up=line-previous ctrl+p=line-previous arrow_down=line-next ctrl+n=line-next page_up=page-up page_down=page-down alt+&lt;=input-start ctrl+home=input-start alt+&gt;=input-end ctrl+end=input-end mod+a=select-all ctrl+m=newline"></div>` |
-| 73 | `program` | string | `surface` | modifier | keys, by myelin's names and apart by spaces, that belong to the host program, which the fields in it give it | `<surface program="ctrl+b"/>` | `<div id="r" class="u-surface u-theme-graphite u-compact"></div>` |
-| 74 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
-| 75 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `chip`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `face` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
-| 76 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `chip`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `face` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
+| 12 | `href` | string | `link` | modifier | where a link goes: a URL, a path, or #name for the element whose anchor it is | `<link href="/docs/install">Install</link>` | `<a id="r" class="u-link" href="/docs/install">Install</a>` |
+| 13 | `external` | bool | `link` | modifier | a link to somewhere else: a host opens it in a new tab, a terminal by its OSC 8, and it takes no press on the surface unless it has a follow | `<link href="https://example.com" external>Site</link>` | `<a id="r" class="u-link is-external" href="https://example.com" target="_blank" rel="noopener noreferrer">Site</a>` |
+| 14 | `anchor` | string | every widget | modifier | the name a link's #fragment finds the element by: its id on a host | `<text anchor="usage">x</text>` | `<span id="usage" class="u-text">x</span>` |
+| 15 | `key` | string | every widget | modifier | the node's key among its siblings, which the diff follows | `<row><text key="a">x</text></row>` | `<div id="r" class="u-row"><span id="r.ka" class="u-text">x</span></div>` |
+| 16 | `tone` | string | every widget | modifier | the text's colour: accent, ok, warn, error, info, muted or plain | `<text tone="warn">x</text>` | `<span id="r" class="u-text u-tone-warn">x</span>` |
+| 17 | `hue` | string | `text`, `dot`, `glyph`, `icon` | modifier | the text's colour as a hue a palette names, not a tone; bound, a name no palette declares draws the ink and warns once | `<text :hue="'coral'">x</text>` | `<span id="r" class="u-text u-hue-coral">x</span>` |
+| 18 | `fill` | string | every widget | modifier | a fill in a tone's colour: accent, ok, warn, error, info, muted or plain | `<chip fill="ok">x</chip>` | `<span id="r" class="u-chip u-fill-ok">x</span>` |
+| 19 | `bold` | bool | every widget | modifier | bold text | `<text bold>x</text>` | `<span id="r" class="u-text u-bold">x</span>` |
+| 20 | `semibold` | bool | every widget | modifier | text at weight 600 | `<text semibold>x</text>` | `<span id="r" class="u-text u-semi">x</span>` |
+| 21 | `muted` | bool | every widget | modifier | the muted colour | `<text muted>x</text>` | `<span id="r" class="u-text u-tone-muted">x</span>` |
+| 22 | `small` | bool | every widget | modifier | smaller text; a button a line tall, to fit its row | `<text small>x</text>` | `<span id="r" class="u-text u-small">x</span>` |
+| 23 | `wrap` | bool | every widget | modifier | a text that wraps; a line that is a paragraph; a field of several lines wraps unless wrap is false | `<text wrap>x</text>` | `<span id="r" class="u-text u-wrap">x</span>` |
+| 24 | `grow` | bool | every widget | modifier | takes the room left in its row or stack | `<text grow>x</text>` | `<span id="r" class="u-text u-grow">x</span>` |
+| 25 | `keep` | bool | every widget | modifier | keeps it whole in its row or stack: what is beside it gives way first | `<row keep/>` | `<div id="r" class="u-row u-keep"></div>` |
+| 26 | `fit` | bool | `row` | modifier | shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first | `<row fit/>` | `<div id="r" class="u-row u-fit"></div>` |
+| 27 | `fit-start` | bool | `row` | modifier | a row of what fits from its start: its children left to right, each whole, those it has no room for left out from the last; it takes the room left, and keeps its first | `<row fit-start/>` | `<div id="r" class="u-row u-fit-start"></div>` |
+| 28 | `gap` | int | every widget | modifier | steps of room between its children, 0 to 6 | `<row gap="2"/>` | `<div id="r" class="u-row u-gap2"></div>` |
+| 29 | `pad` | pad | every widget | modifier | steps of room inside it, across and down | `<box pad="2 1"/>` | `<div id="r" class="u-box u-px2 u-py1"></div>` |
+| 30 | `indent` | int | every widget | modifier | moves it in by cells | `<text indent="2">x</text>` | `<span id="r" class="u-text u-indent" style="--u-in:2">x</span>` |
+| 31 | `down` | int | every widget | modifier | moves it down by rows | `<box down="4"/>` | `<div id="r" class="u-box u-down" style="--u-dn:4"></div>` |
+| 32 | `top` | bool | every widget | modifier | aligns a row's children to its top | `<row top/>` | `<div id="r" class="u-row u-top"></div>` |
+| 33 | `width` | int | every widget | modifier | its width in cells | `<chip width="6">x</chip>` | `<span id="r" class="u-chip u-width" style="--u-w:6">x</span>` |
+| 34 | `height` | int | every widget | modifier | its height in rows | `<stack height="3"/>` | `<div id="r" class="u-stack u-height" style="--u-h:3"></div>` |
+| 35 | `selected` | bool | every widget | modifier | an item that is its list's selection, kept in view where the document scrolls | `<item selected/>` | `<div id="r" class="u-item is-sel" role="option" aria-selected="true"></div>` |
+| 36 | `checked` | bool | every widget | modifier | a switch's state, set in place | `<switch checked/>` | `<button id="r" class="u-switch is-on" type="button" role="switch" aria-checked="true"><span id="r.0" class="u-knob"></span></button>` |
+| 37 | `disabled` | bool | every widget | modifier | a control that can't be used | `<button disabled>x</button>` | `<button id="r" class="u-btn is-disabled" type="button" disabled>x</button>` |
+| 38 | `invalid` | bool | every widget | modifier | a field whose value isn't taken | `<field invalid/>` | `<input id="r" class="u-field is-invalid" type="text" aria-invalid="true">` |
+| 39 | `value` | string | `field` | modifier | a field's value | `<field value="hi"/>` | `<input id="r" class="u-field" type="text" value="hi">` |
+| 40 | `placeholder` | string | `field` | modifier | a field's placeholder | `<field placeholder="Find"/>` | `<input id="r" class="u-field" type="text" placeholder="Find">` |
+| 41 | `rows` | string | `field` | modifier | a field's rows: "8" always that tall, "3..8" from 3 growing with its text to 8, then scrolling; "1" is a one-line field. Enter and Shift+Enter type a newline in more than one | `<field rows="3..8" value="a"/>` | `<textarea id="r" class="u-field u-area" spellcheck="true" wrap="soft" rows="3" data-rows="3..8" style="--u-rows:3;--u-rows-max:8" data-on="caret">a</textarea>` |
+| 42 | `caret` | string | `field` | modifier | where a field's caret goes when the program sets its value: start, end, or keep it where the user had it (the default of a field of several lines; a one-line field's is end). The same value again moves nothing | `<field rows="3..8" caret="end"/>` | `<textarea id="r" class="u-field u-area" spellcheck="true" wrap="soft" rows="3" data-rows="3..8" data-caret="end" style="--u-rows:3;--u-rows-max:8" data-on="caret"></textarea>` |
+| 43 | `spellcheck` | bool | `field` | modifier | whether a host checks the spelling of a field of several lines: on unless spellcheck is false; the cells have none | `<field rows="3..8" spellcheck="false"/>` | `<textarea id="r" class="u-field u-area" spellcheck="false" wrap="soft" rows="3" data-rows="3..8" style="--u-rows:3;--u-rows-max:8" data-on="caret"></textarea>` |
+| 44 | `trap` | bool | `stack` | modifier | keeps the keyboard in a stack while it shows: Tab and Shift+Tab go from its last element that takes it to its first and back, never out (the cells; a host keeps Tab until hotty's V6-02) | `<stack trap/>` | `<div id="r" class="u-stack" data-trap></div>` |
+| 45 | `name` | string | every widget | modifier | a control's name | `<field name="q"/>` | `<input id="r" class="u-field" type="text" name="q">` |
+| 46 | `label` | string | every widget | modifier | its accessible label | `<button label="Close">x</button>` | `<button id="r" class="u-btn" type="button" aria-label="Close">x</button>` |
+| 47 | `title` | string | every widget | modifier | its tooltip, this text wrapped, which the host shows while the pointer rests on it; a <title> child is one of any elements | `<text title="Copies the row">x</text>` | `<span id="r" class="u-text">x</span>` |
+| 48 | `reveal` | bool | every widget | modifier | shown only while its item is pointed at, selected or focused | `<button reveal>x</button>` | `<button id="r" class="u-btn u-reveal" type="button">x</button>` |
+| 49 | `focusable` | bool | every widget | modifier | takes the keyboard on a click and by Tab | `<list focusable/>` | `<div id="r" class="u-list" role="listbox" tabindex="0"></div>` |
+| 50 | `bare` | bool | every widget | modifier | a field or a button with no border and no fill | `<button bare>x</button>` | `<button id="r" class="u-btn u-bare" type="button">x</button>` |
+| 51 | `pill` | bool | `button` | modifier | a button on a bar: a pill, no fill at rest; its icon alone, a circle | `<button pill>app</button>` | `<button id="r" class="u-btn u-pill" type="button">app</button>` |
+| 52 | `raised` | bool | `button` | modifier | a pill on the selected fill: a bar's picker | `<button pill raised>main</button>` | `<button id="r" class="u-btn u-pill u-raised" type="button">main</button>` |
+| 53 | `current` | bool | `button` | modifier | a pill whose thing holds the keyboard: the accent's soft fill | `<button pill current>editor</button>` | `<button id="r" class="u-btn u-pill is-cur" type="button" aria-current="true">editor</button>` |
+| 54 | `badge` | int | `button` | modifier | a tool's badge on the button's corner: its count, 99+ past 99; none at 0 | `<button pill badge="3">Tests</button>` | `<button id="r" class="u-btn u-pill u-has-badge" type="button">Tests<span id="r.1" class="u-badge">3</span></button>` |
+| 55 | `badge-dot` | bool | `button` | modifier | a badge with no number on the button's corner, a dot: something new | `<button pill badge-dot>Files</button>` | `<button id="r" class="u-btn u-pill u-has-badge" type="button">Files<span id="r.1" class="u-badge u-badge-dot"></span></button>` |
+| 56 | `badge-tone` | string | `button` | modifier | the badge's tone: accent (the default), warn, error or muted | `<button pill badge="1" badge-tone="warn">Agents</button>` | `<button id="r" class="u-btn u-pill u-has-badge" type="button">Agents<span id="r.1" class="u-badge u-tone-warn">1</span></button>` |
+| 57 | `chrome` | bool | every widget | modifier | a sidebar's ground: a darker fill with a hairline at its end | `<stack chrome/>` | `<div id="r" class="u-stack u-chrome"></div>` |
+| 58 | `card` | bool | `box` | modifier | a group's panel: a fill a step lighter than the page, its rows split by rules | `<box card/>` | `<div id="r" class="u-box u-card"></div>` |
+| 59 | `ring` | bool | `dot` | modifier | a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven | `<dot ring/>` | `<span id="r" class="u-glyph u-dot u-ring">○</span>` |
+| 60 | `target` | bool | `dot` | modifier | a dot in a ring (◉), a state that asks for someone | `<dot target/>` | `<span id="r" class="u-glyph u-dot u-target">◉</span>` |
+| 61 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
+| 62 | `attention` | bool | `button`, `item` | modifier | it waits for someone: drawn in the warn tone | `<button pill attention>build</button>` | `<button id="r" class="u-btn u-pill is-att" type="button">build</button>` |
+| 63 | `cap` | bool | `key` | modifier | a key drawn boxed, a cap: a sheet of keys | `<key cap>ctrl+b</key>` | `<kbd id="r" class="u-key u-cap">ctrl+b</kbd>` |
+| 64 | `strip` | bool | `row` | modifier | a row that is a strip of chrome: its three rows its start, centre and end | `<row strip><row/><row/><row/></row>` | `<div id="r" class="u-row u-strip"><div id="r.0" class="u-row"></div><div id="r.1" class="u-row"></div><div id="r.2" class="u-row"></div></div>` |
+| 65 | `grid` | bool | `row` | modifier | a row that is a picker's grid: its buttons squares that wrap | `<row grid><button>a</button></row>` | `<div id="r" class="u-row u-grid"><button id="r.0" class="u-btn" type="button">a</button></div>` |
+| 66 | `meter` | int | `face` | modifier | a widget's meter after its value, filled to a percentage, 0 to 100 | `<face icon="memory" value="23%" meter="23"/>` | `<div id="r" class="u-row u-wg"><span id="r.0" class="u-text u-icon">󰍛</span><span id="r.1" class="u-text u-wg-v">23%</span><span id="r.2" class="u-wg-meter" style="--u-m:0.23"><span id="r.2.0" class="u-wg-fill"></span></span></div>` |
+| 67 | `stale` | bool | `face` | modifier | a widget whose value is old, its source gone: dimmed | `<face icon="server-off" value="—" unit="offline" stale/>` | `<div id="r" class="u-row u-wg u-stale"><span id="r.0" class="u-text u-icon">󰒏</span><span id="r.1" class="u-text u-wg-v">—</span><span id="r.2" class="u-text u-wg-u">offline</span></div>` |
+| 68 | `popover` | bool | `box`, `stack` | modifier | a box or a stack that is a popover's card, the root of what a widget or a strip's tool opens | `<box popover/>` | `<div id="r" class="u-box u-pop"></div>` |
+| 69 | `segmented` | bool | `row` | modifier | a row of buttons drawn as one control, a scope or a filter of two to four values, the selected one raised | `<row segmented><button selected>All</button><button>Errors</button></row>` | `<div id="r" class="u-row u-seg"><button id="r.0" class="u-btn is-sel" type="button" aria-selected="true">All</button><button id="r.1" class="u-btn" type="button">Errors</button></div>` |
+| 70 | `search` | bool | `row` | modifier | a row drawn as a search field: its icon and a bare field in one field's box | `<row search><field bare/></row>` | `<div id="r" class="u-row u-search"><input id="r.0" class="u-field u-bare" type="text"></div>` |
+| 71 | `nav` | bool | `list` | modifier | a sidebar's list | `<list nav/>` | `<div id="r" class="u-list u-nav" role="listbox" tabindex="0"></div>` |
+| 72 | `entries` | bool | `list` | modifier | a list whose items are entries, each taking the keyboard | `<list entries><item/></list>` | `<div id="r" class="u-list u-entries" role="listbox"><div id="r.0" class="u-item" role="option" tabindex="0"></div></div>` |
+| 73 | `scale` | int | every widget | modifier | drawn at a percentage of its size | `<box scale="80"/>` | `<div id="r" class="u-box u-scale" style="--u-zoom:0.8"></div>` |
+| 74 | `scroll` | bool | every widget | modifier | takes the room left and scrolls what doesn't fit | `<box scroll/>` | `<div id="r" class="u-box u-scroll" tabindex="0"></div>` |
+| 75 | `readline` | bool | `surface`, `field` | modifier | the fields in it edit by the readline keys of a terminal (ctrl+w, ctrl+u, ctrl+k, alt+b, …), whatever the platform | `<surface readline/>` | `<div id="r" class="u-surface u-theme-graphite u-compact" data-keys="arrow_left=char-backward ctrl+b=char-backward arrow_right=char-forward ctrl+f=char-forward alt+arrow_left=word-backward ctrl+arrow_left=word-backward alt+b=word-backward alt+arrow_right=word-forward ctrl+arrow_right=word-forward alt+f=word-forward home=line-start end=line-end ctrl+e=line-end backspace=delete-char-backward ctrl+h=delete-char-backward delete=delete-char-forward ctrl+d=delete-char-forward alt+backspace=delete-word-backward ctrl+w=delete-word-backward ctrl+backspace=delete-word-backward alt+delete=delete-word-forward alt+d=delete-word-forward ctrl+delete=delete-word-forward ctrl+u=delete-to-line-start ctrl+k=delete-to-line-end arrow_up=line-previous ctrl+p=line-previous arrow_down=line-next ctrl+n=line-next page_up=page-up page_down=page-down alt+&lt;=input-start ctrl+home=input-start alt+&gt;=input-end ctrl+end=input-end mod+a=select-all ctrl+m=newline"></div>` |
+| 76 | `program` | string | `surface` | modifier | keys, by myelin's names and apart by spaces, that belong to the host program, which the fields in it give it | `<surface program="ctrl+b"/>` | `<div id="r" class="u-surface u-theme-graphite u-compact"></div>` |
+| 77 | `autofocus` | bool | every widget | modifier | takes the keyboard when the surface is shown | `<list autofocus/>` | `<div id="r" class="u-list" role="listbox"></div>` |
+| 78 | `drag` | bool | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `chip`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `link`, `face` | modifier | a drag handle: a press drags it, and its click waits for the release | `<item drag/>` | `<div id="r" class="u-item" role="option" data-on="drag"></div>` |
+| 79 | `drop` | string | `surface`, `stack`, `row`, `text`, `line`, `heading`, `caption`, `chip`, `glyph`, `icon`, `key`, `button`, `field`, `switch`, `select`, `cycle`, `list`, `item`, `section`, `box`, `dialog`, `link`, `face` | modifier | a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it | `<item drop="halves"/>` | `<div id="r" class="u-item" role="option" data-on="drop" data-steps="0 1"></div>` |
 <!-- end attributes table -->
 
 `autofocus` changes no HTML: the runtime gives the first element that
@@ -781,6 +816,7 @@ The events, by widget (the Widgets table's *events*):
 | --- | --- | --- | --- |
 | `click` | every widget but `spacer` and `rule` | a click, or Space or Enter on a button | the element's `value` attribute, if any |
 | `focus` | every widget but `spacer` and `rule` | it takes the keyboard | |
+| `follow` | `link` | a click, or Space or Enter on it ([Links](#links)) | the link's `href` |
 | `input` | `field` | every edit | the field's whole value |
 | `change` | `field` | the user commits it: on Enter, and on leaving it (hotty SPEC §9: Tab, a click elsewhere, the surface losing the keyboard); once for each value | the field's value |
 | `height` | `field` of several lines | its height in rows is not what the program last heard, and when it first shows: from the cells' wrap: the runtime's own call, not a host's event, which tells none | the rows, an int (`Event.Rows`) |
@@ -1553,6 +1589,9 @@ hits
   fill's, `fg/bg`, and the attributes joined by `+`.
 - **`hits`**, then each cell rect a press acts on, `@ X,Y WxH ID`, in
   the order drawn: where two overlap, the later is on top.
+- **`links`**, only where a run carries a link: each such run, `@ X,Y
+  WxH HREF`. Runs of one style and different links are one letter in
+  `style`; this is where they differ.
 
 ## Conformance
 

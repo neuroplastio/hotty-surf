@@ -306,6 +306,25 @@ var All = []Story{
 		}
 		return st
 	}},
+	{"link/inline", 60, func() *surfui.Node {
+		// A link in a paragraph that wraps, one that is a hyperlink to
+		// somewhere else, one with the keyboard (forced), one muted, and
+		// one on a row of its own.
+		return surfui.Stack(
+			surfui.Line(
+				surfui.Text("See the "),
+				surfui.Link("/docs/install", surfui.Str("install guide")),
+				surfui.Text(" first, then "),
+				surfui.Link("https://example.com", surfui.Str("the site")).External(),
+				surfui.Text(", or jump to "),
+				Force(surfui.Link("#usage", surfui.Str("usage")), "focus"),
+				surfui.Text(" below; a link in a muted text stays "),
+				surfui.Link("/docs/api", surfui.Str("a link")).Muted(),
+				surfui.Text("."),
+			).Wrap(),
+			surfui.Row(surfui.Text("On a row:").Muted(), surfui.Link("/docs/api", surfui.Str("API reference"))).Gap(2),
+		).Gap(1)
+	}},
 	{"button/states", 60, func() *surfui.Node {
 		return surfui.Row(surfui.Button("Restart"), surfui.Button("Focus").Fill(surfui.Accent), surfui.Button("Disabled").Disabled(true)).Gap(1)
 	}},

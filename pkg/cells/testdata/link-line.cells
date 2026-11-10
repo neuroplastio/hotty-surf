@@ -1,0 +1,15 @@
+cells 24x2
+text
+> See the install guide
+> first, or the site.
+style
+= ........aaaaaaaaaaaaa
+= ..........aaaaaaaa
+. fg/bg
+a accent/bg underline
+hits
+@ 8,0 7x1 r.0.1
+@ 15,0 6x1 r.0.1
+links
+@ 8,0 13x1 /docs/install
+@ 10,1 8x1 https://example.com/x

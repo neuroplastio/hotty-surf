@@ -187,6 +187,10 @@ func (f *frame) embed(e *elem, out *[]*surfui.Node) {
 //
 //go:noinline
 func (f *frame) textNode(e *elem, out *[]*surfui.Node) {
+	if e.plain {
+		*out = append(*out, surfui.Str(f.text(e, e.text)))
+		return
+	}
 	*out = append(*out, surfui.Text(f.text(e, e.text)))
 }
 
@@ -585,6 +589,8 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 		return surfui.Row(kids...)
 	case "line":
 		return surfui.Line(kids...)
+	case "link":
+		return NewLink(kids...)
 	case "list":
 		return surfui.List(kids...)
 	case "item":
@@ -722,6 +728,10 @@ func applyString(name string, n *surfui.Node, v string) error {
 		return ModDensity(n, v)
 	case "key":
 		ModKey(n, v)
+	case "href":
+		ModHref(n, v)
+	case "anchor":
+		ModAnchor(n, v)
 	case "tone":
 		return ModTone(n, v)
 	case "hue":
@@ -758,6 +768,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 	switch name {
 	case "bold":
 		ModBold(n, v)
+	case "external":
+		ModExternal(n, v)
 	case "semibold":
 		ModSemibold(n, v)
 	case "muted":

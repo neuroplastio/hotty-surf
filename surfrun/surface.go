@@ -110,6 +110,8 @@ type Surface struct {
 	held   *surfui.Node
 	heldIx surfui.Index
 
+	reveals []string // the anchors links followed, which the next frame scrolls to
+
 	focused string // the element with the keyboard, "" for none
 	home    string // where keys start with no element focused
 	lent    bool   // the host has the keyboard for keys of its own (Lend)
@@ -462,6 +464,12 @@ func (s *Surface) update() Frame {
 		}
 		s.prev, s.index = tree, ix
 	}
+	for _, id := range s.reveals {
+		if s.index[id] != nil {
+			f.Reveals = append(f.Reveals, hotty.OpReveal(id, hotty.RevealStart))
+		}
+	}
+	s.reveals = nil
 	s.held, s.heldIx, s.stale = s.prev, s.index, false
 	f.Fields = s.fields()
 	if restructured {
@@ -599,6 +607,21 @@ func (s *Surface) event(e hotty.Event) bool {
 	ev := Event{Kind: e.Kind, Target: e.Target, Value: e.Value, Mods: e.Mods, Count: e.Count}
 	if e.Checked != nil {
 		ev.Checked = *e.Checked
+	}
+	if e.Kind == hotty.EventClick && surfui.IsLink(n) {
+		// A link is followed: by the program, which hears the href, or
+		// where the href is a #fragment an anchor names, by a scroll to it.
+		href := surfui.HrefOf(n)
+		if act, ok := surfui.Handler(n, "follow"); ok {
+			ev.Kind, ev.Value = "follow", href
+			s.do(act, ev)
+			return true
+		}
+		if name, ok := surfui.FragmentOf(href); ok && s.index[name] != nil {
+			s.reveals = append(s.reveals, name)
+			s.due = true
+			return true
+		}
 	}
 	act, ok := surfui.Handler(n, e.Kind)
 	if !ok {

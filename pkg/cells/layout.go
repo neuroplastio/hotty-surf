@@ -84,11 +84,17 @@ const (
 	fKeep
 	fFit
 	fFitStart
-	fScale // drawn at a scale (CSS zoom)
-	fHolds // holds a scaled element
-	fGone  // a Fit or FitStart row's child it has no room for
-	fKeys  // a key's caps (surfkeys.SeqOf), drawn in the renderer's KeyStyle
-	fTip   // a tooltip's card (surfui.TipCard)
+	fScale  // drawn at a scale (CSS zoom)
+	fHolds  // holds a scaled element
+	fGone   // a Fit or FitStart row's child it has no room for
+	fKeys   // a key's caps (surfkeys.SeqOf), drawn in the renderer's KeyStyle
+	fTip    // a tooltip's card (surfui.TipCard)
+	fStrike // del, s
+	fLink   // a link's: underlined in the link tone, and its text carries its href
+	fCode   // inline code, on the code ground
+	fInline // an inline element of a paragraph: its text is runs of the paragraph's
+	fFlow   // a paragraph: its inline children flow as one text
+	fBreak  // a hard break, in a paragraph
 )
 
 // density is the surface's, for the steps.
@@ -114,6 +120,7 @@ type box struct {
 	runs []*box
 
 	tone, fill Role
+	href       string // a link's text's
 	gap        int
 	pl, pr     int // padding
 	pt, pb     int
@@ -147,15 +154,21 @@ func build(n *surfui.Node, d density, caps keyCaps) *box {
 		b.capsOf(seq, caps)
 		return b
 	}
-	if b.kind == across && b.f&fWrap != 0 && hasClass(n, "u-line") {
+	if b.kind == across && (b.f&fWrap != 0 && hasClass(n, "u-line") || b.f&(fFlow|fInline) != 0) {
 		b.kind = flow
 	}
-	if b.kind == column || b.kind == across || b.kind == flow {
+	if b.kind == flow {
+		for _, k := range surfui.Kids(n) {
+			b.runs = append(b.runs, b.inline(k, inl{}, d, caps)...)
+		}
+		return b
+	}
+	if b.kind == column || b.kind == across {
 		var prev *box
 		for _, k := range surfui.Kids(n) {
 			// White space between elements is nothing in a box; in a
 			// paragraph it is a space.
-			if surfui.Tag(k) == "" && strings.TrimSpace(textOf(k)) == "" && b.kind != flow {
+			if surfui.Tag(k) == "" && strings.TrimSpace(textOf(k)) == "" {
 				continue
 			}
 			kb := build(k, d, caps)
@@ -172,10 +185,73 @@ func build(n *surfui.Node, d density, caps keyCaps) *box {
 			prev = kb
 		}
 	}
-	if b.kind == flow {
-		b.runs, b.kids = b.kids, nil
-	}
 	return b
+}
+
+// inl is what the inline elements around a run give it: their look, and
+// the element a press on it reaches (the link, else the nearest).
+type inl struct {
+	f    flag
+	tone Role
+	href string
+	n    *surfui.Node
+}
+
+// inherited are the flags an inline element gives its runs.
+const inherited = fBold | fItalic | fUnder | fStrike | fCode | fLink
+
+// inline is the runs of k, a child of a paragraph (or of an inline
+// element of one, whose look is in): a text node one run; an inline
+// element (a link, em, strong, del, code) its children's, each with its
+// look; a run of its own (a Text, a Key) as built, with the look it is
+// in; a hard break, which breaks the line.
+func (b *box) inline(k *surfui.Node, in inl, d density, caps keyCaps) []*box {
+	stackprobe.Probe()
+	if surfui.Tag(k) == "" {
+		rb := &box{n: k, d: d, kind: text, text: textOf(k), f: fWrap, fw: -1, fh: -1, natw: -1, memoW: -1}
+		in.give(rb)
+		return []*box{rb}
+	}
+	kb := &box{n: k, d: d, fw: -1, fh: -1, natw: -1, memoW: -1}
+	kb.look(d)
+	if kb.f&fBreak != 0 {
+		return []*box{kb}
+	}
+	if kb.f&fInline != 0 {
+		in.f |= kb.f & inherited
+		if kb.tone != "" {
+			in.tone = kb.tone
+		}
+		if kb.f&fLink != 0 {
+			in.href, in.n = kb.href, k
+		} else if in.n == nil || in.href == "" {
+			in.n = k
+		}
+		var out []*box
+		for _, c := range surfui.Kids(k) {
+			out = append(out, b.inline(c, in, d, caps)...)
+		}
+		return out
+	}
+	rb := build(k, d, caps)
+	if rb.kind == text {
+		in.give(rb)
+	}
+	return []*box{rb}
+}
+
+// give puts what the inline elements around a run gave it on the run.
+func (in inl) give(rb *box) {
+	rb.f |= in.f
+	if rb.tone == "" {
+		rb.tone = in.tone
+	}
+	if in.href != "" {
+		rb.href = in.href
+	}
+	if in.n != nil {
+		rb.n = in.n
+	}
 }
 
 // capsOf makes b, a key, its sequence's caps (surfkeys.Expand's, in cells):
@@ -334,6 +410,25 @@ func (b *box) look(d density) {
 			b.kind, known = glyph, true
 		case c == "u-key":
 			b.kind, known = keycap, true
+		case c == "u-link":
+			b.f |= fLink | fUnder | fInline
+			b.href, _ = surfui.AttrOf(n, "href")
+		case c == "u-p", c == "u-h":
+			b.kind, known = across, true
+			b.f |= fFlow | fWrap
+			if c == "u-h" {
+				b.f |= fBold
+			}
+		case c == "u-em":
+			b.f |= fItalic | fInline
+		case c == "u-strong":
+			b.f |= fBold | fInline
+		case c == "u-del":
+			b.f |= fStrike | fInline
+		case c == "u-code":
+			b.f |= fCode | fInline
+		case c == "u-br":
+			b.f |= fBreak
 		case c == "u-keys": // a surfkeys.Node's caps, drawn as its style drew them
 			b.kind, known = across, true
 			b.f |= fKeys | fKeep
@@ -897,6 +992,11 @@ func (b *box) flowLines(w int) [][]piece {
 	}
 	space := false // white space since the last piece
 	for _, k := range b.runs {
+		if k.f&fBreak != 0 {
+			next()
+			space = false
+			continue
+		}
 		if k.kind != text {
 			put(piece{src: k, w: k.ml + k.natural()}, btoi(space))
 			space = false
@@ -941,8 +1041,18 @@ func (b *box) placeFlow() {
 	b.kids = b.kids[:0]
 	for i, line := range b.flowLines(b.w - b.pl - b.pr) {
 		y := b.y + b.pt + i
-		for _, p := range line {
+		var prev *piece
+		for j, p := range line {
 			k := p.src
+			// The space between two words of one link, or of one inline
+			// code, is the link's or the code's: its underline and its
+			// ground run on, and so does its OSC 8.
+			if prev != nil && p.text != "" && prev.text != "" && p.x > prev.x+prev.w &&
+				(prev.src == p.src || prev.src.href != "" && prev.src.href == p.src.href) &&
+				(p.src.href != "" || p.src.f&fCode != 0) {
+				p.text, p.x, p.w = " "+p.text, p.x-1, p.w+1
+			}
+			prev = &line[j]
 			if p.text == "" {
 				k.place(b.x+b.pl+p.x+k.ml, y, p.w-k.ml, k.height(p.w-k.ml))
 				b.kids = append(b.kids, k)

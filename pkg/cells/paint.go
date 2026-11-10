@@ -30,7 +30,8 @@ import (
 type ink struct {
 	fg    Role
 	attr  Attr
-	plain bool // tones inherit, on a control's accent fill
+	plain bool   // tones inherit, on a control's accent fill
+	href  string // the link its text is in
 }
 
 // painter draws the boxes into a grid.
@@ -183,11 +184,31 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	if b.f&fUnder != 0 {
 		in.attr |= Underline
 	}
+	if b.f&fStrike != 0 {
+		in.attr |= Strike
+	}
+	if b.f&fLink != 0 {
+		// The link tone, unless the text says another, or a muted block
+		// holds all its runs in one.
+		if b.tone == "" && !in.plain {
+			in.fg = Accent
+		}
+	}
+	if b.href != "" {
+		in.href = b.href
+	}
 	foc := p.focus == n
 	var bg Role
 	switch {
 	case b.f&fSurface != 0:
 		bg = Bg
+	case b.f&fCode != 0:
+		// Inline code is on the code ground; the role L2 adds
+		// (code.ground) is not on this branch, so the tonal fill, a
+		// control's step from the ground.
+		bg = Tonal
+	case b.f&fLink != 0 && foc:
+		bg = Sel
 	case hasClass(n, "u-search") || hasClass(n, "u-query"):
 		// The field belongs to the whole row, including its icon and the
 		// bare text field inside it, as it does on a host.
@@ -324,7 +345,7 @@ func (p *painter) keyed(list *surfui.Node) bool {
 }
 
 // at is what a leaf's text draws in: its ink, on the fill below it.
-func (in ink) style() style { return style{fg: in.fg, attr: in.attr} }
+func (in ink) style() style { return style{fg: in.fg, attr: in.attr, href: in.href} }
 
 // write draws cs from x, y in clip, at most w cells of them.
 func (p *painter) write(x, y, w int, cs []Cluster, st style, clip rect) int {
@@ -642,8 +663,11 @@ func focusable(n *surfui.Node) bool {
 	case "select", "textarea", "button", "summary":
 		return true
 	case "a":
+		// A link takes the keyboard but a hyperlink to somewhere else
+		// that the program doesn't follow (surfui.TakesFocus).
 		if _, ok := surfui.AttrOf(n, "href"); ok {
-			return true
+			t, _ := surfui.AttrOf(n, "target")
+			return t != "_blank"
 		}
 	}
 	t, ok := surfui.AttrOf(n, "tabindex")
@@ -654,8 +678,14 @@ func focusable(n *surfui.Node) bool {
 // link, a summary, or what asks for it (data-on~=click).
 func reportsClick(n *surfui.Node) bool {
 	switch surfui.Tag(n) {
-	case "button", "a", "summary":
+	case "button", "summary":
 		return true
+	case "a":
+		// A hyperlink to somewhere else is the terminal's, by its OSC 8:
+		// no press on it is the program's, and the mouse stays the
+		// terminal's where nothing else asks for it.
+		t, _ := surfui.AttrOf(n, "target")
+		return t != "_blank"
 	}
 	return listens(n, "click")
 }

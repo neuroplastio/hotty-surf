@@ -172,6 +172,10 @@ func (n *Node) Unvar(name string) *Node {
 // On runs act on the event kind (hotty's: "click", "change", "input",
 // "submit", "focus").
 func (n *Node) On(kind string, act Action) *Node {
+	if kind == "follow" && IsLink(n) {
+		// The program follows it, so it is no new tab (External).
+		n.Unattr("target").Unattr("rel")
+	}
 	n.on = append(n.on, handler{kind, act})
 	return n
 }
