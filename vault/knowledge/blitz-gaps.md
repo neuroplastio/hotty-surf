@@ -703,3 +703,13 @@ other (its slot is two cells now and the heading keeps its width).
 | --- | --- | --- | --- | --- |
 | table/threads (Dense 2×: 39–40; Compact 2×: 35–36; Roomy 1.6×: 12.1–12.5) | A cut text (the document column at its `max` cap) ends a character earlier than Chromium's | 1.6×, 2× | Not verified: Blitz measures the text to the cell's width in its own advance, a letter off Chromium's (as in the text/path cases) | Cosmetic |
 | table/scroll (Roomy 1.6×: neuroplastio 26.6, terminal 30.5) | A pixel of text placement in rows the same width, the "changed" heading cut in both | 1.6× | As above; the cut is the framework's: an auto column is measured in cells, which proportional Roomy text outgrows | Cosmetic |
+
+### The table after the rebase onto L2, L3, L11 and L17 (2026-11-10)
+
+`table/threads` (15 cases) passes now and is off the baseline: its summary and
+chip are shorter and its canvas 80 cells. A Dense table cell's width is in
+the font's own advance (`calc(var(--u-w) * 1ch)`), since the gate's cell
+width, rounded to device pixels, is a few percent under the monospace face's
+advance and cut every Dense cell ("1.0 KB" to "1.0 …"). The legible gate
+passes the table's stories; the 17 cases named above that still fail are
+`table/static`, `table/empty` and `table/scroll`'s, as before.

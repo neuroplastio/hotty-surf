@@ -451,7 +451,7 @@ var All = []Story{
 			row("--no-links", "false", "Leaves OSC 8 hyperlinks out of the cells"),
 		)
 	}},
-	{"table/threads", 72, func() *surfui.Node {
+	{"table/threads", 80, func() *surfui.Node {
 		// A threads view: columns declared once, one selected row on a
 		// focused table, a muted resolved row, a chip in a cell, a sort
 		// chevron on the age. The data is made up.
@@ -468,7 +468,7 @@ var All = []Story{
 			surfui.Col("thread").FillCol(),
 			surfui.Col("age").Align("end").Muted().Sort("descending"),
 			row(false, "●", "warn", "README.md", "Is this still true after the rename?", "3h", ""),
-			row(true, "●", "warn", "docs/surf.md", "The table's max wants an example", "5h", "block gone"),
+			row(true, "●", "warn", "docs/surf.md", "Max wants an example", "5h", "gone"),
 			row(false, "✓", "ok", "docs/spec.md", "Typo in the second paragraph", "2d", ""),
 			row(false, "●", "warn", "internal/cmd/long-name-of-a-directory/main.go", "Why is this one so long", "3d", ""),
 		).Focusable(), "within")

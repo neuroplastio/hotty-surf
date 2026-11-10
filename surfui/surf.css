@@ -1521,6 +1521,10 @@
 .u-table { min-width: 0; }
 .u-table .u-cell { overflow: hidden; min-width: 0; }
 .u-table .u-cell.u-width.u-shrink { flex: 0 1 auto; }
+/* Dense is the host's grid and its font: a cell's width in the font's own
+   advance (ch), so that a text of as many cells fits whole whatever the
+   device-pixel rounding of the cell width, which a gate's host shows. */
+.u-dense .u-table .u-cell.u-width { width: calc(var(--u-w) * 1ch); }
 .u-table .u-cell.u-maxp { max-width: calc(var(--u-maxp) * 1%); }
 .u-thead { padding: var(--u-iy) var(--u-px); color: var(--u-muted); font-weight: 400; }
 .u-table-empty { padding: var(--u-iy) var(--u-px); }
