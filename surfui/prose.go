@@ -216,10 +216,10 @@ var alertLook = map[string]struct {
 	tone        Tone
 }{
 	"note":      {"Note", "\U000F02FD", Info},
-	"tip":       {"Tip", "\U000F06A8", OK},
-	"important": {"Important", "\U000F0361", Accent},
-	"warning":   {"Warning", "\U000F0027", Warn},
-	"caution":   {"Caution", "\U000F0027", Error},
+	"tip":       {"Tip", "\U000F06E9", OK},
+	"important": {"Important", "\U000F0A04", Accent},
+	"warning":   {"Warning", "\U000F002A", Warn},
+	"caution":   {"Caution", "\U000F0CE6", Error},
 }
 
 // Alert is GitHub's callout: a bar in the kind's tone at its start, its

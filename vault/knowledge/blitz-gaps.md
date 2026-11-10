@@ -494,3 +494,29 @@ underline: Blitz's sits a device row lower than Chromium's (red under
 | Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
 | --- | --- | --- | --- | --- |
 | link/inline (Compact 1.6×: 12–14; Dense 2×: 21–23; Roomy 2×: 51–52) | An underline a device row lower and thicker than Chromium's | 1.6×, 2× | Not verified: Blitz places the line from the font's underline metrics, snapped to device px; Chromium 153 rounds its own | Cosmetic |
+
+## Prose and links (a2ui-exit L10 and L11, 2026-11-10)
+
+From `make gate GATE_FLAGS="--only prose-"` (and `link-`), hotty-blitz 0.7.0:
+the new stories `prose/doc`, `prose/compact`, `prose/alerts` and
+`link/inline` fail in every theme and density, as every story of
+proportional text does (a row's line sits 1–2 CSS px lower in Blitz): 100–600
+CSS px² in `prose/doc`, 2700 at 2× in `prose/alerts`, which is long. Looked
+at in the sheets (`.shots/gate/prose-*`), the layout is Chromium's: the
+measure, the gaps, the hanging list items, the quote's and alert's bars
+(a background layer, as the list marker is), the heading sizes, and the
+inline code's ground. What differs, for hotty-blitz's batch:
+
+- **A task's marker (☐ ☑) falls back to another face** than Chromium's and
+  comes out smaller, so the marker is narrower and the text after it sits a
+  few px off. The glyph isn't in the proportional face the host ships.
+- **`em`'s italic** of the proportional face draws oddly at 2× (the glyphs
+  are cut by a stray stroke in `prose/doc`'s "fast"); not isolated.
+- **An alert's icon** (an MDI glyph, in the Nerd Font Propo) is a size off
+  Chromium's, as the icon widget's are.
+- **`text-decoration: underline` and `line-through`** (a link's, `del`'s)
+  draw, at a different thickness or offset: they are marked unknown in
+  [`css-subset.md`](css-subset.md) until the gate's cases are scored.
+
+No workaround is in the framework. The gate's baseline wasn't written
+(the gate was red on main for other reasons).
