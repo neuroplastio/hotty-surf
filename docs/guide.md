@@ -1044,7 +1044,9 @@ Surface routes the host's events and the keys to the model, and says
 what to send; the host writes it with hotty-go and places the surfaces.
 `surfrun.Runtime` is a Surface on a terminal, and `surftest.StartHosted` is a
 whole host of this kind for tests (`surftest/hosted.go`); `surftest.NewRelay`
-is one that draws in frames, whose test says when it updates.
+is one that draws in frames, whose test says when it updates. A Bubble
+Tea program's host is `surftea`, which does all of this
+([Hosting in a Bubble Tea program](#hosting-in-a-bubble-tea-program)).
 
 The host is the model's `surfrun.Runner`: `Post(f)` runs `f` on the host's
 goroutine and then updates, `Quit()` ends the run after this update,
@@ -1260,6 +1262,95 @@ for !quit { // host.Quit sets it
 
 There, `frame` is `surfrun.WriteFrame` with a `writeList`, which uses
 `placeList` for a list's placement.
+
+## Hosting in a Bubble Tea program
+
+A Bubble Tea program that owns its screen and puts hotty surfaces among its
+own cells (hotty-go's `hottytea` places them) shows a model through
+`neuroplast.io/hotty-surf/surftea`. It is a module of its own, so hotty-surf's
+core takes no Bubble Tea. It is the route above, written once:
+`surftea.Host` is a `surfrun.Surface` on a `hottytea.Session`, placed at a
+rectangle the program picks, with the Session's calls around it. It is a
+Host per surface, each with a name of its own.
+
+```go
+a.form = surftea.New("form", formModel, nil,
+	surftea.Options{NoQuit: true})
+a.source = surftea.New("source", sourceModel, nil,
+	surftea.Options{NoQuit: true})
+// once the program is made, so that Post can come back to it:
+a.form.Attach(p.Send)
+```
+
+What the program's `Update` does, after the Session's own (`hottytea`):
+
+```go
+msg, cmd := a.s.Update(msg)
+switch msg := msg.(type) {
+case hottytea.ReadyMsg:
+	a.form.Ready(msg.Caps) // how a binding's mod reads
+case hottytea.RelayoutMsg:
+	surftea.Relayout(a.s, msg) // the stylesheet again, if lost
+case hottytea.EventMsg:
+	if !a.form.Event(a.s, msg.Event) {
+		a.source.Event(a.s, msg.Event)
+	}
+case surftea.PostMsg:
+	msg.Host.Posted(a.s, msg) // what a model posted, on this goroutine
+case tea.KeyPressMsg:
+	// a key the host takes is the model's; the rest is the program's
+	took := a.form.Key(a.s, hottytea.KeyName(msg.Key()))
+}
+```
+
+Drawing the frame lists each Host's surfaces, then lays them out:
+
+```go
+want := a.form.Surfaces(a.s, formAt, screen)
+want = append(want, a.source.Surfaces(a.s, sourceAt, screen)...)
+a.s.Layout(want)
+a.form.AfterLayout(a.s) // the keys' home focused, a menu's keyboard
+a.source.AfterLayout(a.s)
+return a.s.Flush()
+```
+
+- **Events and keys.** `Event` reports whether the surface was the Host's
+  (its own, its list's or its menu's) and the model took it; each Host
+  sends what changed. `Key` is the same for a key, and a key it does not
+  take is the program's (ctrl+c). `Lend` gives the program the keyboard for
+  keys of its own and takes it back. A model whose state changed some other
+  way (another surface's pick) is `Sync`ed. After any of them, draw.
+- **The stylesheet once per Session.** The first Host to lay out sends
+  surf's stylesheet; every other Host on the Session finds it sent. A
+  `RelayoutMsg` with `Lost` says the host lost its documents, and maybe its
+  resources: `Relayout` has the stylesheet sent again, ahead of the
+  documents. Its hues are the first Host's (`Options` has no palette: a
+  program that wants one declares it on that model's Surface).
+- **Two Hosts share nothing else.** Each has its own Surface: its focus,
+  its loan of the keyboard, its list and its menu. The host has one keyboard,
+  so focusing an element of one surface takes it from the other's, which
+  the host tells with a blur, as for any two surfaces.
+- **Lists and menus.** A Select's open list and an element's menu are
+  surfaces of their own, named `<name>-list` and `<name>-menu`: placed
+  where the frame says (under the Select, above it where there is more room,
+  at the pointer's cell for a menu), within the `clip` of `Surfaces`, at
+  `Options.Z+1` and `+2` with presses on, and deleted when they close. A
+  menu holds the keyboard, so a click elsewhere closes it. `Surfaces` lists
+  them after the Host's own, so the Layout places them.
+- **Posting.** A model that posts from a goroutine of its own (a
+  `surfrun.Runner`'s `Post`) reaches the program as a `surftea.PostMsg`, and
+  `Posted` runs it on the program's goroutine and sends what it changed.
+- **Cells.** Where the terminal is no host (the Session's `Mode` is `Text`)
+  the same Host draws in cells at the same rectangle: `Lines(w, rows)` are
+  the rows for the program's frame, `Caret()` where the field's caret is
+  in them, and `CellsKey`, `CellsPaste` and `CellsClick(col, row)` take what
+  the user does. The renderer draws a list and a menu in the same cells.
+
+`surftea/examples/twosurfaces` is a whole program of it: a form and the
+source it would write, two surfaces among the program's header and footer,
+which draws the same in cells, tested on a `hottytest` host. There is no
+new wire here: a Host writes hotty commands through the Session, and
+nothing of its own crosses a process.
 
 ## Hosting a Lua view
 
