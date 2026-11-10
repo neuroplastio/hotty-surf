@@ -952,6 +952,7 @@ The events, by widget (the Widgets table's *events*):
 | `input` | `field` | every edit | the field's whole value |
 | `change` | `field` | the user commits it: on Enter, and on leaving it (hotty SPEC §9: Tab, a click elsewhere, the surface losing the keyboard); once for each value | the field's value |
 | `height` | `field` of several lines | its height in rows is not what the program last heard, and when it first shows: from the cells' wrap, the runtime's own call; on a host from its measure (`Surface.Fit`, a `fit` event's rows, SPEC §9), which says the document's rows and not the field's, so it comes where the document has one such field | the rows, an int (`Event.Rows`) |
+| `submit` | `form` | the form is submitted: Enter in one of its fields of one line, after that field's `change`, or a `submit` button, after its click and the change of the field the click left (hotty SPEC §9, V6-03; [Forms](surf.md#forms)). A field of several lines never submits | |
 | `change` | `select` | a pick: in its open list, or by a key while it is closed | the option picked |
 | `change` | `cycle` | each step, by a key or a click on a part | the new value |
 | `input` | `slider` | each new value, by a key or by the pointer in a drag | the value, a decimal string |
@@ -1133,8 +1134,11 @@ widget it is drawn in.
   arrows, Page Up and Down, Enter, the function keys. A letter, Space,
   Backspace, the left and right arrows, Home and End stay the field's:
   the arrows, Home and End a parent gives it binds back to their editing
-  actions. A field with a `change` handler gives Enter too, which
-  commits it; the key then goes on to the bindings.
+  actions. A field of one line with a `change` handler, in no form, gives
+  Enter too, which commits it; the key then goes on to the bindings. In a
+  `form` a field keeps Enter, which a host commits and submits with
+  (SPEC V6-03), and a field of several lines never gives it: its Enter
+  is a line break.
 - **A select and a cycle are the runtime's:** they give the program the
   keys a host would scroll with that move them, a cycle Space too. A closed select picks on ↑ and ↓, Home
   and End (Page Up and Down alike) and a letter; open, those move in its
@@ -1592,7 +1596,7 @@ a select's list, whose markup the script's host shows as a surface of
 its own. A host in Go shows a script's view itself: the view is a
 `surfrun.Model` (`surflua.View`). It runs the conformance case for a host
 with one number type, `one-number`, and the Form's, the Shelf's and the Crew's
-cases (and the Draft's), with the Form, the Shelf and its InfoPanels written in Lua, in
+cases (and the Draft's and the Signup's), with the Form, the Shelf and its InfoPanels written in Lua, in
 the runtime and as a view on a host of its own. The reference's
 [From Lua](surf.md#from-lua) is its manual.
 
@@ -1671,6 +1675,16 @@ for a host draws in cells unchanged.
   was typed before the key. A `stack` with `trap` keeps Tab and Shift+Tab
   inside it: past its last element that takes the keyboard they go to
   its first.
+- **A form** (`form`, [Forms](surf.md#forms)) is a stack. Enter in a field
+  of one line commits it (`change`) and submits the form, as a host does
+  (SPEC V6-03): the cells send the form's `submit` event after the field's
+  `change`, with the fields it names, in tree order. A `submit` button
+  sends it after its click. A field of several lines types a line break
+  on Enter and never submits. A `type="password"` field draws `•` for
+  each character and gives nothing to copy. A field's `label` and `error`
+  are a stack in its place: the label above it, and in Dense before it,
+  where the field takes the rest of the row, and a message under it in
+  the `error` role. A field keeps its id as the message comes and goes.
 - **A scale is 100%:** a cell is a cell. What `:scale` scales is laid out
   as it is, and a box whose `height` is set around it, sized for its
   rows at the scale, is as tall as what it holds at least. Where that
@@ -1776,7 +1790,7 @@ cells or errors differ from the case's or from each other
 A case is a txtar archive. Its comment says what it shows. Its files:
 
 - **`root`**: the fixture the case draws, `Form`, `Shelf`, `Frame`,
-  `Deck`, `Crew` or `Draft`; without the file, a `Board`.
+  `Deck`, `Crew`, `Draft` or `Signup`; without the file, a `Board`.
 - **`css`**, where the case has it: what the stylesheet gains after the
   floor's, a palette's rules ([Hues](#hues)).
 - **`scroll`**: the case runs where the document scrolls, down (Go:
@@ -1939,6 +1953,26 @@ component Draft                     // draft.surf: a field of several lines,
   grew(h int)                       // height = h; no log, a host has none
   send()                            // log += "send " + quote(text)
   keep()                            // log += "keep"
+
+component Signup                    // signup.surf: a form, its checks in
+                                    // the program
+  name      string
+  pass      string
+  notes     string
+  nameError string
+  passError string
+  log       list(string)
+
+  setName(v string)                 // name = v; log += "name " + quote(v)
+  setPass(v string)                 // pass = v; log += "pass " + len(v)
+  setNotes(v string)                // notes = v;
+                                    // log += "notes " + quote(v)
+  submit()                          // nameError = "", passError = "";
+                                    // "Name is required" for no name,
+                                    // "Use at least 8 characters" for a
+                                    // short pass; if either, log +=
+                                    // "refused", else log += "signed up "
+                                    // + name
 
 component Form                      // form.surf: what the event brings,
                                     // $value and $event

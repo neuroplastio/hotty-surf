@@ -199,8 +199,9 @@ component, a partial, or a widget a package registered from outside
 | `dot` | a state's mark: a small dot in its `tone` | nothing |
 | `key` | a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style, lower case by default, Enter as `↵` | text |
 | `button` | a button, its text its label, with an `<icon>` before or after it ("Icons") | text, an `icon` |
-| `field` | a text field: one line, or with `rows` several ("A field of several lines") | nothing |
+| `form` | a stack whose text fields submit it on Enter, and a `<button submit>` too: `@submit` is the program's check ("Forms") | children |
 | `checkbox` | a boolean square with a check; its click handler changes `checked` | nothing |
+| `field` | a text field: one line, or with `rows` several ("A field of several lines"); with `label` and `error`, a caption above it and a message under it ("Forms") | nothing |
 | `switch` | a boolean as a track with a knob: it shows `:on`, and its `@click` handler changes the state `:on` reads | nothing |
 | `select` | a pick of one of `:options`, `:value` picked | nothing |
 | `tabs` | a segmented row of `options`, `value` selected | nothing |
@@ -521,9 +522,13 @@ registers widgets runs its own cases with `conformance.Suite`
 | `selected`, `checked`, `disabled`, `invalid` | bool | all | states |
 | `value`, `placeholder` | string | field | a field's value and placeholder |
 | `rows`, `caret` | string | field | a field's rows, `"8"` or `"3..8"`, and where its caret goes when the program sets its value: `start`, `end` or `keep` ("A field of several lines") |
+| `label`, `error` | string | field | a caption above the field (before it in Dense), which is also its accessible label; a message under it in the error tone, which also makes it `invalid` ("Forms") |
+| `type` | string | field | `text` (the default) or `password`: a host masks it, the cells draw `•` ("Forms") |
+| `submit` | bool | button | the button submits its form ("Forms") |
 | `spellcheck` | bool | field | a host checks the spelling of a field of several lines, unless `spellcheck="false"` |
 | `trap` | bool | stack | keeps Tab inside the stack while it shows (the cells; "A field of several lines") |
-| `name`, `label` | string | all | a control's name (an `icon`'s is its symbol's), an accessible label |
+| `name`, `label` | string | all | a control's name (an `icon`'s is its symbol's), an accessible label (on a field that isn't `bare`, `label` is also drawn: "Forms") |
+| `aria-label` | string | field | a field's accessible label and nothing drawn, which `label` of a field also draws |
 | `title` | string | all | its tooltip, this text wrapped ("Tooltips"); never an HTML `title` |
 | `reveal`, `focusable`, `bare`, `scroll`, `autofocus` | bool | all | the floor's behaviours |
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
@@ -691,6 +696,7 @@ registers widgets runs its own cases with `conformance.Suite`
   - `follow` on a `link` ("Links"), beside its `click` and `focus`;
   - `change` and `input` on a `field`, and `height` on a field of
     several lines (cells only; its `$value` is the rows, an int);
+  - `submit` on a `form` ("Forms"), with no argument but `$event`;
   - `change` on a `select`, a `cycle`, `tabs` and a `checkbox` (whose
     `$value` is a bool);
   - `input` and `change` on a `slider` ("Sliders and chips"), `$value` a
@@ -933,6 +939,75 @@ one:
   `ESTALE`).
 - **In Go:** `surfui.Field().Rows(3, 8).Wrap().Caret(surfui.CaretEnd)`,
   `.Spellcheck(false)`, `.OnHeight(...)`, and `.Trap()` on a `Stack`.
+
+## Forms
+
+A `form` is a `stack` whose text fields submit it. The sign-up form of a
+tour:
+
+```html
+<surface>
+  <form @submit="signUp()">
+    <field key="name" label="Name" :value="name" :error="nameError"
+           @change="setName($value)"/>
+    <field key="pass" label="Password" type="password" :value="pass"
+           :error="passError" @change="setPass($value)"/>
+    <button submit>Sign up</button>
+  </form>
+</surface>
+```
+
+- **Enter in a field of one line commits it and submits the form**, in
+  that order: the field's `@change` runs, then the form's `@submit`
+  (hotty SPEC V6-03). A `<button submit>` submits after its click, and
+  after the field it took the keyboard from has committed. A button with
+  no `submit` submits nothing. The cells do the same, with the same events
+  in the same order.
+- **A field of several lines never submits on Enter**: its Enter is a line
+  break ("A field of several lines"), in a form or out of one. It commits
+  when the user leaves it.
+- **The form's fields give their values by `@change`** (or `@input`): the
+  handler of `@submit` reads what the component has, which is what the
+  user typed, since every field committed first. A field with a `name`
+  also goes in hotty's `submit` event's `fields`, for a program that reads
+  it so; `surfrun.Event` doesn't carry them.
+- **`label`** puts a caption above a field, and before it in Dense. It is
+  also the field's accessible label. A `bare` field sits inside another
+  control (a search row's), so its `label` is the accessible label alone;
+  `aria-label` is that for any field, with nothing drawn. The caption is
+  drawn by a stack that takes the field's place, so the field has two
+  more levels in its id: a field keyed `name` in a form keyed `form` is
+  `r.kform.kname.0.kname`. It keeps that id as its `error` comes and goes.
+- **`error`** is a message under the field, in the error tone, and makes
+  it `invalid`; `""` is none. It is a string, so it is bound:
+  `:error="nameError"`.
+- **`type="password"`** is `type=password` on a host, which masks it; the
+  cells draw each character as `•`, and never copy it.
+- **The checks are Go, in the handler: there is no validation language in
+  a template.** The handler of `@submit` checks what the fields gave it,
+  sets each field's error (an empty string for a field it took), and
+  refuses by doing nothing else; the template shows the errors:
+
+  ```go
+  func (s *SignUp) SignUp() {
+      s.nameError, s.passError = "", ""
+      if s.name == "" {
+          s.nameError = "Name is required"
+      }
+      if len(s.pass) < 8 {
+          s.passError = "Use at least 8 characters"
+      }
+      if s.nameError != "" || s.passError != "" {
+          return // refused: the form shows why
+      }
+      s.create()
+  }
+  ```
+
+- **In Go:** `surfui.Form(kids...).OnSubmit(f)`, `surfui.Button("Sign
+  up").Submit()`, `surfui.Field().Label("Name").Error(msg).Password()`.
+  `Label` and `Error` are drawn when the field is added to its parent, so
+  they come before it.
 
 ## Context menus
 
