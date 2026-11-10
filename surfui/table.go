@@ -285,7 +285,7 @@ func tableHead(spec *tableSpec) *Node {
 			if c.sort != "none" {
 				sort.Class("is-sorted")
 			}
-			n.Add(Row(Text(c.heading), sort).Gap(1))
+			n.Add(Row(Text(c.heading).Keep(), sort).Gap(1))
 		}
 		if c.align == "center" {
 			n.Add(Spacer())
