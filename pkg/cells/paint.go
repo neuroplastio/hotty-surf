@@ -83,6 +83,9 @@ func (p *painter) paint(b *box, dy int, clip rect, in ink) {
 	if b.f&fScroll != 0 {
 		kdy, kclip = p.port(b, dy, clip)
 	}
+	if b.kind == custom {
+		kclip = clip.cut(rect{b.x, b.y - dy, b.w, b.h}) // its placed children stay in it
+	}
 	for _, k := range b.kids {
 		p.paint(k, kdy, kclip, in)
 	}
@@ -368,6 +371,8 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 	}
 	st := in.style()
 	switch b.kind {
+	case custom:
+		p.block(b, r, clip, in)
 	case text:
 		for i, l := range b.textLines(w) {
 			if i >= r.h-b.pt-b.pb {

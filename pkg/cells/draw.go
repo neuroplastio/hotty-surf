@@ -154,6 +154,7 @@ func (r *Renderer) scrolls() bool { return r.Scroll&hotty.ScrollVertical != 0 }
 // screen at least (min-height: 100vh), the open list under its Select.
 func (r *Renderer) layout() {
 	r.root, r.over, r.pageBar = nil, nil, false
+	r.blocks.next()
 	if r.tree == nil {
 		return
 	}
@@ -232,7 +233,7 @@ func (r *Renderer) endAtScreen() bool {
 // or above it where there is more room there; it scrolls where it
 // doesn't fit, with option At in view.
 func (r *Renderer) placeList(d density) {
-	o := build(r.list.tree, densityOf(r.list.tree), r.keyCaps())
+	o := build(r.list.tree, densityOf(r.list.tree), r.keyCaps(), &r.blocks)
 	// The list's surface holds the box of options: the box is the list.
 	if len(o.kids) == 1 {
 		o = o.kids[0]

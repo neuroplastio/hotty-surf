@@ -120,45 +120,52 @@ func surfRenderDash(e *surf.Errs, out []*surfui.Node, c *Dash, fill surf.Fill) [
 			k1 = append(k1, n4)
 			e.Leave()
 		}
-		// dash.surf:5:3 <x-callout>
+		// dash.surf:5:3 <x-spark>
 		if e.Enter("dash.surf", 5, 3) {
-			var k5 []*surfui.Node
-			// dash.surf:6:5 <x-tagline>
-			if e.Enter("dash.surf", 6, 5) {
-				n6 := surfwgauge.Tagline("Heads up")
-				surfwgauge.SetLoud(n6, true)
-				k5 = append(k5, n6)
-				e.Leave()
-			}
-			// dash.surf:7:5 <text>
-			if e.Enter("dash.surf", 7, 5) {
-				n7 := surfui.Text(c.Note)
-				k5 = append(k5, n7)
-				e.Leave()
-			}
-			n5 := surfwgauge.Callout(k5...)
-			surf.ModKey(n5, "note")
-			surfwgauge.SetKind(n5, "warn")
-			{
-				a8 := "note"
-				n5.On("click", func() { c.Pick(a8) })
-			}
+			n5 := surfwgauge.Spark("3 1 4 1 5 9 2 6")
+			surf.ModKey(n5, "trend")
 			k1 = append(k1, n5)
 			e.Leave()
 		}
-		// dash.surf:9:3 <x-tagline>
-		if e.Enter("dash.surf", 9, 3) {
-			n9 := surfwgauge.Tagline(strconv.FormatInt(int64(c.Level), 10) + " of 100")
-			surf.ModKey(n9, "tag")
-			k1 = append(k1, n9)
+		// dash.surf:6:3 <x-callout>
+		if e.Enter("dash.surf", 6, 3) {
+			var k6 []*surfui.Node
+			// dash.surf:7:5 <x-tagline>
+			if e.Enter("dash.surf", 7, 5) {
+				n7 := surfwgauge.Tagline("Heads up")
+				surfwgauge.SetLoud(n7, true)
+				k6 = append(k6, n7)
+				e.Leave()
+			}
+			// dash.surf:8:5 <text>
+			if e.Enter("dash.surf", 8, 5) {
+				n8 := surfui.Text(c.Note)
+				k6 = append(k6, n8)
+				e.Leave()
+			}
+			n6 := surfwgauge.Callout(k6...)
+			surf.ModKey(n6, "note")
+			surfwgauge.SetKind(n6, "warn")
+			{
+				a9 := "note"
+				n6.On("click", func() { c.Pick(a9) })
+			}
+			k1 = append(k1, n6)
 			e.Leave()
 		}
-		// dash.surf:10:3 <button>
+		// dash.surf:10:3 <x-tagline>
 		if e.Enter("dash.surf", 10, 3) {
-			n10 := surfui.Button("Raise")
-			surf.ModKey(n10, "raise")
-			n10.On("click", func() { c.Raise() })
+			n10 := surfwgauge.Tagline(strconv.FormatInt(int64(c.Level), 10) + " of 100")
+			surf.ModKey(n10, "tag")
 			k1 = append(k1, n10)
+			e.Leave()
+		}
+		// dash.surf:11:3 <button>
+		if e.Enter("dash.surf", 11, 3) {
+			n11 := surfui.Button("Raise")
+			surf.ModKey(n11, "raise")
+			n11.On("click", func() { c.Raise() })
+			k1 = append(k1, n11)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)

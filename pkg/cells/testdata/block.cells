@@ -1,0 +1,15 @@
+cells 20x6
+text
+> head
+> ████░░░░░░░░
+>          Go
+> tail
+style
+=
+= aaaa
+= ........bbbb
+. fg/bg
+a accent/bg
+b fg/tonal
+hits
+@ 8,2 4x1 r.0.1.0

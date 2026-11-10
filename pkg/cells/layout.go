@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/pkg/cellblock"
 	"neuroplast.io/hotty-surf/surfkeys"
 	"neuroplast.io/hotty-surf/surfui"
 )
@@ -50,6 +51,7 @@ const (
 	cycle
 	rule
 	spacer
+	custom // an element that draws its own cells (Node.Cells)
 )
 
 // flag is a box's look, from its classes.
@@ -130,6 +132,14 @@ type box struct {
 	natw         int // the natural width, -1 until known
 	memoW, memoH int // the natural height at width memoW, memoW -1 until known
 
+	// A custom box's block func, the cache it is kept in, and its
+	// children's boxes, of which its block places some (block.go).
+	blk    BlockFunc
+	bc     *blockCache
+	slots  []*box
+	memoB  Block // the block at inner width memoBW, memoBW 0 until known
+	memoBW int
+
 	// Where the layout put it, as if nothing scrolled.
 	x, y, w, h int
 	area       *areaBox // a field of several lines (area.go)
@@ -142,7 +152,7 @@ type box struct {
 type keyCaps func(seq string) (caps []string, then string)
 
 // build makes the boxes of the tree under n, its keys' caps by caps.
-func build(n *surfui.Node, d density, caps keyCaps) *box {
+func build(n *surfui.Node, d density, caps keyCaps, bc *blockCache) *box {
 	stackprobe.Probe()
 	b := &box{n: n, d: d, fw: -1, fh: -1, natw: -1, memoW: -1}
 	if surfui.Tag(n) == "" {
@@ -150,6 +160,10 @@ func build(n *surfui.Node, d density, caps keyCaps) *box {
 		return b
 	}
 	b.look(d)
+	if f := surfui.BlockOf(n); f != nil {
+		b.custom(f, d, caps, bc)
+		return b
+	}
 	if seq, ok := surfkeys.SeqOf(n); ok {
 		b.capsOf(seq, caps)
 		return b
@@ -171,7 +185,7 @@ func build(n *surfui.Node, d density, caps keyCaps) *box {
 			if surfui.Tag(k) == "" && strings.TrimSpace(textOf(k)) == "" {
 				continue
 			}
-			kb := build(k, d, caps)
+			kb := build(k, d, caps, bc)
 			if prev != nil && capLike(prev) && capLike(kb) {
 				kb.ml++ // .u-key + .u-key, .u-keys + .u-keys
 			}
@@ -704,6 +718,8 @@ func (b *box) leafWidth() int {
 		return 20 + b.pl + b.pr
 	case toggle:
 		return 5 // [off]
+	case custom:
+		return b.block(cellblock.Unbounded).Width() + b.pl + b.pr
 	case choose, cycle:
 		return valueWidth(b.n) + 4
 	}
@@ -869,6 +885,8 @@ func (b *box) leafHeight(w int) int {
 		if b.area != nil {
 			return b.area.height(w)
 		}
+	case custom:
+		return b.block(w).Height()
 	}
 	return 1
 }
@@ -956,6 +974,8 @@ func (b *box) place(x, y, w, h int) {
 		b.placeFlow()
 	case column:
 		b.placeColumn()
+	case custom:
+		b.placeBlock()
 	}
 }
 

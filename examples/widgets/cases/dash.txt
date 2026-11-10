@@ -1,39 +1,40 @@
-Widgets from outside (examples/widgets/gauge): a gauge, a callout and a
-tagline, which both modes draw alike, and the cells with what they know:
-the text. A click on the gauge's button fills it ten more; a click on the
-callout runs its handler.
+Widgets from outside (examples/widgets/gauge): a gauge, a callout, a
+sparkline and a tagline, which both modes draw alike. The cells draw the
+gauge's bar and the sparkline's strokes by blocks of their own
+(Node.Cells, surfui.Graphic), the rest by what they know: the text. A click on the gauge's button
+fills it ten more; a click on the callout runs its handler.
 -- state.json --
 {"Title": "Dash", "Level": 30, "Note": "disk is full"}
 -- document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level:0.3"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">30%</span></div><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">30 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level:0.3"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">30%</span></div><span id="r.ktrend" class="u-graphic x-spark"><svg viewBox="0 0 32 16" width="32" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><polyline points="2,11.0 6,14.0 10,9.5 14,14.0 18,8.0 22,2.0 26,12.5 30,6.5"></polyline></svg></span><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">30 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
 -- cells --
 cells 64x32
 text
 > Dash
->
-> 40%
->
-> 30%
+> ████████░░░░░░░░░░░░ 40%
+> ██████░░░░░░░░░░░░░░ 30%
+> ▂▁▃▁▄█▁▅
 > Heads up
 > disk is full
 > 30 of 100
 >                              Raise
 style
 = aaaa
+= bbbbbbbbcccccccccccccccc
+= bbbbbbcccccccccccccccccc
+= bbbbbbbb
 =
 =
 =
-=
-=
-=
-=
-= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b accent/bg
+c muted/bg
+d fg/tonal
 hits
-@ 0,5 64x2 r.knote
-@ 0,8 64x1 r.kraise
+@ 0,4 64x2 r.knote
+@ 0,7 64x1 r.kraise
 -- 1.event --
 click r.kraise
 -- 1.log --
@@ -43,36 +44,36 @@ var r.klevel x-level "0.4"
 text r.klevel.1 "40%"
 text r.ktag "40 of 100"
 -- 1.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level: 0.4"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">40%</span></div><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">40 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level: 0.4"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">40%</span></div><span id="r.ktrend" class="u-graphic x-spark"><svg viewBox="0 0 32 16" width="32" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><polyline points="2,11.0 6,14.0 10,9.5 14,14.0 18,8.0 22,2.0 26,12.5 30,6.5"></polyline></svg></span><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">40 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
 -- 1.cells --
 cells 64x32
 text
 > Dash
->
-> 40%
->
-> 40%
+> ████████░░░░░░░░░░░░ 40%
+> ████████░░░░░░░░░░░░ 40%
+> ▂▁▃▁▄█▁▅
 > Heads up
 > disk is full
 > 40 of 100
 >                              Raise
 style
 = aaaa
+= bbbbbbbbcccccccccccccccc
+= bbbbbbbbcccccccccccccccc
+= bbbbbbbb
 =
 =
 =
-=
-=
-=
-=
-= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= dddddddddddddddddddddddddddddeeeeedddddddddddddddddddddddddddddd
 . fg/bg
 a fg/bg bold
-b fg/accent
-c on-accent/accent
+b accent/bg
+c muted/bg
+d fg/accent
+e on-accent/accent
 hits
-@ 0,5 64x2 r.knote
-@ 0,8 64x1 r.kraise
+@ 0,4 64x2 r.knote
+@ 0,7 64x1 r.kraise
 -- 2.event --
 click r.knote
 -- 2.log --
@@ -80,32 +81,32 @@ pick note
 -- 2.ops --
 
 -- 2.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level: 0.4"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">40%</span></div><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">40 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.0" class="u-heading">Dash</div><div id="r.kfixed" class="x-gauge" style="--x-level:0.4"><div id="r.kfixed.0" class="x-gauge-track"><div id="r.kfixed.0.0" class="x-gauge-fill"></div></div><span id="r.kfixed.1" class="x-gauge-text">40%</span></div><div id="r.klevel" class="x-gauge" style="--x-level: 0.4"><div id="r.klevel.0" class="x-gauge-track"><div id="r.klevel.0.0" class="x-gauge-fill"></div></div><span id="r.klevel.1" class="x-gauge-text">40%</span></div><span id="r.ktrend" class="u-graphic x-spark"><svg viewBox="0 0 32 16" width="32" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><polyline points="2,11.0 6,14.0 10,9.5 14,14.0 18,8.0 22,2.0 26,12.5 30,6.5"></polyline></svg></span><div id="r.knote" class="x-callout x-callout-warn" data-on="click"><span id="r.knote.0" class="x-tagline x-loud">Heads up</span><span id="r.knote.1" class="u-text">disk is full</span></div><span id="r.ktag" class="x-tagline">40 of 100</span><button id="r.kraise" class="u-btn" type="button">Raise</button></div></body></html>
 -- 2.cells --
 cells 64x32
 text
 > Dash
->
-> 40%
->
-> 40%
+> ████████░░░░░░░░░░░░ 40%
+> ████████░░░░░░░░░░░░ 40%
+> ▂▁▃▁▄█▁▅
 > Heads up
 > disk is full
 > 40 of 100
 >                              Raise
 style
 = aaaa
+= bbbbbbbbcccccccccccccccc
+= bbbbbbbbcccccccccccccccc
+= bbbbbbbb
 =
 =
 =
-=
-=
-=
-=
-= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b accent/bg
+c muted/bg
+d fg/tonal
 hits
-@ 0,5 64x2 r.knote
-@ 0,8 64x1 r.kraise
+@ 0,4 64x2 r.knote
+@ 0,7 64x1 r.kraise

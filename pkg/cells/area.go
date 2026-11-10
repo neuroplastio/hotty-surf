@@ -53,8 +53,8 @@ func (a *areaBox) height(w int) int {
 
 // build is build, each multi-row field given the value it holds now.
 func (r *Renderer) build(n *surfui.Node, d density) *box {
-	b := build(n, d, r.keyCaps())
-	walk(b, func(k *box) bool {
+	b := build(n, d, r.keyCaps(), &r.blocks)
+	walkSlots(b, func(k *box) bool {
 		if k.area != nil {
 			if st := r.fields[surfui.IDOf(k.n)]; st != nil {
 				k.area.val = st.ed.Value

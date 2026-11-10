@@ -56,7 +56,7 @@ func TestRegistered(t *testing.T) {
 			t.Errorf("<%s> is from %q", w.Tag, w.Pkg)
 		}
 	}
-	if got := strings.Join(tags, " "); got != "x-gauge x-callout x-tagline" {
+	if got := strings.Join(tags, " "); got != "x-gauge x-callout x-tagline x-spark" {
 		t.Errorf("registered: %s", got)
 	}
 }
@@ -159,7 +159,7 @@ func TestLua(t *testing.T) {
 	L := lua.NewState()
 	defer L.Close()
 	surflua.PreloadFS(L, fstest.MapFS{"t/dash.surf": {Data: []byte(
-		`<surface><x-gauge level="40" key="g"/><x-callout kind="warn" key="c"><x-tagline loud>Hi</x-tagline></x-callout></surface>`)}})
+		`<surface><x-gauge level="40" key="g"/><x-callout kind="warn" key="c"><x-tagline loud>Hi</x-tagline></x-callout><x-spark key="s">1 2 3</x-spark></surface>`)}})
 	if err := L.DoString(`
 local surf = require("surf")
 dash = {}
@@ -170,7 +170,7 @@ view = surf.load("/t"):view("dash", dash)`); err != nil {
 		t.Fatal(err)
 	}
 	html := L.GetGlobal("html").String()
-	for _, want := range []string{`class="x-gauge"`, `style="--x-level:0.4"`, `40%`, `x-callout-warn`, `class="x-tagline x-loud"`} {
+	for _, want := range []string{`class="x-gauge"`, `style="--x-level:0.4"`, `40%`, `x-callout-warn`, `class="x-tagline x-loud"`, `<polyline points="2,14.0 6,8.0 10,2.0">`} {
 		if !strings.Contains(html, want) {
 			t.Errorf("surflua's document has no %s:\n%s", want, html)
 		}

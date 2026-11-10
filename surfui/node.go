@@ -17,6 +17,7 @@ import (
 	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/stackprobe"
+	"neuroplast.io/hotty-surf/pkg/cellblock"
 )
 
 // Action is what an event or a key runs. What it may be is the model's:
@@ -49,7 +50,8 @@ type Node struct {
 	text  string // a text node's text
 	raw   string // raw HTML, inside its element
 	isRaw bool
-	cells string // what the cells draw in its place: an SVG icon's glyph
+	cells string         // what the cells draw in its place: an SVG icon's glyph
+	block cellblock.Func // what the cells draw in its place: a block of rows (Cells)
 
 	key      string
 	id       string // given, or the key path once resolved
