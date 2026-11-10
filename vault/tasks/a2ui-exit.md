@@ -135,7 +135,7 @@ Sizes as the board's: S one leg, M two or three.
   Markdown table one to one. M–L, likely two legs: layout and static,
   then data, scroll, the scrollbar (host and `│┃` in cells) and
   `$range`. The palette's scrollbar comes with it.
-- [ ] **L7. Tree** (A5, G2): `depth`, `branch`, `open`, `current`,
+- [x] **L7. Tree** (merge 6e247eb) (A5, G2): `depth`, `branch`, `open`, `current`,
   `@toggle`; captions the selection skips, one selection across groups;
   ← and → as ARIA's tree, switched off by an attribute for a program
   that reads every key (margin); `:focused`; trailing content kept whole
