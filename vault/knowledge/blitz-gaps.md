@@ -725,3 +725,14 @@ counts. `tree/nav` and `tree/current` pass at every density, scale and theme.
 The first version of `tree/files` and `tree/current` put two or three trees
 in a row in a canvas too narrow for them, and Blitz and Chromium shrank them
 differently (14600 px²): they stack, and `tree/current` has 60 cells.
+
+## hotty-blitz 0.7.3 (2026-11-10)
+
+The gate renders with hotty-blitz 0.7.3 (6aa10ca) in place of 0.7.0
+(b7cbf17), fonts unchanged, and the 0.7.0 baseline holds: `make gate` says
+"as known". 0.7.2 had moved the 30 `field-rows` cases: its content-sized
+textarea followed its caret at every layout, so an unfocused field with
+its caret at the end showed its end where Chromium shows the top (found
+by the maintainer looking at field-rows-graphite-roomy-1.6 before and
+after). 0.7.3 (mods/blitz 0055) takes the offset back only to what the new
+height allows.

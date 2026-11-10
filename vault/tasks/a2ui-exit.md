@@ -230,6 +230,9 @@ itself and offers it back later (its own suggestion).
 
 ## The gate
 
+Since 2026-11-10 the gate's Blitz is hotty-blitz 0.7.3 (6aa10ca, local tag
+v0.7.3, not pushed); the baseline did not move.
+
 Red on main from 450e529 (plx Agent's larger base text, 2026-11-09)
 until merge 99303e2 retook the baseline, each case named in
 blitz-gaps.

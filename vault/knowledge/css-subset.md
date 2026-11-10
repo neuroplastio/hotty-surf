@@ -23,6 +23,8 @@ stories, 504 cases, with hotty-blitz 0.5.8 (cff9a62), the Blitz the
 hosts ship (hottyterm 26.10.31), which the gate renders with from then.
 Since 2026-11-07 the gate renders with hotty-blitz 0.7.0 (b7cbf17),
 hottyterm's since 26.11.06 ([gaps](blitz-gaps.md#hotty-blitz-070-2026-11-07)).
+Since 2026-11-10 it renders with hotty-blitz 0.7.3 (6aa10ca), which adds
+`field-sizing: content` ([gaps](blitz-gaps.md#hotty-blitz-073-2026-11-10)).
 
 ## Properties
 
