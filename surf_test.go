@@ -458,13 +458,8 @@ func TestAttrValues(t *testing.T) {
 			t.Errorf("%s takes frob, which is none of its values", a.Name)
 		}
 	}
-<<<<<<< HEAD
 	if n != 12 {
 		t.Errorf("%d attributes have values, not 12 (tone, fill, theme, density, badge-tone, drop, caret, kind, language, type, align, sort)", n)
-=======
-	if n != 11 {
-		t.Errorf("%d attributes have values, not 11 (tone, fill, theme, density, badge-tone, drop, caret, kind, language, align, sort)", n)
->>>>>>> 37bdbce (table: ColMax (Max is the slider's); the attribute count after the rebase)
 	}
 }
 
