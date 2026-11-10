@@ -111,12 +111,13 @@ Gone with the look (2026-10-31), and so no longer shown here: a 1px
 | `<input type="text">` (Field) | proven | field/states, placeholder included |
 | `<kbd>` (Key) | proven | key/caps |
 | `<button>` (Select: the value and a Nerd Font chevron; its list a surface of its own, in the density and theme nearest the Select) | proven but the hairline at 1.6× (above) | select/closed, select/open |
+| `<textarea>` (a field of several lines: `.u-field.u-area`, `--u-rows` rows tall by `calc(var(--u-rows) * var(--u-row) + 8px)`, `padding: 4px`, `overflow-y: auto`, the surface's font, `line-height: var(--u-row)`) | proven in both engines, Graphite and paper at 2×; the scrollbar unknown (as a `scroll` box's) | field/rows. `resize: none` is in it for a browser, whose textarea draws a grab handle without it; Blitz ignores `resize` (below), so it changes nothing there |
 | `<select>` | **gap**, and not in the vocabulary: Blitz draws its own ▾ and sets the text 4 CSS px further left and 2 px higher than Chromium ([gap](blitz-gaps.md#over-the-threshold-30-of-132-cases)); hotty-blitz shows no list for it (SPEC §10.2 allows that), so `surfui.Select` is a button the runtime drives |
 
 ## Known not to draw (not in `surfui.CSS`)
 
 `filter`, `text-shadow`,
 transitions and animations but a `pulse` dot's (above), range, progress and meter, `:invalid`,
-`:placeholder-shown`, `resize`; inside an inline SVG, document rules,
+`:placeholder-shown`, `resize` (but `resize: none` on a textarea, above: it is for a browser); inside an inline SVG, document rules,
 `var()` and `vector-effect: non-scaling-stroke`. See
 [`blitz-gaps.md`](blitz-gaps.md).

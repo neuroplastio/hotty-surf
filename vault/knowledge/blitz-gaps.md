@@ -434,3 +434,17 @@ text differences; the compact paragraph scores change slightly. The gap is
 between the two renderers, not a different intended size in the document.
 The baseline records these cases and their new scores, and removes cases
 that now pass. The 1.6× and 2× comparisons remain in the gate.
+
+## A field of several lines (2026-11-09, L5c)
+
+`field rows="3..8"` is a `<textarea class="u-field u-area">` on a host,
+`--u-rows` rows tall (its least) with `overflow-y: auto`, the surface's
+font, `resize: none`. Both engines draw it alike in the story field/rows
+(look, Graphite and paper, 2×).
+
+| What | Gap | Cause | How bad |
+| --- | --- | --- | --- |
+| Growing with the text up to the most rows | The CSS says `field-sizing: content` with `min-height` and `max-height` in rows; a Blitz without L5b's mods (stylo 0005, blitz 0054; hotty-blitz branch a2ui/field-sizing, 2f52995) ignores it, so a field there is its least rows tall and scrolls. **Stays here until the gate runs against a Blitz built with those mods.** The field's `@height` is the cells' alone until L5d's fit plumbing | Feature: a long comment scrolls in a 3-row box |
+| A long word with no break in a textarea | It doesn't wrap: it runs past the field's edge (seen by blitz-field-sizing, 2026-11-09) | Blitz's textarea layout; unmeasured beyond that report | Bug: a long URL in a comment is cut or overflows (the cells and Chromium break it anywhere) |
+| Tab kept inside a `trap` stack | The host moves Tab itself, so the keyboard leaves the surface past the last button | A field can't give the program `tab` until hotty's V6-02 (accepted, in 0.8); a binding of `tab` is dropped by `Keymap.Bind` | Feature: the cells do it; `data-trap` is on the element for a host that gets V6-02 |
+| The scrollbar of a field that overflows | None drawn in a still render, by either engine | As for a `scroll` box ([css-subset](css-subset.md)) | Cosmetic |
