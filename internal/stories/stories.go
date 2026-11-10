@@ -120,6 +120,68 @@ var KeyStyle = surfkeys.Style{Caps: "glyphs", Case: "lower", Then: "space", Glue
 
 // All are the stories, in the order the gate and the book show them.
 var All = []Story{
+	{"code/source", 64, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Caption("Template"),
+			surfui.CodeBlock("<surface>\n  <heading>{{ title }}</heading>\n  <button @click=\"increment()\">Add</button>\n</surface>").Language("surf"),
+			surfui.Caption("Go"),
+			surfui.CodeBlock("// The app owns its state.\ntype Counter struct {\n\tCount int\n}\n\nfunc (c *Counter) Increment() { c.Count++ }").Language("go"),
+		)
+	}},
+	{"code/spans", 48, func() *surfui.Node {
+		// A caller's own highlighting: the roles of a lexer the app runs.
+		return surfui.Stack(
+			surfui.Caption("Spans, numbered from 12"),
+			surfui.CodeSpans([]surfui.Span{
+				{Text: "func", Role: "keyword"}, {Text: " Greet(", Role: "plain"},
+				{Text: "name", Role: "attribute"}, {Text: " ", Role: "plain"}, {Text: "string", Role: "type"},
+				{Text: ") {\n\t", Role: "plain"}, {Text: "// say hello\n", Role: "comment"},
+				{Text: "\tprintln(", Role: "plain"}, {Text: "\"hello, \"", Role: "string"},
+				{Text: " + name, ", Role: "plain"}, {Text: "42", Role: "number"}, {Text: ")\n}", Role: "plain"},
+			}).Numbers(true).From(12),
+		)
+	}},
+	{"code/numbers", 40, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Caption("Numbers, from 8; not wrapped"),
+			surfui.CodeBlock("// The state.\ntype C struct {\n\tN int\n}\n\nfunc (c *C) Inc()").Language("go").Numbers(true).From(8),
+		)
+	}},
+	{"code/wrap", 40, func() *surfui.Node {
+		src := "func Describe(name string) string {\n\tmessage := \"a long line breaks at a space and hangs under its indent\"\n\n\treturn name + \": \" + message\n}"
+		return surfui.Stack(
+			surfui.Caption("Wrap"),
+			surfui.CodeBlock(src).Language("go").Wrap(),
+			surfui.Caption("Wrap, numbered"),
+			surfui.CodeBlock(src).Language("go").Wrap().Numbers(true),
+			// Not wrapped, a line is cut at the edge: the cells' golden
+			// shows it (the legible gate fails any story that cuts text).
+		)
+	}},
+	{"checkbox/states", 40, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(surfui.Checkbox(false).Label("Off"), surfui.Text("Off")).Gap(2),
+			surfui.Row(surfui.Checkbox(true).Label("On"), surfui.Text("On")).Gap(2),
+			surfui.Row(Force(surfui.Checkbox(false).Label("Hover"), "hover"), surfui.Text("Hover")).Gap(2),
+			surfui.Row(Force(surfui.Checkbox(true).Label("Focus"), "focus"), surfui.Text("Focus")).Gap(2),
+			surfui.Row(surfui.Checkbox(false).Invalid(true).Label("Required"), surfui.Text("Required")).Gap(2),
+			surfui.Row(surfui.Checkbox(true).Disabled(true).Label("Disabled"), surfui.Text("Disabled").Muted()).Gap(2),
+		).Gap(1)
+	}},
+	{"tabs/states", 48, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Tabs("Source", "Source", "Result", "Log").Label("View"),
+			Force(surfui.Tabs("Result", "Source", "Result", "Log").Label("View"), "focus"),
+			surfui.Tabs("Log", "Source", "Result", "Log").Label("View").Disabled(true),
+		).Gap(2)
+	}},
+	{"progress/values", 48, func() *surfui.Node {
+		return surfui.Stack(
+			surfui.Row(surfui.Text("Starting").Width(12), surfui.Progress(0).Grow().Label("Starting")).Gap(2),
+			surfui.Row(surfui.Text("Download").Width(12), surfui.Progress(45).Grow().Label("Download")).Gap(2),
+			surfui.Row(surfui.Text("Complete").Width(12), surfui.Progress(100).Grow().Label("Complete")).Gap(2),
+		).Gap(2)
+	}},
 	{"text/tones", 60, func() *surfui.Node {
 		return surfui.Stack(
 			surfui.Text("Plain text, the terminal's colour"),

@@ -1,0 +1,16 @@
+cells 28x5
+text
+>  func main() { // go
+>      return "a" + 1
+>  }
+style
+= abbbbaaaaaaaacccccccaaaaaaaa
+= abbbbbbbbbbbdddaaaeaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaa
+. fg/bg
+a fg/code-ground
+b syn-keyword/code-ground
+c syn-comment/code-ground
+d syn-string/code-ground
+e syn-number/code-ground
+hits

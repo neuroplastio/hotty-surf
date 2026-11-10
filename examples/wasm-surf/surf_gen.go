@@ -68,9 +68,9 @@ func (o surfCounter) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfCounter) Shape() *surf.Shape { return &surfShapeCounter }
-
 func (o surfCounter) Unwrap() any { return o.p }
+
+func (o surfCounter) Shape() *surf.Shape { return &surfShapeCounter }
 
 func (o surfCounter) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {

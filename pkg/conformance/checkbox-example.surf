@@ -1,0 +1,5 @@
+<surface>
+  <checkbox key="check" :checked="enabled" :disabled="disabled"
+            label="Enabled" @click="toggle()"/>
+  <checkbox key="mark" :checked="marked" label="Marked" @change="mark($value)"/>
+</surface>

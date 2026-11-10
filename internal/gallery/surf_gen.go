@@ -123,9 +123,9 @@ func (o surfGallery) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfGallery) Shape() *surf.Shape { return &surfShapeGallery }
-
 func (o surfGallery) Unwrap() any { return o.p }
+
+func (o surfGallery) Shape() *surf.Shape { return &surfShapeGallery }
 
 func (o surfGallery) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -254,6 +254,8 @@ func (o surfControl) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfControl) Unwrap() any { return o.p }
+
 // surfShapeBarRow is BarRow's shape, a struct.
 var surfShapeBarRow = surf.Shape{Name: "BarRow", Component: false,
 	Fields: []surf.Field{{Name: "name", Type: cellite.Bool}, {Name: "canvas", Type: cellite.Bool}, {Name: "views", Type: cellite.Bool}, {Name: "panes", Type: cellite.Bool}},
@@ -292,6 +294,8 @@ func (o surfBarRow) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfBarRow) Unwrap() any { return o.p }
+
 // surfShapeEntry is Entry's shape, a struct.
 var surfShapeEntry = surf.Shape{Name: "Entry", Component: false,
 	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "label", Type: cellite.String}, {Name: "kind", Type: cellite.String}},
@@ -327,6 +331,8 @@ func (o surfEntry) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfEntry) Unwrap() any { return o.p }
 
 // surfRenderGallery_ControlRow draws control-row.surf for Gallery.
 func surfRenderGallery_ControlRow(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.Fill, prop11 *Control, prop12 int64) []*surfui.Node {

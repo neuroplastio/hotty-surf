@@ -180,6 +180,16 @@ func (e *Errs) AsStrings(file string, line, col int, v cellite.Value) ([]string,
 	return out, true
 }
 
+// AsSpans is v as :spans reads it (SpansOf).
+func (e *Errs) AsSpans(file string, line, col int, v cellite.Value) ([]surfui.Span, bool) {
+	spans, err := SpansOf(v)
+	if err != nil {
+		e.Fail(file, line, col, err)
+		return nil, false
+	}
+	return spans, true
+}
+
 func (e *Errs) AsPad(file string, line, col int, v cellite.Value) ([2]int64, bool) {
 	p, err := padOf(v)
 	if err != nil {

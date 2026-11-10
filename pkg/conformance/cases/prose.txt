@@ -68,10 +68,10 @@ style
 =
 =
 = i.iiiiiiii.iiiiii.iiii.jjjjjji
-= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b fg/code-ground
 c fg/bg italic
 d fg/bg strike
 e accent/bg underline
@@ -80,6 +80,7 @@ g warn/bg
 h warn/bg bold
 i muted/bg
 j muted/bg underline
+k fg/tonal
 hits
 @ 59,2 5x1 r.kdoc.1.ktousage
 @ 23,24 1x1 r.kcomment.0.1
@@ -152,10 +153,10 @@ style
 =
 =
 = j.jjjjjjjj.jjjjjj.jjjj.kkkkkkj
-= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b fg/code-ground
 c fg/bg italic
 d fg/bg strike
 e accent/sel underline
@@ -165,6 +166,7 @@ h warn/bg
 i warn/bg bold
 j muted/bg
 k muted/bg underline
+l fg/tonal
 hits
 @ 59,2 5x1 r.kdoc.1.ktousage
 @ 23,24 1x1 r.kcomment.0.1
@@ -242,7 +244,7 @@ style
 = kkkkkkkkkkkkkkkkkkkkkkkkkkkkkllllllkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b fg/code-ground
 c fg/bg italic
 d fg/bg strike
 e accent/bg underline
@@ -325,10 +327,10 @@ style
 =
 =
 = i.iiiiiiii.iiiiii.iiii.jjjjjji
-= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b fg/code-ground
 c fg/bg italic
 d fg/bg strike
 e accent/bg underline
@@ -337,6 +339,7 @@ g warn/bg
 h warn/bg bold
 i muted/bg
 j muted/sel underline
+k fg/tonal
 hits
 @ 59,2 5x1 r.kdoc.1.ktousage
 @ 23,24 1x1 r.kcomment.0.1

@@ -1,0 +1,13 @@
+cells 20x4
+text
+> ░░░░░░░░░░░░░░░░░░░░
+> █████████░░░░░░░░░░░
+> ████████████████████
+style
+= aaaaaaaaaaaaaaaaaaaa
+= bbbbbbbbbaaaaaaaaaaa
+= bbbbbbbbbbbbbbbbbbbb
+. fg/bg
+a muted/bg
+b accent/bg
+hits

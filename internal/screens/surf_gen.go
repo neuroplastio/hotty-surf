@@ -114,9 +114,9 @@ func (o surfAgents) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfAgents) Shape() *surf.Shape { return &surfShapeAgents }
-
 func (o surfAgents) Unwrap() any { return o.p }
+
+func (o surfAgents) Shape() *surf.Shape { return &surfShapeAgents }
 
 func (o surfAgents) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -196,9 +196,9 @@ func (o surfNotices) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfNotices) Shape() *surf.Shape { return &surfShapeNotices }
-
 func (o surfNotices) Unwrap() any { return o.p }
+
+func (o surfNotices) Shape() *surf.Shape { return &surfShapeNotices }
 
 func (o surfNotices) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -320,9 +320,9 @@ func (o surfPalette) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfPalette) Shape() *surf.Shape { return &surfShapePalette }
-
 func (o surfPalette) Unwrap() any { return o.p }
+
+func (o surfPalette) Shape() *surf.Shape { return &surfShapePalette }
 
 func (o surfPalette) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -448,9 +448,9 @@ func (o surfSettings) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfSettings) Shape() *surf.Shape { return &surfShapeSettings }
-
 func (o surfSettings) Unwrap() any { return o.p }
+
+func (o surfSettings) Shape() *surf.Shape { return &surfShapeSettings }
 
 func (o surfSettings) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -551,6 +551,8 @@ func (o surfAgent) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfAgent) Unwrap() any { return o.p }
+
 // surfShapeNotice is Notice's shape, a struct.
 var surfShapeNotice = surf.Shape{Name: "Notice", Component: false,
 	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "level", Type: cellite.String, Go: "screens.Level"}, {Name: "source", Type: cellite.String}, {Name: "text", Type: cellite.String}, {Name: "age", Type: cellite.Int, Go: "time.Duration"}, {Name: "unread", Type: cellite.Bool}},
@@ -592,6 +594,8 @@ func (o surfNotice) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfNotice) Unwrap() any { return o.p }
 
 // surfShapeRow is Row's shape, a struct.
 var surfShapeRow = surf.Shape{Name: "Row", Component: false,
@@ -651,6 +655,8 @@ func (o surfRow) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfRow) Unwrap() any { return o.p }
+
 // surfShapeMark is Mark's shape, a struct.
 var surfShapeMark = surf.Shape{Name: "Mark", Component: false,
 	Fields: []surf.Field{{Name: "text", Type: cellite.String}, {Name: "tone", Type: cellite.String}, {Name: "hit", Type: cellite.Bool}},
@@ -687,6 +693,8 @@ func (o surfMark) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfMark) Unwrap() any { return o.p }
+
 // surfShapeHint is Hint's shape, a struct.
 var surfShapeHint = surf.Shape{Name: "Hint", Component: false,
 	Fields: []surf.Field{{Name: "title", Type: cellite.String}, {Name: "key", Type: cellite.String}},
@@ -720,6 +728,8 @@ func (o surfHint) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfHint) Unwrap() any { return o.p }
 
 // surfShapeSection is Section's shape, a struct.
 var surfShapeSection = surf.Shape{Name: "Section", Component: false,
@@ -760,6 +770,8 @@ func (o surfSection) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfSection) Unwrap() any { return o.p }
 
 // surfShapeSetting is Setting's shape, a struct.
 var surfShapeSetting = surf.Shape{Name: "Setting", Component: false,
@@ -809,6 +821,8 @@ func (o surfSetting) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfSetting) Unwrap() any { return o.p }
+
 // surfShapeGroup is Group's shape, a struct.
 var surfShapeGroup = surf.Shape{Name: "Group", Component: false,
 	Fields: []surf.Field{{Name: "title", Type: cellite.String}, {Name: "note", Type: cellite.String}, {Name: "settings", Type: cellite.ListOf(cellite.StructOf("Setting"))}},
@@ -845,6 +859,8 @@ func (o surfGroup) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfGroup) Unwrap() any { return o.p }
+
 // surfShapeAction is Action's shape, a struct.
 var surfShapeAction = surf.Shape{Name: "Action", Component: false,
 	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "title", Type: cellite.String}, {Name: "key", Type: cellite.String}},
@@ -880,6 +896,8 @@ func (o surfAction) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfAction) Unwrap() any { return o.p }
 
 // surfProgsAgents are agents.surf's programs, for Agents, loaded at the first call.
 func surfProgsAgents() []*cellite.Program {

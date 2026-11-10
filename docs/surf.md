@@ -188,6 +188,7 @@ component, a partial, or a widget a package registered from outside
 | `stack` | its children top to bottom | children |
 | `row` | its children left to right, centred on the line | children |
 | `spacer` | the room left in its row or stack | nothing |
+| `code` | read-only source, highlighted by `language` or by the caller's `spans`, with `wrap` and `numbers` | text |
 | `text` | a line of text, cut with … where it doesn't fit | text |
 | `line` | one line of texts side by side, each in its own tone and weight, cut once with … at its end; with `wrap`, a paragraph of its texts and keys | children |
 | `heading` | a section's or a screen's title | text |
@@ -199,13 +200,16 @@ component, a partial, or a widget a package registered from outside
 | `key` | a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style, lower case by default, Enter as `↵` | text |
 | `button` | a button, its text its label, with an `<icon>` before or after it ("Icons") | text, an `icon` |
 | `field` | a text field: one line, or with `rows` several ("A field of several lines") | nothing |
+| `checkbox` | a boolean square with a check; its click handler changes `checked` | nothing |
 | `switch` | a boolean as a track with a knob: it shows `:on`, and its `@click` handler changes the state `:on` reads | nothing |
 | `select` | a pick of one of `:options`, `:value` picked | nothing |
+| `tabs` | a segmented row of `options`, `value` selected | nothing |
 | `cycle` | `‹ value ›`, stepping through `:options` | nothing |
 | `slider` | an integer from `min` to `max` in steps of `step`, at `:value`: a track with a thumb ("Sliders and chips") | nothing |
 | `list` | a column of items with a selection | children |
 | `item` | a row of a list | children |
 | `section` | a group under a heading: `heading` | children |
+| `progress` | a determinate percentage; a thin track on a host, blocks in cells | nothing |
 | `rule` | a line across | nothing |
 | `box` | a raised panel | children |
 | `dialog` | the box plx draws round its palette | children |
@@ -221,6 +225,107 @@ component, a partial, or a widget a package registered from outside
 - A widget that takes nothing may still hold `<bind>`s.
 - Text in a container is a `text` of it: `<row>Hello</row>` is
   `<row><text>Hello</text></row>`.
+
+### Code
+
+`<code language="go">{{ source }}</code>` shows source in the terminal's
+monospace face on the code ground, which is the card's. `language` is
+`plain` (the default), `go`, or `surf`: a small lexer that is built in
+(it highlights, it doesn't parse, and keeps every byte of unfinished
+source). Bound source keeps newlines, blank lines and indentation. A tab
+is four spaces; CRLF and CR draw as one newline.
+
+**Your own highlighting: `:spans`.** A program that has a lexer of its
+own (Chroma, a language server) gives the block its tokens, and the
+framework tokenizes nothing:
+
+```
+<code :spans="highlighted" numbers :from="first"/>
+```
+
+`spans` is a list of `{text, role}`: a Go field or method that gives
+`[]surfui.Span`, a Lua table of `{ text = …, role = … }`, or a literal
+(`:spans="[{'text': 'x', 'role': 'keyword'}]"`). `surfui.Span` is plain
+data (`Text`, `Role` strings). The roles are the lexer's own:
+`keyword`, `tag`, `string`, `number`, `comment`, `type`, `attribute` and
+`plain`; the empty role is plain. A role that is none of them is a render
+error in a template (the block keeps what it had), and plain in the Go
+builder. A newline inside a span ends the line, and the span goes on in
+the next. Spans win over `language` and the text.
+
+- **`wrap`:** a line wider than the box wraps at a space, and the rest
+  hangs under the line's own indent. Every space is kept. A word wider
+  than the box breaks where the box ends. Without `wrap`, a line is cut
+  at the box's edge, and the block scrolls across where the renderer
+  scrolls that way (a host's overflow; the cells cut the line: they have
+  no scrolling across yet, so `wrap` is how they show it whole).
+- **`numbers`:** a muted gutter as wide as the last number and a space,
+  counting from `from` (an int, 1 unless it says). A wrapped line's number
+  is on its first row; the source's last empty line, after a final
+  newline, has none.
+
+Go: `surfui.CodeBlock(source).Language("go")`, and
+`surfui.CodeSpans(spans []surfui.Span)`; both take `.Wrap()`,
+`.Numbers(true)` and `.From(n)`. It is read-only. The lexer escapes every
+token before drawing it, and so does a span: source cannot become live
+markup. A bound expression is the way to keep source whitespace: literal
+template text uses the ordinary whitespace rules above, and must escape
+`<` and `&`.
+
+The syntax roles default to existing roles in every theme: keywords and
+tags in accent, strings in ok, numbers in warn, types in info, comments
+muted, and attributes and plain text in the ink. Their host tokens are
+`--u-syn-keyword`, `--u-syn-tag`, `--u-syn-string`, `--u-syn-number`,
+`--u-syn-type`, `--u-syn-comment`, `--u-syn-attribute` and
+`--u-syn-plain`, and the block's ground `--u-code-ground` (the card's).
+The cells name the same roles (`syn-keyword` … `syn-plain`,
+`code-ground`), which a terminal draws in their defaults
+(`cells.Role.Base`).
+
+### Checkbox
+
+`<checkbox :checked="enabled" label="Enabled" @click="toggle()"/>`
+shows a model-owned boolean, as Switch does. Click, Space and Enter run
+its click handler; the handler changes the field that `checked` reads.
+Use `disabled` to prevent input and focus, and `invalid` for a required
+check that is missing. `label` is its accessible label; a text beside
+it can show that label. Cells draw `[ ]` and `[x]` with the same input.
+Go: `surfui.Checkbox(enabled).Label("Enabled").OnClick(toggle)`.
+
+`@change="set($value)"` is the same press as a value: `$value` is a bool,
+whether the checkbox is now checked, so that a handler sets the field
+instead of flipping it (`func (m *Model) Set(on bool)`). A press runs
+`@click` and `@change` both, where both are bound; on `change`, `$value` is
+a bool where it is a string on every other event, so a method that takes it
+takes a `bool`.
+
+### Tabs
+
+```html
+<tabs :value="tab" :options="['Source', 'Result', 'Log']"
+      @change="pick($value)" label="View"/>
+<text :if="tab == 'Result'">{{ result }}</text>
+```
+
+The model owns the selected value and draws the chosen panel. Left and
+Right wrap through the options; Home and End pick an end; a click picks
+that option. Each new selection sends `change` with its string value.
+Tab enters or leaves the whole control in one step. Options should have
+unique labels. `disabled` blocks selection and focus for the whole row.
+An empty options list takes no navigation keys. Cells show the same
+options, selection and keyboard focus. Go:
+`surfui.Tabs(value, "Source", "Result", "Log").OnChange(pick)`.
+
+### Progress
+
+`<progress :percent="done" label="Download"/>` is a determinate track.
+The app supplies an integer percentage, clamped to 0..100. Use `grow`
+in a row to fill its remaining room, or `width` for a fixed cell width.
+Its accessible label and numeric value describe the progress; add a
+text beside it if the percentage should also be visible. It takes no
+input and has no animation or indeterminate state. Cells draw filled
+and empty blocks across the same available width.
+Go: `surfui.Progress(done).Label("Download")`.
 
 ## Widgets from outside
 
@@ -383,9 +488,14 @@ registers widgets runs its own cases with `conformance.Suite`
 
 | attribute | type | on | what |
 | --- | --- | --- | --- |
+| `language` | string | code | `plain`, `go` or `surf` |
+| `spans` | list(span) | code | the caller's own highlighting, `{text, role}` (bound only: `:spans="highlighted"`) |
+| `numbers` | bool | code | a gutter of line numbers |
+| `from` | int | code | the number of the first line, 1 unless it says |
+| `percent` | int | progress | 0 to 100, clamped at either end |
 | `on` | bool | switch | whether it is on |
-| `value` | string | select, cycle, face | the option picked; a face's value |
-| `options` | list(string) | select, cycle | the options (bound only: `:options="['a', 'b']"`) |
+| `value` | string | select, cycle, tabs, face | the option picked; a face's value |
+| `options` | list(string) | select, cycle, tabs | the options (bound only: `:options="['a', 'b']"`) |
 | `value`, `min`, `max`, `step` | int | slider | its value (snapped to the steps, held between the ends), its ends (0 and 100) and its step (1) |
 | `heading` | string | section | its heading |
 | `name` | string | icon | an MDI symbol's name, as `cog-outline`: its glyph ("Icons") |
@@ -568,12 +678,13 @@ registers widgets runs its own cases with `conformance.Suite`
   the wrong kind, `@click="open(dyn(1))"` is the error "no such
   overload: open", and the element is drawn with no handler.
 - **The events:**
-  - `click` and `focus` on every widget but `spacer` and `rule`, which
-    take none;
+  - `click` and `focus` on every widget but `spacer`, `rule` and
+    `progress`, which take none, and `tabs`, which takes focus and change;
   - `follow` on a `link` ("Links"), beside its `click` and `focus`;
   - `change` and `input` on a `field`, and `height` on a field of
     several lines (cells only; its `$value` is the rows, an int);
-  - `change` on a `select` and a `cycle`;
+  - `change` on a `select`, a `cycle`, `tabs` and a `checkbox` (whose
+    `$value` is a bool);
   - `input` and `change` on a `slider` ("Sliders and chips"), `$value` a
     string;
   - `dragstart` and `dragend` on a drag handle, and `drop` on a place

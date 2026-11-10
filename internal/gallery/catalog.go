@@ -61,6 +61,9 @@ func catalog(src *source) []*story {
 	}
 	for i := range surf.Widgets {
 		w := &surf.Widgets[i]
+		if w.Tag == "code" {
+			w = surf.BlockCode() // the block, which has the attributes; the inline code is the prose story's
+		}
 		out = append(out, &story{id: "w-" + w.Tag, section: widgets, group: w.Tag, name: "attributes", cols: 50, widget: w})
 		all(widgets, w.Tag)
 	}

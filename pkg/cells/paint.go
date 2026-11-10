@@ -80,6 +80,9 @@ func (p *painter) paint(b *box, dy int, clip rect, in ink) {
 		return
 	}
 	kdy, kclip := dy, clip
+	if hasClass(b.n, "u-code-line") || hasClass(b.n, "u-tabs") {
+		kclip = kclip.cut(rect{b.x, b.y - dy, b.w, b.h})
+	}
 	if b.f&fScroll != 0 {
 		kdy, kclip = p.port(b, dy, clip)
 	}
@@ -209,10 +212,8 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	case b.f&fSurface != 0:
 		bg = Bg
 	case b.f&fCode != 0:
-		// Inline code is on the code ground; the role L2 adds
-		// (code.ground) is not on this branch, so the tonal fill, a
-		// control's step from the ground.
-		bg = Tonal
+		// Inline code is on the code ground, as a code block is.
+		bg = CodeGround
 	case b.f&fLink != 0 && foc:
 		bg = Sel
 	case hasClass(n, "u-search") || hasClass(n, "u-query"):
@@ -221,6 +222,8 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 		bg = Field
 	case b.f&(fDialog|fOptions|fTip) != 0:
 		bg = Surface
+	case b.f&fBox != 0 && hasClass(n, "u-codeblock"):
+		bg = CodeGround
 	case b.f&fBox != 0 && b.d == compact:
 		bg = Tonal
 	case b.f&fBox != 0:
@@ -301,6 +304,19 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	case toggle:
 		if foc {
 			bg = Sel
+		}
+	}
+	if tabs, _, _, picked, ok := surfui.TabsOf(n); ok && picked >= 0 {
+		bg, in.fg = "", Muted
+		if b.f&fSel != 0 {
+			bg, in.fg = Sel, Fg
+			if p.focus == tabs {
+				in.fg = Accent
+				in.attr |= Underline
+			}
+		}
+		if _, disabled := surfui.AttrOf(tabs, "disabled"); disabled {
+			off, bg = true, ""
 		}
 	}
 	if off {
@@ -432,10 +448,24 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 		if b.f&fOn != 0 {
 			face, role = "[on]", Accent
 		}
+		if hasClass(b.n, "u-checkbox") {
+			face, role = "[ ]", Fg
+			if b.f&fOn != 0 {
+				face = "[x]"
+			}
+			if b.f&fInvalid != 0 {
+				role = Error
+			}
+		}
 		if b.f&fDisabled != 0 {
 			role = Faint
 		}
 		p.write(x, y, w, clusters(face), style{fg: role, attr: st.attr}, clip)
+	case progress:
+		percent, _ := surfui.ProgressOf(b.n)
+		filled := w * percent / 100
+		p.write(x, y, w, clusters(strings.Repeat("█", max(filled, 0))), style{fg: Accent}, clip)
+		p.write(x+filled, y, w-filled, clusters(strings.Repeat("░", max(w-filled, 0))), style{fg: Muted}, clip)
 	case choose:
 		value, _, _ := surfui.SelectOf(b.n)
 		vw := valueWidth(b.n)

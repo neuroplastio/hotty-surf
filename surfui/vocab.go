@@ -607,12 +607,17 @@ func (n *Node) Muted() *Node { return n.Class("u-tone-muted") }
 // without it, at every density: a row's actions.
 func (n *Node) Small() *Node { return n.Class("u-small") }
 
-// Wrap lets a Text wrap at its box's edge.
+// Wrap lets a Text wrap at its box's edge, and a Code break its lines at
+// their spaces.
 func (n *Node) Wrap() *Node {
 	if n.tag == "textarea" {
 		n.Attr("wrap", "soft")
 	}
-	return n.Class("u-wrap")
+	n.Class("u-wrap")
+	if n.code != nil {
+		n.codeBuild()
+	}
+	return n
 }
 
 // Grow lets n take the room left in its Row or Stack.

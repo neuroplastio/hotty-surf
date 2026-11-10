@@ -535,3 +535,55 @@ view = require("surf").load(%q):view("x", s)`, dir))
 		t.Errorf("the handler got %v", r[0])
 	}
 }
+
+// A code block draws a Lua table's spans, {text, role}: a list of
+// tables, one role left out (plain), and a role that is none of the
+// lexer's is an error, the block drawn as it was.
+func TestCodeSpans(t *testing.T) {
+	dir := write(t, map[string]string{"x.surf": `
+<surface>
+  <code key="a" :spans="spans" numbers :from="first" :wrap="wrap"/>
+</surface>`})
+	L := state(t)
+	eval(t, L, fmt.Sprintf(`
+s = { first = 40, wrap = false, spans = {
+  { text = "local", role = "keyword" }, { text = " x = " },
+  { text = "\t'<b>'\n", role = "string" }, { text = "1", role = "number" } } }
+view = require("surf").load(%q):view("x", s)`, dir))
+	r := eval(t, L, `return view:html()`)
+	html := r[0].String()
+	for _, want := range []string{"u-syn-keyword", "u-syn-string", "u-syn-number", "u-syn-plain", "&lt;b&gt;", "u-code-num", ">40 <", ">41 <"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("no %q:\n%s", want, html)
+		}
+	}
+	if strings.Contains(html, "<b>") || strings.Contains(html, "u-code-flow") || len(lines(r[1])) != 0 {
+		t.Errorf("render:\n%s\n%v", html, lines(r[1]))
+	}
+	eval(t, L, `s.wrap = true; s.spans[2].role = "loud"`)
+	r = eval(t, L, `return view:html()`)
+	if errs := lines(r[1]); len(errs) != 1 || !strings.Contains(errs[0], `"loud"`) {
+		t.Errorf("errors: %v", errs)
+	}
+}
+
+// A checkbox's change gives the handler a bool: whether it is now
+// checked. The table owns the state.
+func TestCheckboxChange(t *testing.T) {
+	dir := write(t, map[string]string{"x.surf": `
+<surface>
+  <checkbox key="a" :checked="on" label="On" @change="set($value)"/>
+</surface>`})
+	L := state(t)
+	eval(t, L, fmt.Sprintf(`
+s = { on = false, heard = {} }
+function s:set(v) s.on = v; table.insert(s.heard, v) end
+view = require("surf").load(%q):view("x", s)`, dir))
+	for range 3 {
+		eval(t, L, `view:html()`) // the tree the event reads
+		eval(t, L, `view:event("r.ka", "click")`)
+	}
+	if r := eval(t, L, `return #s.heard == 3 and s.heard[1] == true and s.heard[2] == false and s.on == true`); r[0] != lua.LTrue {
+		t.Errorf("change heard %v", eval(t, L, `return table.concat({tostring(s.heard[1]), tostring(s.heard[2]), tostring(s.heard[3])}, " ")`)[0])
+	}
+}

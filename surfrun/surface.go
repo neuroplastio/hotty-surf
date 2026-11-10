@@ -3,6 +3,7 @@ package surfrun
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -615,6 +616,10 @@ func (s *Surface) event(e hotty.Event) bool {
 		return took
 	}
 	if e.Kind == hotty.EventClick {
+		if tabs, _, options, picked, ok := surfui.TabsOf(n); ok && picked >= 0 {
+			s.tabsTo(tabs, options[picked])
+			return true
+		}
 		if c, value, options, step, ok := surfui.CycleOf(n); ok {
 			if step != 0 {
 				s.cycleTo(c, cycleBy(value, options, step))
@@ -646,14 +651,31 @@ func (s *Surface) event(e hotty.Event) bool {
 		}
 	}
 	act, ok := surfui.Handler(n, e.Kind)
-	if !ok {
+	// A click on a checkbox is also its change, which says whether it is
+	// now checked ("true" or "false"): the model owns the state, and a
+	// handler of either changes it.
+	var change surfui.Action
+	var now bool
+	if e.Kind == hotty.EventClick {
+		if checked, enabled, is := surfui.CheckboxOf(n); is && enabled {
+			if change, _ = surfui.Handler(n, "change"); change != nil {
+				now = !checked
+			}
+		}
+	}
+	if !ok && change == nil {
 		if s.Unhandled != nil {
 			s.Unhandled(ev)
 			s.due, s.stale = true, true
 		}
 		return took
 	}
-	s.do(act, ev)
+	if ok {
+		s.do(act, ev)
+	}
+	if change != nil {
+		s.do(change, Event{Kind: "change", Target: e.Target, Value: strconv.FormatBool(now), Checked: now})
+	}
 	return true
 }
 
@@ -700,7 +722,7 @@ func (s *Surface) Key(name string) (took, redraw bool) {
 		return true, s.due
 	}
 	took = s.fieldEnter(name)
-	if s.selectKey(name) || s.cycleKey(name) || s.sliderKey(name) {
+	if s.selectKey(name) || s.cycleKey(name) || s.sliderKey(name) || s.tabsKey(name) {
 		return true, s.due
 	}
 	if s.menu == nil && (name == "shift+f10" || name == "context_menu") && s.menuKey(name) {

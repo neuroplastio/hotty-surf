@@ -73,9 +73,9 @@ func (o surfHello) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfHello) Shape() *surf.Shape { return &surfShapeHello }
-
 func (o surfHello) Unwrap() any { return o.p }
+
+func (o surfHello) Shape() *surf.Shape { return &surfShapeHello }
 
 func (o surfHello) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -125,9 +125,9 @@ func (o surfHelpPanel) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfHelpPanel) Shape() *surf.Shape { return &surfShapeHelpPanel }
-
 func (o surfHelpPanel) Unwrap() any { return o.p }
+
+func (o surfHelpPanel) Shape() *surf.Shape { return &surfShapeHelpPanel }
 
 func (o surfHelpPanel) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -198,9 +198,9 @@ func (o surfTasks) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfTasks) Shape() *surf.Shape { return &surfShapeTasks }
-
 func (o surfTasks) Unwrap() any { return o.p }
+
+func (o surfTasks) Shape() *surf.Shape { return &surfShapeTasks }
 
 func (o surfTasks) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -274,6 +274,8 @@ func (o surfTask) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfTask) Unwrap() any { return o.p }
 
 // surfRenderHello draws hello.surf for Hello.
 func surfRenderHello(e *surf.Errs, out []*surfui.Node, c *Hello, fill surf.Fill) []*surfui.Node {

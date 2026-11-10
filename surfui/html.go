@@ -354,6 +354,8 @@ func dataKeys(n *Node) string {
 		keys = append(keys, cycleKeys...)
 	case n.slider != nil:
 		keys = append(keys, sliderKeys...)
+	case n.tabs != nil:
+		keys = append(keys, tabsHostKeys...)
 	case n.choice != nil && n.choice.open:
 		keys = append(keys, selectOpenKeys...)
 	case n.choice != nil:

@@ -53,6 +53,7 @@ const (
 	rule
 	spacer
 	custom // an element that draws its own cells (Node.Cells)
+	progress
 )
 
 // flag is a box's look, from its classes.
@@ -518,8 +519,10 @@ func (b *box) look(d density) {
 			b.kind, known = button, true
 		case c == "u-field":
 			b.kind, known = field, true
-		case c == "u-switch":
+		case c == "u-switch", c == "u-checkbox":
 			b.kind, known = toggle, true
+		case c == "u-progress":
+			b.kind, known = progress, true
 		case c == "u-select":
 			b.kind, known = choose, true
 		case c == "u-cycle":
@@ -540,6 +543,9 @@ func (b *box) look(d density) {
 			b.f |= fBold
 		case c == "u-reveal":
 			b.f |= fReveal
+		case c == "u-code-flow":
+			b.f |= fPre // a code line's paragraph keeps its spaces
+			b.pr = 1    // and a cell at its end, where they hang (surf.css)
 		case c == "u-keep":
 			b.f |= fKeep
 		case c == "u-fit":
@@ -568,6 +574,10 @@ func (b *box) look(d density) {
 			b.f |= fHi
 		case strings.HasPrefix(c, "u-tone-"):
 			b.tone = Role(c[len("u-tone-"):])
+		case strings.HasPrefix(c, "u-syn-"):
+			if c != "u-syn-plain" {
+				b.tone = Role("syn-" + c[len("u-syn-"):]) // plain is the text's own
+			}
 		case strings.HasPrefix(c, "u-fill-"):
 			b.fill = Role(c[len("u-fill-"):])
 		case strings.HasPrefix(c, "u-gap"):
@@ -813,9 +823,14 @@ func (b *box) leafWidth() int {
 	case field:
 		return 20 + b.pl + b.pr
 	case toggle:
+		if hasClass(b.n, "u-checkbox") {
+			return 3 // [x]
+		}
 		return 5 // [off]
 	case custom:
 		return b.block(cellblock.Unbounded).Width() + b.pl + b.pr
+	case progress:
+		return 20
 	case choose, cycle:
 		return valueWidth(b.n) + 4
 	case slider:
@@ -1075,6 +1090,10 @@ func (b *box) share(w int) int {
 
 // place puts b at x, y, w×h, and its children in it.
 func (b *box) place(x, y, w, h int) {
+	// A progress track stretches in a column unless the app fixed its width.
+	if b.kind == progress && b.fw >= 0 {
+		w = min(w, b.fw)
+	}
 	stackprobe.Probe()
 	if b.maxw > 0 {
 		w = min(w, b.maxw)
@@ -1108,6 +1127,9 @@ type piece struct {
 // line broken where the line ends. A key's caps keep whole: one wider than the line overflows it.
 func (b *box) flowLines(w int) [][]piece {
 	w = max(w, 1)
+	if b.f&fPre != 0 {
+		return b.preLines(w)
+	}
 	var out [][]piece
 	var line []piece
 	x := 0
@@ -1160,6 +1182,83 @@ func (b *box) flowLines(w int) [][]piece {
 				put(piece{src: k, text: joined(p), w: width(p)}, gap)
 			}
 			space = false
+		}
+	}
+	if len(line) > 0 || len(out) == 0 {
+		out = append(out, line)
+	}
+	return out
+}
+
+// preLines are a code line's pieces, as white-space: pre-wrap and
+// overflow-wrap: anywhere lay it out: every space kept, a line broken
+// after the spaces at its end (which hang past the edge, and show
+// nothing there) before the word that doesn't fit, and a word wider
+// than a line broken where the line ends. The runs are the line's, so
+// that a word and its spaces keep the colour of their run.
+func (b *box) preLines(w int) [][]piece {
+	var out [][]piece
+	var line []piece
+	x := 0
+	brk := false // the spaces ended at the edge: the next word starts a line
+	next := func() { out, line, x, brk = append(out, line), nil, 0, false }
+	for _, k := range b.runs {
+		if k.kind != text {
+			wd := k.ml + k.natural()
+			if brk || x > 0 && x+wd > w {
+				next()
+			}
+			line = append(line, piece{src: k, w: wd, x: x})
+			x += wd
+			continue
+		}
+		for s := k.text; s != ""; {
+			r, _ := utf8.DecodeRuneInString(s)
+			if unicode.IsSpace(r) {
+				// A run of spaces: what fits stays, the rest hangs
+				// off the line's end.
+				end := strings.IndexFunc(s, func(r rune) bool { return !unicode.IsSpace(r) })
+				if end < 0 {
+					end = len(s)
+				}
+				sp := clusters(s[:end])
+				s = s[end:]
+				if x == 0 && len(out) > 0 {
+					continue // a wrapped line starts at its word
+				}
+				room := max(w-x, 0)
+				if len(sp) > room {
+					sp = sp[:room]
+					brk = true
+				}
+				if len(sp) > 0 {
+					line = append(line, piece{src: k, text: joined(sp), w: len(sp), x: x})
+					x += len(sp)
+				}
+				if x >= w {
+					brk = true
+				}
+				continue
+			}
+			end := strings.IndexFunc(s, unicode.IsSpace)
+			if end < 0 {
+				end = len(s)
+			}
+			word := clusters(s[:end])
+			s = s[end:]
+			if brk || x > 0 && x+width(word) > w {
+				next()
+			}
+			for width(word) > w {
+				n := fits(word, w)
+				line = append(line, piece{src: k, text: joined(word[:n]), w: width(word[:n]), x: x})
+				next()
+				word = word[n:]
+			}
+			if len(word) > 0 {
+				line = append(line, piece{src: k, text: joined(word), w: width(word), x: x})
+				x += width(word)
+			}
 		}
 	}
 	if len(line) > 0 || len(out) == 0 {

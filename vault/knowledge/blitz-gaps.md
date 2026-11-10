@@ -567,3 +567,92 @@ The baseline has these five, and no other line added or changed. The
 first run of the story had a segmented row under the chips, which is the
 segmented/states gap again (the red under its box, 360 in Compact at
 1.6×), so the story keeps to its own widget.
+
+## Tour checkbox (2026-11-07)
+
+The 14px checkbox adds four Dense 1.6× cases. Its inset edge and the
+checked focus edge land a device pixel differently from Chromium,
+most visible along the focused square's top. The geometry, check glyph
+and state colours agree; all 2× cases pass. This is consistent with the
+painted-box snap above, rather than a different control design. The
+exact renderer cause has not been isolated.
+
+The new baseline cases, each inspected against the same-state sheets:
+
+- `checkbox-states-neuroplastio-dense-1.6`: 13.3 CSS px².
+- `checkbox-states-terminal-dense-1.6`: 13.3 CSS px².
+- `checkbox-states-paper-dense-1.6`: 12.9 CSS px².
+- `checkbox-states-stone-dense-1.6`: 12.5 CSS px².
+
+No existing case is changed by the checkbox's own CSS block.
+
+## Tour tabs (2026-11-07)
+
+Tabs use the existing segmented control. Eight new cases show the same
+fractional-scale edge snap as `segmented/states`: the long box's lower
+edge lands a device row differently at 1.6×. Its full-width story makes
+that edge count more area (up to 839.8 CSS px²); the selected buttons'
+edges and text account for the smaller Compact differences. The viewed
+Roomy terminal and Compact graphite sheets retain the same layout,
+labels, selection and inset focus. Every Dense and 2× case passes.
+
+The new baseline cases are:
+
+- `tabs-states-neuroplastio-roomy-1.6`: 839.8 CSS px².
+- `tabs-states-neuroplastio-compact-1.6`: 337.5 CSS px².
+- `tabs-states-terminal-roomy-1.6`: 839.8 CSS px².
+- `tabs-states-terminal-compact-1.6`: 337.5 CSS px².
+- `tabs-states-paper-compact-1.6`: 16.4 CSS px².
+- `tabs-states-graphite-compact-1.6`: 16.8 CSS px².
+- `tabs-states-stone-roomy-1.6`: 839.1 CSS px².
+- `tabs-states-stone-compact-1.6`: 308.6 CSS px².
+
+## Code spans and wrap (2026-11-09)
+
+`white-space: pre-wrap` with `overflow-wrap: anywhere` lays a wrapped code
+line out in Blitz as Chromium does: the words, the break points and the
+hanging indent match, in `.shots/look/code-wrap-*` and the gate's sheets.
+Four 1.6× cases are over the threshold, each by one device row at the
+bottom edge of the document and nothing else (the sheets' diff panel is
+yellow, within tolerance, but for a red line under the last row): the
+known entry "a root of `min-height: 100vh` whose rows × 21.25 px ends in
+.25" above. Dense draws 17 and 5 rows here.
+
+- `code-wrap-neuroplastio-dense-1.6` and `-terminal-`: 229.7 CSS px².
+- `code-spans-neuroplastio-dense-1.6` and `-terminal-`: 279.7 CSS px².
+
+The story's third block, a line cut at the edge, is not in `code/wrap`
+(the legible gate fails any story that cuts text); the cells' golden
+`code-numbers` shows it, and the unwrapped block's edge is in `code/source`.
+
+**Scrolling across.** A `code` without `wrap` is `overflow-x: auto`, its
+lines `width: max-content`. `hotty render` draws one frame, so it proves
+the clipped edge (the gate's "No wrap" block matches Chromium) and
+nothing about the scroll itself: a wheel or a drag on a host's bar
+hasn't been seen to move it. Left for hottyterm to try; if Blitz doesn't
+scroll an `overflow-x` box, that is its gap and no workaround is made
+here.
+
+## Tour widgets on the 2026-11-10 baseline (code, checkbox, tabs)
+
+All twenty-five cases are 1.6× (every 2× case passes) and each was looked
+at in both engines on the gate's sheets (`.shots/gate/<case>.png`). The
+words, labels, selection, fills and marks are the same in both; what
+differs is an edge, by whole device rows, the entries above again:
+
+- **code-spans** (`neuroplastio` and `terminal`, Dense: 279.7). One
+  device row at the bottom edge of the document and nothing else: "a root
+  of `min-height: 100vh` whose rows × 21.25 px ends in .25". (code-wrap
+  passes everywhere, since a wrapped line keeps a cell at its end.)
+- **checkbox-states** (all five themes at Compact, Dense and Roomy:
+  16.0 to 24.6, fifteen cases). The 14px square's 1px rest hairline and
+  its 2px focus ring: at 1.6× Blitz paints an inset `box-shadow` on whole
+  device px (`floor(width × scale)`: 3 for the ring where Chromium draws
+  3.2), and an edge lands a device row off: "a thin line drops out" and
+  "the focus ring is 1 device px wide" above. The sheets' red marks are
+  the Hover box's top edge and the Focus ring's corners only.
+- **tabs-states** (Compact in every theme, and Roomy in neuroplastio, terminal and
+  stone: 16.4 to 839.8, eight cases). The tablist's lower hairline lands
+  a device row differently, and the full-width story makes that edge
+  count more area (a red line under each list in the diff panel); the
+  selected buttons' text and fills match. As `segmented/states`.

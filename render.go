@@ -420,6 +420,8 @@ func (f *frame) node(e *elem, kids []*surfui.Node, binds []surfui.Binding) *surf
 		opts, _ := f.strs(e, e.args[1])
 		if e.w.Tag == "select" {
 			n = NewSelect(val, opts)
+		} else if e.w.Tag == "tabs" {
+			n = NewTabs(val, opts)
 		} else {
 			n = NewCycle(val, opts)
 		}
@@ -631,12 +633,16 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 		return surfui.Spacer()
 	case "rule":
 		return surfui.Rule()
+	case "progress":
+		return NewProgress()
 	case "dot":
 		return surfui.Dot()
 	case "field":
 		return surfui.Field()
 	case "slider":
 		return NewSlider()
+	case "checkbox":
+		return NewCheckbox()
 	}
 	panic("surf: no widget " + tag)
 }
@@ -644,6 +650,8 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 // buildText is a FormText widget.
 func buildText(tag, s string) *surfui.Node {
 	switch tag {
+	case "code":
+		return surfui.CodeBlock(s) // outside prose: the block (blockCode)
 	case "text":
 		return surfui.Text(s)
 	case "heading":
@@ -712,6 +720,15 @@ func (f *frame) apply(e *elem, n *surfui.Node, m mod) {
 			}
 		}
 		ModPad(n, p)
+	case TypeSpans:
+		var spans []surfui.Span
+		x, ok := f.eval(e, m.v.prog)
+		if !ok {
+			return
+		}
+		if spans, err = SpansOf(x); err == nil {
+			err = ModSpans(n, spans)
+		}
 	}
 	if err != nil {
 		f.fail(e, err)
@@ -752,6 +769,8 @@ func applyIntOf(a *Attr, n *surfui.Node, v int64) {
 // table's Func, as generated code calls it.
 func applyString(name string, n *surfui.Node, v string) error {
 	switch name {
+	case "language":
+		return ModLanguage(n, v)
 	case "theme":
 		return ModTheme(n, v)
 	case "density":
@@ -842,6 +861,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModBare(n, v)
 	case "chrome":
 		ModChrome(n, v)
+	case "numbers":
+		ModNumbers(n, v)
 	case "pill":
 		ModPill(n, v)
 	case "raised":
@@ -913,6 +934,10 @@ func applyInt(name string, n *surfui.Node, v int64) {
 		ModScale(n, v)
 	case "meter":
 		ModMeter(n, v)
+	case "percent":
+		ModPercent(n, v)
+	case "from":
+		ModFrom(n, v)
 	case "badge":
 		ModBadge(n, v)
 	case "level":
@@ -1089,6 +1114,8 @@ func (f *frame) action(e *elem, h handler) (surfui.Action, bool) {
 					a[i] = cellite.StringValue(ev.Value)
 				case ArgRows:
 					a[i] = cellite.IntValue(int64(ev.Rows))
+				case ArgChecked:
+					a[i] = cellite.BoolValue(ev.Value == "true")
 				case ArgEvent:
 					a[i] = EventValue(ev)
 				case ArgDragFrom:

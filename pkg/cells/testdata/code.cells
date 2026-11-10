@@ -1,0 +1,23 @@
+cells 32x9
+text
+>  package demo
+>
+>  type App struct {
+>      Count int // items
+>  }
+>  const count = 3
+style
+= abbbbbbbaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= abbbbaaaaabbbbbbaaaaaaaaaaaaaaaa
+= aaaaaaaaaaacccaddddddddaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= abbbbbaaaaaaaaaeaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+. fg/bg
+a fg/code-ground
+b syn-keyword/code-ground
+c syn-type/code-ground
+d syn-comment/code-ground
+e syn-number/code-ground
+hits

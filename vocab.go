@@ -83,6 +83,9 @@ const (
 	// TypePad is padding: "x y", or "n" for both; bound, a list of one or
 	// two ints.
 	TypePad
+	// TypeSpans is a list of a code block's spans, {text, role}: bound
+	// only (SpansOf).
+	TypeSpans
 )
 
 // Attr is one attribute: a constructor's argument (Arg), or a modifier,
@@ -176,12 +179,15 @@ var Widgets = []Widget{
 	floor("field", "a text field: one line, or with rows several, wrapped, whose Enter types a newline", FormNone, "surfui.Field", []string{"click", "focus", "change", "input", "height"}),
 	floor("slider", "an integer from min to max in steps of step, a track with a thumb: a drag, ← → ↑ ↓ and Home and End move it, each new value its @input (a string), and its @change when a key or the drag's end commits it; the cells draw ───●─── and the value after it", FormNone, "NewSlider", []string{"focus", "input", "change"}),
 	floor("switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events),
+	floor("checkbox", "a boolean as a square with a check: it shows checked, and its click handler changes it", FormNone, "NewCheckbox", []string{"click", "focus", "change"}),
 	floor("select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}),
 	floor("cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}),
+	floor("tabs", "a row of options, one selected, with one keyboard stop", FormChoice, "NewTabs", []string{"focus", "change"}),
 	floor("list", "a column of items with a selection", FormKids, "surfui.List", events),
 	floor("item", "a row of a list", FormKids, "surfui.Item", events),
 	floor("section", "a group under a heading", FormSection, "surfui.Section", events),
 	floor("rule", "a line across", FormNone, "surfui.Rule", nil),
+	floor("progress", "a determinate percentage, as a track on a host and blocks in cells", FormNone, "NewProgress", nil),
 	floor("box", "a raised panel", FormKids, "surfui.Box", events),
 	floor("dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events),
 	floor("link", "a link, inline in a line or on a row of its own: its text underlined in the link tone, which Enter and a click follow; a #fragment an anchor names scrolls to it", FormKids, "NewLink", []string{"click", "focus", "follow"}),
@@ -202,12 +208,19 @@ var Widgets = []Widget{
 	floor("face", "a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb", FormFace, "NewFace", events),
 }
 
+// blockCode is the `code` that is a block of source: read-only,
+// highlighted by language or by the caller's spans, with wrap, line
+// numbers and tabs of four spaces. A `code` outside prose (a p, an h, an
+// li, a link, an em …) with one of language, spans, numbers or from is it;
+// any other is the inline code of Widgets, which lists a tag once.
+var blockCode = floor("code", "read-only source, preserving whitespace, highlighted by language or by the caller's spans, with wrap, line numbers and tabs of four spaces", FormText, "surfui.CodeBlock", events)
+
 // Attrs are the attributes, constructors' arguments first.
 var Attrs = []Attr{
 	{Name: "on", Type: TypeBool, Doc: "whether the switch is on", Tags: []string{"switch"}, Arg: true},
 	{Name: "icon", Type: TypeString, Doc: "a widget's icon, muted: an MDI symbol's name, as source-branch", Tags: []string{"face"}, Arg: true},
-	{Name: "value", Type: TypeString, Doc: "the option picked; a widget's value", Tags: []string{"select", "cycle", "face"}, Arg: true},
-	{Name: "options", Type: TypeStrings, Doc: "the options, in order", Tags: []string{"select", "cycle"}, Arg: true},
+	{Name: "value", Type: TypeString, Doc: "the option picked; a widget's value", Tags: []string{"select", "cycle", "tabs", "face"}, Arg: true},
+	{Name: "options", Type: TypeStrings, Doc: "the options, in order", Tags: []string{"select", "cycle", "tabs"}, Arg: true},
 	{Name: "heading", Type: TypeString, Doc: "the section's heading", Tags: []string{"section"}, Arg: true},
 	{Name: "name", Type: TypeString, Doc: "an MDI symbol's name, as cog-outline: the glyph it draws, in the cells beside an svg", Tags: []string{"icon"}, Arg: true},
 	{Name: "svg", Type: TypeString, Doc: "an SVG a host draws: the name of an .svg file beside the templates", Tags: []string{"icon"}, Arg: true},
@@ -295,6 +308,12 @@ var Attrs = []Attr{
 	{Name: "autofocus", Type: TypeBool, Doc: "takes the keyboard when the surface is shown", Func: "ModAutofocus"},
 	{Name: "drag", Type: TypeBool, Doc: "a drag handle: a press drags it, and its click waits for the release", Tags: pointed, Func: "ModDrag"},
 	{Name: "drop", Type: TypeString, Doc: "a place to drop on: bare (or whole) the whole element, halves before or after it, thirds before, into or after it", Tags: pointed, Func: "ModDrop", Fails: true, Values: drops},
+	{Name: "language", Type: TypeString, Doc: "a code block's language: plain, go or surf", Tags: []string{"code"}, Func: "ModLanguage", Fails: true, Values: []string{"plain", "go", "surf"}},
+	{Name: "spans", Type: TypeSpans, Doc: "a code block's own highlighting, in place of its text's: a list of {text, role}, the role one of keyword, tag, string, number, comment, type, attribute or plain", Tags: []string{"code"}, Func: "ModSpans", Fails: true},
+	{Name: "numbers", Type: TypeBool, Doc: "a code block's line numbers, a muted gutter", Tags: []string{"code"}, Func: "ModNumbers"},
+	{Name: "from", Type: TypeInt, Doc: "the number of a code block's first line, 1 unless it says", Tags: []string{"code"}, Func: "ModFrom"},
+
+	{Name: "percent", Type: TypeInt, Doc: "progress from 0 to 100, clamped at either end", Tags: []string{"progress"}, Func: "ModPercent"},
 }
 
 // widget is the tag's entry, if it is a widget's.
@@ -731,3 +750,8 @@ func staticPad(s string) ([2]int64, error) {
 	}
 	return v, nil
 }
+
+// BlockCode is the widget a `code` is where it is a block of source
+// (language, spans, numbers or from outside prose), for a tool that
+// shows a widget's form, as the gallery does.
+func BlockCode() *Widget { return &blockCode }

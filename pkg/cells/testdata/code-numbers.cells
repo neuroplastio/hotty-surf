@@ -1,0 +1,21 @@
+cells 24x6
+text
+>  1 func f() {
+>  2     println("aaaa bb
+>  3
+>  4     x := 1
+>  5 }
+style
+= abbccccaaaaaaaaaaaaaaaaa
+= abbaaaaaaaaaaaadddddddda
+= abbaaaaaaaaaaaaaaaaaaaaa
+= abbaaaaaaaaaeaaaaaaaaaaa
+= abbaaaaaaaaaaaaaaaaaaaaa
+= abbaaaaaaaaaaaaaaaaaaaaa
+. fg/bg
+a fg/code-ground
+b muted/code-ground
+c syn-keyword/code-ground
+d syn-string/code-ground
+e syn-number/code-ground
+hits

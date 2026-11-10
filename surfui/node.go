@@ -52,6 +52,7 @@ type Node struct {
 	isRaw bool
 	cells string         // what the cells draw in its place: an SVG icon's glyph
 	block cellblock.Func // what the cells draw in its place: a block of rows (Cells)
+	code  *codeSpec      // what a Code is built from
 
 	key      string
 	id       string // given, or the key path once resolved
@@ -73,6 +74,7 @@ type Node struct {
 	cycle   *cycle  // a Cycle's value and options
 	slider  *slider // a Slider's bounds and value
 	choice  *choice // a Select's value and options
+	tabs    *choice // a Tabs' selected value and options
 	part    int8    // which part of a Cycle n is: partLess, partValue, partMore
 	entries bool    // a List of Entries: the Items added to it are focusable
 
@@ -454,6 +456,7 @@ func resolve(n *Node, ix Index) {
 		k.parent = n
 		resolve(k, ix)
 	}
+	resolveTabs(n)
 }
 
 // Clone is a deep copy of n, unresolved.
