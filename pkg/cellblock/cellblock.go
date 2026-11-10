@@ -42,7 +42,44 @@ const (
 	Selected Role = "selected"  // a list's selection, while it or what drives it has the keyboard
 	Sel      Role = "sel"       // a control with the keyboard; an open Select's highlight
 	OnAccent Role = "on-accent" // text on an accent fill
+
+	// A code block's syntax roles, and its ground (surf.css's
+	// --u-syn-* and --u-code-ground). A host that has no colour of its
+	// own for one draws Base's: the theme's default, from the roles
+	// above.
+	SynKeyword   Role = "syn-keyword"   // accent
+	SynTag       Role = "syn-tag"       // accent
+	SynString    Role = "syn-string"    // ok
+	SynNumber    Role = "syn-number"    // warn
+	SynComment   Role = "syn-comment"   // muted
+	SynType      Role = "syn-type"      // info
+	SynAttribute Role = "syn-attribute" // fg
+	SynPlain     Role = "syn-plain"     // fg
+	CodeGround   Role = "code-ground"   // surface
 )
+
+// Base is the role a host that doesn't know r draws it as: a syntax
+// role's and the code ground's default in every theme, from the roles
+// that every host has. Any other role is its own.
+func (r Role) Base() Role {
+	switch r {
+	case SynKeyword, SynTag:
+		return Accent
+	case SynString:
+		return OK
+	case SynNumber:
+		return Warn
+	case SynComment:
+		return Muted
+	case SynType:
+		return Info
+	case SynAttribute, SynPlain:
+		return Fg
+	case CodeGround:
+		return Surface
+	}
+	return r
+}
 
 // AnsiRole is the role of the terminal's colour n, 0 to 15, "ansi-9": a
 // hue's (surfui.Palette), which the terminal's palette draws, so that its

@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf prose.surf shelf.surf tune.surf mark.svg ring.svg
+//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf progress-example.surf prose.surf shelf.surf tabs-example.surf tune.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProse, &surfShapeShelf, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeTabsExample, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -95,9 +95,9 @@ func (o surfBoard) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfBoard) Shape() *surf.Shape { return &surfShapeBoard }
-
 func (o surfBoard) Unwrap() any { return o.p }
+
+func (o surfBoard) Shape() *surf.Shape { return &surfShapeBoard }
 
 func (o surfBoard) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -125,6 +125,167 @@ func (o surfBoard) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpBoard is c drawn by its template, interpreted.
 func surfInterpBoard(c *Board) surflive.Component { return surf.Component(surfSet(), surfBoard{c}) }
+
+// surfShapeCheckboxExample is CheckboxExample's shape, a component.
+var surfShapeCheckboxExample = surf.Shape{Name: "CheckboxExample", Component: true,
+	Fields: []surf.Field{{Name: "enabled", Type: cellite.Bool}, {Name: "disabled", Type: cellite.Bool}, {Name: "marked", Type: cellite.Bool}, {Name: "heard", Type: cellite.ListOf(cellite.Bool)}},
+	Methods: []surf.Method{
+		{Name: "mark", Args: []cellite.Type{cellite.Bool}},
+		{Name: "toggle"},
+	},
+}
+
+// surfCheckboxExample is a *CheckboxExample as its templates read it.
+type surfCheckboxExample struct{ p *CheckboxExample }
+
+// surfCheckboxExampleValue is p as a value: null for nil.
+func surfCheckboxExampleValue(p *CheckboxExample) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("CheckboxExample", surfCheckboxExample{p})
+}
+
+// surfCheckboxExampleOf is a value's *CheckboxExample: nil for any other.
+func surfCheckboxExampleOf(v cellite.Value) *CheckboxExample {
+	if o, ok := v.Object().(surfCheckboxExample); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfCheckboxExample) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.BoolValue(bool(o.p.Enabled))
+	case 1:
+		return cellite.BoolValue(bool(o.p.Disabled))
+	case 2:
+		return cellite.BoolValue(bool(o.p.Marked))
+	case 3:
+		return cellite.ListValue(surfList4(o.p.Heard))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfCheckboxExample) Unwrap() any { return o.p }
+
+func (o surfCheckboxExample) Shape() *surf.Shape { return &surfShapeCheckboxExample }
+
+func (o surfCheckboxExample) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Mark(bool(args[0].Bool()))
+	case 1:
+		o.p.Toggle()
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpCheckboxExample is c drawn by its template, interpreted.
+func surfInterpCheckboxExample(c *CheckboxExample) surflive.Component {
+	return surf.Component(surfSet(), surfCheckboxExample{c})
+}
+
+// surfShapeCodeExample is CodeExample's shape, a component.
+var surfShapeCodeExample = surf.Shape{Name: "CodeExample", Component: true,
+	Fields: []surf.Field{{Name: "source", Type: cellite.String}, {Name: "language", Type: cellite.String}},
+}
+
+// surfCodeExample is a *CodeExample as its templates read it.
+type surfCodeExample struct{ p *CodeExample }
+
+// surfCodeExampleValue is p as a value: null for nil.
+func surfCodeExampleValue(p *CodeExample) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("CodeExample", surfCodeExample{p})
+}
+
+// surfCodeExampleOf is a value's *CodeExample: nil for any other.
+func surfCodeExampleOf(v cellite.Value) *CodeExample {
+	if o, ok := v.Object().(surfCodeExample); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfCodeExample) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Source))
+	case 1:
+		return cellite.StringValue(string(o.p.Language))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfCodeExample) Unwrap() any { return o.p }
+
+func (o surfCodeExample) Shape() *surf.Shape { return &surfShapeCodeExample }
+
+func (o surfCodeExample) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpCodeExample is c drawn by its template, interpreted.
+func surfInterpCodeExample(c *CodeExample) surflive.Component {
+	return surf.Component(surfSet(), surfCodeExample{c})
+}
+
+// surfShapeCodeSpansExample is CodeSpansExample's shape, a component.
+var surfShapeCodeSpansExample = surf.Shape{Name: "CodeSpansExample", Component: true,
+	Fields: []surf.Field{{Name: "spans", Type: cellite.ListOf(cellite.StructOf("Span"))}, {Name: "from", Type: cellite.Int}, {Name: "wrap", Type: cellite.Bool}},
+}
+
+// surfCodeSpansExample is a *CodeSpansExample as its templates read it.
+type surfCodeSpansExample struct{ p *CodeSpansExample }
+
+// surfCodeSpansExampleValue is p as a value: null for nil.
+func surfCodeSpansExampleValue(p *CodeSpansExample) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("CodeSpansExample", surfCodeSpansExample{p})
+}
+
+// surfCodeSpansExampleOf is a value's *CodeSpansExample: nil for any other.
+func surfCodeSpansExampleOf(v cellite.Value) *CodeSpansExample {
+	if o, ok := v.Object().(surfCodeSpansExample); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfCodeSpansExample) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.ListValue(surfList5(o.p.Spans))
+	case 1:
+		return cellite.IntValue(int64(o.p.From))
+	case 2:
+		return cellite.BoolValue(bool(o.p.Wrap))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfCodeSpansExample) Unwrap() any { return o.p }
+
+func (o surfCodeSpansExample) Shape() *surf.Shape { return &surfShapeCodeSpansExample }
+
+func (o surfCodeSpansExample) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpCodeSpansExample is c drawn by its template, interpreted.
+func surfInterpCodeSpansExample(c *CodeSpansExample) surflive.Component {
+	return surf.Component(surfSet(), surfCodeSpansExample{c})
+}
 
 // surfShapeCrew is Crew's shape, a component.
 var surfShapeCrew = surf.Shape{Name: "Crew", Component: true,
@@ -158,16 +319,16 @@ func (o surfCrew) Field(i int) cellite.Value {
 	case 0:
 		return cellite.StringValue(string(o.p.Title))
 	case 1:
-		return cellite.ListValue(surfList4(o.p.Hands))
+		return cellite.ListValue(surfList6(o.p.Hands))
 	case 2:
 		return cellite.ListValue(surfList2(o.p.Log))
 	}
 	return cellite.NullValue()
 }
 
-func (o surfCrew) Shape() *surf.Shape { return &surfShapeCrew }
-
 func (o surfCrew) Unwrap() any { return o.p }
+
+func (o surfCrew) Shape() *surf.Shape { return &surfShapeCrew }
 
 func (o surfCrew) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -214,18 +375,18 @@ func surfDeckOf(v cellite.Value) *Deck {
 func (o surfDeck) Field(i int) cellite.Value {
 	switch i {
 	case 0:
-		return cellite.ListValue(surfList5(o.p.Rows))
+		return cellite.ListValue(surfList7(o.p.Rows))
 	case 1:
-		return cellite.ListValue(surfList5(o.p.Folders))
+		return cellite.ListValue(surfList7(o.p.Folders))
 	case 2:
 		return cellite.ListValue(surfList2(o.p.Log))
 	}
 	return cellite.NullValue()
 }
 
-func (o surfDeck) Shape() *surf.Shape { return &surfShapeDeck }
-
 func (o surfDeck) Unwrap() any { return o.p }
+
+func (o surfDeck) Shape() *surf.Shape { return &surfShapeDeck }
 
 func (o surfDeck) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -288,9 +449,9 @@ func (o surfDraft) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfDraft) Shape() *surf.Shape { return &surfShapeDraft }
-
 func (o surfDraft) Unwrap() any { return o.p }
+
+func (o surfDraft) Shape() *surf.Shape { return &surfShapeDraft }
 
 func (o surfDraft) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -353,9 +514,9 @@ func (o surfForm) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfForm) Shape() *surf.Shape { return &surfShapeForm }
-
 func (o surfForm) Unwrap() any { return o.p }
+
+func (o surfForm) Shape() *surf.Shape { return &surfShapeForm }
 
 func (o surfForm) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -420,9 +581,9 @@ func (o surfFrame) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfFrame) Shape() *surf.Shape { return &surfShapeFrame }
-
 func (o surfFrame) Unwrap() any { return o.p }
+
+func (o surfFrame) Shape() *surf.Shape { return &surfShapeFrame }
 
 func (o surfFrame) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -474,9 +635,9 @@ func (o surfInfoPanel) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfInfoPanel) Shape() *surf.Shape { return &surfShapeInfoPanel }
-
 func (o surfInfoPanel) Unwrap() any { return o.p }
+
+func (o surfInfoPanel) Shape() *surf.Shape { return &surfShapeInfoPanel }
 
 func (o surfInfoPanel) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -526,9 +687,9 @@ func (o surfLinks) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfLinks) Shape() *surf.Shape { return &surfShapeLinks }
-
 func (o surfLinks) Unwrap() any { return o.p }
+
+func (o surfLinks) Shape() *surf.Shape { return &surfShapeLinks }
 
 func (o surfLinks) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -540,6 +701,53 @@ func (o surfLinks) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpLinks is c drawn by its template, interpreted.
 func surfInterpLinks(c *Links) surflive.Component { return surf.Component(surfSet(), surfLinks{c}) }
+
+// surfShapeProgressExample is ProgressExample's shape, a component.
+var surfShapeProgressExample = surf.Shape{Name: "ProgressExample", Component: true,
+	Fields: []surf.Field{{Name: "percent", Type: cellite.Int}},
+}
+
+// surfProgressExample is a *ProgressExample as its templates read it.
+type surfProgressExample struct{ p *ProgressExample }
+
+// surfProgressExampleValue is p as a value: null for nil.
+func surfProgressExampleValue(p *ProgressExample) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("ProgressExample", surfProgressExample{p})
+}
+
+// surfProgressExampleOf is a value's *ProgressExample: nil for any other.
+func surfProgressExampleOf(v cellite.Value) *ProgressExample {
+	if o, ok := v.Object().(surfProgressExample); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfProgressExample) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.IntValue(int64(o.p.Percent))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfProgressExample) Unwrap() any { return o.p }
+
+func (o surfProgressExample) Shape() *surf.Shape { return &surfShapeProgressExample }
+
+func (o surfProgressExample) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpProgressExample is c drawn by its template, interpreted.
+func surfInterpProgressExample(c *ProgressExample) surflive.Component {
+	return surf.Component(surfSet(), surfProgressExample{c})
+}
 
 // surfShapeProse is Prose's shape, a component.
 var surfShapeProse = surf.Shape{Name: "Prose", Component: true,
@@ -581,9 +789,9 @@ func (o surfProse) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfProse) Shape() *surf.Shape { return &surfShapeProse }
-
 func (o surfProse) Unwrap() any { return o.p }
+
+func (o surfProse) Shape() *surf.Shape { return &surfShapeProse }
 
 func (o surfProse) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -633,16 +841,16 @@ func (o surfShelf) Field(i int) cellite.Value {
 	case 1:
 		return surfInfoPanelValue(o.p.Panel)
 	case 2:
-		return cellite.ListValue(surfList6(o.p.Panels))
+		return cellite.ListValue(surfList8(o.p.Panels))
 	case 3:
 		return cellite.ListValue(surfList2(o.p.Log))
 	}
 	return cellite.NullValue()
 }
 
-func (o surfShelf) Shape() *surf.Shape { return &surfShapeShelf }
-
 func (o surfShelf) Unwrap() any { return o.p }
+
+func (o surfShelf) Shape() *surf.Shape { return &surfShapeShelf }
 
 func (o surfShelf) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -656,6 +864,60 @@ func (o surfShelf) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpShelf is c drawn by its template, interpreted.
 func surfInterpShelf(c *Shelf) surflive.Component { return surf.Component(surfSet(), surfShelf{c}) }
+
+// surfShapeTabsExample is TabsExample's shape, a component.
+var surfShapeTabsExample = surf.Shape{Name: "TabsExample", Component: true,
+	Fields: []surf.Field{{Name: "value", Type: cellite.String}, {Name: "disabled", Type: cellite.Bool}},
+	Methods: []surf.Method{
+		{Name: "pick", Args: []cellite.Type{cellite.String}},
+	},
+}
+
+// surfTabsExample is a *TabsExample as its templates read it.
+type surfTabsExample struct{ p *TabsExample }
+
+// surfTabsExampleValue is p as a value: null for nil.
+func surfTabsExampleValue(p *TabsExample) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("TabsExample", surfTabsExample{p})
+}
+
+// surfTabsExampleOf is a value's *TabsExample: nil for any other.
+func surfTabsExampleOf(v cellite.Value) *TabsExample {
+	if o, ok := v.Object().(surfTabsExample); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfTabsExample) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Value))
+	case 1:
+		return cellite.BoolValue(bool(o.p.Disabled))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfTabsExample) Unwrap() any { return o.p }
+
+func (o surfTabsExample) Shape() *surf.Shape { return &surfShapeTabsExample }
+
+func (o surfTabsExample) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Pick(string(args[0].String()))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpTabsExample is c drawn by its template, interpreted.
+func surfInterpTabsExample(c *TabsExample) surflive.Component {
+	return surf.Component(surfSet(), surfTabsExample{c})
+}
 
 // surfShapeTune is Tune's shape, a component.
 var surfShapeTune = surf.Shape{Name: "Tune", Component: true,
@@ -699,9 +961,9 @@ func (o surfTune) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfTune) Shape() *surf.Shape { return &surfShapeTune }
-
 func (o surfTune) Unwrap() any { return o.p }
+
+func (o surfTune) Shape() *surf.Shape { return &surfShapeTune }
 
 func (o surfTune) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -760,6 +1022,8 @@ func (o surfNote) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfNote) Unwrap() any { return o.p }
+
 // surfShapeBranch is Branch's shape, a struct.
 var surfShapeBranch = surf.Shape{Name: "Branch", Component: false,
 	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "name", Type: cellite.String}, {Name: "kids", Type: cellite.ListOf(cellite.StructOf("Branch"))}, {Name: "via", Type: cellite.String}, {Name: "next", Type: cellite.StructOf("Branch")}},
@@ -800,6 +1064,44 @@ func (o surfBranch) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfBranch) Unwrap() any { return o.p }
+
+// surfShapeSpan is Span's shape, a struct.
+var surfShapeSpan = surf.Shape{Name: "Span", Component: false,
+	Fields: []surf.Field{{Name: "text", Type: cellite.String}, {Name: "role", Type: cellite.String}},
+}
+
+// surfSpan is a *surfui.Span as its templates read it.
+type surfSpan struct{ p *surfui.Span }
+
+// surfSpanValue is p as a value: null for nil.
+func surfSpanValue(p *surfui.Span) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Span", surfSpan{p})
+}
+
+// surfSpanOf is a value's *surfui.Span: nil for any other.
+func surfSpanOf(v cellite.Value) *surfui.Span {
+	if o, ok := v.Object().(surfSpan); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfSpan) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Text))
+	case 1:
+		return cellite.StringValue(string(o.p.Role))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfSpan) Unwrap() any { return o.p }
+
 // surfShapeHand is Hand's shape, a struct.
 var surfShapeHand = surf.Shape{Name: "Hand", Component: false,
 	Fields: []surf.Field{{Name: "name", Type: cellite.String}, {Name: "colour", Type: cellite.String}},
@@ -834,6 +1136,8 @@ func (o surfHand) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
+func (o surfHand) Unwrap() any { return o.p }
+
 // surfShapeCard is Card's shape, a struct.
 var surfShapeCard = surf.Shape{Name: "Card", Component: false,
 	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "name", Type: cellite.String}},
@@ -867,6 +1171,8 @@ func (o surfCard) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfCard) Unwrap() any { return o.p }
 
 // surfProgsBoard are board.surf's programs, for Board, loaded at the first call.
 func surfProgsBoard() []*cellite.Program {
@@ -1125,6 +1431,91 @@ func surfRenderBoard(e *surf.Errs, out []*surfui.Node, c *Board, fill surf.Fill)
 		for _, kb := range b1 {
 			n1.AddBinding(kb)
 		}
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
+// surfRenderCheckboxExample draws checkbox-example.surf for CheckboxExample.
+func surfRenderCheckboxExample(e *surf.Errs, out []*surfui.Node, c *CheckboxExample, fill surf.Fill) []*surfui.Node {
+	// checkbox-example.surf:1:1 <surface>
+	if e.Enter("checkbox-example.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// checkbox-example.surf:2:3 <checkbox>
+		if e.Enter("checkbox-example.surf", 2, 3) {
+			n2 := surf.NewCheckbox()
+			surf.ModKey(n2, "check")
+			surf.ModChecked(n2, c.Enabled)
+			surf.ModDisabled(n2, c.Disabled)
+			surf.ModLabel(n2, "Enabled")
+			n2.On("click", func() { c.Toggle() })
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// checkbox-example.surf:4:3 <checkbox>
+		if e.Enter("checkbox-example.surf", 4, 3) {
+			n3 := surf.NewCheckbox()
+			surf.ModKey(n3, "mark")
+			surf.ModChecked(n3, c.Marked)
+			surf.ModLabel(n3, "Marked")
+			n3.On("change", func(ev surfrun.Event) { c.Mark(ev.Value == "true") })
+			k1 = append(k1, n3)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
+// surfRenderCodeExample draws code-example.surf for CodeExample.
+func surfRenderCodeExample(e *surf.Errs, out []*surfui.Node, c *CodeExample, fill surf.Fill) []*surfui.Node {
+	// code-example.surf:1:1 <surface>
+	if e.Enter("code-example.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// code-example.surf:1:10 <code>
+		if e.Enter("code-example.surf", 1, 10) {
+			n2 := surfui.CodeBlock(c.Source)
+			if err := surf.ModLanguage(n2, c.Language); err != nil {
+				e.Fail("code-example.surf", 1, 10, err)
+			}
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
+// surfRenderCodeSpansExample draws code-spans-example.surf for CodeSpansExample.
+func surfRenderCodeSpansExample(e *surf.Errs, out []*surfui.Node, c *CodeSpansExample, fill surf.Fill) []*surfui.Node {
+	// code-spans-example.surf:1:1 <surface>
+	if e.Enter("code-spans-example.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// code-spans-example.surf:1:10 <code>
+		if e.Enter("code-spans-example.surf", 1, 10) {
+			n2 := surfui.CodeBlock("")
+			surf.ModWrap(n2, c.Wrap)
+			switch {
+			default:
+				v3, ok3 := e.AsSpans("code-spans-example.surf", 1, 10, cellite.ListValue(surfList5(c.Spans)))
+				if !ok3 {
+					break
+				}
+				if err := surf.ModSpans(n2, v3); err != nil {
+					e.Fail("code-spans-example.surf", 1, 10, err)
+				}
+			}
+			surf.ModNumbers(n2, true)
+			surf.ModFrom(n2, int64(c.From))
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
 		out = append(out, n1)
 		e.Leave()
 	}
@@ -3142,6 +3533,26 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 	return out
 }
 
+// surfRenderProgressExample draws progress-example.surf for ProgressExample.
+func surfRenderProgressExample(e *surf.Errs, out []*surfui.Node, c *ProgressExample, fill surf.Fill) []*surfui.Node {
+	// progress-example.surf:1:1 <surface>
+	if e.Enter("progress-example.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// progress-example.surf:1:10 <progress>
+		if e.Enter("progress-example.surf", 1, 10) {
+			n2 := surf.NewProgress()
+			surf.ModLabel(n2, "Download")
+			surf.ModPercent(n2, c.Percent)
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfRenderProse draws prose.surf for Prose.
 func surfRenderProse(e *surf.Errs, out []*surfui.Node, c *Prose, fill surf.Fill) []*surfui.Node {
 	// prose.surf:1:1 <surface>
@@ -3738,6 +4149,33 @@ func surfRenderShelf(e *surf.Errs, out []*surfui.Node, c *Shelf, fill surf.Fill)
 	return out
 }
 
+// surfRenderTabsExample draws tabs-example.surf for TabsExample.
+func surfRenderTabsExample(e *surf.Errs, out []*surfui.Node, c *TabsExample, fill surf.Fill) []*surfui.Node {
+	// tabs-example.surf:1:1 <surface>
+	if e.Enter("tabs-example.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// tabs-example.surf:2:3 <tabs>
+		if e.Enter("tabs-example.surf", 2, 3) {
+			n2 := surf.NewTabs(c.Value, slices.Clone([]string{"Source", "Result", "Log"}))
+			surf.ModKey(n2, "tabs")
+			surf.ModDisabled(n2, c.Disabled)
+			n2.On("change", func(ev surfrun.Event) { c.Pick(ev.Value) })
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// tabs-example.surf:4:3 <text>
+		if e.Enter("tabs-example.surf", 4, 3) {
+			n3 := surfui.Text(c.Value)
+			k1 = append(k1, n3)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfRenderTune draws tune.surf for Tune.
 func surfRenderTune(e *surf.Errs, out []*surfui.Node, c *Tune, fill surf.Fill) []*surfui.Node {
 	// tune.surf:1:1 <surface>
@@ -3848,6 +4286,21 @@ func surfCompiledBoard(c *Board) surflive.Component {
 	return surf.Compiled(c, "board.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderBoard(e, nil, c, nil) }, surfPalette)
 }
 
+// surfCompiledCheckboxExample is c drawn by its templates compiled into Go.
+func surfCompiledCheckboxExample(c *CheckboxExample) surflive.Component {
+	return surf.Compiled(c, "checkbox-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderCheckboxExample(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledCodeExample is c drawn by its templates compiled into Go.
+func surfCompiledCodeExample(c *CodeExample) surflive.Component {
+	return surf.Compiled(c, "code-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderCodeExample(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledCodeSpansExample is c drawn by its templates compiled into Go.
+func surfCompiledCodeSpansExample(c *CodeSpansExample) surflive.Component {
+	return surf.Compiled(c, "code-spans-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderCodeSpansExample(e, nil, c, nil) }, surfPalette)
+}
+
 // surfCompiledCrew is c drawn by its templates compiled into Go.
 func surfCompiledCrew(c *Crew) surflive.Component {
 	return surf.Compiled(c, "crew.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderCrew(e, nil, c, nil) }, surfPalette)
@@ -3883,6 +4336,11 @@ func surfCompiledLinks(c *Links) surflive.Component {
 	return surf.Compiled(c, "links.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderLinks(e, nil, c, nil) }, surfPalette)
 }
 
+// surfCompiledProgressExample is c drawn by its templates compiled into Go.
+func surfCompiledProgressExample(c *ProgressExample) surflive.Component {
+	return surf.Compiled(c, "progress-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderProgressExample(e, nil, c, nil) }, surfPalette)
+}
+
 // surfCompiledProse is c drawn by its templates compiled into Go.
 func surfCompiledProse(c *Prose) surflive.Component {
 	return surf.Compiled(c, "prose.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderProse(e, nil, c, nil) }, surfPalette)
@@ -3891,6 +4349,11 @@ func surfCompiledProse(c *Prose) surflive.Component {
 // surfCompiledShelf is c drawn by its templates compiled into Go.
 func surfCompiledShelf(c *Shelf) surflive.Component {
 	return surf.Compiled(c, "shelf.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderShelf(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledTabsExample is c drawn by its templates compiled into Go.
+func surfCompiledTabsExample(c *TabsExample) surflive.Component {
+	return surf.Compiled(c, "tabs-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderTabsExample(e, nil, c, nil) }, surfPalette)
 }
 
 // surfCompiledTune is c drawn by its templates compiled into Go.
@@ -3962,14 +4425,52 @@ func surfList3Of(v cellite.Value) []*Branch {
 	return out
 }
 
-// surfList4 is a []*Hand as a list.
-type surfList4 []*Hand
+// surfList4 is a []bool as a list.
+type surfList4 []bool
 
 func (l surfList4) Len() int               { return len(l) }
-func (l surfList4) At(i int) cellite.Value { return surfHandValue(l[i]) }
+func (l surfList4) At(i int) cellite.Value { return cellite.BoolValue(bool(l[i])) }
 
-// surfList4Of is a list's value as a []*Hand.
-func surfList4Of(v cellite.Value) []*Hand {
+// surfList4Of is a list's value as a []bool.
+func surfList4Of(v cellite.Value) []bool {
+	l := v.List()
+	if l == nil {
+		return nil
+	}
+	out := make([]bool, l.Len())
+	for i := range out {
+		out[i] = bool(l.At(i).Bool())
+	}
+	return out
+}
+
+// surfList5 is a []surfui.Span as a list.
+type surfList5 []surfui.Span
+
+func (l surfList5) Len() int               { return len(l) }
+func (l surfList5) At(i int) cellite.Value { return surfSpanValue(&l[i]) }
+
+// surfList5Of is a list's value as a []surfui.Span.
+func surfList5Of(v cellite.Value) []surfui.Span {
+	l := v.List()
+	if l == nil {
+		return nil
+	}
+	out := make([]surfui.Span, l.Len())
+	for i := range out {
+		out[i] = surf.Deref(surfSpanOf(l.At(i)))
+	}
+	return out
+}
+
+// surfList6 is a []*Hand as a list.
+type surfList6 []*Hand
+
+func (l surfList6) Len() int               { return len(l) }
+func (l surfList6) At(i int) cellite.Value { return surfHandValue(l[i]) }
+
+// surfList6Of is a list's value as a []*Hand.
+func surfList6Of(v cellite.Value) []*Hand {
 	l := v.List()
 	if l == nil {
 		return nil
@@ -3981,14 +4482,14 @@ func surfList4Of(v cellite.Value) []*Hand {
 	return out
 }
 
-// surfList5 is a []*Card as a list.
-type surfList5 []*Card
+// surfList7 is a []*Card as a list.
+type surfList7 []*Card
 
-func (l surfList5) Len() int               { return len(l) }
-func (l surfList5) At(i int) cellite.Value { return surfCardValue(l[i]) }
+func (l surfList7) Len() int               { return len(l) }
+func (l surfList7) At(i int) cellite.Value { return surfCardValue(l[i]) }
 
-// surfList5Of is a list's value as a []*Card.
-func surfList5Of(v cellite.Value) []*Card {
+// surfList7Of is a list's value as a []*Card.
+func surfList7Of(v cellite.Value) []*Card {
 	l := v.List()
 	if l == nil {
 		return nil
@@ -4000,14 +4501,14 @@ func surfList5Of(v cellite.Value) []*Card {
 	return out
 }
 
-// surfList6 is a []*InfoPanel as a list.
-type surfList6 []*InfoPanel
+// surfList8 is a []*InfoPanel as a list.
+type surfList8 []*InfoPanel
 
-func (l surfList6) Len() int               { return len(l) }
-func (l surfList6) At(i int) cellite.Value { return surfInfoPanelValue(l[i]) }
+func (l surfList8) Len() int               { return len(l) }
+func (l surfList8) At(i int) cellite.Value { return surfInfoPanelValue(l[i]) }
 
-// surfList6Of is a list's value as a []*InfoPanel.
-func surfList6Of(v cellite.Value) []*InfoPanel {
+// surfList8Of is a list's value as a []*InfoPanel.
+func surfList8Of(v cellite.Value) []*InfoPanel {
 	l := v.List()
 	if l == nil {
 		return nil

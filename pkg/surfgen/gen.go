@@ -760,11 +760,12 @@ func (g *gen) writeShape(w func(string, ...any), sh *shapeInfo) {
 		w("case %d:\nreturn %s\n", i, g.toValue("o.p."+f.goName, f.t, true))
 	}
 	w("}\nreturn cellite.NullValue()\n}\n\n")
+	// Unwrap is the Go value, which :spans reads a surfui.Span by.
+	w("func (o %s) Unwrap() any { return o.p }\n\n", sh.wrap)
 	if !sh.component {
 		return
 	}
 	w("func (o %s) Shape() *surf.Shape { return &surfShape%s }\n\n", sh.wrap, cn)
-	w("func (o %s) Unwrap() any { return o.p }\n\n", sh.wrap)
 	w("func (o %s) Call(m int, args []cellite.Value) cellite.Value {\nswitch m {\n", sh.wrap)
 	for i, m := range sh.methods {
 		var args []string

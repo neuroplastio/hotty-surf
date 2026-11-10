@@ -84,9 +84,9 @@ func (o surfFetch) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfFetch) Shape() *surf.Shape { return &surfShapeFetch }
-
 func (o surfFetch) Unwrap() any { return o.p }
+
+func (o surfFetch) Shape() *surf.Shape { return &surfShapeFetch }
 
 func (o surfFetch) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
@@ -136,6 +136,8 @@ func (o surfGauge) Field(i int) cellite.Value {
 	}
 	return cellite.NullValue()
 }
+
+func (o surfGauge) Unwrap() any { return o.p }
 
 // surfRenderFetch draws fetch.surf for Fetch.
 func surfRenderFetch(e *surf.Errs, out []*surfui.Node, c *Fetch, fill surf.Fill) []*surfui.Node {

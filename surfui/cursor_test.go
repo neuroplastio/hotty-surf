@@ -33,6 +33,8 @@ func TestCursorOverTheVocabulary(t *testing.T) {
 		{"bare button", Button("Reset").Bare(), nil, "pointer"},
 		{"disabled button", Button("Restart").Disabled(true), nil, "default"},
 		{"switch", Switch(true), nil, "pointer"},
+		{"checkbox", Checkbox(true), nil, "pointer"},
+		{"disabled checkbox", Checkbox(true).Disabled(true), nil, "default"},
 		{"a switch's knob", Switch(true), []int{0}, "pointer"},
 		{"disabled switch", Switch(false).Disabled(true), nil, "default"},
 		{"select", Select("top", "top", "center"), nil, "pointer"},

@@ -94,6 +94,9 @@ func (s *Surface) Keys() ([]KeyUse, Chars) {
 	if s.focusedSlider() != nil {
 		own(sliderKeys)
 	}
+	if s.focusedTabs() != nil {
+		own(tabsKeys)
+	}
 	s.eachBinding(func(k string, b surfui.Binding) bool {
 		if !stops[k] && !(chars == CharsPick && isCharacter(k)) {
 			stops[k] = true

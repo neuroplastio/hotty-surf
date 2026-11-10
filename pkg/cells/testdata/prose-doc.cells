@@ -81,7 +81,7 @@ style
 = aaaaa
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b fg/code-ground
 c fg/bg italic
 d fg/bg strike
 e accent/bg underline

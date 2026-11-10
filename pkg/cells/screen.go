@@ -27,23 +27,32 @@ type (
 
 // The roles.
 const (
-	Fg       = cellblock.Fg
-	Bg       = cellblock.Bg
-	Accent   = cellblock.Accent
-	Muted    = cellblock.Muted
-	Faint    = cellblock.Faint
-	OK       = cellblock.OK
-	Warn     = cellblock.Warn
-	Error    = cellblock.Error
-	Info     = cellblock.Info
-	Border   = cellblock.Border
-	Surface  = cellblock.Surface
-	Field    = cellblock.Field
-	Tonal    = cellblock.Tonal
-	Line     = cellblock.Line
-	Selected = cellblock.Selected
-	Sel      = cellblock.Sel
-	OnAccent = cellblock.OnAccent
+	Fg           = cellblock.Fg
+	Bg           = cellblock.Bg
+	Accent       = cellblock.Accent
+	Muted        = cellblock.Muted
+	Faint        = cellblock.Faint
+	OK           = cellblock.OK
+	Warn         = cellblock.Warn
+	Error        = cellblock.Error
+	Info         = cellblock.Info
+	Border       = cellblock.Border
+	Surface      = cellblock.Surface
+	Field        = cellblock.Field
+	Tonal        = cellblock.Tonal
+	Line         = cellblock.Line
+	Selected     = cellblock.Selected
+	Sel          = cellblock.Sel
+	OnAccent     = cellblock.OnAccent
+	SynKeyword   = cellblock.SynKeyword
+	SynTag       = cellblock.SynTag
+	SynString    = cellblock.SynString
+	SynNumber    = cellblock.SynNumber
+	SynComment   = cellblock.SynComment
+	SynType      = cellblock.SynType
+	SynAttribute = cellblock.SynAttribute
+	SynPlain     = cellblock.SynPlain
+	CodeGround   = cellblock.CodeGround
 )
 
 // AnsiRole is the role of the terminal's colour n, 0 to 15, "ansi-9": a

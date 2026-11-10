@@ -686,6 +686,8 @@ func (w *fw) mod(b *bytes.Buffer, el *surf.Elem, sc *scope, n string, m surf.Mod
 		c = ctx{k: cInt, name: at.Name}
 	case surf.TypePad:
 		c = ctx{k: cPad}
+	case surf.TypeSpans:
+		c = ctx{k: cSpans}
 	}
 	if v.Program() == nil {
 		lit := ""
@@ -907,6 +909,13 @@ func (w *fw) action(el *surf.Elem, sc *scope, h surf.Handler) ([]string, string)
 			}
 			args = append(args, v)
 			continue
+		case surf.ArgChecked: // a checkbox's change: whether it is checked, a bool
+			v := `ev.Value == "true"`
+			if !types.Identical(m.params[i], types.Typ[types.Bool]) {
+				v = w.c.g.goType(m.params[i]) + "(" + v + ")"
+			}
+			args = append(args, v)
+			continue
 		case surf.ArgEvent:
 			args = append(args, "ev")
 			continue
@@ -1119,6 +1128,7 @@ const (
 	cInt                        // an int, of attribute name
 	cStrings                    // a []string: options
 	cPad                        // a [2]int64
+	cSpans                      // a []surfui.Span
 	cArg                        // a method's argument, of Go type goType
 	cProp                       // a prop, prop
 )
@@ -1310,6 +1320,8 @@ func (x *xl) to(v gval, c ctx) (string, bool) {
 		return x.check("Strings", c0.valueOf(v)), true
 	case cPad:
 		return x.check("Pad", c0.valueOf(v)), true
+	case cSpans:
+		return x.check("Spans", c0.valueOf(v)), true
 	case cArg:
 		return x.argCode(v, c.goType), true
 	case cProp:

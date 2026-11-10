@@ -321,8 +321,10 @@ func mods(m uv.KeyMod) int {
 // ansi black on the fill is the tone on itself in many palettes.
 func cellsSGR(run cells.Run) string {
 	ps := []string{"0"}
-	fg := run.Fg
-	switch bg := run.Bg; {
+	// The syntax roles and the code ground are the terminal's by their
+	// defaults: the roles every host has (cells.Role.Base).
+	fg := run.Fg.Base()
+	switch bg := run.Bg.Base(); {
 	case bg == cells.Sel:
 		ps = append(ps, "7")
 		fg = cells.Fg

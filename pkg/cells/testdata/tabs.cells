@@ -1,0 +1,13 @@
+cells 32x3
+text
+>  Source  Result  Log
+style
+= .aaaaaa.bbbbbbbb.aaa
+. fg/bg
+a muted/bg
+b fg/sel
+hits
+@ 0,0 32x1 r.0
+@ 0,0 8x1 r.0.k0
+@ 8,0 8x1 r.0.k1
+@ 16,0 5x1 r.0.k2

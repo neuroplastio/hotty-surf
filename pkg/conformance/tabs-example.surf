@@ -1,0 +1,5 @@
+<surface>
+  <tabs key="tabs" :value="value" :options="['Source', 'Result', 'Log']"
+        :disabled="disabled" @change="pick($value)"/>
+  <text>{{ value }}</text>
+</surface>

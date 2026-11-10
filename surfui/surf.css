@@ -275,6 +275,22 @@
   --u-tile-shell-ink: #204633;
   color-scheme: light;
 }
+/* Syntax defaults to the theme roles, in every theme: a keyword and a tag
+   the accent, a string ok, a number warn, a comment muted, a type info,
+   an attribute and plain text the ink. A code block's ground is the
+   card's. The cells name the same roles (syn-keyword …, code-ground)
+   and draw these defaults. */
+.u-surface {
+  --u-syn-keyword: var(--u-accent);
+  --u-syn-tag: var(--u-accent);
+  --u-syn-string: var(--u-ok);
+  --u-syn-number: var(--u-warn);
+  --u-syn-comment: var(--u-muted);
+  --u-syn-type: var(--u-info);
+  --u-syn-attribute: var(--u-ink);
+  --u-syn-plain: var(--u-ink);
+  --u-code-ground: var(--u-raised);
+}
 /* What is mixed with the ground is mixed again where a layer sets its
    own (a dialog, a menu). */
 .u-surface, .u-dialog, .u-options, .u-menu, .u-card {
@@ -1209,6 +1225,52 @@
 .u-compact .u-tip .u-tone-muted, .u-roomy .u-tip .u-tone-muted { font-weight: 400; }
 .u-compact .u-tip > .u-stack, .u-roomy .u-tip > .u-stack { gap: 3px; padding: 3px 0; }
 
+/* Checkbox: the Switch's accent, control hairlines and disabled ground,
+   in a 14px square. The check uses the kit's icon font, in the ink the
+   kit puts on the accent (on-accent; on-solid is for --u-solid and is
+   1.2:1 on Graphite's accent), and so does a checked box's focus ring. Focus is a 2px inset ring, as
+   a drop target's (proven): a 1px one is the rest hairline's weight, and
+   a focused box read as an unfocused one. */
+.u-checkbox {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--u-r-xs);
+  line-height: 1;
+  color: var(--u-ink);
+  background: var(--u-field);
+  box-shadow: inset 0 0 0 1px var(--u-input);
+}
+.u-checkbox { cursor: pointer; }
+.u-checkbox .u-check-mark { visibility: hidden; width: 14px; font-size: 14px; color: inherit; }
+.u-checkbox.is-on { background: var(--u-accent); color: var(--u-on-accent); box-shadow: none; }
+.u-checkbox.is-on .u-check-mark { visibility: visible; }
+.u-checkbox:hover { box-shadow: inset 0 0 0 1px var(--u-hover-line); }
+.u-checkbox:focus { box-shadow: inset 0 0 0 2px var(--u-focus-line); }
+.u-checkbox.is-on:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-on-accent) 45%, transparent); }
+.u-checkbox.is-on:focus { box-shadow: inset 0 0 0 2px var(--u-on-accent); }
+.u-checkbox.is-invalid { box-shadow: inset 0 0 0 1px var(--u-error); }
+.u-checkbox[disabled], .u-checkbox[disabled]:hover, .u-checkbox[disabled]:focus { color: var(--u-dim); background: var(--u-hover); box-shadow: none; }
+.u-checkbox[disabled] { cursor: default; }
+
+/* Tabs use the segmented control's look. Focus stays on the tablist,
+   and its selected option carries the control's focus hairline. */
+.u-tabs.u-seg { flex-shrink: 1; overflow: hidden; }
+.u-tabs > .u-tab { overflow: hidden; white-space: pre; text-overflow: ellipsis; }
+.u-tabs:focus > .u-btn.is-sel { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-tabs.u-seg[disabled] > .u-btn { color: var(--u-dim); cursor: default; }
+
+/* Progress: the meter's thin rounded geometry, with the input track
+   and accent fill. Native progress painting is not used. */
+.u-progress { width: 100%; height: 4px; border-radius: 2px; overflow: hidden; background: var(--u-input); }
+.u-progress.u-width { width: calc(var(--u-w) * var(--u-cw)); }
+.u-progress-fill { display: block; width: calc(var(--u-progress) * 1%); height: 100%; border-radius: 2px; background: var(--u-accent); }
+
 /* What a program asks of a widget wins over the widget's own look (the
    maintainer, 2026-11-05, on the gallery: its controls changed nothing
    on a button). A component sets its colour, fill, weight, margins and
@@ -1415,3 +1477,34 @@
 .u-slider-rest { height: 0.23529412rem; border-radius: 0 0.11764706rem 0.11764706rem 0; }
 .u-compact .u-row.u-chips > .u-btn, .u-roomy .u-row.u-chips > .u-btn { height: 1.29411765rem; line-height: 1.29411765rem; padding: 0 0.70588235rem; font-size: 0.70588235rem; }
 .u-row.u-chips { gap: 0.23529412rem; }
+
+/* Code: source in the terminal's face, on the code ground. A run's colour
+   is its syntax role's, in both renderers. Without wrap a line keeps its
+   width and the block scrolls across; with it a line is a paragraph
+   that breaks at its spaces and hangs under its own indent (the indent
+   is a text of its own beside the words). */
+.u-codeblock {
+  font-family: var(--hotty-font, monospace);
+  --u-row: var(--hotty-cell-h);
+  --u-bg: var(--u-code-ground);
+  background: var(--u-bg);
+  line-height: var(--u-row);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.u-code-line { white-space: pre; width: max-content; min-width: 100%; }
+.u-codeblock.u-wrap { overflow-x: hidden; }
+.u-codeblock.u-wrap > .u-code-line { width: auto; min-width: 0; overflow: hidden; }
+.u-code-run { flex: 0 0 auto; overflow: visible; text-overflow: clip; }
+.u-codeblock .u-line.u-code-flow, .u-codeblock .u-line.u-code-flow > .u-text { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; }
+.u-codeblock .u-code-flow > .u-code-run { flex: none; }
+/* A paragraph keeps a cell at its end, where the spaces that end a line hang: the legible gate measures a run's box, which holds them. */
+.u-codeblock .u-line.u-code-flow { padding-right: var(--hotty-cell-w); }
+.u-codeblock .u-syn-keyword { color: var(--u-syn-keyword); }
+.u-codeblock .u-syn-tag { color: var(--u-syn-tag); }
+.u-codeblock .u-syn-string { color: var(--u-syn-string); }
+.u-codeblock .u-syn-number { color: var(--u-syn-number); }
+.u-codeblock .u-syn-comment { color: var(--u-syn-comment); }
+.u-codeblock .u-syn-type { color: var(--u-syn-type); }
+.u-codeblock .u-syn-attribute { color: var(--u-syn-attribute); }
+.u-codeblock .u-syn-plain { color: var(--u-syn-plain); }

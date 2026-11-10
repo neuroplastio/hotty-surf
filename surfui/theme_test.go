@@ -119,3 +119,31 @@ func TestGraphiteStoneMutedPinned(t *testing.T) {
 		}
 	}
 }
+
+// A checked checkbox draws its mark and its hover and focus rings in the
+// ink the kit puts on the accent (--u-on-accent), which the badge's text
+// uses: 3:1 at least for the mark against the fill, in Graphite and Stone
+// (paper and the neuroplastio theme's accents are #5b4bd6 and #9d90ff
+// under #ffffff and the canvas: 6.1:1 and about 6.7:1). The old ink,
+// --u-on-solid, was 1.2:1 on Graphite's accent.
+func TestCheckboxMarkInk(t *testing.T) {
+	for _, sel := range []string{".u-checkbox.is-on {", ".u-checkbox.is-on:hover {", ".u-checkbox.is-on:focus {"} {
+		i := strings.Index(CSS, "\n"+sel)
+		if i < 0 {
+			t.Fatalf("no rule %q in surf.css", sel)
+		}
+		rule := CSS[i : i+strings.Index(CSS[i:], "}")]
+		if strings.Contains(rule, "on-solid") || strings.Contains(rule, "ground-line") || !strings.Contains(rule, "--u-on-accent") && !strings.Contains(rule, "--u-focus") {
+			t.Errorf("%s draws its ink with %q, want --u-on-accent", sel, rule)
+		}
+	}
+	for name, tok := range map[string]map[string]string{
+		"graphite": tokens(t, ".u-surface.u-theme-graphite"),
+		"stone":    tokens(t, ".u-surface.u-theme-stone"),
+	} {
+		r, err := ContrastOf(tok["on-accent"], tok["accent"])
+		if err != nil || r < DotContrast {
+			t.Errorf("%s: the mark is %.2f:1 on the accent (%v), want %.1f", name, r, err, DotContrast)
+		}
+	}
+}

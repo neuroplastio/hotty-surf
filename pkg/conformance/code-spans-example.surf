@@ -1,0 +1,1 @@
+<surface><code :spans="spans" numbers :from="from" :wrap="wrap"/></surface>

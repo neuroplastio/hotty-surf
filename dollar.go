@@ -189,6 +189,9 @@ const (
 	// ArgDragCancel is $drag.cancel: whether Escape ended the drag, a
 	// bool.
 	ArgDragCancel
+	// ArgChecked is $value of a checkbox's change: whether it is now
+	// checked, a bool (surfrun.Event's Value, "true" or "false").
+	ArgChecked
 )
 
 // eventArg is what the $name name is as a handler's argument, if it is

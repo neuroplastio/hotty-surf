@@ -76,9 +76,9 @@ func (o surfDash) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfDash) Shape() *surf.Shape { return &surfShapeDash }
-
 func (o surfDash) Unwrap() any { return o.p }
+
+func (o surfDash) Shape() *surf.Shape { return &surfShapeDash }
 
 func (o surfDash) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {

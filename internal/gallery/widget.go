@@ -40,7 +40,7 @@ const none = "none"
 // sample are a choice's options, and a text widget's text.
 var (
 	sample     = []string{"alpha", "beta", "gamma", "delta", "epsilon", "zeta"}
-	sampleText = map[string]string{"text": "A line of text", "heading": "Settings", "caption": "Terminal", "chip": "devbox", "glyph": "●", "icon": "\U000F08BB", "key": "ctrl+b v", "button": "Restart"}
+	sampleText = map[string]string{"code": "const count = 3", "text": "A line of text", "heading": "Settings", "caption": "Terminal", "chip": "devbox", "glyph": "●", "icon": "\U000F08BB", "key": "ctrl+b v", "button": "Restart"}
 	kidCounts  = []string{"0", "1", "2", "3", "4", "5", "6"}
 )
 
@@ -248,7 +248,13 @@ func (ws *widgetStory) source() string {
 			b.WriteString(" " + a.Name + `="` + escape(v, true) + `"`)
 		}
 	}
+	if w.Tag == "code" && !strings.Contains(b.String(), " language=") {
+		b.WriteString(` language="plain"`) // the block, whatever the language control says: a code with none is the inline one
+	}
 	for _, e := range w.Events {
+		if e == "change" && w.Tag == "checkbox" {
+			continue // a checkbox's change is its click's press, with a bool: the story logs the click
+		}
 		arg := "$value"
 		if e == "click" || e == "focus" {
 			arg = "$event"
@@ -409,6 +415,10 @@ func (o widgetOwner) Call(m int, args []cellite.Value) cellite.Value {
 	switch {
 	case name == "click" && ws.w.Form == surf.FormSwitch:
 		c = ws.by["on"]
+		c.On = c.Value != "true"
+		c.Value = strconv.FormatBool(c.On)
+	case name == "click" && ws.w.Tag == "checkbox":
+		c = ws.by["checked"]
 		c.On = c.Value != "true"
 		c.Value = strconv.FormatBool(c.On)
 	case name == "change" && ws.w.Form == surf.FormChoice, name == "input" && ws.by["value"] != nil:

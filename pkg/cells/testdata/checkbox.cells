@@ -1,0 +1,18 @@
+cells 20x5
+text
+> [ ] Off
+> [x] On
+> [x] Disabled
+> [ ] Invalid
+style
+=
+=
+= aaa
+= bbb
+. fg/bg
+a faint/bg
+b error/bg
+hits
+@ 0,0 3x1 r.0.0.0
+@ 0,1 3x1 r.0.1.0
+@ 0,3 3x1 r.0.3.0

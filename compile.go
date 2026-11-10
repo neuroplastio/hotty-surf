@@ -841,6 +841,9 @@ func (s *scope) typed(p *cellite.Program, want Type, what string, at markup.Pos)
 		ok = t.Kind == cellite.ListKind && (t.Elem.Kind == cellite.StringKind || t.Elem.Kind == cellite.DynKind)
 	case TypePad:
 		ok = t.Kind == cellite.ListKind && (t.Elem.Kind == cellite.IntKind || t.Elem.Kind == cellite.DynKind)
+	case TypeSpans:
+		ok = t.Kind == cellite.ListKind && (t.Elem.Kind == cellite.DynKind || t.Elem.Kind == cellite.MapKind ||
+			t.Elem.Kind == cellite.StructKind && t.Elem.Name == "Span")
 	}
 	if !ok {
 		s.c.fail(s.t.file, at, "%s is %s, not %s", what, typeName(want), cellite.FormatType(t))
@@ -860,6 +863,8 @@ func typeName(t Type) string {
 		return "a list(string)"
 	case TypePad:
 		return "a list(int) of one or two"
+	case TypeSpans:
+		return "a list of spans, surfui.Span or {'text': …, 'role': …}"
 	}
 	return "?"
 }
@@ -1108,6 +1113,13 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 	w, ok := widget(n.Tag)
 	if !ok {
 		s.c.fail(s.t.file, n.Pos, "<%s> is no widget; a component's tag has a dash", n.Tag)
+		return nil
+	}
+	if n.Tag == "code" && !s.inProse && hasBlockAttr(n) {
+		w = &blockCode // outside prose, code with a block's attribute is the block of source
+	}
+	if n.Tag == "code" && s.inProse && hasBlockAttr(n) {
+		s.c.fail(s.t.file, n.Pos, "<code> in a paragraph is inline code: it takes no language, spans, numbers or from (the block of source stands on its own)")
 		return nil
 	}
 	e := &elem{kind: kWidget, pos: n.Pos, w: w}
@@ -1463,7 +1475,7 @@ func (s *scope) tipEl(n *markup.Node) *elem {
 }
 
 // acting are the widgets a tooltip may not hold: the controls.
-var acting = []string{"button", "field", "switch", "select", "cycle", "slider"}
+var acting = []string{"button", "field", "switch", "checkbox", "select", "cycle", "tabs", "slider"}
 
 // inert fails what acts in a tooltip's e: a control, a handler, a
 // <bind>, a <menu>, focusable, autofocus, drag or drop, an <embed>, or a
@@ -1789,6 +1801,9 @@ func (s *scope) value(at *Attr, a markup.Attr, bound bool) (value, bool) {
 	case TypeStrings:
 		s.c.fail(s.t.file, a.Pos, "%s is a list: bind it, :%s=\"['a', 'b']\"", at.Name, at.Name)
 		return value{}, false
+	case TypeSpans:
+		s.c.fail(s.t.file, a.Pos, "%s is a list: bind it, :%s=\"highlighted\"", at.Name, at.Name)
+		return value{}, false
 	default:
 		if a.Bare && at.Name == "drop" {
 			v.lit = cellite.StringValue("whole") // drop alone: the whole element
@@ -1852,6 +1867,8 @@ func checkLiteral(at *Attr, v string) error {
 		return ModRows(surfui.Field(), v)
 	case "theme":
 		return ModTheme(NewSurface(), v)
+	case "language":
+		return ModLanguage(surfui.CodeBlock(""), v)
 	case "density":
 		return ModDensity(NewSurface(), v)
 	case "drop":
@@ -1890,7 +1907,7 @@ func (s *scope) event(e *elem, n *markup.Node, a markup.Attr) {
 		s.c.fail(s.t.file, a.Pos, "<%s> has no %s event", n.Tag, kind)
 		return
 	}
-	if h, ok := s.handler(a.Value, a.ValuePos, true, contains(dragEvents, kind), kind); ok {
+	if h, ok := s.handler(a.Value, a.ValuePos, true, contains(dragEvents, kind), checkedKind(n, kind)); ok {
 		e.evs = append(e.evs, event{kind, h})
 	}
 }
@@ -1936,6 +1953,9 @@ func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool, kind stri
 			f.k = ArgRows // a height's $value is its rows, an int
 		}
 		from[i], given[f.k] = f.k, true
+		if kind == kindChecked && f.k == ArgValue {
+			from[i] = ArgChecked // a checkbox's change says whether it is checked
+		}
 	}
 	owner := s.t.owner
 	m := owner.method(name)
@@ -1970,6 +1990,9 @@ func (s *scope) handler(src string, at markup.Pos, onEvent, drag bool, kind stri
 		switch {
 		case from[i] != ArgEvent && isEventType(want):
 			s.c.fail(s.t.file, pos, "%s's argument %d is a surfrun.Event, which only $event gives", name, i+1)
+			return handler{}, false
+		case from[i] == ArgChecked && want.Kind != cellite.BoolKind && want.Kind != cellite.DynKind:
+			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $value, which is a bool on a checkbox's change", name, i+1, cellite.FormatType(want))
 			return handler{}, false
 		case (from[i] == ArgValue || from[i] == ArgDragFrom || from[i] == ArgDragWhere) && want.Kind != cellite.StringKind && want.Kind != cellite.DynKind:
 			s.c.fail(s.t.file, pos, "%s's argument %d is %s, not $%s, which is a string", name, i+1, cellite.FormatType(want), eventName(from[i]))
@@ -2585,3 +2608,29 @@ type emptyMap struct{}
 func (emptyMap) Len() int                                { return 0 }
 func (emptyMap) Get(cellite.Value) (cellite.Value, bool) { return cellite.Value{}, false }
 func (emptyMap) Range(func(k, v cellite.Value) bool)     {}
+
+// kindChecked is the event kind a checkbox's change is handled as: its
+// $value is a bool (ArgChecked), not a string.
+const kindChecked = "checked"
+
+// checkedKind is the kind handler takes for n's event kind: a checkbox's
+// change is kindChecked.
+func checkedKind(n *markup.Node, kind string) string {
+	if n.Tag == "checkbox" && kind == "change" {
+		return kindChecked
+	}
+	return kind
+}
+
+// hasBlockAttr says a <code> has an attribute only the block takes
+// (language, spans, numbers, from): what makes it the block of source and
+// not the inline code, outside prose.
+func hasBlockAttr(n *markup.Node) bool {
+	for _, a := range n.Attrs {
+		switch strings.TrimPrefix(a.Name, ":") {
+		case "language", "spans", "numbers", "from":
+			return true
+		}
+	}
+	return false
+}
