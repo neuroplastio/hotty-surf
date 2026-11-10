@@ -1822,19 +1822,29 @@ A file of a widget of the vocabulary is a scene file: the component as a
 person judges it, with real labels. Each story's children are the scene,
 drawn as wide as the window allows, with no Go state. The file's
 `title` names the component in the list, a story's `name` is its title,
-and its `about` the sentence under it.
+and its `about` the sentence under it. The file's first lines:
 
 ```html
 <!-- internal/stories/button.surf -->
 <stories of="button" title="Button">
   <story name="Buttons on a release page"
-         about="Every kind of button, with a program's labels.">
-    <row gap="1">
-      <button fill="accent">Deploy to production</button>
-      <button bare>Cancel</button>
-    </row>
-  </story>
-</stories>
+         about="Every kind of button, with the labels a program gives it.">
+    <stack gap="1">
+      <section heading="Actions">
+        <text muted wrap>
+          The page's main actions: the primary one filled with the accent,
+          the rest plain, and a bare one, with no fill until it is pointed
+          at. Point at one to hover it; Tab to focus it.
+        </text>
+        <row gap="1">
+          <button fill="accent">
+            <icon name="rocket-launch-outline"/>Deploy to production
+          </button>
+          <button>Save as draft</button>
+          <button><icon name="restart"/>Run the checks again</button>
+          <button bare>Cancel</button>
+        </row>
+      </section>
 ```
 
 ## What fails where

@@ -3,14 +3,21 @@
      gives them. A stories file of a widget (of="button") is a scene
      file: each story's children are what the canvas draws, at the
      window's width. Hover and focus are live: point at a button, or
-     Tab to it. -->
+     Tab to it. docs/guide.md shows its first lines. -->
 <stories of="button" title="Button">
-  <story name="Buttons on a release page" about="Every kind of button and the states it has, with the labels a program gives them: point at one to hover it, Tab to focus it.">
+  <story name="Buttons on a release page"
+         about="Every kind of button, with the labels a program gives it.">
     <stack gap="1">
       <section heading="Actions">
-        <text muted wrap>The page's main actions. The primary one is filled with the accent; the rest are plain; a bare one has no fill until it is pointed at.</text>
+        <text muted wrap>
+          The page's main actions: the primary one filled with the accent,
+          the rest plain, and a bare one, with no fill until it is pointed
+          at. Point at one to hover it; Tab to focus it.
+        </text>
         <row gap="1">
-          <button fill="accent"><icon name="rocket-launch-outline"/>Deploy to production</button>
+          <button fill="accent">
+            <icon name="rocket-launch-outline"/>Deploy to production
+          </button>
           <button>Save as draft</button>
           <button><icon name="restart"/>Run the checks again</button>
           <button bare>Cancel</button>

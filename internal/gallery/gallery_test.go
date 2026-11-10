@@ -1039,7 +1039,7 @@ func TestScene(t *testing.T) {
 	if v := a.Surface().TextOf(titleID); v != "Buttons on a release page" {
 		t.Errorf("the title: %q", v)
 	}
-	if v := a.Surface().TextOf("r.kpage.kmain.kmid.kabout"); !strings.HasPrefix(v, "<button>  Every kind of button") {
+	if v := a.Surface().TextOf("r.kpage.kmain.kmid.kabout"); !strings.HasPrefix(v, "<button>  Every kind of button, with") {
 		t.Errorf("the line under the title: %q", v)
 	}
 	if !strings.Contains(a.Surface().TextOf(storyID(sel)), "Deploy to production") {
