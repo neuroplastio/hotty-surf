@@ -67,9 +67,9 @@ func (o surfDoc) Field(i int) cellite.Value {
 	return cellite.NullValue()
 }
 
-func (o surfDoc) Shape() *surf.Shape { return &surfShapeDoc }
-
 func (o surfDoc) Unwrap() any { return o.p }
+
+func (o surfDoc) Shape() *surf.Shape { return &surfShapeDoc }
 
 func (o surfDoc) Call(m int, args []cellite.Value) cellite.Value {
 	switch m {
