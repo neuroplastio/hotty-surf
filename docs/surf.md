@@ -186,7 +186,7 @@ component, a partial, or a widget a package registered from outside
 | --- | --- | --- |
 | `surface` | a screen's root; Compact unless `density` says | children |
 | `stack` | its children top to bottom | children |
-| `row` | its children left to right, centred on the line | children |
+| `row` | its children left to right, centred on the line; with `wrap`, on to the next line where one is full | children |
 | `spacer` | the room left in its row or stack | nothing |
 | `code` | read-only source, highlighted by `language` or by the caller's `spans`, with `wrap` and `numbers` | text |
 | `text` | a line of text, cut with … where it doesn't fit | text |
@@ -515,7 +515,7 @@ registers widgets runs its own cases with `conformance.Suite`
 | `path` | string | icon | an SVG a host draws: one path's data, filled, in a 24×24 box |
 | `icon`, `unit` | string | face | a face's icon, an MDI symbol's name, and its unit after its value ("A widget's face") |
 | `theme` | string | surface | `graphite` (the default), `stone`, `neuroplastio`, `terminal` or `paper` |
-| `density` | string | surface | `compact` (the default), `dense` or `roomy` |
+| `density` | string | surface | `compact` (the default) or `roomy`; `dense` is on its way out: it draws as it did, and nothing new is to use it |
 | `key` | string | all | its key among its siblings, which the diff follows: give a `:each`'s items one. Bound, any value with a text (an int `1` is `k1`) |
 | `tone` | string | all | the text's colour: `accent`, `ok`, `warn`, `error`, `info`, `muted`, `plain` |
 | `fill` | string | all | a fill in a tone's colour, by the tone's name: `accent`, `ok`, `warn`, `error`, `info`, `muted`, `plain` |

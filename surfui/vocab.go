@@ -34,6 +34,13 @@ type Density string
 const (
 	// Dense is the terminal's: a line is a row, the text the terminal's
 	// font and size, a gap a cell. It lines up with cells beside it.
+	//
+	// Dense is on its way out: no new surface is to be Dense (the
+	// maintainer, 2026-11-10); use Compact. It draws as it did, and the
+	// cells still lay out in it, until what depends on it has moved off
+	// it (vault/knowledge/dense.md). It has no "Deprecated:" paragraph
+	// yet: staticcheck would then fail every use of it, here and in the
+	// programs that draw with hotty-surf, before they can move.
 	Dense Density = "dense"
 	// Roomy is a page's: proportional type, a line and a half.
 	Roomy Density = "roomy"
