@@ -551,9 +551,8 @@ No workaround is in the framework. The gate's baseline wasn't written
 
 slider/states passes in all 30 cases (at most 3.1 CSS px², 0.004%): the
 fill, thumb and rest draw alike in both engines at every density and
-scale, 2× exact in Dense and Compact. chips/filters passes in 27 of 30;
-the three that fail are Roomy at 1.6× (paper 38.3, graphite 42.2, stone
-41.0; neuroplastio and terminal pass). Looked at in the sheet (graphite,
+scale. chips/filters passes in 25 of 30; the five that fail are Roomy at
+1.6×, one a theme (32.8–43.0 CSS px²). Looked at in the sheet (graphite,
 roomy, 1.6×): both engines lay out the same rows (B/C 3/3) and the same
 chips, the same fills and the same ring on the picked ones. The diff is
 red under the accent text of the picked chips, "Errors" and "Slow": the
@@ -562,9 +561,9 @@ yellow ring of the pill's hairline (the known 1.6× one).
 
 | Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
 | --- | --- | --- | --- | --- |
-| chips/filters Roomy (new: paper 38.3, graphite 42.2, stone 41.0) | The picked chips' label a device row off, the pill's hairline a row off | 1.6× | Half-leading and `round.rs`, as button/small Roomy above | Cosmetic |
+| chips/filters Roomy (new: neuroplastio 32.8, terminal 33.2, paper 38.3, stone 41.8, graphite 43.0) | The picked chips' label a device row off, the pill's hairline a row off | 1.6× | Half-leading and `round.rs`, as button/small Roomy above | Cosmetic |
 
-The baseline has these three, and no other line added or changed: the
-first run of the story had a segmented row under the chips, which is
-the segmented/states gap again (the red under its box, 360 in Compact at
+The baseline has these five, and no other line added or changed. The
+first run of the story had a segmented row under the chips, which is the
+segmented/states gap again (the red under its box, 360 in Compact at
 1.6×), so the story keeps to its own widget.
