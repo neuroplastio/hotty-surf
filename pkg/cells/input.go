@@ -173,6 +173,11 @@ func (r *Renderer) fieldKey(n *surfui.Node, name string, keymaps []string) bool 
 		if st.ed.Do(hotty.DeleteCharBackward) {
 			r.settle(r.edited())
 		}
+	case a == hotty.Submit:
+		// Enter in a text field commits it, and submits its form where
+		// it is in one (SPEC V6-03), as a host does: the field's change
+		// comes before the form's submit.
+		r.settle(r.submitField(n))
 	case changed:
 		r.settle(r.edited())
 	}
@@ -453,6 +458,12 @@ func (r *Renderer) clickOn(n *surfui.Node, count, mods int) bool {
 		e.Area = &hotty.Area{Col: b.x, Row: b.y - r.offsets[""], W: b.w, H: b.h}
 	}
 	_, due := r.p.Event(e)
+	if surfui.Submits(n) {
+		if f := surfui.FormOf(n); f != nil {
+			// A submit button submits its form, after its click.
+			due = r.submit(f, n) || due
+		}
+	}
 	return due
 }
 
