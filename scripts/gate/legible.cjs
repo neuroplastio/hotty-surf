@@ -142,7 +142,9 @@ function measure({ canvas, min, tol }) {
   const edge = (el) => {
     if (el === html) return html.clientWidth;
     const r = el.getBoundingClientRect();
-    if (!el.offsetWidth) return r.right;
+    // An inline box (a link on its focus fill) has no clientWidth: its
+    // padding box is its bounding box.
+    if (!el.offsetWidth || inline(el)) return r.right;
     return r.right - (el.offsetWidth - el.clientLeft - el.clientWidth) * (r.width / el.offsetWidth);
   };
   const hidden = (el) => style(el).visibility !== "visible" || el.getClientRects().length === 0;

@@ -27,3 +27,14 @@ The Makefile already installs `scripts/gate/node_modules` (`npm ci`) when
 it is missing. A symlink to another checkout's directory is older than
 package.json, so make reinstalls into the shared one: remove the symlink
 and let make install, or touch the target.
+
+## After L5c, L9 and L10
+
+Rebased on main d8d6a25. The gate's new cases were L5c's 15 field/rows
+(named in blitz-gaps by L5c) and L10's 13 link/inline (underline a device
+row lower; named in blitz-gaps, "Links"). Nothing else moved.
+
+The legible gate failed on link/inline (6 documents): a link on its focus
+fill paints, and an inline box has no clientWidth, so its "edge" was its
+left side and its own text "overflowed" it. A fault of legible.cjs, not
+of the story: an inline box's edge is its bounding box's right now.
