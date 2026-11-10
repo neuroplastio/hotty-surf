@@ -76,6 +76,18 @@ func TestCells(t *testing.T) {
 		if !a.left.CellsKey("x") || a.lm.count != 2 {
 			t.Errorf("the key x: count %d", a.lm.count)
 		}
+		// The click gave the button the keyboard; blurring takes it back, and
+		// the cells draw it unfocused.
+		focused := strings.Join(a.left.Lines(leftRect.W, leftRect.H), "\n")
+		if !a.left.CellsBlur() {
+			t.Error("the cells had no keyboard to take after a click")
+		}
+		if blurred := strings.Join(a.left.Lines(leftRect.W, leftRect.H), "\n"); blurred == focused {
+			t.Error("the cells draw the same after CellsBlur")
+		}
+		if a.left.CellsBlur() {
+			t.Error("CellsBlur took a keyboard the cells did not have")
+		}
 		if a.left.CellsKey("f12") {
 			t.Error("a key nothing binds was taken")
 		}

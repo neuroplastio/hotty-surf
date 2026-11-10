@@ -66,3 +66,12 @@ func (h *Host) CellsWheel(col, row, notches int) bool {
 	took, _ := h.renderer().Wheel(col, row, notches)
 	return took
 }
+
+// CellsBlur takes the keyboard from the model in cells, as a click on
+// what takes no focus does: the focused field commits and the model hears
+// blur. It reports whether the model had the keyboard. (Surface.Lend's blur
+// is in the frame it returns, which only a host sees.)
+func (h *Host) CellsBlur() bool {
+	took, _ := h.renderer().Blur()
+	return took
+}
