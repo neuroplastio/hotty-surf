@@ -17,7 +17,7 @@ func DrawTip(tree *surfui.Node, style surfkeys.Style, palette surfui.Palette) Sc
 	r := New(nil)
 	r.KeyStyle, r.Palette = style, palette
 	r.tree = tree
-	b := build(tree, densityOf(tree), r.keyCaps())
+	b := build(tree, densityOf(tree), r.keyCaps(), &r.blocks)
 	if len(b.kids) == 1 {
 		b = b.kids[0] // the surface holds the card: the card is the tip
 	}

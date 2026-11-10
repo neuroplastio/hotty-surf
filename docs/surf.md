@@ -279,10 +279,61 @@ func SetLevel(n *surfui.Node, v int64)      { … }
   theme and the density, and uses only what hotty-blitz is shown to draw
   (`vault/knowledge/css-subset.md`). A custom property a node carries is
   `Node.Var("x-level", …)`, which writes `--x-level`.
-- **In cells** a registered widget has only the nodes it made (`surfui.El`
+- **In cells** a registered widget has the nodes it made (`surfui.El`
   and its text), which the cells draw as far as they know them: the
-  text. A widget that needs more waits for the hook that draws a custom
-  element in cells.
+  text. A widget that needs more draws its own: see below.
+
+### Cells for a custom element
+
+`Node.Cells` gives an element its own drawing in the cells, which a host
+ignores (it draws the element's tags and children). `surfui.Graphic` is
+the common case: SVG on a host, a block in the cells.
+
+```go
+func Gauge(level int) *surfui.Node {
+	return surfui.El("div", /* the host's track and number */).
+		Cells(func(w int, in cells.Style) cells.Block {
+			fill := min(w, 20) * level / 100
+			return cells.Block{Rows: [][]cells.Run{{
+				cells.NewRun(0, strings.Repeat("█", fill),
+					cells.Accent, "", 0),
+			}}}
+		})
+}
+
+func Spark(svg string, vs []float64) *surfui.Node {
+	return surfui.Graphic(svg, func(w int) cells.Block { … })
+}
+```
+
+- **A block is rows of runs** at most `w` cells wide, `Col` from the
+  block's left, and its height is its rows. The layout gives the element
+  its width as a column's child's or a row's and takes the height. For
+  its natural width in a row it asks at
+  `cells.Unbounded` wide: say the width you want, don't fill it.
+- **It is pure.** The block depends on the node (what the func closes
+  over), `w` and `in` (the density), and nothing else: the cells keep it
+  by the node and the width, as the diff skips a cached subtree, and a
+  node built fresh makes it again.
+- **A colour `""` is the element's own:** a run with no `Fg` is in its
+  ink (tone, hue, disabled), and one with no `Bg` is on the ground below.
+- **Focus and keys stay hotty-surf's.** A child of the element that takes
+  focus is still a node in the tree. The block *places* it: a
+  `cells.Place{Kid, X, Y, W, H}` says that child number `Kid` sits at
+  `X, Y` of the block, `W` by `H`, and the layout draws it there, with
+  its press and its caret. `cells.BlockHit{Kid, X, Y, W, H}` is a press
+  on a child the block drew itself. A child neither names isn't drawn in
+  the cells and takes no press, though it stays in the tree, in Tab's
+  order.
+- **Where the types live.** `surfui` can't import `pkg/cells` (the cells
+  import it), and a host that never draws cells shouldn't take in the
+  cells' text measuring. So the types are in `pkg/cellblock`, which has
+  nothing to run, and `pkg/cells` names them as aliases: a program that
+  draws blocks imports `pkg/cells` alone, and `cells.NewRun` builds a
+  run, its clusters measured as the cells measure them. (`cells.Block`
+  was the caret's block shape: that is `cells.BlockCaret` now.)
+- `examples/widgets/gauge` draws a gauge's bar this way (`x-gauge`) and
+  a sparkline as a graphic (`x-spark`).
 
 The generator has to know the widgets, which are Go values run by the
 packages' `init`. So a package that uses one writes its own `surfgen`: a

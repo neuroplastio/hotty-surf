@@ -515,7 +515,39 @@ widget is read as theirs are:
   package that uses one generates its bindings with a `surfgen` that
   links the registering package (`surfgen.Main`).
 - **In cells** it is drawn from the nodes it makes, as far as the cells
-  know them.
+  know them, unless it gives its own drawing: a *block*, which is
+  specified below.
+
+#### Cells for a custom element
+
+A widget may give the cells a drawing of its own, for what its look on a
+host (an SVG, a stylesheet) can't tell them. The block is a function of
+the width the layout gives the element and of the surface's density,
+and of nothing else, so that a runtime may keep it by the node and the
+width.
+
+- **A block** is rows of runs, each at most as wide as the width given
+  (a run is text from a column, in a foreground and a background colour
+  role and attributes, as the cells' screen has them); the children it
+  *places*; the presses it has on children; and its anchors (names of
+  rows, which the links' `#fragment` will name).
+- **The layout** gives the element its width as it gives a column's child
+  or a row's (its natural width, asked of the block at an unbounded
+  width: it says the width it wants and doesn't fill), and takes the
+  block's height: its rows, or where a place or a press ends, if lower.
+- **A colour a run leaves out** is the element's: its ink (tone, hue,
+  disabled) and the ground below it.
+- **Children stay in the tree.** A placed child is a node as any other:
+  its id, focus, Tab order, keys and events are the runtime's. The block
+  says where it sits (a rectangle of the block, in cells), the layout
+  lays it out there and draws it. A *press* in a block acts on a child
+  the block drew itself (a segment of a bar). A child the block neither
+  places nor presses isn't drawn and takes no press, and stays in the
+  tree and the order of Tab.
+- **On a host** the block is ignored: the element is its tags and
+  children.
+- **A graphic** is an element that is an SVG on a host and a block in the
+  cells.
 
 ### Links
 

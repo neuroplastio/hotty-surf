@@ -102,6 +102,7 @@ type List struct {
 
 // Renderer draws a program's tree in cells and hosts it there.
 type Renderer struct {
+	blocks blockCache // what custom elements drew, by element and width (block.go)
 	// Platform is how keymaps are read (SPEC §10.4): in a terminal, the
 	// zero Platform's, whose mod is ctrl.
 	Platform hotty.Platform

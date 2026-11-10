@@ -174,7 +174,7 @@ func (r *Runtime) drawTree() {
 	switch c := s.Caret; {
 	case c.Visible:
 		shape := "6" // a steady bar
-		if c.Shape == cells.Block {
+		if c.Shape == cells.BlockCaret {
 			shape = "2"
 		}
 		fmt.Fprintf(&b, "\x1b[%d;%dH\x1b[%s q\x1b[?25h", r.opts.Top+1+c.Y, c.X+1, shape)

@@ -73,7 +73,7 @@ clean:
 # goes in it, with a test (tinygo test builds a package with no test file
 # not at all, so make wasm fails on one). cmd, screens, gallery and scripts
 # are not the framework.
-FRAMEWORK := . ./pkg/markup ./pkg/mdi ./pkg/conformance ./surfui ./surfrun ./pkg/cells ./surflive ./surftest ./internal/stories ./surflua ./internal/stackprobe
+FRAMEWORK := . ./pkg/markup ./pkg/mdi ./pkg/conformance ./surfui ./surfrun ./pkg/cellblock ./pkg/cells ./surflive ./surftest ./internal/stories ./surflua ./internal/stackprobe
 # TINYGO is the TinyGo that mise.toml pins, as mise has it: `mise
 # install` installs it. A TinyGo build takes several GB, and other work
 # on the machine runs TinyGo too, so its packages build and test one at a

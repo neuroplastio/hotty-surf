@@ -4,101 +4,65 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"neuroplast.io/hotty-surf/pkg/cellblock"
 )
 
-// Role is a colour of the theme, named as surf.css's tokens name it: a
-// host maps each to its palette, as the runtime maps them to the
-// terminal's (surfrun, the cells) and plx to its theme.
-type Role string
+// The types of a block and of a run are cellblock's, which surfui can
+// import too (see its doc); cells names them as it always has.
+type (
+	// Role is a colour of the theme, named as surf.css's tokens name it:
+	// a host maps each to its palette, as the runtime maps them to the
+	// terminal's (surfrun, the cells) and plx to its theme.
+	Role = cellblock.Role
+	// Attr is a set of text attributes.
+	Attr = cellblock.Attr
+	// Cluster is a grapheme cluster and the cells it takes: 1, or 2 for a
+	// wide one (an ideograph, most emoji).
+	Cluster = cellblock.Cluster
+	// Run is a row's run of cells in one style, from column Col, Width
+	// cells wide: its text, and the clusters it is made of.
+	Run = cellblock.Run
+)
 
 // The roles.
 const (
-	Fg       Role = "fg"        // the text
-	Bg       Role = "bg"        // the ground
-	Accent   Role = "accent"    // what has the keyboard, a match
-	Muted    Role = "muted"     // secondary text
-	Faint    Role = "faint"     // a placeholder, what is disabled
-	OK       Role = "ok"        // the tones
-	Warn     Role = "warn"      //
-	Error    Role = "error"     //
-	Info     Role = "info"      //
-	Border   Role = "border"    // a dialog's line, a scrollbar
-	Surface  Role = "surface"   // a box's fill, a step from the ground
-	Field    Role = "field"     // a control's fill
-	Tonal    Role = "tonal"     // a selection's, a button's, a Compact box's fill
-	Line     Role = "line"      // a rule
-	Selected Role = "selected"  // a list's selection, while it or what drives it has the keyboard
-	Sel      Role = "sel"       // a control with the keyboard; an open Select's highlight
-	OnAccent Role = "on-accent" // text on an accent fill
+	Fg       = cellblock.Fg
+	Bg       = cellblock.Bg
+	Accent   = cellblock.Accent
+	Muted    = cellblock.Muted
+	Faint    = cellblock.Faint
+	OK       = cellblock.OK
+	Warn     = cellblock.Warn
+	Error    = cellblock.Error
+	Info     = cellblock.Info
+	Border   = cellblock.Border
+	Surface  = cellblock.Surface
+	Field    = cellblock.Field
+	Tonal    = cellblock.Tonal
+	Line     = cellblock.Line
+	Selected = cellblock.Selected
+	Sel      = cellblock.Sel
+	OnAccent = cellblock.OnAccent
 )
 
 // AnsiRole is the role of the terminal's colour n, 0 to 15, "ansi-9": a
 // hue's (surfui.Palette), which the terminal's palette draws, so that its
 // theme keeps the control of colour in the cells too.
-func AnsiRole(n int) Role { return Role("ansi-" + strconv.Itoa(n)) }
-
-// Ansi is the terminal colour a role names, if it is AnsiRole's.
-func (r Role) Ansi() (n int, ok bool) {
-	rest, ok := strings.CutPrefix(string(r), "ansi-")
-	if !ok {
-		return 0, false
-	}
-	n, err := strconv.Atoi(rest)
-	return n, err == nil && n >= 0 && n <= 15
-}
-
-// Attr is a set of text attributes.
-type Attr uint8
+func AnsiRole(n int) Role { return cellblock.AnsiRole(n) }
 
 // The attributes.
 const (
-	Bold Attr = 1 << iota
-	Dim
-	Italic
-	Underline
-	Reverse
-	Strike
+	Bold      = cellblock.Bold
+	Dim       = cellblock.Dim
+	Italic    = cellblock.Italic
+	Underline = cellblock.Underline
+	Reverse   = cellblock.Reverse
+	Strike    = cellblock.Strike
 	// Overline is a line over the cell, SGR 53: where a drop would land
 	// before an element with nothing drawn above it.
-	Overline
+	Overline = cellblock.Overline
 )
-
-var attrNames = [...]string{"bold", "dim", "italic", "underline", "reverse", "strike", "overline"}
-
-// String is the attributes' names, joined by "+": "bold+underline".
-func (a Attr) String() string {
-	var out []string
-	for i, n := range attrNames {
-		if a&(1<<i) != 0 {
-			out = append(out, n)
-		}
-	}
-	return strings.Join(out, "+")
-}
-
-// Cluster is a grapheme cluster and the cells it takes: 1, or 2 for a
-// wide one (an ideograph, most emoji).
-type Cluster struct {
-	Text  string
-	Width int
-}
-
-// Run is a row's run of cells in one style, from column Col, Width cells
-// wide: its text, and the clusters it is made of.
-type Run struct {
-	Col, Width int
-	Text       string
-	Clusters   []Cluster
-	Fg, Bg     Role
-	Attr       Attr
-	// Ul is the colour of an Underline or an Overline, "" for the text's:
-	// a drop's line is the accent's whatever the text's colour (SGR 58).
-	Ul Role
-	// Href is the link the cells belong to, "" for none: a hyperlink
-	// (surfrun.Paint writes it as OSC 8, unless NoLinks takes it off).
-	// Runs split where it changes.
-	Href string
-}
 
 // NoLinks is s with its runs' Href taken off, for a host that keeps the
 // links itself and has the terminal open none: the runs that were split
@@ -129,8 +93,9 @@ type Shape string
 
 // The shapes.
 const (
-	Bar   Shape = "bar"
-	Block Shape = "block"
+	Bar Shape = "bar"
+	// BlockCaret was Block, before Block named a custom element's cells.
+	BlockCaret Shape = "block"
 )
 
 // Caret is where the terminal's cursor goes: in the focused text field,
@@ -305,7 +270,7 @@ func (g *grid) lines() [][]Run {
 				c := row[x]
 				if c.width > 0 {
 					b.WriteString(c.text)
-					r.Clusters = append(r.Clusters, Cluster{c.text, c.width})
+					r.Clusters = append(r.Clusters, Cluster{Text: c.text, Width: c.width})
 				}
 				x++
 			}

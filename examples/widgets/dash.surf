@@ -2,6 +2,7 @@
   <heading>{{ title }}</heading>
   <x-gauge level="40" key="fixed"/>
   <x-gauge :level="level" key="level"/>
+  <x-spark key="trend">3 1 4 1 5 9 2 6</x-spark>
   <x-callout kind="warn" key="note" @click="pick('note')">
     <x-tagline loud>Heads up</x-tagline>
     <text>{{ note }}</text>
