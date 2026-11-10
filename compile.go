@@ -1865,6 +1865,8 @@ func checkLiteral(at *Attr, v string) error {
 		return ModCaret(surfui.Field(), v)
 	case "rows":
 		return ModRows(surfui.Field(), v)
+	case "type":
+		return ModType(surfui.Field(), v)
 	case "theme":
 		return ModTheme(NewSurface(), v)
 	case "language":

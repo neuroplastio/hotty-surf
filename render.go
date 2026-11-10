@@ -589,6 +589,8 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 		return surfui.Stack(kids...)
 	case "row":
 		return surfui.Row(kids...)
+	case "form":
+		return surfui.Form(kids...)
 	case "line":
 		return surfui.Line(kids...)
 	case "link":
@@ -801,6 +803,12 @@ func applyString(name string, n *surfui.Node, v string) error {
 		return ModRows(n, v)
 	case "caret":
 		return ModCaret(n, v)
+	case "type":
+		return ModType(n, v)
+	case "error":
+		ModError(n, v)
+	case "aria-label":
+		ModAriaLabel(n, v)
 	case "name":
 		ModName(n, v)
 	case "label":
@@ -913,6 +921,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModSpellcheck(n, v)
 	case "trap":
 		ModTrap(n, v)
+	case "submit":
+		ModSubmit(n, v)
 	default:
 		panic("surf: no bool modifier " + name)
 	}

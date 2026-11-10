@@ -141,6 +141,41 @@ return function(state)
 end
 `
 
+// signupLua is the Signup fixture in Lua: a form whose submit checks what
+// its fields gave and sets each field's error (signup.surf).
+const signupLua = `
+local Signup = {}
+Signup.__index = Signup
+function Signup:setName(v)
+  self.name = v
+  table.insert(self.log, "name " .. string.format("%q", v))
+end
+function Signup:setPass(v)
+  self.pass = v
+  table.insert(self.log, "pass " .. #v)
+end
+function Signup:setNotes(v)
+  self.notes = v
+  table.insert(self.log, "notes " .. string.format("%q", v):gsub("\\\n", "\\n"))
+end
+function Signup:submit()
+  self.nameError, self.passError = "", ""
+  if self.name == "" then self.nameError = "Name is required" end
+  if #self.pass < 8 then self.passError = "Use at least 8 characters" end
+  if self.nameError ~= "" or self.passError ~= "" then
+    table.insert(self.log, "refused")
+    return
+  end
+  table.insert(self.log, "signed up " .. self.name)
+end
+return function(state)
+  state.name, state.pass, state.notes = state.name or "", state.pass or "", state.notes or ""
+  state.nameError, state.passError = state.nameError or "", state.passError or ""
+  state.log = state.log or {}
+  return setmetatable(state, Signup)
+end
+`
+
 // linksLua is the Links fixture in Lua: a component of links, whose
 // follow logs the href and the modifiers held.
 const linksLua = `
@@ -240,7 +275,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Prose", strings.TrimSpace(string(root)) == "Tune":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Prose", strings.TrimSpace(string(root)) == "Tune", strings.TrimSpace(string(root)) == "Signup":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -258,6 +293,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = proseLua, "prose"
 			case "Tune":
 				src, tmpl = tuneLua, "tune"
+			case "Signup":
+				src, tmpl = signupLua, "signup"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any

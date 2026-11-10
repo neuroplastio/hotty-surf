@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf progress-example.surf prose.surf shelf.surf tabs-example.surf tune.surf mark.svg ring.svg
+//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf tune.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeTabsExample, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeSignup, &surfShapeTabsExample, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -864,6 +864,75 @@ func (o surfShelf) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpShelf is c drawn by its template, interpreted.
 func surfInterpShelf(c *Shelf) surflive.Component { return surf.Component(surfSet(), surfShelf{c}) }
+
+// surfShapeSignup is Signup's shape, a component.
+var surfShapeSignup = surf.Shape{Name: "Signup", Component: true,
+	Fields: []surf.Field{{Name: "name", Type: cellite.String}, {Name: "pass", Type: cellite.String}, {Name: "notes", Type: cellite.String}, {Name: "nameError", Type: cellite.String}, {Name: "passError", Type: cellite.String}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "setName", Args: []cellite.Type{cellite.String}},
+		{Name: "setNotes", Args: []cellite.Type{cellite.String}},
+		{Name: "setPass", Args: []cellite.Type{cellite.String}},
+		{Name: "submit"},
+	},
+}
+
+// surfSignup is a *Signup as its templates read it.
+type surfSignup struct{ p *Signup }
+
+// surfSignupValue is p as a value: null for nil.
+func surfSignupValue(p *Signup) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Signup", surfSignup{p})
+}
+
+// surfSignupOf is a value's *Signup: nil for any other.
+func surfSignupOf(v cellite.Value) *Signup {
+	if o, ok := v.Object().(surfSignup); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfSignup) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Name))
+	case 1:
+		return cellite.StringValue(string(o.p.Pass))
+	case 2:
+		return cellite.StringValue(string(o.p.Notes))
+	case 3:
+		return cellite.StringValue(string(o.p.NameError))
+	case 4:
+		return cellite.StringValue(string(o.p.PassError))
+	case 5:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfSignup) Unwrap() any { return o.p }
+
+func (o surfSignup) Shape() *surf.Shape { return &surfShapeSignup }
+
+func (o surfSignup) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.SetName(string(args[0].String()))
+	case 1:
+		o.p.SetNotes(string(args[0].String()))
+	case 2:
+		o.p.SetPass(string(args[0].String()))
+	case 3:
+		o.p.Submit()
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpSignup is c drawn by its template, interpreted.
+func surfInterpSignup(c *Signup) surflive.Component { return surf.Component(surfSet(), surfSignup{c}) }
 
 // surfShapeTabsExample is TabsExample's shape, a component.
 var surfShapeTabsExample = surf.Shape{Name: "TabsExample", Component: true,
@@ -4149,6 +4218,73 @@ func surfRenderShelf(e *surf.Errs, out []*surfui.Node, c *Shelf, fill surf.Fill)
 	return out
 }
 
+// surfRenderSignup draws signup.surf for Signup.
+func surfRenderSignup(e *surf.Errs, out []*surfui.Node, c *Signup, fill surf.Fill) []*surfui.Node {
+	// signup.surf:4:1 <surface>
+	if e.Enter("signup.surf", 4, 1) {
+		var k1 []*surfui.Node
+		// signup.surf:5:3 <form>
+		if e.Enter("signup.surf", 5, 3) {
+			var k2 []*surfui.Node
+			// signup.surf:6:5 <field>
+			if e.Enter("signup.surf", 6, 5) {
+				n3 := surfui.Field()
+				surf.ModKey(n3, "name")
+				surf.ModValue(n3, c.Name)
+				surf.ModPlaceholder(n3, "Ada Lovelace")
+				surf.ModName(n3, "name")
+				surf.ModLabel(n3, "Name")
+				surf.ModError(n3, c.NameError)
+				n3.On("change", func(ev surfrun.Event) { c.SetName(ev.Value) })
+				k2 = append(k2, n3)
+				e.Leave()
+			}
+			// signup.surf:8:5 <field>
+			if e.Enter("signup.surf", 8, 5) {
+				n4 := surfui.Field()
+				surf.ModKey(n4, "pass")
+				surf.ModValue(n4, c.Pass)
+				surf.ModName(n4, "pass")
+				surf.ModLabel(n4, "Password")
+				surf.ModError(n4, c.PassError)
+				surf.ModType(n4, "password")
+				n4.On("change", func(ev surfrun.Event) { c.SetPass(ev.Value) })
+				k2 = append(k2, n4)
+				e.Leave()
+			}
+			// signup.surf:10:5 <field>
+			if e.Enter("signup.surf", 10, 5) {
+				n5 := surfui.Field()
+				surf.ModKey(n5, "notes")
+				surf.ModValue(n5, c.Notes)
+				surf.ModRows(n5, "2..4")
+				surf.ModName(n5, "notes")
+				surf.ModLabel(n5, "Notes")
+				n5.On("change", func(ev surfrun.Event) { c.SetNotes(ev.Value) })
+				k2 = append(k2, n5)
+				e.Leave()
+			}
+			// signup.surf:12:5 <button>
+			if e.Enter("signup.surf", 12, 5) {
+				n6 := surfui.Button("Sign up")
+				surf.ModKey(n6, "go")
+				surf.ModSubmit(n6, true)
+				k2 = append(k2, n6)
+				e.Leave()
+			}
+			n2 := surfui.Form(k2...)
+			surf.ModKey(n2, "form")
+			n2.On("submit", func() { c.Submit() })
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfRenderTabsExample draws tabs-example.surf for TabsExample.
 func surfRenderTabsExample(e *surf.Errs, out []*surfui.Node, c *TabsExample, fill surf.Fill) []*surfui.Node {
 	// tabs-example.surf:1:1 <surface>
@@ -4349,6 +4485,11 @@ func surfCompiledProse(c *Prose) surflive.Component {
 // surfCompiledShelf is c drawn by its templates compiled into Go.
 func surfCompiledShelf(c *Shelf) surflive.Component {
 	return surf.Compiled(c, "shelf.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderShelf(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledSignup is c drawn by its templates compiled into Go.
+func surfCompiledSignup(c *Signup) surflive.Component {
+	return surf.Compiled(c, "signup.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderSignup(e, nil, c, nil) }, surfPalette)
 }
 
 // surfCompiledTabsExample is c drawn by its templates compiled into Go.

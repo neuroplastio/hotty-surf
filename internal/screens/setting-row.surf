@@ -18,7 +18,7 @@
     <switch :if="control(st) == 'switch'" :on="st.value == 'true'" @click="flip(st)" :label="st.label" key="control"/>
     <cycle :else-if="control(st) == 'cycle'" :value="st.value" :options="st.choices" @change="choose(st, $value)" :label="st.label" key="control"/>
     <select :else-if="control(st) == 'select'" :value="st.value" :options="st.choices" @change="choose(st, $value)" :label="st.label" key="control"/>
-    <field :else-if="control(st) in ['number', 'text']" :value="draft(st)" :placeholder="st.placeholder" @input="edit(st, $value)" @change="commit(st, $value)" :label="st.label" key="control"/>
+    <field :else-if="control(st) in ['number', 'text']" :value="draft(st)" :placeholder="st.placeholder" @input="edit(st, $value)" @change="commit(st, $value)" :aria-label="st.label" key="control"/>
     <text :else small muted key="control">{{ st.value }}</text>
   </row>
 </stack>

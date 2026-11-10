@@ -418,3 +418,52 @@ func (t *Tune) Toggle(name string) {
 	t.Picked = append(t.Picked, name)
 	t.Log = append(t.Log, "on "+name)
 }
+
+// Signup is a component whose template is a form (signup.surf): fields
+// that give their values on change, a password, a field of several lines
+// that never submits on Enter, and a submit button. Its Submit is the
+// form's check, in Go: it sets each field's error and refuses.
+type Signup struct {
+	Name      string
+	Pass      string
+	Notes     string
+	NameError string
+	PassError string
+	Log       []string
+}
+
+// SetName is the name field's change: its whole value.
+func (s *Signup) SetName(v string) {
+	s.Name = v
+	s.Log = append(s.Log, "name "+strconv.Quote(v))
+}
+
+// SetPass is the password field's change.
+func (s *Signup) SetPass(v string) {
+	s.Pass = v
+	s.Log = append(s.Log, "pass "+strconv.Itoa(len(v)))
+}
+
+// SetNotes is the field of several lines' change.
+func (s *Signup) SetNotes(v string) {
+	s.Notes = v
+	s.Log = append(s.Log, "notes "+strconv.Quote(v))
+}
+
+// Submit is the form's submit, after the fields' changes: it checks, sets
+// each field's error (an empty string is none), and does nothing else
+// where it refuses.
+func (s *Signup) Submit() {
+	s.NameError, s.PassError = "", ""
+	if s.Name == "" {
+		s.NameError = "Name is required"
+	}
+	if len(s.Pass) < 8 {
+		s.PassError = "Use at least 8 characters"
+	}
+	if s.NameError != "" || s.PassError != "" {
+		s.Log = append(s.Log, "refused")
+		return
+	}
+	s.Log = append(s.Log, "signed up "+s.Name)
+}

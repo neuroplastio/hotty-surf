@@ -36,7 +36,7 @@
         <text small muted>{{ status }}</text>
         <row search gap="2" key="search">
           <icon>&#xF0349;</icon> <!-- magnify -->
-          <field bare width="24" placeholder="Search settings" label="Search settings" :value="query" autofocus @input="search($value)" key="query"/>
+          <field bare width="24" placeholder="Search settings" aria-label="Search settings" :value="query" autofocus @input="search($value)" key="query"/>
         </row>
       </row>
       <stack scroll grow :key="box()">

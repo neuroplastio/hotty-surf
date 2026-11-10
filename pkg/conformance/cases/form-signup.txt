@@ -1,0 +1,173 @@
+A sign-up form: fields with a label above them, a password, a field of
+several lines and a submit button. Enter in a field of one line commits
+it and submits the form (SPEC V6-03): the field's change comes first,
+then the form's submit, which is the program's check, in Go. It refuses
+by setting each field's error, a message under the field in the error
+tone that also makes it invalid, and where nothing is wrong it signs up
+and clears them. The field of several lines types a line break on Enter
+and never submits; it commits when it is left. The submit button
+submits after the fields it left. A password is masked in the cells with
+a bullet; a host's field is type=password. The cells draw the same
+document: the same events, in the same order.
+-- root --
+Signup
+-- state.json --
+{}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><form id="r.kform" class="u-stack"><div id="r.kform.kname" class="u-stack"><div id="r.kform.kname.0" class="u-stack u-labelled"><span id="r.kform.kname.0.0" class="u-text u-tone-muted u-label u-keep">Name</span><input id="r.kform.kname.0.kname" class="u-field" type="text" value="" placeholder="Ada Lovelace" name="name" aria-label="Name" data-on="input"/></div></div><div id="r.kform.kpass" class="u-stack"><div id="r.kform.kpass.0" class="u-stack u-labelled"><span id="r.kform.kpass.0.0" class="u-text u-tone-muted u-label u-keep">Password</span><input id="r.kform.kpass.0.kpass" class="u-field" type="password" value="" name="pass" aria-label="Password" data-on="input"/></div></div><div id="r.kform.knotes" class="u-stack"><div id="r.kform.knotes.0" class="u-stack u-labelled"><span id="r.kform.knotes.0.0" class="u-text u-tone-muted u-label u-keep">Notes</span><textarea id="r.kform.knotes.0.knotes" class="u-field u-area" spellcheck="true" wrap="soft" rows="2" data-rows="2..4" name="notes" aria-label="Notes" style="--u-rows:2;--u-rows-max:4" data-on="input caret"></textarea></div></div><button id="r.kform.kgo" class="u-btn" type="submit">Sign up</button></form></div></body></html>
+-- cells --
+cells 64x32
+text
+> Name
+>  Ada Lovelace
+> Password
+>
+> Notes
+>
+>
+>                             Sign up
+style
+= aaaa
+= bccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+. fg/bg
+a muted/bg
+b fg/field
+c muted/field
+d fg/tonal
+hits
+@ 0,1 64x1 r.kform.kname.0.kname
+@ 0,3 64x1 r.kform.kpass.0.kpass
+@ 0,5 64x2 r.kform.knotes.0.knotes
+@ 0,7 64x1 r.kform.kgo
+-- 1.event --
+fill r.kform.kname.0.kname Ada; key enter
+-- 1.log --
+name "Ada"
+refused
+-- 1.ops --
+after r.kform.kpass.0 "<span id=\"r.kform.kpass.kerror\" class=\"u-text u-tone-error u-error u-wrap\">Use at least 8 characters</span>"
+attr r.kform.kpass.0.kpass class "u-field is-invalid"
+attr r.kform.kpass.0.kpass aria-invalid "true"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><form id="r.kform" class="u-stack"><div id="r.kform.kname" class="u-stack"><div id="r.kform.kname.0" class="u-stack u-labelled"><span id="r.kform.kname.0.0" class="u-text u-tone-muted u-label u-keep">Name</span><input id="r.kform.kname.0.kname" class="u-field" type="text" value="" placeholder="Ada Lovelace" name="name" aria-label="Name" data-on="input"/></div></div><div id="r.kform.kpass" class="u-stack"><div id="r.kform.kpass.0" class="u-stack u-labelled"><span id="r.kform.kpass.0.0" class="u-text u-tone-muted u-label u-keep">Password</span><input id="r.kform.kpass.0.kpass" class="u-field is-invalid" type="password" value="" name="pass" aria-label="Password" data-on="input" aria-invalid="true"/></div><span id="r.kform.kpass.kerror" class="u-text u-tone-error u-error u-wrap">Use at least 8 characters</span></div><div id="r.kform.knotes" class="u-stack"><div id="r.kform.knotes.0" class="u-stack u-labelled"><span id="r.kform.knotes.0.0" class="u-text u-tone-muted u-label u-keep">Notes</span><textarea id="r.kform.knotes.0.knotes" class="u-field u-area" spellcheck="true" wrap="soft" rows="2" data-rows="2..4" name="notes" aria-label="Notes" style="--u-rows:2;--u-rows-max:4" data-on="input caret"></textarea></div></div><button id="r.kform.kgo" class="u-btn" type="submit">Sign up</button></form></div></body></html>
+-- 1.cells --
+cells 64x32
+caret 4,1 bar
+text
+> Name
+>  Ada
+> Password
+>
+> Use at least 8 characters
+> Notes
+>
+>
+>                             Sign up
+style
+= aaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccccccccccccccccccccccc
+= aaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+. fg/bg
+a muted/bg
+b fg/field
+c error/bg
+d fg/tonal
+hits
+@ 0,1 64x1 r.kform.kname.0.kname
+@ 0,3 64x1 r.kform.kpass.0.kpass
+@ 0,6 64x2 r.kform.knotes.0.knotes
+@ 0,8 64x1 r.kform.kgo
+-- 2.event --
+fill r.kform.kpass.0.kpass hunter22; click r.kform.kgo
+-- 2.log --
+pass 8
+signed up Ada
+-- 2.ops --
+remove r.kform.kpass.kerror
+attr r.kform.kpass.0.kpass class "u-field"
+unattr r.kform.kpass.0.kpass aria-invalid
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><form id="r.kform" class="u-stack"><div id="r.kform.kname" class="u-stack"><div id="r.kform.kname.0" class="u-stack u-labelled"><span id="r.kform.kname.0.0" class="u-text u-tone-muted u-label u-keep">Name</span><input id="r.kform.kname.0.kname" class="u-field" type="text" value="" placeholder="Ada Lovelace" name="name" aria-label="Name" data-on="input"/></div></div><div id="r.kform.kpass" class="u-stack"><div id="r.kform.kpass.0" class="u-stack u-labelled"><span id="r.kform.kpass.0.0" class="u-text u-tone-muted u-label u-keep">Password</span><input id="r.kform.kpass.0.kpass" class="u-field" type="password" value="" name="pass" aria-label="Password" data-on="input"/></div></div><div id="r.kform.knotes" class="u-stack"><div id="r.kform.knotes.0" class="u-stack u-labelled"><span id="r.kform.knotes.0.0" class="u-text u-tone-muted u-label u-keep">Notes</span><textarea id="r.kform.knotes.0.knotes" class="u-field u-area" spellcheck="true" wrap="soft" rows="2" data-rows="2..4" name="notes" aria-label="Notes" style="--u-rows:2;--u-rows-max:4" data-on="input caret"></textarea></div></div><button id="r.kform.kgo" class="u-btn" type="submit">Sign up</button></form></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+> Name
+>  Ada
+> Password
+>  ••••••••
+> Notes
+>
+>
+>                             Sign up
+style
+= aaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccccccccccccccccccccccccccdddddddccccccccccccccccccccccccccccc
+. fg/bg
+a muted/bg
+b fg/field
+c fg/accent
+d on-accent/accent
+hits
+@ 0,1 64x1 r.kform.kname.0.kname
+@ 0,3 64x1 r.kform.kpass.0.kpass
+@ 0,5 64x2 r.kform.knotes.0.knotes
+@ 0,7 64x1 r.kform.kgo
+-- 3.event --
+fill r.kform.knotes.0.knotes Hello; key enter; key enter; click r.kform.kgo
+-- 3.log --
+notes "Hello\n\n"
+signed up Ada
+-- 3.ops --
+
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><form id="r.kform" class="u-stack"><div id="r.kform.kname" class="u-stack"><div id="r.kform.kname.0" class="u-stack u-labelled"><span id="r.kform.kname.0.0" class="u-text u-tone-muted u-label u-keep">Name</span><input id="r.kform.kname.0.kname" class="u-field" type="text" value="" placeholder="Ada Lovelace" name="name" aria-label="Name" data-on="input"/></div></div><div id="r.kform.kpass" class="u-stack"><div id="r.kform.kpass.0" class="u-stack u-labelled"><span id="r.kform.kpass.0.0" class="u-text u-tone-muted u-label u-keep">Password</span><input id="r.kform.kpass.0.kpass" class="u-field" type="password" value="" name="pass" aria-label="Password" data-on="input"/></div></div><div id="r.kform.knotes" class="u-stack"><div id="r.kform.knotes.0" class="u-stack u-labelled"><span id="r.kform.knotes.0.0" class="u-text u-tone-muted u-label u-keep">Notes</span><textarea id="r.kform.knotes.0.knotes" class="u-field u-area" spellcheck="true" wrap="soft" rows="2" data-rows="2..4" name="notes" aria-label="Notes" style="--u-rows:2;--u-rows-max:4" data-on="input caret"></textarea></div></div><button id="r.kform.kgo" class="u-btn" type="submit">Sign up</button></form></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+> Name
+>  Ada
+> Password
+>  ••••••••
+> Notes
+>  Hello
+>
+>
+>                             Sign up
+style
+= aaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ccccccccccccccccccccccccccccdddddddccccccccccccccccccccccccccccc
+. fg/bg
+a muted/bg
+b fg/field
+c fg/accent
+d on-accent/accent
+hits
+@ 0,1 64x1 r.kform.kname.0.kname
+@ 0,3 64x1 r.kform.kpass.0.kpass
+@ 0,5 64x3 r.kform.knotes.0.knotes
+@ 0,8 64x1 r.kform.kgo
