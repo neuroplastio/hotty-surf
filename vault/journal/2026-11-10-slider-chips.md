@@ -32,9 +32,10 @@ A9 of the a2ui-exit plan. The maintainer approved the slider's contract on
   the meter and the switch already use (`calc`, `flex`, `border-radius`).
   `--u-s` is written to four places, so that every runtime writes the same
   text. A drag measures the whole element, as hotty's SPEC says, so the
-  pointer at the thumb's centre reads a step a half thumb off the thumb at
-  the ends (6px of 160): within a step of 11 or more, and the end steps
-  are reachable by the edge as a browser's range input has them.
+  pointer at the thumb's centre reads a step a little off the thumb's
+  step near the ends (the thumb's 12px of a 160px track), never more than
+  one of 11 or more; the end steps are reached at the track's edges, as a
+  browser's range input has them.
 - **In the cells** a track of 20 `─` with a `●` thumb and the value after
   it (a cell off, as wide as the widest end, so that the track keeps its
   length). The track is filled in the accent up to the thumb and muted
@@ -62,6 +63,40 @@ A9 of the a2ui-exit plan. The maintainer approved the slider's contract on
   the cells, `Renderer.WhereStepX` is the cell at the step). The cells
   goldens (`slider-*`, `chips-*`) are beside the host's. The stories are
   `slider/states` and `chips/filters`.
+
+## Shots
+
+The stories, looked at in Chromium and Blitz (`make look`, scale 2, dark
+and light) and on the gate:
+
+- `.shots/look/slider-states-{dark,light}-compact-50-2.{chromium,blitz}.png`
+  and `.shots/look/chips-filters-{dark,light}-compact-60-2.{chromium,blitz}.png`
+  (in the worktree, `.shots/` untracked). The slider: fill and thumb in the
+  accent, the rest the input's fill (the meter's roles), the keyboard's
+  ring on the thumb, the disabled one dim. The chips: a pill each, the
+  picked ones the accent's soft fill and line, the hover and the keyboard
+  one hairline each. The first look at the chips, on the input's fill, was
+  too dark and too faint in the light themes; a chip is a button's own
+  fill and hairline now.
+- The gate (`make gate GATE_FLAGS="--only slider"`, `--only chips`):
+  slider/states 30 of 30; chips/filters 25 of 30, the five Roomy 1.6×
+  cases on the gap list and in the baseline
+  ([gaps](../knowledge/blitz-gaps.md#slider-and-chips-2026-11-10-l17)).
+- The cells, from the stories (Compact):
+
+  ```text
+  Replicas     ●─────────────────── 1
+  Replicas     ────────●─────────── 6
+  Replicas     ───────────────────● 12
+  Amount       ───────●──────────── 150
+  Locked       ────────●─────────── 40
+
+  [Errors] [Warnings] [Slow] [Cached] [Retried]
+  ```
+
+  with the picked chips (Errors, Slow) on the accent, and the goldens in
+  `pkg/cells/testdata/slider-*.cells` and `chips-*.cells`, in Dense,
+  Compact and Roomy.
 
 ## Found, not fixed
 
