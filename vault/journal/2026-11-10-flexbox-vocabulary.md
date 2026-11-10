@@ -38,17 +38,18 @@ hotty-pm. Branch `gallery-human`, not landed.
 **The proof (F5)**
 
 The pixel gate draws `stories.All`, not scene files, so four Go
-fixtures prove the values: `row/justify`, `row/align`, `row/grow`,
-`stack/place`. hotty-blitz and Chromium lay each out the same at every
-theme, density and scale. 21 of their 120 cases are over the threshold
-at 1.6x, by the text's sub-pixel raster and not by a box's place (the
-class the baseline already holds for most stories); they are on the
-baseline, and no other line of it changed.
+fixtures proved the values (00b5820): hotty-blitz and Chromium laid
+each out the same in all 120 cases. The maintainer then had them taken
+out again, with their 21 baseline lines: the gallery takes only
+`.surf`, gate fixtures too. The record of what was drawn is
+`vault/knowledge/surf-gaps.md`, "Proven once"; nothing re-proves the
+values until the gate can draw a scene file.
 
 **Left out**
 
 `baseline`, `around` and `evenly` (nothing proves them, and the cells
-have one baseline); a basis, so `grow` and `wrap` don't compose; `chips`,
+have one baseline); a basis, so `grow` and `wrap` don't compose (to
+stay so: the maintainer, 2026-11-10); `chips`,
 `grid`, `fit`, `keep` as they were; no existing story or screen uses
 the new words.
 
