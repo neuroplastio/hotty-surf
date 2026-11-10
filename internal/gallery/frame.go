@@ -74,7 +74,7 @@ func fitWidth(cols, story int) int {
 
 // frame is g's frame in its window.
 func (g *Gallery) frame() frame {
-	return frameOf(g.cols, g.Width, !g.noStories, !g.noControls, g.keepControls)
+	return frameOf(g.cols, g.Width, !g.noStories, g.wantControls(), g.keepControls)
 }
 
 // frameOf lays out a window cols wide (0: not yet known, so as wide as
@@ -164,11 +164,15 @@ func (g *Gallery) NameWidth() int { return max(g.frame().aside-fieldCols-1, 1) }
 // it: it is shown, or the window has room for it, at least in place of
 // the other.
 func (g *Gallery) CanShowStories() bool {
-	return frameOf(g.cols, g.Width, true, !g.noControls, false).side > 0
+	return frameOf(g.cols, g.Width, true, g.wantControls(), false).side > 0
 }
 
+// wantControls says the controls' column is asked for: the story has
+// controls, and their switch didn't hide them.
+func (g *Gallery) wantControls() bool { return !g.noControls && g.HasControls() }
+
 func (g *Gallery) CanShowControls() bool {
-	return frameOf(g.cols, g.Width, !g.noStories, true, true).aside > 0
+	return g.HasControls() && frameOf(g.cols, g.Width, !g.noStories, true, true).aside > 0
 }
 
 // FlipStories hides the stories' column, or shows it, in place of the
@@ -282,13 +286,30 @@ func (g *Gallery) barGroups() []barGroup {
 	}
 	pair := func(label string, control int) int { return utf8.RuneCountInString(label) + 1 + control }
 	const sw = 4
-	return []barGroup{
+	out := []barGroup{
 		{utf8.RuneCountInString("Gallery"), func(r *BarRow) { r.Name = true }},
 		{pairs(pair("Theme", widest(g.Themes())+5), pair("Density", widest(g.Densities())+5), pair("Width", widest(g.Widths())+7)),
 			func(r *BarRow) { r.Canvas = true }},
-		{pairs(pair("Cells", sw), pair("States", sw), pair("Reference", sw)), func(r *BarRow) { r.Views = true }},
-		{pairs(pair("Stories", sw), pair("Controls", sw)), func(r *BarRow) { r.Panes = true }},
 	}
+	// A switch that can do nothing for the story is not shown, nor a
+	// group with none.
+	var views []int
+	for _, v := range []struct {
+		label string
+		has   bool
+	}{{"Cells", g.HasCells()}, {"States", g.HasStates()}, {"Reference", g.HasReference()}} {
+		if v.has {
+			views = append(views, pair(v.label, sw))
+		}
+	}
+	if len(views) > 0 {
+		out = append(out, barGroup{pairs(views...), func(r *BarRow) { r.Views = true }})
+	}
+	panes := []int{pair("Stories", sw)}
+	if g.HasControls() {
+		panes = append(panes, pair("Controls", sw))
+	}
+	return append(out, barGroup{pairs(panes...), func(r *BarRow) { r.Panes = true }})
 }
 
 // widest is the length of the longest of ss, in runes.

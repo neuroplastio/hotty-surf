@@ -10,6 +10,7 @@ import (
 // column: what internal/cmd/stories -gallery opens each story in.
 func TestWindow(t *testing.T) {
 	g := New()
+	g.Pick("w-button") // a story with controls: a story with none has no column of them
 	for _, cols := range []int{20, 30, 50, 80, 120} {
 		g.SetWidth(strconv.Itoa(cols))
 		g.Resize(Window(cols), 54)

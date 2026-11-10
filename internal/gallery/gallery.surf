@@ -7,10 +7,13 @@
      narrow, then are left out, which the line under the toolbar says.
      The bar's labels are frame.go's barGroups': change them together.
      The stories, the canvas and the controls each scroll by the wheel.
-     The stories' list is its own scroll box, so Tab gives the keyboard
-     to the list, and the arrows its bindings hear move the story. The
-     page is dense whatever the canvas is: a compact page's rules reach
-     every element inside it, the canvas's too. -->
+     The stories are a sidebar as an app draws one: a surface of its
+     own, Compact, with a search field over a tree (a nav list whose
+     groups fold). The tree is its own scroll box, so Tab gives the
+     keyboard to it, and the arrows its bindings hear move the story.
+     A switch that can do nothing for the story is not drawn, nor the
+     controls' column where the story has none. The rest of the page is
+     dense whatever the canvas is, until the toolbar is redrawn. -->
 <surface density="dense">
   <stack grow key="page">
     <stack key="bar">
@@ -26,18 +29,18 @@
           <cycle :value="string(width)" :options="widths()" @change="setWidth($value)" label="Width" key="width"/>
         </row>
         <row :if="r.views" gap="1" key="views">
-          <text muted>Cells</text>
-          <switch :on="cells" :disabled="!hasCells()" @click="flipCells" label="Cells" key="cells"/>
-          <text muted indent="1">States</text>
-          <switch :on="states" :disabled="!hasStates()" @click="flipStates" label="States" key="states"/>
-          <text muted indent="1">Reference</text>
-          <switch :on="reference" :disabled="!hasReference()" @click="flipReference" label="Reference" key="reference"/>
+          <text :if="hasCells()" muted key="lcells">Cells</text>
+          <switch :if="hasCells()" :on="cells" @click="flipCells" label="Cells" key="cells"/>
+          <text :if="hasStates()" muted indent="1" key="lstates">States</text>
+          <switch :if="hasStates()" :on="states" @click="flipStates" label="States" key="states"/>
+          <text :if="hasReference()" muted indent="1" key="lreference">Reference</text>
+          <switch :if="hasReference()" :on="reference" @click="flipReference" label="Reference" key="reference"/>
         </row>
         <row :if="r.panes" gap="1" key="panes">
           <text muted>Stories</text>
           <switch :on="showStories()" :disabled="!canShowStories()" @click="flipStories" label="Stories" key="stories"/>
-          <text muted indent="1">Controls</text>
-          <switch :on="showControls()" :disabled="!canShowControls()" @click="flipControls" label="Controls" key="controls"/>
+          <text :if="hasControls()" muted indent="1" key="lcontrols">Controls</text>
+          <switch :if="hasControls()" :on="showControls()" :disabled="!canShowControls()" @click="flipControls" label="Controls" key="controls"/>
         </row>
       </row>
       <row :if="fit() != ''" top gap="1" pad="1 0" key="fit">
@@ -47,17 +50,18 @@
     </stack>
     <row top gap="1" pad="1 0" grow key="main">
       <stack :if="showStories()" :width="sideWidth()" key="side">
-        <field placeholder="Filter" aria-label="Filter the stories" :value="filter" autofocus @input="setFilter($value)" key="filter"/>
-        <list :if="size(shown()) > 0" nav scroll label="Stories" key="list">
-          <bind key="arrow_up" label="Previous story" do="move(-1)"/>
-          <bind key="arrow_down" label="Next story" do="move(1)"/>
-          <item :each="e in shown()" :key="e.id" :selected="e.id == sel" @click="pick(e.id)">
-            <text :if="e.kind == 'section'" bold>{{ e.label }}</text>
-            <text :else-if="e.kind == 'group'" indent="1">{{ e.label }}</text>
-            <text :else muted indent="3">{{ e.label }}</text>
-          </item>
-        </list>
-        <text :else muted wrap key="none">No story has "{{ filter }}" in its name.</text>
+        <surface density="compact" grow key="nav">
+          <row search gap="2" key="search">
+            <icon name="magnify"/>
+            <field bare grow placeholder="Filter the stories" aria-label="Filter the stories" :value="filter" autofocus @input="setFilter($value)" key="filter"/>
+          </row>
+          <list :if="size(shown()) > 0" nav scroll keys="none" label="Stories" key="list">
+            <bind key="arrow_up" label="Previous story" do="move(-1)"/>
+            <bind key="arrow_down" label="Next story" do="move(1)"/>
+            <story-entry :each="e in shown()" :key="e.id" :e="e"/>
+          </list>
+          <text :else muted wrap key="none">No story has "{{ filter }}" in its name.</text>
+        </surface>
       </stack>
       <stack grow key="mid">
         <heading key="title">{{ title() }}</heading>

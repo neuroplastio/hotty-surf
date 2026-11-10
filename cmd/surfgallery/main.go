@@ -100,13 +100,6 @@ func pick(g *gallery.Gallery, text string) {
 	}
 }
 
-// storyIDs are the ids of the stories the list shows, in its order.
-func storyIDs(g *gallery.Gallery) []string {
-	var ids []string
-	for _, e := range g.Shown() {
-		if e.Kind == "story" {
-			ids = append(ids, e.ID)
-		}
-	}
-	return ids
-}
+// storyIDs are the ids of the stories the list has, in its order,
+// whatever groups are folded.
+func storyIDs(g *gallery.Gallery) []string { return g.Stories() }

@@ -121,8 +121,9 @@ const (
 	fitID    = barID + ".kfit.kwhy"
 	sideID   = "r.kpage.kmain.kside"
 	asideID  = "r.kpage.kmain.kaside"
-	filterID = "r.kpage.kmain.kside.kfilter"
-	listID   = "r.kpage.kmain.kside.klist"
+	navID    = sideID + ".knav"
+	filterID = navID + ".ksearch.kfilter"
+	listID   = navID + ".klist"
 	titleID  = "r.kpage.kmain.kmid.ktitle"
 	logID    = "r.kpage.kmain.kmid.klog"
 )
@@ -221,7 +222,16 @@ func idOf(t *testing.T, html, tag, text string) string {
 func TestPickAndFilter(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(mode.name, func(t *testing.T) {
-			a, _ := start(t, mode.of, "w-surface")
+			a, g := start(t, mode.of, "w-surface")
+			// A group is folded until a click on it, or on its chevron,
+			// unfolds it; the picked story's is open.
+			if _, folded := a.Surface().Element(listID + ".kw-button"); folded {
+				t.Fatal("the button's stories show before its group is opened")
+			}
+			if err := a.Host.Click(a.Name, listID+".kg-widgets-button"); err != nil {
+				t.Fatal(err)
+			}
+			a.Wait("the button's group open", func() bool { _, ok := a.Surface().Element(listID + ".kw-button"); return ok })
 			if err := a.Host.Click(a.Name, listID+".kw-button"); err != nil {
 				t.Fatal(err)
 			}
@@ -248,17 +258,18 @@ func TestPickAndFilter(t *testing.T) {
 				return a.Surface().TextOf(titleID) == "notice-row / read" &&
 					strings.Contains(a.Surface().TextOf(storyID("f-notice-row-read")), "hotty-blitz 0.5.3 built")
 			})
-			// A component's head picks its first story.
-			if err := a.Host.Click(a.Name, listID+".kg-screens-notices"); err != nil {
-				t.Fatal(err)
+			// While the list is filtered every group is open, and counts
+			// the stories the filter leaves.
+			if got := a.Surface().TextOf(listID + ".kg-screens-notices"); !strings.Contains(got, "notices") || !strings.HasSuffix(got, "2") {
+				t.Errorf("the notices' group: %q", got)
 			}
-			a.Wait("the notices' first story", func() bool { return a.Surface().TextOf(titleID) == "notices / all" })
+			_ = g
 
 			if err := a.Host.Fill(a.Name, filterID, "zzz"); err != nil {
 				t.Fatal(err)
 			}
 			a.Wait("no story", func() bool {
-				return a.Surface().TextOf("r.kpage.kmain.kside.knone") == `No story has "zzz" in its name.`
+				return a.Surface().TextOf(navID+".knone") == `No story has "zzz" in its name.`
 			})
 		})
 	}
@@ -654,12 +665,7 @@ func TestSidebarKeys(t *testing.T) {
 
 func sidebarKeys(t *testing.T, start starter, of func(*Gallery) surflive.Component) {
 	g := New()
-	var ids []string
-	for _, e := range g.Shown() {
-		if e.Kind == "story" {
-			ids = append(ids, e.ID)
-		}
-	}
+	ids := g.Stories()
 	last, prev := ids[len(ids)-1], ids[len(ids)-2]
 	a, _ := startOn(t, start, g, of, last)
 	a.Call(func() {}) // the document's reveals, written
@@ -703,7 +709,7 @@ func TestStates(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(mode.name, func(t *testing.T) {
 			sel := "w-field"
-			a, _ := start(t, mode.of, sel)
+			a, g := start(t, mode.of, sel)
 			if _, css, _ := a.Host.Resource(surfui.StyleID); !strings.Contains(string(css), "[data-force~=hover]") {
 				t.Error("the run's stylesheet has no forced rules")
 			}
@@ -748,6 +754,10 @@ func TestStates(t *testing.T) {
 			}
 
 			sel = "f-notice-row-read"
+			if err := a.Host.Click(a.Name, listID+".kg-composites-notice-row"); err != nil {
+				t.Fatal(err)
+			}
+			a.Wait("the notice row's group open", func() bool { _, ok := a.Surface().Element(listID + ".kf-notice-row-read"); return ok })
 			if err := a.Host.Click(a.Name, listID+".kf-notice-row-read"); err != nil {
 				t.Fatal(err)
 			}
@@ -762,14 +772,12 @@ func TestStates(t *testing.T) {
 				t.Errorf("the long notice: %q", a.Surface().TextOf(row(sel, "long-text")))
 			}
 
-			// A tree has no controls, so no states.
-			if err := a.Host.Click(a.Name, listID+".ks-button-states"); err != nil {
-				t.Fatal(err)
-			}
+			// A tree has no controls, so no states, and no switch for them.
+			a.Call(func() { g.Pick("s-button-states") })
 			a.Wait("the tree, as it is", func() bool {
 				_, button := a.Surface().Element(storyID("s-button-states") + ".0.0")
-				_, off := a.Surface().Attr(barCtl("states"), "disabled")
-				return button && off
+				_, states := a.Surface().Element(barCtl("states"))
+				return button && !states
 			})
 		})
 	}
@@ -862,7 +870,14 @@ func TestBar(t *testing.T) {
 		gr.put(&r)
 		widths[fmt.Sprintf("%v", r)] = gr.cells
 	}
-	for cols, rows := range map[int]int{95: 2, 120: 2, 148: 2, 149: 1, 200: 1} {
+	// The palette's toolbar has the switches that act on it: Cells and
+	// Stories. It is one row from the width its groups take, each with
+	// its gap.
+	one := framePad
+	for _, gr := range g.barGroups() {
+		one += gr.cells + 2
+	}
+	for cols, rows := range map[int]int{80: 2, one - 1: 2, one: 1, 200: 1} {
 		g.Resize(cols, 50)
 		bar := g.Bar()
 		if len(bar) != rows {
@@ -907,9 +922,10 @@ func TestNarrowWindow(t *testing.T) {
 				a.Call(func() { cols = g.cur.state.(*screens.Palette).Cols })
 				return cols
 			}
-			if width(c) != "80" || width(sideID) != "30" || width(asideID) != "40" || shown(fitID) {
-				t.Fatalf("at 200 cells: the canvas %q, the stories %q, the controls %q, the line %q",
-					width(c), width(sideID), width(asideID), a.Surface().TextOf(fitID))
+			// The palette has no controls: no column of them, and no switch.
+			if width(c) != "80" || width(sideID) != "30" || shown(asideID) || shown(barCtl("controls")) || shown(fitID) {
+				t.Fatalf("at 200 cells: the canvas %q, the stories %q, the controls shown %v, the line %q",
+					width(c), width(sideID), shown(asideID), a.Surface().TextOf(fitID))
 			}
 
 			a.Resize(95, 50) // half the 1796-px window
@@ -917,7 +933,7 @@ func TestNarrowWindow(t *testing.T) {
 			if width(sideID) != "30" || storyCols() != 62 || shown(fitID) {
 				t.Errorf("at 95 cells the stories are %q cells, the story %d, the line %q", width(sideID), storyCols(), a.Surface().TextOf(fitID))
 			}
-			if !shown(barAt(0, "width")) || !shown(barAt(1, "cells")) || !shown(barAt(1, "controls")) {
+			if !shown(barAt(0, "width")) || !shown(barAt(0, "cells")) || !shown(barAt(1, "stories")) {
 				t.Errorf("at 95 cells the toolbar isn't two rows:\n%s", a.Surface().HTML())
 			}
 			if _, off := a.Surface().Attr(barAt(1, "stories"), "disabled"); off {
@@ -929,23 +945,15 @@ func TestNarrowWindow(t *testing.T) {
 			if width(sideID) != "30" || shown(fitID) {
 				t.Errorf("at 120 cells the stories are %q cells, and the line says %q", width(sideID), a.Surface().TextOf(fitID))
 			}
-			if err := a.Host.Click(a.Name, barAt(1, "controls")); err != nil {
-				t.Fatal(err)
-			}
-			a.Wait("the controls in place of the stories", func() bool { return !shown(sideID) && width(asideID) == "37" })
-			if width(c) != "80" {
-				t.Errorf("with the controls the canvas is %q cells", width(c))
-			}
-
 			a.Call(func() { g.SetWidth("120") })
-			a.Wait("the canvas at 120", func() bool { return width(c) == "120" && !shown(asideID) })
+			a.Wait("the canvas at 120", func() bool { return width(c) == "120" && !shown(sideID) })
 			if f := a.Surface().TextOf(fitID); !strings.Contains(f, "its last 2 are cut off") || storyCols() != 120 {
 				t.Errorf("a canvas wider than the window: the line says %q, the story is %d", f, storyCols())
 			}
 
 			a.Resize(200, 60)
-			a.Wait("both columns at 200", func() bool { return width(sideID) == "30" && width(asideID) == "40" && !shown(fitID) })
-			if width(c) != "120" || !shown(barCtl("controls")) {
+			a.Wait("the stories again at 200", func() bool { return width(sideID) == "30" && !shown(asideID) && !shown(fitID) })
+			if width(c) != "120" || !shown(barCtl("stories")) {
 				t.Errorf("at 200 cells the canvas is %q, and the toolbar:\n%s", width(c), a.Surface().HTML())
 			}
 		})
@@ -1053,4 +1061,33 @@ func TestScene(t *testing.T) {
 	a.Wait("the scene's new label, in the story and the theme it had", func() bool {
 		return strings.Contains(a.Surface().TextOf(storyID(sel)), "Keep as a draft") && a.Has(canvasID(sel), "u-theme-paper")
 	})
+}
+
+// What can do nothing for the story is not drawn: a scene has no
+// controls, no states and no cells, so the toolbar has none of their
+// switches and there is no controls' column; a widget's story has its
+// controls and its states, and no cells. Dense is not a density the
+// canvas is offered.
+func TestOnlyWhatActs(t *testing.T) {
+	a, g := start(t, Interpreted, "f-button-buttons-on-a-release-page")
+	shown := func(id string) bool { _, ok := a.Surface().Element(id); return ok }
+	for _, key := range []string{"cells", "states", "reference", "controls"} {
+		if shown(barCtl(key)) {
+			t.Errorf("a scene's toolbar has %s", key)
+		}
+	}
+	if shown(asideID) || !shown(barCtl("stories")) {
+		t.Errorf("a scene: the controls' column shown %v, the Stories switch %v", shown(asideID), shown(barCtl("stories")))
+	}
+	a.Call(func() { g.Pick("w-button") })
+	a.Wait("the button's controls and states", func() bool {
+		return shown(asideID) && shown(barCtl("controls")) && shown(barCtl("states")) && !shown(barCtl("cells"))
+	})
+	if slices.Contains(g.Densities(), "dense") {
+		t.Errorf("the canvas is offered %v", g.Densities())
+	}
+	a.Call(func() { g.SetDensity("dense") })
+	if g.Density != "compact" {
+		t.Errorf("the canvas took the density %s", g.Density)
+	}
 }

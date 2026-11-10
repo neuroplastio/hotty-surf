@@ -119,15 +119,11 @@ func writeGallery(dir, theme, density string, width int) error {
 		g := gallery.New()
 		app := surflive.New(m.of(g))
 		css := gallery.Options(g).CSS + gallery.Options(g).Palette.CSS()
-		section := ""
-		for _, e := range g.Shown() {
-			if e.Kind == "section" {
-				section = e.Label
-			}
-			if e.Kind != "story" {
-				continue
-			}
+		// Every story, whatever groups the sidebar has folded.
+		for _, id := range g.Stories() {
+			e := struct{ ID string }{id}
 			g.Pick(e.ID)
+			section := g.Section()
 			g.SetTheme(theme)
 			g.SetDensity(density)
 			cols := g.Width

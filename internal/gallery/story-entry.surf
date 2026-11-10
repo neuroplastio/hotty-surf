@@ -1,0 +1,13 @@
+<!-- A row of the sidebar's tree: a section's caption; a component's
+     group, which a click or its chevron folds, with its section's icon
+     and the count of its stories; or a story under its group. -->
+<props e="Entry"/>
+<caption :if="e.kind == 'section'">{{ e.label }}</caption>
+<item :else-if="e.kind == 'group'" depth="0" branch :open="e.open" gap="2" @click="toggle(e.id)" @toggle="toggle(e.id)">
+  <icon :name="e.icon"/>
+  <text grow>{{ e.label }}</text>
+  <text small muted keep>{{ e.count }}</text>
+</item>
+<item :else depth="1" :selected="e.id == sel" @click="pick(e.id)">
+  <text grow>{{ e.label }}</text>
+</item>

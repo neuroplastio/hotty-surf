@@ -18,7 +18,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed control-row.surf gallery.surf
+//go:embed control-row.surf gallery.surf story-entry.surf
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -57,12 +57,14 @@ var surfShapeGallery = surf.Shape{Name: "Gallery", Component: true,
 		{Name: "flipStates"},
 		{Name: "flipStories"},
 		{Name: "hasCells", Result: surf.TypeOf(cellite.Bool)},
+		{Name: "hasControls", Result: surf.TypeOf(cellite.Bool)},
 		{Name: "hasReference", Result: surf.TypeOf(cellite.Bool)},
 		{Name: "hasStates", Result: surf.TypeOf(cellite.Bool)},
 		{Name: "move", Args: []cellite.Type{cellite.Int}},
 		{Name: "nameWidth", Result: surf.TypeOf(cellite.Int)},
 		{Name: "pick", Args: []cellite.Type{cellite.String}},
 		{Name: "quiet", Result: surf.TypeOf(cellite.String)},
+		{Name: "section", Result: surf.TypeOf(cellite.String)},
 		{Name: "setDensity", Args: []cellite.Type{cellite.String}},
 		{Name: "setFilter", Args: []cellite.Type{cellite.String}},
 		{Name: "setTheme", Args: []cellite.Type{cellite.String}},
@@ -71,9 +73,11 @@ var surfShapeGallery = surf.Shape{Name: "Gallery", Component: true,
 		{Name: "showStories", Result: surf.TypeOf(cellite.Bool)},
 		{Name: "shown", Result: surf.TypeOf(cellite.ListOf(cellite.StructOf("Entry")))},
 		{Name: "sideWidth", Result: surf.TypeOf(cellite.Int)},
+		{Name: "stories", Result: surf.TypeOf(cellite.ListOf(cellite.String))},
 		{Name: "tail", Result: surf.TypeOf(cellite.ListOf(cellite.String))},
 		{Name: "themes", Result: surf.TypeOf(cellite.ListOf(cellite.String))},
 		{Name: "title", Result: surf.TypeOf(cellite.String)},
+		{Name: "toggle", Args: []cellite.Type{cellite.String}},
 		{Name: "uncontrolled", Result: surf.TypeOf(cellite.String)},
 		{Name: "widths", Result: surf.TypeOf(cellite.ListOf(cellite.String))},
 	},
@@ -167,42 +171,50 @@ func (o surfGallery) Call(m int, args []cellite.Value) cellite.Value {
 	case 17:
 		return cellite.BoolValue(bool(o.p.HasCells()))
 	case 18:
-		return cellite.BoolValue(bool(o.p.HasReference()))
+		return cellite.BoolValue(bool(o.p.HasControls()))
 	case 19:
-		return cellite.BoolValue(bool(o.p.HasStates()))
+		return cellite.BoolValue(bool(o.p.HasReference()))
 	case 20:
-		o.p.Move(int(args[0].Int()))
+		return cellite.BoolValue(bool(o.p.HasStates()))
 	case 21:
-		return cellite.IntValue(int64(o.p.NameWidth()))
+		o.p.Move(int(args[0].Int()))
 	case 22:
-		o.p.Pick(string(args[0].String()))
+		return cellite.IntValue(int64(o.p.NameWidth()))
 	case 23:
-		return cellite.StringValue(string(o.p.Quiet()))
+		o.p.Pick(string(args[0].String()))
 	case 24:
-		o.p.SetDensity(string(args[0].String()))
+		return cellite.StringValue(string(o.p.Quiet()))
 	case 25:
-		o.p.SetFilter(string(args[0].String()))
+		return cellite.StringValue(string(o.p.Section()))
 	case 26:
-		o.p.SetTheme(string(args[0].String()))
+		o.p.SetDensity(string(args[0].String()))
 	case 27:
-		o.p.SetWidth(string(args[0].String()))
+		o.p.SetFilter(string(args[0].String()))
 	case 28:
-		return cellite.BoolValue(bool(o.p.ShowControls()))
+		o.p.SetTheme(string(args[0].String()))
 	case 29:
-		return cellite.BoolValue(bool(o.p.ShowStories()))
+		o.p.SetWidth(string(args[0].String()))
 	case 30:
-		return cellite.ListValue(surfList4(o.p.Shown()))
+		return cellite.BoolValue(bool(o.p.ShowControls()))
 	case 31:
-		return cellite.IntValue(int64(o.p.SideWidth()))
+		return cellite.BoolValue(bool(o.p.ShowStories()))
 	case 32:
-		return cellite.ListValue(surfList2(o.p.Tail()))
+		return cellite.ListValue(surfList4(o.p.Shown()))
 	case 33:
-		return cellite.ListValue(surfList2(o.p.Themes()))
+		return cellite.IntValue(int64(o.p.SideWidth()))
 	case 34:
-		return cellite.StringValue(string(o.p.Title()))
+		return cellite.ListValue(surfList2(o.p.Stories()))
 	case 35:
-		return cellite.StringValue(string(o.p.Uncontrolled()))
+		return cellite.ListValue(surfList2(o.p.Tail()))
 	case 36:
+		return cellite.ListValue(surfList2(o.p.Themes()))
+	case 37:
+		return cellite.StringValue(string(o.p.Title()))
+	case 38:
+		o.p.Toggle(string(args[0].String()))
+	case 39:
+		return cellite.StringValue(string(o.p.Uncontrolled()))
+	case 40:
 		return cellite.ListValue(surfList2(o.p.Widths()))
 	}
 	return cellite.NullValue()
@@ -301,7 +313,7 @@ func (o surfBarRow) Unwrap() any { return o.p }
 
 // surfShapeEntry is Entry's shape, a struct.
 var surfShapeEntry = surf.Shape{Name: "Entry", Component: false,
-	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "label", Type: cellite.String}, {Name: "kind", Type: cellite.String}},
+	Fields: []surf.Field{{Name: "id", Type: cellite.String}, {Name: "label", Type: cellite.String}, {Name: "kind", Type: cellite.String}, {Name: "open", Type: cellite.Bool}, {Name: "icon", Type: cellite.String}, {Name: "count", Type: cellite.String}},
 }
 
 // surfEntry is a *Entry as its templates read it.
@@ -331,6 +343,12 @@ func (o surfEntry) Field(i int) cellite.Value {
 		return cellite.StringValue(string(o.p.Label))
 	case 2:
 		return cellite.StringValue(string(o.p.Kind))
+	case 3:
+		return cellite.BoolValue(bool(o.p.Open))
+	case 4:
+		return cellite.StringValue(string(o.p.Icon))
+	case 5:
+		return cellite.StringValue(string(o.p.Count))
 	}
 	return cellite.NullValue()
 }
@@ -557,50 +575,50 @@ var (
 
 // surfRenderGallery draws gallery.surf for Gallery.
 func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.Fill) []*surfui.Node {
-	// gallery.surf:14:1 <surface>
-	if e.Enter("gallery.surf", 14, 1) {
+	// gallery.surf:17:1 <surface>
+	if e.Enter("gallery.surf", 17, 1) {
 		var k1 []*surfui.Node
-		// gallery.surf:15:3 <stack>
-		if e.Enter("gallery.surf", 15, 3) {
+		// gallery.surf:18:3 <stack>
+		if e.Enter("gallery.surf", 18, 3) {
 			var k2 []*surfui.Node
-			// gallery.surf:16:5 <stack>
-			if e.Enter("gallery.surf", 16, 5) {
+			// gallery.surf:19:5 <stack>
+			if e.Enter("gallery.surf", 19, 5) {
 				var k3 []*surfui.Node
 				{
 					l4 := c.Bar()
 					for i4 := range l4 {
-						// gallery.surf:17:7 <row>
-						if e.Enter("gallery.surf", 17, 7) {
+						// gallery.surf:20:7 <row>
+						if e.Enter("gallery.surf", 20, 7) {
 							var k5 []*surfui.Node
 							if (&l4[i4]).Name {
-								// gallery.surf:18:9 <heading>
-								if e.Enter("gallery.surf", 18, 9) {
+								// gallery.surf:21:9 <heading>
+								if e.Enter("gallery.surf", 21, 9) {
 									n6 := surfui.Heading("Gallery")
 									surf.ModKey(n6, "name")
 									k5 = append(k5, n6)
 									e.Leave()
 								}
 							}
-							// gallery.surf:19:9 <spacer>
-							if e.Enter("gallery.surf", 19, 9) {
+							// gallery.surf:22:9 <spacer>
+							if e.Enter("gallery.surf", 22, 9) {
 								n7 := surfui.Spacer()
 								surf.ModKey(n7, "sp")
 								k5 = append(k5, n7)
 								e.Leave()
 							}
 							if (&l4[i4]).Canvas {
-								// gallery.surf:20:9 <row>
-								if e.Enter("gallery.surf", 20, 9) {
+								// gallery.surf:23:9 <row>
+								if e.Enter("gallery.surf", 23, 9) {
 									var k8 []*surfui.Node
-									// gallery.surf:21:11 <text>
-									if e.Enter("gallery.surf", 21, 11) {
+									// gallery.surf:24:11 <text>
+									if e.Enter("gallery.surf", 24, 11) {
 										n9 := surfui.Text("Theme")
 										surf.ModMuted(n9, true)
 										k8 = append(k8, n9)
 										e.Leave()
 									}
-									// gallery.surf:22:11 <select>
-									if e.Enter("gallery.surf", 22, 11) {
+									// gallery.surf:25:11 <select>
+									if e.Enter("gallery.surf", 25, 11) {
 										n10 := surf.NewSelect(c.Theme, slices.Clone(c.Themes()))
 										surf.ModKey(n10, "theme")
 										surf.ModLabel(n10, "Theme")
@@ -608,16 +626,16 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 										k8 = append(k8, n10)
 										e.Leave()
 									}
-									// gallery.surf:23:11 <text>
-									if e.Enter("gallery.surf", 23, 11) {
+									// gallery.surf:26:11 <text>
+									if e.Enter("gallery.surf", 26, 11) {
 										n11 := surfui.Text("Density")
 										surf.ModMuted(n11, true)
 										surf.ModIndent(n11, 1)
 										k8 = append(k8, n11)
 										e.Leave()
 									}
-									// gallery.surf:24:11 <select>
-									if e.Enter("gallery.surf", 24, 11) {
+									// gallery.surf:27:11 <select>
+									if e.Enter("gallery.surf", 27, 11) {
 										n12 := surf.NewSelect(c.Density, slices.Clone(c.Densities()))
 										surf.ModKey(n12, "density")
 										surf.ModLabel(n12, "Density")
@@ -625,26 +643,26 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 										k8 = append(k8, n12)
 										e.Leave()
 									}
-									// gallery.surf:25:11 <text>
-									if e.Enter("gallery.surf", 25, 11) {
+									// gallery.surf:28:11 <text>
+									if e.Enter("gallery.surf", 28, 11) {
 										n13 := surfui.Text("Width")
 										surf.ModMuted(n13, true)
 										surf.ModIndent(n13, 1)
 										k8 = append(k8, n13)
 										e.Leave()
 									}
-									// gallery.surf:26:11 <cycle>
-									if e.Enter("gallery.surf", 26, 11) {
+									// gallery.surf:29:11 <cycle>
+									if e.Enter("gallery.surf", 29, 11) {
 										var a17 string
 										switch {
 										default:
-											v15, ok15 := e.Eval("gallery.surf", 26, 11, surfProgsGallery()[8], surf.Act(func(i int) cellite.Value {
+											v15, ok15 := e.Eval("gallery.surf", 29, 11, surfProgsGallery()[8], surf.Act(func(i int) cellite.Value {
 												return surfGallery{c}.Field(i - 1)
 											}))
 											if !ok15 {
 												break
 											}
-											v16, ok16 := e.AsString("gallery.surf", 26, 11, v15)
+											v16, ok16 := e.AsString("gallery.surf", 29, 11, v15)
 											if !ok16 {
 												break
 											}
@@ -665,61 +683,73 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 								}
 							}
 							if (&l4[i4]).Views {
-								// gallery.surf:28:9 <row>
-								if e.Enter("gallery.surf", 28, 9) {
+								// gallery.surf:31:9 <row>
+								if e.Enter("gallery.surf", 31, 9) {
 									var k18 []*surfui.Node
-									// gallery.surf:29:11 <text>
-									if e.Enter("gallery.surf", 29, 11) {
-										n19 := surfui.Text("Cells")
-										surf.ModMuted(n19, true)
-										k18 = append(k18, n19)
-										e.Leave()
+									if c.HasCells() {
+										// gallery.surf:32:11 <text>
+										if e.Enter("gallery.surf", 32, 11) {
+											n19 := surfui.Text("Cells")
+											surf.ModKey(n19, "lcells")
+											surf.ModMuted(n19, true)
+											k18 = append(k18, n19)
+											e.Leave()
+										}
 									}
-									// gallery.surf:30:11 <switch>
-									if e.Enter("gallery.surf", 30, 11) {
-										n20 := surfui.Switch(c.Cells)
-										surf.ModKey(n20, "cells")
-										surf.ModDisabled(n20, !c.HasCells())
-										surf.ModLabel(n20, "Cells")
-										n20.On("click", func() { c.FlipCells() })
-										k18 = append(k18, n20)
-										e.Leave()
+									if c.HasCells() {
+										// gallery.surf:33:11 <switch>
+										if e.Enter("gallery.surf", 33, 11) {
+											n20 := surfui.Switch(c.Cells)
+											surf.ModKey(n20, "cells")
+											surf.ModLabel(n20, "Cells")
+											n20.On("click", func() { c.FlipCells() })
+											k18 = append(k18, n20)
+											e.Leave()
+										}
 									}
-									// gallery.surf:31:11 <text>
-									if e.Enter("gallery.surf", 31, 11) {
-										n21 := surfui.Text("States")
-										surf.ModMuted(n21, true)
-										surf.ModIndent(n21, 1)
-										k18 = append(k18, n21)
-										e.Leave()
+									if c.HasStates() {
+										// gallery.surf:34:11 <text>
+										if e.Enter("gallery.surf", 34, 11) {
+											n21 := surfui.Text("States")
+											surf.ModKey(n21, "lstates")
+											surf.ModMuted(n21, true)
+											surf.ModIndent(n21, 1)
+											k18 = append(k18, n21)
+											e.Leave()
+										}
 									}
-									// gallery.surf:32:11 <switch>
-									if e.Enter("gallery.surf", 32, 11) {
-										n22 := surfui.Switch(c.States)
-										surf.ModKey(n22, "states")
-										surf.ModDisabled(n22, !c.HasStates())
-										surf.ModLabel(n22, "States")
-										n22.On("click", func() { c.FlipStates() })
-										k18 = append(k18, n22)
-										e.Leave()
+									if c.HasStates() {
+										// gallery.surf:35:11 <switch>
+										if e.Enter("gallery.surf", 35, 11) {
+											n22 := surfui.Switch(c.States)
+											surf.ModKey(n22, "states")
+											surf.ModLabel(n22, "States")
+											n22.On("click", func() { c.FlipStates() })
+											k18 = append(k18, n22)
+											e.Leave()
+										}
 									}
-									// gallery.surf:33:11 <text>
-									if e.Enter("gallery.surf", 33, 11) {
-										n23 := surfui.Text("Reference")
-										surf.ModMuted(n23, true)
-										surf.ModIndent(n23, 1)
-										k18 = append(k18, n23)
-										e.Leave()
+									if c.HasReference() {
+										// gallery.surf:36:11 <text>
+										if e.Enter("gallery.surf", 36, 11) {
+											n23 := surfui.Text("Reference")
+											surf.ModKey(n23, "lreference")
+											surf.ModMuted(n23, true)
+											surf.ModIndent(n23, 1)
+											k18 = append(k18, n23)
+											e.Leave()
+										}
 									}
-									// gallery.surf:34:11 <switch>
-									if e.Enter("gallery.surf", 34, 11) {
-										n24 := surfui.Switch(c.Reference)
-										surf.ModKey(n24, "reference")
-										surf.ModDisabled(n24, !c.HasReference())
-										surf.ModLabel(n24, "Reference")
-										n24.On("click", func() { c.FlipReference() })
-										k18 = append(k18, n24)
-										e.Leave()
+									if c.HasReference() {
+										// gallery.surf:37:11 <switch>
+										if e.Enter("gallery.surf", 37, 11) {
+											n24 := surfui.Switch(c.Reference)
+											surf.ModKey(n24, "reference")
+											surf.ModLabel(n24, "Reference")
+											n24.On("click", func() { c.FlipReference() })
+											k18 = append(k18, n24)
+											e.Leave()
+										}
 									}
 									n18 := surfui.Row(k18...)
 									surf.ModKey(n18, "views")
@@ -729,18 +759,18 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 								}
 							}
 							if (&l4[i4]).Panes {
-								// gallery.surf:36:9 <row>
-								if e.Enter("gallery.surf", 36, 9) {
+								// gallery.surf:39:9 <row>
+								if e.Enter("gallery.surf", 39, 9) {
 									var k25 []*surfui.Node
-									// gallery.surf:37:11 <text>
-									if e.Enter("gallery.surf", 37, 11) {
+									// gallery.surf:40:11 <text>
+									if e.Enter("gallery.surf", 40, 11) {
 										n26 := surfui.Text("Stories")
 										surf.ModMuted(n26, true)
 										k25 = append(k25, n26)
 										e.Leave()
 									}
-									// gallery.surf:38:11 <switch>
-									if e.Enter("gallery.surf", 38, 11) {
+									// gallery.surf:41:11 <switch>
+									if e.Enter("gallery.surf", 41, 11) {
 										n27 := surfui.Switch(c.ShowStories())
 										surf.ModKey(n27, "stories")
 										surf.ModDisabled(n27, !c.CanShowStories())
@@ -749,23 +779,28 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 										k25 = append(k25, n27)
 										e.Leave()
 									}
-									// gallery.surf:39:11 <text>
-									if e.Enter("gallery.surf", 39, 11) {
-										n28 := surfui.Text("Controls")
-										surf.ModMuted(n28, true)
-										surf.ModIndent(n28, 1)
-										k25 = append(k25, n28)
-										e.Leave()
+									if c.HasControls() {
+										// gallery.surf:42:11 <text>
+										if e.Enter("gallery.surf", 42, 11) {
+											n28 := surfui.Text("Controls")
+											surf.ModKey(n28, "lcontrols")
+											surf.ModMuted(n28, true)
+											surf.ModIndent(n28, 1)
+											k25 = append(k25, n28)
+											e.Leave()
+										}
 									}
-									// gallery.surf:40:11 <switch>
-									if e.Enter("gallery.surf", 40, 11) {
-										n29 := surfui.Switch(c.ShowControls())
-										surf.ModKey(n29, "controls")
-										surf.ModDisabled(n29, !c.CanShowControls())
-										surf.ModLabel(n29, "Controls")
-										n29.On("click", func() { c.FlipControls() })
-										k25 = append(k25, n29)
-										e.Leave()
+									if c.HasControls() {
+										// gallery.surf:43:11 <switch>
+										if e.Enter("gallery.surf", 43, 11) {
+											n29 := surfui.Switch(c.ShowControls())
+											surf.ModKey(n29, "controls")
+											surf.ModDisabled(n29, !c.CanShowControls())
+											surf.ModLabel(n29, "Controls")
+											n29.On("click", func() { c.FlipControls() })
+											k25 = append(k25, n29)
+											e.Leave()
+										}
 									}
 									n25 := surfui.Row(k25...)
 									surf.ModKey(n25, "panes")
@@ -777,7 +812,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 							n5 := surfui.Row(k5...)
 							switch {
 							default:
-								v30, ok30 := e.Eval("gallery.surf", 17, 7, surfProgsGallery()[1], surf.Act(func(i int) cellite.Value {
+								v30, ok30 := e.Eval("gallery.surf", 20, 7, surfProgsGallery()[1], surf.Act(func(i int) cellite.Value {
 									switch i {
 									case 12:
 										return cellite.IntValue(int64(i4))
@@ -787,7 +822,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 								if !ok30 {
 									break
 								}
-								v31, ok31 := e.AsText("gallery.surf", 17, 7, v30)
+								v31, ok31 := e.AsText("gallery.surf", 20, 7, v30)
 								if !ok31 {
 									break
 								}
@@ -801,19 +836,19 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 					}
 				}
 				if c.Fit() != "" {
-					// gallery.surf:43:7 <row>
-					if e.Enter("gallery.surf", 43, 7) {
+					// gallery.surf:46:7 <row>
+					if e.Enter("gallery.surf", 46, 7) {
 						var k32 []*surfui.Node
-						// gallery.surf:44:9 <chip>
-						if e.Enter("gallery.surf", 44, 9) {
+						// gallery.surf:47:9 <chip>
+						if e.Enter("gallery.surf", 47, 9) {
 							n33 := surfui.Chip("Window too narrow")
 							surf.ModKey(n33, "tag")
 							surf.ModFill(n33, "warn")
 							k32 = append(k32, n33)
 							e.Leave()
 						}
-						// gallery.surf:45:9 <text>
-						if e.Enter("gallery.surf", 45, 9) {
+						// gallery.surf:48:9 <text>
+						if e.Enter("gallery.surf", 48, 9) {
 							n34 := surfui.Text(c.Fit())
 							surf.ModKey(n34, "why")
 							surf.ModTone(n34, "warn")
@@ -836,103 +871,102 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 				k2 = append(k2, n3)
 				e.Leave()
 			}
-			// gallery.surf:48:5 <row>
-			if e.Enter("gallery.surf", 48, 5) {
+			// gallery.surf:51:5 <row>
+			if e.Enter("gallery.surf", 51, 5) {
 				var k35 []*surfui.Node
 				if c.ShowStories() {
-					// gallery.surf:49:7 <stack>
-					if e.Enter("gallery.surf", 49, 7) {
+					// gallery.surf:52:7 <stack>
+					if e.Enter("gallery.surf", 52, 7) {
 						var k36 []*surfui.Node
-						// gallery.surf:50:9 <field>
-						if e.Enter("gallery.surf", 50, 9) {
-							n37 := surfui.Field()
-							surf.ModKey(n37, "filter")
-							surf.ModValue(n37, c.Filter)
-							surf.ModPlaceholder(n37, "Filter")
-							surf.ModAriaLabel(n37, "Filter the stories")
-							surf.ModAutofocus(n37, true)
-							n37.On("input", func(ev surfrun.Event) { c.SetFilter(ev.Value) })
-							k36 = append(k36, n37)
-							e.Leave()
-						}
-						if int64(len(c.Shown())) > int64(0) {
-							// gallery.surf:51:9 <list>
-							if e.Enter("gallery.surf", 51, 9) {
+						// gallery.surf:53:9 <surface>
+						if e.Enter("gallery.surf", 53, 9) {
+							var k37 []*surfui.Node
+							// gallery.surf:54:11 <row>
+							if e.Enter("gallery.surf", 54, 11) {
 								var k38 []*surfui.Node
-								var b38 []surfui.Binding
-								{
-									a39 := int(int64(-1))
-									b38 = append(b38, surfui.Binding{Key: "arrow_up", Title: "Previous story", Act: func() { c.Move(a39) }})
+								// gallery.surf:55:13 <icon>
+								if e.Enter("gallery.surf", 55, 13) {
+									n39 := surfui.Icon("\U000f0349")
+									k38 = append(k38, n39)
+									e.Leave()
 								}
-								{
-									a40 := int(int64(1))
-									b38 = append(b38, surfui.Binding{Key: "arrow_down", Title: "Next story", Act: func() { c.Move(a40) }})
+								// gallery.surf:56:13 <field>
+								if e.Enter("gallery.surf", 56, 13) {
+									n40 := surfui.Field()
+									surf.ModKey(n40, "filter")
+									surf.ModGrow(n40, true)
+									surf.ModValue(n40, c.Filter)
+									surf.ModPlaceholder(n40, "Filter the stories")
+									surf.ModAriaLabel(n40, "Filter the stories")
+									surf.ModBare(n40, true)
+									surf.ModAutofocus(n40, true)
+									n40.On("input", func(ev surfrun.Event) { c.SetFilter(ev.Value) })
+									k38 = append(k38, n40)
+									e.Leave()
 								}
-								{
-									l41 := c.Shown()
-									for i41 := range l41 {
-										// gallery.surf:54:11 <item>
-										if e.Enter("gallery.surf", 54, 11) {
-											var k42 []*surfui.Node
-											if (&l41[i41]).Kind == "section" {
-												// gallery.surf:55:13 <text>
-												if e.Enter("gallery.surf", 55, 13) {
-													n43 := surfui.Text((&l41[i41]).Label)
-													surf.ModBold(n43, true)
-													k42 = append(k42, n43)
-													e.Leave()
+								n38 := surfui.Row(k38...)
+								surf.ModKey(n38, "search")
+								surf.ModGap(n38, 2)
+								surf.ModSearch(n38, true)
+								k37 = append(k37, n38)
+								e.Leave()
+							}
+							if int64(len(c.Shown())) > int64(0) {
+								// gallery.surf:58:11 <list>
+								if e.Enter("gallery.surf", 58, 11) {
+									var k41 []*surfui.Node
+									var b41 []surfui.Binding
+									{
+										a42 := int(int64(-1))
+										b41 = append(b41, surfui.Binding{Key: "arrow_up", Title: "Previous story", Act: func() { c.Move(a42) }})
+									}
+									{
+										a43 := int(int64(1))
+										b41 = append(b41, surfui.Binding{Key: "arrow_down", Title: "Next story", Act: func() { c.Move(a43) }})
+									}
+									{
+										l44 := c.Shown()
+										for i44 := range l44 {
+											// gallery.surf:61:13 <story-entry>
+											if e.Enter("gallery.surf", 61, 13) {
+												start45 := len(k41)
+												k41 = surfRenderGallery_StoryEntry(e, k41, c, nil, (&l44[i44]))
+												for _, kn := range k41[start45:] {
+													kn.Key((&l44[i44]).ID)
 												}
-											} else if (&l41[i41]).Kind == "group" {
-												// gallery.surf:56:13 <text>
-												if e.Enter("gallery.surf", 56, 13) {
-													n44 := surfui.Text((&l41[i41]).Label)
-													surf.ModIndent(n44, 1)
-													k42 = append(k42, n44)
-													e.Leave()
-												}
-											} else {
-												// gallery.surf:57:13 <text>
-												if e.Enter("gallery.surf", 57, 13) {
-													n45 := surfui.Text((&l41[i41]).Label)
-													surf.ModMuted(n45, true)
-													surf.ModIndent(n45, 3)
-													k42 = append(k42, n45)
-													e.Leave()
-												}
+												e.Leave()
 											}
-											n42 := surfui.Item(k42...)
-											surf.ModKey(n42, (&l41[i41]).ID)
-											surf.ModSelected(n42, ((&l41[i41]).ID == c.Sel))
-											{
-												a46 := (&l41[i41]).ID
-												n42.On("click", func() { c.Pick(a46) })
-											}
-											k38 = append(k38, n42)
-											e.Leave()
 										}
 									}
+									n41 := surfui.List(k41...)
+									surf.ModKey(n41, "list")
+									surf.ModLabel(n41, "Stories")
+									surf.ModKeys(n41, "none")
+									surf.ModNav(n41, true)
+									surf.ModScroll(n41, true)
+									for _, kb := range b41 {
+										n41.AddBinding(kb)
+									}
+									k37 = append(k37, n41)
+									e.Leave()
 								}
-								n38 := surfui.List(k38...)
-								surf.ModKey(n38, "list")
-								surf.ModLabel(n38, "Stories")
-								surf.ModNav(n38, true)
-								surf.ModScroll(n38, true)
-								for _, kb := range b38 {
-									n38.AddBinding(kb)
+							} else {
+								// gallery.surf:63:11 <text>
+								if e.Enter("gallery.surf", 63, 11) {
+									n46 := surfui.Text("No story has \"" + c.Filter + "\" in its name.")
+									surf.ModKey(n46, "none")
+									surf.ModMuted(n46, true)
+									surf.ModWrap(n46, true)
+									k37 = append(k37, n46)
+									e.Leave()
 								}
-								k36 = append(k36, n38)
-								e.Leave()
 							}
-						} else {
-							// gallery.surf:60:9 <text>
-							if e.Enter("gallery.surf", 60, 9) {
-								n47 := surfui.Text("No story has \"" + c.Filter + "\" in its name.")
-								surf.ModKey(n47, "none")
-								surf.ModMuted(n47, true)
-								surf.ModWrap(n47, true)
-								k36 = append(k36, n47)
-								e.Leave()
-							}
+							n37 := surf.NewSurface(k37...)
+							surf.ModDensity(n37, "compact")
+							surf.ModKey(n37, "nav")
+							surf.ModGrow(n37, true)
+							k36 = append(k36, n37)
+							e.Leave()
 						}
 						n36 := surfui.Stack(k36...)
 						surf.ModKey(n36, "side")
@@ -941,180 +975,180 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 						e.Leave()
 					}
 				}
-				// gallery.surf:62:7 <stack>
-				if e.Enter("gallery.surf", 62, 7) {
-					var k48 []*surfui.Node
-					// gallery.surf:63:9 <heading>
-					if e.Enter("gallery.surf", 63, 9) {
-						n49 := surfui.Heading(c.Title())
-						surf.ModKey(n49, "title")
-						k48 = append(k48, n49)
+				// gallery.surf:66:7 <stack>
+				if e.Enter("gallery.surf", 66, 7) {
+					var k47 []*surfui.Node
+					// gallery.surf:67:9 <heading>
+					if e.Enter("gallery.surf", 67, 9) {
+						n48 := surfui.Heading(c.Title())
+						surf.ModKey(n48, "title")
+						k47 = append(k47, n48)
 						e.Leave()
 					}
 					if c.About() != "" {
-						// gallery.surf:64:9 <text>
-						if e.Enter("gallery.surf", 64, 9) {
-							n50 := surfui.Text(c.About())
-							surf.ModKey(n50, "about")
-							surf.ModMuted(n50, true)
-							surf.ModWrap(n50, true)
-							k48 = append(k48, n50)
+						// gallery.surf:68:9 <text>
+						if e.Enter("gallery.surf", 68, 9) {
+							n49 := surfui.Text(c.About())
+							surf.ModKey(n49, "about")
+							surf.ModMuted(n49, true)
+							surf.ModWrap(n49, true)
+							k47 = append(k47, n49)
 							e.Leave()
 						}
 					}
-					// gallery.surf:65:9 <embed>
-					if e.Enter("gallery.surf", 65, 9) {
-						start51 := len(k48)
-						k48 = e.Embed("gallery.surf", 65, 9, surf.ComponentValue(c.Canvas()), k48)
-						for _, kn := range k48[start51:] {
+					// gallery.surf:69:9 <embed>
+					if e.Enter("gallery.surf", 69, 9) {
+						start50 := len(k47)
+						k47 = e.Embed("gallery.surf", 69, 9, surf.ComponentValue(c.Canvas()), k47)
+						for _, kn := range k47[start50:] {
 							kn.Key(("c-" + c.Sel))
 						}
 						e.Leave()
 					}
-					// gallery.surf:66:9 <row>
-					if e.Enter("gallery.surf", 66, 9) {
-						var k52 []*surfui.Node
-						// gallery.surf:67:11 <text>
-						if e.Enter("gallery.surf", 67, 11) {
-							n53 := surfui.Text("Actions")
-							surf.ModBold(n53, true)
-							surf.ModGrow(n53, true)
-							k52 = append(k52, n53)
+					// gallery.surf:70:9 <row>
+					if e.Enter("gallery.surf", 70, 9) {
+						var k51 []*surfui.Node
+						// gallery.surf:71:11 <text>
+						if e.Enter("gallery.surf", 71, 11) {
+							n52 := surfui.Text("Actions")
+							surf.ModBold(n52, true)
+							surf.ModGrow(n52, true)
+							k51 = append(k51, n52)
 							e.Leave()
 						}
-						// gallery.surf:68:11 <text>
-						if e.Enter("gallery.surf", 68, 11) {
-							n54 := surfui.Text(strconv.FormatInt(int64(len(c.Log)), 10) + " calls")
-							surf.ModMuted(n54, true)
-							surf.ModSmall(n54, true)
-							k52 = append(k52, n54)
+						// gallery.surf:72:11 <text>
+						if e.Enter("gallery.surf", 72, 11) {
+							n53 := surfui.Text(strconv.FormatInt(int64(len(c.Log)), 10) + " calls")
+							surf.ModMuted(n53, true)
+							surf.ModSmall(n53, true)
+							k51 = append(k51, n53)
 							e.Leave()
 						}
-						// gallery.surf:69:11 <button>
-						if e.Enter("gallery.surf", 69, 11) {
-							n55 := surfui.Button("Clear")
-							surf.ModKey(n55, "clear")
-							surf.ModBare(n55, true)
-							n55.On("click", func() { c.ClearLog() })
-							k52 = append(k52, n55)
+						// gallery.surf:73:11 <button>
+						if e.Enter("gallery.surf", 73, 11) {
+							n54 := surfui.Button("Clear")
+							surf.ModKey(n54, "clear")
+							surf.ModBare(n54, true)
+							n54.On("click", func() { c.ClearLog() })
+							k51 = append(k51, n54)
 							e.Leave()
 						}
-						n52 := surfui.Row(k52...)
-						surf.ModKey(n52, "loghead")
-						surf.ModGap(n52, 2)
-						k48 = append(k48, n52)
+						n51 := surfui.Row(k51...)
+						surf.ModKey(n51, "loghead")
+						surf.ModGap(n51, 2)
+						k47 = append(k47, n51)
 						e.Leave()
 					}
-					// gallery.surf:71:9 <stack>
-					if e.Enter("gallery.surf", 71, 9) {
-						var k56 []*surfui.Node
-						for i57, x57 := range c.Tail() {
-							// gallery.surf:72:11 <text>
-							if e.Enter("gallery.surf", 72, 11) {
-								n58 := surfui.Text(x57)
+					// gallery.surf:75:9 <stack>
+					if e.Enter("gallery.surf", 75, 9) {
+						var k55 []*surfui.Node
+						for i56, x56 := range c.Tail() {
+							// gallery.surf:76:11 <text>
+							if e.Enter("gallery.surf", 76, 11) {
+								n57 := surfui.Text(x56)
 								switch {
 								default:
-									v59, ok59 := e.Eval("gallery.surf", 72, 11, surfProgsGallery()[47], surf.Act(func(i int) cellite.Value {
+									v58, ok58 := e.Eval("gallery.surf", 76, 11, surfProgsGallery()[46], surf.Act(func(i int) cellite.Value {
 										switch i {
 										case 12:
-											return cellite.IntValue(int64(i57))
+											return cellite.IntValue(int64(i56))
 										}
 										return surfGallery{c}.Field(i - 1)
 									}))
+									if !ok58 {
+										break
+									}
+									v59, ok59 := e.AsText("gallery.surf", 76, 11, v58)
 									if !ok59 {
 										break
 									}
-									v60, ok60 := e.AsText("gallery.surf", 72, 11, v59)
-									if !ok60 {
-										break
-									}
-									surf.ModKey(n58, v60)
+									surf.ModKey(n57, v59)
 								}
-								surf.ModSmall(n58, true)
-								k56 = append(k56, n58)
+								surf.ModSmall(n57, true)
+								k55 = append(k55, n57)
 								e.Leave()
 							}
 						}
 						if int64(len(c.Log)) == int64(0) {
-							// gallery.surf:73:11 <text>
-							if e.Enter("gallery.surf", 73, 11) {
-								n61 := surfui.Text(c.Quiet())
-								surf.ModKey(n61, "quiet")
-								surf.ModMuted(n61, true)
-								surf.ModSmall(n61, true)
-								surf.ModWrap(n61, true)
-								k56 = append(k56, n61)
+							// gallery.surf:77:11 <text>
+							if e.Enter("gallery.surf", 77, 11) {
+								n60 := surfui.Text(c.Quiet())
+								surf.ModKey(n60, "quiet")
+								surf.ModMuted(n60, true)
+								surf.ModSmall(n60, true)
+								surf.ModWrap(n60, true)
+								k55 = append(k55, n60)
 								e.Leave()
 							}
 						}
-						n56 := surfui.Stack(k56...)
-						surf.ModKey(n56, "log")
-						surf.ModHeight(n56, 8)
-						k48 = append(k48, n56)
+						n55 := surfui.Stack(k55...)
+						surf.ModKey(n55, "log")
+						surf.ModHeight(n55, 8)
+						k47 = append(k47, n55)
 						e.Leave()
 					}
-					n48 := surfui.Stack(k48...)
-					surf.ModKey(n48, "mid")
-					surf.ModGrow(n48, true)
-					k35 = append(k35, n48)
+					n47 := surfui.Stack(k47...)
+					surf.ModKey(n47, "mid")
+					surf.ModGrow(n47, true)
+					k35 = append(k35, n47)
 					e.Leave()
 				}
 				if c.ShowControls() {
-					// gallery.surf:76:7 <stack>
-					if e.Enter("gallery.surf", 76, 7) {
-						var k62 []*surfui.Node
-						// gallery.surf:77:9 <text>
-						if e.Enter("gallery.surf", 77, 9) {
-							n63 := surfui.Text("Controls")
-							surf.ModKey(n63, "head")
-							surf.ModBold(n63, true)
-							k62 = append(k62, n63)
+					// gallery.surf:80:7 <stack>
+					if e.Enter("gallery.surf", 80, 7) {
+						var k61 []*surfui.Node
+						// gallery.surf:81:9 <text>
+						if e.Enter("gallery.surf", 81, 9) {
+							n62 := surfui.Text("Controls")
+							surf.ModKey(n62, "head")
+							surf.ModBold(n62, true)
+							k61 = append(k61, n62)
 							e.Leave()
 						}
-						// gallery.surf:78:9 <stack>
-						if e.Enter("gallery.surf", 78, 9) {
-							var k64 []*surfui.Node
-							for i65, x65 := range c.Controls {
-								// gallery.surf:79:11 <control-row>
-								if e.Enter("gallery.surf", 79, 11) {
-									start66 := len(k64)
-									k64 = surfRenderGallery_ControlRow(e, k64, c, nil, x65, int64(i65))
+						// gallery.surf:82:9 <stack>
+						if e.Enter("gallery.surf", 82, 9) {
+							var k63 []*surfui.Node
+							for i64, x64 := range c.Controls {
+								// gallery.surf:83:11 <control-row>
+								if e.Enter("gallery.surf", 83, 11) {
+									start65 := len(k63)
+									k63 = surfRenderGallery_ControlRow(e, k63, c, nil, x64, int64(i64))
 									switch {
 									default:
-										p67 := x65
-										if p67 == nil {
-											e.Null("gallery.surf", 79, 11)
+										p66 := x64
+										if p66 == nil {
+											e.Null("gallery.surf", 83, 11)
 											break
 										}
-										for _, kn := range k64[start66:] {
-											kn.Key(p67.Key)
+										for _, kn := range k63[start65:] {
+											kn.Key(p66.Key)
 										}
 									}
 									e.Leave()
 								}
 							}
 							if int64(len(c.Controls)) == int64(0) {
-								// gallery.surf:80:11 <text>
-								if e.Enter("gallery.surf", 80, 11) {
-									n68 := surfui.Text(c.Uncontrolled())
-									surf.ModKey(n68, "none")
-									surf.ModMuted(n68, true)
-									surf.ModSmall(n68, true)
-									surf.ModWrap(n68, true)
-									k64 = append(k64, n68)
+								// gallery.surf:84:11 <text>
+								if e.Enter("gallery.surf", 84, 11) {
+									n67 := surfui.Text(c.Uncontrolled())
+									surf.ModKey(n67, "none")
+									surf.ModMuted(n67, true)
+									surf.ModSmall(n67, true)
+									surf.ModWrap(n67, true)
+									k63 = append(k63, n67)
 									e.Leave()
 								}
 							}
-							n64 := surfui.Stack(k64...)
-							surf.ModKey(n64, ("p-" + c.Sel))
-							surf.ModScroll(n64, true)
-							k62 = append(k62, n64)
+							n63 := surfui.Stack(k63...)
+							surf.ModKey(n63, ("p-" + c.Sel))
+							surf.ModScroll(n63, true)
+							k61 = append(k61, n63)
 							e.Leave()
 						}
-						n62 := surfui.Stack(k62...)
-						surf.ModKey(n62, "aside")
-						surf.ModWidth(n62, int64(c.AsideWidth()))
-						k35 = append(k35, n62)
+						n61 := surfui.Stack(k61...)
+						surf.ModKey(n61, "aside")
+						surf.ModWidth(n61, int64(c.AsideWidth()))
+						k35 = append(k35, n61)
 						e.Leave()
 					}
 				}
@@ -1137,6 +1171,186 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 		surf.ModDensity(n1, "dense")
 		out = append(out, n1)
 		e.Leave()
+	}
+	return out
+}
+
+// surfRenderGallery_StoryEntry draws story-entry.surf for Gallery.
+func surfRenderGallery_StoryEntry(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.Fill, prop11 *Entry) []*surfui.Node {
+	switch {
+	default:
+		p4 := prop11
+		if p4 == nil {
+			e.Null("story-entry.surf", 5, 1)
+			break
+		}
+		if p4.Kind == "section" {
+			// story-entry.surf:5:1 <caption>
+			if e.Enter("story-entry.surf", 5, 1) {
+				var t3 string
+				switch {
+				default:
+					p2 := prop11
+					if p2 == nil {
+						e.Null("story-entry.surf", 5, 1)
+						break
+					}
+					t3 += p2.Label
+				}
+				n1 := surfui.Caption(t3)
+				out = append(out, n1)
+				e.Leave()
+			}
+			break
+		}
+		p20 := prop11
+		if p20 == nil {
+			e.Null("story-entry.surf", 5, 1)
+			break
+		}
+		if p20.Kind == "group" {
+			// story-entry.surf:6:1 <item>
+			if e.Enter("story-entry.surf", 6, 1) {
+				var k5 []*surfui.Node
+				// story-entry.surf:7:3 <icon>
+				if e.Enter("story-entry.surf", 7, 3) {
+					g7 := "\U000f078b" // where the name fails
+					switch {
+					default:
+						p8 := prop11
+						if p8 == nil {
+							e.Null("story-entry.surf", 7, 3)
+							break
+						}
+						{
+							var err error
+							if g7, err = surf.IconGlyph(p8.Icon); err != nil {
+								e.Fail("story-entry.surf", 7, 3, err)
+							}
+						}
+					}
+					n6 := surfui.Icon(g7)
+					k5 = append(k5, n6)
+					e.Leave()
+				}
+				// story-entry.surf:8:3 <text>
+				if e.Enter("story-entry.surf", 8, 3) {
+					var t11 string
+					switch {
+					default:
+						p10 := prop11
+						if p10 == nil {
+							e.Null("story-entry.surf", 8, 3)
+							break
+						}
+						t11 += p10.Label
+					}
+					n9 := surfui.Text(t11)
+					surf.ModGrow(n9, true)
+					k5 = append(k5, n9)
+					e.Leave()
+				}
+				// story-entry.surf:9:3 <text>
+				if e.Enter("story-entry.surf", 9, 3) {
+					var t14 string
+					switch {
+					default:
+						p13 := prop11
+						if p13 == nil {
+							e.Null("story-entry.surf", 9, 3)
+							break
+						}
+						t14 += p13.Count
+					}
+					n12 := surfui.Text(t14)
+					surf.ModMuted(n12, true)
+					surf.ModSmall(n12, true)
+					surf.ModKeep(n12, true)
+					k5 = append(k5, n12)
+					e.Leave()
+				}
+				n5 := surfui.Item(k5...)
+				surf.ModGap(n5, 2)
+				surf.ModDepth(n5, 0)
+				surf.ModBranch(n5, true)
+				switch {
+				default:
+					p15 := prop11
+					if p15 == nil {
+						e.Null("story-entry.surf", 6, 1)
+						break
+					}
+					surf.ModOpen(n5, p15.Open)
+				}
+				switch {
+				default:
+					p16 := prop11
+					if p16 == nil {
+						e.Null("story-entry.surf", 6, 1)
+						break
+					}
+					a17 := p16.ID
+					n5.On("click", func() { c.Toggle(a17) })
+				}
+				switch {
+				default:
+					p18 := prop11
+					if p18 == nil {
+						e.Null("story-entry.surf", 6, 1)
+						break
+					}
+					a19 := p18.ID
+					n5.On("toggle", func() { c.Toggle(a19) })
+				}
+				out = append(out, n5)
+				e.Leave()
+			}
+			break
+		}
+		// story-entry.surf:11:1 <item>
+		if e.Enter("story-entry.surf", 11, 1) {
+			var k21 []*surfui.Node
+			// story-entry.surf:12:3 <text>
+			if e.Enter("story-entry.surf", 12, 3) {
+				var t24 string
+				switch {
+				default:
+					p23 := prop11
+					if p23 == nil {
+						e.Null("story-entry.surf", 12, 3)
+						break
+					}
+					t24 += p23.Label
+				}
+				n22 := surfui.Text(t24)
+				surf.ModGrow(n22, true)
+				k21 = append(k21, n22)
+				e.Leave()
+			}
+			n21 := surfui.Item(k21...)
+			switch {
+			default:
+				p25 := prop11
+				if p25 == nil {
+					e.Null("story-entry.surf", 11, 1)
+					break
+				}
+				surf.ModSelected(n21, (p25.ID == c.Sel))
+			}
+			surf.ModDepth(n21, 1)
+			switch {
+			default:
+				p26 := prop11
+				if p26 == nil {
+					e.Null("story-entry.surf", 11, 1)
+					break
+				}
+				a27 := p26.ID
+				n21.On("click", func() { c.Pick(a27) })
+			}
+			out = append(out, n21)
+			e.Leave()
+		}
 	}
 	return out
 }

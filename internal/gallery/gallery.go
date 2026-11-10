@@ -28,6 +28,7 @@ import (
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/surflive"
 	"neuroplast.io/hotty-surf/surfrun"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // Gallery is the gallery's state.
@@ -51,6 +52,11 @@ type Gallery struct {
 	drawing bool       // the story is rendering: its calls are its functions', not logged
 	cols    int        // the window's width in cells, 0 until the run tells it: what the frame lays out in
 
+	// The groups of the sidebar's tree a click opened (true) or closed
+	// (false); one it says nothing of is open while it holds the picked
+	// story.
+	open map[string]bool
+
 	// The side columns (frame.go): left out by the toolbar's switches,
 	// and which keeps its room where the window has room for one.
 	noStories, noControls bool
@@ -69,12 +75,15 @@ type Gallery struct {
 	refSent   map[string][]byte // the reference's renders, as they were sent
 }
 
-// Entry is a line of the sidebar's list: a section's head, a component's,
-// or a story.
+// Entry is a row of the sidebar's tree: a section's caption, a
+// component's group, which folds, or a story under it.
 type Entry struct {
 	ID    string
 	Label string
 	Kind  string // section, group or story
+	Open  bool   // a group whose stories are shown
+	Icon  string // a group's icon, an MDI name: its section's
+	Count string // a group's stories, counted
 }
 
 // Control is one of the story's controls: a prop, an attribute, a field
@@ -136,39 +145,106 @@ func Interpreted(g *Gallery) surflive.Component { return surfInterpGallery(g) }
 // Compiled is g drawn by its templates compiled into Go.
 func Compiled(g *Gallery) surflive.Component { return surfCompiledGallery(g) }
 
-// Shown is the sidebar's list: every story whose component or name has
-// the filter in it, under its section's and its component's heads.
+// Shown is the sidebar's tree, flattened: every story whose component or
+// name has the filter in it, under its section's caption and its
+// component's group. A group's stories are shown while it is open: where
+// a click opened it, where it holds the picked story and no click closed
+// it, and, while the list is filtered, always.
 func (g *Gallery) Shown() []Entry {
-	q := strings.ToLower(strings.TrimSpace(g.Filter))
 	var out []Entry
-	section, group := "", ""
-	for _, s := range g.all {
-		// A scene is found by its words, not as component/name.
-		find := s.group + "/" + s.name
-		if s.section == scenes {
-			find = s.group + " " + s.name
-		}
-		if q != "" && !strings.Contains(strings.ToLower(find), q) {
-			continue
-		}
+	section, group, open := "", "", false
+	head := -1
+	for _, s := range g.found() {
 		if s.section != section {
 			section, group = s.section, ""
 			out = append(out, Entry{ID: "x-" + slug(section), Label: section, Kind: "section"})
 		}
 		if s.group != group {
 			group = s.group
-			out = append(out, Entry{ID: "g-" + slug(section+"-"+group), Label: group, Kind: "group"})
+			id := groupID(s)
+			open = g.isOpen(id)
+			head = len(out)
+			out = append(out, Entry{ID: id, Label: group, Kind: "group", Open: open, Icon: sectionIcons[section]})
 		}
-		out = append(out, Entry{ID: s.id, Label: s.name, Kind: "story"})
+		n, _ := strconv.Atoi(out[head].Count)
+		out[head].Count = strconv.Itoa(n + 1)
+		if open {
+			out = append(out, Entry{ID: s.id, Label: s.name, Kind: "story"})
+		}
 	}
 	return out
+}
+
+// sectionIcons are the icons of a section's groups, MDI names.
+var sectionIcons = map[string]string{
+	scenes:     "shape-outline",
+	widgets:    "code-tags",
+	others:     "book-open-outline",
+	composites: "puzzle-outline",
+	screensSec: "monitor",
+}
+
+// groupID is the id of s's group's row.
+func groupID(s *story) string { return "g-" + slug(s.section+"-"+s.group) }
+
+// found are the stories the filter leaves, in the catalog's order.
+func (g *Gallery) found() []*story {
+	q := strings.ToLower(strings.TrimSpace(g.Filter))
+	if q == "" {
+		return g.all
+	}
+	var out []*story
+	for _, s := range g.all {
+		// A scene is found by its words, not as component/name.
+		find := s.group + "/" + s.name
+		if s.section == scenes {
+			find = s.group + " " + s.name
+		}
+		if strings.Contains(strings.ToLower(find), q) {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// Stories are the ids of the stories the filter leaves, in the
+// sidebar's order, whatever groups are folded.
+func (g *Gallery) Stories() []string {
+	var ids []string
+	for _, s := range g.found() {
+		ids = append(ids, s.id)
+	}
+	return ids
+}
+
+// isOpen says the group id shows its stories.
+func (g *Gallery) isOpen(id string) bool {
+	if strings.TrimSpace(g.Filter) != "" {
+		return true
+	}
+	if open, said := g.open[id]; said {
+		return open
+	}
+	return g.cur != nil && groupID(g.cur.s) == id
+}
+
+// Toggle folds the group id, or unfolds it.
+func (g *Gallery) Toggle(id string) {
+	if g.open == nil {
+		g.open = map[string]bool{}
+	}
+	g.open[id] = !g.isOpen(id)
 }
 
 // Themes are the themes a surface takes.
 func (g *Gallery) Themes() []string { return valuesOf("theme") }
 
-// Densities are the densities a surface takes.
-func (g *Gallery) Densities() []string { return valuesOf("density") }
+// Densities are the densities the canvas takes: a surface's but dense,
+// the cells' own, which no host draws a page in (the maintainer,
+// 2026-11-10).
+func (g *Gallery) Densities() []string {
+	return slices.DeleteFunc(slices.Clone(valuesOf("density")), func(d string) bool { return d == string(surfui.Dense) })
+}
 
 // Widths are the canvas's widths to step through: the story's own among
 // them.
@@ -201,6 +277,14 @@ func (g *Gallery) Title() string {
 	return g.cur.s.group + " / " + g.cur.s.name
 }
 
+// Section is the picked story's section in the sidebar.
+func (g *Gallery) Section() string {
+	if g.cur == nil {
+		return ""
+	}
+	return g.cur.s.section
+}
+
 // About is a scene's line under its title: its component's tag, and
 // the sentence that says what the scene shows; "" for any other story.
 func (g *Gallery) About() string {
@@ -213,6 +297,10 @@ func (g *Gallery) About() string {
 	}
 	return tag + "  " + g.cur.s.about
 }
+
+// HasControls says the story has controls: the toolbar's Controls
+// switch and the controls' column are shown only where it has.
+func (g *Gallery) HasControls() bool { return len(g.Controls) > 0 }
 
 // HasCells says the story's component has a cells UI, which the
 // toolbar's Cells switch draws it by.
@@ -253,25 +341,13 @@ func (g *Gallery) Uncontrolled() string {
 // SetFilter narrows the list to the stories with q in their names.
 func (g *Gallery) SetFilter(q string) { g.Filter = q }
 
-// Pick picks the story id; a head picks its first story.
+// Pick picks the story id.
 func (g *Gallery) Pick(id string) {
 	s, ok := g.byID[id]
 	if !ok {
-		shown := g.Shown()
-		at := slices.IndexFunc(shown, func(e Entry) bool { return e.ID == id })
-		if at < 0 {
-			return
-		}
-		for _, e := range shown[at:] {
-			if e.Kind == "story" {
-				s = g.byID[e.ID]
-				break
-			}
-		}
-		if s == nil {
-			return
-		}
+		return
 	}
+	delete(g.open, groupID(s)) // its group shows it, whatever a click said
 	g.Sel, g.Width, g.Cells, g.own = s.id, fitWidth(g.cols, s.cols), false, false
 	g.Log, g.matrix = nil, nil
 	g.cur = g.draw(s)
@@ -283,14 +359,10 @@ func (g *Gallery) Pick(id string) {
 }
 
 // Move picks the story by stories down the list from the picked one (up
-// for less than 0).
+// for less than 0), through the groups, folded or not: the one it comes
+// to unfolds.
 func (g *Gallery) Move(by int) {
-	var ids []string
-	for _, e := range g.Shown() {
-		if e.Kind == "story" {
-			ids = append(ids, e.ID)
-		}
-	}
+	ids := g.Stories()
 	if len(ids) == 0 {
 		return
 	}
@@ -304,8 +376,12 @@ func (g *Gallery) Move(by int) {
 // SetTheme is the canvas's theme.
 func (g *Gallery) SetTheme(t string) { g.Theme = t }
 
-// SetDensity is the canvas's density.
-func (g *Gallery) SetDensity(d string) { g.Density = d }
+// SetDensity is the canvas's density, one of Densities.
+func (g *Gallery) SetDensity(d string) {
+	if slices.Contains(g.Densities(), d) {
+		g.Density = d
+	}
+}
 
 // SetWidth is the canvas's width in cells, which the story is drawn at
 // whatever the window's.

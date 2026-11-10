@@ -713,7 +713,8 @@ density gives the units.
 - **Density** is the surface's: Compact unless it says
   (`<surface density="dense">`). Compact is proportional type (IBM Plex
   Sans, 14px) on the terminal's lines. Dense is the terminal's grid, a
-  line a row and the terminal's font, its rows whole cells. Roomy is a
+  line a row and the terminal's font, its rows whole cells; it is on its
+  way out, and nothing new is to use it. Roomy is a
   page's. On a host, Compact's and Roomy's list rows have air above,
   below and between them (a nav's more), so that a selection is a
   rounded block; the cells UI keeps a row a cell, its layout its own. A
@@ -1836,7 +1837,7 @@ and its `about` the sentence under it. The file's first lines:
           the rest plain, and a bare one, with no fill until it is pointed
           at. Point at one to hover it; Tab to focus it.
         </text>
-        <row gap="1">
+        <row wrap gap="1">
           <button fill="accent">
             <icon name="rocket-launch-outline"/>Deploy to production
           </button>
