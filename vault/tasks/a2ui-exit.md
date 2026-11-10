@@ -239,3 +239,7 @@ blitz-gaps.
 - **A partial next row** showing in a scrolled multi-row field's padding
   in Chromium is left as native textareas have it; Blitz doesn't show it
   (L5c).
+- **The Markdown tag is `<surf-markdown>`,** not `<markdown>` (L12): a
+  registered widget's tag keeps L8's dash, so it never meets a future
+  word of the vocabulary. A rename if the maintainer wants `markdown` in
+  the vocabulary itself (it would pull goldmark into the core, Q-0004).
