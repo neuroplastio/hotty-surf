@@ -46,7 +46,7 @@ hits
   --u-hue-teal: #4fd1c5;
 }
 @media (prefers-color-scheme: light) {
-  .u-surface {
+  .u-surface:where(:not(.u-scheme-dark)) {
     --u-hue-coral: #a42d1c;
     --u-hue-plum: #6b3fa0;
     --u-hue-teal: #0d645d;
