@@ -21,7 +21,7 @@ func clusters(line string) []Cluster {
 		if s == "\t" {
 			n := 8 - w%8
 			for range n {
-				out = append(out, Cluster{" ", 1})
+				out = append(out, Cluster{Text: " ", Width: 1})
 			}
 			w += n
 			continue
@@ -30,7 +30,7 @@ func clusters(line string) []Cluster {
 		if cw <= 0 {
 			continue
 		}
-		out = append(out, Cluster{s, cw})
+		out = append(out, Cluster{Text: s, Width: cw})
 		w += cw
 	}
 	return out
@@ -58,7 +58,7 @@ func joined(cs []Cluster) string {
 }
 
 // ellipsis ends a text cut where it doesn't fit.
-var ellipsis = Cluster{"…", 1}
+var ellipsis = Cluster{Text: "…", Width: 1}
 
 // fit is cs in at most w cells, ending in … where it was cut.
 func fit(cs []Cluster, w int) []Cluster {
@@ -116,7 +116,7 @@ func wrap(s string, w int) [][]Cluster {
 				pw = width(p)
 			}
 			if gap > 0 {
-				line = append(line, Cluster{" ", 1})
+				line = append(line, Cluster{Text: " ", Width: 1})
 			}
 			line = append(line, p...)
 			n += gap + pw
