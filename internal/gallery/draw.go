@@ -22,6 +22,7 @@ type drawn struct {
 	host     *owner              // a partial's story's owner, which gives its props
 	state    any                 // a stories file's Go state
 	controls []*Control
+	src      string   // a widget's story's template, as its controls set it
 	at       int      // where its node is among its tree's root's children; -1: the root
 	err      string   // why it draws nothing
 	errs     []string // what its last render reported

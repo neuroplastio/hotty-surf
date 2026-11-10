@@ -2,6 +2,7 @@ package gallery
 
 import (
 	"fmt"
+	"neuroplast.io/hotty-surf/pkg/markup"
 	"regexp"
 	"slices"
 	"strconv"
@@ -133,7 +134,7 @@ const (
 func barCtl(key string) string { return barAt(0, key) }
 func barAt(row int, key string) string {
 	group := map[string]string{"theme": "canvas", "density": "canvas", "width": "canvas",
-		"cells": "views", "states": "views", "reference": "views", "stories": "panes", "controls": "panes"}[key]
+		"cells": "views", "states": "views", "reference": "views", "stories": "panes", "controls": "panes", "source": "panes"}[key]
 	return barID + ".kr" + strconv.Itoa(row) + ".k" + group + ".k" + key
 }
 
@@ -827,7 +828,7 @@ func TestFrameOf(t *testing.T) {
 		{200, 80, true, false, false, sideCols, 0, 0, false, false},
 		{120, 80, false, true, false, 0, 38 - 1, 0, false, false},
 	} {
-		f := frameOf(c.cols, c.width, c.stories, c.controls, c.keep)
+		f := frameOf(c.cols, c.width, c.stories, c.controls, c.keep, asideCols, asideMin)
 		want := frame{c.side, c.aside, c.sideOut, c.asideOut, c.cut}
 		if f != want {
 			t.Errorf("%d cells round a canvas of %d, stories %v, controls %v, controls kept %v: %+v, want %+v",
@@ -840,7 +841,7 @@ func TestFrameOf(t *testing.T) {
 	for cols := 1; cols <= 260; cols++ {
 		for _, width := range []int{24, 30, 40, 50, 60, 80, 100, 120} {
 			for _, keep := range []bool{false, true} {
-				f := frameOf(cols, width, true, true, keep)
+				f := frameOf(cols, width, true, true, keep, asideCols, asideMin)
 				used := framePad + max(width, midMin)
 				if f.side > 0 {
 					used += f.side + 1
@@ -1089,5 +1090,88 @@ func TestOnlyWhatActs(t *testing.T) {
 	a.Call(func() { g.SetDensity("dense") })
 	if g.Density != "compact" {
 		t.Errorf("the canvas took the density %s", g.Density)
+	}
+}
+
+// The story's .surf source is shown beside the canvas, behind a switch
+// that is drawn only where the story has some: a stories file's story
+// is its own lines, numbered as the file's, with the template it draws
+// under them; a widget's own is what its controls make; a story of
+// stories.All, a Go tree, has none. The canvas gives it room, and it
+// follows the file as the canvas does.
+func TestSource(t *testing.T) {
+	dir := checkout(t)
+	g := New()
+	if err := g.Watch(dir, 5*time.Millisecond); err != nil {
+		t.Fatal(err)
+	}
+	sel := "f-button-buttons-on-a-release-page"
+	a, _ := startOn(t, surftest.Start, g, Interpreted, sel)
+	source := asideID + ".ksrc-" + sel
+	shown := func(id string) bool { _, ok := a.Surface().Element(id); return ok }
+	click := func(id string) {
+		t.Helper()
+		if err := a.Host.Click(a.Name, id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !g.HasSource() || shown(source) {
+		t.Fatalf("a scene has source (%v), shown before its switch is on (%v)", g.HasSource(), shown(source))
+	}
+	wide := g.Width
+	click(barCtl("source"))
+	a.Wait("the source beside the canvas", func() bool { return shown(source) })
+	src := g.Source()
+	if len(src) != 1 || src[0].Title != "internal/stories/button.surf" || src[0].From != 8 ||
+		!strings.HasPrefix(src[0].Text, "<story name=\"Buttons on a release page\"\n       about=") ||
+		!strings.HasSuffix(src[0].Text, "\n</story>") {
+		t.Errorf("the scene's source: %+v", src)
+	}
+	if !strings.Contains(a.Surface().TextOf(source), "Deploy to production") {
+		t.Errorf("the source drawn: %q", a.Surface().TextOf(source))
+	}
+	if g.Width >= wide || g.Width < midMin || g.AsideWidth() < sourceMin {
+		t.Errorf("the canvas went from %d to %d cells for a source of %d", wide, g.Width, g.AsideWidth())
+	}
+	edit(t, dir, "internal/stories/button.surf", "Save as draft", "Keep as a draft")
+	a.Wait("the source follows the file", func() bool {
+		return strings.Contains(a.Surface().TextOf(source), "Keep as a draft")
+	})
+	click(barCtl("source"))
+	a.Wait("the source gone, the canvas as wide as it was", func() bool { return !shown(source) && g.Width == wide })
+
+	// A partial's story: its line of the stories file, then its template.
+	a.Call(func() { g.Pick("f-notice-row-read") })
+	if src := g.Source(); len(src) != 2 || !strings.HasPrefix(src[0].Text, "<story name=\"read\"") ||
+		src[1].Title != "notice-row.surf, the template it draws" || !strings.Contains(src[1].Text, "<props notice=") {
+		t.Errorf("a partial's story's source: %+v", src)
+	}
+	// A widget's own story: the template its controls make.
+	a.Call(func() { g.Pick("w-button") })
+	if src := g.Source(); len(src) != 1 || !strings.Contains(src[0].Text, "<button") {
+		t.Errorf("a widget's story's source: %+v", src)
+	}
+	// A story of stories.All is a Go tree: no source, and no switch.
+	a.Call(func() { g.Pick("s-row-fit") })
+	a.Wait("a Go tree's toolbar, with no Source switch", func() bool { return !shown(barCtl("source")) })
+	if g.HasSource() {
+		t.Errorf("a Go tree has source: %+v", g.Source())
+	}
+}
+
+func TestStorySource(t *testing.T) {
+	src := "<stories of=\"text\">\n  <story name=\"a\"><text>x</text></story>\n  <story name=\"b\">\n    <text>\n      hi\n    </text>\n  </story>\n</stories>\n"
+	f := parseStoryFile("x.surf", src, nil)
+	if len(f.stories) != 2 {
+		t.Fatalf("%d stories: %v", len(f.stories), f.err)
+	}
+	if s := f.stories[0]; s.src != `<story name="a"><text>x</text></story>` || s.line != 2 {
+		t.Errorf("a story on one line: %q at %d", s.src, s.line)
+	}
+	if got := storySource("  <story name=\"c\"\n         n=\"1\"/>\n  <story name=\"d\"/>", &markup.Node{Pos: markup.Pos{Line: 1}}); got != "<story name=\"c\"\n       n=\"1\"/>" {
+		t.Errorf("a story with no children: %q", got)
+	}
+	if s := f.stories[1]; s.src != "<story name=\"b\">\n  <text>\n    hi\n  </text>\n</story>" || s.line != 3 {
+		t.Errorf("a story with children: %q at %d", s.src, s.line)
 	}
 }

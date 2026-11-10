@@ -12,7 +12,10 @@
      groups fold). The tree is its own scroll box, so Tab gives the
      keyboard to it, and the arrows its bindings hear move the story.
      A switch that can do nothing for the story is not drawn, nor the
-     controls' column where the story has none. The rest of the page is
+     controls' column where the story has none. The story's .surf source
+     (Source) is in that column, under the controls, a scroll box of its
+     own: its lines of its stories file, numbered as the file's, and
+     the template it draws. The rest of the page is
      dense whatever the canvas is, until the toolbar is redrawn. -->
 <surface density="dense">
   <stack grow key="page">
@@ -41,6 +44,8 @@
           <switch :on="showStories()" :disabled="!canShowStories()" @click="flipStories" label="Stories" key="stories"/>
           <text :if="hasControls()" muted indent="1" key="lcontrols">Controls</text>
           <switch :if="hasControls()" :on="showControls()" :disabled="!canShowControls()" @click="flipControls" label="Controls" key="controls"/>
+          <text :if="hasSource()" muted indent="1" key="lsource">Source</text>
+          <switch :if="hasSource()" :on="showSource()" @click="flipSource" label="Source" key="source"/>
         </row>
       </row>
       <row :if="fit() != ''" top gap="1" pad="1 0" key="fit">
@@ -77,11 +82,18 @@
           <text :if="size(log) == 0" small muted wrap key="quiet">{{ quiet() }}</text>
         </stack>
       </stack>
-      <stack :if="showControls()" :width="asideWidth()" key="aside">
-        <text bold key="head">Controls</text>
-        <stack scroll :key="'p-' + sel">
+      <stack :if="showAside()" :width="asideWidth()" key="aside">
+        <text :if="showControls()" bold key="head">Controls</text>
+        <stack :if="showControls()" scroll :key="'p-' + sel">
           <control-row :each="(i, c) in controls" :key="c.key" :c="c" :i="i"/>
           <text :if="size(controls) == 0" small muted wrap key="none">{{ uncontrolled() }}</text>
+        </stack>
+        <text :if="showSource()" bold key="shead">Source</text>
+        <stack :if="showSource()" scroll gap="1" :key="'src-' + sel">
+          <stack :each="(i, p) in source()" :key="'s' + string(i)">
+            <text small muted wrap key="from">{{ p.title }}</text>
+            <code language="surf" numbers wrap :from="p.from" key="code">{{ p.text }}</code>
+          </stack>
         </stack>
       </stack>
     </row>

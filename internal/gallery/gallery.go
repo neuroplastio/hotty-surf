@@ -61,6 +61,7 @@ type Gallery struct {
 	// and which keeps its room where the window has room for one.
 	noStories, noControls bool
 	keepControls          bool
+	source                bool // the Source switch: the story's .surf beside the canvas
 	// own: the canvas's width is the user's (SetWidth), not the frame's
 	// fit of the story's (fitWidth).
 	own bool
@@ -302,6 +303,46 @@ func (g *Gallery) About() string {
 // switch and the controls' column are shown only where it has.
 func (g *Gallery) HasControls() bool { return len(g.Controls) > 0 }
 
+// SourcePart is a piece of a story's .surf source: where it is from,
+// its text, and the file's line its first line is.
+type SourcePart struct {
+	Title string
+	Text  string
+	From  int
+}
+
+// Source is the picked story's .surf source, as its author wrote it: a
+// stories file's story is its own lines of the file, and under them the
+// template it draws, where it draws one (a screen, a partial); a
+// widget's own story is the template its controls make. A story of
+// stories.All is a Go tree, and has none.
+func (g *Gallery) Source() []SourcePart {
+	if g.cur == nil {
+		return nil
+	}
+	s := g.cur.s
+	switch {
+	case s.widget != nil && g.cur.src != "":
+		return []SourcePart{{Title: "<" + s.widget.Tag + ">, as the controls set it", Text: g.cur.src, From: 1}}
+	case s.file != nil && s.at >= 0 && s.at < len(s.file.stories):
+		f := s.file
+		st := &f.stories[s.at]
+		out := []SourcePart{{Title: storiesDir + "/" + f.name + ".surf", Text: st.src, From: st.line}}
+		if f.pkg != nil && f.pkg.load() == nil {
+			name := f.of + ".surf"
+			if tf, ok := f.pkg.files[name]; ok {
+				out = append(out, SourcePart{Title: name + ", the template it draws", Text: strings.TrimRight(string(tf.Data), "\n"), From: 1})
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+// HasSource says the story has .surf source to show: the toolbar's
+// Source switch is drawn only where it has.
+func (g *Gallery) HasSource() bool { return len(g.Source()) > 0 }
+
 // HasCells says the story's component has a cells UI, which the
 // toolbar's Cells switch draws it by.
 func (g *Gallery) HasCells() bool { return g.cur != nil && g.cur.cells() != nil }
@@ -348,13 +389,14 @@ func (g *Gallery) Pick(id string) {
 		return
 	}
 	delete(g.open, groupID(s)) // its group shows it, whatever a click said
-	g.Sel, g.Width, g.Cells, g.own = s.id, fitWidth(g.cols, s.cols), false, false
+	g.Sel, g.Cells, g.own = s.id, false, false
 	g.Log, g.matrix = nil, nil
 	g.cur = g.draw(s)
 	g.Controls = g.cur.controls
 	for _, c := range g.Controls {
 		c.Key = slug(c.Name)
 	}
+	g.Width = fitWidth(g.cols, s.cols, g.reserve())
 	g.cur.resize(g.Width)
 }
 

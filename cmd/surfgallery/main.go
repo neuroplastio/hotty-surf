@@ -41,6 +41,7 @@ func main() {
 	cells := flag.Bool("cells", false, "draw a screen by its cells UI")
 	reference := flag.Bool("reference", false, "show the gate's renders of a story of stories.All under it (with -dev)")
 	bare := flag.Bool("bare", false, "hide the stories' and the controls' columns")
+	source := flag.Bool("source", false, "show the story's .surf source beside the canvas")
 	dev := flag.String("dev", "", "draw the checkout at `dir`'s stories files, templates and stylesheet, and reload them as they change")
 	flag.Parse()
 	g := gallery.New()
@@ -75,6 +76,9 @@ func main() {
 	}
 	if *bare {
 		g.Bare()
+	}
+	if *source {
+		g.FlipSource()
 	}
 	c := gallery.Interpreted(g)
 	if *compiled {

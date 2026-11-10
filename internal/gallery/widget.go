@@ -405,6 +405,7 @@ func sampleKid(tag string, i int) string {
 // it.
 func (ws *widgetStory) load() {
 	src := ws.source()
+	ws.d.src = src
 	set, err := surf.Load(fstest.MapFS{surf.TemplateName(widgetShape.Name) + ".surf": {Data: []byte(src)}}, []*surf.Shape{widgetShape})
 	if err != nil {
 		ws.d.fail(err)

@@ -34,12 +34,18 @@ import (
 // width else, so that the log's head (Actions, its count, Clear) is
 // whole under the narrowest canvas. framePad is the main row's pads;
 // each column shown takes a cell of gap beside the middle one.
+//
+// The source (Source) is in the controls' column, under them, and makes
+// it wider: sourceCols where the window has room, a line of 80 and its
+// numbers, down to sourceMin, where the lines wrap. A story's canvas
+// makes room for it (reserve), since a scene is as wide as the window.
 const (
-	sideCols, sideMin   = 30, 22
-	asideCols, asideMin = 40, 34
-	midMin              = 30
-	fieldCols           = 18
-	framePad            = 2
+	sideCols, sideMin     = 30, 22
+	asideCols, asideMin   = 40, 34
+	sourceCols, sourceMin = 86, 44
+	midMin                = 30
+	fieldCols             = 18
+	framePad              = 2
 )
 
 // frame is the window's width shared out: the side columns' widths, 0
@@ -55,33 +61,81 @@ type frame struct {
 // known): its own, cols wide, where it fits beside the stories' column
 // at its width; else the room beside it, or beside it at its least; else,
 // in a window too narrow for a canvas of midMin beside them, its own.
-func fitWidth(cols, story int) int {
+// reserve is the cells kept for the source beside it, its gap in them.
+func fitWidth(cols, story, reserve int) int {
 	if cols == 0 {
 		return story
 	}
-	full := cols - framePad - sideCols - 1
+	full := cols - framePad - sideCols - 1 - reserve
 	if story <= full {
 		return story
 	}
 	if full >= midMin {
 		return full
 	}
-	if least := cols - framePad - sideMin - 1; least >= midMin {
+	if least := cols - framePad - sideMin - 1 - reserve; least >= midMin {
 		return min(story, least)
 	}
 	return story
 }
 
+// reserve is the cells a story's canvas leaves the source beside it,
+// its gap in them: half the room beside the stories, between the
+// source's least and its width; none where it isn't shown, or the
+// window has no room for it at its least beside a canvas at its least.
+func (g *Gallery) reserve() int {
+	if !g.wantSource() || g.cols == 0 {
+		return 0
+	}
+	room := g.cols - framePad - sideCols - 1 - 1
+	if room-sourceMin < midMin {
+		return 0
+	}
+	return min(max(room/2, sourceMin), sourceCols, room-midMin) + 1
+}
+
+// refit fits the story's canvas to the window again, unless the user
+// picked its width.
+func (g *Gallery) refit() {
+	if g.own || g.cur == nil {
+		return
+	}
+	if w := fitWidth(g.cols, g.cur.s.cols, g.reserve()); w != g.Width {
+		g.Width = w
+		g.cur.resize(w)
+		for _, v := range g.matrix {
+			v.d.resize(w)
+		}
+	}
+}
+
+// wantSource says the source is asked for: its switch is on, and the
+// story has some.
+func (g *Gallery) wantSource() bool { return g.source && g.HasSource() }
+
+// wantAside says the column at the right is asked for, by the controls
+// or the source; asideSize is its width and its least, the source's
+// where it holds it.
+func (g *Gallery) wantAside() bool { return g.wantControls() || g.wantSource() }
+
+func (g *Gallery) asideSize() (cols, least int) {
+	if g.wantSource() {
+		return sourceCols, sourceMin
+	}
+	return asideCols, asideMin
+}
+
 // frame is g's frame in its window.
 func (g *Gallery) frame() frame {
-	return frameOf(g.cols, g.Width, !g.noStories, g.wantControls(), g.keepControls)
+	ac, am := g.asideSize()
+	return frameOf(g.cols, g.Width, !g.noStories, g.wantAside(), g.keepControls, ac, am)
 }
 
 // frameOf lays out a window cols wide (0: not yet known, so as wide as
 // the columns ask) round a canvas width wide, with the side columns
 // asked for: both, narrowed as they must; else the one kept, the stories
 // unless keepControls; else the other; else neither.
-func frameOf(cols, width int, stories, controls, keepControls bool) frame {
+func frameOf(cols, width int, stories, controls, keepControls bool, asideCols, asideMin int) frame {
 	if cols == 0 {
 		var f frame
 		if stories {
@@ -99,7 +153,7 @@ func frameOf(cols, width int, stories, controls, keepControls bool) frame {
 	}
 	f := frame{cut: max(width-(cols-framePad), 0)}
 	for _, t := range tries {
-		if side, aside, ok := share(room, t[0], t[1]); ok {
+		if side, aside, ok := share(room, t[0], t[1], asideCols, asideMin); ok {
 			f.side, f.aside = side, aside
 			break
 		}
@@ -113,7 +167,7 @@ func frameOf(cols, width int, stories, controls, keepControls bool) frame {
 // each with its gap: at their widths where they fit, else narrowed a
 // cell at a time, the one further above its least first, down to their
 // least. ok is false where even that doesn't fit.
-func share(room int, stories, controls bool) (side, aside int, ok bool) {
+func share(room int, stories, controls bool, asideCols, asideMin int) (side, aside int, ok bool) {
 	if stories {
 		side, room = sideCols, room-1
 	}
@@ -137,34 +191,41 @@ func share(room int, stories, controls bool) (side, aside int, ok bool) {
 // user picked stays; a story's is fitted to the window again.
 func (g *Gallery) Resize(cols, rows int) {
 	g.cols = cols
-	if g.own || g.cur == nil {
-		return
-	}
-	if w := fitWidth(cols, g.cur.s.cols); w != g.Width {
-		g.Width = w
-		g.cur.resize(w)
-		for _, v := range g.matrix {
-			v.d.resize(w)
-		}
-	}
+	g.refit()
 }
 
 // ShowStories and ShowControls say the side column is shown; SideWidth
 // and AsideWidth are its width in cells.
 func (g *Gallery) ShowStories() bool  { return g.frame().side > 0 }
-func (g *Gallery) ShowControls() bool { return g.frame().aside > 0 }
-func (g *Gallery) SideWidth() int     { return g.frame().side }
-func (g *Gallery) AsideWidth() int    { return g.frame().aside }
+func (g *Gallery) ShowControls() bool { return g.frame().aside > 0 && g.wantControls() }
+
+// ShowSource says the source is shown, in the column at the right;
+// ShowAside, that the column is, for the controls, the source or both.
+func (g *Gallery) ShowSource() bool { return g.frame().aside > 0 && g.wantSource() }
+func (g *Gallery) ShowAside() bool  { return g.frame().aside > 0 }
+
+// FlipSource shows the story's source beside the canvas, or hides it;
+// a story's canvas gives it room, or takes it back.
+func (g *Gallery) FlipSource() {
+	g.source = !g.source
+	if g.source {
+		g.keepControls = true // where there is room for one column only, the one just asked for
+	}
+	g.refit()
+}
+func (g *Gallery) SideWidth() int  { return g.frame().side }
+func (g *Gallery) AsideWidth() int { return g.frame().aside }
 
 // NameWidth is the width of the controls' names, in cells: the controls'
 // column's but a field's and its gap.
-func (g *Gallery) NameWidth() int { return max(g.frame().aside-fieldCols-1, 1) }
+func (g *Gallery) NameWidth() int { return max(min(g.frame().aside, asideCols)-fieldCols-1, 1) }
 
 // CanShowStories and CanShowControls say the column's switch can show
 // it: it is shown, or the window has room for it, at least in place of
 // the other.
 func (g *Gallery) CanShowStories() bool {
-	return frameOf(g.cols, g.Width, true, g.wantControls(), false).side > 0
+	ac, am := g.asideSize()
+	return frameOf(g.cols, g.Width, true, g.wantAside(), false, ac, am).side > 0
 }
 
 // wantControls says the controls' column is asked for: the story has
@@ -172,7 +233,8 @@ func (g *Gallery) CanShowStories() bool {
 func (g *Gallery) wantControls() bool { return !g.noControls && g.HasControls() }
 
 func (g *Gallery) CanShowControls() bool {
-	return g.HasControls() && frameOf(g.cols, g.Width, !g.noStories, true, true).aside > 0
+	ac, am := g.asideSize()
+	return g.HasControls() && frameOf(g.cols, g.Width, !g.noStories, true, true, ac, am).aside > 0
 }
 
 // FlipStories hides the stories' column, or shows it, in place of the
@@ -206,11 +268,11 @@ func (g *Gallery) Fit() string {
 	var out string
 	switch {
 	case f.sideOut && f.asideOut:
-		out = "the stories and the controls"
+		out = "the stories and " + g.asideName()
 	case f.sideOut:
 		out = "the stories"
 	case f.asideOut:
-		out = "the controls"
+		out = g.asideName()
 	}
 	w, cols := strconv.Itoa(g.Width), strconv.Itoa(g.cols)
 	switch {
@@ -233,6 +295,17 @@ func (g *Gallery) Fit() string {
 		return s + "."
 	}
 	return ""
+}
+
+// asideName is what the column at the right holds, as Fit says it.
+func (g *Gallery) asideName() string {
+	switch {
+	case g.wantControls() && g.wantSource():
+		return "the controls and the source"
+	case g.wantSource():
+		return "the source"
+	}
+	return "the controls"
 }
 
 // BarRow is a row of the toolbar: the groups it holds, the gallery's
@@ -308,6 +381,9 @@ func (g *Gallery) barGroups() []barGroup {
 	panes := []int{pair("Stories", sw)}
 	if g.HasControls() {
 		panes = append(panes, pair("Controls", sw))
+	}
+	if g.HasSource() {
+		panes = append(panes, pair("Source", sw))
 	}
 	return append(out, barGroup{pairs(panes...), func(r *BarRow) { r.Panes = true }})
 }

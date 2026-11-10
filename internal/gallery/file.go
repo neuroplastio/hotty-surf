@@ -28,6 +28,8 @@ type fileStory struct {
 	cols  int
 	about string        // a muted line drawn under it, if any; a scene's sentence, under its title
 	props []markup.Attr // its other attributes: the props it gives
+	src   string        // its own lines of the file, as written, their common indent taken off
+	line  int           // the file's line its first is
 	kids  []*markup.Node
 }
 
@@ -107,7 +109,8 @@ func parseStoryFile(file, src string, packs []*pack) *storyFile {
 		if n.Tag != "story" {
 			return fail(n.Pos, "<stories> holds <story>s and <state>s, not <%s>", n.Tag)
 		}
-		st := fileStory{kids: n.Kids}
+		st := fileStory{kids: n.Kids, line: n.Pos.Line}
+		st.src = storySource(src, n)
 		for _, a := range n.Attrs {
 			switch a.Name {
 			case "name":
@@ -136,6 +139,43 @@ func parseStoryFile(file, src string, packs []*pack) *storyFile {
 		f.stories = append(f.stories, st)
 	}
 	return f
+}
+
+// storySource is the lines of src that are the <story> n, from its
+// opening tag to its closing one, with the indent they share taken off:
+// what its author wrote. A story holds no story, so its end is the
+// first </story> from its start, or, where it has no children, the end
+// of its tag.
+func storySource(src string, n *markup.Node) string {
+	lines := strings.Split(src, "\n")
+	at := n.Pos.Line - 1
+	if at < 0 || at >= len(lines) {
+		return ""
+	}
+	end := len(lines) - 1
+	for i := at; i < len(lines); i++ {
+		if strings.Contains(lines[i], "</story>") || len(n.Kids) == 0 && strings.Contains(lines[i], "/>") {
+			end = i
+			break
+		}
+	}
+	lines = lines[at : end+1]
+	indent := -1
+	for _, l := range lines {
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
+		if in := len(l) - len(strings.TrimLeft(l, " \t")); indent < 0 || in < indent {
+			indent = in
+		}
+	}
+	for i, l := range lines {
+		if len(l) >= indent && indent > 0 {
+			lines[i] = l[indent:]
+		}
+		lines[i] = strings.TrimRight(lines[i], " \t\r")
+	}
+	return strings.Join(lines, "\n")
 }
 
 // elements are ns' elements: their texts are space between them.
