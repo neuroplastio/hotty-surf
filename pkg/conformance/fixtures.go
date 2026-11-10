@@ -354,6 +354,7 @@ func (d *Draft) Send() { d.Log = append(d.Log, "send "+strconv.Quote(d.Text)) }
 
 // Keep is the Keep draft button.
 func (d *Draft) Keep() { d.Log = append(d.Log, "keep") }
+
 // Links is a component of links: one the program follows, one that is a
 // hyperlink only (external), one to an anchor of its own document, and
 // one to a fragment no element has, which the program follows too. Its
