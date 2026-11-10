@@ -463,7 +463,10 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | `cycle` | choice | `value`, `options` | click, focus, change | steps through its options: ‹ value › | `<cycle value="b" :options="['a', 'b']"/>` | `<div id="r" class="u-cycle" tabindex="0" role="spinbutton" aria-valuemin="1" aria-valuemax="2" aria-valuetext="b" aria-valuenow="2" style="--u-chars:1" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program space=program"><span id="r.0" class="u-cycle-step" aria-label="previous" data-on="click">󰅁</span><span id="r.1" class="u-cycle-value" data-on="click">b</span><span id="r.2" class="u-cycle-step" aria-label="next" data-on="click">󰅂</span></div>` |
 | `tabs` | choice | `value`, `options` | focus, change | a row of options, one selected, with one keyboard stop | `<tabs value="b" :options="['a', 'b']"/>` | `<div id="r" class="u-row u-seg u-tabs" tabindex="0" role="tablist" aria-activedescendant="r.k1" data-keys="arrow_left=program arrow_right=program home=program end=program"><span id="r.k0" class="u-btn u-tab" role="tab" aria-selected="false" data-on="click">a</span><span id="r.k1" class="u-btn u-tab is-sel" role="tab" aria-selected="true" data-on="click">b</span></div>` |
 | `list` | kids | children | click, focus | a column of items with a selection | `<list/>` | `<div id="r" class="u-list" role="listbox"></div>` |
-| `item` | kids | children | click, focus | a row of a list | `<item/>` | `<div id="r" class="u-item" role="option"></div>` |
+| `item` | kids | children | click, focus, activate | a row of a list or a table; its activate is Enter on the selected row, a click on it, or a double click, its value the row's key | `<item/>` | `<div id="r" class="u-item" role="option"></div>` |
+| `table` | kids | children | click, focus | columns declared once and rows that are items: a header, its cells at their columns' widths, the rows' selection from the list | `<table><col>Name</col><item><text>alpha</text></item></table>` | `<div id="r" class="u-stack u-table" role="grid"><div id="r.0" class="u-row u-thead u-gap2" role="row"><div id="r.0.0" class="u-row u-cell u-width u-shrink" role="columnheader" style="--u-w:5"><span id="r.0.0.0" class="u-text">Name</span></div></div><div id="r.1" class="u-rule u-table-rule"></div><div id="r.2" class="u-list u-table-body u-table-ruled" role="rowgroup"><div id="r.2.0" class="u-item u-gap2" role="row"><div id="r.2.0.0" class="u-row u-cell u-width u-shrink" role="gridcell" style="--u-w:5"><span id="r.2.0.0.0" class="u-text">alpha</span></div></div></div></div>` |
+| `col` | text | text | none | a table's column: its text the heading, its modifiers its cells' | `<col>Name</col>` | `<span id="r" class="u-col">Name</span>` |
+| `empty` | kids | children | none | what a table shows where it draws no row | `<empty><text muted>No rows.</text></empty>` | `<div id="r" class="u-stack u-table-empty"><span id="r.0" class="u-text u-tone-muted">No rows.</span></div>` |
 | `section` | section | `heading`, children | click, focus | a group under a heading | `<section heading="Agents"/>` | `<section id="r" class="u-section"><div id="r.0" class="u-heading u-section-head">Agents</div></section>` |
 | `rule` | none | nothing | none | a line across | `<rule/>` | `<div id="r" class="u-rule"></div>` |
 | `progress` | none | nothing | none | a determinate percentage, as a track on a host and blocks in cells | `<progress percent="45" label="Download"/>` | `<div id="r" class="u-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="45" aria-label="Download" style="--u-progress:45"><span id="r.0" class="u-progress-fill"></span></div>` |
@@ -659,6 +662,55 @@ has no Markdown parser, a converter (`surfmd`) writes these tags.
   too.
 - **Height.** Every block lays out to its natural height: `Draw(cols, 0)`
   is as tall as the prose, and `Box(anchor)` says where a heading is.
+
+### Tables
+
+A `<table>` has `col` kids that declare its columns, `item` kids that are
+its rows, an `empty`, and other kids that are its foot. Its HTML is a
+`div` (`u-table`, `role="grid"`) holding the header row (`u-thead`, one
+`u-cell` a column), a `rule` (`u-table-rule`), the body, a `list`
+(`u-table-body`, `role="rowgroup"`) of the rows, or the `empty` (`u-table-empty`) in
+its place where there is no row, and the foot's kids.
+
+- **A column** has `width` (a number of cells; `auto`, the default; or
+  `fill`, as `fill` or `grow` bare), `max` (`auto`'s cap: cells, or `N%`
+  of the table), `align` (`start`, `end` or `center`), `sort` (`none`,
+  `ascending`, `descending`: the heading's chevron and `aria-sort`) and
+  `show` (`:if` on a `col` is it: the column and its cells are left
+  out). Its other modifiers (`muted`, `tone`, `bold`, `semibold`,
+  `small`, `hue`) apply to its cells. It draws no element of its own.
+  The header row is drawn where a column has a heading or a `sort`.
+- **A row's** children are its cells in the declared order, each
+  wrapped in a `u-cell` row of its column's width; one past the last
+  column stays as it is. A cell of an `end` or `center` column has a
+  `spacer` before its content, and one after it for `center`.
+- **Widths are in cells and the host is given them.** Once the tree is
+  resolved, each cell of a `fill` column is `u-grow`; of a `width`
+  column `u-width` with `--u-w` its number; of an `auto` column `u-width
+  u-shrink` with `--u-w` the widest of its cells' natural widths in
+  cells (heading and rows), less than `max` in cells, and for a `max`
+  in percent, `u-maxp` with `--u-maxp` its number, a share of the row's
+  width. A cell's natural width is a text's width in cells, a `chip`'s
+  two more, a `glyph`'s two (its text in Compact), a `key`'s two more
+  (three at least), a `button`'s two more, a `line`'s or a `row`'s the
+  sum of its children's (a `row`'s gap between them), a stack's its
+  widest child's. Nothing else is measured but by its text.
+- **`activate`:** on an `item`, run by a click on it where it is selected
+  (`aria-selected`), by a click that is the second of a double click, and
+  by Enter: a table with a selected row that has an `activate` takes the
+  keyboard (`tabindex="0"` on its body) and binds `enter` on it. Its
+  `Value` is the row's key, and the row's `click` runs first.
+- **`scroll`** on a table is on its body, and `height` is the whole
+  table's. The foot's `$range` (a text, once the tree is resolved) is
+  `F–L of N`, `N of N` where all show, `0 of 0` with no rows; a host's is
+  the window from the top that holds the selected row, and the cells'
+  the rows their scrolled body shows.
+- **The cells:** the header and rows draw with the columns' widths in the
+  cells' own units; a hairline row (`─`) follows each row while none is
+  `selected`; with `scroll`, the header leaves the body's bar column
+  free.
+- **The static form:** `tr`, `th`, `td`, `thead`, `tbody` and `tfoot` in
+  a `table` are read as the columns, `item`s and `line`s above.
 
 ### Icons
 
@@ -949,6 +1001,7 @@ The events, by widget (the Widgets table's *events*):
 | `click` | every widget but `spacer` and `rule` | a click, or Space or Enter on a button | the element's `value` attribute, if any |
 | `focus` | every widget but `spacer` and `rule` | it takes the keyboard | |
 | `follow` | `link` | a click, or Space or Enter on it ([Links](#links)) | the link's `href` |
+| `activate` | `item` | Enter on the table whose selected row it is, a click on the selected row, or a double click, after its own `click` ([Tables](#tables)) | the row's key |
 | `input` | `field` | every edit | the field's whole value |
 | `change` | `field` | the user commits it: on Enter, and on leaving it (hotty SPEC §9: Tab, a click elsewhere, the surface losing the keyboard); once for each value | the field's value |
 | `height` | `field` of several lines | its height in rows is not what the program last heard, and when it first shows: from the cells' wrap, the runtime's own call; on a host from its measure (`Surface.Fit`, a `fit` event's rows, SPEC §9), which says the document's rows and not the field's, so it comes where the document has one such field | the rows, an int (`Event.Rows`) |
@@ -1835,6 +1888,7 @@ A case is a txtar archive. Its comment says what it shows. Its files:
 | `press ID` | a press that starts a drag of the handle `ID` (hottytest's `DragStart`) |
 | `over ID [STEP]` | the pointer of the drag onto the element `ID`, at step `STEP` of its `data-steps`' second count where it is split (`DragOver`; `DragMove` without) |
 | `release ID [STEP]` | the drag's button released there (`DragEndOver`, `DragEnd`) |
+| `doubleclick ID` | two clicks on the element `ID`, the second counted as such (hottytest's `DoubleClick`) |
 
 Several acts split by `;` are one step: `release r.krows.kc 1; press
 r.krows.kb; release r.krows.kb`.
@@ -2026,6 +2080,21 @@ component Deck                      // deck.surf: drags, a row a handle
   file(from, folder, where string)  // log += "file " + from + " " +
                                     // where + " " + folder
   open(id string)                   // log += "open " + id
+
+struct Thread                       // a data struct: a Threads' row
+  key, state, doc, summary, age string
+  resolved, gone bool
+
+component Threads                   // threads.surf: a table of threads,
+                                    // columns declared once, a model's
+                                    // selection, @activate, a foot
+  tree    bool                      // the document column's :if
+  sel     int
+  rows    list(Thread)
+  log     list(string)
+
+  pick(i int)                       // sel = i; log += "pick " + i
+  open(key string)                  // log += "open " + key
 ```
 
 `event` is the runtime's event type (Go's `surfrun.Event`), whose parameter

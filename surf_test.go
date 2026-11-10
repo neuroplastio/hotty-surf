@@ -458,8 +458,8 @@ func TestAttrValues(t *testing.T) {
 			t.Errorf("%s takes frob, which is none of its values", a.Name)
 		}
 	}
-	if n != 10 {
-		t.Errorf("%d attributes have values, not 10 (tone, fill, theme, density, badge-tone, drop, caret, kind, language, type)", n)
+	if n != 12 {
+		t.Errorf("%d attributes have values, not 12 (tone, fill, theme, density, badge-tone, drop, caret, kind, language, type, align, sort)", n)
 	}
 }
 

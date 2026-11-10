@@ -395,3 +395,25 @@ func into(off, at, h, view int) int {
 	}
 	return off
 }
+
+// tableRange is the rows, first to last of total (1-based), that a table's
+// body shows in the last layout, whole: its scroll box's offset and view
+// over its rows' height. ok is false where body is none or is not laid out.
+func (r *Renderer) tableRange(body *surfui.Node) (first, last, total int, ok bool) {
+	if body == nil || r.root == nil {
+		return 0, 0, 0, false
+	}
+	b := r.boxOf(surfui.IDOf(body))
+	if b == nil || len(b.kids) == 0 {
+		return 0, 0, 0, false
+	}
+	total = len(b.kids)
+	row := max(b.kids[0].h, 1)
+	if b.f&fScroll == 0 {
+		return 1, total, total, true
+	}
+	off, view := r.offsets[surfui.IDOf(body)], b.view(0).h
+	first = (off+row-1)/row + 1
+	last = min((off+view)/row, total)
+	return first, max(last, first), total, true
+}

@@ -1510,3 +1510,20 @@
 .u-codeblock .u-syn-type { color: var(--u-syn-type); }
 .u-codeblock .u-syn-attribute { color: var(--u-syn-attribute); }
 .u-codeblock .u-syn-plain { color: var(--u-syn-plain); }
+
+/* Table: columns declared once, the rows a list's, so its selection,
+   marker and keys are the list's. The header is muted at weight 400 with
+   one rule beneath; the rows are split by hairlines only while none is
+   selected (the Design review of 2026-11-07). Each cell is a row of the
+   column's width, in cells (--u-w, which surfui fixes by measuring the
+   widest, the cells' units), cut at its end; an Auto cell shrinks where
+   the row is too narrow, and a --u-maxp caps one at a share of its row. */
+.u-table { min-width: 0; }
+.u-table .u-cell { overflow: hidden; min-width: 0; }
+.u-table .u-cell.u-width.u-shrink { flex: 0 1 auto; }
+.u-table .u-cell.u-maxp { max-width: calc(var(--u-maxp) * 1%); }
+.u-thead { padding: var(--u-iy) var(--u-px); color: var(--u-muted); font-weight: 400; }
+.u-table-empty { padding: var(--u-iy) var(--u-px); }
+.u-table-ruled > .u-item { box-shadow: inset 0 -1px var(--u-border); }
+.u-table-sort { flex: 0 0 auto; color: var(--u-muted); }
+.u-table-sort.is-sorted { color: var(--u-ink); }

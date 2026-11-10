@@ -688,11 +688,13 @@ type scope struct {
 	inProse bool
 	// inMenu says what it compiles is a <menu>'s items.
 	inMenu bool
+	// inTable says it is in a <table>, whose foot's texts may say $range.
+	inTable bool
 }
 
 // with is s with locals added, in the next slots.
 func (s *scope) with(locals ...cellite.Var) *scope {
-	n := &scope{c: s.c, t: s.t, vars: append([]cellite.Var(nil), s.vars...), around: s.around, inLine: s.inLine, inProse: s.inProse}
+	n := &scope{c: s.c, t: s.t, vars: append([]cellite.Var(nil), s.vars...), around: s.around, inLine: s.inLine, inProse: s.inProse, inTable: s.inTable}
 	for _, l := range locals {
 		n.vars = declare(n.vars, s.t.nfields, l)
 	}
@@ -1033,8 +1035,8 @@ func (s *scope) directive(n *markup.Node) string {
 	if _, ok := n.Attr(":each"); ok {
 		return ":each"
 	}
-	if _, ok := n.Attr(":if"); ok {
-		return ":if"
+	if _, ok := n.Attr(":if"); ok && n.Tag != "col" {
+		return ":if" // a col's is its `show`: the column stays, so its cells keep their places
 	}
 	for _, d := range []string{":else-if", ":else"} {
 		if a, ok := n.Attr(d); ok {
@@ -1081,12 +1083,16 @@ func (s *scope) bare(n *markup.Node) *elem {
 	case strings.Contains(n.Tag, "-") && !registered(n.Tag):
 		return s.use(n)
 	}
+	if n.Tag == "table" {
+		n = tableAliases(n)
+	}
 	e := s.widgetEl(n)
 	if e == nil {
 		return nil
 	}
 	ks := s.tipOf(e, n, s.menuOf(e, n))
-	was, wasLine, wasProse := s.around, s.inLine, s.inProse
+	was, wasLine, wasProse, wasTable := s.around, s.inLine, s.inProse, s.inTable
+	s.inTable = s.inTable || n.Tag == "table"
 	s.around = true // a <bind> in it binds on it
 	if e.w.Form == FormKids || e.w.Form == FormSection || e.w.Form == FormFace {
 		s.inProse = proseTags[e.w.Tag]
@@ -1097,7 +1103,7 @@ func (s *scope) bare(n *markup.Node) *elem {
 		s.inProse = s.inProse && e.w.Tag == "text"
 		s.leafKids(e, n.Tag, ks)
 	}
-	s.around, s.inLine, s.inProse = was, wasLine, wasProse
+	s.around, s.inLine, s.inProse, s.inTable = was, wasLine, wasProse, wasTable
 	return e
 }
 
@@ -1126,6 +1132,9 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 	vals := map[int]value{}
 	for _, a := range n.Attrs {
 		name, bound := strings.CutPrefix(a.Name, ":")
+		if n.Tag == "col" && a.Name == ":if" {
+			name = "show"
+		}
 		switch {
 		case strings.HasPrefix(a.Name, "@"):
 			s.event(e, n, a)
@@ -1863,6 +1872,14 @@ func checkLiteral(at *Attr, v string) error {
 		return ModKind(NewAlert(), v)
 	case "caret":
 		return ModCaret(surfui.Field(), v)
+	case "width":
+		return ModColWidth(surfui.Col(""), v)
+	case "max":
+		return ModColMax(surfui.Col(""), v)
+	case "align":
+		return ModColAlign(surfui.Col(""), v)
+	case "sort":
+		return ModColSort(surfui.Col(""), v)
 	case "rows":
 		return ModRows(surfui.Field(), v)
 	case "type":
@@ -1888,6 +1905,16 @@ func (s *scope) parts(ps []markup.Part) []part {
 	for _, p := range ps {
 		if !p.Expr {
 			out = append(out, part{lit: p.Src})
+			continue
+		}
+		if strings.TrimSpace(p.Src) == "$range" {
+			// The rows a table shows: its own, which it writes in once it
+			// knows its rows (surfui.RangeText).
+			if !s.inTable {
+				s.c.fail(s.t.file, p.Pos, "$range is the rows a <table> shows: it goes in one, in its foot")
+				continue
+			}
+			out = append(out, part{lit: surfui.RangeMark})
 			continue
 		}
 		if prog, ok := s.expr(p.Src, p.Pos); ok {

@@ -1,0 +1,13 @@
+cells 40x6
+text
+>  document thread
+> ────────────────────────────────────────
+>  No threads yet.
+style
+= .aaaaaaaa.aaaaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= .aaaaaaaaaaaaaaa
+. fg/bg
+a muted/bg
+b line/bg
+hits

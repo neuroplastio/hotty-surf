@@ -224,6 +224,9 @@ func dataOn(n *Node) string {
 			if n.slider == nil { // a Slider's input is the runtime's, from its drag
 				on = appendOnce(on, "input")
 			}
+		case "activate":
+			// A click on the selected row, or a double click, activates it.
+			on = appendOnce(on, "click")
 		}
 	}
 	if Commits(n) {

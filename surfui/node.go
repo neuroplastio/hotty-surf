@@ -74,12 +74,18 @@ type Node struct {
 	caption, message string // a Field's Label and Error, which its parent draws (decorate)
 	captioned        bool   // Label was called
 
-	cycle   *cycle  // a Cycle's value and options
-	slider  *slider // a Slider's bounds and value
-	choice  *choice // a Select's value and options
-	tabs    *choice // a Tabs' selected value and options
-	part    int8    // which part of a Cycle n is: partLess, partValue, partMore
-	entries bool    // a List of Entries: the Items added to it are focusable
+	cycle    *cycle     // a Cycle's value and options
+	slider   *slider    // a Slider's bounds and value
+	choice   *choice    // a Select's value and options
+	tabs     *choice    // a Tabs' selected value and options
+	part     int8       // which part of a Cycle n is: partLess, partValue, partMore
+	entries  bool       // a List of Entries: the Items added to it are focusable
+	col      *colSpec   // a Col's declaration
+	tbl      *tableSpec // a Table's columns
+	empty    bool       // an Empty
+	cellAt   int        // a table cell's column, from 1; 0 for none
+	tmpl     string     // a text's source where it holds a RangeMark, which resolve fills
+	tableSrc []*Node    // a Table's kids as given, which Add builds it from again
 
 	parent   *Node
 	resolved bool // has an id from Resolve
@@ -105,6 +111,11 @@ func RawBlock(html string) *Node { return &Node{tag: "div", raw: html, isRaw: tr
 // Add appends kids, leaving out nils, so that a condition reads as
 // `ok && …`'s Go form: `If(ok, n)`.
 func (n *Node) Add(kids ...*Node) *Node {
+	if n.tbl != nil { // a Table's rows and columns: it is built again
+		n.tableSrc = append(n.tableSrc, kids...)
+		n.assembleTable()
+		return n
+	}
 	for _, k := range kids {
 		if k != nil {
 			if n.entries {
@@ -186,6 +197,19 @@ func (n *Node) On(kind string, act Action) *Node {
 	}
 	n.on = append(n.on, handler{kind, act})
 	return n
+}
+
+// OnActivate runs act when the user activates an Item: Enter on the
+// table or list it is the selection of, a click on the selected Item, or
+// a double click. The event's value is the Item's key.
+func (n *Node) OnActivate(act Action) *Node { return n.On("activate", act) }
+
+// Activation is the action of the Enter binding a Table makes for its
+// selected row: the row's @activate action, and the key it hears as its
+// value. The runtime runs Act as it runs an activate event.
+type Activation struct {
+	Act   Action
+	Value string
 }
 
 // OnClick runs act on a click.
@@ -460,6 +484,7 @@ func resolve(n *Node, ix Index) {
 		resolve(k, ix)
 	}
 	resolveTabs(n)
+	resolveTable(n)
 }
 
 // Clone is a deep copy of n, unresolved.

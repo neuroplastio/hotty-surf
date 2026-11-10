@@ -625,6 +625,10 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 		return NewImg()
 	case "list":
 		return surfui.List(kids...)
+	case "table":
+		return surfui.Table(kids...)
+	case "empty":
+		return surfui.Empty(kids...)
 	case "item":
 		return surfui.Item(kids...)
 	case "box":
@@ -660,6 +664,8 @@ func buildText(tag, s string) *surfui.Node {
 		return surfui.Heading(s)
 	case "caption":
 		return surfui.Caption(s)
+	case "col":
+		return surfui.Col(s)
 	case "chip":
 		return surfui.Chip(s)
 	case "glyph":
@@ -817,6 +823,14 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModTitle(n, v)
 	case "drop":
 		return ModDrop(n, v)
+	case "width":
+		return ModColWidth(n, v)
+	case "max":
+		return ModColMax(n, v)
+	case "align":
+		return ModColAlign(n, v)
+	case "sort":
+		return ModColSort(n, v)
 	case "program":
 		ModProgram(n, v)
 	case "badge-tone":
@@ -829,6 +843,10 @@ func applyString(name string, n *surfui.Node, v string) error {
 
 func applyBool(name string, n *surfui.Node, v bool) {
 	switch name {
+	case "fill":
+		ModColFill(n, v)
+	case "show":
+		ModColShow(n, v)
 	case "bold":
 		ModBold(n, v)
 	case "external":
