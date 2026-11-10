@@ -144,6 +144,11 @@ package:
 go generate ./examples/hello
 ```
 
+The line is this repository's: its own module runs surfgen with `go run`.
+In a program of your own, pin surfgen in `mise.toml` and write
+`//go:generate surfgen`, which `go mod tidy` can't break
+([Running the generator](surf.md#running-the-generator)).
+
 surfgen writes `surf_gen.go`. For each struct `T` with a template it
 writes `surfInterpT`, here `surfInterpHello(h *Hello) surflive.Component`,
 which draws `h` by its template; `surfCompiledT`, which draws it by Go
@@ -168,8 +173,9 @@ as `text r.0.kcount "1 clicks"`.
 
 1. Write the struct, and its template beside it, named in kebab case:
    `type AgentList struct` is `agent-list.surf`.
-2. Put `//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen`
-   in one file of the package, and run `go generate`.
+2. Put `//go:generate surfgen` (surfgen pinned in `mise.toml`:
+   [Running the generator](surf.md#running-the-generator)) in one file of
+   the package, and run `go generate`.
 3. Run it: `surfrun.Run(ctx, surflive.New(surfInterpAgentList(s)), surfrun.Options{Name: "agents"})`.
 4. Test it on `surftest` ([Testing a screen](#testing-a-screen)).
 
@@ -719,6 +725,32 @@ density gives the units.
   (the terminal's ground with neuroplastio's violet), `terminal`, `paper`
   (light). The UI's text is a
   neutral ink, not the terminal's foreground, which stays for terminals.
+- **The ground:** a surf document is opaque, never transparent. Its root
+  fills with the theme's ground (`.u-surface`'s `background: var(--u-bg)`):
+  `terminal` and `neuroplastio` use the host's `var(--hotty-bg)`, but
+  `graphite`, the default, has a ground of its own (`#202020`, `#d2d2d2` on
+  a light terminal), and `paper` and `stone` their own light ones. So a surf
+  surface beside cells shows its theme's ground, not the terminal's, unless
+  its theme is `terminal` or `neuroplastio`. A program's own document
+  beside surf's, which sets no background, shows the host's: hotty's SPEC §8
+  has the host's default stylesheet fill the root with `var(--hotty-bg)`,
+  which a document's rule wins over. Leave it unset, or write
+  `var(--hotty-bg)` (the same), to match the terminal; write nothing
+  transparent over a colour of your own. Where a program has set the
+  terminal's background with OSC 11, hottyterm still draws `--hotty-bg`
+  at the configured one, so a surface on `var(--hotty-bg)` and the cells
+  differ: that is hotty's HT-03, a bug of the host, not of surf.
+- **An item's padding:** `pad` on an `item` replaces its default room
+  (Compact 8px across and 4px down, Roomy 10px and 4px, Dense a cell
+  across), so give a list's items none unless they need it. The selected
+  row's marker is 2px wide at the row's edge, and clears the first letter
+  by the padding across less 2px: a step is 4px in Compact, 8px in Roomy
+  and a cell in Dense, so `pad="1 0"` in Compact leaves 2px, which looks
+  like touching, and `pad="2 0"` the default's 8px. Rule of thumb: 2
+  steps across in Compact, 1 in Roomy and Dense. It is the padding's
+  doing, not a defect of the marker. (And the 0 down takes the default's
+  4px air away: `pad="2 1"` gives a row of its own, a step down is half a
+  cell row.)
 - **The look** is GPUI's, by roles (gov R-24): a sidebar's chrome is a
   step darker than the content, a dialog a step lighter, and a menu
   raised. Hover and selection are translucent fills that are right on
@@ -1035,19 +1067,24 @@ for {
 
 ## Hosting without surfrun.Runtime
 
-`surfrun.Runtime` shows a model on a terminal (`hottyterm`). A host that
-relays hotty documents itself, as a multiplexer does for its panes,
-shows it through a `surfrun.Surface` instead: the model's tree, the element
+`surfrun.Runtime` shows a model on a terminal (`hottyterm`).
+
+**A Bubble Tea program starts with `surftea`**
+([Hosting in a Bubble Tea program](#hosting-in-a-bubble-tea-program)): its
+`Host` is a `Surface` on a `hottytea.Session` that does everything below,
+the first frame after Layout, the platform once the caps are known, the
+popups, the frames and the keys. Read on only for a host that isn't Bubble
+Tea.
+
+A host that relays hotty documents itself, as a multiplexer does for its
+panes, shows it through a `surfrun.Surface` instead: the model's tree, the element
 with the keyboard, what the user typed in its fields, and a Select's
 open list, with no terminal, no alternate screen and no raw mode. The
 Surface routes the host's events and the keys to the model, and says
 what to send; the host writes it with hotty-go and places the surfaces.
 `surfrun.Runtime` is a Surface on a terminal, and `surftest.StartHosted` is a
 whole host of this kind for tests (`surftest/hosted.go`); `surftest.NewRelay`
-is one that draws in frames, whose test says when it updates. A Bubble
-Tea program's host is `surftea`, which does all of this
-([Hosting in a Bubble Tea program](#hosting-in-a-bubble-tea-program)).
-
+is one that draws in frames, whose test says when it updates. 
 The host is the model's `surfrun.Runner`: `Post(f)` runs `f` on the host's
 goroutine and then updates, `Quit()` ends the run after this update,
 and `Focus(key)` gives the keyboard to the element of that key, which
@@ -1148,8 +1185,8 @@ A `Frame` goes in its order: `Ops` as a delta, each of `Fields` as an
 delta (with `Ops`, where no `Blur` or `Focus` comes between).
 `surfrun.WriteFrame(b, name, f, list, menu)` writes it so, with the host's
 `list` and `menu` funcs, which it calls at their places and only where
-`f.List` or `f.Menu` is set (nil, for a host that draws no list; a menu it
-does not draw still needs a func, as above). A `List` is a Select's
+`f.List` or `f.Menu` is set (nil writes nothing: for a host that draws no
+list; a host that draws no menu sets `Surface.NoMenu` too, as below). A `List` is a Select's
 list for the host to show in a surface of its own: `Closed` deletes the
 last one; `New` sends `surfui.Document(l.Tree)` and places it, with `Z`
 above the Select's surface and `Press: hotty.On`, so that a press on
@@ -1184,9 +1221,12 @@ closes it at once and reports whether its surface is up, for the host to
 delete: for a resize, a host that goes away, or an ENOENT for its surface.
 `surfrun.Runtime` does all of this, on a host and in the cells
 ([Context menus](surf.md#context-menus)); a host of its own that draws no
-menu still passes a `menu` func to `WriteFrame`, since a menu it does not
-show would hold the keyboard (`surftest.StartHosted` records the frames:
-`App.Menus`).
+menu sets `Surface.NoMenu`: no menu ever opens (a secondary press and
+`shift+f10` are not taken, as on an element with no menu), so none holds
+the keyboard undrawn. A nil `menu` func to `WriteFrame` alone is not that:
+it skips the drawing, but the Surface has opened the menu, and keeps the
+keys until it is closed (`CloseMenu`, `DropMenu`). (`surftest.StartHosted`
+draws no menu and records the frames: `App.Menus`.)
 
 ### Placing a surface on a host
 

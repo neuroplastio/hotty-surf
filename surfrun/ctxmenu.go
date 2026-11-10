@@ -69,7 +69,7 @@ type MenuFrame struct {
 // the innermost element that has one at the pointer's cell, and reports
 // whether there was one.
 func (s *Surface) secondaryPress(e hotty.Event) bool {
-	if !s.shown {
+	if !s.shown || s.NoMenu {
 		return false
 	}
 	m, ok := s.Menu(MenuAt{ID: e.Target})
@@ -98,7 +98,7 @@ func (s *Surface) openMenu(m Menu, at int, point *hotty.Cell, area *hotty.Area) 
 // keyMenu opens the menu under the focused element, with the first item
 // that can be picked highlighted; it reports whether there is one.
 func (s *Surface) keyMenu() bool {
-	if !s.shown {
+	if !s.shown || s.NoMenu {
 		return false
 	}
 	m, ok := s.Menu(MenuAt{Focus: true})
