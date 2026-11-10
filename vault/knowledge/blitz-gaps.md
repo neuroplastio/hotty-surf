@@ -504,6 +504,15 @@ fallback face; every line's height in prose is a length in `em`
 code's) can't change a line box, which had Blitz's blocks creep up by a
 row by the end of `prose/alerts`.
 
+**The baseline's new cases of this leg (33 of 1950, taken 2026-11-10 on
+main's green gate):** `prose/doc` in compact and roomy, every theme, both
+scales (20 cases, 24–47 CSS px²), and `prose/compact` in roomy at both
+scales in each theme and in compact at 1.6× in some (13 cases, 13–28). The
+defects seen in both engines' sheets (`.shots/gate/prose-*`): the italic
+(the gate's fonts have no Plex Italic, below), a pixel of inline code's
+edge, and the proportional text's known 1–2 px. `prose/alerts`, `link/inline`
+and every Dense case pass. Nothing else moved.
+
 From `make gate GATE_FLAGS="--only prose-"` (and `link-`), hotty-blitz 0.7.0:
 the new stories `prose/doc`, `prose/compact`, `prose/alerts` and
 `link/inline` fail in every theme and density, as every story of
