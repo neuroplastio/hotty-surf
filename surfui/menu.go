@@ -69,6 +69,8 @@ func MenuCard(from *Node, items []MenuItem, hi int) *Node {
 	for n := from; n != nil; n = n.parent {
 		for _, cl := range n.class {
 			switch {
+			case cl == "u-scheme-dark":
+				s.Class(cl)
 			case !density && (cl == "u-dense" || cl == "u-roomy" || cl == "u-compact"):
 				density = true
 				s.Class(cl)

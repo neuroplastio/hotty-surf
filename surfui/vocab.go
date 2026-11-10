@@ -61,6 +61,12 @@ func (n *Node) Theme(name string) *Node {
 	return n
 }
 
+// Dark pins a surface to its dark colours, whatever the browser prefers:
+// the neuroplastio and graphite themes follow prefers-color-scheme
+// otherwise (paper and stone are light always). A page on a dark site
+// that shows a surface asks for it.
+func (n *Node) Dark() *Node { return n.Class("u-scheme-dark") }
+
 // Density sets a surface's density.
 func (n *Node) Density(d Density) *Node {
 	n.dropClass("u-dense")
@@ -445,6 +451,8 @@ func SelectList(from *Node, value string, options []string, at int) *Node {
 	for n := from; n != nil; n = n.parent {
 		for _, c := range n.class {
 			switch {
+			case c == "u-scheme-dark":
+				s.Class(c)
 			case !density && (c == "u-dense" || c == "u-roomy" || c == "u-compact"):
 				density = true
 				s.Class(c)

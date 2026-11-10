@@ -51,7 +51,7 @@ func mixOver(t *testing.T, a, b string, share float64) string {
 // program tile's glyph 3:1. A light terminal's Graphite is Stone.
 func TestGraphiteStoneContrast(t *testing.T) {
 	stone := tokens(t, ".u-surface.u-theme-stone")
-	if light := tokens(t, "  .u-surface.u-theme-graphite"); !maps.Equal(light, stone) {
+	if light := tokens(t, "  .u-surface.u-theme-graphite:where(:not(.u-scheme-dark))"); !maps.Equal(light, stone) {
 		t.Errorf("Graphite on a light terminal is not Stone:\n%v\n%v", light, stone)
 	}
 	themes := []struct {
@@ -145,5 +145,19 @@ func TestCheckboxMarkInk(t *testing.T) {
 		if err != nil || r < DotContrast {
 			t.Errorf("%s: the mark is %.2f:1 on the accent (%v), want %.1f", name, r, err, DotContrast)
 		}
+	}
+}
+
+// A surface pinned dark (Node.Dark) ignores prefers-color-scheme: the
+// first rule of every light override is conditioned on the pin's absence.
+func TestDarkPinsTheScheme(t *testing.T) {
+	lines := strings.Split(CSS, "\n")
+	for i, l := range lines {
+		if strings.HasPrefix(l, "@media (prefers-color-scheme: light)") && !strings.Contains(lines[i+1], "u-scheme-dark") {
+			t.Errorf("a light override applies to a pinned surface: %q", lines[i+1])
+		}
+	}
+	if n := Surface().Dark(); n.class[len(n.class)-1] != "u-scheme-dark" {
+		t.Errorf("Dark leaves no class: %v", n.class)
 	}
 }

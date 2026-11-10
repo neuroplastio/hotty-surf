@@ -435,7 +435,7 @@ func (p Palette) CSS() string {
 	}
 	var b strings.Builder
 	b.WriteString("\n/* The palette's hues (surfui.Palette). */\n.u-surface {\n" + dark.String() + "}\n")
-	b.WriteString("@media (prefers-color-scheme: light) {\n  .u-surface {\n" + indent(light.String()) + "  }\n}\n")
+	b.WriteString("@media (prefers-color-scheme: light) {\n  .u-surface:where(:not(.u-scheme-dark)) {\n" + indent(light.String()) + "  }\n}\n")
 	b.WriteString(".u-surface.u-theme-paper, .u-surface.u-theme-stone {\n" + light.String() + "}\n")
 	b.WriteString(rules.String())
 	return b.String()

@@ -150,7 +150,7 @@ func TestPaletteCSS(t *testing.T) {
 	css := p.CSS()
 	for _, want := range []string{
 		".u-surface {\n  --u-hue-coral: #ff8e7a;\n  --u-hue-teal: #4fd1c5;\n}",
-		"@media (prefers-color-scheme: light) {\n  .u-surface {\n    --u-hue-coral: #a42d1c;\n    --u-hue-teal: #0d645d;\n  }\n}",
+		"@media (prefers-color-scheme: light) {\n  .u-surface:where(:not(.u-scheme-dark)) {\n    --u-hue-coral: #a42d1c;\n    --u-hue-teal: #0d645d;\n  }\n}",
 		".u-surface.u-theme-paper, .u-surface.u-theme-stone {\n  --u-hue-coral: #a42d1c;\n  --u-hue-teal: #0d645d;\n}",
 		".u-hue-coral { color: var(--u-hue-coral); }",
 		".u-hue-teal { color: var(--u-hue-teal); }",

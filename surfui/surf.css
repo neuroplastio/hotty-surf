@@ -47,7 +47,7 @@
   --u-info: var(--hotty-ansi-6);
 }
 @media (prefers-color-scheme: light) {
-  .u-surface {
+  .u-surface:where(:not(.u-scheme-dark)) {
     --u-ok: var(--hotty-ansi-2);
     --u-warn: var(--hotty-ansi-3);
     --u-error: var(--hotty-ansi-1);
@@ -62,7 +62,7 @@
     --u-shadow-modal: 0 12px 24px -4px rgb(0 0 0 / 0.2);
     color-scheme: light;
   }
-  .u-surface.u-theme-neuroplastio { --u-accent: #5b4bd6; }
+  .u-surface.u-theme-neuroplastio:where(:not(.u-scheme-dark)) { --u-accent: #5b4bd6; }
 }
 .u-surface.u-theme-paper {
   --u-bg: #fbfbfd;
@@ -119,7 +119,7 @@
   --u-on-solid: var(--u-canvas);
 }
 @media (prefers-color-scheme: light) {
-  .u-surface {
+  .u-surface:where(:not(.u-scheme-dark)) {
     --u-canvas: color-mix(in srgb, var(--u-bg) 94%, black);
     --u-popover: #ffffff;
     --u-raised: #ffffff;
@@ -196,7 +196,7 @@
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
-  .u-surface.u-theme-graphite {
+  .u-surface.u-theme-graphite:where(:not(.u-scheme-dark)) {
     --u-canvas: #c4c4c4;
     --u-bg: #d2d2d2;
     --u-raised: #d7d7d7;
@@ -303,7 +303,7 @@
 /* Graphite's and Stone's muted and dim are their own, not mixed. */
 .u-theme-graphite.u-surface, .u-theme-graphite .u-dialog, .u-theme-graphite .u-options, .u-theme-graphite .u-menu, .u-theme-graphite .u-card { --u-muted: #9b9b9b; --u-dim: #989898; }
 @media (prefers-color-scheme: light) {
-  .u-theme-graphite.u-surface, .u-theme-graphite .u-dialog, .u-theme-graphite .u-options, .u-theme-graphite .u-menu, .u-theme-graphite .u-card { --u-muted: #484848; --u-dim: #494949; }
+  .u-theme-graphite:where(:not(.u-scheme-dark)).u-surface, .u-theme-graphite:where(:not(.u-scheme-dark)) .u-dialog, .u-theme-graphite:where(:not(.u-scheme-dark)) .u-options, .u-theme-graphite:where(:not(.u-scheme-dark)) .u-menu, .u-theme-graphite:where(:not(.u-scheme-dark)) .u-card { --u-muted: #484848; --u-dim: #494949; }
 }
 .u-theme-stone.u-surface, .u-theme-stone .u-dialog, .u-theme-stone .u-options, .u-theme-stone .u-menu, .u-theme-stone .u-card { --u-muted: #484848; --u-dim: #494949; }
 .u-surface {
