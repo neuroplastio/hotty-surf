@@ -222,6 +222,12 @@ the website's P1 and margin's M1 together. If the website can't wait
 that long, L8 and L9 can move ahead of phase 2, so it carries prose
 itself and offers it back later (its own suggestion).
 
+## The gate
+
+Red on main from 450e529 (plx Agent's larger base text, 2026-11-09)
+until merge 99303e2 retook the baseline, each case named in
+blitz-gaps.
+
 ## Calls made while the maintainer was away (2026-11-09 night), to confirm
 
 - **Inline code is `code` too,** as in HTML: inside an inline flow (`p`,
