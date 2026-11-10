@@ -98,6 +98,8 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 				err = a.Host.DragStart(a.Name, f[1], 0, 0)
 			case (len(f) == 2 || len(f) == 3) && (f[0] == "over" || f[0] == "release"):
 				err = dragTo(a.Host, f)
+			case len(f) == 3 && (f[0] == "pressat" || f[0] == "moveat" || f[0] == "releaseat"):
+				err = dragAt(a.Host, a.Name, f)
 			default:
 				t.Fatalf("%s.event: %q is no event", n, ev)
 			}
@@ -119,7 +121,7 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 		// A step of several events logs as many lines as the case says:
 		// the first is no sign the rest are in. A release logs two when
 		// it is a click as well (a drag's end, then the click's handler).
-		if want, ok := File(ar, n+".log"); ok && len(f) > 0 && (strings.Contains(ev, ";") || f[0] == "release") {
+		if want, ok := File(ar, n+".log"); ok && len(f) > 0 && (strings.Contains(ev, ";") || f[0] == "release" || f[0] == "releaseat") {
 			lines := 0
 			if w := strings.TrimSpace(string(want)); w != "" {
 				lines = strings.Count(w, "\n") + 1
@@ -182,6 +184,24 @@ func dragTo(h *hottytest.Host, f []string) error {
 		return h.DragEndOver(f[1], 0, 0, 0, ty)
 	}
 	return h.DragEnd(f[1], 0, 0)
+}
+
+// dragAt is a drag of an element with steps on a host (SPEC §9.1): `pressat
+// ID X`, the press on ID at step X of it, which starts the drag; `moveat ID
+// X` and `releaseat ID X`, the pointer at step X of the element the drag
+// began on, wherever it is, and the button released there.
+func dragAt(h *hottytest.Host, surface string, f []string) error {
+	x, err := strconv.Atoi(f[2])
+	if err != nil {
+		return err
+	}
+	switch f[0] {
+	case "pressat":
+		return h.DragStartStep(surface, f[1], 0, 0, x, 0)
+	case "moveat":
+		return h.DragMoveStep(f[1], 0, 0, x, 0)
+	}
+	return h.DragEndStep(f[1], 0, 0, x, 0)
 }
 
 // hear has c's render errors appended to errs, each the first time.

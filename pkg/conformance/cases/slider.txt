@@ -1,0 +1,233 @@
+A slider (min 1, max 12) is a drag handle whose data-steps is its count
+of steps, 11. A press on it at step 5 starts the drag and is the value 6
+(its @input, which the app keeps); the pointer at step 8 is 9; the release
+there commits it (@change), once. The keys then move it a step and to its
+ends, each an @input and an @change. Chips in a row are buttons that are
+picked and let go by a click or Space, several at once.
+-- root --
+Tune
+-- state.json --
+{"Replicas": 3, "Picked": ["slow"]}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="3" aria-orientation="horizontal" style="--u-s:0.1818" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">3</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- cells --
+cells 64x32
+text
+> Replicas ───●──────────────── 3  3
+> [Errors] [Warnings] [Slow]
+style
+= .........aaa.bbbbbbbbbbbbbbbb....b
+= cccccccc.cccccccccc.dddddd
+. fg/bg
+a accent/bg
+b muted/bg
+c fg/tonal
+d on-accent/accent
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 1.event --
+pressat r.kreplicas.kslider 5; moveat r.kreplicas.kslider 8; releaseat r.kreplicas.kslider 8
+-- 1.log --
+input 6
+input 9
+commit 9
+-- 1.ops --
+attr r class "u-surface u-theme-graphite u-compact u-dragging"
+attr r.kreplicas.kslider aria-valuenow "6"
+var r.kreplicas.kslider u-s "0.4545"
+text r.kreplicas.kshown "6"
+attr r.kreplicas.kslider aria-valuenow "9"
+var r.kreplicas.kslider u-s "0.7273"
+text r.kreplicas.kshown "9"
+attr r class "u-surface u-theme-graphite u-compact"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="9" aria-orientation="horizontal" style="--u-s: 0.7273" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">9</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+> Replicas ──────────────●───── 9  9
+> [Errors] [Warnings] [Slow]
+style
+= .........aaaaaaaaaaaaaaabbbbb....b
+= cccccccc.cccccccccc.dddddd
+. fg/bg
+a accent/bg
+b muted/bg
+c fg/tonal
+d on-accent/accent
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 2.event --
+key arrow_left
+-- 2.log --
+input 8
+commit 8
+-- 2.ops --
+attr r.kreplicas.kslider aria-valuenow "8"
+var r.kreplicas.kslider u-s "0.6364"
+text r.kreplicas.kshown "8"
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="8" aria-orientation="horizontal" style="--u-s: 0.6364" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">8</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+> Replicas ────────────●─────── 8  8
+> [Errors] [Warnings] [Slow]
+style
+= .........aaaaaaaaaaaaabbbbbbb....b
+= cccccccc.cccccccccc.dddddd
+. fg/bg
+a accent/bg
+b muted/bg
+c fg/tonal
+d on-accent/accent
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 3.event --
+key end
+-- 3.log --
+input 12
+commit 12
+-- 3.ops --
+attr r.kreplicas.kslider aria-valuenow "12"
+var r.kreplicas.kslider u-s "1"
+text r.kreplicas.kshown "12"
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="12" aria-orientation="horizontal" style="--u-s: 1" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">12</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+> Replicas ───────────────────● 12 12
+> [Errors] [Warnings] [Slow]
+style
+= .........aaaaaaaaaaaaaaaaaaaa....bb
+= cccccccc.cccccccccc.dddddd
+. fg/bg
+a accent/bg
+b muted/bg
+c fg/tonal
+d on-accent/accent
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 4.event --
+key home
+-- 4.log --
+input 1
+commit 1
+-- 4.ops --
+attr r.kreplicas.kslider aria-valuenow "1"
+var r.kreplicas.kslider u-s "0"
+text r.kreplicas.kshown "1"
+-- 4.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1" aria-orientation="horizontal" style="--u-s: 0" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">1</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- 4.cells --
+cells 64x32
+text
+> Replicas ●─────────────────── 1  1
+> [Errors] [Warnings] [Slow]
+style
+= .........abbbbbbbbbbbbbbbbbbb....b
+= cccccccc.cccccccccc.dddddd
+. fg/bg
+a accent/bg
+b muted/bg
+c fg/tonal
+d on-accent/accent
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 5.event --
+click r.kfilters.kerrors
+-- 5.log --
+on errors
+-- 5.ops --
+attr r.kfilters.kerrors class "u-btn is-sel"
+attr r.kfilters.kerrors aria-selected "true"
+-- 5.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1" aria-orientation="horizontal" style="--u-s: 0" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">1</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn is-sel" type="button" aria-selected="true">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- 5.cells --
+cells 64x32
+text
+> Replicas ●─────────────────── 1  1
+> [Errors] [Warnings] [Slow]
+style
+= ..........aaaaaaaaaaaaaaaaaaa....a
+= bbbbbbbb.cccccccccc.dddddd
+. fg/bg
+a muted/bg
+b on-accent/accent underline
+c fg/tonal
+d on-accent/accent
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 6.event --
+click r.kfilters.kslow
+-- 6.log --
+off slow
+-- 6.ops --
+attr r.kfilters.kslow class "u-btn"
+unattr r.kfilters.kslow aria-selected
+-- 6.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1" aria-orientation="horizontal" style="--u-s: 0" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">1</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn is-sel" type="button" aria-selected="true">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div></div></body></html>
+-- 6.cells --
+cells 64x32
+text
+> Replicas ●─────────────────── 1  1
+> [Errors] [Warnings] [Slow]
+style
+= ..........aaaaaaaaaaaaaaaaaaa....a
+= bbbbbbbb.cccccccccc.dddddd
+. fg/bg
+a muted/bg
+b on-accent/accent
+c fg/tonal
+d fg/sel
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow
+-- 7.event --
+key space
+-- 7.log --
+on slow
+-- 7.ops --
+attr r.kfilters.kslow class "u-btn is-sel"
+attr r.kfilters.kslow aria-selected "true"
+-- 7.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="1" aria-orientation="horizontal" style="--u-s: 0" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">1</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn is-sel" type="button" aria-selected="true">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn is-sel" type="button" aria-selected="true">Slow</button></div></div></body></html>
+-- 7.cells --
+cells 64x32
+text
+> Replicas ●─────────────────── 1  1
+> [Errors] [Warnings] [Slow]
+style
+= ..........aaaaaaaaaaaaaaaaaaa....a
+= bbbbbbbb.cccccccccc.dddddd
+. fg/bg
+a muted/bg
+b on-accent/accent
+c fg/tonal
+d on-accent/accent underline
+hits
+@ 9,0 23x1 r.kreplicas.kslider
+@ 0,1 8x1 r.kfilters.kerrors
+@ 9,1 10x1 r.kfilters.kwarnings
+@ 20,1 6x1 r.kfilters.kslow

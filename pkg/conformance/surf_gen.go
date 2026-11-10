@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf prose.surf shelf.surf mark.svg ring.svg
+//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf prose.surf shelf.surf tune.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProse, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProse, &surfShapeShelf, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -656,6 +656,69 @@ func (o surfShelf) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpShelf is c drawn by its template, interpreted.
 func surfInterpShelf(c *Shelf) surflive.Component { return surf.Component(surfSet(), surfShelf{c}) }
+
+// surfShapeTune is Tune's shape, a component.
+var surfShapeTune = surf.Shape{Name: "Tune", Component: true,
+	Fields: []surf.Field{{Name: "replicas", Type: cellite.Int}, {Name: "picked", Type: cellite.ListOf(cellite.String)}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "commit", Args: []cellite.Type{cellite.String}},
+		{Name: "input", Args: []cellite.Type{cellite.String}},
+		{Name: "isPicked", Args: []cellite.Type{cellite.String}, Result: surf.TypeOf(cellite.Bool)},
+		{Name: "toggle", Args: []cellite.Type{cellite.String}},
+	},
+}
+
+// surfTune is a *Tune as its templates read it.
+type surfTune struct{ p *Tune }
+
+// surfTuneValue is p as a value: null for nil.
+func surfTuneValue(p *Tune) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Tune", surfTune{p})
+}
+
+// surfTuneOf is a value's *Tune: nil for any other.
+func surfTuneOf(v cellite.Value) *Tune {
+	if o, ok := v.Object().(surfTune); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfTune) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.IntValue(int64(o.p.Replicas))
+	case 1:
+		return cellite.ListValue(surfList2(o.p.Picked))
+	case 2:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfTune) Shape() *surf.Shape { return &surfShapeTune }
+
+func (o surfTune) Unwrap() any { return o.p }
+
+func (o surfTune) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Commit(string(args[0].String()))
+	case 1:
+		o.p.Input(string(args[0].String()))
+	case 2:
+		return cellite.BoolValue(bool(o.p.IsPicked(string(args[0].String()))))
+	case 3:
+		o.p.Toggle(string(args[0].String()))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpTune is c drawn by its template, interpreted.
+func surfInterpTune(c *Tune) surflive.Component { return surf.Component(surfSet(), surfTune{c}) }
 
 // surfShapeNote is Note's shape, a struct.
 var surfShapeNote = surf.Shape{Name: "Note", Component: false,
@@ -3675,6 +3738,100 @@ func surfRenderShelf(e *surf.Errs, out []*surfui.Node, c *Shelf, fill surf.Fill)
 	return out
 }
 
+// surfRenderTune draws tune.surf for Tune.
+func surfRenderTune(e *surf.Errs, out []*surfui.Node, c *Tune, fill surf.Fill) []*surfui.Node {
+	// tune.surf:1:1 <surface>
+	if e.Enter("tune.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// tune.surf:2:3 <row>
+		if e.Enter("tune.surf", 2, 3) {
+			var k2 []*surfui.Node
+			// tune.surf:3:5 <text>
+			if e.Enter("tune.surf", 3, 5) {
+				n3 := surfui.Text("Replicas")
+				surf.ModKey(n3, "label")
+				k2 = append(k2, n3)
+				e.Leave()
+			}
+			// tune.surf:4:5 <slider>
+			if e.Enter("tune.surf", 4, 5) {
+				n4 := surf.NewSlider()
+				surf.ModKey(n4, "slider")
+				surf.ModSliderValue(n4, int64(c.Replicas))
+				surf.ModMin(n4, 1)
+				surf.ModMax(n4, 12)
+				n4.On("input", func(ev surfrun.Event) { c.Input(ev.Value) })
+				n4.On("change", func(ev surfrun.Event) { c.Commit(ev.Value) })
+				k2 = append(k2, n4)
+				e.Leave()
+			}
+			// tune.surf:5:5 <text>
+			if e.Enter("tune.surf", 5, 5) {
+				n5 := surfui.Text(strconv.FormatInt(int64(c.Replicas), 10))
+				surf.ModKey(n5, "shown")
+				surf.ModMuted(n5, true)
+				k2 = append(k2, n5)
+				e.Leave()
+			}
+			n2 := surfui.Row(k2...)
+			surf.ModKey(n2, "replicas")
+			surf.ModGap(n2, 1)
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// tune.surf:7:3 <row>
+		if e.Enter("tune.surf", 7, 3) {
+			var k6 []*surfui.Node
+			// tune.surf:8:5 <button>
+			if e.Enter("tune.surf", 8, 5) {
+				n7 := surfui.Button("Errors")
+				surf.ModKey(n7, "errors")
+				surf.ModSelected(n7, c.IsPicked("errors"))
+				{
+					a8 := "errors"
+					n7.On("click", func() { c.Toggle(a8) })
+				}
+				k6 = append(k6, n7)
+				e.Leave()
+			}
+			// tune.surf:9:5 <button>
+			if e.Enter("tune.surf", 9, 5) {
+				n9 := surfui.Button("Warnings")
+				surf.ModKey(n9, "warnings")
+				surf.ModSelected(n9, c.IsPicked("warnings"))
+				{
+					a10 := "warnings"
+					n9.On("click", func() { c.Toggle(a10) })
+				}
+				k6 = append(k6, n9)
+				e.Leave()
+			}
+			// tune.surf:10:5 <button>
+			if e.Enter("tune.surf", 10, 5) {
+				n11 := surfui.Button("Slow")
+				surf.ModKey(n11, "slow")
+				surf.ModSelected(n11, c.IsPicked("slow"))
+				{
+					a12 := "slow"
+					n11.On("click", func() { c.Toggle(a12) })
+				}
+				k6 = append(k6, n11)
+				e.Leave()
+			}
+			n6 := surfui.Row(k6...)
+			surf.ModKey(n6, "filters")
+			surf.ModGap(n6, 1)
+			surf.ModChips(n6, true)
+			k1 = append(k1, n6)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfSVG is the .svg file of that name beside the templates.
 func surfSVG(name string) (surf.SVGAsset, bool) {
 	switch name {
@@ -3734,6 +3891,11 @@ func surfCompiledProse(c *Prose) surflive.Component {
 // surfCompiledShelf is c drawn by its templates compiled into Go.
 func surfCompiledShelf(c *Shelf) surflive.Component {
 	return surf.Compiled(c, "shelf.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderShelf(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledTune is c drawn by its templates compiled into Go.
+func surfCompiledTune(c *Tune) surflive.Component {
+	return surf.Compiled(c, "tune.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderTune(e, nil, c, nil) }, surfPalette)
 }
 
 // surfPalette is the templates' hues, <palette>s as written.

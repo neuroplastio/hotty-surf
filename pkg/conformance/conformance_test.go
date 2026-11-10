@@ -31,12 +31,13 @@ type mode struct {
 	draft func(*Draft) surflive.Component
 	links func(*Links) surflive.Component
 	prose func(*Prose) surflive.Component
+	tune  func(*Tune) surflive.Component
 }
 
 // modes are the ways a root is drawn: each case holds in both, alike.
 var modes = []mode{
-	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew, surfInterpDraft, surfInterpLinks, surfInterpProse},
-	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew, surfCompiledDraft, surfCompiledLinks, surfCompiledProse},
+	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew, surfInterpDraft, surfInterpLinks, surfInterpProse, surfInterpTune},
+	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew, surfCompiledDraft, surfCompiledLinks, surfCompiledProse, surfCompiledTune},
 }
 
 // suite runs the cases in the fixtures' two modes.
@@ -94,6 +95,10 @@ func fixtureRoot(t testing.TB, root string, state []byte, m mode) (surflive.Comp
 		p := &Prose{}
 		read(p)
 		return m.prose(p), func() []string { return p.Log }
+	case "Tune":
+		tu := &Tune{}
+		read(tu)
+		return m.tune(tu), func() []string { return tu.Log }
 	}
 	t.Fatalf("root: no fixture %s", root)
 	return nil, nil
