@@ -244,7 +244,9 @@ func (n *Node) Kind(kind string) *Node {
 	if !slices.Contains(alertKinds, kind) {
 		kind = "note"
 	}
-	n.class = slices.DeleteFunc(n.class, func(c string) bool { return strings.HasPrefix(c, "u-alert-") && c != "u-alert-title" && c != "u-alert-icon" })
+	n.class = slices.DeleteFunc(n.class, func(c string) bool {
+		return strings.HasPrefix(c, "u-alert-") && c != "u-alert-title" && c != "u-alert-icon"
+	})
 	n.Class("u-alert-" + kind)
 	l := alertLook[kind]
 	n.kids[0] = El("div", El("span", Str(l.icon)).Class("u-alert-icon"), Str(" "+l.title)).Class("u-alert-title")
