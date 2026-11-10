@@ -149,7 +149,7 @@ Sizes as the board's: S one leg, M two or three.
   dashed tags only; a clash with a component is a load error; the
   widget's CSS after surf.css; the conformance suite runnable by a
   registering package. M.
-- [ ] **L9. Cells for a custom element** (B2): `Node.Cells(func(w,
+- [x] **L9. Cells for a custom element** (merge e4e9f62; types in `pkg/cellblock`, `cells.Block` is `cells.BlockCaret`) (B2): `Node.Cells(func(w,
   style) cells.Block)`, pure and cached; focusable children placed by
   the block; `surfui.Graphic(svg, cells)`. M.
 - [x] **L10. Links and hyperlinks** (merge 5d4727d) (A2, B5): `link` with `href`,
