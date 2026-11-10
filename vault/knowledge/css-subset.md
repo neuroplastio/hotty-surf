@@ -56,6 +56,9 @@ Since 2026-11-10 it renders with hotty-blitz 0.7.3 (6aa10ca), which adds
 | `box-sizing` | `border-box` | proven | every story |
 | `display` | `flex`, `inline-flex`, `inline-block` | proven | every story |
 | `flex`, `flex-direction`, `align-items`, `justify-content` | `1 1 0`, `0 0 auto` (`.u-keep` too); row, column; `center`; `flex-start`, `flex-end` | proven | list/selection, switch/states (the knob's side), line/runs (caps beside a cut label keep whole) |
+| `justify-content` on a Row and a Stack (`justify`) | `center`, `flex-end`, `space-between`; on a row that wraps, each line | proven: the same layout in both at every density and scale | row/justify, stack/place (their failures at 1.6× are the text's sub-pixel raster, on the baseline) |
+| `align-items` on a Row and a Stack (`align`) | `flex-start`, `center`, `flex-end`, `stretch` | proven | row/align, stack/place |
+| `flex-grow: var(--u-grow)` over `flex: 1 1 0` (`grow`'s weight) | 2 to 1; 3 to 1 to none | proven | row/grow |
 | `flex-wrap`, `flex-direction`, `overflow`, `min-width` | a Fit row: `wrap` in `row-reverse` under `overflow: clip`, at `height: var(--u-row)`, with `min-width: auto` (its widest child) | proven | row/fit: the same children in both, in every case (70–164 is the text's place, below) |
 | `gap` | in cells and rows | proven | chip/fills, box/rule |
 | `position: relative`, `position: absolute` with `top`, `right` | a tool's badge on its button's corner (`.u-has-badge > .u-badge`), over the edge | proven | badge/states: every badge where Chromium puts it, in every case |

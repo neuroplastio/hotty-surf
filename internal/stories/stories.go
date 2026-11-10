@@ -249,6 +249,64 @@ var All = []Story{
 		}
 		return surfui.Stack(foot("pane.new"), foot("workspace.close-others"))
 	}},
+	{"row/justify", 40, func() *surfui.Node {
+		// Justify: a row's children at its start, its middle and its end,
+		// and the first and last at its ends with the room between; on a
+		// row that wraps, each line placed so.
+		three := func() *surfui.Node {
+			return surfui.Row(surfui.Chip("api"), surfui.Chip("worker"), surfui.Chip("indexer")).Gap(1)
+		}
+		return surfui.Stack(
+			surfui.Box(three().Justify("start")),
+			surfui.Box(three().Justify("center")),
+			surfui.Box(three().Justify("end")),
+			surfui.Box(three().Justify("between")),
+			surfui.Box(surfui.Row(surfui.Text("billing-worker in production"), surfui.Text("deployed 4 minutes ago"),
+				surfui.Text("3 errors")).Gap(2).Wrap().Justify("end")),
+		).Gap(1)
+	}},
+	{"row/align", 60, func() *surfui.Node {
+		// Align on a row: a chip beside three lines, at their top, their
+		// middle (a row's own) and their bottom; and stretched, a box as
+		// tall as the one beside it.
+		lines := func() *surfui.Node {
+			return surfui.Stack(surfui.Text("api"), surfui.Text("worker"), surfui.Text("indexer"))
+		}
+		return surfui.Stack(
+			surfui.Row(
+				surfui.Box(surfui.Row(lines(), surfui.Chip("start")).Gap(2).Align("start")),
+				surfui.Box(surfui.Row(lines(), surfui.Chip("center")).Gap(2).Align("center")),
+				surfui.Box(surfui.Row(lines(), surfui.Chip("end")).Gap(2).Align("end")),
+			).Gap(1).Top(),
+			surfui.Row(surfui.Box(lines()), surfui.Box(surfui.Text("stretch"))).Gap(1).Align("stretch"),
+		).Gap(1)
+	}},
+	{"row/grow", 40, func() *surfui.Node {
+		// GrowBy: the room shared by weight, two to one, and three to one
+		// to none.
+		return surfui.Stack(
+			surfui.Row(surfui.Box(surfui.Text("two")).GrowBy(2), surfui.Box(surfui.Text("one")).Grow()).Gap(1),
+			surfui.Row(surfui.Box(surfui.Text("three")).GrowBy(3), surfui.Box(surfui.Text("one")).GrowBy(1),
+				surfui.Box(surfui.Text("none")).GrowBy(0)).Gap(1),
+		).Gap(1)
+	}},
+	{"stack/place", 40, func() *surfui.Node {
+		// Align on a stack: its children as wide as they are, at its
+		// start, its middle and its end. Justify on one that is taller
+		// than they are: at its end, its middle, and its two ends.
+		two := func() *surfui.Node {
+			return surfui.Stack(surfui.Text("No deploys yet").Semibold(), surfui.Chip("production"))
+		}
+		tall := func(j string) *surfui.Node {
+			return surfui.Box(surfui.Stack(surfui.Text("first"), surfui.Text("last")).Height(4).Justify(j)).Grow()
+		}
+		return surfui.Stack(
+			surfui.Box(two().Align("start")),
+			surfui.Box(two().Align("center")),
+			surfui.Box(two().Align("end")),
+			surfui.Row(tall("end"), tall("center"), tall("between")).Gap(1).Top(),
+		).Gap(1)
+	}},
 	{"row/fit-start", 40, func() *surfui.Node {
 		// A footer: its note, then the hints that fit, in order from the
 		// start, each whole; those there is no room for, the least
