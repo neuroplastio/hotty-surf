@@ -130,6 +130,9 @@ var (
 	alertKinds = surfui.AlertKinds()
 )
 
+// treeKeyModes are the values of a tree list's keys.
+var treeKeyModes = []string{"tree", "none"}
+
 var events = []string{"click", "focus"}
 
 // The drag's events (docs/surf.md, "Drag"): a drag handle's (drag)
@@ -186,7 +189,7 @@ var Widgets = []Widget{
 	floor("cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}),
 	floor("tabs", "a row of options, one selected, with one keyboard stop", FormChoice, "NewTabs", []string{"focus", "change"}),
 	floor("list", "a column of items with a selection", FormKids, "surfui.List", events),
-	floor("item", "a row of a list or a table; its activate is Enter on the selected row, a click on it, or a double click, its value the row's key", FormKids, "surfui.Item", []string{"click", "focus", "activate"}),
+	floor("item", "a row of a list or a table; its activate is Enter on the selected row, a click on it, or a double click, its value the row's key", FormKids, "surfui.Item", []string{"click", "focus", "toggle", "activate"}),
 	floor("table", "columns declared once and rows that are items: a header, its cells at their columns' widths, the rows' selection from the list", FormKids, "surfui.Table", events),
 	floor("col", "a table's column: its text the heading, its modifiers its cells'", FormText, "surfui.Col", nil),
 	floor("empty", "what a table shows where it draws no row", FormKids, "surfui.Empty", nil),
@@ -296,7 +299,11 @@ var Attrs = []Attr{
 	{Name: "bare", Type: TypeBool, Doc: "a field or a button with no border and no fill", Func: "ModBare"},
 	{Name: "pill", Type: TypeBool, Doc: "a button on a bar: a pill, no fill at rest; its icon alone, a circle", Tags: []string{"button"}, Func: "ModPill"},
 	{Name: "raised", Type: TypeBool, Doc: "a pill on the selected fill: a bar's picker", Tags: []string{"button"}, Func: "ModRaised"},
-	{Name: "current", Type: TypeBool, Doc: "a pill whose thing holds the keyboard: the accent's soft fill", Tags: []string{"button"}, Func: "ModCurrent"},
+	{Name: "current", Type: TypeBool, Doc: "a pill whose thing holds the keyboard: the accent's soft fill; a tree's item that is open in the program, apart from the selected row: the accent's ink, bold", Tags: []string{"button", "item"}, Func: "ModCurrent"},
+	{Name: "depth", Type: TypeInt, Doc: "how deep a tree's item is, from 0: two cells of room in front of it a level, with the chevron's", Tags: []string{"item"}, Func: "ModDepth"},
+	{Name: "branch", Type: TypeBool, Doc: "a tree's item that has children, drawn or not: a chevron in front of it", Tags: []string{"item"}, Func: "ModBranch"},
+	{Name: "open", Type: TypeBool, Doc: "a tree's branch whose children are shown: the program draws them, and the chevron points down", Tags: []string{"item"}, Func: "ModOpen"},
+	{Name: "keys", Type: TypeString, Doc: "a tree's keys: tree (the default) answers ↑ ↓ Home End ← → and Enter itself, none leaves every key to the program's own bindings", Tags: []string{"list"}, Func: "ModKeys", Fails: true, Values: treeKeyModes},
 	{Name: "badge", Type: TypeInt, Doc: "a tool's badge on the button's corner: its count, 99+ past 99; none at 0", Tags: []string{"button"}, Func: "ModBadge"},
 	{Name: "badge-dot", Type: TypeBool, Doc: "a badge with no number on the button's corner, a dot: something new", Tags: []string{"button"}, Func: "ModBadgeDot"},
 	{Name: "badge-tone", Type: TypeString, Doc: "the badge's tone: accent (the default), warn, error or muted", Tags: []string{"button"}, Func: "ModBadgeTone", Fails: true, Values: badgeTones},
@@ -686,6 +693,22 @@ func ModDisabled(n *surfui.Node, v bool)  { n.Disabled(v) }
 func ModCurrent(n *surfui.Node, v bool)   { n.Current(v) }
 func ModAttention(n *surfui.Node, v bool) { n.Attention(v) }
 func ModInvalid(n *surfui.Node, v bool)   { n.Invalid(v) }
+
+// A tree's: its item's place and state, and its list's keys.
+func ModBranch(n *surfui.Node, v bool) { n.Branch(v) }
+func ModOpen(n *surfui.Node, v bool)   { n.Open(v) }
+
+// ModDepth is a tree item's depth, from 0.
+func ModDepth(n *surfui.Node, v int64) { n.Depth(clampInt(v)) }
+
+// ModKeys is keys="tree" or keys="none" (surfui.Node.TreeKeys).
+func ModKeys(n *surfui.Node, v string) error {
+	if !slices.Contains(treeKeyModes, v) {
+		return fmt.Errorf("keys is tree or none, not %q", v)
+	}
+	n.TreeKeys(v == "tree")
+	return nil
+}
 
 // The sizes, in the floor's steps; the floor clamps them.
 func ModGap(n *surfui.Node, v int64)    { n.Gap(clampInt(v)) }

@@ -71,8 +71,11 @@ type Node struct {
 	hue      string     // the name of the hue its text is drawn in (Hue)
 	readline bool       // a Surface or Field whose fields edit by hotty.TerminalKeys (Readline)
 
-	caption, message string // a Field's Label and Error, which its parent draws (decorate)
-	captioned        bool   // Label was called
+	caption, message string    // a Field's Label and Error, which its parent draws (decorate)
+	captioned        bool      // Label was called
+	tree             *treeSpec // an Item of a tree: its depth, whether it is a branch, and whether it is open
+	disclosure       bool      // the chevron of a tree Item
+	treeOff          bool      // a List whose keys are the program's (TreeKeys)
 
 	cycle    *cycle     // a Cycle's value and options
 	slider   *slider    // a Slider's bounds and value
@@ -485,6 +488,7 @@ func resolve(n *Node, ix Index) {
 	}
 	resolveTabs(n)
 	resolveTable(n)
+	resolveTree(n)
 }
 
 // Clone is a deep copy of n, unresolved.

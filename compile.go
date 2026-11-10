@@ -1895,6 +1895,8 @@ func checkLiteral(at *Attr, v string) error {
 		return ModColAlign(surfui.Col(""), v)
 	case "sort":
 		return ModColSort(surfui.Col(""), v)
+	case "keys":
+		return ModKeys(surfui.List(), v)
 	case "rows":
 		return ModRows(surfui.Field(), v)
 	case "type":

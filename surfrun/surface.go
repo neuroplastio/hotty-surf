@@ -627,6 +627,12 @@ func (s *Surface) event(e hotty.Event) bool {
 			s.tabsTo(tabs, options[picked])
 			return true
 		}
+		if item := surfui.DisclosureOf(n); item != nil {
+			// A branch's chevron: the program flips what is open.
+			act, _ := surfui.Handler(item, "toggle")
+			s.do(act, Event{Kind: "toggle", Target: surfui.IDOf(item), Value: surfui.KeyOf(item)})
+			return true
+		}
 		if c, value, options, step, ok := surfui.CycleOf(n); ok {
 			if step != 0 {
 				s.cycleTo(c, cycleBy(value, options, step))
@@ -796,6 +802,11 @@ func (s *Surface) bound(key string) binding {
 			// A table's Enter: its selected row's @activate, with the
 			// row's key as its value.
 			s.do(a.Act, Event{Kind: "activate", Value: a.Value, Key: key})
+			return false
+		}
+		if m, ok := b.Act.(surfui.TreeMove); ok {
+			// A tree's key: the handler of the item it stands for.
+			s.do(m.Act, Event{Kind: m.Kind, Target: m.Target, Value: m.Value, Key: key})
 			return false
 		}
 		s.do(b.Act, Event{Kind: "key", Key: key})
