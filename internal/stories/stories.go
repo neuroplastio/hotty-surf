@@ -556,7 +556,7 @@ var All = []Story{
 		return surfui.Row(surfui.Icon(mdCogOutline).Tone(surfui.OK), hexagon().Tone(surfui.Warn),
 			surfui.Icon(mdCogOutline).Tone(surfui.Error), hexagon().Tone(surfui.Accent)).Gap(2)
 	}},
-	{"text/clickable", 50, func() *surfui.Node {
+	{"text/clickable", 54, func() *surfui.Node {
 		// What acts on a click with no look of its own says so under the
 		// pointer and with the keyboard: a text and an icon in the accent,
 		// a chip with a control's hover-line, a row on the hover fill.
