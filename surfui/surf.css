@@ -810,23 +810,23 @@
 .u-row.u-grid > .u-btn:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 
 /* Chips (Chips): a row of buttons that are chips, several picked at
-   once: each a pill on the input's fill, its text muted, 4px from the
-   next, wrapping; the pointer on one the hover fill; a selected one the
-   accent's soft fill with its line, in the accent; the keyboard on one
-   its focus-line. In Compact and Roomy a chip is 22px tall, 12px of
-   room in it; in Dense a row, a cell each side. */
+   once: each a pill, a button's own fill and hairline with its text
+   muted, 4px from the next, wrapping; the pointer on one the ink and
+   the hover line; a selected one the accent's soft fill with its line,
+   in the accent; the keyboard on one its focus-line. In Compact and
+   Roomy a chip is 22px tall, 12px of room in it; in Dense a row, a cell
+   each side. */
 .u-row.u-chips { flex-wrap: wrap; gap: 4px; align-items: flex-start; }
 .u-row.u-chips > .u-btn {
   padding: 0 var(--u-px);
   border-radius: var(--u-r-pill);
   color: var(--u-muted);
-  background: var(--u-input);
-  box-shadow: none;
 }
 .u-compact .u-row.u-chips > .u-btn, .u-roomy .u-row.u-chips > .u-btn { height: 22px; line-height: 22px; padding: 0 12px; font-size: 12px; font-weight: 500; }
-.u-row.u-chips > .u-btn:hover { color: var(--u-ink); background: var(--u-hover); box-shadow: none; }
+.u-row.u-chips > .u-btn:hover { color: var(--u-ink); }
 .u-row.u-chips > .u-btn.is-sel { color: var(--u-accent); background: var(--u-accent-soft); box-shadow: inset 0 0 0 1px var(--u-accent); }
-.u-row.u-chips > .u-btn:focus { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-row.u-chips > .u-btn:focus { color: var(--u-ink); box-shadow: inset 0 0 0 1px var(--u-focus-line); }
+.u-row.u-chips > .u-btn.is-sel:focus { color: var(--u-accent); }
 
 /* A slider (Slider): a track 16 cells long, a row tall (a control's
    height in Compact and Roomy): its fill in the accent 4px thick up to
