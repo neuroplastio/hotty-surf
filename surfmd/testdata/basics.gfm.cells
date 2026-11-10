@@ -23,12 +23,12 @@ text
 >
 > ────────────────────────────────────────────────────────────
 >
->   func main() {
+>  func main() {
 >
->           println("hi")
->   }
+>      println("hi")
+>  }
 >
->   indented code
+>  indented code
 >
 > Raw <b>HTML</b> stays text, and so does:
 >
@@ -80,18 +80,18 @@ style
 =
 = hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
 =
-= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+= biiiibbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbjjjjbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 =
-= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-=
-=
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 =
 =
 =
-= jjjj.jjjjjjjj
+=
+=
+= kkkk.kkkkkkkk
 =
 = aaaaa
 =
@@ -104,32 +104,33 @@ style
 =
 =
 =
-= k.l.llll
-= k
+= l.m.mmmm
+= l
 =
-= m.n.nnnnnnn
-= m
-= m
-= m
+= n.o.ooooooo
+= n
+= n
+= n
 =
-= o.p.ppp
+= p.q.qqq
 . fg/bg
 a fg/bg bold
-b fg/tonal
+b fg/code-ground
 c fg/bg italic
 d fg/bg strike
 e fg/bg bold+italic
 f accent/bg underline
 g border/bg
 h line/bg
-i fg/surface
-j muted/bg
-k info/bg
-l info/bg bold
-m warn/bg
-n warn/bg bold
-o ok/bg
-p ok/bg bold
+i syn-keyword/code-ground
+j syn-string/code-ground
+k muted/bg
+l info/bg
+m info/bg bold
+n warn/bg
+o warn/bg bold
+p ok/bg
+q ok/bg bold
 hits
 @ 47,3 5x1 r.0.1.13
 links

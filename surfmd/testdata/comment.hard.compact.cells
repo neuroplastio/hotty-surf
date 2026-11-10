@@ -24,7 +24,7 @@ style
 =
 = ....dddddddddd
 . fg/bg
-a fg/tonal
+a fg/code-ground
 b fg/bg bold
 c border/bg
 d accent/bg underline

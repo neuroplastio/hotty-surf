@@ -24,6 +24,7 @@ type NodeFunc func(n ast.Node, src []byte, kids []*surfui.Node) *surfui.Node
 type config struct {
 	hard, gfm, compact bool
 	anchors            func(string) string
+	highlight          func(lang, code string) []surfui.Span
 	nodes              map[ast.NodeKind]NodeFunc
 }
 
@@ -40,6 +41,16 @@ func GFM() Option { return func(c *config) { c.gfm = true } }
 // Compact makes the prose a comment's (surfui.Node.Compact): no measure,
 // the surface's text size.
 func Compact() Option { return func(c *config) { c.compact = true } }
+
+// Highlight has f tokenize a fenced code block: lang is its info string's
+// first word ("go", "" for none) and code its source, and f returns the
+// spans the block shows (surfui.Span, the roles of a code block). It may
+// return nil to leave a language to the block's own lexer (go, surf) or
+// plain text. The converter tokenizes nothing itself; chroma stays the
+// caller's.
+func Highlight(f func(lang, code string) []surfui.Span) Option {
+	return func(c *config) { c.highlight = f }
+}
 
 // Anchors names each heading by f of its text, the id a #fragment link
 // finds it by; the website's is GitHub's. Without it a heading has none.
@@ -149,9 +160,9 @@ func (cv *converter) block(n ast.Node) *surfui.Node {
 	case *ast.ThematicBreak:
 		return surfui.Rule()
 	case *ast.FencedCodeBlock:
-		return codeBlock(linesOf(n, cv.src))
+		return cv.code(string(n.Language(cv.src)), linesOf(n, cv.src))
 	case *ast.CodeBlock:
-		return codeBlock(linesOf(n, cv.src))
+		return cv.code("", linesOf(n, cv.src))
 	case *ast.HTMLBlock:
 		// Raw HTML is text: it shows as written and is never injected.
 		return surfui.Para(surfui.Str(strings.TrimRight(string(n.Lines().Value(cv.src)), "\n")))
@@ -182,17 +193,28 @@ func linesOf(n ast.Node, src []byte) []string {
 	return out
 }
 
-// codeBlock is a block of code as main has it: a box of one text a line,
-// which keeps its white space. L2's code widget will replace it.
-func codeBlock(lines []string) *surfui.Node {
-	rows := make([]*surfui.Node, len(lines))
-	for i, l := range lines {
-		if l == "" {
-			l = " " // an empty text has no row
+// code is a fenced or indented block of code: surfui's code block, its
+// spans the caller's Highlight gives where it does, else the block's own
+// lexer for the language (go and surf; any other is plain). Where the prose
+// is compact, a box beside a comment's, a line wraps at a space.
+func (cv *converter) code(lang string, lines []string) *surfui.Node {
+	source := strings.Join(lines, "\n")
+	var n *surfui.Node
+	if cv.c.highlight != nil {
+		if spans := cv.c.highlight(lang, source); spans != nil {
+			n = surfui.CodeSpans(spans)
 		}
-		rows[i] = surfui.Text(l)
 	}
-	return surfui.Box(surfui.Stack(rows...)).Pad(2, 0)
+	if n == nil {
+		n = surfui.CodeBlock(source)
+		if lang == "go" || lang == "surf" {
+			n.Language(lang)
+		}
+	}
+	if cv.c.compact {
+		n.Wrap()
+	}
+	return n
 }
 
 var alertKinds = map[string]string{"NOTE": "note", "TIP": "tip", "IMPORTANT": "important", "WARNING": "warning", "CAUTION": "caution"}

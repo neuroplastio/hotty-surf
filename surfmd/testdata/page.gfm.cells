@@ -56,7 +56,7 @@ a fg/bg bold
 b accent/bg
 c accent/bg bold
 d accent/bg underline
-e fg/tonal
+e fg/code-ground
 f error/bg
 g error/bg bold
 hits

@@ -74,7 +74,7 @@ func TestNodeOverride(t *testing.T) {
 		return surfui.Text("diagram: " + strings.TrimSpace(string(f.Lines().Value(src))))
 	}))
 	h := html(n)
-	if !strings.Contains(h, "diagram: graph TD") || !strings.Contains(h, "x := 1") || strings.Contains(h, "mermaid") {
+	if !strings.Contains(h, "diagram: graph TD") || !strings.Contains(h, "x := ") || strings.Contains(h, "mermaid") {
 		t.Errorf("override: %s", h)
 	}
 }
@@ -85,5 +85,31 @@ func TestConvertAST(t *testing.T) {
 	doc := goldmark.New().Parser().Parse(text.NewReader(src))
 	if h := html(surfmd.ConvertAST(doc, src)); !strings.Contains(h, `<em`) || !strings.Contains(h, "u-prose") {
 		t.Errorf("%s", h)
+	}
+}
+
+// A fenced block is surfui's code block: Highlight's spans where it gives
+// them, the block's own lexer for go and surf where it doesn't, plain
+// otherwise; the language is the info string's first word. In compact
+// prose a block wraps.
+func TestHighlight(t *testing.T) {
+	src := []byte("```go title=x\nx := 1\n```\n\n```text\nplain\n```\n\n```\nnone\n```\n")
+	var langs []string
+	h := surfmd.Highlight(func(lang, code string) []surfui.Span {
+		langs = append(langs, lang)
+		if lang == "text" {
+			return []surfui.Span{{Text: code, Role: "string"}}
+		}
+		return nil
+	})
+	out := html(surfmd.Convert(src, h, surfmd.Compact()))
+	if strings.Join(langs, ",") != "go,text," {
+		t.Errorf("languages asked: %q", langs)
+	}
+	if strings.Count(out, "u-codeblock") != 3 || !strings.Contains(out, "u-syn-string") || !strings.Contains(out, "u-wrap") {
+		t.Errorf("code blocks: %s", out)
+	}
+	if !strings.Contains(html(surfmd.Convert([]byte("```go\nfunc f() {}\n```\n"))), "u-syn-keyword") {
+		t.Error("the block's own lexer isn't used for go")
 	}
 }

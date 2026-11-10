@@ -820,11 +820,15 @@ doc := surfmd.Convert(src, surfmd.GFM(), surfmd.Anchors(github))
   program sent) is no link: `[x](javascript:…)` is its text, and an image
   with such a source has none. A link with a scheme is `external`; a path
   and a `#fragment` are not.
-- **Until `code` and `table` are in the vocabulary** (the plan's L2 and L6),
-  a fenced code block is a box of one `text` a line, and a table a column
-  of rows of `text`s as wide as their columns' widest: both are one
-  function each in `surfmd/convert.go` (`codeBlock`, `table`), to be
-  replaced; `Highlight` comes with `code`.
+- **Fenced code** is `code`'s block ("Code" in the reference). **`Highlight(f)`**
+  has `f(lang, source)` give the spans of a block (`surfui.Span`, the
+  roles `keyword`, `string`, …): chroma stays the caller's, and the
+  converter tokenizes nothing. Where `f` returns nil, a `go` or `surf`
+  block is lexed by the block's own lexer and any other is plain. In
+  `Compact` prose a block wraps, since its box is narrow.
+- **Until `table` is in the vocabulary** (the plan's L6), a table is a column
+  of rows of `text`s as wide as their columns' widest: one function in
+  `surfmd/convert.go` (`table`), to be replaced.
 
 ### In a template
 
