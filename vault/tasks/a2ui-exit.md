@@ -113,9 +113,9 @@ Sizes as the board's: S one leg, M two or three.
   and End and Up and Down by visual row with the column kept, a
   multi-line paste kept whole (CRLF to LF, tabs to spaces), undo by
   typing run. A hotty-go PATCH, published on the maintainer's word. M.
-- [ ] **L5b. `field-sizing: content` in hotty-blitz,** as a mod, with
+- [ ] **L5b. `field-sizing: content` in hotty-blitz,** (done on hotty-blitz a2ui/field-sizing 2f52995; merge pending) as a mod, with
   the gate's proof. S–M.
-- [ ] **L5c. `field rows`** (A16, G1): `rows="8"` and `"3..8"`, `wrap`,
+- [x] **L5c. `field rows`** (merge c830bb5, on hotty-go v0.7.2, published 2026-11-09) (A16, G1): `rows="8"` and `"3..8"`, `wrap`,
   Enter a newline, `caret="start|end|keep"`, `@height`, `spellcheck`,
   `cells.Caret` across wrapped rows, and `trap` on a stack. Tests for the
   never-lose-words rules: an edit reaches the model before the next
