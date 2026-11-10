@@ -144,7 +144,9 @@ func TestTreeChevron(t *testing.T) {
 	}
 	s.Update()
 	s.Event(hotty.Event{Kind: hotty.EventClick, Target: "r.ktree.ksrc"})
-	if got := m.heardNow(); got != "click " {
+	// The row is the selected one, so its click activates it too, as a
+	// table's does (an Item's @activate): the click first.
+	if got := m.heardNow(); got != "click , activate src" {
 		t.Errorf("the row's click: heard %q", got)
 	}
 }
