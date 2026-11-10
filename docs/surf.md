@@ -235,6 +235,14 @@ monospace face on the code ground, which is the card's. `language` is
 source). Bound source keeps newlines, blank lines and indentation. A tab
 is four spaces; CRLF and CR draw as one newline.
 
+**One tag, two things.** `code` is also the inline code of a paragraph
+(`<p>Run <code>make check</code> first</p>`, "Prose"): in a `prose`, a
+`p`, a `h`, an `li`, a `link`, an `em`, a `strong` or a `del` it is the
+inline span, on the code ground, with no `language`, `:spans`, `wrap` or
+numbers (one that has them is a load error there). Outside those, a
+`code` with `language`, `spans`, `numbers` or `from` is the block
+described here, and a bare one is the inline span on its own.
+
 **Your own highlighting: `:spans`.** A program that has a lexer of its
 own (Chroma, a language server) gives the block its tokens, and the
 framework tokenizes nothing:

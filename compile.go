@@ -1118,6 +1118,10 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 	if n.Tag == "code" && !s.inProse && hasBlockAttr(n) {
 		w = &blockCode // outside prose, code with a block's attribute is the block of source
 	}
+	if n.Tag == "code" && s.inProse && hasBlockAttr(n) {
+		s.c.fail(s.t.file, n.Pos, "<code> in a paragraph is inline code: it takes no language, spans, numbers or from (the block of source stands on its own)")
+		return nil
+	}
 	e := &elem{kind: kWidget, pos: n.Pos, w: w}
 	vals := map[int]value{}
 	for _, a := range n.Attrs {

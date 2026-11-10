@@ -217,6 +217,7 @@ func TestLoadErrors(t *testing.T) {
 	for _, c := range []struct{ src, want string }{
 		{`<surface><text>{{ titel }}</text></surface>`, `board.surf:1:19: undeclared reference to 'titel'`},
 		{`<surface><text :bold="title">x</text></surface>`, `board.surf:1:23: :bold is a bool, not string`},
+		{`<surface><p>a <code language="go">x</code></p></surface>`, `board.surf:1:17: <code> in a paragraph is inline code: it takes no language, spans, numbers or from (the block of source stands on its own)`},
 		{`<surface><row gap="x"/></surface>`, `board.surf:1:20: gap is an int, not "x"`},
 		// The refusal names what the widget takes, its own and every
 		// widget's, each once, in alphabetical order.
