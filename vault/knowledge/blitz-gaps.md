@@ -504,7 +504,7 @@ fallback face; every line's height in prose is a length in `em`
 code's) can't change a line box, which had Blitz's blocks creep up by a
 row by the end of `prose/alerts`.
 
-**The baseline's new cases of this leg (33 of 1950, taken 2026-11-10 on
+**The baseline's new cases of this leg (33 of 1860, taken 2026-11-10 on
 main's green gate):** `prose/doc` in compact and roomy, every theme, both
 scales (20 cases, 24–47 CSS px²), and `prose/compact` in roomy at both
 scales in each theme and in compact at 1.6× in some (13 cases, 13–28). The
