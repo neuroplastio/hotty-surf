@@ -736,3 +736,15 @@ its caret at the end showed its end where Chromium shows the top (found
 by the maintainer looking at field-rows-graphite-roomy-1.6 before and
 after). 0.7.3 (mods/blitz 0055) takes the offset back only to what the new
 height allows.
+
+## A wrapping row in a stack that doesn't stretch (2026-11-10, not placed)
+
+Seen in hotty-blitz 0.7.3 while the layout scene was written: a
+`<row wrap>` of two buttons in a `<stack align="center">`
+(`align-items: center` over a `flex-wrap: wrap` child) took its widest
+button's width, so the second button went under the first and past
+the box that held them. Chromium was not drawn beside it, so it isn't
+known to be Blitz's: it is here so that it is looked at. How to see it
+is in [`surf-gaps.md`](surf-gaps.md), "Every gap, once". No fixture and
+no baseline line were made for it.
+

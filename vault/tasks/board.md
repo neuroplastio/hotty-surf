@@ -213,15 +213,20 @@ The order is the maintainer's, via gov (2026-10-30):
   - [x] The third slice, on the same branch, not landed
     (`vault/journal/2026-11-10-flexbox-vocabulary.md`): flexbox's words
     on a row and a stack, `justify` and `align`, and `grow` with a
-    weight, in both renditions and both modes, proven in hotty-blitz by
-    four gate fixtures; and the layout scene
-    (`internal/stories/row.surf`).
-  - [ ] The fourth slice, authorized: the story's `.surf` source in the
-    gallery, behind a switch.
+    weight, in both renditions and both modes, proven in hotty-blitz
+    once by four Go fixtures that aren't kept
+    (`vault/knowledge/surf-gaps.md`, "Proven once"); and the layout
+    scene (`internal/stories/row.surf`).
+  - [x] The fourth slice, on the same branch, not landed
+    (`vault/journal/2026-11-10-gallery-source.md`): the story's `.surf`
+    source beside the canvas, behind a Source switch.
+  - Every gap and bug found on the way is written once, for a
+    follow-up outside this project: `vault/knowledge/surf-gaps.md`
+    ("Every gap, once"), `blitz-gaps.md`, `look.md` ("Seen, not ruled
+    on"), `dense.md`, `open-bugs.md`.
   - Proposed, none started: the other components as scenes; the Go
     loop; surfaces beside cells; the toolbar, the default theme and a
-    key bar; the gates on the `.surf` stories; a basis for `grow`
-    (`vault/knowledge/surf-gaps.md`); Dense's dependents
+    key bar; the gates on the `.surf` stories; Dense's dependents
     (`vault/knowledge/dense.md`).
 - [x] **The gallery** (merge 20f8f7a), alongside: the live story
   browser, `cmd/surfgallery`, `sh scripts/gallery.sh [--web]`.

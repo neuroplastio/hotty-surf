@@ -160,3 +160,16 @@ Not taken, by the maintainer's call ("Keep R-24's quiet look",
 9. **A progress bar**: plx's toast draws its countdown in block glyphs
    ("████░ 95%") on a host. It needs a widget: a thin rounded track and
    fill on a host, glyphs only in the cells.
+
+## Seen, not ruled on (2026-11-10, the gallery's scenes)
+
+The look is the maintainer's. These were seen in the Button scene
+(`make gallery`, Components, Button) and left as they are:
+
+| What | How to see it | Where |
+| --- | --- | --- |
+| A disabled button is hard to tell from a live one: its label is a little fainter, nothing else. | "Unavailable", beside "Actions" above it. | `surfui/surf.css`, `.u-btn`'s `:disabled` rules. |
+| A bare button has no edge at rest and gains one disabled, so the disabled Cancel looks more like a button than the live one. | The last button of "Unavailable" against the last of "Actions". | The same rules, with `.u-btn.u-bare`. |
+| An icon-only pill is much smaller than a pill with a label. | "On a bar": the flask, the bell and the cog beside `production` and `main`. | `surfui/surf.css`, `.u-btn.u-pill`. |
+| The focus line round a scroll box that isn't a surface. | Tab to the gallery's stories tree, or to any `<stack scroll>` or `<list scroll>`: a hairline round the whole box. | `surfui/surf.css`: `.u-scroll:not(.u-surface):focus-visible`. The gate's `box/scroll` shows it on purpose, so taking it off moves a baseline. The rule it sits against is above ("a surface has no focus outline"). |
+
