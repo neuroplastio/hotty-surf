@@ -1,0 +1,18 @@
+cells 40x8
+caret 1,0 bar
+text
+>  Write a comment
+>
+>  Save  Keep
+style
+= abbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= cccccccccccc
+. fg/bg
+a fg/field
+b muted/field
+c fg/tonal
+hits
+@ 0,0 40x2 r.0.ktext
+@ 0,2 6x1 r.0.1.ksave
+@ 6,2 6x1 r.0.1.kkeep

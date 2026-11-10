@@ -1,0 +1,21 @@
+cells 40x8
+caret 6,3 bar
+text
+>  attempt, not before; and put the
+>  retry's reason in the error, or no one
+>  will know why it waited. Then add the
+>  test.
+>  Save  Keep
+style
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= bbbbbbbbbbbb
+. fg/bg
+a fg/field
+b fg/tonal
+hits
+@ 0,0 40x4 r.0.ktext
+@ 0,4 6x1 r.0.1.ksave
+@ 6,4 6x1 r.0.1.kkeep

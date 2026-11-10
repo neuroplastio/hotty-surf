@@ -1,0 +1,17 @@
+cells 40x8
+caret 1,1 bar
+text
+>  Looks good to me, one nit on the name.
+>
+>  Save  Keep
+style
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+= bbbbbbbbbbbb
+. fg/bg
+a fg/field
+b fg/tonal
+hits
+@ 0,0 40x2 r.0.ktext
+@ 0,2 6x1 r.0.1.ksave
+@ 6,2 6x1 r.0.1.kkeep
