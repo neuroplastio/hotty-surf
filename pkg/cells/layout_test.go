@@ -236,3 +236,59 @@ func TestWrapRow(t *testing.T) {
 		}
 	}
 }
+
+// TestJustifyAlignGrow: a Row's and a Stack's Justify and Align place
+// their children as flexbox's justify-content and align-items do, and
+// GrowBy shares the room left by weight.
+func TestJustifyAlignGrow(t *testing.T) {
+	two := func() *surfui.Node { return surfui.Stack(surfui.Text("a"), surfui.Text("b")) }
+	for _, c := range []struct {
+		name string
+		n    func() *surfui.Node
+		want string
+	}{
+		{"justify start", func() *surfui.Node { return surfui.Row(surfui.Text("ab"), surfui.Text("cd")).Justify("start") }, "abcd"},
+		{"justify center", func() *surfui.Node { return surfui.Row(surfui.Text("ab"), surfui.Text("cd")).Justify("center") }, "        abcd"},
+		{"justify end", func() *surfui.Node { return surfui.Row(surfui.Text("ab"), surfui.Text("cd")).Justify("end") }, "                abcd"},
+		{"justify between", func() *surfui.Node {
+			return surfui.Row(surfui.Text("ab"), surfui.Text("cd"), surfui.Text("ef")).Justify("between")
+		}, "ab       cd       ef"},
+		{"justify, one that grows", func() *surfui.Node {
+			return surfui.Row(surfui.Text("ab").Grow(), surfui.Text("cd")).Justify("end")
+		}, "ab                cd"},
+		{"justify on a row that wraps", func() *surfui.Node {
+			return surfui.Row(surfui.Text("0123456789"), surfui.Text("abcdefgh"), surfui.Text("xyz")).Wrap().Justify("end")
+		}, "  0123456789abcdefgh\n                 xyz"},
+		{"grow by weight", func() *surfui.Node {
+			return surfui.Row(surfui.Text("a").GrowBy(1), surfui.Text("b").GrowBy(3), surfui.Text("c"))
+		}, "a    b             c"}, // 19 cells left: 4 and 14, and the one over to the first
+		{"grow by none", func() *surfui.Node { return surfui.Row(surfui.Text("a").GrowBy(0), surfui.Text("b")) }, "ab"},
+		{"row, the middle", func() *surfui.Node {
+			return surfui.Row(surfui.Stack(surfui.Text("a"), surfui.Text("b"), surfui.Text("c")), surfui.Text("x"))
+		}, "a\nbx\nc"},
+		{"row align start", func() *surfui.Node {
+			return surfui.Row(surfui.Stack(surfui.Text("a"), surfui.Text("b"), surfui.Text("c")), surfui.Text("x")).Align("start")
+		}, "ax\nb\nc"},
+		{"row align end", func() *surfui.Node {
+			return surfui.Row(surfui.Stack(surfui.Text("a"), surfui.Text("b"), surfui.Text("c")), surfui.Text("x")).Align("end")
+		}, "a\nb\ncx"},
+		{"row align center over top", func() *surfui.Node {
+			return surfui.Row(surfui.Stack(surfui.Text("a"), surfui.Text("b"), surfui.Text("c")), surfui.Text("x")).Top().Align("center")
+		}, "a\nbx\nc"},
+		{"stack align start", func() *surfui.Node { return surfui.Stack(surfui.Text("ab"), surfui.Text("cdef")).Align("start") }, "ab\ncdef"},
+		{"stack align center", func() *surfui.Node { return surfui.Stack(surfui.Text("ab"), surfui.Text("cdef")).Align("center") }, "         ab\n        cdef"},
+		{"stack align end", func() *surfui.Node { return surfui.Stack(surfui.Text("ab"), surfui.Text("cdef")).Align("end") }, "                  ab\n                cdef"},
+		{"stack align end, a row in it", func() *surfui.Node {
+			return surfui.Stack(surfui.Row(surfui.Text("ab"), surfui.Text("cd")).Gap(1)).Align("end")
+		}, "               ab cd"},
+		{"stack justify end", func() *surfui.Node { return two().Height(4).Justify("end") }, "\n\na\nb"},
+		{"stack justify center", func() *surfui.Node { return two().Height(4).Justify("center") }, "\na\nb"},
+		{"stack justify between", func() *surfui.Node { return two().Height(4).Justify("between") }, "a\n\n\nb"},
+	} {
+		m := &model{render: func() *surfui.Node { return surfui.Surface(c.n()) }}
+		s := show(m).Draw(20, 6)
+		if got := strings.TrimRight(s.Text(), "\n"); got != c.want {
+			t.Errorf("%s: %q, want %q", c.name, got, c.want)
+		}
+	}
+}

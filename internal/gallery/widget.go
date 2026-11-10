@@ -88,7 +88,7 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 		switch {
 		case a.Name == "hue": // one of the stories' palette's, which the story declares
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, stories.Palette.Names()...)
-		case a.Type == surf.TypeBool:
+		case a.Type == surf.TypeBool, a.Type == surf.TypeWeight:
 			c.Kind, c.Value = "switch", "false"
 		case a.Values != nil:
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, a.Values...)
@@ -244,7 +244,7 @@ func (ws *widgetStory) source() string {
 	for _, a := range ws.attrs() {
 		v := ws.by[a.Name].Value
 		switch {
-		case a.Type == surf.TypeBool:
+		case a.Type == surf.TypeBool, a.Type == surf.TypeWeight:
 			if v == "true" {
 				b.WriteString(" " + a.Name)
 			}

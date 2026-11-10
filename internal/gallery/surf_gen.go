@@ -853,7 +853,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 							surf.ModKey(n34, "why")
 							surf.ModTone(n34, "warn")
 							surf.ModWrap(n34, true)
-							surf.ModGrow(n34, true)
+							surf.ModGrowBy(n34, 1)
 							k32 = append(k32, n34)
 							e.Leave()
 						}
@@ -894,7 +894,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 								if e.Enter("gallery.surf", 56, 13) {
 									n40 := surfui.Field()
 									surf.ModKey(n40, "filter")
-									surf.ModGrow(n40, true)
+									surf.ModGrowBy(n40, 1)
 									surf.ModValue(n40, c.Filter)
 									surf.ModPlaceholder(n40, "Filter the stories")
 									surf.ModAriaLabel(n40, "Filter the stories")
@@ -964,7 +964,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 							n37 := surf.NewSurface(k37...)
 							surf.ModDensity(n37, "compact")
 							surf.ModKey(n37, "nav")
-							surf.ModGrow(n37, true)
+							surf.ModGrowBy(n37, 1)
 							k36 = append(k36, n37)
 							e.Leave()
 						}
@@ -1012,7 +1012,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 						if e.Enter("gallery.surf", 71, 11) {
 							n52 := surfui.Text("Actions")
 							surf.ModBold(n52, true)
-							surf.ModGrow(n52, true)
+							surf.ModGrowBy(n52, 1)
 							k51 = append(k51, n52)
 							e.Leave()
 						}
@@ -1089,7 +1089,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 					}
 					n47 := surfui.Stack(k47...)
 					surf.ModKey(n47, "mid")
-					surf.ModGrow(n47, true)
+					surf.ModGrowBy(n47, 1)
 					k35 = append(k35, n47)
 					e.Leave()
 				}
@@ -1154,7 +1154,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 				}
 				n35 := surfui.Row(k35...)
 				surf.ModKey(n35, "main")
-				surf.ModGrow(n35, true)
+				surf.ModGrowBy(n35, 1)
 				surf.ModGap(n35, 1)
 				surf.ModPad(n35, [2]int64{1, 0})
 				surf.ModTop(n35, true)
@@ -1163,7 +1163,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 			}
 			n2 := surfui.Stack(k2...)
 			surf.ModKey(n2, "page")
-			surf.ModGrow(n2, true)
+			surf.ModGrowBy(n2, 1)
 			k1 = append(k1, n2)
 			e.Leave()
 		}
@@ -1246,7 +1246,7 @@ func surfRenderGallery_StoryEntry(e *surf.Errs, out []*surfui.Node, c *Gallery, 
 						t11 += p10.Label
 					}
 					n9 := surfui.Text(t11)
-					surf.ModGrow(n9, true)
+					surf.ModGrowBy(n9, 1)
 					k5 = append(k5, n9)
 					e.Leave()
 				}
@@ -1323,7 +1323,7 @@ func surfRenderGallery_StoryEntry(e *surf.Errs, out []*surfui.Node, c *Gallery, 
 					t24 += p23.Label
 				}
 				n22 := surfui.Text(t24)
-				surf.ModGrow(n22, true)
+				surf.ModGrowBy(n22, 1)
 				k21 = append(k21, n22)
 				e.Leave()
 			}

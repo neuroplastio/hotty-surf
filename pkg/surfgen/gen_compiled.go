@@ -684,6 +684,8 @@ func (w *fw) mod(b *bytes.Buffer, el *surf.Elem, sc *scope, n string, m surf.Mod
 		c = ctx{k: cBool}
 	case surf.TypeInt:
 		c = ctx{k: cInt, name: at.Name}
+	case surf.TypeWeight:
+		c = ctx{k: cWeight, name: at.Name}
 	case surf.TypePad:
 		c = ctx{k: cPad}
 	case surf.TypeSpans:
@@ -1126,6 +1128,7 @@ const (
 	cBool                       // a bool
 	cCond                       // a :if's bool
 	cInt                        // an int, of attribute name
+	cWeight                     // a bool or an int as a weight, of attribute name
 	cStrings                    // a []string: options
 	cPad                        // a [2]int64
 	cSpans                      // a []surfui.Span
@@ -1150,7 +1153,7 @@ func litCode(v cellite.Value, c ctx) string {
 		return strconv.Quote(v.String())
 	case cBool, cCond:
 		return strconv.FormatBool(v.Bool())
-	case cInt:
+	case cInt, cWeight:
 		return strconv.FormatInt(v.Int(), 10)
 	}
 	panic("surfgen: no literal for this context")
@@ -1312,6 +1315,14 @@ func (x *xl) to(v gval, c ctx) (string, bool) {
 			return v.code, true
 		}
 		return x.check("Int", strconv.Quote(c.name), c0.valueOf(v)), true
+	case cWeight:
+		switch v.k {
+		case gInt:
+			return v.code, true
+		case gBool:
+			return "surf.Weight(" + v.code + ")", true
+		}
+		return x.check("Weight", strconv.Quote(c.name), c0.valueOf(v)), true
 	case cStrings:
 		if v.k == gSlice && types.Identical(v.t.Underlying().(*types.Slice).Elem(), types.Typ[types.String]) {
 			c0.std["slices"] = true // the node keeps it: not the program's

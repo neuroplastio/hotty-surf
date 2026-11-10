@@ -643,6 +643,34 @@ func (n *Node) Grow() *Node {
 	return n.Class("u-grow")
 }
 
+// GrowBy is Grow with a weight: the room left in a Row or a Stack is
+// shared among those that grow in proportion to their weights, as
+// flexbox's flex-grow shares it. GrowBy(1) is Grow, and a weight under
+// 1 is none.
+func (n *Node) GrowBy(weight int) *Node {
+	if weight < 1 {
+		return n
+	}
+	n.Grow()
+	if weight > 1 && n.col == nil {
+		n.Var("u-grow", strconv.Itoa(weight)).Class("u-grow-by")
+	}
+	return n
+}
+
+// Justify places a Row's or a Stack's children along it, where they
+// leave room: "start" (the default), "center", "end", or "between", the
+// first at its start, the last at its end and the room shared between
+// them. It is flexbox's justify-content. A child that grows takes the
+// room, and leaves none to place.
+func (n *Node) Justify(v string) *Node {
+	switch v {
+	case "center", "end", "between":
+		n.Class("u-jc-" + v)
+	}
+	return n
+}
+
 // Keep keeps n whole in its Row or Stack: it never shrinks, and what is
 // beside it gives way first. A sequence of key caps keeps its caps whole
 // so; a Text or a Line beside it is cut instead.

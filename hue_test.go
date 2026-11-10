@@ -115,7 +115,7 @@ func TestHueRefusals(t *testing.T) {
 		{"an empty name", `<surface><text hue="">x</text></surface>`, `crew.surf:5:21: hue "" is in no <palette>; the palettes declare coral or teal`},
 		{"hex in a hue", `<surface><text hue="#ff8e7a">x</text></surface>`, `crew.surf:5:21: hue "#ff8e7a" is in no <palette>; the palettes declare coral or teal`},
 		{"a button", `<surface><button hue="coral">x</button></surface>`, "crew.surf:5:18: <button> takes no hue; it takes anchor, attention, autofocus,"},
-		{"a row", `<surface><row :hue="colour"/></surface>`, "crew.surf:5:15: <row> takes no hue; it takes anchor, autofocus,"},
+		{"a row", `<surface><row :hue="colour"/></surface>`, "crew.surf:5:15: <row> takes no hue; it takes align, anchor, autofocus,"},
 		{"a chip", `<surface><chip hue="coral">x</chip></surface>`, "crew.surf:5:16: <chip> takes no hue; it takes anchor, autofocus,"},
 		{"a bound number", `<surface><text :hue="1">x</text></surface>`, "crew.surf:5:22: :hue is a string, not int"},
 	} {

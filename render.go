@@ -715,6 +715,20 @@ func (f *frame) apply(e *elem, n *surfui.Node, m mod) {
 			return
 		}
 		applyIntOf(m.attr, n, v.Int())
+	case TypeWeight:
+		v := m.v.lit
+		if m.v.prog != nil {
+			var ok bool
+			if v, ok = f.eval(e, m.v.prog); !ok {
+				return
+			}
+		}
+		w, werr := WeightOf(m.attr.Name, v)
+		if werr != nil {
+			f.fail(e, werr)
+			return
+		}
+		applyIntOf(m.attr, n, w)
 	case TypePad:
 		p := m.v.pad
 		if m.v.prog != nil {
@@ -830,7 +844,9 @@ func applyString(name string, n *surfui.Node, v string) error {
 	case "max":
 		return ModColMax(n, v)
 	case "align":
-		return ModColAlign(n, v)
+		return ModAlign(n, v)
+	case "justify":
+		return ModJustify(n, v)
 	case "sort":
 		return ModColSort(n, v)
 	case "program":
@@ -863,8 +879,6 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModSmall(n, v)
 	case "wrap":
 		ModWrap(n, v)
-	case "grow":
-		ModGrow(n, v)
 	case "keep":
 		ModKeep(n, v)
 	case "fit":
@@ -956,6 +970,8 @@ func applyInt(name string, n *surfui.Node, v int64) {
 	switch name {
 	case "gap":
 		ModGap(n, v)
+	case "grow":
+		ModGrowBy(n, v)
 	case "indent":
 		ModIndent(n, v)
 	case "depth":

@@ -425,7 +425,7 @@ func surfRenderTasks_TaskRow(e *surf.Errs, out []*surfui.Node, c *Tasks, fill su
 				}
 				surf.ModMuted(n6, p9.Done)
 			}
-			surf.ModGrow(n6, true)
+			surf.ModGrowBy(n6, 1)
 			k1 = append(k1, n6)
 			e.Leave()
 		}

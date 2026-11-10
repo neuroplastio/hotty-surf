@@ -185,8 +185,8 @@ component, a partial, or a widget a package registered from outside
 | tag | what | takes |
 | --- | --- | --- |
 | `surface` | a screen's root; Compact unless `density` says | children |
-| `stack` | its children top to bottom | children |
-| `row` | its children left to right, centred on the line; with `wrap`, on to the next line where one is full | children |
+| `stack` | its children top to bottom, each as wide as the stack; `justify` and `align` place them | children |
+| `row` | its children left to right, centred on the line; with `wrap`, on to the next line where one is full; `justify` and `align` place them | children |
 | `spacer` | the room left in its row or stack | nothing |
 | `code` | read-only source, highlighted by `language` or by the caller's `spans`, with `wrap` and `numbers` | text |
 | `text` | a line of text, cut with … where it doesn't fit | text |
@@ -519,7 +519,10 @@ registers widgets runs its own cases with `conformance.Suite`
 | `key` | string | all | its key among its siblings, which the diff follows: give a `:each`'s items one. Bound, any value with a text (an int `1` is `k1`) |
 | `tone` | string | all | the text's colour: `accent`, `ok`, `warn`, `error`, `info`, `muted`, `plain` |
 | `fill` | string | all | a fill in a tone's colour, by the tone's name: `accent`, `ok`, `warn`, `error`, `info`, `muted`, `plain` |
-| `bold`, `semibold`, `muted`, `small`, `wrap`, `grow`, `keep`, `top` | bool | all | the floor's modifiers (`surfui/vocab.go`) |
+| `bold`, `semibold`, `muted`, `small`, `wrap`, `keep`, `top` | bool | all | the floor's modifiers (`surfui/vocab.go`) |
+| `grow` | bool or int | all | takes the room left in its row or stack. A number is its weight, as flexbox's `flex-grow`: `grow="2"` beside a bare `grow` takes twice the room. Bare is 1; `false` and `0` are none; bound, a bool or an int |
+| `justify` | string | row, stack | where the children go along it, where they leave room, as flexbox's `justify-content`: `start` (the default), `center`, `end`, or `between` (the first at its start, the last at its end). A child that grows leaves no room to place |
+| `align` | string | row, stack | where the children go across it, as flexbox's `align-items`: `start`, `center`, `end`, `stretch`. A row's are at its middle unless it says, and `top` is the old spelling of its `start`; a stack's are stretched to its width |
 | `gap`, `indent`, `down`, `width`, `height`, `scale` | int | all | the floor's sizes: gap 0 to 6 steps, indent and width in cells, down and height in rows, scale in percent |
 | `width`, `max`, `align`, `sort` | string | col | a column's width (cells, `auto` or `fill`), cap, place and sort chevron ("Tables") |
 | `fill`, `show` | bool | col | a column that takes the room left; one drawn only while it holds (`:if` on a `col` is `show`) |

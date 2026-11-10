@@ -402,7 +402,17 @@
 .u-row.u-top, .u-item.u-top { align-items: flex-start; }
 .u-row.u-top > .u-stack { align-self: stretch; }
 .u-grow { flex: 1 1 0; min-width: 0; }
+.u-grow.u-grow-by { flex-grow: var(--u-grow); }
 .u-keep { flex: 0 0 auto; }
+/* Justify and Align: flexbox's justify-content and align-items, on a Row
+   and a Stack. A Row's align="start" is Top. */
+.u-row.u-jc-center, .u-stack.u-jc-center { justify-content: center; }
+.u-row.u-jc-end, .u-stack.u-jc-end { justify-content: flex-end; }
+.u-row.u-jc-between, .u-stack.u-jc-between { justify-content: space-between; }
+.u-stack.u-ai-start { align-items: flex-start; }
+.u-row.u-ai-center, .u-stack.u-ai-center { align-items: center; }
+.u-row.u-ai-end, .u-stack.u-ai-end { align-items: flex-end; }
+.u-row.u-ai-stretch, .u-stack.u-ai-stretch { align-items: stretch; }
 /* A row that wraps (wrap on a row): flexbox's flex-wrap. A child goes on
    to the next line where it doesn't fit whole, and the row's gap is
    between the lines as it is between the children. Its white space is

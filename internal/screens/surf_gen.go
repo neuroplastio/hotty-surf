@@ -980,7 +980,7 @@ func surfRenderAgents(e *surf.Errs, out []*surfui.Node, c *Agents, fill surf.Fil
 											surf.ModBold(n13, true)
 											surf.ModMuted(n13, (&l4[i4]).Offline)
 											surf.ModWrap(n13, true)
-											surf.ModGrow(n13, true)
+											surf.ModGrowBy(n13, 1)
 											k12 = append(k12, n13)
 											e.Leave()
 										}
@@ -1048,12 +1048,12 @@ func surfRenderAgents(e *surf.Errs, out []*surfui.Node, c *Agents, fill surf.Fil
 										}
 									}
 									n11 := surfui.Stack(k11...)
-									surf.ModGrow(n11, true)
+									surf.ModGrowBy(n11, 1)
 									k6 = append(k6, n11)
 									e.Leave()
 								}
 								n6 := surfui.Row(k6...)
-								surf.ModGrow(n6, true)
+								surf.ModGrowBy(n6, 1)
 								surf.ModGap(n6, 2)
 								surf.ModTop(n6, true)
 								k5 = append(k5, n6)
@@ -1257,7 +1257,7 @@ func surfRenderNotices_NoticeRow(e *surf.Errs, out []*surfui.Node, c *Notices, f
 					}
 					surf.ModBold(n16, p19.Unread)
 				}
-				surf.ModGrow(n16, true)
+				surf.ModGrowBy(n16, 1)
 				k2 = append(k2, n16)
 				e.Leave()
 			}
@@ -1290,7 +1290,7 @@ func surfRenderNotices_NoticeRow(e *surf.Errs, out []*surfui.Node, c *Notices, f
 				e.Leave()
 			}
 			n2 := surfui.Row(k2...)
-			surf.ModGrow(n2, true)
+			surf.ModGrowBy(n2, 1)
 			surf.ModGap(n2, 1)
 			k1 = append(k1, n2)
 			e.Leave()
@@ -1544,7 +1544,7 @@ func surfRenderPalette(e *surf.Errs, out []*surfui.Node, c *Palette, fill surf.F
 						// palette.surf:26:11 <field>
 						if e.Enter("palette.surf", 26, 11) {
 							n18 := surfui.Field()
-							surf.ModGrow(n18, true)
+							surf.ModGrowBy(n18, 1)
 							surf.ModValue(n18, c.Query)
 							surf.ModAriaLabel(n18, "Command")
 							surf.ModBare(n18, true)
@@ -1948,7 +1948,7 @@ func surfRenderPalette_PaletteRow(e *surf.Errs, out []*surfui.Node, c *Palette, 
 				}
 			}
 			n7 := surfui.Line(k7...)
-			surf.ModGrow(n7, true)
+			surf.ModGrowBy(n7, 1)
 			k1 = append(k1, n7)
 			e.Leave()
 		}
@@ -2218,7 +2218,7 @@ func surfRenderSettings_SettingRow(e *surf.Errs, out []*surfui.Node, c *Settings
 				}
 				n4 := surfui.Stack(k4...)
 				surf.ModKey(n4, "text")
-				surf.ModGrow(n4, true)
+				surf.ModGrowBy(n4, 1)
 				k3 = append(k3, n4)
 				e.Leave()
 			}
@@ -2619,7 +2619,7 @@ func surfRenderSettings(e *surf.Errs, out []*surfui.Node, c *Settings, fill surf
 					// settings.surf:35:9 <heading>
 					if e.Enter("settings.surf", 35, 9) {
 						n30 := surfui.Heading(c.Title())
-						surf.ModGrow(n30, true)
+						surf.ModGrowBy(n30, 1)
 						k29 = append(k29, n30)
 						e.Leave()
 					}
@@ -2695,21 +2695,21 @@ func surfRenderSettings(e *surf.Errs, out []*surfui.Node, c *Settings, fill surf
 					}
 					n35 := surfui.Stack(k35...)
 					surf.ModKey(n35, c.Box())
-					surf.ModGrow(n35, true)
+					surf.ModGrowBy(n35, 1)
 					surf.ModScroll(n35, true)
 					k28 = append(k28, n35)
 					e.Leave()
 				}
 				n28 := surfui.Stack(k28...)
 				surf.ModKey(n28, "main")
-				surf.ModGrow(n28, true)
+				surf.ModGrowBy(n28, 1)
 				surf.ModPad(n28, [2]int64{4, 1})
 				k2 = append(k2, n28)
 				e.Leave()
 			}
 			n2 := surfui.Row(k2...)
 			surf.ModKey(n2, "split")
-			surf.ModGrow(n2, true)
+			surf.ModGrowBy(n2, 1)
 			surf.ModTop(n2, true)
 			k1 = append(k1, n2)
 			e.Leave()

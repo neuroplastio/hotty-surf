@@ -271,7 +271,7 @@ func surfRenderFetch(e *surf.Errs, out []*surfui.Node, c *Fetch, fill surf.Fill)
 				}
 				n5 := surfui.Stack(k5...)
 				surf.ModKey(n5, "facts")
-				surf.ModGrow(n5, true)
+				surf.ModGrowBy(n5, 1)
 				k2 = append(k2, n5)
 				e.Leave()
 			}

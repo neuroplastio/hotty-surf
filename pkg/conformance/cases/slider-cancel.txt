@@ -6,12 +6,14 @@ Tune
 -- state.json --
 {"Replicas": 3, "Picked": []}
 -- document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="3" aria-orientation="horizontal" style="--u-s:0.1818" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">3</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="3" aria-orientation="horizontal" style="--u-s:0.1818" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">3</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div><div id="r.klayout" class="u-row u-jc-between u-ai-end"><span id="r.klayout.kbare" class="u-text u-grow">a</span><span id="r.klayout.kthree" class="u-text u-grow u-grow-by" style="--u-grow:3">b</span><span id="r.klayout.koff" class="u-text">c</span><span id="r.klayout.kon" class="u-text u-grow">d</span><span id="r.klayout.kby" class="u-text u-grow u-grow-by" style="--u-grow:3">e</span><span id="r.klayout.kdyn" class="u-text u-grow u-grow-by" style="--u-grow:3">g</span></div><div id="r.kside" class="u-stack u-jc-end u-ai-center"><span id="r.kside.kf" class="u-text">f</span></div></div></body></html>
 -- cells --
 cells 64x32
 text
 > Replicas ───●──────────────── 3  3
 > [Errors] [Warnings] [Slow]
+> a     b                 cd    e                g
+>                                f
 style
 = .........aaa.bbbbbbbbbbbbbbbb....b
 = cccccccc.cccccccccc.cccccc
@@ -34,16 +36,22 @@ attr r class "u-surface u-theme-graphite u-compact u-dragging"
 attr r.kreplicas.kslider aria-valuenow "10"
 var r.kreplicas.kslider u-s "0.8182"
 text r.kreplicas.kshown "10"
+var r.klayout.kby u-grow "10"
+var r.klayout.kdyn u-grow "10"
 attr r.kreplicas.kslider aria-valuenow "8"
 var r.kreplicas.kslider u-s "0.6364"
 text r.kreplicas.kshown "8"
+var r.klayout.kby u-grow "8"
+var r.klayout.kdyn u-grow "8"
 -- 1.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact u-dragging"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="8" aria-orientation="horizontal" style="--u-s: 0.6364" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">8</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact u-dragging"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="8" aria-orientation="horizontal" style="--u-s: 0.6364" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">8</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div><div id="r.klayout" class="u-row u-jc-between u-ai-end"><span id="r.klayout.kbare" class="u-text u-grow">a</span><span id="r.klayout.kthree" class="u-text u-grow u-grow-by" style="--u-grow:3">b</span><span id="r.klayout.koff" class="u-text">c</span><span id="r.klayout.kon" class="u-text u-grow">d</span><span id="r.klayout.kby" class="u-text u-grow u-grow-by" style="--u-grow: 8">e</span><span id="r.klayout.kdyn" class="u-text u-grow u-grow-by" style="--u-grow: 8">g</span></div><div id="r.kside" class="u-stack u-jc-end u-ai-center"><span id="r.kside.kf" class="u-text">f</span></div></div></body></html>
 -- 1.cells --
 cells 64x32
 text
 > Replicas ────────────●─────── 8  8
 > [Errors] [Warnings] [Slow]
+> a  b        cd  e                       g
+>                                f
 style
 = .........aaaaaaaaaaaaabbbbbbb....b
 = cccccccc.cccccccccc.cccccc
@@ -66,13 +74,17 @@ attr r class "u-surface u-theme-graphite u-compact"
 attr r.kreplicas.kslider aria-valuenow "3"
 var r.kreplicas.kslider u-s "0.1818"
 text r.kreplicas.kshown "3"
+var r.klayout.kby u-grow "3"
+var r.klayout.kdyn u-grow "3"
 -- 2.document --
-<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="3" aria-orientation="horizontal" style="--u-s: 0.1818" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">3</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div></div></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.kreplicas" class="u-row u-gap1"><span id="r.kreplicas.klabel" class="u-text">Replicas</span><div id="r.kreplicas.kslider" class="u-slider" tabindex="0" role="slider" aria-valuemin="1" aria-valuemax="12" aria-valuenow="3" aria-orientation="horizontal" style="--u-s: 0.1818" data-on="drag" data-steps="11" data-keys="arrow_left=program arrow_right=program arrow_up=program arrow_down=program home=program end=program"><span id="r.kreplicas.kslider.0" class="u-slider-fill"></span><span id="r.kreplicas.kslider.1" class="u-slider-thumb"></span><span id="r.kreplicas.kslider.2" class="u-slider-rest"></span></div><span id="r.kreplicas.kshown" class="u-text u-tone-muted">3</span></div><div id="r.kfilters" class="u-row u-gap1 u-chips"><button id="r.kfilters.kerrors" class="u-btn" type="button">Errors</button><button id="r.kfilters.kwarnings" class="u-btn" type="button">Warnings</button><button id="r.kfilters.kslow" class="u-btn" type="button">Slow</button></div><div id="r.klayout" class="u-row u-jc-between u-ai-end"><span id="r.klayout.kbare" class="u-text u-grow">a</span><span id="r.klayout.kthree" class="u-text u-grow u-grow-by" style="--u-grow:3">b</span><span id="r.klayout.koff" class="u-text">c</span><span id="r.klayout.kon" class="u-text u-grow">d</span><span id="r.klayout.kby" class="u-text u-grow u-grow-by" style="--u-grow: 3">e</span><span id="r.klayout.kdyn" class="u-text u-grow u-grow-by" style="--u-grow: 3">g</span></div><div id="r.kside" class="u-stack u-jc-end u-ai-center"><span id="r.kside.kf" class="u-text">f</span></div></div></body></html>
 -- 2.cells --
 cells 64x32
 text
 > Replicas ───●──────────────── 3  3
 > [Errors] [Warnings] [Slow]
+> a     b                 cd    e                g
+>                                f
 style
 = .........aaaabbbbbbbbbbbbbbbb....b
 = cccccccc.cccccccccc.cccccc

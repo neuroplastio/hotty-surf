@@ -116,6 +116,19 @@ const (
 	roomy
 )
 
+// place is where a Row's or a Stack's children go: along it (Justify),
+// or across it (Align).
+type place uint8
+
+const (
+	pDefault place = iota // start along; a Row's middle and a Stack's width across
+	pStart
+	pCenter
+	pEnd
+	pBetween // along only
+	pStretch // across only
+)
+
 // box is an element as the layout has it.
 type box struct {
 	n    *surfui.Node
@@ -134,7 +147,9 @@ type box struct {
 	barRole    Role   // fBar's colour
 	maxw       int    // the widest it is laid out, 0 for no limit (a Prose's measure)
 	gap        int
-	pl, pr     int // padding
+	jc, ai     place // Justify and Align, a Row's or a Stack's
+	gw         int   // GrowBy's weight, 1 for Grow
+	pl, pr     int   // padding
 	pt, pb     int
 	ml, mt     int // margins: Indent, Down, a Section in a Section
 	fw, fh     int // a fixed width and height, -1 for none
@@ -546,6 +561,20 @@ func (b *box) look(d density) {
 			b.kind, known = rule, true
 		case c == "u-grow":
 			b.f |= fGrow
+		case c == "u-jc-center":
+			b.jc = pCenter
+		case c == "u-jc-end":
+			b.jc = pEnd
+		case c == "u-jc-between":
+			b.jc = pBetween
+		case c == "u-ai-start":
+			b.ai = pStart
+		case c == "u-ai-center":
+			b.ai = pCenter
+		case c == "u-ai-end":
+			b.ai = pEnd
+		case c == "u-ai-stretch":
+			b.ai = pStretch
 		case c == "u-scroll":
 			b.f |= fScroll
 		case c == "u-top":
@@ -695,6 +724,10 @@ func (b *box) look(d density) {
 			}
 		case "u-dn":
 			b.mt += atoi(v.V)
+		case "u-grow":
+			if hasClass(n, "u-grow-by") {
+				b.gw = min(max(atoi(v.V), 1), 1<<20)
+			}
 		case "u-w":
 			if hasClass(n, "u-width") {
 				b.fw = max(atoi(v.V), 0)
@@ -833,6 +866,63 @@ func (b *box) fixed() bool {
 
 // grows reports whether b takes the room left, flex: 1 1 0.
 func (b *box) grows() bool { return b.f&(fGrow|fScroll|fFit|fFitStart) != 0 || b.kind == spacer }
+
+// weight is the share b takes of the room left where it grows, GrowBy's:
+// flex-grow.
+func (b *box) weight() int { return max(b.gw, 1) }
+
+// shareOut shares free cells among the kids that grow (grows reports
+// which), in proportion to their weights, into out: what doesn't divide
+// goes a cell each to the first of them.
+func shareOut(kids []*box, out []int, free int, grows func(*box) bool) {
+	sum := 0
+	for _, k := range kids {
+		if grows(k) {
+			sum += k.weight()
+		}
+	}
+	if free <= 0 || sum == 0 {
+		return
+	}
+	left := free
+	for i, k := range kids {
+		if grows(k) {
+			d := free * k.weight() / sum
+			out[i] += d
+			left -= d
+		}
+	}
+	for i, k := range kids {
+		if left <= 0 {
+			break
+		}
+		if grows(k) {
+			out[i]++
+			left--
+		}
+	}
+}
+
+// along is where a Row's or a Stack's children start along it, and the
+// room more between two of them, for its Justify: free is the room they
+// leave, n how many they are. The room that doesn't divide between them
+// stays at the end.
+func (b *box) along(free, n int) (start, between int) {
+	if free <= 0 {
+		return 0, 0
+	}
+	switch b.jc {
+	case pCenter:
+		return free / 2, 0
+	case pEnd:
+		return free, 0
+	case pBetween:
+		if n > 1 {
+			return 0, free / (n - 1)
+		}
+	}
+	return 0, 0
+}
 
 // fitMin is a Fit row's least width: its widest child's, min-width: auto.
 func (b *box) fitMin() int {
@@ -1043,16 +1133,7 @@ func (b *box) widthsOf(kids []*box, inner int) []int {
 	free := inner - total
 	switch {
 	case free > 0 && grow > 0:
-		share, extra := free/grow, free%grow
-		for i, k := range kids {
-			if k.grows() && k.fw < 0 {
-				ws[i] += share
-				if extra > 0 {
-					ws[i]++
-					extra--
-				}
-			}
-		}
+		shareOut(kids, ws, free, func(k *box) bool { return k.grows() && k.fw < 0 })
 	case free < 0:
 		shrink(kids, ws, -free)
 	}
@@ -1179,9 +1260,19 @@ func (b *box) columnHeight(w int) int {
 		if i > 0 {
 			h += b.gap
 		}
-		h += k.mt + k.share(w)
+		h += k.mt + k.share(b.across(k, w))
 	}
 	return h
+}
+
+// across is the width a Stack's child takes of its inner w, its margin
+// in it: all of it, or its own where the Stack's Align places it.
+func (b *box) across(k *box, w int) int {
+	switch b.ai {
+	case pStart, pCenter, pEnd:
+		return min(k.ml+k.natural(), w)
+	}
+	return w
 }
 
 // share is the height a column's child takes before the room left is
@@ -1428,36 +1519,46 @@ func (b *box) placeRow() {
 	if b.f&fLines != 0 {
 		y := b.y + b.pt
 		for _, l := range b.lines(inner) {
-			cx := b.x + b.pl
-			for i, k := range b.kids[l.at:l.end] {
-				cx += k.ml
-				kh := k.height(l.ws[i])
-				ky := y + k.mt
-				if b.f&fTop == 0 {
-					ky += max((l.h-k.mt-kh)/2, 0)
-				}
-				k.place(cx, ky, l.ws[i], max(kh, 0))
-				cx += l.ws[i] + b.gap
-			}
+			b.placeLine(b.kids[l.at:l.end], l.ws, inner, y, l.h)
 			y += l.h
 		}
 		return
 	}
-	ih := b.h - b.pt - b.pb
-	ws := b.widths(inner)
-	cx := b.x + b.pl
-	for i, k := range b.kids {
+	b.placeLine(b.kids, b.widths(inner), inner, b.y+b.pt, b.h-b.pt-b.pb)
+}
+
+// placeLine puts kids, a Row's children or a line's of them, ws wide,
+// on a line ih tall at y: along it by the Row's Justify, and across it
+// by its Align.
+func (b *box) placeLine(kids []*box, ws []int, inner, y, ih int) {
+	used := 0
+	for i, k := range kids {
+		used += k.ml + ws[i]
+		if i > 0 {
+			used += b.gap
+		}
+	}
+	start, between := b.along(inner-used, len(kids))
+	cx := b.x + b.pl + start
+	for i, k := range kids {
 		cx += k.ml
 		kh := k.height(ws[i])
-		if b.f&fTop != 0 && k.kind == column && k.fh < 0 {
-			kh = ih - k.mt // a Stack in a Top Row is as tall as the Row
-		}
-		ky := b.y + b.pt + k.mt
-		if b.f&fTop == 0 {
-			ky += max((ih-k.mt-kh)/2, 0)
+		tall := ih - k.mt
+		ky := y + k.mt
+		switch {
+		case b.ai == pStretch:
+			if (k.kind == column || k.kind == across) && k.fh < 0 {
+				kh = tall // a box is as tall as the Row; a leaf stays a line at its top
+			}
+		case b.ai == pEnd:
+			ky += max(tall-kh, 0)
+		case b.ai == pCenter, b.f&fTop == 0:
+			ky += max((tall-kh)/2, 0)
+		case k.kind == column && k.fh < 0 && b.f&fLines == 0:
+			kh = tall // a Stack in a Top Row is as tall as the Row
 		}
 		k.place(cx, ky, ws[i], max(kh, 0))
-		cx += ws[i] + b.gap
+		cx += ws[i] + b.gap + between
 	}
 }
 
@@ -1539,7 +1640,7 @@ func (b *box) placeColumn() {
 	hs := make([]int, len(b.kids))
 	used, grow := 0, 0
 	for i, k := range b.kids {
-		hs[i] = k.share(inner)
+		hs[i] = k.share(b.across(k, inner))
 		used += k.mt + hs[i]
 		if i > 0 {
 			used += b.gap
@@ -1548,23 +1649,25 @@ func (b *box) placeColumn() {
 			grow++
 		}
 	}
+	start, between := 0, 0
 	if free := ih - used; free > 0 && grow > 0 {
-		each, extra := free/grow, free%grow
-		for i, k := range b.kids {
-			if k.grows() && k.fh < 0 {
-				hs[i] += each
-				if extra > 0 {
-					hs[i]++
-					extra--
-				}
-			}
-		}
+		shareOut(b.kids, hs, free, func(k *box) bool { return k.grows() && k.fh < 0 })
+	} else if b.f&fScroll == 0 {
+		start, between = b.along(free, len(b.kids))
 	}
-	cy := b.y + b.pt
+	cy := b.y + b.pt + start
 	for i, k := range b.kids {
 		cy += k.mt
-		k.place(b.x+b.pl+k.ml, cy, max(inner-k.ml, 0), hs[i])
-		cy += hs[i] + b.gap
+		kw := b.across(k, inner)
+		kx := b.x + b.pl
+		switch b.ai {
+		case pCenter:
+			kx += (inner - kw) / 2
+		case pEnd:
+			kx += inner - kw
+		}
+		k.place(kx+k.ml, cy, max(kw-k.ml, 0), hs[i])
+		cy += hs[i] + b.gap + between
 	}
 	if b.f&fScroll != 0 {
 		b.contentH = max(b.contentH, cy-b.gap-b.y-b.pt)

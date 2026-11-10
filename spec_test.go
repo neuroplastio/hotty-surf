@@ -85,6 +85,8 @@ var canonWidgets = map[string]string{
 // canonAttrs is each attribute in a canonical instance, by its name and,
 // where it is only on some tags, the first of them.
 var canonAttrs = map[string]string{
+	"justify/row":       `<row justify="between"><text>a</text><text>b</text></row>`,
+	"align/row":         `<row align="end"><text>a</text><text>b</text></row>`,
 	"language/code":     `<code language="surf">&lt;text/&gt;</code>`,
 	"spans/code":        `<code :spans="[{'text': 'go', 'role': 'keyword'}]"/>`,
 	"numbers/code":      `<code numbers>a</code>`,
@@ -270,6 +272,8 @@ func typeText(t Type) string {
 		return "pad"
 	case TypeSpans:
 		return "list(span)"
+	case TypeWeight:
+		return "bool or int"
 	}
 	return "?"
 }

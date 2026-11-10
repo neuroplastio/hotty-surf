@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf file-row.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf outline.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf threads.surf tune.surf mark.svg ring.svg
+//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf file-row.surf form.surf frame-tab.surf frame.surf grow-part.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf outline.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf threads.surf tune.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -1967,7 +1967,7 @@ func surfRenderDeck(e *surf.Errs, out []*surfui.Node, c *Deck, fill surf.Fill) [
 							e.Leave()
 						}
 						n5 := surfui.Stack(k5...)
-						surf.ModGrow(n5, true)
+						surf.ModGrowBy(n5, 1)
 						k4 = append(k4, n5)
 						e.Leave()
 					}
@@ -2065,7 +2065,7 @@ func surfRenderDeck(e *surf.Errs, out []*surfui.Node, c *Deck, fill surf.Fill) [
 							e.Leave()
 						}
 						n20 := surfui.Stack(k20...)
-						surf.ModGrow(n20, true)
+						surf.ModGrowBy(n20, 1)
 						k19 = append(k19, n20)
 						e.Leave()
 					}
@@ -2267,7 +2267,7 @@ func surfRenderOutline_FileRow(e *surf.Errs, out []*surfui.Node, c *Outline, fil
 					t11 += v10
 				}
 				n8 := surfui.Text(t11)
-				surf.ModGrow(n8, true)
+				surf.ModGrowBy(n8, 1)
 				k7 = append(k7, n8)
 				e.Leave()
 			}
@@ -2668,6 +2668,25 @@ func surfRenderFrame_FrameTab(e *surf.Errs, out []*surfui.Node, c *Frame, fill s
 			out = append(out, n2)
 			e.Leave()
 		}
+	}
+	return out
+}
+
+// surfRenderTune_GrowPart draws grow-part.surf for Tune.
+func surfRenderTune_GrowPart(e *surf.Errs, out []*surfui.Node, c *Tune, fill surf.Fill, prop4 cellite.Value) []*surfui.Node {
+	// grow-part.surf:2:1 <text>
+	if e.Enter("grow-part.surf", 2, 1) {
+		n1 := surfui.Text("g")
+		switch {
+		default:
+			v2, ok2 := e.AsWeight("grow-part.surf", 2, 1, "grow", prop4)
+			if !ok2 {
+				break
+			}
+			surf.ModGrowBy(n1, v2)
+		}
+		out = append(out, n1)
+		e.Leave()
 	}
 	return out
 }
@@ -3814,7 +3833,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 					}
 					surf.ModBold(n10, p13.Unread)
 				}
-				surf.ModGrow(n10, true)
+				surf.ModGrowBy(n10, 1)
 				k2 = append(k2, n10)
 				e.Leave()
 			}
@@ -3899,7 +3918,7 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 				e.Leave()
 			}
 			n2 := surfui.Row(k2...)
-			surf.ModGrow(n2, true)
+			surf.ModGrowBy(n2, 1)
 			surf.ModGap(n2, 1)
 			k1 = append(k1, n2)
 			e.Leave()
@@ -5133,6 +5152,84 @@ func surfRenderTune(e *surf.Errs, out []*surfui.Node, c *Tune, fill surf.Fill) [
 			surf.ModGap(n6, 1)
 			surf.ModChips(n6, true)
 			k1 = append(k1, n6)
+			e.Leave()
+		}
+		// tune.surf:12:3 <row>
+		if e.Enter("tune.surf", 12, 3) {
+			var k13 []*surfui.Node
+			// tune.surf:13:5 <text>
+			if e.Enter("tune.surf", 13, 5) {
+				n14 := surfui.Text("a")
+				surf.ModKey(n14, "bare")
+				surf.ModGrowBy(n14, 1)
+				k13 = append(k13, n14)
+				e.Leave()
+			}
+			// tune.surf:14:5 <text>
+			if e.Enter("tune.surf", 14, 5) {
+				n15 := surfui.Text("b")
+				surf.ModKey(n15, "three")
+				surf.ModGrowBy(n15, 3)
+				k13 = append(k13, n15)
+				e.Leave()
+			}
+			// tune.surf:15:5 <text>
+			if e.Enter("tune.surf", 15, 5) {
+				n16 := surfui.Text("c")
+				surf.ModKey(n16, "off")
+				surf.ModGrowBy(n16, surf.Weight((int64(c.Replicas) > int64(99))))
+				k13 = append(k13, n16)
+				e.Leave()
+			}
+			// tune.surf:16:5 <text>
+			if e.Enter("tune.surf", 16, 5) {
+				n17 := surfui.Text("d")
+				surf.ModKey(n17, "on")
+				surf.ModGrowBy(n17, surf.Weight((int64(c.Replicas) > int64(0))))
+				k13 = append(k13, n17)
+				e.Leave()
+			}
+			// tune.surf:17:5 <text>
+			if e.Enter("tune.surf", 17, 5) {
+				n18 := surfui.Text("e")
+				surf.ModKey(n18, "by")
+				surf.ModGrowBy(n18, int64(c.Replicas))
+				k13 = append(k13, n18)
+				e.Leave()
+			}
+			// tune.surf:18:5 <grow-part>
+			if e.Enter("tune.surf", 18, 5) {
+				start19 := len(k13)
+				k13 = surfRenderTune_GrowPart(e, k13, c, nil, cellite.IntValue(int64(c.Replicas)))
+				for _, kn := range k13[start19:] {
+					kn.Key("dyn")
+				}
+				e.Leave()
+			}
+			n13 := surfui.Row(k13...)
+			surf.ModKey(n13, "layout")
+			surf.ModJustify(n13, "between")
+			surf.ModAlign(n13, "end")
+			k1 = append(k1, n13)
+			e.Leave()
+		}
+		// tune.surf:20:3 <stack>
+		if e.Enter("tune.surf", 20, 3) {
+			var k20 []*surfui.Node
+			// tune.surf:21:5 <text>
+			if e.Enter("tune.surf", 21, 5) {
+				n21 := surfui.Text("f")
+				surf.ModKey(n21, "f")
+				k20 = append(k20, n21)
+				e.Leave()
+			}
+			n20 := surfui.Stack(k20...)
+			surf.ModKey(n20, "side")
+			surf.ModJustify(n20, "end")
+			if err := surf.ModAlign(n20, "center"); err != nil {
+				e.Fail("tune.surf", 20, 3, err)
+			}
+			k1 = append(k1, n20)
 			e.Leave()
 		}
 		n1 := surf.NewSurface(k1...)

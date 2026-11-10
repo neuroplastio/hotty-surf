@@ -849,6 +849,8 @@ func (s *scope) typed(p *cellite.Program, want Type, what string, at markup.Pos)
 	case TypeSpans:
 		ok = t.Kind == cellite.ListKind && (t.Elem.Kind == cellite.DynKind || t.Elem.Kind == cellite.MapKind ||
 			t.Elem.Kind == cellite.StructKind && t.Elem.Name == "Span")
+	case TypeWeight:
+		ok = t.Kind == cellite.BoolKind || t.Kind == cellite.IntKind
 	}
 	if !ok {
 		s.c.fail(s.t.file, at, "%s is %s, not %s", what, typeName(want), cellite.FormatType(t))
@@ -870,6 +872,8 @@ func typeName(t Type) string {
 		return "a list(int) of one or two"
 	case TypeSpans:
 		return "a list of spans, surfui.Span or {'text': …, 'role': …}"
+	case TypeWeight:
+		return "a bool or an int"
 	}
 	return "?"
 }
@@ -1815,6 +1819,20 @@ func (s *scope) value(at *Attr, a markup.Attr, bound bool) (value, bool) {
 			return value{}, false
 		}
 		v.lit = cellite.IntValue(n)
+	case TypeWeight:
+		switch {
+		case a.Bare, a.Value == "true":
+			v.lit = cellite.IntValue(1)
+		case a.Value == "false":
+			v.lit = cellite.IntValue(0)
+		default:
+			n, err := strconv.ParseInt(a.Value, 10, 64)
+			if err != nil || n < 0 {
+				s.c.fail(s.t.file, a.ValuePos, "%s is bare, true, false or a number that is none or more, not %q", at.Name, a.Value)
+				return value{}, false
+			}
+			v.lit = cellite.IntValue(n)
+		}
 	case TypePad:
 		p, err := staticPad(a.Value)
 		if err != nil {
@@ -1892,7 +1910,12 @@ func checkLiteral(at *Attr, v string) error {
 	case "max":
 		return ModColMax(surfui.Col(""), v)
 	case "align":
+		if at.Func == "ModAlign" {
+			return ModAlign(surfui.Row(), v)
+		}
 		return ModColAlign(surfui.Col(""), v)
+	case "justify":
+		return ModJustify(surfui.Row(), v)
 	case "sort":
 		return ModColSort(surfui.Col(""), v)
 	case "keys":

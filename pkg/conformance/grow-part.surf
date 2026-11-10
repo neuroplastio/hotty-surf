@@ -1,0 +1,2 @@
+<props w="dyn"/>
+<text :grow="w">g</text>

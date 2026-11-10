@@ -95,7 +95,10 @@ func (n *Node) ColMax(cells, pct int) *Node {
 }
 
 // Align places a Col's cells in it: "start" (the default), "end" or
-// "center".
+// "center". On a Row or a Stack it places the children across it, as
+// flexbox's align-items: "start", "center", "end" or "stretch". A Row's
+// are at its middle unless it says, and "start" there is Top; a Stack's
+// are stretched to its width unless it says.
 func (n *Node) Align(a string) *Node {
 	if n.col != nil {
 		switch a {
@@ -104,6 +107,13 @@ func (n *Node) Align(a string) *Node {
 		default:
 			n.col.align = ""
 		}
+		return n
+	}
+	switch {
+	case a == "start" && !has(n, "u-stack"):
+		n.Top()
+	case a == "start", a == "center", a == "end", a == "stretch":
+		n.Class("u-ai-" + a)
 	}
 	return n
 }

@@ -153,6 +153,28 @@ func (e *Errs) AsInt(file string, line, col int, name string, v cellite.Value) (
 	return v.Int(), true
 }
 
+// AsWeight is a flag that may weigh (TypeWeight), of attribute name.
+func (e *Errs) AsWeight(file string, line, col int, name string, v cellite.Value) (int64, bool) {
+	w, err := WeightOf(name, v)
+	if err != nil {
+		e.Fail(file, line, col, err)
+		return 0, false
+	}
+	return w, true
+}
+
+// WeightOf is v as attribute name's weight (TypeWeight): a bool, 1 for
+// true, or an int.
+func WeightOf(name string, v cellite.Value) (int64, error) {
+	switch v.Kind() {
+	case cellite.BoolKind:
+		return Weight(v.Bool()), nil
+	case cellite.IntKind:
+		return v.Int(), nil
+	}
+	return 0, fmt.Errorf("%s is a bool or an int, not %s", name, kindName(v))
+}
+
 func (e *Errs) AsText(file string, line, col int, v cellite.Value) (string, bool) {
 	s, err := cellite.Text(v)
 	if err != nil {

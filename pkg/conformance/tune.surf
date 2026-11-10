@@ -9,4 +9,15 @@
     <button key="warnings" :selected="isPicked('warnings')" @click="toggle('warnings')">Warnings</button>
     <button key="slow" :selected="isPicked('slow')" @click="toggle('slow')">Slow</button>
   </row>
+  <row key="layout" justify="between" align="end">
+    <text key="bare" grow>a</text>
+    <text key="three" grow="3">b</text>
+    <text key="off" :grow="replicas > 99">c</text>
+    <text key="on" :grow="replicas > 0">d</text>
+    <text key="by" :grow="replicas">e</text>
+    <grow-part key="dyn" :w="replicas"/>
+  </row>
+  <stack key="side" justify="end" :align="'center'">
+    <text key="f">f</text>
+  </stack>
 </surface>

@@ -86,6 +86,9 @@ const (
 	// TypeSpans is a list of a code block's spans, {text, role}: bound
 	// only (SpansOf).
 	TypeSpans
+	// TypeWeight is a flag that may weigh: bare or true (1), false (0),
+	// or a number that is none or more; bound, a bool or an int. Grow.
+	TypeWeight
 )
 
 // Attr is one attribute: a constructor's argument (Arg), or a modifier,
@@ -120,6 +123,8 @@ type Attr struct {
 var (
 	themes     = []string{"neuroplastio", "terminal", "paper", "graphite", "stone"}
 	densities  = []string{"compact", "dense", "roomy"}
+	justifies  = []string{"start", "center", "end", "between"}
+	aligns     = []string{"start", "center", "end", "stretch"}
 	tones      = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
 	drops      = []string{"whole", "halves", "thirds"}
 	fieldTypes = []string{"text", "password"}
@@ -262,7 +267,7 @@ var Attrs = []Attr{
 	{Name: "muted", Type: TypeBool, Doc: "the muted colour", Func: "ModMuted"},
 	{Name: "small", Type: TypeBool, Doc: "smaller text; a button a line tall, to fit its row", Func: "ModSmall"},
 	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph; a row whose children go on to the next line where they don't fit, as flexbox's flex-wrap, its gap between the lines too; a field of several lines wraps unless wrap is false", Func: "ModWrap"},
-	{Name: "grow", Type: TypeBool, Doc: "takes the room left in its row or stack", Func: "ModGrow"},
+	{Name: "grow", Type: TypeWeight, Doc: "takes the room left in its row or stack; a number is its weight, as flexbox's flex-grow: the room is shared among those that grow in proportion to their weights, and bare is 1", Func: "ModGrowBy"},
 	{Name: "keep", Type: TypeBool, Doc: "keeps it whole in its row or stack: what is beside it gives way first", Func: "ModKeep"},
 	{Name: "fit", Type: TypeBool, Doc: "shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFit"},
 	{Name: "fit-start", Type: TypeBool, Doc: "a row of what fits from its start: its children left to right, each whole, those it has no room for left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFitStart"},
@@ -270,7 +275,9 @@ var Attrs = []Attr{
 	{Name: "pad", Type: TypePad, Doc: "steps of room inside it, across and down", Func: "ModPad"},
 	{Name: "indent", Type: TypeInt, Doc: "moves it in by cells", Func: "ModIndent"},
 	{Name: "down", Type: TypeInt, Doc: "moves it down by rows", Func: "ModDown"},
-	{Name: "top", Type: TypeBool, Doc: "aligns a row's children to its top", Func: "ModTop"},
+	{Name: "justify", Type: TypeString, Doc: "where its children go along it, where they leave room, as flexbox's justify-content: start (the default), center, end, or between (the first at its start, the last at its end, the room shared between them)", Tags: []string{"row", "stack"}, Func: "ModJustify", Fails: true, Values: justifies},
+	{Name: "align", Type: TypeString, Doc: "where its children go across it, as flexbox's align-items: start, center, end or stretch; a row's are at its middle unless it says, a stack's stretched to its width", Tags: []string{"row", "stack"}, Func: "ModAlign", Fails: true, Values: aligns},
+	{Name: "top", Type: TypeBool, Doc: "aligns a row's children to its top: on a row, the old spelling of align=\"start\"", Func: "ModTop"},
 	{Name: "width", Type: TypeInt, Doc: "its width in cells", Func: "ModWidth"},
 	{Name: "height", Type: TypeInt, Doc: "its height in rows", Func: "ModHeight"},
 	{Name: "selected", Type: TypeBool, Doc: "an item that is its list's selection, kept in view where the document scrolls", Func: "ModSelected"},
@@ -602,7 +609,41 @@ func ModWrap(n *surfui.Node, v bool) {
 	}
 	flag(n, v, n.Wrap)
 }
-func ModGrow(n *surfui.Node, v bool)      { flag(n, v, n.Grow) }
+func ModGrow(n *surfui.Node, v bool) { flag(n, v, n.Grow) }
+
+// ModGrowBy is grow with its weight: bare is 1, and none under 1.
+func ModGrowBy(n *surfui.Node, v int64) { n.GrowBy(clampInt(v)) }
+
+// Weight is a bound flag's weight (TypeWeight): 1 for true.
+func Weight(v bool) int64 {
+	if v {
+		return 1
+	}
+	return 0
+}
+
+// ModJustify is a row's or a stack's justify="start", "center", "end" or
+// "between".
+func ModJustify(n *surfui.Node, v string) error {
+	if !contains(justifies, v) {
+		return fmt.Errorf("justify is %s, not %q", orList(justifies), v)
+	}
+	n.Justify(v)
+	return nil
+}
+
+// ModAlign is a row's or a stack's align="start", "center", "end" or
+// "stretch"; a col's is ModColAlign.
+func ModAlign(n *surfui.Node, v string) error {
+	if surfui.IsCol(n) {
+		return ModColAlign(n, v)
+	}
+	if !contains(aligns, v) {
+		return fmt.Errorf("align is %s, not %q", orList(aligns), v)
+	}
+	n.Align(v)
+	return nil
+}
 func ModKeep(n *surfui.Node, v bool)      { flag(n, v, n.Keep) }
 func ModFit(n *surfui.Node, v bool)       { flag(n, v, n.Fit) }
 func ModFitStart(n *surfui.Node, v bool)  { flag(n, v, n.FitStart) }
