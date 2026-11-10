@@ -699,6 +699,10 @@ func (n *Node) Selected(on bool) *Node {
 // Checked is a switch's state, as Switch(on) sets it: for a model that
 // flips a switch in place.
 func (n *Node) Checked(on bool) *Node {
+	if slices.Contains(n.class, "u-li") {
+		n.task(on) // an item of a list: a task's
+		return n
+	}
 	if on {
 		return n.Attr("aria-checked", "true").Class("is-on")
 	}

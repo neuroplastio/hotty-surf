@@ -1,0 +1,21 @@
+<surface>
+  <prose key="doc">
+    <h level="1" anchor="top">Install guide</h>
+    <p>Run <code>make check</code> first, it is <em>fast</em> and <strong>strict</strong>, not <del>slow</del>. See <link href="#usage" key="tousage">usage</link> or <link href="https://example.com/x" external key="site">the site</link>.<br/>A second line.</p>
+    <ul>
+      <li>first item that is long enough to wrap onto a second line</li>
+      <li>second<ol start="8"><li>eight</li><li>nine</li><li>ten</li></ol></li>
+      <li checked>a task</li>
+      <li :checked="open">an open task</li>
+    </ul>
+    <quote>Measure twice, cut once.</quote>
+    <alert kind="warning">Mind the gap.</alert>
+    <p>{{ note }} <img src="cid:x" alt="the diagram"/> and <img src="cid:y" alt=""/></p>
+    <h level="2" anchor="usage">Usage</h>
+    <p>The end.</p>
+  </prose>
+  <prose compact muted key="comment">
+    <p>A comment, muted, with <link href="/x" @follow="follow($value)">a link</link>.</p>
+  </prose>
+  <button key="toggle" @click="toggle">Toggle</button>
+</surface>

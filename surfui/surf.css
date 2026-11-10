@@ -1201,6 +1201,48 @@
    ring. Placed before the tones, which win at the same weight. */
 .u-surface .u-link { color: var(--u-accent); text-decoration: underline; border-radius: var(--u-r-xs); }
 .u-surface .u-link:focus-visible { background: var(--u-accent-soft); }
+/* Prose: long-form text in plain HTML. A column of blocks at a reading
+   measure of 80ch, in the reading size (Compact and Roomy; Dense keeps the
+   terminal's); .u-prose-compact is a comment's: no measure, the surface's
+   size, a smaller gap. Spacing is the flex gap, never margins (the UA's
+   are reset), and a bar is a background layer: border-left on a box with
+   a radius is a gap. */
+.u-prose, .u-ul, .u-ol, .u-li-body, .u-quote, .u-alert, .u-alert-body { display: flex; flex-direction: column; min-width: 0; }
+.u-prose, .u-ul, .u-ol, .u-li, .u-li-body, .u-quote, .u-alert, .u-alert-body, .u-p, .u-h { margin: 0; padding: 0; }
+.u-ul, .u-ol { list-style: none; }
+.u-prose { max-width: 80ch; gap: 0.76470588rem; }
+.u-prose-compact { max-width: none; gap: 0.47058824rem; }
+.u-dense .u-prose, .u-dense .u-prose-compact { gap: var(--hotty-cell-h); }
+.u-compact .u-prose, .u-roomy .u-prose { font-size: 0.94117647rem; line-height: 1.6; }
+.u-compact .u-prose-compact, .u-roomy .u-prose-compact { font-size: inherit; line-height: inherit; }
+.u-ul, .u-ol, .u-li-body, .u-alert-body { gap: 0.23529412rem; }
+.u-dense .u-ul, .u-dense .u-ol, .u-dense .u-li-body, .u-dense .u-alert-body { gap: 0; }
+.u-dense .u-alert-body { gap: var(--hotty-cell-h); }
+.u-h { font-weight: 600; }
+.u-h1 { font-size: 1.5em; line-height: 1.3; }
+.u-h2 { font-size: 1.25em; line-height: 1.35; }
+.u-h3 { font-size: 1.1em; }
+.u-h5, .u-h6 { color: var(--u-muted); }
+.u-dense .u-h1, .u-dense .u-h2, .u-dense .u-h3 { font-size: inherit; line-height: inherit; }
+.u-li { display: flex; flex-direction: row; align-items: flex-start; gap: 0.5em; }
+.u-li-mark { flex: 0 0 auto; min-width: calc(var(--u-mw) * 1ch); text-align: right; color: var(--u-muted); }
+.u-li-body { flex: 1 1 0; }
+.u-quote { padding-left: 0.9em; background: linear-gradient(var(--u-border), var(--u-border)) 0 0 / 3px 100% no-repeat; }
+.u-alert { padding: 0.4em 0 0.4em 0.9em; gap: 0.23529412rem; background: linear-gradient(var(--u-bar), var(--u-bar)) 0 0 / 3px 100% no-repeat; }
+.u-alert-note { --u-bar: var(--u-info); }
+.u-alert-tip { --u-bar: var(--u-ok); }
+.u-alert-important { --u-bar: var(--u-accent); }
+.u-alert-warning { --u-bar: var(--u-warn); }
+.u-alert-caution { --u-bar: var(--u-error); }
+.u-alert-title { font-weight: 600; color: var(--u-bar); }
+.u-alert-icon { font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); }
+.u-em { font-style: italic; }
+.u-strong { font-weight: 600; }
+.u-del { text-decoration: line-through; }
+.u-code { font-family: var(--hotty-font, monospace); font-size: 0.9em; padding: 0 0.25em; border-radius: var(--u-r-xs); background: var(--u-selected); }
+.u-img { max-width: 100%; max-height: calc(20 * var(--u-row)); }
+/* Muted reaches every run in it: a link's, a heading's, an alert's. */
+.u-surface .u-prose.u-tone-muted * { color: inherit; }
 .u-surface .u-tone-accent, .u-surface.u-tone-accent { color: var(--u-accent); }
 .u-surface .u-tone-ok, .u-surface.u-tone-ok { color: var(--u-ok); }
 .u-surface .u-tone-warn, .u-surface.u-tone-warn { color: var(--u-warn); }

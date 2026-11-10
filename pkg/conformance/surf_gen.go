@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf shelf.surf mark.svg ring.svg
+//go:embed board.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf prose.surf shelf.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProse, &surfShapeShelf, &surfShapeNote, &surfShapeBranch, &surfShapeHand, &surfShapeCard}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -540,6 +540,63 @@ func (o surfLinks) Call(m int, args []cellite.Value) cellite.Value {
 
 // surfInterpLinks is c drawn by its template, interpreted.
 func surfInterpLinks(c *Links) surflive.Component { return surf.Component(surfSet(), surfLinks{c}) }
+
+// surfShapeProse is Prose's shape, a component.
+var surfShapeProse = surf.Shape{Name: "Prose", Component: true,
+	Fields: []surf.Field{{Name: "note", Type: cellite.String}, {Name: "open", Type: cellite.Bool}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "follow", Args: []cellite.Type{cellite.String}},
+		{Name: "toggle"},
+	},
+}
+
+// surfProse is a *Prose as its templates read it.
+type surfProse struct{ p *Prose }
+
+// surfProseValue is p as a value: null for nil.
+func surfProseValue(p *Prose) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Prose", surfProse{p})
+}
+
+// surfProseOf is a value's *Prose: nil for any other.
+func surfProseOf(v cellite.Value) *Prose {
+	if o, ok := v.Object().(surfProse); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfProse) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Note))
+	case 1:
+		return cellite.BoolValue(bool(o.p.Open))
+	case 2:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfProse) Shape() *surf.Shape { return &surfShapeProse }
+
+func (o surfProse) Unwrap() any { return o.p }
+
+func (o surfProse) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Follow(string(args[0].String()))
+	case 1:
+		o.p.Toggle()
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpProse is c drawn by its template, interpreted.
+func surfInterpProse(c *Prose) surflive.Component { return surf.Component(surfSet(), surfProse{c}) }
 
 // surfShapeShelf is Shelf's shape, a component.
 var surfShapeShelf = surf.Shape{Name: "Shelf", Component: true,
@@ -3022,6 +3079,373 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 	return out
 }
 
+// surfRenderProse draws prose.surf for Prose.
+func surfRenderProse(e *surf.Errs, out []*surfui.Node, c *Prose, fill surf.Fill) []*surfui.Node {
+	// prose.surf:1:1 <surface>
+	if e.Enter("prose.surf", 1, 1) {
+		var k1 []*surfui.Node
+		// prose.surf:2:3 <prose>
+		if e.Enter("prose.surf", 2, 3) {
+			var k2 []*surfui.Node
+			// prose.surf:3:5 <h>
+			if e.Enter("prose.surf", 3, 5) {
+				var k3 []*surfui.Node
+				if e.Enter("prose.surf", 3, 31) {
+					k3 = append(k3, surfui.Str("Install guide"))
+					e.Leave()
+				}
+				n3 := surf.NewH(k3...)
+				surf.ModLevel(n3, 1)
+				surf.ModAnchor(n3, "top")
+				k2 = append(k2, n3)
+				e.Leave()
+			}
+			// prose.surf:4:5 <p>
+			if e.Enter("prose.surf", 4, 5) {
+				var k4 []*surfui.Node
+				if e.Enter("prose.surf", 4, 8) {
+					k4 = append(k4, surfui.Str("Run"+" "))
+					e.Leave()
+				}
+				// prose.surf:4:12 <code>
+				if e.Enter("prose.surf", 4, 12) {
+					var k5 []*surfui.Node
+					if e.Enter("prose.surf", 4, 18) {
+						k5 = append(k5, surfui.Str("make check"))
+						e.Leave()
+					}
+					n5 := surfui.Code(k5...)
+					k4 = append(k4, n5)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 35) {
+					k4 = append(k4, surfui.Str(" "+"first, it is"+" "))
+					e.Leave()
+				}
+				// prose.surf:4:49 <em>
+				if e.Enter("prose.surf", 4, 49) {
+					var k6 []*surfui.Node
+					if e.Enter("prose.surf", 4, 53) {
+						k6 = append(k6, surfui.Str("fast"))
+						e.Leave()
+					}
+					n6 := surfui.Em(k6...)
+					k4 = append(k4, n6)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 62) {
+					k4 = append(k4, surfui.Str(" "+"and"+" "))
+					e.Leave()
+				}
+				// prose.surf:4:67 <strong>
+				if e.Enter("prose.surf", 4, 67) {
+					var k7 []*surfui.Node
+					if e.Enter("prose.surf", 4, 75) {
+						k7 = append(k7, surfui.Str("strict"))
+						e.Leave()
+					}
+					n7 := surfui.Strong(k7...)
+					k4 = append(k4, n7)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 90) {
+					k4 = append(k4, surfui.Str(", not"+" "))
+					e.Leave()
+				}
+				// prose.surf:4:96 <del>
+				if e.Enter("prose.surf", 4, 96) {
+					var k8 []*surfui.Node
+					if e.Enter("prose.surf", 4, 101) {
+						k8 = append(k8, surfui.Str("slow"))
+						e.Leave()
+					}
+					n8 := surfui.Del(k8...)
+					k4 = append(k4, n8)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 111) {
+					k4 = append(k4, surfui.Str(". See"+" "))
+					e.Leave()
+				}
+				// prose.surf:4:117 <link>
+				if e.Enter("prose.surf", 4, 117) {
+					var k9 []*surfui.Node
+					if e.Enter("prose.surf", 4, 151) {
+						k9 = append(k9, surfui.Str("usage"))
+						e.Leave()
+					}
+					n9 := surf.NewLink(k9...)
+					surf.ModHref(n9, "#usage")
+					surf.ModKey(n9, "tousage")
+					k4 = append(k4, n9)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 163) {
+					k4 = append(k4, surfui.Str(" "+"or"+" "))
+					e.Leave()
+				}
+				// prose.surf:4:167 <link>
+				if e.Enter("prose.surf", 4, 167) {
+					var k10 []*surfui.Node
+					if e.Enter("prose.surf", 4, 222) {
+						k10 = append(k10, surfui.Str("the site"))
+						e.Leave()
+					}
+					n10 := surf.NewLink(k10...)
+					surf.ModHref(n10, "https://example.com/x")
+					surf.ModExternal(n10, true)
+					surf.ModKey(n10, "site")
+					k4 = append(k4, n10)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 237) {
+					k4 = append(k4, surfui.Str("."))
+					e.Leave()
+				}
+				// prose.surf:4:238 <br>
+				if e.Enter("prose.surf", 4, 238) {
+					n11 := surfui.Br()
+					k4 = append(k4, n11)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 4, 243) {
+					k4 = append(k4, surfui.Str("A second line."))
+					e.Leave()
+				}
+				n4 := surfui.Para(k4...)
+				k2 = append(k2, n4)
+				e.Leave()
+			}
+			// prose.surf:5:5 <ul>
+			if e.Enter("prose.surf", 5, 5) {
+				var k12 []*surfui.Node
+				// prose.surf:6:7 <li>
+				if e.Enter("prose.surf", 6, 7) {
+					var k13 []*surfui.Node
+					if e.Enter("prose.surf", 6, 11) {
+						k13 = append(k13, surfui.Str("first item that is long enough to wrap onto a second line"))
+						e.Leave()
+					}
+					n13 := surfui.Li(k13...)
+					k12 = append(k12, n13)
+					e.Leave()
+				}
+				// prose.surf:7:7 <li>
+				if e.Enter("prose.surf", 7, 7) {
+					var k14 []*surfui.Node
+					if e.Enter("prose.surf", 7, 11) {
+						k14 = append(k14, surfui.Str("second"))
+						e.Leave()
+					}
+					// prose.surf:7:17 <ol>
+					if e.Enter("prose.surf", 7, 17) {
+						var k15 []*surfui.Node
+						// prose.surf:7:31 <li>
+						if e.Enter("prose.surf", 7, 31) {
+							var k16 []*surfui.Node
+							if e.Enter("prose.surf", 7, 35) {
+								k16 = append(k16, surfui.Str("eight"))
+								e.Leave()
+							}
+							n16 := surfui.Li(k16...)
+							k15 = append(k15, n16)
+							e.Leave()
+						}
+						// prose.surf:7:45 <li>
+						if e.Enter("prose.surf", 7, 45) {
+							var k17 []*surfui.Node
+							if e.Enter("prose.surf", 7, 49) {
+								k17 = append(k17, surfui.Str("nine"))
+								e.Leave()
+							}
+							n17 := surfui.Li(k17...)
+							k15 = append(k15, n17)
+							e.Leave()
+						}
+						// prose.surf:7:58 <li>
+						if e.Enter("prose.surf", 7, 58) {
+							var k18 []*surfui.Node
+							if e.Enter("prose.surf", 7, 62) {
+								k18 = append(k18, surfui.Str("ten"))
+								e.Leave()
+							}
+							n18 := surfui.Li(k18...)
+							k15 = append(k15, n18)
+							e.Leave()
+						}
+						n15 := surf.NewNumbered(k15...)
+						surf.ModStart(n15, 8)
+						k14 = append(k14, n15)
+						e.Leave()
+					}
+					n14 := surfui.Li(k14...)
+					k12 = append(k12, n14)
+					e.Leave()
+				}
+				// prose.surf:8:7 <li>
+				if e.Enter("prose.surf", 8, 7) {
+					var k19 []*surfui.Node
+					if e.Enter("prose.surf", 8, 19) {
+						k19 = append(k19, surfui.Str("a task"))
+						e.Leave()
+					}
+					n19 := surfui.Li(k19...)
+					surf.ModChecked(n19, true)
+					k12 = append(k12, n19)
+					e.Leave()
+				}
+				// prose.surf:9:7 <li>
+				if e.Enter("prose.surf", 9, 7) {
+					var k20 []*surfui.Node
+					if e.Enter("prose.surf", 9, 27) {
+						k20 = append(k20, surfui.Str("an open task"))
+						e.Leave()
+					}
+					n20 := surfui.Li(k20...)
+					surf.ModChecked(n20, c.Open)
+					k12 = append(k12, n20)
+					e.Leave()
+				}
+				n12 := surfui.Bullets(k12...)
+				k2 = append(k2, n12)
+				e.Leave()
+			}
+			// prose.surf:11:5 <quote>
+			if e.Enter("prose.surf", 11, 5) {
+				var k21 []*surfui.Node
+				if e.Enter("prose.surf", 11, 12) {
+					k21 = append(k21, surfui.Str("Measure twice, cut once."))
+					e.Leave()
+				}
+				n21 := surfui.Quote(k21...)
+				k2 = append(k2, n21)
+				e.Leave()
+			}
+			// prose.surf:12:5 <alert>
+			if e.Enter("prose.surf", 12, 5) {
+				var k22 []*surfui.Node
+				if e.Enter("prose.surf", 12, 27) {
+					k22 = append(k22, surfui.Str("Mind the gap."))
+					e.Leave()
+				}
+				n22 := surf.NewAlert(k22...)
+				surf.ModKind(n22, "warning")
+				k2 = append(k2, n22)
+				e.Leave()
+			}
+			// prose.surf:13:5 <p>
+			if e.Enter("prose.surf", 13, 5) {
+				var k23 []*surfui.Node
+				if e.Enter("prose.surf", 13, 8) {
+					k23 = append(k23, surfui.Str(c.Note+" "))
+					e.Leave()
+				}
+				// prose.surf:13:19 <img>
+				if e.Enter("prose.surf", 13, 19) {
+					n24 := surf.NewImg()
+					surf.ModSrc(n24, "cid:x")
+					surf.ModAlt(n24, "the diagram")
+					k23 = append(k23, n24)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 13, 55) {
+					k23 = append(k23, surfui.Str(" "+"and"+" "))
+					e.Leave()
+				}
+				// prose.surf:13:60 <img>
+				if e.Enter("prose.surf", 13, 60) {
+					n25 := surf.NewImg()
+					surf.ModSrc(n25, "cid:y")
+					surf.ModAlt(n25, "")
+					k23 = append(k23, n25)
+					e.Leave()
+				}
+				n23 := surfui.Para(k23...)
+				k2 = append(k2, n23)
+				e.Leave()
+			}
+			// prose.surf:14:5 <h>
+			if e.Enter("prose.surf", 14, 5) {
+				var k26 []*surfui.Node
+				if e.Enter("prose.surf", 14, 33) {
+					k26 = append(k26, surfui.Str("Usage"))
+					e.Leave()
+				}
+				n26 := surf.NewH(k26...)
+				surf.ModLevel(n26, 2)
+				surf.ModAnchor(n26, "usage")
+				k2 = append(k2, n26)
+				e.Leave()
+			}
+			// prose.surf:15:5 <p>
+			if e.Enter("prose.surf", 15, 5) {
+				var k27 []*surfui.Node
+				if e.Enter("prose.surf", 15, 8) {
+					k27 = append(k27, surfui.Str("The end."))
+					e.Leave()
+				}
+				n27 := surfui.Para(k27...)
+				k2 = append(k2, n27)
+				e.Leave()
+			}
+			n2 := surfui.Prose(k2...)
+			surf.ModKey(n2, "doc")
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		// prose.surf:17:3 <prose>
+		if e.Enter("prose.surf", 17, 3) {
+			var k28 []*surfui.Node
+			// prose.surf:18:5 <p>
+			if e.Enter("prose.surf", 18, 5) {
+				var k29 []*surfui.Node
+				if e.Enter("prose.surf", 18, 8) {
+					k29 = append(k29, surfui.Str("A comment, muted, with"+" "))
+					e.Leave()
+				}
+				// prose.surf:18:31 <link>
+				if e.Enter("prose.surf", 18, 31) {
+					var k30 []*surfui.Node
+					if e.Enter("prose.surf", 18, 72) {
+						k30 = append(k30, surfui.Str("a link"))
+						e.Leave()
+					}
+					n30 := surf.NewLink(k30...)
+					surf.ModHref(n30, "/x")
+					n30.On("follow", func(ev surfrun.Event) { c.Follow(ev.Value) })
+					k29 = append(k29, n30)
+					e.Leave()
+				}
+				if e.Enter("prose.surf", 18, 85) {
+					k29 = append(k29, surfui.Str("."))
+					e.Leave()
+				}
+				n29 := surfui.Para(k29...)
+				k28 = append(k28, n29)
+				e.Leave()
+			}
+			n28 := surfui.Prose(k28...)
+			surf.ModCompact(n28, true)
+			surf.ModKey(n28, "comment")
+			surf.ModMuted(n28, true)
+			k1 = append(k1, n28)
+			e.Leave()
+		}
+		// prose.surf:20:3 <button>
+		if e.Enter("prose.surf", 20, 3) {
+			n31 := surfui.Button("Toggle")
+			surf.ModKey(n31, "toggle")
+			n31.On("click", func() { c.Toggle() })
+			k1 = append(k1, n31)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfProgsShelf are shelf.surf's programs, for Shelf, loaded at the first call.
 func surfProgsShelf() []*cellite.Program {
 	surfProgsShelfOnce.Do(func() { surfProgsShelfVal = surfSet().Programs("shelf\x00Shelf") })
@@ -3300,6 +3724,11 @@ func surfCompiledInfoPanel(c *InfoPanel) surflive.Component {
 // surfCompiledLinks is c drawn by its templates compiled into Go.
 func surfCompiledLinks(c *Links) surflive.Component {
 	return surf.Compiled(c, "links.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderLinks(e, nil, c, nil) }, surfPalette)
+}
+
+// surfCompiledProse is c drawn by its templates compiled into Go.
+func surfCompiledProse(c *Prose) surflive.Component {
+	return surf.Compiled(c, "prose.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderProse(e, nil, c, nil) }, surfPalette)
 }
 
 // surfCompiledShelf is c drawn by its templates compiled into Go.

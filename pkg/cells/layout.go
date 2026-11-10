@@ -97,6 +97,8 @@ const (
 	fInline // an inline element of a paragraph: its text is runs of the paragraph's
 	fFlow   // a paragraph: its inline children flow as one text
 	fBreak  // a hard break, in a paragraph
+	fProse  // a Prose: its blocks a row apart, at a measure
+	fBar    // a quote's or an alert's: a ▎ bar at its start, in bar's role
 )
 
 // density is the surface's, for the steps.
@@ -123,6 +125,8 @@ type box struct {
 
 	tone, fill Role
 	href       string // a link's text's
+	barRole    Role   // fBar's colour
+	maxw       int    // the widest it is laid out, 0 for no limit (a Prose's measure)
 	gap        int
 	pl, pr     int // padding
 	pt, pb     int
@@ -337,6 +341,28 @@ func untag(s string) string {
 	return html.UnescapeString(b.String())
 }
 
+// alertRole is the tone of the alert n, or of the one a title is in: its
+// kind's.
+func alertRole(n *surfui.Node) Role {
+	if n != nil {
+		for _, c := range surfui.Classes(n) {
+			switch c {
+			case "u-alert-note":
+				return Info
+			case "u-alert-tip":
+				return OK
+			case "u-alert-important":
+				return Accent
+			case "u-alert-warning":
+				return Warn
+			case "u-alert-caution":
+				return Error
+			}
+		}
+	}
+	return Info
+}
+
 // steps across and down, at a density: a step is a cell and a row on a
 // dense surface, half that in Compact and Roomy.
 func (d density) across(steps int) int {
@@ -383,6 +409,7 @@ func (b *box) look(d density) {
 	b.kind = column
 	known := false
 	var px, py = -1, -1
+	pgap := -1 // a prose block's gap, in rows or cells whatever the density
 	caption, then := false, false
 	for _, c := range surfui.Classes(n) {
 		switch {
@@ -443,6 +470,42 @@ func (b *box) look(d density) {
 			b.f |= fCode | fInline
 		case c == "u-br":
 			b.f |= fBreak
+		case c == "u-prose":
+			known = true
+			b.f |= fProse
+			pgap = 1
+			if !hasClass(n, "u-prose-compact") {
+				b.maxw = 80
+			}
+		case c == "u-ul", c == "u-ol", c == "u-li-body":
+			known = true
+		case c == "u-li":
+			b.kind, known = across, true
+			b.f |= fTop
+			pgap = 1
+		case c == "u-li-mark":
+			b.kind, known = text, true
+			b.f |= fPre | fKeep
+		case c == "u-quote":
+			known = true
+			b.f |= fBar | fProse
+			b.barRole, pgap = Border, 1
+		case c == "u-alert":
+			known = true
+			b.f |= fBar | fProse
+			b.barRole = alertRole(n)
+		case c == "u-alert-body":
+			known = true
+			pgap = 1
+		case c == "u-alert-title":
+			b.kind, known = across, true
+			b.f |= fFlow | fWrap | fBold
+			b.tone = alertRole(surfui.Parent(n))
+		case c == "u-img":
+			known = true
+			b.kind = text
+			b.f |= fWrap
+			b.tone = Muted
 		case c == "u-keys": // a surfkeys.Node's caps, drawn as its style drew them
 			b.kind, known = across, true
 			b.f |= fKeys | fKeep
@@ -533,6 +596,12 @@ func (b *box) look(d density) {
 	default:
 		b.gap = 0
 	}
+	if pgap >= 0 {
+		b.gap = pgap
+	}
+	if b.f&fBar != 0 {
+		b.pl = 2 // the bar, and a cell
+	}
 	if px >= 0 {
 		b.pl, b.pr = d.padAcross(px), d.padAcross(px)
 	}
@@ -590,6 +659,22 @@ func (b *box) look(d density) {
 	}
 	if b.kind == text || b.kind == chip || b.kind == glyph || b.kind == keycap || b.kind == button {
 		b.text = textOf(n)
+	}
+	switch {
+	case hasClass(n, "u-li-mark"):
+		// Right-aligned to the widest marker of its list: the numbers'
+		// ones place lines up.
+		if v, ok := varOf(n, "u-mw"); ok {
+			b.text = strings.Repeat(" ", max(atoi(v)-textWidth(b.text), 0)) + b.text
+		}
+	case hasClass(n, "u-img"):
+		alt, _ := surfui.AttrOf(n, "alt")
+		b.text = ""
+		if alt != "" {
+			b.text = "[" + alt + "]"
+		} else {
+			b.kind = spacer
+		}
 	}
 	if b.kind == field {
 		b.area = areaOf(n)
@@ -763,6 +848,15 @@ func (b *box) natural() int {
 	if b.natw >= 0 {
 		return b.natw
 	}
+	if b.maxw > 0 {
+		b.natw = min(b.natural0(), b.maxw)
+		return b.natw
+	}
+	return b.natural0()
+}
+
+// natural0 is natural without a measure's limit, and without its memo.
+func (b *box) natural0() int {
 	w := 0
 	switch {
 	case b.fw >= 0:
@@ -913,6 +1007,9 @@ func (b *box) sized() bool { return b.fh >= 0 && b.f&fHolds == 0 }
 // height is b's natural height at width w.
 func (b *box) height(w int) int {
 	stackprobe.Probe()
+	if b.maxw > 0 {
+		w = min(w, b.maxw)
+	}
 	if b.sized() {
 		return b.fh
 	}
@@ -966,6 +1063,9 @@ func (b *box) share(w int) int {
 // place puts b at x, y, w×h, and its children in it.
 func (b *box) place(x, y, w, h int) {
 	stackprobe.Probe()
+	if b.maxw > 0 {
+		w = min(w, b.maxw)
+	}
 	b.x, b.y, b.w, b.h = x, y, w, h
 	switch b.kind {
 	case across:

@@ -591,6 +591,34 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 		return surfui.Line(kids...)
 	case "link":
 		return NewLink(kids...)
+	case "prose":
+		return surfui.Prose(kids...)
+	case "p":
+		return surfui.Para(kids...)
+	case "h":
+		return NewH(kids...)
+	case "em":
+		return surfui.Em(kids...)
+	case "strong":
+		return surfui.Strong(kids...)
+	case "del":
+		return surfui.Del(kids...)
+	case "code":
+		return surfui.Code(kids...)
+	case "br":
+		return surfui.Br()
+	case "ul":
+		return surfui.Bullets(kids...)
+	case "ol":
+		return NewNumbered(kids...)
+	case "li":
+		return surfui.Li(kids...)
+	case "quote":
+		return surfui.Quote(kids...)
+	case "alert":
+		return NewAlert(kids...)
+	case "img":
+		return NewImg()
 	case "list":
 		return surfui.List(kids...)
 	case "item":
@@ -732,6 +760,12 @@ func applyString(name string, n *surfui.Node, v string) error {
 		ModHref(n, v)
 	case "anchor":
 		ModAnchor(n, v)
+	case "src":
+		ModSrc(n, v)
+	case "alt":
+		ModAlt(n, v)
+	case "kind":
+		return ModKind(n, v)
 	case "tone":
 		return ModTone(n, v)
 	case "hue":
@@ -770,6 +804,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModBold(n, v)
 	case "external":
 		ModExternal(n, v)
+	case "compact":
+		ModCompact(n, v)
 	case "semibold":
 		ModSemibold(n, v)
 	case "muted":
@@ -875,6 +911,10 @@ func applyInt(name string, n *surfui.Node, v int64) {
 		ModMeter(n, v)
 	case "badge":
 		ModBadge(n, v)
+	case "level":
+		ModLevel(n, v)
+	case "start":
+		ModStart(n, v)
 	default:
 		panic("surf: no int modifier " + name)
 	}

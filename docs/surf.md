@@ -208,6 +208,12 @@ component, a partial, or a widget a package registered from outside
 | `rule` | a line across | nothing |
 | `box` | a raised panel | children |
 | `dialog` | the box plx draws round its palette | children |
+| `prose` | long-form text: its blocks one under another at a reading measure of 80 columns, a row apart in the cells; `compact`, `muted` ("Prose") | blocks, text |
+| `p`, `h` | a paragraph, whose inline children flow and wrap as one text; a heading, `level` 1 to 6, `anchor` | inline children, text |
+| `em`, `strong`, `del`, `code`, `br` | inline: italic, bold, struck through, code on the code ground, a hard break | text, inline children |
+| `ul`, `ol`, `li` | a bulleted and a numbered (`start`) list, and its item (`checked` for a task) | `li`; blocks, text |
+| `quote`, `alert` | a block quote; GitHub's callout, `kind` note, tip, important, warning or caution | blocks, text |
+| `img` | an image, `src` and `alt`: on a host at most 20 rows tall, in the cells `[alt]` | nothing |
 | `link` | a link, inline in a `line` or on a row of its own: its text underlined in the link tone, which Enter and a click follow ("Links"); `href`, `external`, `@follow` | text, inline children |
 
 - "Text" means literal text and `{{ }}`, with no elements in it.
@@ -603,6 +609,66 @@ inline in a `line` that wraps (and in a paragraph), or on a row of its own.
   the links itself sets `surfrun.Options.NoLinks`, or paints
   `Screen.NoLinks()`; the runs stay split as they were.
 - **Go:** `surfui.Link(href, kids...)`, `.External()`, `.OnFollow(func())`.
+
+## Prose
+
+Long-form text, as a docs page or a review comment has it. No Markdown
+parser is in hotty-surf: `surfmd`, a module of its own, turns Markdown
+into these tags.
+
+```
+<prose>
+  <h level="1" anchor="install">Install guide</h>
+  <p>Run <code>make check</code> first: it is <em>fast</em> and
+     <strong>strict</strong>. See <link href="#usage">usage</link>.</p>
+  <ul>
+    <li>Clone, then <code>mise install</code></li>
+    <li checked>Read the guide</li>
+  </ul>
+  <quote>Measure twice, cut once.</quote>
+  <alert kind="tip">Run one heavy job at a time.</alert>
+</prose>
+```
+
+- **`prose`** is a column of blocks (`p`, `h`, `ul`, `ol`, `quote`, `alert`,
+  `img`). A text among a block's children, with nothing around it, is a
+  paragraph's, and so is each run of inline children: `<li>Use <code>x</code>
+  now</li>`. In cells the blocks are a row apart and at most 80 columns
+  wide; on a host it is plain HTML (`p`, `h1`–`h6`, `ul`, `ol`,
+  `blockquote`) at an `80ch` measure, in a reading size.
+- **`compact`** is a comment's form: no measure (the box's width is it),
+  the space between blocks a row at most, the surface's text size.
+  **`muted`** reaches every run in it, a link's and a heading's too.
+- **`p`** wraps at its spaces, as `<line wrap>` does, and its inline
+  children are runs of that one text: a text, `em` (italic), `strong`
+  (bold), `del` (struck through), `code` (on the code ground), `link`,
+  `br` (a hard break) and `img`. They nest: `<strong><em>x</em></strong>`.
+  White space is the template's ("Text"): a text of only white space
+  between two tags is dropped, so two inline elements side by side need
+  `{{ ' ' }}` between them: `<em>a</em>{{ ' ' }}<strong>b</strong>`. A
+  text that has other characters keeps a space at its ends.
+- **`h`** takes `level` 1 to 6 (heading sizes are the host's; the cells draw
+  it bold) and `anchor`, its `id` on a host, which a `#fragment` link finds
+  and `Box` finds in the cells ("Links").
+- **`ul` and `ol`** hold `li`; `start` is the number an `ol` begins with. An
+  item is its marker, `•`, its number, or `☐` and `☑` for a task, and its
+  blocks hanging beside it, so a wrapped line sits under the text, not the
+  marker; a list in an item is nested. `checked` on an `li` makes it a
+  task (`:checked="done"` binds it); a task isn't numbered.
+- **`quote`** and **`alert`** hold blocks behind a bar at their start, a
+  `▎` in cells. An `alert`'s `kind` (note, tip, important, warning,
+  caution) gives it an icon and a title in its tone (info, ok, accent,
+  warn, error).
+- **`img`** takes `src`, a URL or a resource the program sent (`cid:name`),
+  and `alt`. A host draws it at most 20 rows tall; the cells draw `[alt]`,
+  and nothing for an empty `alt`.
+- **`code` here is the inline one.** Inside a paragraph, a heading, an
+  item, a link or an emphasis it takes no `language`, spans, `wrap` or
+  numbers.
+- **Go:** `surfui.Prose(...)`, `.Compact()`, `Para`, `H(level, anchor, ...)`,
+  `Em`, `Strong`, `Del`, `Code`, `Br`, `Bullets`, `Numbered(start, ...)`,
+  `Li` (`.Checked(on)`), `Quote`, `Alert(kind, ...)`, `Img(src, alt)`.
+- A prose block lays out to its natural height in cells, `Draw(cols, 0)`.
 
 ## Keys
 

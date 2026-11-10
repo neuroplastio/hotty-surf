@@ -306,6 +306,56 @@ var All = []Story{
 		}
 		return st
 	}},
+	{"prose/doc", 80, func() *surfui.Node {
+		// A page: a heading, a paragraph of every inline run, lists with a
+		// nested one and tasks, a quote, an alert and a second heading, at
+		// the reading size and the 80ch measure.
+		s := surfui.Str
+		return surfui.Prose(
+			surfui.H(1, "install", s("Install guide")),
+			surfui.Para(s("Run "), surfui.Code(s("make check")), s(" first: it is "), surfui.Em(s("fast")), s(" and "),
+				surfui.Strong(s("strict")), s(", not "), surfui.Del(s("slow")), s(". See "),
+				surfui.Link("#usage", s("usage")), s(" or the "), surfui.Link("https://example.com", s("site")).External(),
+				s(", which says more about each step than this paragraph, which only runs long enough to wrap onto a second line.")),
+			surfui.H(2, "steps", s("Steps")),
+			surfui.Bullets(
+				surfui.Li(s("Clone the repository, then "), surfui.Code(s("mise install"))),
+				surfui.Li(s("Build:"), surfui.Numbered(1, surfui.Li(s("generate")), surfui.Li(s("compile")), surfui.Li(s("test")))),
+				surfui.Li(s("Read the guide")).Checked(true),
+				surfui.Li(s("Tell us what broke")).Checked(false),
+			),
+			surfui.Quote(s("Measure twice, cut once.")),
+			surfui.Alert("tip", s("Run one heavy job at a time.")),
+			surfui.H(3, "usage", s("Usage")),
+			surfui.Para(s("That is all.")),
+		)
+	}},
+	{"prose/compact", 60, func() *surfui.Node {
+		// A comment: no measure, the surface's size, hard breaks kept, a
+		// muted one beside it.
+		s := surfui.Str
+		return surfui.Stack(
+			surfui.Box(surfui.Prose(
+				surfui.Para(s("Looks right to me; "), surfui.Code(s("Update")), s(" runs once.")),
+				surfui.Para(s("One thing:"), surfui.Br(), s("the "), surfui.Link("/x", s("old path")), s(" is still used.")),
+				surfui.Bullets(surfui.Li(s("rename it")), surfui.Li(s("or "), surfui.Strong(s("drop"), s(" it")))),
+			).Compact()).Pad(2, 1),
+			surfui.Box(surfui.Prose(
+				surfui.Para(s("A deleted comment's body, "), surfui.Link("/x", s("link")), s(" and "), surfui.Code(s("code")), s(" muted too.")),
+			).Compact().Muted()).Pad(2, 1),
+		).Gap(1)
+	}},
+	{"prose/alerts", 70, func() *surfui.Node {
+		s := surfui.Str
+		return surfui.Prose(
+			surfui.Alert("note", s("Useful information that users should know.")),
+			surfui.Alert("tip", s("Helpful advice for doing things better.")),
+			surfui.Alert("important", s("Key information users need to succeed.")),
+			surfui.Alert("warning", surfui.Para(s("Urgent info that needs attention.")), surfui.Para(s("A second paragraph."))),
+			surfui.Alert("caution", s("Negative potential consequences of an action.")),
+			surfui.Quote(s("A quote, for comparison."), surfui.Br(), s("Two lines.")),
+		)
+	}},
 	{"link/inline", 60, func() *surfui.Node {
 		// A link in a paragraph that wraps, one that is a hyperlink to
 		// somewhere else, one with the keyboard (forced), one muted, and

@@ -153,6 +153,21 @@ return function(state)
 end
 `
 
+// proseLua is the Prose fixture in Lua: a page of long-form text with a
+// link the program follows and a task it toggles (prose.surf).
+const proseLua = `
+local Prose = {}
+Prose.__index = Prose
+function Prose:follow(href) table.insert(self.log, "follow " .. href) end
+function Prose:toggle() self.open = not self.open; table.insert(self.log, "toggle") end
+return function(state)
+  state.note = state.note or ""
+  state.open = state.open or false
+  state.log = state.log or {}
+  return setmetatable(state, Prose)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
 // as Lua values, a table drawn by the first template; the Form's, the
@@ -196,7 +211,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Prose":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -210,6 +225,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = draftLua, "draft"
 			case "Links":
 				src, tmpl = linksLua, "links"
+			case "Prose":
+				src, tmpl = proseLua, "prose"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any
