@@ -30,6 +30,7 @@ var widgetShape = &surf.Shape{Name: "WidgetStory", Component: true, Methods: []s
 	{Name: "focus", Args: []cellite.Type{surf.EventType}},
 	{Name: "change", Args: []cellite.Type{cellite.String}},
 	{Name: "input", Args: []cellite.Type{cellite.String}},
+	{Name: "height", Args: []cellite.Type{cellite.Int}},
 }}
 
 // none is a string attribute's select's value for no value.
@@ -86,6 +87,8 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 			c.Kind, c.Value = "switch", "false"
 		case a.Values != nil:
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, a.Values...)
+		case a.Name == "rows": // a number, or a range of them
+			c.Kind, c.Value, c.Options, c.text = "select", none, []string{none, "1", "3", "3..8"}, false
 		}
 		add(c)
 	}
