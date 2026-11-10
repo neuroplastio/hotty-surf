@@ -324,6 +324,9 @@ func readFiles(fsys fs.FS) (map[string]*file, map[string]stamp, error) {
 // or one :if chain of them (:if, :else-if, :else) of which one draws.
 func parseFile(name, src string) (*file, error) {
 	nodes, err := markup.Parse(name, src)
+	for i := range nodes {
+		nodes[i] = tablesRead(nodes[i])
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1082,9 +1085,6 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return nil
 	case strings.Contains(n.Tag, "-") && !registered(n.Tag):
 		return s.use(n)
-	}
-	if n.Tag == "table" {
-		n = tableAliases(n)
 	}
 	e := s.widgetEl(n)
 	if e == nil {

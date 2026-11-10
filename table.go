@@ -187,3 +187,26 @@ func tableAliases(n *markup.Node) *markup.Node {
 	}
 	return &out
 }
+
+// tablesRead reads the table aliases (tableAliases) of every <table> in
+// the tree under root, at load, before anything is compiled. It walks
+// with a stack of its own: TinyGo's stacks are small, and a template is
+// as deep as MaxDepth.
+func tablesRead(root *markup.Node) *markup.Node {
+	if root.Kind == markup.Element && root.Tag == "table" {
+		root = tableAliases(root)
+	}
+	todo := []*markup.Node{root}
+	for len(todo) > 0 {
+		n := todo[len(todo)-1]
+		todo = todo[:len(todo)-1]
+		for i, k := range n.Kids {
+			if k.Kind == markup.Element && k.Tag == "table" {
+				k = tableAliases(k)
+				n.Kids[i] = k
+			}
+			todo = append(todo, k)
+		}
+	}
+	return root
+}
