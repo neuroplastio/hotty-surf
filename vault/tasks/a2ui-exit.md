@@ -121,7 +121,7 @@ Sizes as the board's: S one leg, M two or three.
   never-lose-words rules: an edit reaches the model before the next
   program key, a lost host document comes back with the value and caret,
   the same `:value` moves nothing. M.
-- [ ] **L5d. A surface's rows on a host** (B11): `surfui.Rows(root, cols,
+- [x] **L5d. A surface's rows on a host** (merge 59c7c33; `make rows` checks the estimate against both engines) (B11): `surfui.Rows(root, cols,
   metrics)` from the tokens surf owns, then the measured answer
   (`Frame.Fit`, an `OnFit` hook) from hotty's `r=auto` and `fit`, the
   top kept still on a re-place. The composer's `@height` uses it. M.
