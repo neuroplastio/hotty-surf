@@ -221,3 +221,15 @@ Table and tree (phase 3) serve both programs, and phase 4 finishes both
 the website's P1 and margin's M1 together. If the website can't wait
 that long, L8 and L9 can move ahead of phase 2, so it carries prose
 itself and offers it back later (its own suggestion).
+
+## Calls made while the maintainer was away (2026-11-09 night), to confirm
+
+- **Inline code is `code` too,** as in HTML: inside an inline flow (`p`,
+  `line`, `li`, `h`, `link`, `em`, `strong`, `del`) `code` is a span with
+  no `language`, `spans`, `wrap` or `numbers`; elsewhere it is L2's block.
+  A rename if the maintainer wants two tags.
+- **A `code` block without `wrap`** scrolls across on a host and is cut at
+  the edge in the cells (L2); sideways scrolling in the cells is M2.
+- **A partial next row** showing in a scrolled multi-row field's padding
+  in Chromium is left as native textareas have it; Blitz doesn't show it
+  (L5c).
