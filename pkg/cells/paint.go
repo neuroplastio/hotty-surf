@@ -209,6 +209,12 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	if b.f&fProse != 0 && b.tone == Muted {
 		in.plain = true // muted reaches every run in it, a link's and an alert's too
 	}
+	if hasClass(n, "u-tree-disclosure") && !in.plain {
+		// A chevron is muted, as an icon is, but on the selected row.
+		if item := surfui.Parent(n); item == nil || !surfui.IsSelected(item) {
+			in.fg = Muted
+		}
+	}
 	foc := p.focus == n
 	var bg Role
 	switch {
@@ -348,6 +354,11 @@ func (p *painter) item(b *box, in *ink, bg *Role) {
 		// row's selected fill, as the host's .u-menu-item.is-sel.
 		*bg = Sel
 		return
+	}
+	if hasClass(b.n, "is-cur") {
+		// The item open in the program, told from the selected row: bold
+		// in the accent's tone.
+		in.fg, in.attr = Accent, in.attr|Bold
 	}
 	list := surfui.Parent(b.n)
 	// A standalone focusable item has no list selection to mark where

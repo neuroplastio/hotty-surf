@@ -229,6 +229,9 @@ func dataOn(n *Node) string {
 			on = appendOnce(on, "click")
 		}
 	}
+	if DisclosureOf(n) != nil {
+		on = appendOnce(on, "click") // a branch's chevron asks the program to toggle it
+	}
 	if Commits(n) {
 		on = appendOnce(on, "input")
 	}

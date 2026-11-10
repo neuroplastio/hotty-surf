@@ -1,0 +1,31 @@
+cells 30x9
+text
+> Project
+>  ▾ src                    2/3
+> ▎    main.go
+>      a-very-long-file-n…3/12!
+>  ▸ docs
+> More
+>    notes.md
+style
+= aaaaaaa
+= .aa.......................aaa
+= bccdddddddddcccccccccccccccccc
+= ...aa...................aaaaa
+= .aa
+= aaaa
+= .aa
+. fg/bg
+a muted/bg
+b border/tonal
+c fg/tonal
+d accent/tonal bold
+hits
+@ 0,0 30x7 r.ktree
+@ 0,1 30x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 30x1 r.ktree.kmain_2ego
+@ 0,3 30x1 r.ktree.ka-very-long-file-name-indeed_2ego
+@ 0,4 30x1 r.ktree.kdocs
+@ 1,4 2x1 r.ktree.kdocs.kdisclosure
+@ 0,6 30x1 r.ktree.knotes_2emd

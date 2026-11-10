@@ -498,3 +498,46 @@ func (t *Threads) Pick(i int) {
 
 // Open is a row's @activate: it hears the row's key.
 func (t *Threads) Open(key string) { t.Log = append(t.Log, "open "+key) }
+
+// Entry is a data struct: a row of an Outline tree, already flattened by its
+// model: a caption, or an item with its depth and what it is.
+type Entry struct {
+	Key     string
+	Name    string
+	Caption bool
+	Depth   int
+	Branch  bool
+	Open    bool
+	Current bool
+	Count   string
+}
+
+// Outline is a component of a file tree, with made-up data (outline.surf):
+// the model owns what is selected, and what is open. Its log is what each
+// click, toggle and activate heard.
+type Outline struct {
+	Sel  string
+	Rows []*Entry
+	Log  []string
+}
+
+// Pick is an item's click: the selection moves to it.
+func (f *Outline) Pick(key string) {
+	f.Sel = key
+	f.Log = append(f.Log, "pick "+key)
+}
+
+// Fold is a branch's toggle: it flips what it keeps. The rows are the
+// model's to draw again; this fixture's are fixed, so only the chevron
+// changes.
+func (f *Outline) Fold(key string) {
+	for _, r := range f.Rows {
+		if r.Key == key {
+			r.Open = !r.Open
+		}
+	}
+	f.Log = append(f.Log, "fold "+key)
+}
+
+// Open is an item's @activate, which hears its key.
+func (f *Outline) Open(key string) { f.Log = append(f.Log, "open "+key) }

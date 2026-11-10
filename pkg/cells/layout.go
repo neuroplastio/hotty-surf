@@ -683,6 +683,12 @@ func (b *box) look(d density) {
 		switch v.K {
 		case "u-in":
 			b.ml += atoi(v.V)
+		case "u-depth":
+			// A tree item's depth: two cells a level of room in front, so
+			// that its fill and its bar keep the row's left edge.
+			if b.f&fItem != 0 {
+				b.pl += 2 * min(max(atoi(v.V), 0), 1<<20)
+			}
 		case "u-dn":
 			b.mt += atoi(v.V)
 		case "u-w":

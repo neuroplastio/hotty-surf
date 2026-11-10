@@ -790,7 +790,10 @@ func (n *Node) Raised() *Node { return n.Class("u-raised") }
 
 // Current marks a Pill whose thing holds the keyboard (a tab whose
 // stack has it, a stripe's tool that has it): the accent's soft fill
-// and the accent's ink.
+// and the accent's ink. On a tree's Item it is the one open in the
+// program (a file's, a page's), which is not the selected row: the
+// accent's ink and a heavier weight on a host, bold in the accent's tone
+// in the cells, with no fill of its own.
 func (n *Node) Current(on bool) *Node {
 	if on {
 		n.Class("is-cur").Attr("aria-current", "true")

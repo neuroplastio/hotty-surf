@@ -1023,6 +1023,81 @@ var All = []Story{
 		}
 		return surfui.Row(nav(0), Force(nav(1), "within"), Force(nav(3), "hover")).Gap(4).Top()
 	}},
+	// A file tree, made-up files: depth is two cells of room a level in
+	// front of the item, a chevron before a branch (a leaf has the room),
+	// a count flush at the row's end, the open file's name in the accent.
+	// The selection is quiet, then bright with the keyboard in the list.
+	{"tree/files", 40, func() *surfui.Node {
+		file := func(name string, depth int, branch, open bool, count string) *surfui.Node {
+			it := surfui.Item(surfui.Text(name).Grow()).Depth(depth).Branch(branch).Open(open)
+			if count != "" {
+				it.Add(surfui.Text(count).Small().Muted().Keep())
+			}
+			return it
+		}
+		tree := func(sel int) *surfui.Node {
+			rows := []*surfui.Node{
+				file("notes", 0, true, false, ""),
+				file("src", 0, true, true, "2/5"),
+				file("views", 1, true, true, ""),
+				file("home.surf", 2, false, false, "1/3"),
+				file("a-long-file-name-for-a-narrow-pane.surf", 2, false, false, "3/12!"),
+				file("main.go", 1, false, false, ""),
+				file("readme.md", 0, false, false, ""),
+			}
+			l := surfui.List().Nav()
+			for i, r := range rows {
+				l.Add(r.Selected(i == sel))
+			}
+			return l
+		}
+		return surfui.Stack(tree(2), Force(tree(3), "within")).Gap(1)
+	}},
+	// A docs nav: captions between the groups' items, which the selection
+	// skips, one selection across them; a page with pages under it is a
+	// branch, open where the shown page is.
+	{"tree/nav", 64, func() *surfui.Node {
+		nav := func(sel int) *surfui.Node {
+			l := surfui.List().Nav()
+			add := func(i int, name string, depth int, branch, open bool) {
+				l.Add(surfui.Item(surfui.Text(name)).Depth(depth).Branch(branch).Open(open).Selected(i == sel))
+			}
+			l.Add(surfui.Caption("Guides"))
+			add(0, "Install", 0, false, false)
+			add(1, "Templates", 0, true, true)
+			add(2, "Expressions", 1, false, false)
+			add(3, "Handlers", 1, false, false)
+			l.Add(surfui.Caption("Reference"))
+			add(4, "Widgets", 0, true, false)
+			add(5, "Keys", 0, false, false)
+			return l
+		}
+		return surfui.Row(nav(2), Force(nav(4), "within")).Gap(4).Top()
+	}},
+	// The item open in the program (current), told from the selected row:
+	// the accent's ink and a heavier weight on a host, bold in the accent in
+	// the cells. Shown on the selected row (quiet, bright), beside it and
+	// apart from it.
+	{"tree/current", 60, func() *surfui.Node {
+		tree := func(sel int) *surfui.Node {
+			l := surfui.List().Nav()
+			for i, f := range []struct {
+				name         string
+				depth        int
+				branch, open bool
+				current      bool
+			}{
+				{"docs", 0, true, true, false},
+				{"guide.md", 1, false, false, true},
+				{"spec.md", 1, false, false, false},
+				{"README.md", 0, false, false, false},
+			} {
+				l.Add(surfui.Item(surfui.Text(f.name)).Depth(f.depth).Branch(f.branch).Open(f.open).Current(f.current).Selected(i == sel))
+			}
+			return l
+		}
+		return surfui.Row(tree(1), tree(2), Force(tree(1), "within")).Gap(3).Top()
+	}},
 	{"list/drop", 40, func() *surfui.Node {
 		// Where a drop would land, as the runtime marks it while a row is
 		// dragged (surfui.DropMark): a line in the accent at a row's top

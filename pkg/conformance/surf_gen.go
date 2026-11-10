@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf threads.surf tune.surf mark.svg ring.svg
+//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf file-row.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf outline.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf threads.surf tune.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeSignup, &surfShapeTabsExample, &surfShapeThreads, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard, &surfShapeThread}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeOutline, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeSignup, &surfShapeTabsExample, &surfShapeThreads, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard, &surfShapeEntry, &surfShapeThread}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -702,6 +702,68 @@ func (o surfLinks) Call(m int, args []cellite.Value) cellite.Value {
 // surfInterpLinks is c drawn by its template, interpreted.
 func surfInterpLinks(c *Links) surflive.Component { return surf.Component(surfSet(), surfLinks{c}) }
 
+// surfShapeOutline is Outline's shape, a component.
+var surfShapeOutline = surf.Shape{Name: "Outline", Component: true,
+	Fields: []surf.Field{{Name: "sel", Type: cellite.String}, {Name: "rows", Type: cellite.ListOf(cellite.StructOf("Entry"))}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "fold", Args: []cellite.Type{cellite.String}},
+		{Name: "open", Args: []cellite.Type{cellite.String}},
+		{Name: "pick", Args: []cellite.Type{cellite.String}},
+	},
+}
+
+// surfOutline is a *Outline as its templates read it.
+type surfOutline struct{ p *Outline }
+
+// surfOutlineValue is p as a value: null for nil.
+func surfOutlineValue(p *Outline) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Outline", surfOutline{p})
+}
+
+// surfOutlineOf is a value's *Outline: nil for any other.
+func surfOutlineOf(v cellite.Value) *Outline {
+	if o, ok := v.Object().(surfOutline); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfOutline) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Sel))
+	case 1:
+		return cellite.ListValue(surfList8(o.p.Rows))
+	case 2:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfOutline) Unwrap() any { return o.p }
+
+func (o surfOutline) Shape() *surf.Shape { return &surfShapeOutline }
+
+func (o surfOutline) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Fold(string(args[0].String()))
+	case 1:
+		o.p.Open(string(args[0].String()))
+	case 2:
+		o.p.Pick(string(args[0].String()))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpOutline is c drawn by its template, interpreted.
+func surfInterpOutline(c *Outline) surflive.Component {
+	return surf.Component(surfSet(), surfOutline{c})
+}
+
 // surfShapeProgressExample is ProgressExample's shape, a component.
 var surfShapeProgressExample = surf.Shape{Name: "ProgressExample", Component: true,
 	Fields: []surf.Field{{Name: "percent", Type: cellite.Int}},
@@ -841,7 +903,7 @@ func (o surfShelf) Field(i int) cellite.Value {
 	case 1:
 		return surfInfoPanelValue(o.p.Panel)
 	case 2:
-		return cellite.ListValue(surfList8(o.p.Panels))
+		return cellite.ListValue(surfList9(o.p.Panels))
 	case 3:
 		return cellite.ListValue(surfList2(o.p.Log))
 	}
@@ -1023,7 +1085,7 @@ func (o surfThreads) Field(i int) cellite.Value {
 	case 1:
 		return cellite.IntValue(int64(o.p.Sel))
 	case 2:
-		return cellite.ListValue(surfList9(o.p.Rows))
+		return cellite.ListValue(surfList10(o.p.Rows))
 	case 3:
 		return cellite.ListValue(surfList2(o.p.Log))
 	}
@@ -1303,6 +1365,54 @@ func (o surfCard) Field(i int) cellite.Value {
 }
 
 func (o surfCard) Unwrap() any { return o.p }
+
+// surfShapeEntry is Entry's shape, a struct.
+var surfShapeEntry = surf.Shape{Name: "Entry", Component: false,
+	Fields: []surf.Field{{Name: "key", Type: cellite.String}, {Name: "name", Type: cellite.String}, {Name: "caption", Type: cellite.Bool}, {Name: "depth", Type: cellite.Int}, {Name: "branch", Type: cellite.Bool}, {Name: "open", Type: cellite.Bool}, {Name: "current", Type: cellite.Bool}, {Name: "count", Type: cellite.String}},
+}
+
+// surfEntry is a *Entry as its templates read it.
+type surfEntry struct{ p *Entry }
+
+// surfEntryValue is p as a value: null for nil.
+func surfEntryValue(p *Entry) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Entry", surfEntry{p})
+}
+
+// surfEntryOf is a value's *Entry: nil for any other.
+func surfEntryOf(v cellite.Value) *Entry {
+	if o, ok := v.Object().(surfEntry); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfEntry) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Key))
+	case 1:
+		return cellite.StringValue(string(o.p.Name))
+	case 2:
+		return cellite.BoolValue(bool(o.p.Caption))
+	case 3:
+		return cellite.IntValue(int64(o.p.Depth))
+	case 4:
+		return cellite.BoolValue(bool(o.p.Branch))
+	case 5:
+		return cellite.BoolValue(bool(o.p.Open))
+	case 6:
+		return cellite.BoolValue(bool(o.p.Current))
+	case 7:
+		return cellite.StringValue(string(o.p.Count))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfEntry) Unwrap() any { return o.p }
 
 // surfShapeThread is Thread's shape, a struct.
 var surfShapeThread = surf.Shape{Name: "Thread", Component: false,
@@ -2071,6 +2181,279 @@ func surfRenderDraft(e *surf.Errs, out []*surfui.Node, c *Draft, fill surf.Fill)
 		n1 := surf.NewSurface(k1...)
 		out = append(out, n1)
 		e.Leave()
+	}
+	return out
+}
+
+// surfProgsOutline_FileRow are file-row.surf's programs, for Outline, loaded at the first call.
+func surfProgsOutline_FileRow() []*cellite.Program {
+	surfProgsOutline_FileRowOnce.Do(func() { surfProgsOutline_FileRowVal = surfSet().Programs("file-row\x00Outline") })
+	return surfProgsOutline_FileRowVal
+}
+
+var (
+	surfProgsOutline_FileRowOnce sync.Once
+	surfProgsOutline_FileRowVal  []*cellite.Program
+)
+
+// surfRenderOutline_FileRow draws file-row.surf for Outline.
+func surfRenderOutline_FileRow(e *surf.Errs, out []*surfui.Node, c *Outline, fill surf.Fill, prop4 cellite.Value, prop5 string) []*surfui.Node {
+	switch {
+	default:
+		v5, ok5 := e.Eval("file-row.surf", 2, 1, surfProgsOutline_FileRow()[0], surf.Act(func(i int) cellite.Value {
+			switch i {
+			case 4:
+				return prop4
+			}
+			return surfOutline{c}.Field(i - 1)
+		}))
+		if !ok5 {
+			break
+		}
+		v6, ok6 := e.AsCond("file-row.surf", 2, 1, v5)
+		if !ok6 {
+			break
+		}
+		if v6 {
+			// file-row.surf:2:1 <caption>
+			if e.Enter("file-row.surf", 2, 1) {
+				var t4 string
+				switch {
+				default:
+					v2, ok2 := e.Eval("file-row.surf", 2, 1, surfProgsOutline_FileRow()[1], surf.Act(func(i int) cellite.Value {
+						switch i {
+						case 4:
+							return prop4
+						}
+						return surfOutline{c}.Field(i - 1)
+					}))
+					if !ok2 {
+						break
+					}
+					v3, ok3 := e.AsText("file-row.surf", 2, 1, v2)
+					if !ok3 {
+						break
+					}
+					t4 += v3
+				}
+				n1 := surfui.Caption(t4)
+				out = append(out, n1)
+				e.Leave()
+			}
+			break
+		}
+		// file-row.surf:3:1 <item>
+		if e.Enter("file-row.surf", 3, 1) {
+			var k7 []*surfui.Node
+			// file-row.surf:5:3 <text>
+			if e.Enter("file-row.surf", 5, 3) {
+				var t11 string
+				switch {
+				default:
+					v9, ok9 := e.Eval("file-row.surf", 5, 3, surfProgsOutline_FileRow()[9], surf.Act(func(i int) cellite.Value {
+						switch i {
+						case 4:
+							return prop4
+						}
+						return surfOutline{c}.Field(i - 1)
+					}))
+					if !ok9 {
+						break
+					}
+					v10, ok10 := e.AsText("file-row.surf", 5, 3, v9)
+					if !ok10 {
+						break
+					}
+					t11 += v10
+				}
+				n8 := surfui.Text(t11)
+				surf.ModGrow(n8, true)
+				k7 = append(k7, n8)
+				e.Leave()
+			}
+			switch {
+			default:
+				v16, ok16 := e.Eval("file-row.surf", 6, 3, surfProgsOutline_FileRow()[10], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok16 {
+					break
+				}
+				v17, ok17 := e.AsCond("file-row.surf", 6, 3, v16)
+				if !ok17 {
+					break
+				}
+				if v17 {
+					// file-row.surf:6:3 <text>
+					if e.Enter("file-row.surf", 6, 3) {
+						var t15 string
+						switch {
+						default:
+							v13, ok13 := e.Eval("file-row.surf", 6, 3, surfProgsOutline_FileRow()[11], surf.Act(func(i int) cellite.Value {
+								switch i {
+								case 4:
+									return prop4
+								}
+								return surfOutline{c}.Field(i - 1)
+							}))
+							if !ok13 {
+								break
+							}
+							v14, ok14 := e.AsText("file-row.surf", 6, 3, v13)
+							if !ok14 {
+								break
+							}
+							t15 += v14
+						}
+						n12 := surfui.Text(t15)
+						surf.ModMuted(n12, true)
+						surf.ModSmall(n12, true)
+						surf.ModKeep(n12, true)
+						k7 = append(k7, n12)
+						e.Leave()
+					}
+					break
+				}
+			}
+			n7 := surfui.Item(k7...)
+			switch {
+			default:
+				v18, ok18 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[6], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					case 5:
+						return cellite.StringValue(prop5)
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok18 {
+					break
+				}
+				v19, ok19 := e.AsBool("file-row.surf", 3, 1, v18)
+				if !ok19 {
+					break
+				}
+				surf.ModSelected(n7, v19)
+			}
+			switch {
+			default:
+				v20, ok20 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[5], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok20 {
+					break
+				}
+				v21, ok21 := e.AsBool("file-row.surf", 3, 1, v20)
+				if !ok21 {
+					break
+				}
+				surf.ModCurrent(n7, v21)
+			}
+			switch {
+			default:
+				v22, ok22 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[2], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok22 {
+					break
+				}
+				v23, ok23 := e.AsInt("file-row.surf", 3, 1, "depth", v22)
+				if !ok23 {
+					break
+				}
+				surf.ModDepth(n7, v23)
+			}
+			switch {
+			default:
+				v24, ok24 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[3], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok24 {
+					break
+				}
+				v25, ok25 := e.AsBool("file-row.surf", 3, 1, v24)
+				if !ok25 {
+					break
+				}
+				surf.ModBranch(n7, v25)
+			}
+			switch {
+			default:
+				v26, ok26 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[4], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok26 {
+					break
+				}
+				v27, ok27 := e.AsBool("file-row.surf", 3, 1, v26)
+				if !ok27 {
+					break
+				}
+				surf.ModOpen(n7, v27)
+			}
+			switch {
+			default:
+				v28, ok28 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[7], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok28 {
+					break
+				}
+				d29, ok30 := e.AsArg("file-row.surf", 3, 1, v28, cellite.String, "pick")
+				if !ok30 {
+					break
+				}
+				a31 := string(d29.String())
+				n7.On("click", func() { c.Pick(a31) })
+			}
+			switch {
+			default:
+				v32, ok32 := e.Eval("file-row.surf", 3, 1, surfProgsOutline_FileRow()[8], surf.Act(func(i int) cellite.Value {
+					switch i {
+					case 4:
+						return prop4
+					}
+					return surfOutline{c}.Field(i - 1)
+				}))
+				if !ok32 {
+					break
+				}
+				d33, ok34 := e.AsArg("file-row.surf", 3, 1, v32, cellite.String, "fold")
+				if !ok34 {
+					break
+				}
+				a35 := string(d33.String())
+				n7.On("toggle", func() { c.Fold(a35) })
+			}
+			n7.On("activate", func(ev surfrun.Event) { c.Open(ev.Value) })
+			out = append(out, n7)
+			e.Leave()
+		}
 	}
 	return out
 }
@@ -3709,6 +4092,47 @@ func surfRenderBoard_NoteRow(e *surf.Errs, out []*surfui.Node, c *Board, fill su
 	return out
 }
 
+// surfRenderOutline draws outline.surf for Outline.
+func surfRenderOutline(e *surf.Errs, out []*surfui.Node, c *Outline, fill surf.Fill) []*surfui.Node {
+	// outline.surf:6:1 <surface>
+	if e.Enter("outline.surf", 6, 1) {
+		var k1 []*surfui.Node
+		// outline.surf:7:3 <list>
+		if e.Enter("outline.surf", 7, 3) {
+			var k2 []*surfui.Node
+			for _, x3 := range c.Rows {
+				// outline.surf:8:5 <file-row>
+				if e.Enter("outline.surf", 8, 5) {
+					start4 := len(k2)
+					k2 = surfRenderOutline_FileRow(e, k2, c, nil, surfEntryValue(x3), c.Sel)
+					switch {
+					default:
+						p5 := x3
+						if p5 == nil {
+							e.Null("outline.surf", 8, 5)
+							break
+						}
+						for _, kn := range k2[start4:] {
+							kn.Key(p5.Key)
+						}
+					}
+					e.Leave()
+				}
+			}
+			n2 := surfui.List(k2...)
+			surf.ModKey(n2, "tree")
+			surf.ModNav(n2, true)
+			surf.ModAutofocus(n2, true)
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfRenderProgressExample draws progress-example.surf for ProgressExample.
 func surfRenderProgressExample(e *surf.Errs, out []*surfui.Node, c *ProgressExample, fill surf.Fill) []*surfui.Node {
 	// progress-example.surf:1:1 <surface>
@@ -4784,6 +5208,11 @@ func surfCompiledLinks(c *Links) surflive.Component {
 	return surf.Compiled(c, "links.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderLinks(e, nil, c, nil) }, surfPalette)
 }
 
+// surfCompiledOutline is c drawn by its templates compiled into Go.
+func surfCompiledOutline(c *Outline) surflive.Component {
+	return surf.Compiled(c, "outline.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderOutline(e, nil, c, nil) }, surfPalette)
+}
+
 // surfCompiledProgressExample is c drawn by its templates compiled into Go.
 func surfCompiledProgressExample(c *ProgressExample) surflive.Component {
 	return surf.Compiled(c, "progress-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderProgressExample(e, nil, c, nil) }, surfPalette)
@@ -4959,14 +5388,33 @@ func surfList7Of(v cellite.Value) []*Card {
 	return out
 }
 
-// surfList8 is a []*InfoPanel as a list.
-type surfList8 []*InfoPanel
+// surfList8 is a []*Entry as a list.
+type surfList8 []*Entry
 
 func (l surfList8) Len() int               { return len(l) }
-func (l surfList8) At(i int) cellite.Value { return surfInfoPanelValue(l[i]) }
+func (l surfList8) At(i int) cellite.Value { return surfEntryValue(l[i]) }
 
-// surfList8Of is a list's value as a []*InfoPanel.
-func surfList8Of(v cellite.Value) []*InfoPanel {
+// surfList8Of is a list's value as a []*Entry.
+func surfList8Of(v cellite.Value) []*Entry {
+	l := v.List()
+	if l == nil {
+		return nil
+	}
+	out := make([]*Entry, l.Len())
+	for i := range out {
+		out[i] = surfEntryOf(l.At(i))
+	}
+	return out
+}
+
+// surfList9 is a []*InfoPanel as a list.
+type surfList9 []*InfoPanel
+
+func (l surfList9) Len() int               { return len(l) }
+func (l surfList9) At(i int) cellite.Value { return surfInfoPanelValue(l[i]) }
+
+// surfList9Of is a list's value as a []*InfoPanel.
+func surfList9Of(v cellite.Value) []*InfoPanel {
 	l := v.List()
 	if l == nil {
 		return nil
@@ -4978,14 +5426,14 @@ func surfList8Of(v cellite.Value) []*InfoPanel {
 	return out
 }
 
-// surfList9 is a []*Thread as a list.
-type surfList9 []*Thread
+// surfList10 is a []*Thread as a list.
+type surfList10 []*Thread
 
-func (l surfList9) Len() int               { return len(l) }
-func (l surfList9) At(i int) cellite.Value { return surfThreadValue(l[i]) }
+func (l surfList10) Len() int               { return len(l) }
+func (l surfList10) At(i int) cellite.Value { return surfThreadValue(l[i]) }
 
-// surfList9Of is a list's value as a []*Thread.
-func surfList9Of(v cellite.Value) []*Thread {
+// surfList10Of is a list's value as a []*Thread.
+func surfList10Of(v cellite.Value) []*Thread {
 	l := v.List()
 	if l == nil {
 		return nil

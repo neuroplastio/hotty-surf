@@ -713,3 +713,15 @@ width, rounded to device pixels, is a few percent under the monospace face's
 advance and cut every Dense cell ("1.0 KB" to "1.0 …"). The legible gate
 passes the table's stories; the 17 cases named above that still fail are
 `table/static`, `table/empty` and `table/scroll`'s, as before.
+
+## The tree (a2ui-exit L7, 2026-11-10)
+
+`tree/files` in roomy at 2×, five cases (one a theme, 72.5–72.8 CSS px²):
+the long file name ("a-long-file-name-for-a-narrow-pane.surf") is cut one
+character earlier in Blitz than in Chromium, as every roomy ellipsis is at 2×
+([the palette's fit](#the-palettes-fit-2026-10-31)). The rest of the story
+agrees: the chevrons, the depth, the selected row's fill and its marker, the
+counts. `tree/nav` and `tree/current` pass at every density, scale and theme.
+The first version of `tree/files` and `tree/current` put two or three trees
+in a row in a canvas too narrow for them, and Blitz and Chromium shrank them
+differently (14600 px²): they stack, and `tree/current` has 60 cells.

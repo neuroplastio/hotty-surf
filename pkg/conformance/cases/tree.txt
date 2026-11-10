@@ -1,0 +1,419 @@
+A file tree: a list whose items carry depth, branch, open and current,
+which the model flattens (it draws no children of a closed branch), with a
+caption between the rows, which the selection skips. The list answers the
+keys of ARIA's tree itself, by the handlers its items carry: ↓ and ↑ select
+by @click, across the captions; → on a closed branch asks @toggle, and ←
+on an open one; ← on a closed one goes to its parent; Enter is @activate
+and hears the item's key; End selects the last. A click on a branch's
+chevron is its @toggle. The chevron is ▸ or ▾ in the cells, two cells
+of room a level in front of the label, the open file's name bold in the
+accent, and the count stays whole at the row's end while the name is cut.
+-- root --
+Outline
+-- state.json --
+{"Sel": "src", "Rows": [{"Key": "c1", "Name": "Project", "Caption": true, "Depth": 0, "Branch": false, "Open": false, "Current": false, "Count": ""}, {"Key": "src", "Name": "src", "Branch": true, "Open": true, "Caption": false, "Depth": 0, "Current": false, "Count": ""}, {"Key": "main", "Name": "main.go", "Depth": 1, "Current": true, "Count": "2/3", "Caption": false, "Branch": false, "Open": false}, {"Key": "util", "Name": "util", "Depth": 1, "Branch": true, "Caption": false, "Open": false, "Current": false, "Count": ""}, {"Key": "c2", "Name": "More", "Caption": true, "Depth": 0, "Branch": false, "Open": false, "Current": false, "Count": ""}, {"Key": "notes", "Name": "a-long-notes-file-name-that-gets-cut.md", "Count": "3/12", "Caption": false, "Depth": 0, "Branch": false, "Open": false, "Current": false}]}
+-- document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.ksrc" data-keys="arrow_down=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item is-sel u-tree-item" role="treeitem" aria-selected="true" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- cells --
+cells 64x32
+text
+> Project
+> ▎▾ src
+>      main.go                                                2/3
+>    ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= bbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+= ...ddeeeeeee................................................ddd
+= ...aa
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b accent/tonal
+c fg/tonal
+d muted/bg bold
+e accent/bg bold
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 1.event --
+key arrow_down
+-- 1.log --
+pick main
+-- 1.ops --
+attr r.ktree aria-activedescendant "r.ktree.kmain"
+attr r.ktree data-keys "arrow_up=program arrow_down=program home=program end=program arrow_left=program"
+attr r.ktree.ksrc class "u-item u-tree-item"
+unattr r.ktree.ksrc aria-selected
+attr r.ktree.kmain class "u-item is-sel is-cur u-tree-item"
+attr r.ktree.kmain aria-selected "true"
+-- 1.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.kmain" data-keys="arrow_up=program arrow_down=program home=program end=program arrow_left=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-sel is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click" aria-selected="true"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 1.cells --
+cells 64x32
+text
+> Project
+>  ▾ src
+> ▎    main.go                                                2/3
+>    ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= bccdddddddddcccccccccccccccccccccccccccccccccccccccccccccccceeec
+= ...aa
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b accent/tonal
+c fg/tonal
+d accent/tonal bold
+e muted/tonal bold
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 2.event --
+key arrow_down
+-- 2.log --
+pick util
+-- 2.ops --
+attr r.ktree aria-activedescendant "r.ktree.kutil"
+attr r.ktree data-keys "arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"
+attr r.ktree.kmain class "u-item is-cur u-tree-item"
+unattr r.ktree.kmain aria-selected
+attr r.ktree.kutil class "u-item is-sel u-tree-item"
+attr r.ktree.kutil aria-selected "true"
+-- 2.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.kutil" data-keys="arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item is-sel u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click" aria-selected="true"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 2.cells --
+cells 64x32
+text
+> Project
+>  ▾ src
+>      main.go                                                2/3
+> ▎  ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= ...bbccccccc................................................bbb
+= deeddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b muted/bg bold
+c accent/bg bold
+d accent/tonal
+e fg/tonal
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 3.event --
+key arrow_right
+-- 3.log --
+fold util
+-- 3.ops --
+attr r.ktree data-keys "arrow_up=program arrow_down=program home=program end=program arrow_left=program"
+attr r.ktree.kutil aria-expanded "true"
+text r.ktree.kutil.kdisclosure "\U000f0140"
+-- 3.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.kutil" data-keys="arrow_up=program arrow_down=program home=program end=program arrow_left=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item is-sel u-tree-item" role="treeitem" aria-level="2" aria-expanded="true" style="--u-depth:1" data-on="click" aria-selected="true"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 3.cells --
+cells 64x32
+text
+> Project
+>  ▾ src
+>      main.go                                                2/3
+> ▎  ▾ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= ...bbccccccc................................................bbb
+= deeddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b muted/bg bold
+c accent/bg bold
+d accent/tonal
+e fg/tonal
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 4.event --
+key arrow_left
+-- 4.log --
+fold util
+-- 4.ops --
+attr r.ktree data-keys "arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"
+attr r.ktree.kutil aria-expanded "false"
+text r.ktree.kutil.kdisclosure "\U000f0142"
+-- 4.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.kutil" data-keys="arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item is-sel u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click" aria-selected="true"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 4.cells --
+cells 64x32
+text
+> Project
+>  ▾ src
+>      main.go                                                2/3
+> ▎  ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= ...bbccccccc................................................bbb
+= deeddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b muted/bg bold
+c accent/bg bold
+d accent/tonal
+e fg/tonal
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 5.event --
+key arrow_left
+-- 5.log --
+pick src
+-- 5.ops --
+attr r.ktree aria-activedescendant "r.ktree.ksrc"
+attr r.ktree data-keys "arrow_down=program end=program arrow_left=program arrow_right=program"
+attr r.ktree.ksrc class "u-item is-sel u-tree-item"
+attr r.ktree.ksrc aria-selected "true"
+attr r.ktree.kutil class "u-item u-tree-item"
+unattr r.ktree.kutil aria-selected
+-- 5.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.ksrc" data-keys="arrow_down=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item is-sel u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click" aria-selected="true"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 5.cells --
+cells 64x32
+text
+> Project
+> ▎▾ src
+>      main.go                                                2/3
+>    ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= bbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+= ...ddeeeeeee................................................ddd
+= ...aa
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b accent/tonal
+c fg/tonal
+d muted/bg bold
+e accent/bg bold
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 6.event --
+key enter
+-- 6.log --
+open src
+-- 6.ops --
+
+-- 6.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.ksrc" data-keys="arrow_down=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item is-sel u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click" aria-selected="true"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 6.cells --
+cells 64x32
+text
+> Project
+> ▎▾ src
+>      main.go                                                2/3
+>    ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= bbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+= ...ddeeeeeee................................................ddd
+= ...aa
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b accent/tonal
+c fg/tonal
+d muted/bg bold
+e accent/bg bold
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 7.event --
+key end
+-- 7.log --
+pick notes
+-- 7.ops --
+attr r.ktree aria-activedescendant "r.ktree.knotes"
+attr r.ktree data-keys "arrow_up=program home=program"
+attr r.ktree.ksrc class "u-item u-tree-item"
+unattr r.ktree.ksrc aria-selected
+attr r.ktree.knotes class "u-item is-sel u-tree-item"
+attr r.ktree.knotes aria-selected "true"
+-- 7.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.knotes" data-keys="arrow_up=program home=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item is-sel u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click" aria-selected="true"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 7.cells --
+cells 64x32
+text
+> Project
+>  ▾ src
+>      main.go                                                2/3
+>    ▸ util
+> More
+> ▎  a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= ...bbccccccc................................................bbb
+= ...aa
+= aaaa
+= ddddddddddddddddddddddddddddddddddddddddddeeeeeeeeeeeeeeeeeffffe
+. fg/bg
+a muted/bg
+b muted/bg bold
+c accent/bg bold
+d accent/tonal
+e fg/tonal
+f muted/tonal
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 8.event --
+key arrow_up
+-- 8.log --
+pick util
+-- 8.ops --
+attr r.ktree aria-activedescendant "r.ktree.kutil"
+attr r.ktree data-keys "arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"
+attr r.ktree.kutil class "u-item is-sel u-tree-item"
+attr r.ktree.kutil aria-selected "true"
+attr r.ktree.knotes class "u-item u-tree-item"
+unattr r.ktree.knotes aria-selected
+-- 8.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.kutil" data-keys="arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="true" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅀</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item is-sel u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click" aria-selected="true"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 8.cells --
+cells 64x32
+text
+> Project
+>  ▾ src
+>      main.go                                                2/3
+> ▎  ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= ...bbccccccc................................................bbb
+= deeddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b muted/bg bold
+c accent/bg bold
+d accent/tonal
+e fg/tonal
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes
+-- 9.event --
+click r.ktree.ksrc.kdisclosure
+-- 9.log --
+fold src
+-- 9.ops --
+attr r.ktree.ksrc aria-expanded "false"
+text r.ktree.ksrc.kdisclosure "\U000f0142"
+-- 9.document --
+<!DOCTYPE html><html><head><meta charset="utf-8"/><link rel="stylesheet" href="cid:surf-css"/></head><body><div id="r" class="u-surface u-theme-graphite u-compact"><div id="r.ktree" class="u-list u-nav" role="tree" tabindex="0" aria-activedescendant="r.ktree.kutil" data-keys="arrow_up=program arrow_down=program home=program end=program arrow_left=program arrow_right=program"><span id="r.ktree.kc1" class="u-text u-small u-caption">Project</span><div id="r.ktree.ksrc" class="u-item u-tree-item" role="treeitem" aria-level="1" aria-expanded="false" style="--u-depth:0" data-on="click"><span id="r.ktree.ksrc.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.ksrc.1" class="u-text u-grow">src</span></div><div id="r.ktree.kmain" class="u-item is-cur u-tree-item" role="treeitem" aria-current="true" aria-level="2" style="--u-depth:1" data-on="click"><span id="r.ktree.kmain.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.kmain.1" class="u-text u-grow">main.go</span><span id="r.ktree.kmain.2" class="u-text u-tone-muted u-small u-keep">2/3</span></div><div id="r.ktree.kutil" class="u-item is-sel u-tree-item" role="treeitem" aria-level="2" aria-expanded="false" style="--u-depth:1" data-on="click" aria-selected="true"><span id="r.ktree.kutil.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2" data-on="click">󰅂</span><span id="r.ktree.kutil.1" class="u-text u-grow">util</span></div><span id="r.ktree.kc2" class="u-text u-small u-caption">More</span><div id="r.ktree.knotes" class="u-item u-tree-item" role="treeitem" aria-level="1" style="--u-depth:0" data-on="click"><span id="r.ktree.knotes.kdisclosure" class="u-text u-icon u-width u-keep u-tree-disclosure" aria-hidden="true" style="--u-w:2"> </span><span id="r.ktree.knotes.1" class="u-text u-grow">a-long-notes-file-name-that-gets-cut.md</span><span id="r.ktree.knotes.2" class="u-text u-tone-muted u-small u-keep">3/12</span></div></div></div></body></html>
+-- 9.cells --
+cells 64x32
+text
+> Project
+>  ▸ src
+>      main.go                                                2/3
+> ▎  ▸ util
+> More
+>    a-long-notes-file-name-that-gets-cut.md                 3/12
+style
+= aaaaaaa
+= .aa
+= ...bbccccccc................................................bbb
+= deeddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+= aaaa
+= .aa........................................................aaaa
+. fg/bg
+a muted/bg
+b muted/bg bold
+c accent/bg bold
+d accent/tonal
+e fg/tonal
+hits
+@ 0,0 64x6 r.ktree
+@ 0,1 64x1 r.ktree.ksrc
+@ 1,1 2x1 r.ktree.ksrc.kdisclosure
+@ 0,2 64x1 r.ktree.kmain
+@ 0,3 64x1 r.ktree.kutil
+@ 3,3 2x1 r.ktree.kutil.kdisclosure
+@ 0,5 64x1 r.ktree.knotes

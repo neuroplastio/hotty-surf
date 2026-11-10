@@ -785,6 +785,8 @@ func applyString(name string, n *surfui.Node, v string) error {
 		return ModDensity(n, v)
 	case "key":
 		ModKey(n, v)
+	case "keys":
+		return ModKeys(n, v)
 	case "href":
 		ModHref(n, v)
 	case "anchor":
@@ -895,6 +897,10 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModRaised(n, v)
 	case "current":
 		ModCurrent(n, v)
+	case "branch":
+		ModBranch(n, v)
+	case "open":
+		ModOpen(n, v)
 	case "badge-dot":
 		ModBadgeDot(n, v)
 	case "card":
@@ -952,6 +958,8 @@ func applyInt(name string, n *surfui.Node, v int64) {
 		ModGap(n, v)
 	case "indent":
 		ModIndent(n, v)
+	case "depth":
+		ModDepth(n, v)
 	case "down":
 		ModDown(n, v)
 	case "width":

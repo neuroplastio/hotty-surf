@@ -1026,6 +1026,16 @@
   .u-list > .u-item::before { transform: none; }
 }
 .u-item + .u-item { margin-top: var(--u-ig); }
+/* A tree: an item's depth is room in front of it, two cells a level, so
+   that its fill and its selection's bar keep the row's left edge; the
+   chevron is a slot as wide as a level, so a child's chevron stands
+   under its parent's label. Muted, the ink on the row the keyboard is on;
+   no rotation. The item open in the program (current) is told from the
+   selected row by the accent's ink and a heavier weight. */
+.u-item.u-tree-item { padding-left: calc(var(--u-px) + 2 * var(--u-depth) * var(--u-cw)); }
+.u-tree-disclosure, .u-compact .u-tree-disclosure, .u-roomy .u-tree-disclosure { flex: 0 0 auto; width: calc(2 * var(--u-cw)); }
+.u-item.is-cur { color: var(--u-accent); font-weight: 500; }
+.u-nav > .u-item.is-cur { color: var(--u-accent); }
 .u-item:hover { background: var(--u-hover); }
 .u-item.is-sel { background: var(--u-selected); color: var(--u-ink); }
 .u-list:focus-within > .u-item.is-sel, :focus-within > .u-list > .u-item.is-sel {
@@ -1037,6 +1047,7 @@
 .u-nav > .u-item.is-sel { color: var(--u-ink); }
 .u-compact .u-nav > .u-item:hover, .u-roomy .u-nav > .u-item:hover { color: var(--u-ink); }
 .u-compact .u-item:hover .u-icon, .u-roomy .u-item:hover .u-icon { color: var(--u-ink); }
+.u-list:focus-within > .u-item.is-sel .u-tree-disclosure, :focus-within > .u-list > .u-item.is-sel .u-tree-disclosure { color: var(--u-ink); }
 .u-compact .u-nav > .u-item { font-size: 14px; }
 .u-item[tabindex]:focus-visible { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
 .u-entries > .u-item:focus-visible { box-shadow: inset 0 0 0 1px var(--u-focus-line); }
