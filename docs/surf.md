@@ -546,8 +546,8 @@ registers widgets runs its own cases with `conformance.Suite`
 | `ring`, `target` | bool | dot | a dot's shape, so that a state is told by its shape as well as its tone: `ring` hollow (○), `target` a dot in a ring (◉), and the cells draw those glyphs. A host has no shape for ◌ (offline) until a dashed ring is proven, so offline there is a `ring`, told by its tone and its row's text |
 | `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
 | `search` | bool | row | a row drawn as a search field: its `icon` and a `bare` field in one field's box |
-| `fit` | bool | row | a row of what fits: its children right to left, each whole, those it has no room for left out, the last first |
-| `fit-start` | bool | row | a row of what fits from its start: its children left to right, each whole, those it has no room for left out, the last first |
+| `fit` | bool | row | a row of what fits, laid out from its right end: its first child is at the right end and the next to its left, each whole; the row keeps its first children and leaves out those it has no room for, the last first ("`fit` and `fit-start`") |
+| `fit-start` | bool | row | the same from its left end: its first child at the left end and the next to its right; it keeps its first children and leaves out the last first |
 | `readline` | bool | surface, field | the fields in it edit by a terminal's readline keys ("Field keys") |
 | `program` | string | surface | keys the host program keeps from the fields in it, apart by spaces ("Field keys") |
 | `drag` | bool | every widget with events | a drag handle ("Drag") |
@@ -632,6 +632,18 @@ registers widgets runs its own cases with `conformance.Suite`
   shows what each next key does.</line>`. A text in a `line` keeps a
   space at its ends where it has white space there, as runs of HTML do:
   `<text muted>Pane: </text>` ends in its space.
+- **`fit` and `fit-start`** are a row of what fits, side by side:
+  - both keep the row's **first** children and leave out whole the
+    **last**, one by one, so list the children most important first, as
+    `<row fit-start>` of hints (`<key>` and its label) or `<row fit>` of a
+    footer's actions;
+  - they differ in the end the first child sits at, and so in the order
+    the children are read in: `fit-start` is left to right, as written
+    (hints, read in order: `a  b  c`), and `fit` is right to left from the
+    row's right end (`c  b  a`, a footer's actions, the primary at the
+    right), so hints in a `fit` row come out reversed;
+  - the row takes the room left, never less than its widest child, so the
+    first is always shown.
 - **What gives way** where a row is short of room: a `text` or a `line`
   is cut, with … at its end; one that `grow`s takes the room its
   neighbours leave, and gives way first; what `keep`s is never shrunk;
@@ -1632,12 +1644,35 @@ case of a generated switch.
 
 ## Running the generator
 
-```go
-//go:generate go run neuroplast.io/hotty-surf/cmd/surfgen
+In a program of your own, pin surfgen in `mise.toml` by name, at the
+version of hotty-surf the program's `go.mod` requires, and call it by that
+name (gov P-3's way for a generator: no `go run …@version`):
+
+```toml
+[tools]
+go = "1.26.8"
+"go:neuroplast.io/hotty-surf/cmd/surfgen" = "v0.4.0"
 ```
 
-- Put it in one file of the package, and run `go generate`, or
-  `make check`, whose `gen` step fails when `surf_gen.go` is stale.
+```go
+//go:generate surfgen
+```
+
+- Put it in one file of the package, and run `go generate` (under
+  `mise x --`, or with mise's shims on the PATH), or `make check`, whose
+  `gen` step fails when `surf_gen.go` is stale. Raise the pin with
+  hotty-surf's version in `go.mod`.
+- **Why not `go run neuroplast.io/hotty-surf/cmd/surfgen`:** that works
+  while `go.mod` holds surfgen's own dependencies (`golang.org/x/tools`),
+  which `go mod tidy` drops, since no package of your program imports
+  `cmd/surfgen`: `go generate` then fails with "missing go.sum entry for
+  golang.org/x/tools/go/packages". A mise-pinned surfgen is built outside
+  your module, so tidy has nothing to drop. (hotty-surf's own packages
+  use `go run`, which is its module's own command.)
+- **A program that registers widgets** writes its own command over
+  `pkg/surfgen` ("Widgets from outside"): a `main` package of the
+  module, which tidy keeps, run as `//go:generate go run ./cmd/surfgen`.
+  No pin is needed for it.
 - surfgen fails where a template doesn't compile against the types.
 - `-export` writes `SurfPackage() surf.Package` too: the package's
   templates, its shapes, and an `Instance` for a pointer to any of its

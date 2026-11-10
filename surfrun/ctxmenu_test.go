@@ -658,3 +658,28 @@ func TestCellsMenuKeyedRowIsSelected(t *testing.T) {
 		t.Errorf("selected after Down: %q", got)
 	}
 }
+
+// A host that draws no menu sets NoMenu, and then no menu opens, by a
+// press or by keys: nothing holds the keyboard that the host cannot show
+// (a nil menu func to WriteFrame writes nothing, and cannot close one).
+func TestNoMenuNeverOpens(t *testing.T) {
+	_, s := startCtx(t)
+	s.NoMenu = true
+	if took, redraw := secondary(s, rowB); took || redraw {
+		t.Errorf("a secondary press: took %v, redraw %v", took, redraw)
+	}
+	s.Event(hotty.Event{Kind: hotty.EventFocus, Target: rowB})
+	if took, _ := s.Key("shift+f10"); took {
+		t.Error("shift+f10 opened a menu")
+	}
+	f := s.Update()
+	if f.Menu != nil {
+		t.Fatalf("a menu frame: %+v", f.Menu)
+	}
+	var b strings.Builder
+	surfrun.WriteFrame(&b, "s", f, nil, nil)
+	// The keys are the model's: Escape is not held by a menu.
+	if took, _ := s.Key("down"); took {
+		t.Error("down went to a menu")
+	}
+}

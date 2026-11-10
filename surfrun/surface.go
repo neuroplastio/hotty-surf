@@ -60,6 +60,12 @@ type Surface struct {
 	// where nothing else binds it, for a host the model doesn't end (a
 	// pane's), whose own keys then have it.
 	NoQuit bool
+	// NoMenu, if set, never opens an element's context menu: a secondary
+	// press or shift+f10 is not taken, as on an element with no menu. It
+	// is for a host that draws no menu (a nil menu func to WriteFrame
+	// writes nothing, and cannot close a menu the surface holds open: an
+	// open menu keeps the keyboard).
+	NoMenu bool
 	// Program are keys of the host program's own, by myelin's names
 	// (SPEC §10.4): its keymap's, which it runs itself. The root gives
 	// them to it (surfui.Node.Give): they go into data-keys, a text field
@@ -205,9 +211,10 @@ type Frame struct {
 // The list and the menu are the host's to write, because the host places
 // their surfaces: WriteFrame calls list at the list's place in the order,
 // and only where f.List is set and list is not nil, and menu right after
-// it, where f.Menu is set and menu is not nil (a host that draws no menu
-// passes a func that does not draw it, and so never opens one it cannot
-// show: an open menu holds the keyboard). Use it in a host of its own that
+// it, where f.Menu is set and menu is not nil. A nil menu draws nothing,
+// and does not stop the Surface opening one: an open menu holds the
+// keyboard, so a host that draws no menu sets Surface.NoMenu, and none
+// ever opens. Use it in a host of its own that
 // writes each Frame (docs/guide.md, "Hosting without surfrun.Runtime");
 // surfrun.Runtime writes its Frames so.
 func WriteFrame(b *strings.Builder, name string, f Frame, list func(b *strings.Builder, l *List), menu func(b *strings.Builder, m *MenuFrame)) {
