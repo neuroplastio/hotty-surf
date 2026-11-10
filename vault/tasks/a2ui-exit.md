@@ -152,7 +152,7 @@ Sizes as the board's: S one leg, M two or three.
 - [ ] **L9. Cells for a custom element** (B2): `Node.Cells(func(w,
   style) cells.Block)`, pure and cached; focusable children placed by
   the block; `surfui.Graphic(svg, cells)`. M.
-- [ ] **L10. Links and hyperlinks** (A2, B5): `link` with `href`,
+- [x] **L10. Links and hyperlinks** (merge 5d4727d) (A2, B5): `link` with `href`,
   `external` and `@follow` (`$value` the href, `$event.mods`);
   inline in `p`, `line`, `li`; a `#fragment` scrolls and reveals its
   anchor where no `@follow` takes it, and `@follow` fires for one no
