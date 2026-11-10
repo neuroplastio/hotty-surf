@@ -111,8 +111,14 @@ func (p *painter) area(b *box, x, y, w int, st style, clip rect) {
 	}
 	ed := &fs.ed
 	ed.Width, ed.Rows = b.area.wrapAt(w), h
+	fs.at = rect{x, y, w, h}
 	rows := ed.Wrap()
-	fs.top = ed.Scroll(fs.top)
+	if !fs.seen.ok || fs.seen.caret != ed.Caret || fs.seen.len != len(ed.Value) {
+		fs.top = ed.Scroll(fs.top)
+	} else {
+		fs.top = min(max(fs.top, 0), max(len(rows)-h, 0))
+	}
+	fs.seen.ok, fs.seen.caret, fs.seen.len = true, ed.Caret, len(ed.Value)
 	crow, ccol := ed.Cursor()
 	left := 0 // where a field that doesn't wrap is scrolled to
 	if b.area.nowrap && ccol >= w {
@@ -169,4 +175,56 @@ func (p *painter) area(b *box, x, y, w int, st style, clip rect) {
 			p.caret = Caret{X: cx, Y: cy, Shape: Bar, Visible: true}
 		}
 	}
+}
+
+// pointAt is the character a press at x, y puts the caret before, in a
+// field whose rows were drawn at fs.at: on the row under it, the nearest
+// position that does not pass its column (hottyedit's own rule for Up and
+// Down), and the row's last for a press below the text. ok is false for a
+// press outside the rows.
+func (fs *fieldState) pointAt(x, y int) (pos int, ok bool) {
+	if !fs.at.has(x, y) {
+		return 0, false
+	}
+	ed := &fs.ed
+	rows := ed.Wrap()
+	i := min(fs.top+y-fs.at.y, len(rows)-1)
+	if i < 0 {
+		return 0, false
+	}
+	var cs []string
+	for g := displaywidth.StringGraphemes(ed.Value); g.Next(); {
+		cs = append(cs, g.Value())
+	}
+	row := rows[i]
+	hi := row.End
+	if row.Soft {
+		// A row that wrapped has no position at its end: that is the next
+		// row's start.
+		hi = max(row.End-1, row.Start)
+	}
+	col := x - fs.at.x
+	pos, used := row.Start, 0
+	for pos < hi && pos < len(cs) {
+		cw := displaywidth.String(cs[pos])
+		if cs[pos] == "\t" {
+			cw = 1
+		}
+		if used+cw > col {
+			break
+		}
+		used += cw
+		pos++
+	}
+	return pos, true
+}
+
+// scrollBy moves a field's rows by n, within its text, leaving the caret
+// where it is; it reports whether they moved.
+func (fs *fieldState) scrollBy(n int) bool {
+	rows := fs.ed.Wrap()
+	top := min(max(fs.top+n, 0), max(len(rows)-fs.at.h, 0))
+	moved := top != fs.top
+	fs.top = top
+	return moved
 }

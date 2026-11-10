@@ -57,3 +57,12 @@ func (h *Host) CellsClick(col, row int) bool {
 	rel, _ := r.Release(col, row, 0)
 	return took || rel
 }
+
+// CellsWheel is the wheel at col, row of the cells Lines drew, by notches
+// (down where positive), for the model in cells: it scrolls a field of
+// several lines under it while its rows can move that way, then the
+// innermost scrolling box there. It reports whether anything took it.
+func (h *Host) CellsWheel(col, row, notches int) bool {
+	took, _ := h.renderer().Wheel(col, row, notches)
+	return took
+}

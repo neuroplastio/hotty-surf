@@ -26,7 +26,7 @@
 //
 // Where there is no host (hottytea's Mode is Text) the same Host draws in
 // cells instead, at the same rectangle: Lines, Caret, CellsKey, CellsPaste
-// and CellsClick.
+// CellsClick and CellsWheel.
 //
 // A Select's open list and an element's menu are surfaces of their own,
 // placed where the surface's frame says (surfrun.List, surfrun.MenuFrame)

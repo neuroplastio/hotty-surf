@@ -366,6 +366,12 @@ func (r *Renderer) Press(x, y, mods int) (taken, redraw bool) {
 	}
 	if f := closest(n, focusable); f != nil {
 		due = r.take(surfui.IDOf(f), true) || due
+		if fs := r.fields[surfui.IDOf(f)]; fs != nil && surfui.Tag(f) == "textarea" {
+			// A press in a field of several lines puts the caret there.
+			if at, ok := fs.pointAt(x, y); ok {
+				fs.ed.Select(at, at)
+			}
+		}
 	} else if r.kb {
 		// A press on what takes no focus gives the keyboard back.
 		due = r.blur() || due
@@ -516,10 +522,18 @@ func (r *Renderer) Wheel(x, y, notches int) (taken, redraw bool) {
 		r.closeMenu() // and the wheel goes on
 	}
 	r.ensure()
+	by := notches * 3
+	if h, ok := r.hitAt(x, y); ok && !h.list && notches != 0 {
+		// A field of several lines scrolls its own rows first, while they
+		// can move that way; at their end the wheel goes on to the box
+		// around it.
+		if fs := r.fields[surfui.IDOf(h.n)]; fs != nil && surfui.Tag(h.n) == "textarea" && fs.scrollBy(by) {
+			return true, true
+		}
+	}
 	if !r.scrolls() || notches == 0 {
 		return false, false
 	}
-	by := notches * 3
 	if o := r.over; o != nil && r.overRect().has(x, y) {
 		if o.f&fScroll != 0 {
 			id := surfui.IDOf(o.n)

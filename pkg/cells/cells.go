@@ -186,6 +186,14 @@ type fieldState struct {
 	dirty bool   // edited since its last commit
 	attr  string // its value as the tree last had it
 	top   int    // a field of several lines: its first row shown
+	at    rect   // a field of several lines: where its rows were drawn
+	// seen is the caret and the length of the value the rows were last
+	// scrolled for: they follow the caret only when it moved, so that a
+	// wheel can leave it out of view.
+	seen struct {
+		ok         bool
+		caret, len int
+	}
 	// height is the rows a field of several lines had when its program
 	// last heard (@height), -1 for never.
 	height int

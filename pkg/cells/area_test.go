@@ -381,3 +381,59 @@ func TestAreaGolden(t *testing.T) {
 	r.Key("shift+arrow_right")
 	golden(t, "area-selection", r.Draw(40, 8))
 }
+
+// A press in a field of several lines puts the caret under it: on the row
+// pressed, at the cell, and after the row's text for a press beyond it.
+func TestAreaPressPlacesCaret(t *testing.T) {
+	c := newComposer("one two three four five six")
+	r := show(c)
+	r.Draw(14, 8)
+	// The second row is " three four ": its text starts a cell in.
+	r.Press(4, 1, 0)
+	r.Release(4, 1, 0)
+	s := r.Draw(14, 8)
+	if !s.Caret.Visible || s.Caret.X != 4 || s.Caret.Y != 1 {
+		t.Fatalf("caret after the press: %+v", s.Caret)
+	}
+	typeText(r, "x")
+	if c.text != "one two thrxee four five six" {
+		t.Errorf("text %q", c.text)
+	}
+	// Beyond the last row's text: its end.
+	r.Press(12, 2, 0)
+	r.Release(12, 2, 0)
+	typeText(r, "y")
+	if c.text != "one two thrxee four five sixy" {
+		t.Errorf("text %q", c.text)
+	}
+}
+
+// The wheel over a field of several lines scrolls its rows and leaves the
+// caret where it is; the next draw does not bring the caret's row back.
+func TestAreaWheelScrollsRows(t *testing.T) {
+	text := "l0\nl1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9"
+	c := newComposer(text)
+	r := show(c)
+	r.Draw(14, 8)
+	if taken, redraw := r.Wheel(3, 1, 1); !taken || !redraw {
+		t.Fatalf("wheel: taken %v, redraw %v", taken, redraw)
+	}
+	for range 2 {
+		s := r.Draw(14, 8)
+		if got := strings.TrimSpace(lines(s)[0]); got != "l3" {
+			t.Fatalf("first row %q after the wheel, want l3\n%s", got, s.Text())
+		}
+	}
+	// Typing brings the caret back into view.
+	typeText(r, "x")
+	if got := strings.TrimSpace(lines(r.Draw(14, 8))[0]); got != "xl0" {
+		t.Errorf("first row %q after typing, want xl0", got)
+	}
+	// Past the last row the wheel stops taking it.
+	for range 6 {
+		r.Wheel(3, 1, 1)
+	}
+	if taken, _ := r.Wheel(3, 1, 1); taken {
+		t.Errorf("the wheel at the field's end still taken")
+	}
+}
