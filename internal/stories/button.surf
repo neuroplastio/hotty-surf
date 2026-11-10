@@ -7,81 +7,95 @@
 <stories of="button" title="Button">
   <story name="Buttons on a release page"
          about="Every kind of button, with the labels a program gives it.">
-    <stack gap="1">
+    <stack gap="2">
       <section heading="Actions">
-        <text muted wrap>
-          The page's main actions: the primary one filled with the accent,
-          the rest plain, and a bare one, with no fill until it is pointed
-          at. Point at one to hover it; Tab to focus it.
-        </text>
-        <row wrap gap="1">
-          <button fill="accent">
-            <icon name="rocket-launch-outline"/>Deploy to production
-          </button>
-          <button>Save as draft</button>
-          <button><icon name="restart"/>Run the checks again</button>
-          <button bare>Cancel</button>
-        </row>
+        <stack gap="1">
+          <text muted wrap>
+            The page's main actions: the primary one filled with the accent,
+            the rest plain, and a bare one, with no fill until it is pointed
+            at. Point at one to hover it; Tab to focus it.
+          </text>
+          <row wrap gap="1">
+            <button fill="accent">
+              <icon name="rocket-launch-outline"/>Deploy to production
+            </button>
+            <button>Save as draft</button>
+            <button><icon name="restart"/>Run the checks again</button>
+            <button bare>Cancel</button>
+          </row>
+        </stack>
       </section>
       <section heading="Unavailable">
-        <text muted wrap>The same actions while a deploy runs: each is disabled, and takes neither the pointer nor the keyboard.</text>
-        <row wrap gap="1">
-          <button fill="accent" disabled><icon name="rocket-launch-outline"/>Deploy to production</button>
-          <button disabled>Save as draft</button>
-          <button disabled><icon name="restart"/>Run the checks again</button>
-          <button bare disabled>Cancel</button>
-        </row>
+        <stack gap="1">
+          <text muted wrap>The same actions while a deploy runs: each is disabled, and takes neither the pointer nor the keyboard.</text>
+          <row wrap gap="1">
+            <button fill="accent" disabled><icon name="rocket-launch-outline"/>Deploy to production</button>
+            <button disabled>Save as draft</button>
+            <button disabled><icon name="restart"/>Run the checks again</button>
+            <button bare disabled>Cancel</button>
+          </row>
+        </stack>
       </section>
       <section heading="Tones">
-        <text muted wrap>A button that says what it does by its colour: one that waits for someone, one that destroys, one that confirms.</text>
-        <row wrap gap="1">
-          <button attention><icon name="account-clock-outline"/>Approve the rollout</button>
-          <button tone="error"><icon name="trash-can-outline"/>Delete the release</button>
-          <button fill="error">Roll back now</button>
-          <button fill="ok">Mark as verified</button>
-        </row>
+        <stack gap="1">
+          <text muted wrap>A button that says what it does by its colour: one that waits for someone, one that destroys, one that confirms.</text>
+          <row wrap gap="1">
+            <button attention><icon name="account-clock-outline"/>Approve the rollout</button>
+            <button tone="error"><icon name="trash-can-outline"/>Delete the release</button>
+            <button fill="error">Roll back now</button>
+            <button fill="ok">Mark as verified</button>
+          </row>
+        </stack>
       </section>
       <section heading="Icons">
-        <text muted wrap>An icon before the label, after it, or alone with a label for a reader.</text>
-        <row wrap gap="1">
-          <button><icon name="content-copy"/>Copy the build's link</button>
-          <button>Open the logs<icon name="arrow-right"/></button>
-          <button label="Download the artifact"><icon name="download"/></button>
-          <button label="Close" bare><icon name="close"/></button>
-        </row>
+        <stack gap="1">
+          <text muted wrap>An icon before the label, after it, or alone with a label for a reader.</text>
+          <row wrap gap="1">
+            <button><icon name="content-copy"/>Copy the build's link</button>
+            <button>Open the logs<icon name="arrow-right"/></button>
+            <button label="Download the artifact"><icon name="download"/></button>
+            <button label="Close" bare><icon name="close"/></button>
+          </row>
+        </stack>
       </section>
       <section heading="In a row of a list">
-        <text muted wrap>A small button is a line tall, so the row that holds one is as tall as the rows that hold none.</text>
-        <list>
-          <item gap="1"><text grow>api-gateway</text><text small muted>deployed 4 minutes ago</text></item>
-          <item gap="1" selected><text grow>billing-worker</text><text small muted>waiting for approval</text><button small>Approve</button><button small bare>Skip</button></item>
-          <item gap="1"><text grow>search-indexer</text><text small muted>failed at step 3 of 5</text><button small fill="accent">Retry</button></item>
-        </list>
+        <stack gap="1">
+          <text muted wrap>A small button is a line tall, so the row that holds one is as tall as the rows that hold none.</text>
+          <list>
+            <item gap="1"><text grow>api-gateway</text><text small muted>deployed 4 minutes ago</text></item>
+            <item gap="1" selected><text grow>billing-worker</text><text small muted>waiting for approval</text><button small>Approve</button><button small bare>Skip</button></item>
+            <item gap="1"><text grow>search-indexer</text><text small muted>failed at step 3 of 5</text><button small fill="accent">Retry</button></item>
+          </list>
+        </stack>
       </section>
       <section heading="On a bar">
-        <text muted wrap>Pills: a bar's tools, with no fill at rest. One is raised (a picker), one is current (its tool holds the keyboard), and a badge counts what is new.</text>
-        <row wrap gap="1">
-          <button pill raised>production<icon name="menu-down"/></button>
-          <button pill current><icon name="source-branch"/>main</button>
-          <button pill label="Failed checks" badge="3" badge-tone="error"><icon name="flask-outline"/></button>
-          <button pill label="Notices" badge-dot><icon name="bell-outline"/></button>
-          <button pill label="Settings"><icon name="cog-outline"/></button>
-        </row>
+        <stack gap="1">
+          <text muted wrap>Pills: a bar's tools, with no fill at rest. One is raised (a picker), one is current (its tool holds the keyboard), and a badge counts what is new.</text>
+          <row wrap gap="1">
+            <button pill raised>production<icon name="menu-down"/></button>
+            <button pill current><icon name="source-branch"/>main</button>
+            <button pill label="Failed checks" badge="3" badge-tone="error"><icon name="flask-outline"/></button>
+            <button pill label="Notices" badge-dot><icon name="bell-outline"/></button>
+            <button pill label="Settings"><icon name="cog-outline"/></button>
+          </row>
+        </stack>
       </section>
       <section heading="As one control">
-        <text muted wrap>Buttons in a segmented row are one pick of a few; in a row of chips, several are picked at once.</text>
-        <row wrap gap="2">
-          <row segmented>
-            <button selected>All</button>
-            <button>Failed</button>
-            <button>Running</button>
+        <stack gap="1">
+          <text muted wrap>Buttons in a segmented row are one pick of a few; in a row of chips, several are picked at once.</text>
+          <row wrap gap="2">
+            <row segmented>
+              <button selected>All</button>
+              <button>Failed</button>
+              <button>Running</button>
+            </row>
+            <row chips gap="1">
+              <button selected>production</button>
+              <button selected>staging</button>
+              <button>preview</button>
+            </row>
           </row>
-          <row chips gap="1">
-            <button selected>production</button>
-            <button selected>staging</button>
-            <button>preview</button>
-          </row>
-        </row>
+        </stack>
       </section>
     </stack>
   </story>

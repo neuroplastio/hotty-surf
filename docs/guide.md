@@ -1830,21 +1830,23 @@ and its `about` the sentence under it. The file's first lines:
 <stories of="button" title="Button">
   <story name="Buttons on a release page"
          about="Every kind of button, with the labels a program gives it.">
-    <stack gap="1">
+    <stack gap="2">
       <section heading="Actions">
-        <text muted wrap>
-          The page's main actions: the primary one filled with the accent,
-          the rest plain, and a bare one, with no fill until it is pointed
-          at. Point at one to hover it; Tab to focus it.
-        </text>
-        <row wrap gap="1">
-          <button fill="accent">
-            <icon name="rocket-launch-outline"/>Deploy to production
-          </button>
-          <button>Save as draft</button>
-          <button><icon name="restart"/>Run the checks again</button>
-          <button bare>Cancel</button>
-        </row>
+        <stack gap="1">
+          <text muted wrap>
+            The page's main actions: the primary one filled with the accent,
+            the rest plain, and a bare one, with no fill until it is pointed
+            at. Point at one to hover it; Tab to focus it.
+          </text>
+          <row wrap gap="1">
+            <button fill="accent">
+              <icon name="rocket-launch-outline"/>Deploy to production
+            </button>
+            <button>Save as draft</button>
+            <button><icon name="restart"/>Run the checks again</button>
+            <button bare>Cancel</button>
+          </row>
+        </stack>
       </section>
 ```
 
