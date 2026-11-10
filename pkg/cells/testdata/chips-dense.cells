@@ -1,0 +1,13 @@
+cells 60x3
+text
+> [Errors] [Warnings] [Slow] [Cached]
+style
+= aaaaaaaa.bbbbbbbbbb.aaaaaa.bbbbbbbb
+. fg/bg
+a on-accent/accent
+b fg/tonal
+hits
+@ 0,0 8x1 r.0.kErrors
+@ 9,0 10x1 r.0.kWarnings
+@ 20,0 6x1 r.0.kSlow
+@ 27,0 8x1 r.0.kCached

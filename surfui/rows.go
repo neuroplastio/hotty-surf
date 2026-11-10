@@ -754,7 +754,7 @@ func (e *est) height(n *Node, w float64, parent *Node) float64 {
 		return float64(min(max(l, lo), hi))*t.row + 8
 	case has(n, "u-rule"):
 		return 1
-	case has(n, "u-switch"), has(n, "u-select"), has(n, "u-cycle"), has(n, "u-field"), has(n, "u-search"),
+	case has(n, "u-switch"), has(n, "u-select"), has(n, "u-cycle"), has(n, "u-slider"), has(n, "u-field"), has(n, "u-search"),
 		has(n, "u-query"), n.tag == "button" && has(n, "u-btn"):
 		return e.ctlH(n)
 	case isText(n) || n.tag == "kbd" || has(n, "u-chip") || has(n, "u-icon") || has(n, "u-glyph") || has(n, "u-key"):
@@ -894,6 +894,8 @@ func (e *est) maxW(n *Node, parent *Node) float64 {
 			return 1.5 * t.font
 		}
 		return 2 * t.cw
+	case has(n, "u-slider"):
+		return 16 * t.cw // the track's width, as the sheet's .u-slider
 	case has(n, "u-select"), has(n, "u-cycle"):
 		chars := varOf(n, "u-chars")
 		return chars*e.charW(n) + 2*t.px + 3*t.cw

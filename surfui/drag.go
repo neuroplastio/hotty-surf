@@ -129,6 +129,9 @@ func DropMarked(n *Node) string {
 
 // dataSteps is n's data-steps: a split drop target's, "" for none.
 func dataSteps(n *Node) string {
+	if n.slider != nil {
+		return sliderSteps(n)
+	}
 	switch n.drop {
 	case DropHalves:
 		return "0 1"

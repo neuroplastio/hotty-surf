@@ -221,7 +221,9 @@ func dataOn(n *Node) string {
 				on = appendOnce(on, "click")
 			}
 		case "input":
-			on = appendOnce(on, "input")
+			if n.slider == nil { // a Slider's input is the runtime's, from its drag
+				on = appendOnce(on, "input")
+			}
 		}
 	}
 	if Commits(n) {
@@ -350,6 +352,8 @@ func dataKeys(n *Node) string {
 	switch {
 	case n.cycle != nil:
 		keys = append(keys, cycleKeys...)
+	case n.slider != nil:
+		keys = append(keys, sliderKeys...)
 	case n.choice != nil && n.choice.open:
 		keys = append(keys, selectOpenKeys...)
 	case n.choice != nil:

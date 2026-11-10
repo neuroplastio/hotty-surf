@@ -241,7 +241,7 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 		if !in.plain {
 			in.fg = Fg
 		}
-	case button, field, choose, cycle, toggle:
+	case button, field, choose, cycle, toggle, slider:
 		// A control's text is the text's colour, whatever is around it
 		// or its tone says (.u-btn's color wins over .u-tone-*).
 		in.fg, in.plain = Fg, false
@@ -265,10 +265,20 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 		if b.f&fSel != 0 && parent != nil && (hasClass(parent, "u-seg") || hasClass(parent, "u-grid")) {
 			bg = Selected
 		}
+		chips := inChips(n)
+		if chips && b.f&fSel != 0 {
+			// A chip picked (Chips): the accent's fill, whoever has the
+			// keyboard, which an underline then shows.
+			bg, in.fg, in.plain = Accent, OnAccent, true
+		}
 		switch {
 		case off && bg != "":
 			bg = Surface
-		case foc && b.d == compact:
+		case chips && b.f&fSel != 0:
+			if foc {
+				in.attr |= Underline
+			}
+		case foc && b.d == compact && !chips:
 			bg, in.fg, in.plain = Accent, OnAccent, true
 		case foc:
 			bg = Sel
@@ -396,6 +406,11 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 	case keycap, button, glyph:
 		cs := fit(clusters(firstLine(b.text)), w)
 		p.write(x+(w-width(cs))/2, y, w, cs, st, clip)
+		if b.kind == button && r.w >= 3 && inChips(b.n) {
+			// A chip is its label in brackets, in the padding cells.
+			p.g.put(r.x, y, "[", 1, st, clip)
+			p.g.put(r.x+r.w-1, y, "]", 1, st, clip)
+		}
 		if b.kind == keycap && r.w >= 3 {
 			br := style{fg: Muted}
 			if in.plain {
@@ -441,6 +456,8 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 		}
 	case cycle:
 		p.cycle(b, x, y, w, in, clip)
+	case slider:
+		p.slider(b, x, y, w, in, clip)
 	case rule:
 		role := Line
 		if p.inDialog(b.n) {
@@ -706,4 +723,10 @@ func reportsClick(n *surfui.Node) bool {
 // listens reports whether n asks the host for the event kind (data-on).
 func listens(n *surfui.Node, kind string) bool {
 	return slices.Contains(strings.Fields(surfui.DataOn(n)), kind)
+}
+
+// inChips reports whether n is a button of a Chips row.
+func inChips(n *surfui.Node) bool {
+	p := surfui.Parent(n)
+	return p != nil && hasClass(p, "u-chips")
 }

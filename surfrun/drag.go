@@ -36,6 +36,7 @@ type dragging struct {
 	from, key   string
 	over, where string
 	cancelled   bool
+	slide       *sliding // a Slider's drag (slider.go)
 }
 
 // Dragging reports whether a drag is in progress, which Escape would end
@@ -58,12 +59,21 @@ func (s *Surface) dragEvent(e hotty.Event) bool {
 		g := &dragging{from: e.Target, key: dragKey(n)}
 		s.drag = g
 		s.due, s.stale = true, true // the root is marked
+		if _, _, _, v, ok := surfui.SliderOf(n); ok {
+			g.slide = &sliding{from: v}
+			s.sliderDrag(g, n, e) // a Slider has no handler of its own to run
+			return true
+		}
 		s.dragRun(n, hotty.EventDragStart, Drag{From: g.key}, e.Mods)
 		return true
 	case hotty.EventDrag:
 		g := s.drag
 		if g == nil || g.cancelled {
 			return g != nil
+		}
+		if n := s.index[g.from]; n != nil && g.slide != nil {
+			s.sliderDrag(g, n, e)
+			return true
 		}
 		over, where := s.dropAt(e, g.from)
 		if over != g.over || where != g.where {
@@ -80,6 +90,10 @@ func (s *Surface) dragEvent(e hotty.Event) bool {
 		s.due, s.stale = true, true // the marks go
 		if g.cancelled {
 			s.noClick = g.from
+			return true
+		}
+		if n := s.index[g.from]; n != nil && g.slide != nil {
+			s.sliderDrag(g, n, e)
 			return true
 		}
 		if over, where := s.dropAt(e, g.from); over != "" {
@@ -133,6 +147,10 @@ func (s *Surface) cancelDrag() {
 	g.over, g.where = "", ""
 	s.due, s.stale = true, true // the marks go
 	s.fresh()
+	if n := s.index[g.from]; n != nil && g.slide != nil {
+		s.sliderCancel(g, n)
+		return
+	}
 	if n := s.index[g.from]; n != nil {
 		s.dragRun(n, hotty.EventDragEnd, Drag{From: g.key, Cancel: true}, 0)
 	}
