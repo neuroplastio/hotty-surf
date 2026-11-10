@@ -8,7 +8,7 @@ go 1.26.0
 require (
 	github.com/yuin/goldmark v1.8.6
 	neuroplast.io/cel-lite v0.2.0
-	neuroplast.io/hotty-surf v0.5.3
+	neuroplast.io/hotty-surf v0.5.4
 )
 
 require (
