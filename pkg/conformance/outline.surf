@@ -1,0 +1,10 @@
+<!-- A file tree, with made-up data: a list whose items carry depth,
+     branch, open and current, flattened by the model, which draws a closed
+     branch's children as none (file-row.surf is one row: a caption or an
+     item). A caption is between the rows, which the selection skips. The
+     tree's keys and the chevron ask by @click, @toggle and @activate. -->
+<surface>
+  <list nav key="tree" autofocus>
+    <file-row :each="r in rows" :key="r.key" :r="r" :sel="sel"/>
+  </list>
+</surface>

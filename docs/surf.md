@@ -537,8 +537,10 @@ registers widgets runs its own cases with `conformance.Suite`
 | `title` | string | all | its tooltip, this text wrapped ("Tooltips"); never an HTML `title` |
 | `reveal`, `focusable`, `bare`, `scroll`, `autofocus` | bool | all | the floor's behaviours |
 | `nav`, `entries` | bool | list | a sidebar's list, a list of entries |
+| `depth`, `branch`, `open` | int, bool, bool | item | a tree's item: how deep it is, from 0 (two cells of room a level); whether it has children; whether they are shown ("Trees") |
+| `keys` | string | list | a tree's keys: `tree` (the default) or `none` ("Trees") |
 | `chrome` | bool | all | a sidebar's ground: a darker fill with a hairline at its end |
-| `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
+| `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills"); `current` is also an item's: the one open in the program ("Trees") |
 | `badge`, `badge-dot`, `badge-tone` | int, bool, string | button | a tool's badge on its corner: a count (99+ past 99, none at 0), or a dot where it has none; its tone `accent` (the default), `warn`, `error` or `muted` ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
 | `chips` | bool | row | a row of buttons that are chips, several picked at once ("Sliders and chips") |
@@ -656,6 +658,58 @@ registers widgets runs its own cases with `conformance.Suite`
   label is one `line` (its runs cut once, not each on its own), and the
   keys beside it, which keep whole as they are: `<item><line grow>…</line>
   <key>ctrl+b p</key></item>`.
+
+## Trees
+
+A tree is a `list` (with `nav` for a sidebar) whose `item`s carry
+`depth`, `branch` and `open`. Your program flattens its tree, draws the
+rows that show, and owns what is open and what is selected: hotty-surf
+never folds on its own, so a closed branch's children are those you did
+not draw.
+
+```html
+<list nav chrome scroll :height="rows" key="tree">
+  <caption>Guides</caption>
+  <item :each="p in pages" :key="p.path" :depth="p.depth"
+        :branch="p.kids" :open="p.open" :selected="p.path == at"
+        :current="p.path == shown"
+        @click="pick(p.path)" @toggle="fold(p.path)"
+        @activate="open($value)">
+    <text grow>{{ p.title }}</text>
+    <text :if="p.progress != ''" small muted keep>{{ p.progress }}</text>
+  </item>
+</list>
+```
+
+- **Depth and the chevron.** An item with any of the three has the
+  disclosure in front of its label: `▸` or `▾` in the cells, Material's
+  chevron right and down on a host, muted and in the ink on the row the
+  keyboard is on, with no rotation. A leaf has the room, so labels line
+  up. A level is two cells of room, drawn as padding, so a selection's
+  fill and bar keep the row's left edge.
+- **`@toggle`** is the chevron's click, and the tree's ← and →. It
+  carries the item's key as `$value`, and means "flip": you change
+  `open`.
+- **`current`** is the item open in your program (the file shown),
+  which is not the selected row: on a host the accent's ink and a
+  heavier weight, in the cells bold in the accent's tone.
+- **`caption`s** between the items are group heads, which the selection
+  skips: one selection across the groups.
+- **Keys**, as ARIA's tree: ↑ and ↓ select by the item's `@click`,
+  across the captions; Home and End the ends; ← closes an open branch
+  (`@toggle`) or goes to the parent; → opens a closed branch
+  (`@toggle`) or goes to its first child; Enter is `@activate`, with the
+  item's key as `$value`. A key with nothing to do is left to scroll.
+  `keys="none"` on the list switches them all off, for a program that
+  reads every key itself and binds its own with `<bind>`.
+- **The keyboard in the selection.** The selected row is bright while
+  the list has the keyboard, and quiet while another pane has it, with
+  nothing to set.
+- **Trailing content** after the label (`3/12`) is flush at the row's
+  end and stays whole; give the label `grow` and the rest `keep`, and
+  the label is cut with … instead.
+- **Scrolling:** `scroll` and a `height` (or the room the list has) make
+  it scroll in its rect, the selected row kept in view.
 
 ## Directives
 

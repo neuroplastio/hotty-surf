@@ -245,6 +245,25 @@ return function(state)
 end
 `
 
+// outlineLua is the Outline fixture in Lua: a file tree whose pick, fold and
+// open log what they heard.
+const outlineLua = `
+local Outline = {}
+Outline.__index = Outline
+function Outline:pick(key) self.sel = key; table.insert(self.log, "pick " .. key) end
+function Outline:fold(key)
+  for _, r in ipairs(self.rows) do
+    if r.key == key then r.open = not r.open end
+  end
+  table.insert(self.log, "fold " .. key)
+end
+function Outline:open(key) table.insert(self.log, "open " .. key) end
+return function(state)
+  state.log = state.log or {}
+  return setmetatable(state, Outline)
+end
+`
+
 // TestConformance runs the conformance cases a Lua host can, as it runs
 // them: the cases that bring their own templates, their state.json read
 // as Lua values, a table drawn by the first template; the Form's, the
@@ -288,7 +307,7 @@ func TestConformance(t *testing.T) {
 					t.Errorf("load:\n got %s\nwant %s", got, want)
 				}
 			})
-		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Threads":
+		case strings.TrimSpace(string(root)) == "Form", strings.TrimSpace(string(root)) == "Shelf", strings.TrimSpace(string(root)) == "Deck", strings.TrimSpace(string(root)) == "Crew", strings.TrimSpace(string(root)) == "Draft", strings.TrimSpace(string(root)) == "Links", strings.TrimSpace(string(root)) == "Outline":
 			ran++
 			src, tmpl := formLua, "form"
 			switch strings.TrimSpace(string(root)) {
@@ -310,6 +329,8 @@ func TestConformance(t *testing.T) {
 				src, tmpl = signupLua, "signup"
 			case "Threads":
 				src, tmpl = threadsLua, "threads"
+			case "Outline":
+				src, tmpl = outlineLua, "outline"
 			}
 			t.Run(name, func(t *testing.T) {
 				var state map[string]any

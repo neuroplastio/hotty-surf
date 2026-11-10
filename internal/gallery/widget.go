@@ -28,6 +28,8 @@ type widgetStory struct {
 var widgetShape = &surf.Shape{Name: "WidgetStory", Component: true, Methods: []surf.Method{
 	{Name: "click", Args: []cellite.Type{surf.EventType}},
 	{Name: "focus", Args: []cellite.Type{surf.EventType}},
+	{Name: "toggle", Args: []cellite.Type{cellite.String}},
+	{Name: "activate", Args: []cellite.Type{cellite.String}},
 	{Name: "follow", Args: []cellite.Type{cellite.String, surf.EventType}},
 	{Name: "activate", Args: []cellite.Type{cellite.String}},
 	{Name: "change", Args: []cellite.Type{cellite.String}},

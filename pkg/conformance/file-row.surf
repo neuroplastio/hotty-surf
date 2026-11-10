@@ -1,0 +1,7 @@
+<props r="dyn" sel="string"/>
+<caption :if="r.caption">{{ r.name }}</caption>
+<item :else :depth="int(r.depth)" :branch="r.branch" :open="r.open" :current="r.current"
+      :selected="r.key == sel" @click="pick(r.key)" @toggle="fold(r.key)" @activate="open($value)">
+  <text grow>{{ r.name }}</text>
+  <text :if="r.count != ''" small muted keep>{{ r.count }}</text>
+</item>

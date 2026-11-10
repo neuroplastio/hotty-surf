@@ -34,12 +34,13 @@ type mode struct {
 	tune    func(*Tune) surflive.Component
 	sign    func(*Signup) surflive.Component
 	threads func(*Threads) surflive.Component
+	outline func(*Outline) surflive.Component
 }
 
 // modes are the ways a root is drawn: each case holds in both, alike.
 var modes = []mode{
-	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew, surfInterpDraft, surfInterpLinks, surfInterpProse, surfInterpTune, surfInterpSignup, surfInterpThreads},
-	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew, surfCompiledDraft, surfCompiledLinks, surfCompiledProse, surfCompiledTune, surfCompiledSignup, surfCompiledThreads},
+	{"interpreted", surfInterpBoard, surfInterpForm, surfInterpFrame, surfInterpShelf, surfInterpDeck, surfInterpCrew, surfInterpDraft, surfInterpLinks, surfInterpProse, surfInterpTune, surfInterpSignup, surfInterpThreads, surfInterpOutline},
+	{"compiled", surfCompiledBoard, surfCompiledForm, surfCompiledFrame, surfCompiledShelf, surfCompiledDeck, surfCompiledCrew, surfCompiledDraft, surfCompiledLinks, surfCompiledProse, surfCompiledTune, surfCompiledSignup, surfCompiledThreads, surfCompiledOutline},
 }
 
 // suite runs the cases in the fixtures' two modes.
@@ -109,6 +110,10 @@ func fixtureRoot(t testing.TB, root string, state []byte, m mode) (surflive.Comp
 		th := &Threads{}
 		read(th)
 		return m.threads(th), func() []string { return th.Log }
+	case "Outline":
+		f := &Outline{}
+		read(f)
+		return m.outline(f), func() []string { return f.Log }
 	}
 	t.Fatalf("root: no fixture %s", root)
 	return nil, nil

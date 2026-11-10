@@ -743,6 +743,66 @@ its place where there is no row, and the foot's kids.
   gap apart, and the cells draw the glyph, a space and the text. A
   button of an icon alone has a `label`, its `aria-label`.
 
+### Trees
+
+A tree is a `list` whose `item`s say how deep they are. The program
+flattens its tree: it draws the rows that show, and owns what is open and
+what is selected. The runtime folds nothing: it draws what `open` says,
+and a closed branch's children are absent because the program drew none.
+
+```html
+<list nav keys="tree">
+  <caption>Guides</caption>
+  <item depth="0" branch open selected @click="pick('a')" @toggle="fold('a')">src</item>
+  <item depth="1" current @click="pick('b')" @activate="open($value)">main.go</item>
+</list>
+```
+
+- **`depth`, `branch`, `open`.** An item that carries any of them is a
+  tree item, and its label has the disclosure in front: a chevron where
+  it is a `branch` (pointing right, down while it is `open`), and as much
+  room where it is not, so that the labels of a level line up. A folder
+  with nothing in it is a `branch` still. The depth is room in front of
+  the row's content, two cells a level, which a host draws as padding,
+  so that the row's fill and the selection's bar keep its left edge. The
+  HTML is `u-tree-item`, `--u-depth`, `aria-level` (depth + 1) and, on a
+  branch, `aria-expanded`; the list is `role="tree"`.
+- **`@toggle`** on an item is the chevron's click, and the tree's ← and
+  → below. Its value is the item's key, and the program flips what it
+  keeps: the event says "change it", never what it is now. An item with
+  no `@toggle` has a chevron that is not a target.
+- **`current`** on an item says it is the one open in the program (the
+  file shown, the page read), which is not the selected row. A host draws
+  it in the accent's ink and a heavier weight; the cells bold in the
+  accent's tone. It needs no fill, and both may be on one row.
+- **`caption`** between the items is a group's head. The selection
+  skips it, so the groups of a docs nav have one selection.
+- **The keys.** A list with tree items binds the keys of ARIA's tree on
+  itself, while it or something in it has the keyboard, each running the
+  handler of the item it stands for as the event would: ↓ and ↑ select
+  the next or the previous item across the captions (`@click` on it);
+  Home and End the first and the last; ← closes an open branch
+  (`@toggle`) and otherwise goes to the parent, the nearest item above it
+  that is shallower; → opens a closed branch (`@toggle`) and otherwise
+  goes to the first child, the item after it where it is deeper; Enter
+  is the selected item's `@activate`. A key that has nothing to run (↑ on
+  the first item, → on a leaf) is not bound, and scrolls as it would.
+  With nothing selected, ↓ and Home select the first item.
+- **`keys="none"`** on the list switches those keys off, for a program
+  that reads every key itself (it binds `<bind>`s of its own, which this
+  tree's would otherwise sit under). `keys="tree"` is the default.
+- **The keyboard shows in the selection.** The selected row has the
+  list's selection look while the list has the keyboard (on a host the
+  accent's soft fill and a bar at its start; in the cells the accent),
+  and a quiet one while it has not, so a program shows a pane that lacks
+  the keys with no attribute of its own.
+- **Trailing content** after the label stays whole at the row's end
+  (`grow` on the label, `keep` on what follows), the label cut with … as
+  in any item.
+- **The cells** draw `▸` or `▾` before a branch, two cells of room a
+  level, a caption as a section's head, and scroll the list in its box
+  with the selected row in view, as for any list.
+
 ## Attributes
 
 - **A literal** is `name="text"`. By type:
@@ -1006,6 +1066,8 @@ The events, by widget (the Widgets table's *events*):
 | --- | --- | --- | --- |
 | `click` | every widget but `spacer` and `rule` | a click, or Space or Enter on a button | the element's `value` attribute, if any |
 | `focus` | every widget but `spacer` and `rule` | it takes the keyboard | |
+| `toggle` | `item` | a click on a branch's chevron, or ← or → on it in a tree ([Trees](#trees)) | the item's key |
+| `activate` | `item` | Enter on the selected item of a tree ([Trees](#trees)) | the item's key |
 | `follow` | `link` | a click, or Space or Enter on it ([Links](#links)) | the link's `href` |
 | `activate` | `item` | Enter on the table whose selected row it is, a click on the selected row, or a double click, after its own `click` ([Tables](#tables)) | the row's key |
 | `input` | `field` | every edit | the field's whole value |
@@ -2065,6 +2127,26 @@ component Frame                     // frame.surf: a component chosen as
                                     // click does count += 1;
                                     // log += "inset add"
   hide()                            // hidden = !hidden; log += "hide"
+
+struct Entry                        // a data struct: a row of an Outline
+  key     string                    // tree, already flattened: a caption
+  name    string                    // or an item with its depth and
+  caption bool                      // what it is
+  depth   int
+  branch  bool
+  open    bool
+  current bool
+  count   string
+
+component Outline                  // outline.surf: a tree, its keys
+  sel     string                    // and its chevron
+  rows    list(Entry)
+  log     list(string)
+
+  pick(key string)                  // sel = key; log += "pick " + key
+  fold(key string)                  // flips open on the row;
+                                    // log += "fold " + key
+  open(key string)                  // log += "open " + key
 
 struct Card                         // a data struct: a Deck's row or
   id      string                    // folder
