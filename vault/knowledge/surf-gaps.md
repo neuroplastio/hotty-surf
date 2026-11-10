@@ -27,3 +27,12 @@ Not gaps: every attribute of the button (`fill`, `tone`, `bare`, `small`,
 `pill`, `raised`, `current`, `badge`, `badge-dot`, `badge-tone`,
 `attention`, `disabled`, `selected`, an `<icon>` before or after the
 label, `label`) is written in the scene as a program writes it.
+
+## From the layout scene (2026-11-10, the flexbox slice)
+
+| Gap | What it stops | State |
+| --- | --- | --- |
+| `grow` and `wrap` don't compose: a child that grows has a basis of none (`flex: 1 1 0`), so it never goes on to the next line, it only narrows. | Cards that share a row and go under each other where it is narrow. The scene's two cards narrow instead, and hold at 24. | Open: it wants a basis (flexbox's `flex-basis`), which this slice left out. |
+| `align="baseline"`, and `justify="around"` and `"evenly"`. | Nothing in the scene. | Left out: no fixture proves them in hotty-blitz, and the cells have one baseline, a line's. |
+| A row that wraps, in a stack whose `align` isn't stretch. | Seen in hotty-blitz while the scene was written: the row took its widest child's width and wrapped, two buttons one under the other past their box's edge. Not yet drawn in Chromium beside it, so whose it is isn't known. | Open: a gate fixture decides; a Blitz gap if Chromium keeps the line. The scene doesn't do it. |
+| The pixel gate draws `stories.All`, Go trees, and no scene file. | A scene proves nothing for F5: this slice's values are proven by four Go fixtures (row/justify, row/align, row/grow, stack/place). | Open: the gate reading scene files is a leg of its own. |

@@ -1,0 +1,148 @@
+<!-- A row and a stack, as a person judges them: one scene, a service's
+     page, laid out with flexbox's words (justify, align, wrap, grow's
+     weight and gap), each under a sentence that says what it does. A
+     box draws each row's edge, so that where its children sit in it
+     shows. It holds at every width the gallery offers. -->
+<stories of="row" title="Layout">
+  <story name="A service's page"
+         about="Where a row's and a stack's children go: flexbox's words.">
+    <stack gap="2">
+      <section heading="A toolbar">
+        <stack gap="1">
+          <text muted wrap>
+            justify="between": the first child at the row's start, the last at
+            its end, and the room between them. With wrap, the actions go
+            under the name where the row is too narrow for both.
+          </text>
+          <box pad="2 1">
+            <row wrap justify="between" gap="2">
+              <row gap="1">
+                <icon name="server"/>
+                <text semibold>billing-worker</text>
+                <chip>production</chip>
+              </row>
+              <row gap="1">
+                <button small>Logs</button>
+                <button small>Restart</button>
+                <button small fill="accent">Deploy</button>
+              </row>
+            </row>
+          </box>
+        </stack>
+      </section>
+      <section heading="A form's footer">
+        <stack gap="1">
+          <text muted wrap>
+            justify="end": the form's actions at the row's end, the one that
+            commits last.
+          </text>
+          <box pad="2 1">
+            <stack gap="1">
+              <field label="Service name" value="billing-worker"/>
+              <row wrap justify="end" gap="1">
+                <button bare>Cancel</button>
+                <button fill="accent">Save changes</button>
+              </row>
+            </stack>
+          </box>
+        </stack>
+      </section>
+      <section heading="Nothing here yet">
+        <stack gap="1">
+          <text muted wrap>
+            A stack with align="center": each child as wide as it is, at the
+            middle of the stack.
+          </text>
+          <box pad="2 1">
+            <stack align="center" gap="1">
+              <icon name="rocket-launch-outline"/>
+              <text semibold>No deploys yet</text>
+              <text muted wrap>The first deploy of this service will show here.</text>
+              <button fill="accent">Deploy now</button>
+            </stack>
+          </box>
+        </stack>
+      </section>
+      <section heading="A pager">
+        <stack gap="1">
+          <text muted wrap>
+            justify="center": the row's children together at its middle.
+          </text>
+          <box pad="2 1">
+            <row justify="center" gap="2">
+              <button small label="Newer"><icon name="chevron-left"/></button>
+              <text muted>Page 2 of 7</text>
+              <button small label="Older"><icon name="chevron-right"/></button>
+            </row>
+          </box>
+        </stack>
+      </section>
+      <section heading="Cards that share the row">
+        <stack gap="1">
+          <text muted wrap>
+            grow takes a weight: the first card has grow="2" and the second
+            grow, so the first is twice as wide. align="stretch" makes
+            both as tall as the taller one.
+          </text>
+          <row align="stretch" gap="2">
+            <box grow="2" pad="2 1">
+              <stack>
+                <caption>Requests</caption>
+                <text semibold>1,204 a minute</text>
+                <text muted wrap>Steady since the last deploy.</text>
+              </stack>
+            </box>
+            <box grow pad="2 1">
+              <stack>
+                <caption>Errors</caption>
+                <text semibold tone="error">3</text>
+              </stack>
+            </box>
+          </row>
+        </stack>
+      </section>
+      <section heading="Top, middle and bottom">
+        <stack gap="1">
+          <text muted wrap>
+            align on a row: where its children sit across it, beside a taller
+            one. start (top is its old spelling), center (a row's own), end.
+          </text>
+          <row wrap gap="2">
+            <box pad="2 1">
+              <row align="start" gap="2">
+                <stack><text>api</text><text>worker</text><text>indexer</text></stack>
+                <chip>start</chip>
+              </row>
+            </box>
+            <box pad="2 1">
+              <row align="center" gap="2">
+                <stack><text>api</text><text>worker</text><text>indexer</text></stack>
+                <chip>center</chip>
+              </row>
+            </box>
+            <box pad="2 1">
+              <row align="end" gap="2">
+                <stack><text>api</text><text>worker</text><text>indexer</text></stack>
+                <chip>end</chip>
+              </row>
+            </box>
+          </row>
+        </stack>
+      </section>
+      <section heading="Room between">
+        <stack gap="1">
+          <text muted wrap>
+            gap, in steps: none, one, two and four between the same three
+            chips.
+          </text>
+          <row wrap gap="4">
+            <row><chip>api</chip><chip>worker</chip><chip>indexer</chip></row>
+            <row gap="1"><chip>api</chip><chip>worker</chip><chip>indexer</chip></row>
+            <row gap="2"><chip>api</chip><chip>worker</chip><chip>indexer</chip></row>
+            <row gap="4"><chip>api</chip><chip>worker</chip><chip>indexer</chip></row>
+          </row>
+        </stack>
+      </section>
+    </stack>
+  </story>
+</stories>
