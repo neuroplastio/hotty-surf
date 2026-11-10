@@ -132,9 +132,6 @@ func TreeDepth(item *Node) int {
 	return item.tree.depth
 }
 
-// treeKeys are the keys a tree List binds.
-var treeKeys = []string{"arrow_up", "arrow_down", "arrow_left", "arrow_right", "home", "end", "enter"}
-
 // resolveTree gives a tree List its keys: they are made again at each
 // resolve, from the Items it has then, so that they follow the model's
 // selection and what is open.
