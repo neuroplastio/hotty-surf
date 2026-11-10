@@ -90,3 +90,47 @@ func TestCellsBlockWidth(t *testing.T) {
 		t.Errorf("asked for widths %v, never 7", widths)
 	}
 }
+
+// A block's height is the tree's: Measure and Draw(cols, 0) agree on it
+// at each width (a narrower one wraps the block into more rows), Box
+// covers the custom element by those rows, and a layout the renderer
+// keeps (the same tree at the same width) asks the func nothing more.
+func TestCellsBlockMeasured(t *testing.T) {
+	calls := 0
+	m := &model{render: func() *surfui.Node {
+		wrap := surfui.El("div").Key("wrapped").Cells(func(w int, _ cells.Style) cells.Block {
+			calls++
+			var rows [][]cells.Run
+			for left := 24; left > 0; left -= w {
+				rows = append(rows, []cells.Run{cells.NewRun(0, strings.Repeat("=", min(w, left)), "", "", 0)})
+			}
+			return cells.Block{Rows: rows}
+		})
+		return surfui.Surface(surfui.Stack(surfui.Text("head"), wrap, surfui.Text("tail")))
+	}}
+	r := show(m)
+	for _, c := range []struct{ cols, rows int }{{24, 1}, {10, 3}, {6, 4}} {
+		h := r.Measure(c.cols)
+		s := r.Draw(c.cols, 0)
+		if h != s.Rows || h != c.rows+2 {
+			t.Errorf("at %d cells: Measure %d, Draw %d rows, want %d", c.cols, h, s.Rows, c.rows+2)
+		}
+		x, y, w, bh, ok := r.BoxOf("wrapped")
+		if !ok || x != 0 || y != 1 || w != c.cols || bh != c.rows {
+			t.Errorf("at %d cells: BoxOf %d,%d %dx%d (%v), want 0,1 %dx%d", c.cols, x, y, w, bh, ok, c.cols, c.rows)
+		}
+		if first, last, ok := r.RowsOf("wrapped"); !ok || first != 1 || last != c.rows {
+			t.Errorf("at %d cells: rows %d to %d", c.cols, first, last)
+		}
+		if got := strings.Count(s.Text(), "="); got != 24 {
+			t.Errorf("at %d cells: %d strokes drawn, want 24:\n%s", c.cols, got, s.Text())
+		}
+	}
+	n := calls
+	r.Measure(10)
+	r.Draw(10, 0)
+	r.Draw(10, 0)
+	if calls != n {
+		t.Errorf("kept layouts made %d more blocks", calls-n)
+	}
+}
