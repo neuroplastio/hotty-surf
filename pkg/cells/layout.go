@@ -173,7 +173,7 @@ func build(n *surfui.Node, d density, caps keyCaps, bc *blockCache) *box {
 	}
 	if b.kind == flow {
 		for _, k := range surfui.Kids(n) {
-			b.runs = append(b.runs, b.inline(k, inl{}, d, caps)...)
+			b.runs = append(b.runs, b.inline(k, inl{}, d, caps, bc)...)
 		}
 		return b
 	}
@@ -219,7 +219,7 @@ const inherited = fBold | fItalic | fUnder | fStrike | fCode | fLink
 // element (a link, em, strong, del, code) its children's, each with its
 // look; a run of its own (a Text, a Key) as built, with the look it is
 // in; a hard break, which breaks the line.
-func (b *box) inline(k *surfui.Node, in inl, d density, caps keyCaps) []*box {
+func (b *box) inline(k *surfui.Node, in inl, d density, caps keyCaps, bc *blockCache) []*box {
 	stackprobe.Probe()
 	if surfui.Tag(k) == "" {
 		rb := &box{n: k, d: d, kind: text, text: textOf(k), f: fWrap, fw: -1, fh: -1, natw: -1, memoW: -1}
@@ -243,11 +243,11 @@ func (b *box) inline(k *surfui.Node, in inl, d density, caps keyCaps) []*box {
 		}
 		var out []*box
 		for _, c := range surfui.Kids(k) {
-			out = append(out, b.inline(c, in, d, caps)...)
+			out = append(out, b.inline(c, in, d, caps, bc)...)
 		}
 		return out
 	}
-	rb := build(k, d, caps)
+	rb := build(k, d, caps, bc)
 	if rb.kind == text {
 		in.give(rb)
 	}

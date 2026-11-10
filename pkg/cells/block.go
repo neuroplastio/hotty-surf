@@ -136,7 +136,10 @@ func (p *painter) block(b *box, r rect, clip rect, in ink) {
 			if len(cs) == 0 {
 				cs = clusters(run.Text)
 			}
-			st := style{fg: run.Fg, bg: run.Bg, attr: in.attr | run.Attr, ul: run.Ul}
+			st := style{fg: run.Fg, bg: run.Bg, attr: in.attr | run.Attr, ul: run.Ul, href: run.Href}
+			if st.href == "" {
+				st.href = in.href
+			}
 			if st.fg == "" {
 				st.fg = in.fg
 			}
