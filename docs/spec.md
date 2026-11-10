@@ -851,7 +851,7 @@ The events, by widget (the Widgets table's *events*):
 | `follow` | `link` | a click, or Space or Enter on it ([Links](#links)) | the link's `href` |
 | `input` | `field` | every edit | the field's whole value |
 | `change` | `field` | the user commits it: on Enter, and on leaving it (hotty SPEC §9: Tab, a click elsewhere, the surface losing the keyboard); once for each value | the field's value |
-| `height` | `field` of several lines | its height in rows is not what the program last heard, and when it first shows: from the cells' wrap: the runtime's own call, not a host's event, which tells none | the rows, an int (`Event.Rows`) |
+| `height` | `field` of several lines | its height in rows is not what the program last heard, and when it first shows: from the cells' wrap, the runtime's own call; on a host from its measure (`Surface.Fit`, a `fit` event's rows, SPEC §9), which says the document's rows and not the field's, so it comes where the document has one such field | the rows, an int (`Event.Rows`) |
 | `change` | `select` | a pick: in its open list, or by a key while it is closed | the option picked |
 | `change` | `cycle` | each step, by a key or a click on a part | the new value |
 | `dragstart` | a drag handle (`drag`) | a press on it starts its drag ([Drags](#drags)) | |
@@ -1550,7 +1550,11 @@ for a host draws in cells unchanged.
   undo and redo keep one step to a run of typing. The cells run its
   `@height` handler, with the rows as `$value` (an int), when it first
   shows and when they change, in a draw's layout, before the draw: the
-  runtime's own call, no event of a host's (the SPEC has none). A value the program sets goes by `caret`; the
+  runtime's own call, no event of a host's (the SPEC has none). A host's
+  field grows by `field-sizing: content`, and its `@height` is the
+  host's measure: the surface solves, from the rows the whole document
+  takes (`fit`), for the rows of text that make the document that tall
+  (`surfui.FieldRows`). A value the program sets goes by `caret`; the
   same value moves nothing. A key of the program's, from a field that has
   no `@input`, commits it first (`change`), so that the program has what
   was typed before the key. A `stack` with `trap` keeps Tab and Shift+Tab
@@ -1812,7 +1816,7 @@ component Crew                      // crew.surf: a palette, and each hand
 component Draft                     // draft.surf: a field of several lines,
                                     // its height reported
   text    string
-  height  int                       // the rows, as @height says (cells)
+  height  int                       // the rows, as @height says
   log     list(string)
 
   typed(v string)                   // text = v; log += "typed " + quote(v)

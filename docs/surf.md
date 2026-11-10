@@ -710,9 +710,14 @@ one:
 - **`@height`** runs with the field's height in rows (an int)
   when it first shows and as it grows, so that a program that places the
   surface can give it the room. The cells tell it, from the wrap. A host
-  tells none yet: a field there grows by `field-sizing: content`, between
-  its least rows and its most (hotty-blitz's L5b; a Blitz without it draws
-  the least rows and scrolls).
+  grows the field by `field-sizing: content`, between its least rows and
+  its most (hotty-blitz's L5b; a Blitz without it draws the least rows
+  and scrolls), and says only how many rows the whole document needs
+  (hotty's `fit`): the surface runs `@height` with the rows of text that
+  make the document that tall (`surfui.FieldRows`), where the surface has
+  one field of several lines. It comes when the host's first measure
+  arrives (`Surface.Fit`) and as it changes. See "Placing a surface" in
+  the [guide](guide.md#placing-a-surface-on-a-host).
 - **`spellcheck`** is on for a host's field, `spellcheck="false"` turns
   it off. The cells have no spell check.
 - **`trap`** on a `stack` keeps Tab and Shift+Tab inside it while it shows:
