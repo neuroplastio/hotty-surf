@@ -83,6 +83,12 @@ type Surface struct {
 	Palette surfui.Palette
 	// Warn, if set, hears each such warning; nil writes it to Stderr.
 	Warn func(msg string)
+	// OnFit, if set, hears the rows the host says the document takes at
+	// its width (Fit): each fit event, and each Fit a host reports from
+	// the reply of a placement. The program places the surface again with
+	// them (Placement). It runs before the handlers of the document's
+	// @height, and may not call the surface.
+	OnFit func(rows int)
 	// Trace, if set, is called after each Update with what started it
 	// (TraceIn) and the ops it sent: the first Event, ListEvent,
 	// MenuEvent or Key since the last Update, or the zero TraceIn where
@@ -131,6 +137,11 @@ type Surface struct {
 	areas     map[string]hotty.Area // the Selects in view, where the host's last view put them
 	hover     bool                  // the view has a tooltip, as the last frame said
 
+	cols    int            // the cells the host places the surface, wide (Size)
+	metrics surfui.Metrics // the host's cell, scale and font (Size)
+	fit     int            // the rows the host last measured the document at, 0 before it has (Fit)
+	heights map[string]int // each field's rows @height heard, from the host's measure
+
 	menu      *openMenu             // an element's open menu (ctxmenu.go)
 	menuGone  bool                  // a menu that was shown closed: its surface goes
 	cellsGone bool                  // a menu DropMenu dropped, which the cells' renderer hears of
@@ -178,6 +189,10 @@ type Frame struct {
 	// it; an Update's only when it changes, and the host then places the
 	// surface again with it. The zero Flag changes nothing.
 	Hover hotty.Flag
+	// Fit is Show's: On, so that the host places the surface with f=1
+	// (hotty.Placement.Fit) and hears of each change in the rows the
+	// document needs (fit, SPEC §9). The zero Flag changes nothing.
+	Fit hotty.Flag
 }
 
 // WriteFrame writes f to b as hotty commands for the surface name, in
@@ -327,6 +342,8 @@ func (s *Surface) Show() Frame {
 	}
 	s.hover = surfui.HasTip(s.prev)
 	f.Hover = flag(s.hover)
+	f.Fit = hotty.On
+	s.fit, s.heights = 0, nil // a new document: the host measures it again
 	return f
 }
 
@@ -545,6 +562,11 @@ func (s *Surface) event(e hotty.Event) bool {
 	case hotty.EventHover:
 		// The host's, for a tooltip's dwell (Tip): no handler hears it.
 		return false
+	case hotty.EventFit:
+		// The rows the document needs changed (f=1): not the model's
+		// event, the host's measure.
+		s.fitted(e.FitRows)
+		return true
 	case hotty.EventView:
 		// A Select, and an element with a menu, ask where they are
 		// (surfui's data-on), so that a key that opens the list or the
