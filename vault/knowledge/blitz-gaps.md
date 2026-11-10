@@ -449,3 +449,35 @@ font, `resize: none`. Both engines draw it alike in the story field/rows
 | Tab kept inside a `trap` stack | The host moves Tab itself, so the keyboard leaves the surface past the last button | A field can't give the program `tab` until hotty's V6-02 (accepted, in 0.8); a binding of `tab` is dropped by `Keymap.Bind` | Feature: the cells do it; `data-trap` is on the element for a host that gets V6-02 |
 | The scrollbar of a field that overflows | None drawn in a still render, by either engine | As for a `scroll` box ([css-subset](css-subset.md)) | Cosmetic |
 | field/rows at 1.6× (Compact 594–595, Roomy 585–586; Dense 2× 16–18) | Opened in the gate's images (2026-11-10, 0.7.0 Blitz): both engines draw the same rows (Compact 20, Roomy 24 against 20 and 24) and the same text; the diff is the boxes' edges, a device row off in a thin line along the bottom of a field (and the top of the next), and the text's place a device px | The painted box's snap and a fractional height, as the dialog's and the chips' above: a field is `rows × --u-row + 8px`, fractional at 1.6× (Compact's cell height, Roomy's 1.6em), which Blitz rounds to whole CSS px and Chromium keeps. **Not field-sizing:** none of the story's fields grows past its least rows (the long one is `rows="4"`), so the 0.7.0 Blitz ignoring `field-sizing` isn't in these numbers | Cosmetic |
+
+## Larger base text (2026-11-10)
+
+450e529 (surfui: enlarge base surface text) took Compact's and Dense's
+font-size from 0.8235rem to 0.9412rem and Roomy's from 0.8824rem to 1rem.
+Every case passes at 0369667 on the
+machine's pinned Blitz (b7cbf17) and Chromium 153.0.8010.12; from 450e529
+on, 29 cases are new and 20 worse, 62 came off. The sheets were looked
+at: tip/shown (paper, roomy, 1.6×), button/small (stone, roomy, 1.6×)
+and look/agents (stone, roomy, 1.6×). In each the boxes, rows (B/C),
+fills and text are where Chromium draws them. What differs is the two
+gaps above in more places, as the larger text moves boxes to other
+fractions of a CSS px:
+- a box's bottom or lower hairline edge a device row off, which
+  `round.rs` makes (the 1.6× hairline): tip/shown, look/agents'
+  popover frame, pop/shown, list/warn, list/selection;
+- text 1 CSS px lower (half-leading, roomy) and a Compact control's
+  1 px border dropping out: button/bare, button/small, button/icon,
+  field/states, select/closed, cycle/states.
+
+| Story (cases) | Defect seen | Scale | Cause | How bad |
+| --- | --- | --- | --- | --- |
+| look/agents roomy (new: 4 themes, 769; worse: paper 793, 2×: 305) | The popover frame's edge a device row off, a yellow ring round it in the diff | 1.6× | `round.rs` | Cosmetic |
+| tip/shown roomy (worse: 484–487) | The tips' lower edge a device row off (red line under each box) | 1.6× | `round.rs` | Cosmetic |
+| button/small roomy (new: 33–44), button/icon roomy (worse: 78), button/bare Compact (new: graphite, stone, 69–72; worse: others, 93–101) | Label 1 CSS px lower, button edge a device row off | 1.6× | Half-leading and `round.rs` | Cosmetic |
+| field/states Compact (new: 32–35), select/closed Compact (worse: 129–132), cycle/states (new: graphite compact; worse: others, 68–125) | The 1 px control border drops out or is a row off | 1.6× | The thin-line gap above | Cosmetic |
+| list/warn roomy (new: 20–22), list/selection graphite roomy (new: 12), pop/shown stone roomy (new: 175), look/settings Compact (new: 45–67) | Selected row's or popover's hairline a device row off | 1.6×; look/settings 2× | The inset hairline and `round.rs` | Cosmetic |
+
+`make gate-baseline` wrote the baseline again (the 62 that passed now
+are off it). The legible gate had one real overflow, not a gap:
+text/clickable's "#4182" cut to "#41" in Graphite Roomy at 50 cells,
+where the larger text no longer fits; the story is 54 cells wide now.
