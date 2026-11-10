@@ -635,6 +635,8 @@ func build(tag string, kids []*surfui.Node) *surfui.Node {
 		return surfui.Dot()
 	case "field":
 		return surfui.Field()
+	case "slider":
+		return NewSlider()
 	}
 	panic("surf: no widget " + tag)
 }
@@ -860,6 +862,8 @@ func applyBool(name string, n *surfui.Node, v bool) {
 		ModSearch(n, v)
 	case "segmented":
 		ModSegmented(n, v)
+	case "chips":
+		ModChips(n, v)
 	case "cap":
 		ModCap(n, v)
 	case "attention":
@@ -915,6 +919,14 @@ func applyInt(name string, n *surfui.Node, v int64) {
 		ModLevel(n, v)
 	case "start":
 		ModStart(n, v)
+	case "value":
+		ModSliderValue(n, v)
+	case "min":
+		ModMin(n, v)
+	case "max":
+		ModMax(n, v)
+	case "step":
+		ModStep(n, v)
 	default:
 		panic("surf: no int modifier " + name)
 	}

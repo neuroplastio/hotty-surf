@@ -202,6 +202,7 @@ component, a partial, or a widget a package registered from outside
 | `switch` | a boolean as a track with a knob: it shows `:on`, and its `@click` handler changes the state `:on` reads | nothing |
 | `select` | a pick of one of `:options`, `:value` picked | nothing |
 | `cycle` | `‹ value ›`, stepping through `:options` | nothing |
+| `slider` | an integer from `min` to `max` in steps of `step`, at `:value`: a track with a thumb ("Sliders and chips") | nothing |
 | `list` | a column of items with a selection | children |
 | `item` | a row of a list | children |
 | `section` | a group under a heading: `heading` | children |
@@ -385,6 +386,7 @@ registers widgets runs its own cases with `conformance.Suite`
 | `on` | bool | switch | whether it is on |
 | `value` | string | select, cycle, face | the option picked; a face's value |
 | `options` | list(string) | select, cycle | the options (bound only: `:options="['a', 'b']"`) |
+| `value`, `min`, `max`, `step` | int | slider | its value (snapped to the steps, held between the ends), its ends (0 and 100) and its step (1) |
 | `heading` | string | section | its heading |
 | `name` | string | icon | an MDI symbol's name, as `cog-outline`: its glyph ("Icons") |
 | `svg` | string | icon | an SVG a host draws: the name of an `.svg` file beside the templates |
@@ -411,6 +413,7 @@ registers widgets runs its own cases with `conformance.Suite`
 | `pill`, `raised`, `current` | bool | button | a control on a bar ("Pills") |
 | `badge`, `badge-dot`, `badge-tone` | int, bool, string | button | a tool's badge on its corner: a count (99+ past 99, none at 0), or a dot where it has none; its tone `accent` (the default), `warn`, `error` or `muted` ("Pills") |
 | `segmented` | bool | row | a row of buttons as one control, a scope or a filter ("Pills") |
+| `chips` | bool | row | a row of buttons that are chips, several picked at once ("Sliders and chips") |
 | `meter`, `stale` | int, bool | face | a meter after its value, filled to a percentage (0 to 100); a face whose value is old, dimmed ("A widget's face") |
 | `popover` | bool | box, stack | a popover's card, the root of what a face or a strip's tool opens ("A widget's face") |
 | `strip`, `grid` | bool | row | a strip of chrome, its three rows its start, centre and end; a picker's grid of buttons, squares that wrap ("Pills") |
@@ -484,6 +487,14 @@ registers widgets runs its own cases with `conformance.Suite`
   buttons: one sunk pill, the `selected` button raised in it, each with
   its own `@click`. Past four, a `select`:
   `<row segmented><button :selected="f == 'all'" @click="show('all')">All</button>…</row>`.
+- **Several values picked at once** are a `row chips` of buttons, each
+  with `selected` for its state and an `@click` that toggles it (a press
+  or Space): `chips` is for a filter, `segmented` for a single pick. The
+  cells draw each in brackets, the picked ones on the accent's fill
+  ("Sliders and chips").
+- **A number in a range** is a `slider`: `<slider :value="replicas"
+  min="1" max="12" @input="show($value)" @change="set($value)"/>`
+  ("Sliders and chips").
 - **Row actions without the list jumping:** give every row its actions
   with `reveal`, not only the selected one with `:if`. A revealed
   action keeps its room while hidden, so no row changes height or width
@@ -563,6 +574,8 @@ registers widgets runs its own cases with `conformance.Suite`
   - `change` and `input` on a `field`, and `height` on a field of
     several lines (cells only; its `$value` is the rows, an int);
   - `change` on a `select` and a `cycle`;
+  - `input` and `change` on a `slider` ("Sliders and chips"), `$value` a
+    string;
   - `dragstart` and `dragend` on a drag handle, and `drop` on a place
     to drop on ("Drag");
   - none for the wheel or a scroll: scrolling is the host's
@@ -932,8 +945,8 @@ takes no room and changes no cell, and a `:if` chain goes on past it.
   wraps, as `title`'s does.
 - **Nothing in a tooltip acts:** it goes when the pointer moves, so
   nothing in it can be reached. A `<button>`, a `<field>`, a `<switch>`,
-  a `<select>`, a `<cycle>`, an `@` handler, a `<bind>`, a `<menu>`,
-  `focusable`, `autofocus`, `drag`, `drop`, an `<embed>` and a tooltip
+  a `<select>`, a `<cycle>`, a `<slider>`, an `@` handler, a `<bind>`,
+  a `<menu>`, `focusable`, `autofocus`, `drag`, `drop`, an `<embed>` and a tooltip
   in a tooltip are refused at load, in a partial it uses too.
 - **On a partial's use, its attributes are its props:** a partial that
   wants a tooltip takes a `title` prop and gives it to its root,
@@ -947,6 +960,49 @@ takes no room and changes no cell, and a `:if` chain goes on past it.
   id or a cell's (`cells.Renderer.At`), the innermost element's with
   one, and places it. surf writes no HTML `title`, so a browser host
   draws no second one.
+
+## Sliders and chips
+
+A `slider` is an integer in a range: `min` (0), `max` (100) and `step`
+(1), at `value`, which it snaps to the steps and holds between the ends.
+The app keeps the value, as it does a `cycle`'s:
+
+```html
+<row gap="1">
+  <text width="9">Replicas</text>
+  <slider :value="replicas" min="1" max="12"
+          @input="show($value)" @change="setReplicas($value)"/>
+  <text muted>{{ replicas }}</text>
+</row>
+```
+
+- **Keys:** ← ↓ and → ↑ move it a step, Home and End to its ends, where
+  it stops. Each is an `@input` and an `@change`, `$value` the new value
+  as a string.
+- **A drag** on a host puts the thumb where the pointer is (hotty SPEC
+  §9.1: the slider is a drag handle whose `data-steps` is the number of
+  steps), an `@input` for each new value and one `@change`, when the
+  pointer is released. Escape puts the value back to what it was.
+- **In the cells** a track of `─` with a `●` thumb, and the value after
+  it. Where the host gives the mouse to the program, a press and a drag
+  on the track do what they do on a host (SPEC §9.6).
+- **`value` is an int, not a string,** as the other controls' `value`
+  is: the slider's numbers are `min`, `max`, `step` and `value`, whichever
+  order they are written in.
+
+A `row chips` of buttons is several values picked at once, a filter: each
+button's `selected` is its state, and its `@click` toggles it, as Space
+does. A single pick of two to four values stays a `row segmented`:
+
+```html
+<row chips gap="1">
+  <button :each="f in filters" :key="f.name" :selected="f.on"
+          @click="toggle(f.name)">{{ f.name }}</button>
+</row>
+```
+
+The cells draw each chip in brackets, the picked ones on the accent's
+fill, with an underline where the keyboard is on one.
 
 ## Drag
 
@@ -1499,7 +1555,9 @@ after each:
   element above it that binds it, up to the root;
 - a field with `@change` commits on Enter, and when the host says it
   changed (it lost the keyboard), once for each value;
-- a `<cycle>`'s arrows and keys step it;
+- a `<cycle>`'s arrows and keys step it, and a `<slider>`'s arrows, Home
+  and End move it; its drag, as the host sends it (`dragstart`, `drag`
+  and `dragend` with the step `x`), puts it where the pointer is;
 - a `<select>` opens its list. The list is a surface of its own:
   `view:html` gives it third, `{ html, cols, rows, option, anchor }`
   (its markup, its ids under `p`; the cells it wants; the option the

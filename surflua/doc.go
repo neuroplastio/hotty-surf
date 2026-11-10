@@ -196,7 +196,10 @@
 //     binds takes the keyboard from the element;
 //   - a field with @change commits on Enter, and on the host's change
 //     (it lost the keyboard): once for each value;
-//   - a cycle's arrows and keys step it;
+//   - a cycle's arrows and keys step it, and a slider's arrows, Home and
+//     End move it, its @input and @change hearing the value as a string;
+//     its drag (a dragstart, drag and dragend with the step x) puts it
+//     where the pointer is;
 //   - a click on a select, or Space or Enter on it, opens its list, whose
 //     keys move in it, and which a click on an option picks from.
 //
