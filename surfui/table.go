@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/clipperhouse/displaywidth"
+
+	"neuroplast.io/hotty-surf/internal/stackprobe"
 )
 
 // The table: columns declared once (Col), and rows that are Items, so a
@@ -455,6 +457,7 @@ func densityAbove(n *Node) Density {
 func NaturalWidth(n *Node, d Density) int { return naturalWidth(n, d) }
 
 func naturalWidth(n *Node, d Density) int {
+	stackprobe.Probe()
 	if n.tag == "" {
 		return cellsWidth(n.text)
 	}
@@ -531,6 +534,7 @@ func (n *Node) rangeText(body *Node, d Density) {
 	var texts []*Node
 	var find func(*Node)
 	find = func(k *Node) {
+		stackprobe.Probe()
 		if k.tag == "" && (k.tmpl != "" || strings.Contains(k.text, RangeMark)) {
 			texts = append(texts, k)
 		}
@@ -601,6 +605,7 @@ func RangeTemplate(n *Node) (string, bool) {
 	found := false
 	var walk func(*Node)
 	walk = func(k *Node) {
+		stackprobe.Probe()
 		if k.tag == "" {
 			if k.tmpl != "" {
 				found = true

@@ -1524,6 +1524,7 @@
 .u-table .u-cell.u-maxp { max-width: calc(var(--u-maxp) * 1%); }
 .u-thead { padding: var(--u-iy) var(--u-px); color: var(--u-muted); font-weight: 400; }
 .u-table-empty { padding: var(--u-iy) var(--u-px); }
-.u-table-ruled > .u-item { box-shadow: inset 0 -1px var(--u-border); }
+.u-table-ruled > .u-item { background: linear-gradient(var(--u-border), var(--u-border)) bottom / 100% 1px no-repeat; }
+.u-table-ruled > .u-item:hover { background: linear-gradient(var(--u-border), var(--u-border)) bottom / 100% 1px no-repeat, var(--u-hover); }
 .u-table-sort { flex: 0 0 auto; color: var(--u-muted); }
 .u-table-sort.is-sorted { color: var(--u-ink); }

@@ -456,7 +456,7 @@ var All = []Story{
 		// focused table, a muted resolved row, a chip in a cell, a sort
 		// chevron on the age. The data is made up.
 		row := func(sel bool, state, tone, doc, summary, age string, chip string) *surfui.Node {
-			cell := surfui.Line(surfui.Text(summary))
+			cell := surfui.Line(surfui.Text(summary + " "))
 			if chip != "" {
 				cell.Add(surfui.Chip(chip).Fill(surfui.Warn))
 			}
