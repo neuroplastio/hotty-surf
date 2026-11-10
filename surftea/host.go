@@ -76,6 +76,7 @@ type Host struct {
 	// r draws the model in cells, made when a terminal needs them.
 	r     *cells.Renderer
 	caret cells.Caret
+	touch []hotty.TouchArea
 }
 
 // New hosts m as the surface name. p is the program that runs the Host's

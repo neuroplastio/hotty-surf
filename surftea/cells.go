@@ -1,6 +1,8 @@
 package surftea
 
 import (
+	"neuroplast.io/hotty-go"
+
 	"neuroplast.io/hotty-surf/pkg/cells"
 	"neuroplast.io/hotty-surf/surfrun"
 )
@@ -27,6 +29,7 @@ func (h *Host) Lines(w, rows int) []string {
 	r.Update()
 	scr := r.Draw(w, rows)
 	h.caret = scr.Caret
+	h.touch = scr.Touch
 	return surfrun.Paint(scr)
 }
 
@@ -75,3 +78,10 @@ func (h *Host) CellsBlur() bool {
 	took, _ := h.renderer().Blur()
 	return took
 }
+
+// Touch is where a finger drags in the cells of the last Lines (SPEC
+// §9.6), from the rectangle's top left: a slider's track across, any other
+// drag handle either way. A host that sends the terminal a=touch
+// (hotty.Touch) adds the rectangle's own column and row to each, and sends
+// them again when they change.
+func (h *Host) Touch() []hotty.TouchArea { return h.touch }

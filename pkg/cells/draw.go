@@ -80,7 +80,7 @@ func (r *Renderer) Draw(cols, rows int) Screen {
 	}
 	r.keepInView()
 	g := newGrid(cols, rows)
-	r.hits, r.ports, r.rects = nil, nil, map[*surfui.Node]rect{}
+	r.hits, r.ports, r.rects, r.touches = nil, nil, map[*surfui.Node]rect{}, nil
 	p := r.painter(g)
 	screen := rect{0, 0, cols, rows}
 	if r.root != nil {
@@ -110,6 +110,7 @@ func (r *Renderer) Draw(cols, rows int) Screen {
 		s.Hits = append(s.Hits, Hit{X: h.r.x, Y: h.r.y, W: h.r.w, H: h.r.h, ID: surfui.IDOf(h.n)})
 	}
 	s.Mouse = len(s.Hits) > 0 || len(r.ports) > 0
+	s.Touch = r.touches[:min(len(r.touches), hotty.TouchMax)]
 	if r.menu != nil {
 		// The menu is on top of everything, and is acted on.
 		for _, h := range r.menu.Cells.Hits {

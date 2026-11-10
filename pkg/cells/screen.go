@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"neuroplast.io/hotty-go"
+
 	"neuroplast.io/hotty-surf/pkg/cellblock"
 )
 
@@ -126,6 +128,12 @@ type Screen struct {
 	// Mouse says that a press or the wheel acts on something: a host
 	// reports the terminal's mouse only then.
 	Mouse bool
+	// Touch is where a finger drags as the mouse does (SPEC §9.6): a
+	// slider's track across, any other drag handle either way, in the
+	// order drawn, so that the last listed decides where they overlap. A
+	// host sends them as a=touch (hotty.Touch) when they change, moved to
+	// where it drew the screen.
+	Touch []hotty.TouchArea
 	Gen   uint64
 }
 
@@ -157,7 +165,7 @@ func (s Screen) Text() string {
 // same reports whether s and o draw alike, their generations aside.
 func (s Screen) same(o Screen) bool {
 	if s.Cols != o.Cols || s.Rows != o.Rows || s.Caret != o.Caret || s.Mouse != o.Mouse ||
-		!slices.Equal(s.Hits, o.Hits) || len(s.Lines) != len(o.Lines) {
+		!slices.Equal(s.Hits, o.Hits) || !slices.Equal(s.Touch, o.Touch) || len(s.Lines) != len(o.Lines) {
 		return false
 	}
 	for i := range s.Lines {

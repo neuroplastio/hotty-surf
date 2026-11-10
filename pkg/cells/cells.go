@@ -109,7 +109,9 @@ type Renderer struct {
 	// Scroll is the axes the document scrolls along, as a host has them
 	// (SPEC §5.3): where it is vertical the page and its Scroll boxes
 	// scroll, by the wheel and the keys, and keep what is focused or
-	// revealed in view; otherwise what doesn't fit is clipped.
+	// revealed in view; otherwise what doesn't fit is clipped. The zero
+	// value is not vertical: a host that has the page scroll in cells (the
+	// wheel, Wheel's result) sets hotty.ScrollVertical.
 	Scroll hotty.Axes
 	// KeyStyle is how the tree's keys are drawn on their caps (surfkeys.Style),
 	// each from its sequence whatever caps a host's style gave it: text
@@ -153,6 +155,7 @@ type Renderer struct {
 	root, over *box
 	pageBar    bool
 	hits       []hit
+	touches    []hotty.TouchArea // where a finger drags, in the order drawn
 	ports      []port
 	rects      map[*surfui.Node]rect // what shows of each element
 	screen     Screen

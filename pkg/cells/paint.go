@@ -6,6 +6,8 @@ import (
 
 	"github.com/clipperhouse/displaywidth"
 
+	"neuroplast.io/hotty-go"
+
 	"neuroplast.io/hotty-surf/internal/stackprobe"
 	"neuroplast.io/hotty-surf/surfui"
 )
@@ -118,6 +120,9 @@ func (p *painter) self(b *box, dy int, clip rect, in *ink) bool {
 		}
 		if acts(n) && !vis.empty() {
 			p.r.hits = append(p.r.hits, hit{r: vis, n: n, list: p.list})
+		}
+		if surfui.Draggable(n) && !vis.empty() && !p.list && b.f&fDisabled == 0 {
+			p.r.touches = append(p.r.touches, touchArea(n, vis))
 		}
 	}
 	if b.f&fReveal != 0 && !p.revealed(n) {
@@ -789,4 +794,14 @@ func listens(n *surfui.Node, kind string) bool {
 func inChips(n *surfui.Node) bool {
 	p := surfui.Parent(n)
 	return p != nil && hasClass(p, "u-chips")
+}
+
+// touchArea is where a finger drags in the drag handle n, whose visible
+// cells are vis (SPEC §9.6): a slider's track across, since it moves along
+// it, and any other handle either way.
+func touchArea(n *surfui.Node, vis rect) hotty.TouchArea {
+	if _, _, _, _, ok := surfui.SliderOf(n); ok {
+		return hotty.TouchArea{C: vis.x, R: vis.y, W: min(trackWidth(n, vis.w), vis.w), H: vis.h, Drag: "x"}
+	}
+	return hotty.TouchArea{C: vis.x, R: vis.y, W: vis.w, H: vis.h, Drag: "xy"}
 }

@@ -118,3 +118,32 @@ func trackStart(t *testing.T, screen, label string) (x, y int) {
 	t.Fatalf("no %s line with a track:\n%s", label, screen)
 	return 0, 0
 }
+
+// A slider's track is a place where a finger drags across (SPEC §9.6): the
+// track alone, not the value after it, on the slider's row, in the order
+// drawn; a locked slider has none.
+func TestSliderTouchAreas(t *testing.T) {
+	m := newSliding(surfui.Compact)
+	r := show(m)
+	scr := r.Draw(40, 5)
+	if len(scr.Touch) != 2 {
+		t.Fatalf("touch areas %+v, want one for each of the two sliders that move, none for the locked one", scr.Touch)
+	}
+	for _, a := range scr.Touch {
+		if a.Drag != "x" || a.H != 1 || a.W < 1 || a.C < 0 {
+			t.Errorf("area %+v, want a single row dragged across", a)
+		}
+		line := lines(scr)[a.R]
+		if got := []rune(line)[a.C]; got != '─' && got != '●' {
+			t.Errorf("area %+v starts on %q, not on the track in %q", a, got, line)
+		}
+		if end := []rune(line)[a.C+a.W-1]; end != '─' && end != '●' {
+			t.Errorf("area %+v ends on %q, not on the track in %q", a, end, line)
+		}
+	}
+	// A draw that changes nothing keeps the areas; a new generation only
+	// follows a change.
+	if again := r.Draw(40, 5); again.Gen != scr.Gen {
+		t.Errorf("a second draw moved the generation: %d, %d", scr.Gen, again.Gen)
+	}
+}
