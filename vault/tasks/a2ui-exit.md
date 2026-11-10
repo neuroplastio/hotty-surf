@@ -189,7 +189,7 @@ hotty-go v0.7.1; margin can move its thread pane.
 - [ ] **L16. Forms** (A7): `form @submit`, `button submit`, `field
   label`, `type="password"` (`•` in the cells), `error`; a multi-row
   field never submits on Enter. M.
-- [ ] **L17. Slider and chips** (A8 slider, A9): the branch's slider
+- [x] **L17. Slider and chips** (merge 937ee07) (A8 slider, A9): the branch's slider
   contract (pointer steps by SPEC §9.1); `<row chips>` with several
   `selected`. M.
 
@@ -221,6 +221,12 @@ Table and tree (phase 3) serve both programs, and phase 4 finishes both
 the website's P1 and margin's M1 together. If the website can't wait
 that long, L8 and L9 can move ahead of phase 2, so it carries prose
 itself and offers it back later (its own suggestion).
+
+## Releases
+
+- hotty-surf v0.4.0 and surftea/v0.4.0 (1ed0520, 2026-11-10): L4, L5c,
+  L5d, L8–L11, L13–L15. margin-surf told.
+- hotty-go v0.7.2 (L5a), hotty-blitz v0.7.2 (L5b).
 
 ## The gate
 
