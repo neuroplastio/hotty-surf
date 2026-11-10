@@ -118,11 +118,12 @@ type Attr struct {
 
 // The values of the attributes that take only some.
 var (
-	themes    = []string{"neuroplastio", "terminal", "paper", "graphite", "stone"}
-	densities = []string{"compact", "dense", "roomy"}
-	tones     = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
-	drops     = []string{"whole", "halves", "thirds"}
-	carets    = []string{surfui.CaretStart, surfui.CaretEnd, surfui.CaretKeep}
+	themes     = []string{"neuroplastio", "terminal", "paper", "graphite", "stone"}
+	densities  = []string{"compact", "dense", "roomy"}
+	tones      = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
+	drops      = []string{"whole", "halves", "thirds"}
+	fieldTypes = []string{"text", "password"}
+	carets     = []string{surfui.CaretStart, surfui.CaretEnd, surfui.CaretKeep}
 	// badgeTones are a badge's (Q11, Q12's lean): new, someone waits,
 	// something failed, for information.
 	badgeTones = []string{"accent", "warn", "error", "muted"}
@@ -176,6 +177,7 @@ var Widgets = []Widget{
 	floor("dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil),
 	floor("key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events),
 	floor("button", "a button, its text its label, with an icon before or after it", FormText, "surfui.Button", events),
+	floor("form", "a stack whose text fields submit it: Enter in a field of one line commits it and submits the form, and so does a button with submit; the program checks what the fields gave it", FormKids, "surfui.Form", append([]string{"submit"}, events...)),
 	floor("field", "a text field: one line, or with rows several, wrapped, whose Enter types a newline", FormNone, "surfui.Field", []string{"click", "focus", "change", "input", "height"}),
 	floor("slider", "an integer from min to max in steps of step, a track with a thumb: a drag, ← → ↑ ↓ and Home and End move it, each new value its @input (a string), and its @change when a key or the drag's end commits it; the cells draw ───●─── and the value after it", FormNone, "NewSlider", []string{"focus", "input", "change"}),
 	floor("switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events),
@@ -273,7 +275,11 @@ var Attrs = []Attr{
 	{Name: "spellcheck", Type: TypeBool, Doc: "whether a host checks the spelling of a field of several lines: on unless spellcheck is false; the cells have none", Tags: []string{"field"}, Func: "ModSpellcheck"},
 	{Name: "trap", Type: TypeBool, Doc: "keeps the keyboard in a stack while it shows: Tab and Shift+Tab go from its last element that takes it to its first and back, never out (the cells; a host keeps Tab until hotty's V6-02)", Tags: []string{"stack"}, Func: "ModTrap"},
 	{Name: "name", Type: TypeString, Doc: "a control's name", Func: "ModName"},
-	{Name: "label", Type: TypeString, Doc: "its accessible label", Func: "ModLabel"},
+	{Name: "label", Type: TypeString, Doc: "its accessible label; on a field, also a caption above it (before it in Dense), unless it is bare", Func: "ModLabel"},
+	{Name: "aria-label", Type: TypeString, Doc: "a field's accessible label alone: what label of a field also draws", Tags: []string{"field"}, Func: "ModAriaLabel"},
+	{Name: "error", Type: TypeString, Doc: "a field's error: a message under it in the error tone, which also makes it invalid; \"\" is none. A form's handler sets it for each field it refuses", Tags: []string{"field"}, Func: "ModError"},
+	{Name: "type", Type: TypeString, Doc: "a field's kind of text: text, or password, which a host masks and the cells draw as •", Tags: []string{"field"}, Func: "ModType", Fails: true, Values: fieldTypes},
+	{Name: "submit", Type: TypeBool, Doc: "a button that submits its form, after the fields' own changes", Tags: []string{"button"}, Func: "ModSubmit"},
 	{Name: "title", Type: TypeString, Doc: "its tooltip, this text wrapped, which the host shows while the pointer rests on it; a <title> child is one of any elements", Func: "ModTitle"},
 	{Name: "reveal", Type: TypeBool, Doc: "shown only while its item is pointed at, selected or focused", Func: "ModReveal"},
 	{Name: "focusable", Type: TypeBool, Doc: "takes the keyboard on a click and by Tab", Func: "ModFocusable"},
@@ -720,10 +726,26 @@ func ModCaret(n *surfui.Node, v string) error {
 }
 
 func ModSpellcheck(n *surfui.Node, v bool) { n.Spellcheck(v) }
+func ModSubmit(n *surfui.Node, v bool)     { flag(n, v, n.Submit) }
 func ModTrap(n *surfui.Node, v bool)       { flag(n, v, n.Trap) }
 func ModName(n *surfui.Node, v string)     { n.Name(v) }
 func ModLabel(n *surfui.Node, v string)    { n.Label(v) }
 func ModTitle(n *surfui.Node, v string)    { n.Title(v) }
+
+func ModAriaLabel(n *surfui.Node, v string) { n.AriaLabel(v) }
+func ModError(n *surfui.Node, v string)     { n.Error(v) }
+
+// ModType is type="password" (surfui.Node.Password) or type="text".
+func ModType(n *surfui.Node, v string) error {
+	switch v {
+	case "password":
+		n.Password()
+	case "text":
+	default:
+		return fmt.Errorf("type is text or password, not %q", v)
+	}
+	return nil
+}
 
 // clampInt is v as an int, within what a 32-bit int holds (TinyGo's).
 func clampInt(v int64) int {

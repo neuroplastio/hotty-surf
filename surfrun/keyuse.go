@@ -65,7 +65,7 @@ func (s *Surface) Keys() ([]KeyUse, Chars) {
 		if surfui.IsTextField(n) {
 			chars = CharsText
 		}
-		if _, typed := s.edits[s.focused]; typed && surfui.Commits(n) {
+		if _, typed := s.edits[s.focused]; typed && surfui.GivesEnter(n) {
 			keys = append(keys, KeyUse{Name: "enter", Own: true}) // fieldEnter
 		}
 	}

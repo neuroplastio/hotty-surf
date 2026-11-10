@@ -709,12 +709,38 @@ var All = []Story{
 		// the cells grow it with the text).
 		long := "The loop keeps the lock while it retries, so a second\nrun waits behind it.\n\nFix: take the lock after the first attempt, not before; and put the retry's reason in the error, or no one will know why it waited."
 		return surfui.Stack(
-			surfui.Field().Key("a").Rows(3, 8).Placeholder("Write a comment").Label("Comment"),
+			surfui.Field().Key("a").Rows(3, 8).Placeholder("Write a comment").AriaLabel("Comment"),
 			surfui.Field().Key("b").Rows(3, 8).Value("Looks good to me, one nit on the name."),
 			Force(surfui.Field().Key("c").Rows(4, 4).Value(long), "focus"),
 			surfui.Field().Key("d").Rows(3, 8).Value("Needs a test").Invalid(true),
 			surfui.Field().Key("e").Rows(3, 3).Value("Locked while it posts").Disabled(true),
 		).Gap(1)
+	}},
+	{"form/signup", 50, func() *surfui.Node {
+		// A sign-up form: each field's label above it (before it in
+		// Dense), a password masked, a Strategy choice and the submit
+		// button, a slider and a checkbox of the tour's.
+		return surfui.Form(
+			surfui.Field().Key("name").Name("name").Label("Name").Value("Ada Lovelace"),
+			Force(surfui.Field().Key("email").Name("email").Label("Email").Placeholder("you@example.org"), "focus"),
+			surfui.Field().Key("pass").Name("pass").Label("Password").Password().Value("hunter22"),
+			surfui.Row(surfui.Text("Strategy").Muted().Width(10), surfui.Select("rolling", "rolling", "canary", "all at once")).Gap(1),
+			surfui.Row(surfui.Text("Replicas").Muted().Width(10), surfui.Slider(3).Min(1).Max(12).Label("Replicas")).Gap(1),
+			surfui.Row(surfui.Checkbox(true).Label("Send me the changelog"), surfui.Text("Send me the changelog")).Gap(2),
+			surfui.Row(surfui.Spacer(), surfui.Button("Sign up").Key("go").Submit()),
+		).Key("form").Gap(1)
+	}},
+	{"form/errors", 50, func() *surfui.Node {
+		// A form the program refused: each field it checked says why in
+		// the error tone under it and is invalid; the one it took has no
+		// message. A long message wraps under its field.
+		return surfui.Form(
+			surfui.Field().Key("name").Name("name").Label("Name").Error("Name is required"),
+			surfui.Field().Key("email").Name("email").Label("Email").Value("ada@example").Error("That is not an address: there is no domain after the @, so nothing could be sent to it."),
+			surfui.Field().Key("pass").Name("pass").Label("Password").Password().Value("hunter"),
+			surfui.Field().Key("notes").Name("notes").Label("Notes").Rows(2, 2).Value("Two hosts, no canary").Error("Keep notes under 20 characters"),
+			surfui.Row(surfui.Spacer(), surfui.Button("Sign up").Key("go").Submit()),
+		).Key("form").Gap(1)
 	}},
 	{"switch/states", 40, func() *surfui.Node {
 		return surfui.Stack(

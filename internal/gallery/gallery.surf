@@ -47,7 +47,7 @@
     </stack>
     <row top gap="1" pad="1 0" grow key="main">
       <stack :if="showStories()" :width="sideWidth()" key="side">
-        <field placeholder="Filter" label="Filter the stories" :value="filter" autofocus @input="setFilter($value)" key="filter"/>
+        <field placeholder="Filter" aria-label="Filter the stories" :value="filter" autofocus @input="setFilter($value)" key="filter"/>
         <list :if="size(shown()) > 0" nav scroll label="Stories" key="list">
           <bind key="arrow_up" label="Previous story" do="move(-1)"/>
           <bind key="arrow_down" label="Next story" do="move(1)"/>

@@ -523,7 +523,7 @@ func surfRenderGallery_ControlRow(e *surf.Errs, out []*surfui.Node, c *Gallery, 
 						e.Null("control-row.surf", 11, 3)
 						break
 					}
-					surf.ModLabel(n27, p30.Name)
+					surf.ModAriaLabel(n27, p30.Name)
 				}
 				{
 					a31 := int(prop12)
@@ -846,7 +846,7 @@ func surfRenderGallery(e *surf.Errs, out []*surfui.Node, c *Gallery, fill surf.F
 							surf.ModKey(n37, "filter")
 							surf.ModValue(n37, c.Filter)
 							surf.ModPlaceholder(n37, "Filter")
-							surf.ModLabel(n37, "Filter the stories")
+							surf.ModAriaLabel(n37, "Filter the stories")
 							surf.ModAutofocus(n37, true)
 							n37.On("input", func(ev surfrun.Event) { c.SetFilter(ev.Value) })
 							k36 = append(k36, n37)

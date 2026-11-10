@@ -656,3 +656,25 @@ differs is an edge, by whole device rows, the entries above again:
   a device row differently, and the full-width story makes that edge
   count more area (a red line under each list in the diff panel); the
   selected buttons' text and fills match. As `segmented/states`.
+
+## Forms (2026-11-10, L16)
+
+form/signup and form/errors came on in the gate: 20 cases, all at 1.6×
+and in Compact and Roomy (signup Compact 109–153, Roomy 296–310; errors
+Compact 595, Roomy 884–887); Dense and 2× pass. Looked at in the sheets
+(graphite, Compact, 1.6×) and in `make look` (2×, dark and light, Compact;
+signup Dense): both engines draw the same rows (12 and 18), the same
+labels, messages, text and the same `•` of the password. The diff is the
+hairline along the bottom of a field, a device row off (red under
+"Email"'s field and the password's), the select's line, and the bullets'
+place a device px: the fields' snap at 1.6× that field/states and field/rows
+have (above). The error 595 is field/rows' Compact 594–595 over again, with
+its textarea in the story.
+
+| Story (cases) | Defect seen | Scale | Cause | How bad |
+| --- | --- | --- | --- | --- |
+| form/signup (Compact 109–153, Roomy 296–310), form/errors (Compact 595, Roomy 884–887) | A field's hairline a device row off along its bottom; the password's bullets a device px | 1.6× | The painted box's snap, as field/states and field/rows | Cosmetic |
+
+Dense draws each label before its field and doesn't align the fields in a
+column (each caption is as wide as its text, as in a row): a look to
+choose, not a Blitz gap.

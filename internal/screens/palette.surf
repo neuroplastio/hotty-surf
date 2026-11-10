@@ -23,7 +23,7 @@
       <stack :width="inner()" pad="1 0" :scale="scale()" key="pick">
         <row gap="2" pad="3 1" key="query">
           <text tone="accent" semibold>❯</text>
-          <field bare :value="query" label="Command" autofocus grow @input="setQuery($value)"/>
+          <field bare :value="query" aria-label="Command" autofocus grow @input="setQuery($value)"/>
         </row>
         <rule key="rule"/>
         <row :if="status() != ''" pad="3 1" key="status">

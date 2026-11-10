@@ -1,0 +1,27 @@
+cells 44x10
+caret 16,1 bar
+text
+> Name  ada
+> Password  ••••••
+> Use at least 8 characters
+> Notes
+>
+>                   Sign up
+style
+= aaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= aaaaaaaa.ccccccccccccccccccccccccccccccccccc
+= ddddddddddddddddddddddddd
+= aaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ......bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+. fg/bg
+a muted/bg
+b fg/field
+c fg/error
+d error/bg
+e fg/tonal
+hits
+@ 5,0 39x1 r.kform.kname.0.kname
+@ 9,1 35x1 r.kform.kpass.0.kpass
+@ 6,3 38x2 r.kform.knotes.0.knotes
+@ 0,5 44x1 r.kform.kgo

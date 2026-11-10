@@ -424,6 +424,8 @@
 .u-row.u-gap4, .u-item.u-gap4 { gap: calc(4 * var(--u-gx)); }
 .u-row.u-gap5, .u-item.u-gap5 { gap: calc(5 * var(--u-gx)); }
 .u-row.u-gap6, .u-item.u-gap6 { gap: calc(6 * var(--u-gx)); }
+.u-dense .u-stack.u-labelled { flex-direction: row; align-items: center; gap: var(--u-gx); }
+.u-dense .u-labelled > .u-field { flex: 1 1 0; }
 .u-stack.u-gap1 { gap: var(--u-gy); }
 .u-stack.u-gap2 { gap: calc(2 * var(--u-gy)); }
 .u-stack.u-gap3 { gap: calc(3 * var(--u-gy)); }

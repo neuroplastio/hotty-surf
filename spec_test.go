@@ -76,6 +76,7 @@ var canonWidgets = map[string]string{
 	"quote":    `<quote>Said</quote>`,
 	"alert":    `<alert kind="tip">Careful</alert>`,
 	"img":      `<img src="cid:logo" alt="Logo"/>`,
+	"form":     `<form><field/></form>`,
 }
 
 // canonAttrs is each attribute in a canonical instance, by its name and,
@@ -149,6 +150,10 @@ var canonAttrs = map[string]string{
 	"spellcheck/field":  `<field rows="3..8" spellcheck="false"/>`,
 	"trap/stack":        `<stack trap/>`,
 	"name":              `<field name="q"/>`,
+	"aria-label/field":  `<field aria-label="Search"/>`,
+	"error/field":       `<field error="Required"/>`,
+	"type/field":        `<field type="password"/>`,
+	"submit/button":     `<button submit>Sign up</button>`,
 	"label":             `<button label="Close">x</button>`,
 	"title":             `<text title="Copies the row">x</text>`,
 	"reveal":            `<button reveal>x</button>`,

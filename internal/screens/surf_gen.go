@@ -1546,7 +1546,7 @@ func surfRenderPalette(e *surf.Errs, out []*surfui.Node, c *Palette, fill surf.F
 							n18 := surfui.Field()
 							surf.ModGrow(n18, true)
 							surf.ModValue(n18, c.Query)
-							surf.ModLabel(n18, "Command")
+							surf.ModAriaLabel(n18, "Command")
 							surf.ModBare(n18, true)
 							surf.ModAutofocus(n18, true)
 							n18.On("input", func(ev surfrun.Event) { c.SetQuery(ev.Value) })
@@ -2381,7 +2381,7 @@ func surfRenderSettings_SettingRow(e *surf.Errs, out []*surfui.Node, c *Settings
 								e.Null("setting-row.surf", 21, 5)
 								break
 							}
-							surf.ModLabel(n38, p40.Label)
+							surf.ModAriaLabel(n38, p40.Label)
 						}
 						{
 							a41 := surf.Deref(prop6)
@@ -2647,7 +2647,7 @@ func surfRenderSettings(e *surf.Errs, out []*surfui.Node, c *Settings, fill surf
 							surf.ModWidth(n34, 24)
 							surf.ModValue(n34, c.Query)
 							surf.ModPlaceholder(n34, "Search settings")
-							surf.ModLabel(n34, "Search settings")
+							surf.ModAriaLabel(n34, "Search settings")
 							surf.ModBare(n34, true)
 							surf.ModAutofocus(n34, true)
 							n34.On("input", func(ev surfrun.Event) { c.Search(ev.Value) })

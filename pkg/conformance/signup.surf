@@ -1,0 +1,14 @@
+<!-- A sign-up form: each field commits on Enter or when it is left, then
+     the form is submitted, and the program checks what it has. The
+     message under a field is its error. -->
+<surface>
+  <form key="form" @submit="submit()">
+    <field key="name" name="name" label="Name" placeholder="Ada Lovelace"
+           :value="name" :error="nameError" @change="setName($value)"/>
+    <field key="pass" name="pass" label="Password" type="password"
+           :value="pass" :error="passError" @change="setPass($value)"/>
+    <field key="notes" name="notes" label="Notes" rows="2..4"
+           :value="notes" @change="setNotes($value)"/>
+    <button key="go" submit>Sign up</button>
+  </form>
+</surface>

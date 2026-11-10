@@ -32,6 +32,7 @@ var widgetShape = &surf.Shape{Name: "WidgetStory", Component: true, Methods: []s
 	{Name: "change", Args: []cellite.Type{cellite.String}},
 	{Name: "input", Args: []cellite.Type{cellite.String}},
 	{Name: "height", Args: []cellite.Type{cellite.Int}},
+	{Name: "submit"},
 }}
 
 // none is a string attribute's select's value for no value.
@@ -80,7 +81,7 @@ func newWidgetStory(d *drawn, w *surf.Widget) *widgetStory {
 	for _, a := range ws.attrs() {
 		// A string it draws: not its name, its label or its tooltip,
 		// which it doesn't draw in place.
-		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "hue" && a.Name != "title" && a.Name != "anchor"}
+		c := &Control{Name: a.Name, Kind: "field", text: a.Type == surf.TypeString && a.Values == nil && a.Name != "name" && a.Name != "label" && a.Name != "aria-label" && a.Name != "error" && a.Name != "hue" && a.Name != "title" && a.Name != "anchor"}
 		switch {
 		case a.Name == "hue": // one of the stories' palette's, which the story declares
 			c.Kind, c.Value, c.Options = "select", none, append([]string{none}, stories.Palette.Names()...)
@@ -259,6 +260,9 @@ func (ws *widgetStory) source() string {
 		if e == "click" || e == "focus" {
 			arg = "$event"
 		}
+		if e == "submit" {
+			arg = "" // a form's submit says no more than that
+		}
 		if e == "follow" {
 			arg = "$value, $event"
 		}
@@ -279,7 +283,7 @@ func (ws *widgetStory) source() string {
 				if i == 0 {
 					kids += "<icon>&#xF0349;</icon>"
 				} else {
-					kids += `<field bare width="24" placeholder="Search settings" label="Search settings" @input="input($value)"/>`
+					kids += `<field bare width="24" placeholder="Search settings" aria-label="Search settings" @input="input($value)"/>`
 				}
 			case w.Tag == "row" && (ws.by["segmented"].Value == "true" || ws.by["grid"].Value == "true"):
 				selected := ""

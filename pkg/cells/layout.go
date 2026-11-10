@@ -436,6 +436,11 @@ func (b *box) look(d density) {
 			}
 		case c == "u-row":
 			b.kind, known = across, true
+		case c == "u-labelled":
+			// A field's caption above it, and before it in Dense.
+			if d == dense {
+				b.kind, known, b.gap = across, true, 1
+			}
 		case c == "u-item":
 			b.kind, known = across, true
 			b.f |= fItem
@@ -604,6 +609,9 @@ func (b *box) look(d density) {
 	switch {
 	case b.kind == across && hasClass(n, "u-chips"):
 		b.gap = d.across(max(b.gap, 1)) // chips are apart, as the sheet's 4px
+	case b.kind == across && hasClass(n, "u-labelled"):
+		// Dense's caption row: a cell between the caption and its field,
+		// and the field takes the rest (CSS: .u-dense .u-labelled).
 	case b.kind == across:
 		b.gap = d.across(b.gap)
 	case b.kind == column && hasClass(n, "u-stack"):
@@ -663,6 +671,9 @@ func (b *box) look(d density) {
 				b.fh = max(atoi(v.V), 0)
 			}
 		}
+	}
+	if p := surfui.Parent(n); d == dense && p != nil && hasClass(p, "u-labelled") && (tag == "input" || tag == "textarea") {
+		b.f |= fGrow // the field beside its caption takes the rest of the row
 	}
 	if b.f&(fFit|fFitStart) != 0 && b.fh < 0 {
 		b.fh = 1 // a row's height, what wraps clipped
