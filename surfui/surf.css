@@ -1240,12 +1240,13 @@
 .u-alert-important { --u-bar: var(--u-accent); }
 .u-alert-warning { --u-bar: var(--u-warn); }
 .u-alert-caution { --u-bar: var(--u-error); }
-.u-alert-title { font-weight: 600; color: var(--u-bar); }
+.u-alert-title { font-weight: 600; color: var(--u-bar); height: 1.6em; line-height: 1.6em; }
+.u-dense .u-alert-title, .u-prose-compact .u-alert-title { height: auto; line-height: inherit; }
 .u-alert-icon { font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); }
 .u-em { font-style: italic; }
 .u-strong { font-weight: 600; }
 .u-del { text-decoration: line-through; }
-.u-code { font-family: var(--hotty-font, monospace); font-size: 0.9em; padding: 0 0.25em; border-radius: var(--u-r-xs); background: var(--u-selected); }
+.u-code { font-family: var(--hotty-font, monospace); font-size: 0.9em; padding: 0; border-radius: var(--u-r-xs); background: var(--u-selected); }
 .u-img { max-width: 100%; max-height: calc(20 * var(--u-row)); }
 /* Muted reaches every run in it: a link's, a heading's, an alert's. */
 .u-surface .u-prose.u-tone-muted * { color: inherit; }

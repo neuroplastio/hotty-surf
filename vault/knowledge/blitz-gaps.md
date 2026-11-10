@@ -521,6 +521,14 @@ inline code's ground. What differs, for hotty-blitz's batch:
   fonts) does the same differently. Nothing is faked here: adding
   `IBMPlexSans-Italic.woff2` to the fonts (and the `@font-face` the hosts
   carry) is the fix, and the case is then scored.
+- **Inline padding** (`padding: 0 0.25em` on `code`) widens the text after
+  it in Blitz by more than in Chromium (185 against 26 CSS px² in
+  `prose/compact` once removed), so inline code has none: its ground
+  is flush to the glyphs in both engines.
+- **An alert's title** was a line a pixel shorter in Blitz, which crept the
+  blocks up a row by the end of `prose/alerts` (23 rows against 24); the
+  title has a height of its own (`height: 1.6em`), and `prose/alerts`
+  scores 0.0 in every theme and density since.
 - **An alert's icon** (an MDI glyph, in the Nerd Font Propo) is a size off
   Chromium's, as the icon widget's are.
 - **`text-decoration: underline` and `line-through`** (a link's, `del`'s)
