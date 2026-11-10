@@ -481,3 +481,16 @@ fractions of a CSS px:
 are off it). The legible gate had one real overflow, not a gap:
 text/clickable's "#4182" cut to "#41" in Graphite Roomy at 50 cells,
 where the larger text no longer fits; the story is 54 cells wide now.
+
+## Links (2026-11-10, L10)
+
+link/inline's 13 cases came on in the gate (Compact 1.6×: graphite none,
+12–14 on the other four; Dense 2×: 21–23; Roomy 2×: 51–52). Looked at in
+the sheet (stone, roomy, 2×): both engines draw the same rows (B/C), the
+same text and the same link colours and hover fill. The diff is the
+underline: Blitz's sits a device row lower than Chromium's (red under
+"install guide" and "usage") and is a shade thicker.
+
+| Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
+| --- | --- | --- | --- | --- |
+| link/inline (Compact 1.6×: 12–14; Dense 2×: 21–23; Roomy 2×: 51–52) | An underline a device row lower and thicker than Chromium's | 1.6×, 2× | Not verified: Blitz places the line from the font's underline metrics, snapped to device px; Chromium 153 rounds its own | Cosmetic |
