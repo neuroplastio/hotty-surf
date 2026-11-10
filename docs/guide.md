@@ -1188,6 +1188,60 @@ menu still passes a `menu` func to `WriteFrame`, since a menu it does not
 show would hold the keyboard (`surftest.StartHosted` records the frames:
 `App.Menus`).
 
+### Placing a surface on a host
+
+A host places a surface over whole cells it picks, and a document's
+height there is not a count of lines: in Compact a row has air, and the
+text follows the terminal's font. A program that places the surface
+(margin, a multiplexer) needs the rows twice: a first guess to place it
+with, and the host's answer. A surface gives both, with no Bubble Tea
+and no terminal in it:
+
+- **The estimate, synchronous.** `surfui.Rows(root, cols, surfui.Metrics)`
+  is the rows a tree takes `cols` cells wide, from the host's cell in
+  CSS px (`hotty.Caps.CellCSS`), the density (the root's own, or
+  `Metrics.Density`), the host's `Scale` (device pixels to a CSS pixel)
+  and its root font `Rem`. The sizes come from surf.css, read at start:
+  a density's row, gaps, padding and control height follow the sheet, and
+  a rule's margin, a button's height and the rest of the vocabulary's own
+  sizes are in the estimate's code, held to Chromium by the rows gate
+  (below). Text is counted by its characters, a terminal's font by its
+  cell and a proportional one at half its size, so a paragraph that
+  wraps, and a field that grows with its text, may be a row off.
+  `surfui.Height` is the same in CSS px.
+- **The measure, from the host.** Place the surface with
+  `s.Placement()`: its `Cols` and `Rows` (the host's measure where it
+  has one, else the estimate; `s.Rows()` says which) and `Fit` on, which
+  is `f=1` (SPEC §5.2). A frame's `Fit` says the same. The host then
+  sends a `fit` event whenever the rows the document needs change from
+  the rows it was placed at; `s.Event` takes it, runs `s.OnFit(rows)`
+  and the `@height` of a field of several lines, and the program places
+  the surface again with `s.Placement()`, which now carries the
+  measured rows. A host hears of a fit only when the rows differ from
+  the ones it placed at, so after a placement whose reply gives rows
+  (`r=auto`), tell the surface: `s.Fit(rows)`. Call `s.Size(cols,
+  metrics)` first, before `Show`; it holds the width and the cell the
+  estimate uses.
+- **`@height` on a host** is that measure: a field of several lines is
+  as tall as its text wraps, which only the host knows, and the host says
+  the document's rows. With one such field in the surface the surface
+  finds the rows of text that make the estimate of the document that tall
+  (`surfui.FieldRows`), in one row's steps in Compact and in Dense, and
+  the nearest to its own estimate in Roomy, where a row is not a cell. With
+  more than one it takes each one's from its text and its width.
+- **Hold the top still.** A re-place that grows a surface must not move
+  what is above it. Place it again at the same row (`hotty.PlaceAt`, not
+  the cursor's place) and ask `surfrun.Hold(top, rows, screenRows)` where
+  it goes: the top stays, and where the surface would run past the screen
+  the screen scrolls by the second result and the top moves up with the
+  rows above it. The host does the scrolling.
+
+The rows gate (`node scripts/gate/rows.cjs`, `make rows`) holds the
+estimate to Chromium and Blitz on every story at every density, in two
+themes, at 1.6× and 2× and at a smaller root font; its tolerance and the
+last run's numbers are in the journal entry of the leg that added it
+(`vault/journal/2026-11-10-surface-rows.md`).
+
 ### Tooltips
 
 A template's `title` and `<title>` are tooltips, which the tree never

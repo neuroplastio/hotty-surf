@@ -42,7 +42,20 @@ func main() {
 	density := flag.String("density", "dense", "the density: dense, roomy, compact (with -gallery, compact, the gallery's)")
 	ofGallery := flag.Bool("gallery", false, "write the gallery's stories, each as the gallery draws it, in each of its modes")
 	width := flag.Int("width", 0, "with -gallery, draw every canvas `cells` wide, not at its story's width")
+	rows := flag.Bool("rows", false, "write each story's estimated rows (surfui.Rows) as name<TAB>rows, for scripts/gate/rows.cjs")
+	cellW := flag.Float64("cellw", 10, "with -rows, the cell's width in CSS px")
+	cellH := flag.Float64("cellh", 21.25, "with -rows, the cell's height in CSS px")
+	scale := flag.Float64("scale", 1.6, "with -rows, the host's device pixels to a CSS pixel")
+	rem := flag.Float64("rem", 17, "with -rows, the host's root font size in CSS px")
 	flag.Parse()
+	if *rows {
+		m := surfui.Metrics{CellW: *cellW, CellH: *cellH, Scale: *scale, Rem: *rem}
+		for _, s := range stories.All {
+			root := stories.Surface(s, *theme, surfui.Density(*density))
+			fmt.Printf("%s\t%d\n", s.Name, surfui.Rows(root, s.Cols, m))
+		}
+		return
+	}
 	if *ofGallery {
 		if *list || *out == "" {
 			flag.Usage()

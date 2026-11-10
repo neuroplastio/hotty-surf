@@ -196,9 +196,11 @@ func (n *Node) OnChange(act Action) *Node { return n.On("change", act) }
 func (n *Node) OnInput(act Action) *Node { return n.On("input", act) }
 
 // OnHeight runs act when a Field of several lines (Rows) has another
-// height, as the cells wrap it: its rows are the event's Value, in
-// decimal, and it comes once when the field first shows. A host tells
-// no height yet, so a host's field never runs it (the cells do).
+// height: its rows are the event's Rows, and it comes once when the
+// field first shows. The cells say it from the wrap; on a host it comes
+// from the host's measure of the whole document (surfrun.Surface.Fit),
+// which a surface with one such field turns into the field's rows
+// (FieldRows).
 func (n *Node) OnHeight(act Action) *Node { return n.On("height", act) }
 
 // Bind takes key while focus is in n, or n is the keyboard's home: n's
