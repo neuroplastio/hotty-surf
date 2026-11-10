@@ -23,7 +23,7 @@ func TestChipsInCells(t *testing.T) {
 					row.Add(surfui.Button(name).Key(name).Selected(picked[name]).
 						OnClick(func() { picked[name] = !picked[name] }))
 				}
-				return surfui.Surface(row.Chips().Gap(1)).Density(density)
+				return surfui.Surface(row.Chips()).Density(density)
 			}
 			r := show(m)
 			bg := func(word string) cells.Role {

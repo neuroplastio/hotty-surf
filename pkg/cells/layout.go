@@ -592,6 +592,8 @@ func (b *box) look(d density) {
 	}
 	// Gap works on a Row, an Item and a Stack only.
 	switch {
+	case b.kind == across && hasClass(n, "u-chips"):
+		b.gap = d.across(max(b.gap, 1)) // chips are apart, as the sheet's 4px
 	case b.kind == across:
 		b.gap = d.across(b.gap)
 	case b.kind == column && hasClass(n, "u-stack"):

@@ -756,9 +756,9 @@ var All = []Story{
 		// The tour's Replicas (1 to 12) and a range of steps of 50, as a
 		// form draws them: at the ends, in the middle, the keyboard on
 		// one, and one that can't be used; the cells draw the value after
-		// the track.
+		// the track, a host leaves it to the app.
 		row := func(label string, c *surfui.Node) *surfui.Node {
-			return surfui.Row(surfui.Text(label).Bold().Width(12), c, surfui.Text(strconv.FormatInt(sliderValue(c), 10)).Muted()).Gap(2)
+			return surfui.Row(surfui.Text(label).Bold().Width(12), c).Gap(2)
 		}
 		return surfui.Stack(
 			row("Replicas", surfui.Slider(1).Min(1).Max(12)),
@@ -1002,10 +1002,4 @@ func Surface(s Story, theme string, d surfui.Density) *surfui.Node {
 	root := surfui.Surface(tree).Theme(theme).Density(d)
 	surfkeys.Expand(root, KeyStyle, true)
 	return root
-}
-
-// sliderValue is a slider's value, for a story's label after it.
-func sliderValue(n *surfui.Node) int64 {
-	_, _, _, v, _ := surfui.SliderOf(n)
-	return v
 }
