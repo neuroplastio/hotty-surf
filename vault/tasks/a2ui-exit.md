@@ -179,7 +179,7 @@ hotty-go v0.7.1; margin can move its thread pane.
 
 ### Phase 5: hosting and the tour's P2
 
-- [ ] **L14. `surftea`** (B9; after Q-0004): the Host from the list, one
+- [x] **L14. `surftea`** (merge 02dcc36; at publish, surftea's hotty-surf requirement moves to the new tag) (B9; after Q-0004): the Host from the list, one
   stylesheet per Session, selects and menus placed as surfaces of their
   own, `CellsClick`; margin's adapter replaced; a guide section and an
   example with two surfaces in one program, shown to share no state. M.
