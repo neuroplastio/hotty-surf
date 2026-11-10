@@ -159,7 +159,7 @@ Sizes as the board's: S one leg, M two or three.
   element has; Tab between links in the cells; `Run.Href`, runs split
   where it changes, and OSC 8 written by hotty-go's cells side, with an
   off switch. M.
-- [ ] **L11. Prose** (A1): `prose` (and `compact`, `muted` reaching every
+- [x] **L11. Prose** (A1; merge 8230653; italic waits for the gate's fonts): `prose` (and `compact`, `muted` reaching every
   run), `p`, `h` with `anchor`, `em`, `strong`, `del`, inline `code`,
   `ul`/`ol`/`li` (`start`, `checked`), `quote`, `alert` by kind, `img`
   (`src` a URL or a resource the program sent, alt text in the cells),
