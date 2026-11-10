@@ -249,3 +249,7 @@ blitz-gaps.
   registered widget's tag keeps L8's dash, so it never meets a future
   word of the vocabulary. A rename if the maintainer wants `markdown` in
   the vocabulary itself (it would pull goldmark into the core, Q-0004).
+- **Forms (L16):** `label` on a field that isn't bare is a drawn caption,
+  and the accessible name is a new `aria-label` (six uses in the repo
+  moved to it); new attributes `type`, `submit`, `error`, `aria-label`; a
+  field with a label or an error is wrapped in a stack and keeps its id.
