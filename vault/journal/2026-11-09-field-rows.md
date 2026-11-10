@@ -107,3 +107,12 @@ recorded there: a long word with no break doesn't wrap in a Blitz textarea.
 - **`@height`'s `$value` is a string** (`$value` is always one): the
   program converts it.
 - The gate (fidelity and legible) of the new story: see the report.
+
+## The gate's field/rows cases (2026-11-10)
+
+15 cases fail: Compact and Roomy at 1.6× (585–595) and Dense at 2×
+(16–18). The images show equal rows and text in both engines and only a
+device row's difference along the fields' edges: the snap of a fractional
+height (blitz-gaps), not field-sizing, which no story field exercises.
+field-states at Compact 1.6× (32–35) is main's: the same numbers in
+main's gate log before the a2ui legs.
