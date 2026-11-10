@@ -26,8 +26,14 @@ fmt:   ## fails, listing them, when gofmt would change files
 	@out="$$($(GOFMT) -l $$(git ls-files -co --exclude-standard '*.go'))"; \
 	if [ -n "$$out" ]; then echo "gofmt would change:"; echo "$$out"; exit 1; fi
 
+# SUBMODULES are the modules of their own inside this repository, each with
+# a go.mod and a replace of hotty-surf by ../: surftea takes Bubble Tea, which
+# the core does not. They are tidied, vetted, linted and tested like it.
+SUBMODULES := surftea
+
 tidy:   ## fails when go.mod or go.sum is not what go mod tidy makes
 	$(GO) mod tidy -diff
+	@for m in $(SUBMODULES); do $(GO) -C $$m mod tidy -diff || exit 1; done
 
 gen:    ## fails when a generated file is not what its go:generate makes (surfgen)
 	@t=$$(mktemp); trap 'rm -f "$$t"' EXIT; \
@@ -38,12 +44,15 @@ gen:    ## fails when a generated file is not what its go:generate makes (surfge
 
 vet:
 	$(GO) vet ./...
+	@for m in $(SUBMODULES); do $(GO) -C $$m vet ./... || exit 1; done
 
 lint:   ## staticcheck, pinned; from the module cache when it has it
 	GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) ./...
+	@for m in $(SUBMODULES); do (cd $$m && GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) ./...) || exit 1; done
 
 test:   ## the tests, with the race detector
 	$(GO) test -race ./...
+	@for m in $(SUBMODULES); do $(GO) -C $$m test -race ./... || exit 1; done
 
 # bench times the machine: run it while nothing else runs, at normal
 # priority (`make bench IDLE=` where a CAP holds steps at idle), as
