@@ -166,7 +166,7 @@ Sizes as the board's: S one leg, M two or three.
   hard breaks; `.u-prose` on a host at an 80ch measure. Designed by
   Design Agent first for the alert's and quote's bars and the reading
   size. M–L.
-- [ ] **L12. `surfmd`** (G3; after Q-0004): goldmark to L11's nodes,
+- [x] **L12. `surfmd`** (merged, 2026-11-10) (G3; after Q-0004): goldmark to L11's nodes,
   `HardWraps`, `GFM`, `Compact`, `Highlight`, `Anchors`, `Node`; and
   `<markdown :text hard-wraps compact>` registered through L8. Its own
   module, with goldmark; the core stays TinyGo-clean. M.
