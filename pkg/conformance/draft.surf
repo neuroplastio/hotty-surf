@@ -1,0 +1,15 @@
+<!-- A composer: a field of several lines over buttons, in a stack that
+     keeps Tab. What sends is the program's: ctrl+s, a bind on the field. -->
+<surface>
+  <stack trap>
+    <field key="text" rows="2..4" caret="end" autofocus placeholder="Write a comment"
+           :value="text" @input="typed($value)" @height="grew($value)">
+      <bind key="ctrl+s" label="Send" do="send()"/>
+    </field>
+    <row gap="1">
+      <button key="save" @click="send()">Save</button>
+      <button key="keep" @click="keep()">Keep draft</button>
+    </row>
+  </stack>
+  <text key="rows" muted>{{ height }}</text>
+</surface>

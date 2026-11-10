@@ -330,3 +330,27 @@ func (c *Crew) Recolour(name string) {
 	}
 	c.Log = append(c.Log, "recolour "+name)
 }
+
+// Draft is a component whose template is a composer, a field of several
+// lines with its height reported (draft.surf).
+type Draft struct {
+	Text   string
+	Height int
+	Log    []string
+}
+
+// Typed is the field's input: its whole text.
+func (d *Draft) Typed(v string) {
+	d.Text = v
+	d.Log = append(d.Log, "typed "+strconv.Quote(v))
+}
+
+// Grew is the field's height in rows, as the cells wrap it: a host tells
+// none, so it is not in the log, which a host and the cells share.
+func (d *Draft) Grew(h int) { d.Height = h }
+
+// Send is ctrl+s, and the Save button: what the model has is what is sent.
+func (d *Draft) Send() { d.Log = append(d.Log, "send "+strconv.Quote(d.Text)) }
+
+// Keep is the Keep draft button.
+func (d *Draft) Keep() { d.Log = append(d.Log, "keep") }
