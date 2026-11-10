@@ -71,6 +71,9 @@ type Node struct {
 	hue      string     // the name of the hue its text is drawn in (Hue)
 	readline bool       // a Surface or Field whose fields edit by hotty.TerminalKeys (Readline)
 
+	caption, message string // a Field's Label and Error, which its parent draws (decorate)
+	captioned        bool   // Label was called
+
 	cycle   *cycle  // a Cycle's value and options
 	slider  *slider // a Slider's bounds and value
 	choice  *choice // a Select's value and options
@@ -107,7 +110,7 @@ func (n *Node) Add(kids ...*Node) *Node {
 			if n.entries {
 				entry(k)
 			}
-			n.kids = append(n.kids, k)
+			n.kids = append(n.kids, decorate(k))
 		}
 	}
 	return n

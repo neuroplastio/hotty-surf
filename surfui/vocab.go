@@ -742,9 +742,6 @@ func (n *Node) Placeholder(p string) *Node { return n.Attr("placeholder", p) }
 // Name sets a control's name.
 func (n *Node) Name(s string) *Node { return n.Attr("name", s) }
 
-// Label sets n's accessible label.
-func (n *Node) Label(s string) *Node { return n.Attr("aria-label", s) }
-
 // Reveal shows n only while its Item is under the pointer, selected, or n
 // has the focus: a row's buttons.
 func (n *Node) Reveal() *Node { return n.Class("u-reveal") }

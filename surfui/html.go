@@ -270,6 +270,15 @@ func Commits(n *Node) bool {
 	return ok
 }
 
+// GivesEnter reports whether a field gives Enter to the program, which
+// commits it for the field (Commits): a field of one line with an
+// OnChange, in no form. In a form, it keeps Enter, which commits it and
+// submits the form (SPEC V6-03); a field of several lines types a line
+// break, in a form or not.
+func GivesEnter(n *Node) bool {
+	return Commits(n) && n.tag == "input" && FormOf(n) == nil
+}
+
 func isButtonInput(n *Node) bool {
 	t, _ := AttrOf(n, "type")
 	return t == "button" || t == "submit" || t == "reset"
@@ -397,7 +406,7 @@ func fieldKeys(n *Node) string {
 	if n.readline {
 		keys = append(keys, hotty.TerminalKeys)
 	}
-	if Commits(n) {
+	if GivesEnter(n) {
 		keys = append(keys, "enter=program")
 	}
 	for p := n; p != nil; p = p.parent {
