@@ -44,7 +44,7 @@ func TestTableThreads(t *testing.T) {
 		s := r.Draw(60, 10)
 		golden(t, c.name, s)
 		text := s.Text()
-		if !strings.Contains(text, "Is this still true after the rename…") {
+		if !strings.Contains(text, "Is this still true after the renam…") {
 			t.Errorf("%s: the fill column isn't cut with …:\n%s", c.name, text)
 		}
 		if got := strings.Count(text, "─") > 60; got != (c.sel < 0) {

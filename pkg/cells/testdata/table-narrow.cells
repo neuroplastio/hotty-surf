@@ -1,12 +1,12 @@
 cells 34x10
 text
->     document     thread     age 󰅀
+>     document     thread    age 󰅀
 > ──────────────────────────────────
->  ●  README.md    Is this s…    3h
+>  ●  README.md    Is this …     3h
 >  ✓  docs/surf.md Typo          2d
 >  ●  a.go         Short        10m
 style
-= ....aaaaaaaa.....aaaaaa.....aaa
+= ....aaaaaaaa.....aaaaaa....aaa
 = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 = ...............................aa
 = cccccccccccccccccccccccccccccccddc

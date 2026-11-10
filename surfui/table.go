@@ -281,7 +281,7 @@ func tableHead(spec *tableSpec) *Node {
 				mark = chevronUp
 			}
 			n.Attr("aria-sort", c.sort)
-			sort := Icon(mark).Keep().Class("u-table-sort").Attr("aria-hidden", "true")
+			sort := Icon(mark).Width(2).Keep().Class("u-table-sort").Attr("aria-hidden", "true")
 			if c.sort != "none" {
 				sort.Class("is-sorted")
 			}
