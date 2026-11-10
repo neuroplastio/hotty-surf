@@ -2,6 +2,7 @@ package surf
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -118,6 +119,7 @@ var (
 	densities = []string{"compact", "dense", "roomy"}
 	tones     = []string{"accent", "ok", "warn", "error", "info", "muted", "plain"}
 	drops     = []string{"whole", "halves", "thirds"}
+	carets    = []string{surfui.CaretStart, surfui.CaretEnd, surfui.CaretKeep}
 	// badgeTones are a badge's (Q11, Q12's lean): new, someone waits,
 	// something failed, for information.
 	badgeTones = []string{"accent", "warn", "error", "muted"}
@@ -165,7 +167,7 @@ var Widgets = []Widget{
 	floor("dot", "a state's mark: a small dot in its tone", FormNone, "surfui.Dot", nil),
 	floor("key", "a key, a chord or a sequence by myelin's names, as `ctrl+b v`: a cap a chord, in the renderer's key style", FormText, "surfui.Key", events),
 	floor("button", "a button, its text its label, with an icon before or after it", FormText, "surfui.Button", events),
-	floor("field", "a one-line text field", FormNone, "surfui.Field", []string{"click", "focus", "change", "input"}),
+	floor("field", "a text field: one line, or with rows several, wrapped, whose Enter types a newline", FormNone, "surfui.Field", []string{"click", "focus", "change", "input", "height"}),
 	floor("switch", "a boolean, as a track with a knob: it shows on, and its click handler changes it", FormSwitch, "surfui.Switch", events),
 	floor("select", "a pick of one of its options", FormChoice, "NewSelect", []string{"click", "focus", "change"}),
 	floor("cycle", "steps through its options: ‹ value ›", FormChoice, "NewCycle", []string{"click", "focus", "change"}),
@@ -200,7 +202,7 @@ var Attrs = []Attr{
 	{Name: "semibold", Type: TypeBool, Doc: "text at weight 600", Func: "ModSemibold"},
 	{Name: "muted", Type: TypeBool, Doc: "the muted colour", Func: "ModMuted"},
 	{Name: "small", Type: TypeBool, Doc: "smaller text; a button a line tall, to fit its row", Func: "ModSmall"},
-	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph", Func: "ModWrap"},
+	{Name: "wrap", Type: TypeBool, Doc: "a text that wraps; a line that is a paragraph; a field of several lines wraps unless wrap is false", Func: "ModWrap"},
 	{Name: "grow", Type: TypeBool, Doc: "takes the room left in its row or stack", Func: "ModGrow"},
 	{Name: "keep", Type: TypeBool, Doc: "keeps it whole in its row or stack: what is beside it gives way first", Func: "ModKeep"},
 	{Name: "fit", Type: TypeBool, Doc: "shows what fits: its children right to left from its end, each whole, those that don't fit left out from the last; it takes the room left, and keeps its first", Tags: []string{"row"}, Func: "ModFit"},
@@ -218,6 +220,10 @@ var Attrs = []Attr{
 	{Name: "invalid", Type: TypeBool, Doc: "a field whose value isn't taken", Func: "ModInvalid"},
 	{Name: "value", Type: TypeString, Doc: "a field's value", Tags: []string{"field"}, Func: "ModValue"},
 	{Name: "placeholder", Type: TypeString, Doc: "a field's placeholder", Tags: []string{"field"}, Func: "ModPlaceholder"},
+	{Name: "rows", Type: TypeString, Doc: "a field's rows: \"8\" always that tall, \"3..8\" from 3 growing with its text to 8, then scrolling; \"1\" is a one-line field. Enter and Shift+Enter type a newline in more than one", Tags: []string{"field"}, Func: "ModRows", Fails: true},
+	{Name: "caret", Type: TypeString, Doc: "where a field's caret goes when the program sets its value: start, end, or keep it where the user had it (the default of a field of several lines; a one-line field's is end). The same value again moves nothing", Tags: []string{"field"}, Func: "ModCaret", Fails: true, Values: carets},
+	{Name: "spellcheck", Type: TypeBool, Doc: "whether a host checks the spelling of a field of several lines: on unless spellcheck is false; the cells have none", Tags: []string{"field"}, Func: "ModSpellcheck"},
+	{Name: "trap", Type: TypeBool, Doc: "keeps the keyboard in a stack while it shows: Tab and Shift+Tab go from its last element that takes it to its first and back, never out (the cells; a host keeps Tab until hotty's V6-02)", Tags: []string{"stack"}, Func: "ModTrap"},
 	{Name: "name", Type: TypeString, Doc: "a control's name", Func: "ModName"},
 	{Name: "label", Type: TypeString, Doc: "its accessible label", Func: "ModLabel"},
 	{Name: "title", Type: TypeString, Doc: "its tooltip, this text wrapped, which the host shows while the pointer rests on it; a <title> child is one of any elements", Func: "ModTitle"},
@@ -454,11 +460,17 @@ func flag(n *surfui.Node, v bool, m func() *surfui.Node) {
 }
 
 // The flags.
-func ModBold(n *surfui.Node, v bool)      { flag(n, v, n.Bold) }
-func ModSemibold(n *surfui.Node, v bool)  { flag(n, v, n.Semibold) }
-func ModMuted(n *surfui.Node, v bool)     { flag(n, v, n.Muted) }
-func ModSmall(n *surfui.Node, v bool)     { flag(n, v, n.Small) }
-func ModWrap(n *surfui.Node, v bool)      { flag(n, v, n.Wrap) }
+func ModBold(n *surfui.Node, v bool)     { flag(n, v, n.Bold) }
+func ModSemibold(n *surfui.Node, v bool) { flag(n, v, n.Semibold) }
+func ModMuted(n *surfui.Node, v bool)    { flag(n, v, n.Muted) }
+func ModSmall(n *surfui.Node, v bool)    { flag(n, v, n.Small) }
+func ModWrap(n *surfui.Node, v bool) {
+	if !v && surfui.IsTextField(n) {
+		n.Attr("wrap", "off") // a field of several lines that scrolls sideways
+		return
+	}
+	flag(n, v, n.Wrap)
+}
 func ModGrow(n *surfui.Node, v bool)      { flag(n, v, n.Grow) }
 func ModKeep(n *surfui.Node, v bool)      { flag(n, v, n.Keep) }
 func ModFit(n *surfui.Node, v bool)       { flag(n, v, n.Fit) }
@@ -567,9 +579,36 @@ func ModPad(n *surfui.Node, v [2]int64) { n.Pad(clampInt(v[0]), clampInt(v[1])) 
 // The strings.
 func ModValue(n *surfui.Node, v string)       { n.Value(v) }
 func ModPlaceholder(n *surfui.Node, v string) { n.Placeholder(v) }
-func ModName(n *surfui.Node, v string)        { n.Name(v) }
-func ModLabel(n *surfui.Node, v string)       { n.Label(v) }
-func ModTitle(n *surfui.Node, v string)       { n.Title(v) }
+
+// ModRows is rows="8" or rows="3..8" (surfui.Node.Rows).
+func ModRows(n *surfui.Node, v string) error {
+	a, b, two := strings.Cut(strings.TrimSpace(v), "..")
+	lo, err := strconv.Atoi(strings.TrimSpace(a))
+	hi := lo
+	if err == nil && two {
+		hi, err = strconv.Atoi(strings.TrimSpace(b))
+	}
+	if err != nil || lo < 1 || hi < lo {
+		return fmt.Errorf("rows is a number of rows, 8, or from 3 to 8, 3..8, not %q", v)
+	}
+	n.Rows(lo, hi)
+	return nil
+}
+
+// ModCaret is caret="start", "end" or "keep".
+func ModCaret(n *surfui.Node, v string) error {
+	if !slices.Contains(carets, v) {
+		return fmt.Errorf("caret is start, end or keep, not %q", v)
+	}
+	n.Caret(v)
+	return nil
+}
+
+func ModSpellcheck(n *surfui.Node, v bool) { n.Spellcheck(v) }
+func ModTrap(n *surfui.Node, v bool)       { flag(n, v, n.Trap) }
+func ModName(n *surfui.Node, v string)     { n.Name(v) }
+func ModLabel(n *surfui.Node, v string)    { n.Label(v) }
+func ModTitle(n *surfui.Node, v string)    { n.Title(v) }
 
 // clampInt is v as an int, within what a 32-bit int holds (TinyGo's).
 func clampInt(v int64) int {
