@@ -111,3 +111,17 @@ func TestHold(t *testing.T) {
 		}
 	}
 }
+
+// Rows on a surface that was never shown estimates the tree the model
+// renders now, not one row for want of a tree.
+func TestRowsBeforeShow(t *testing.T) {
+	m := &grower{}
+	s := surfrun.NewSurface(m, nil)
+	s.Size(50, cellMetrics)
+	before, measured := s.Rows()
+	s.Show()
+	after, _ := s.Rows()
+	if measured || before != after || before < 2 {
+		t.Errorf("Rows before Show = %d (measured %v), after Show = %d", before, measured, after)
+	}
+}

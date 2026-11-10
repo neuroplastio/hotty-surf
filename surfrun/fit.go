@@ -25,7 +25,14 @@ func (s *Surface) Rows() (rows int, measured bool) {
 	if s.Density != "" {
 		m.Density = s.Density
 	}
-	return surfui.Rows(s.prev, s.cols, m), false
+	tree := s.prev
+	if tree == nil {
+		// Never shown: the tree the model renders now, which Show would send.
+		if tree = s.tree(); tree != nil {
+			surfui.Resolve(tree, "r")
+		}
+	}
+	return surfui.Rows(tree, s.cols, m), false
 }
 
 // Placement is the surface's placement at the width Size gave: Rows
