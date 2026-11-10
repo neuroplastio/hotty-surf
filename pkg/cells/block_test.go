@@ -2,10 +2,12 @@ package cells_test
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"neuroplast.io/hotty-surf/pkg/cells"
+	"neuroplast.io/hotty-surf/surfrun"
 	"neuroplast.io/hotty-surf/surfui"
 )
 
@@ -132,5 +134,25 @@ func TestCellsBlockMeasured(t *testing.T) {
 	r.Draw(10, 0)
 	if calls != n {
 		t.Errorf("kept layouts made %d more blocks", calls-n)
+	}
+}
+
+// A multi-row field a block places is built and sized as any is: it
+// holds its value and its rows, in the block.
+func TestCellsBlockArea(t *testing.T) {
+	var heights []string
+	m := &model{render: func() *surfui.Node {
+		f := surfui.Field().Key("text").Rows(2, 4).Value("one\ntwo\nthree").
+			OnHeight(func(e surfrun.Event) { heights = append(heights, strconv.Itoa(e.Rows)) })
+		box := surfui.El("div", f).Cells(func(w int, _ cells.Style) cells.Block {
+			return cells.Block{Rows: [][]cells.Run{{cells.NewRun(0, "> ", cells.Muted, "", 0)}, nil, nil},
+				Kids: []cells.Place{{Kid: 0, X: 2, Y: 0, W: max(w-2, 1), H: 3}}}
+		})
+		return surfui.Surface(surfui.Stack(box, surfui.Text("tail")))
+	}}
+	s := show(m).Draw(20, 6)
+	got := lines(s)
+	if !strings.HasPrefix(got[0], "> ") || !strings.Contains(got[0], "one") || !strings.Contains(got[2], "three") || !strings.HasPrefix(got[3], "tail") {
+		t.Errorf("a field in a block:\n%s", s.Text())
 	}
 }
