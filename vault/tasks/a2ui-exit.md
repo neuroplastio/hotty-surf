@@ -128,7 +128,7 @@ Sizes as the board's: S one leg, M two or three.
 
 ### Phase 3: table and tree (both programs; after Q-0002)
 
-- [ ] **L6. Table** (A4, G5): static and data in one widget. Auto widths
+- [x] **L6. Table** (A4, G5; merge 7e109fe): static and data in one widget. Auto widths
   measured in cells and sent to the host as `ch`; `fill` cut with …;
   `max`; `align`; a column's modifiers and `:if`; `empty`; selection and
   `reveal` from the model; `@activate`; the static form taking a
