@@ -1,0 +1,35 @@
+cells 60x11
+text
+> Looks right to me.
+> One thing: the Update loop
+> runs once per event, not per key.
+>
+> • rename it
+> • or drop it
+>
+> ▎ as the doc says,
+> ▎ "once"
+>
+> See the thread and https://example.com.
+style
+=
+= ...............aaaaaa
+=
+=
+=
+= .....bbbb
+=
+= c
+= c
+=
+= ....dddddddddd
+. fg/bg
+a fg/tonal
+b fg/bg bold
+c border/bg
+d accent/bg underline
+hits
+@ 4,10 3x1 r.0.3.1
+@ 7,10 7x1 r.0.3.1
+links
+@ 4,10 10x1 #c12

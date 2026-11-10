@@ -783,6 +783,69 @@ density gives the units.
   against Chromium. A look the vocabulary doesn't have is a new widget or
   modifier: ask for it.
 
+## Markdown
+
+Prose is `surfui`'s nodes (`prose`, `p`, `h`, `ul`, `quote`, `alert`, … in
+[the reference](surf.md#prose)); Markdown is turned into them by `surfmd`,
+a module of its own (`neuroplast.io/hotty-surf/surfmd`) that takes
+goldmark, so the core takes none and stays TinyGo-clean.
+
+```go
+doc := surfmd.Convert(src, surfmd.GFM(), surfmd.Anchors(github))
+// doc is a *surfui.Node, a prose: return it from Render, or put it in a tree
+```
+
+- **`Convert(src, opts...)`** parses with goldmark and gives a `prose`.
+  **`ConvertAST(n, src, opts...)`** takes a document the caller parsed,
+  with its own parser and extensions; the node kinds of tables,
+  strikethrough and task lists are converted whatever the options say.
+- **`HardWraps()`** makes every newline inside a paragraph a break, as a
+  reviewer who typed it meant it; without it a newline is a space, as
+  CommonMark has it. Two spaces at a line's end are a break either way.
+- **`GFM()`** turns on tables, strikethrough, task lists (`- [x]`) and
+  alerts: a quote whose first line is `[!NOTE]`, `[!TIP]`,
+  `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` is an `alert` of that kind.
+- **`Compact()`** is `<prose compact>`: no measure, the surface's text
+  size, for a comment in a box.
+- **`Anchors(f)`** gives each heading the id `f(its text)` (the website's
+  is GitHub's), which a `#fragment` link finds ([Links](surf.md#links)).
+  Without it a heading has none.
+- **`Node(kind, f)`** makes the nodes of one goldmark kind itself, in
+  place of the default: a callout, a fence of `mermaid`. `f` gets the node,
+  the source (a fenced block's lines are read from it) and its children
+  converted, and returns nil to leave the node to the default.
+- **What a document can't do.** Raw HTML, a block or inline, is shown as
+  text and never put in as markup. A link or an image whose address has a
+  scheme other than `http`, `https`, `mailto` and `cid:` (a resource the
+  program sent) is no link: `[x](javascript:…)` is its text, and an image
+  with such a source has none. A link with a scheme is `external`; a path
+  and a `#fragment` are not.
+- **Until `code` and `table` are in the vocabulary** (the plan's L2 and L6),
+  a fenced code block is a box of one `text` a line, and a table a column
+  of rows of `text`s as wide as their columns' widest: both are one
+  function each in `surfmd/convert.go` (`codeBlock`, `table`), to be
+  replaced; `Highlight` comes with `code`.
+
+### In a template
+
+Importing `surfmd` registers a widget, so that a template draws Markdown
+with no Go component:
+
+```
+<surf-markdown gfm :text="body"/>
+<surf-markdown hard-wraps compact muted :text="comment"/>
+```
+
+Its flags are `gfm`, `hard-wraps` and `compact`, and `text` is the Markdown.
+`muted` and the rest of the floor's modifiers go on the prose it is. Its
+tag has a dash because every widget registered from outside does
+(["Widgets from outside"](surf.md#widgets-from-outside)): the floor's tags
+have none, and the rule keeps a registered widget's tag clear of the
+words the vocabulary may take later, `markdown` among them. As for any
+registered widget, the compiled mode needs a generator that links the
+package: a command that imports `surfmd` and calls `surfgen.Main()`
+(`surfmd/examples/markdown/cmd/surfgen`).
+
 ## The runtime
 
 ```go

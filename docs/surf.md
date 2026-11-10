@@ -875,6 +875,9 @@ into these tags.
 - **`code` here is the inline one.** Inside a paragraph, a heading, an
   item, a link or an emphasis it takes no `language`, spans, `wrap` or
   numbers.
+- **Markdown** is `surfmd`'s: `surfmd.Convert` turns it into these tags, and
+  `<surf-markdown :text="…" gfm hard-wraps compact/>` draws it from a
+  template (the guide's "Markdown").
 - **Go:** `surfui.Prose(...)`, `.Compact()`, `Para`, `H(level, anchor, ...)`,
   `Em`, `Strong`, `Del`, `Code`, `Br`, `Bullets`, `Numbered(start, ...)`,
   `Li` (`.Checked(on)`), `Quote`, `Alert(kind, ...)`, `Img(src, alt)`.

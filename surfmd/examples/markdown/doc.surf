@@ -1,0 +1,4 @@
+<surface>
+  <surf-markdown key="page" gfm :text="body"/>
+  <surf-markdown key="comment" hard-wraps compact muted :text="comment"/>
+</surface>

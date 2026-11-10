@@ -1,0 +1,66 @@
+cells 60x25
+text
+> hotty-surf
+>
+> Components, state and events in Go.
+>
+> ▎ 󰨄 Important
+> ▎ Read the guide first.
+>
+> Features
+>
+> Feature  Status
+> Links    done
+> Prose    done
+> Tables   table
+>
+> ☑ Links
+> ☑ Prose
+> ☐ Forms
+>
+> Install it
+>
+> 1. Clone the repository.
+> 2. Run mise install.
+>
+> ▎ 󰳦 Caution
+> ▎ A caution, with code and a link.
+style
+= aaaaaaaaaa
+=
+=
+=
+= b.c.ccccccccc
+= b..........ddddd
+=
+= aaaaaaaa
+=
+= aaaaaaa..aaaaaa
+=
+=
+=
+=
+=
+=
+=
+=
+= aaaaaaa.aa
+=
+=
+= .......eeeeeeeeeeee
+=
+= f.g.ggggggg
+= f.................eeee.......dddd
+. fg/bg
+a fg/bg bold
+b accent/bg
+c accent/bg bold
+d accent/bg underline
+e fg/tonal
+f error/bg
+g error/bg bold
+hits
+@ 11,5 5x1 r.0.2.1.0.1
+links
+@ 11,5 5x1 guide.md
+@ 29,24 4x1 https://example.com

@@ -27,9 +27,9 @@ fmt:   ## fails, listing them, when gofmt would change files
 	if [ -n "$$out" ]; then echo "gofmt would change:"; echo "$$out"; exit 1; fi
 
 # SUBMODULES are the modules of their own inside this repository, each with
-# a go.mod and a replace of hotty-surf by ../: surftea takes Bubble Tea, which
-# the core does not. They are tidied, vetted, linted and tested like it.
-SUBMODULES := surftea
+# a go.mod and a replace of hotty-surf by ../: surftea takes Bubble Tea and
+# surfmd goldmark, which the core does not. They are tidied, vetted, linted and tested like it.
+SUBMODULES := surftea surfmd
 
 tidy:   ## fails when go.mod or go.sum is not what go mod tidy makes
 	$(GO) mod tidy -diff
@@ -39,6 +39,7 @@ gen:    ## fails when a generated file is not what its go:generate makes (surfge
 	@t=$$(mktemp); trap 'rm -f "$$t"' EXIT; \
 	sha256sum $$(git ls-files -co --exclude-standard '*_gen.go') >"$$t"; \
 	$(GO) generate ./... || exit 1; \
+	for m in $(SUBMODULES); do $(GO) -C $$m generate ./... || exit 1; done; \
 	out="$$(sha256sum --quiet -c "$$t" 2>/dev/null | sed 's/: FAILED$$//')"; \
 	if [ -n "$$out" ]; then echo "go generate changed:"; echo "$$out"; exit 1; fi
 

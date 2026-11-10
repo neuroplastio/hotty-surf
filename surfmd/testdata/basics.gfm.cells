@@ -1,0 +1,138 @@
+cells 60x56
+text
+> Install guide
+>
+> Run make check first: it is fast and strict, not slow (a
+> single newline is a space here), and both. See usage or the
+> site, or https://example.org. A line ending in two spaces
+> breaks.
+>
+> Lists
+>
+> • first item that is long enough to wrap onto a second line
+>   when drawn
+> • second
+>   1. nested one
+>   2. nested two
+> • third
+>
+> 3. three
+> 4. four
+>
+> ▎ Measure twice, cut once.
+>
+> ────────────────────────────────────────────────────────────
+>
+>   func main() {
+>
+>           println("hi")
+>   }
+>
+>   indented code
+>
+> Raw <b>HTML</b> stays text, and so does:
+>
+> <div onclick="x()">a block</div>
+>
+> [the diagram] and a script link.
+>
+> Usage
+>
+> The end.
+>
+> ☑ a task
+> ☐ an open task
+>
+> Name   Count
+> alpha  3
+> beta   12
+>
+> ▎ 󰋽 Note
+> ▎ Useful information.
+>
+> ▎ 󰀪 Warning
+> ▎ Mind the gap.
+> ▎
+> ▎ A second paragraph.
+>
+> ▎ 󰛩 Tip
+style
+= aaaaaaa.aaaaa
+=
+= ....bbbbbbbbbb..............cccc.....aaaaaa......dddd
+= .....................................eeee......fffff
+= ffff.....fffffffffffffffffff
+=
+=
+= aaaaa
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+= g
+=
+= hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+=
+= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+=
+= iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+=
+=
+=
+=
+=
+= jjjj.jjjjjjjj
+=
+= aaaaa
+=
+=
+=
+=
+=
+=
+= aaaa...aaaaa
+=
+=
+=
+= k.l.llll
+= k
+=
+= m.n.nnnnnnn
+= m
+= m
+= m
+=
+= o.p.ppp
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c fg/bg italic
+d fg/bg strike
+e fg/bg bold+italic
+f accent/bg underline
+g border/bg
+h line/bg
+i fg/surface
+j muted/bg
+k info/bg
+l info/bg bold
+m warn/bg
+n warn/bg bold
+o ok/bg
+p ok/bg bold
+hits
+@ 47,3 5x1 r.0.1.13
+links
+@ 47,3 5x1 #usage
+@ 0,4 4x1 https://example.com/x
+@ 9,4 19x1 https://example.org
