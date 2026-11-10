@@ -1051,7 +1051,7 @@ var All = []Story{
 			}
 			return l
 		}
-		return surfui.Row(tree(2), Force(tree(3), "within")).Gap(4).Top()
+		return surfui.Stack(tree(2), Force(tree(3), "within")).Gap(1)
 	}},
 	// A docs nav: captions between the groups' items, which the selection
 	// skips, one selection across them; a page with pages under it is a
@@ -1078,7 +1078,7 @@ var All = []Story{
 	// the accent's ink and a heavier weight on a host, bold in the accent in
 	// the cells. Shown on the selected row (quiet, bright), beside it and
 	// apart from it.
-	{"tree/current", 40, func() *surfui.Node {
+	{"tree/current", 60, func() *surfui.Node {
 		tree := func(sel int) *surfui.Node {
 			l := surfui.List().Nav()
 			for i, f := range []struct {
