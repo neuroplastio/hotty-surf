@@ -267,6 +267,10 @@ func playCells(t testing.TB, ar *txtar.Archive, screen func() cells.Screen, log 
 			switch {
 			case len(f) == 2 && f[0] == "click":
 				u.click(f[1])
+			case len(f) == 2 && f[0] == "doubleclick": // two clicks within the double click's time
+				u.click(f[1])
+				u.sync() // the first click's update is drawn: the element is where it is now
+				u.click(f[1])
 			case len(f) == 3 && f[0] == "choose":
 				u.choose(f[1], f[2])
 			case len(f) >= 2 && f[0] == "fill":

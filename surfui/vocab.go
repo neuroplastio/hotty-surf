@@ -621,7 +621,12 @@ func (n *Node) Wrap() *Node {
 }
 
 // Grow lets n take the room left in its Row or Stack.
-func (n *Node) Grow() *Node { return n.Class("u-grow") }
+func (n *Node) Grow() *Node {
+	if n.col != nil { // a Col takes the room left
+		return n.FillCol()
+	}
+	return n.Class("u-grow")
+}
 
 // Keep keeps n whole in its Row or Stack: it never shrinks, and what is
 // beside it gives way first. A sequence of key caps keeps its caps whole
@@ -683,7 +688,13 @@ func (n *Node) Top() *Node { return n.Class("u-top") }
 // Width sets n's width in cells (dense, Compact) or half rems (roomy),
 // its padding included: a column of Chips as wide as the widest lines
 // up what comes after them.
-func (n *Node) Width(cells int) *Node { return n.Var("u-w", strconv.Itoa(cells)).Class("u-width") }
+func (n *Node) Width(cells int) *Node {
+	if n.col != nil { // a Col's: its cells' width
+		n.col.kind, n.col.cells = colFixed, max(cells, 0)
+		return n
+	}
+	return n.Var("u-w", strconv.Itoa(cells)).Class("u-width")
+}
 
 // Height sets n's height in rows (dense, Compact) or lines (roomy), its
 // padding included: an empty Stack of that height is room above what
@@ -888,7 +899,17 @@ func (n *Node) Scale(pct int) *Node {
 // Top Row is as tall as the Row), up to the surface, and the run scrolls
 // (surfrun.Options.Scroll), or the host clips. It takes the keyboard, which
 // scrolls it, and is ringed in the accent while it has it.
-func (n *Node) Scroll() *Node { return n.Class("u-scroll").Focusable() }
+func (n *Node) Scroll() *Node {
+	if n.tbl != nil { // a Table scrolls its rows, its header staying
+		for _, k := range n.kids {
+			if slicesContain(k.class, "u-table-body") {
+				k.Class("u-scroll").Focusable()
+			}
+		}
+		return n.Class("u-table-scroll")
+	}
+	return n.Class("u-scroll").Focusable()
+}
 
 func clamp(v, lo, hi int) int {
 	if v < lo {

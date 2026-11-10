@@ -467,3 +467,34 @@ func (s *Signup) Submit() {
 	}
 	s.Log = append(s.Log, "signed up "+s.Name)
 }
+
+// Thread is a data struct: a row of Threads.
+type Thread struct {
+	Key      string
+	State    string
+	Doc      string
+	Summary  string
+	Age      string
+	Resolved bool
+	Gone     bool
+}
+
+// Threads is a component of margin's threads view, with made-up data: a
+// table whose columns are declared once, a selection that is its own, a
+// document column shown only in a tree review, and an @activate (threads.surf).
+// Its log is what each pick and open heard.
+type Threads struct {
+	Tree bool
+	Sel  int
+	Rows []*Thread
+	Log  []string
+}
+
+// Pick is a click on a row: the selection moves to it.
+func (t *Threads) Pick(i int) {
+	t.Sel = i
+	t.Log = append(t.Log, "pick "+strconv.Itoa(i))
+}
+
+// Open is a row's @activate: it hears the row's key.
+func (t *Threads) Open(key string) { t.Log = append(t.Log, "open "+key) }

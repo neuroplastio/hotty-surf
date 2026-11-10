@@ -208,7 +208,7 @@ component, a partial, or a widget a package registered from outside
 | `cycle` | `‹ value ›`, stepping through `:options` | nothing |
 | `slider` | an integer from `min` to `max` in steps of `step`, at `:value`: a track with a thumb ("Sliders and chips") | nothing |
 | `list` | a column of items with a selection | children |
-| `item` | a row of a list | children |
+| `item` | a row of a list or a table; `@activate` ("Tables") | children |
 | `section` | a group under a heading: `heading` | children |
 | `progress` | a determinate percentage; a thin track on a host, blocks in cells | nothing |
 | `rule` | a line across | nothing |
@@ -221,6 +221,9 @@ component, a partial, or a widget a package registered from outside
 | `quote`, `alert` | a block quote; GitHub's callout, `kind` note, tip, important, warning or caution | blocks, text |
 | `img` | an image, `src` and `alt`: on a host at most 20 rows tall, in the cells `[alt]` | nothing |
 | `link` | a link, inline in a `line` or on a row of its own: its text underlined in the link tone, which Enter and a click follow ("Links"); `href`, `external`, `@follow` | text, inline children |
+| `table` | columns declared once (`col`) and rows that are `item`s: a header, the cells at their columns' widths, a list's selection, `@activate` ("Tables"); its other children are its foot | `col`s, `item`s, an `empty`, a foot |
+| `col` | a table's column: its text the heading; `width`, `max`, `align`, `sort`, `:if`, and the modifiers its cells take | text |
+| `empty` | what a table shows where it draws no row | children |
 
 - "Text" means literal text and `{{ }}`, with no elements in it.
 - A widget that takes nothing may still hold `<bind>`s.
@@ -518,6 +521,8 @@ registers widgets runs its own cases with `conformance.Suite`
 | `fill` | string | all | a fill in a tone's colour, by the tone's name: `accent`, `ok`, `warn`, `error`, `info`, `muted`, `plain` |
 | `bold`, `semibold`, `muted`, `small`, `wrap`, `grow`, `keep`, `top` | bool | all | the floor's modifiers (`surfui/vocab.go`) |
 | `gap`, `indent`, `down`, `width`, `height`, `scale` | int | all | the floor's sizes: gap 0 to 6 steps, indent and width in cells, down and height in rows, scale in percent |
+| `width`, `max`, `align`, `sort` | string | col | a column's width (cells, `auto` or `fill`), cap, place and sort chevron ("Tables") |
+| `fill`, `show` | bool | col | a column that takes the room left; one drawn only while it holds (`:if` on a `col` is `show`) |
 | `pad` | `"x y"` or `"n"` | all | room inside, across and down; bound, a list of one or two ints |
 | `selected`, `checked`, `disabled`, `invalid` | bool | all | states |
 | `value`, `placeholder` | string | field | a field's value and placeholder |
@@ -694,6 +699,7 @@ registers widgets runs its own cases with `conformance.Suite`
   - `click` and `focus` on every widget but `spacer`, `rule` and
     `progress`, which take none, and `tabs`, which takes focus and change;
   - `follow` on a `link` ("Links"), beside its `click` and `focus`;
+  - `activate` on an `item` ("Tables"), beside its `click` and `focus`;
   - `change` and `input` on a `field`, and `height` on a field of
     several lines (cells only; its `$value` is the rows, an int);
   - `submit` on a `form` ("Forms"), with no argument but `$event`;
@@ -807,6 +813,102 @@ into these tags.
   `Em`, `Strong`, `Del`, `Code`, `Br`, `Bullets`, `Numbered(start, ...)`,
   `Li` (`.Checked(on)`), `Quote`, `Alert(kind, ...)`, `Img(src, alt)`.
 - A prose block lays out to its natural height in cells, `Draw(cols, 0)`.
+
+## Tables
+
+A `<table>` declares its columns once, and its rows are `item`s, so a
+row has what a `list`'s has: its `selected`, `reveal`, `@click`, keys
+and its marker. The table draws the header, the rule under it, the cells
+of every row at the widths of their columns, and what is left over.
+
+```html
+<table scroll height="10" key="threads">
+  <col key="state" width="2"/>                        <!-- no heading -->
+  <col key="doc" :if="tree" width="auto" max="40%">document</col>
+  <col key="thread" fill>thread</col>
+  <col key="age" width="auto" align="end" muted sort="descending">age</col>
+  <item :each="(i, t) in threads" :key="t.id" :selected="i == sel"
+        :muted="t.resolved" @click="pick(i)" @activate="open($value)">
+    <glyph tone="ok">{{ t.state }}</glyph>
+    <text>{{ t.doc }}</text>
+    <line>
+      <text>{{ t.summary }}</text>
+      <chip :if="t.gone" fill="warn">block gone</chip>
+    </line>
+    <text>{{ t.age }}</text>
+  </item>
+  <empty><text muted>No threads yet.</text></empty>
+  <text muted small>{{ $range }}</text>
+</table>
+```
+
+- **`col`:** its text is the heading, and the header row is left out
+  where no `col` has one.
+  - `width` is a number of cells, `auto` (the widest cell in the column,
+    its heading and every row's, measured in cells; the default) or
+    `fill`, which takes what the row has left and is cut first, with `…`;
+    a bare `fill` is `width="fill"`, and `grow` is the same. Two `fill`
+    columns share the room.
+  - `max` caps an `auto` column: `max="30"` cells, or `max="40%"` of the
+    table.
+  - `align` is `start` (the default), `end` or `center`.
+  - `muted`, `tone`, `semibold`, `bold` and `small` apply to the
+    column's cells, not its heading, which is muted at weight 400.
+  - `sort="ascending"`, `"descending"` or `"none"` draws a chevron after
+    the heading (▲ or ▼ in the ink for the sorted column, a muted ▼ for
+    one that can be sorted). It sorts nothing: the model orders the rows
+    it gives.
+  - `:if` on a `col` drops the column **and its cells**: it is the
+    attribute `show`, so that the cells keep their places among an
+    item's children.
+- **A row** is an `item` whose children are its cells in the order the
+  `col`s are declared, one for each, a `line` where a cell holds more
+  than one thing. Children past the last `col` are left as they are: a
+  row's `reveal` button. A cell that is left out by an `:if` shifts the
+  ones after it, so give a cell no `:if`; a column has `:if`.
+- **The widths are the cells' and the host's alike.** hotty-surf measures
+  an `auto` column in cells (a `text` is its width, a `chip` two more, a
+  `glyph` two, a `line` its runs') and gives the host the number, as a
+  `width` in `ch`, so that both cut in the same place: `max="40%"` is the
+  host's `max-width` and the cells' share of the row. The host sets it
+  once the tree is resolved, and each render. An `auto` cell shrinks where
+  the row is too narrow, widest first.
+- **Selection is the model's** (`selected` on an `item`), and the keyboard
+  is the model's: the table has none of its own, so a program binds `j`
+  and `k` on it (`<bind>`) and keeps the selection. Where the document
+  scrolls, the selected row is brought into view, as a `list`'s is.
+- **`@activate`** on an `item` runs on Enter on the table (the selected
+  row's), on a click on the selected row, and on a double click, after
+  the row's own `@click`; `$value` is the row's key. A table with a
+  selected row that has one takes the keyboard (`tabindex`) for Enter.
+- **`<empty>`** shows where no row is drawn, under the header.
+- **`scroll` and `height`:** `height` is the whole table's, in rows;
+  `scroll` makes only the rows scroll, the header and the foot staying,
+  with the scrollbar of a `scroll` box (the cells draw `│` and `┃` in the
+  last column; a host's own) and its keys. In the cells the header leaves
+  the bar's column.
+- **The foot** is the table's other children, drawn under the rows and
+  outside what scrolls, and `{{ $range }}` in a text of it says which rows
+  the table shows, `1–7 of 28` (`28 of 28` where they all show). In the
+  cells it is exact: it reads the rows the scrolled body shows. A host
+  can't read where its box is scrolled, so it says the window that starts
+  at the top and moves only as far as the selection needs; after the wheel
+  has scrolled it, or the selection went back up, it is the rows the
+  selection implies, not the ones shown. `$range` is a load error outside
+  a table.
+- **Hairlines:** while no row is `selected` the rows are split by a
+  hairline (a row of its own in the cells); with a selection there are none.
+- **A Markdown table** converts one to one: `<table>` holding `<tr>`,
+  `<th>` and `<td>` (and `<thead>`, `<tbody>`), where a row of `th`s is
+  the columns (`align="left"` and `"right"` are `start` and `end`), every
+  other `tr` is an `item`, a `td` a `line`, and a table with no `th` row
+  has columns with no heading. These are the static form: no selection, no
+  `@activate`. `tr`, `th` and `td` outside a table are load errors.
+- **Go:** `surfui.Table(kids...)` takes `surfui.Col(heading)` (`.Width`,
+  `.Auto`, `.FillCol`, `.Max(cells, pct)`, `.Align`, `.Sort`, `.Show`),
+  `Item`s and `surfui.Empty(kids...)`; `.OnActivate(act)` on an `Item`;
+  `surfui.RangeText()` is `$range`. `Table.Add` builds it again, so add
+  rows before `Scroll()` and the other modifiers of its body.
 
 ## Keys
 

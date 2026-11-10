@@ -1,0 +1,21 @@
+<!-- Margin's threads view, with made-up data: columns declared once, rows
+     that are items (so a click, a selection and Enter are the list's), a
+     document column drawn only in a tree review, and what the table says
+     of its rows in its foot. -->
+<surface>
+  <table key="t" scroll height="8">
+    <col key="state" width="2"/>
+    <col key="doc" :if="tree" width="auto" max="40%">document</col>
+    <col key="thread" fill>thread</col>
+    <col key="age" width="auto" align="end" muted sort="descending">age</col>
+    <item :each="(i, r) in rows" :key="r.key" :selected="i == sel" :muted="r.resolved"
+          @click="pick(i)" @activate="open($value)">
+      <glyph tone="ok">{{ r.state }}</glyph>
+      <text>{{ r.doc }}</text>
+      <line><text>{{ r.summary }}</text><chip :if="r.gone" fill="warn">block gone</chip></line>
+      <text>{{ r.age }}</text>
+    </item>
+    <empty><text muted>No threads yet. Comment on any block to start one.</text></empty>
+    <text key="range" muted small>{{ $range }}</text>
+  </table>
+</surface>

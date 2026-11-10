@@ -1,0 +1,19 @@
+cells 34x10
+text
+>     document     thread    age 󰅀
+> ──────────────────────────────────
+>  ●  README.md    Is this …     3h
+>  ✓  docs/surf.md Typo          2d
+>  ●  a.go         Short        10m
+style
+= ....aaaaaaaa.....aaaaaa....aaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+= ...............................aa
+= cccccccccccccccccccccccccccccccddc
+= ..............................aaa
+. fg/bg
+a muted/bg
+b line/bg
+c fg/tonal
+d muted/tonal
+hits

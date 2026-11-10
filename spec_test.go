@@ -77,6 +77,9 @@ var canonWidgets = map[string]string{
 	"alert":    `<alert kind="tip">Careful</alert>`,
 	"img":      `<img src="cid:logo" alt="Logo"/>`,
 	"form":     `<form><field/></form>`,
+	"table":    `<table><col>Name</col><item><text>alpha</text></item></table>`,
+	"col":      `<col>Name</col>`,
+	"empty":    `<empty><text muted>No rows.</text></empty>`,
 }
 
 // canonAttrs is each attribute in a canonical instance, by its name and,
@@ -87,6 +90,12 @@ var canonAttrs = map[string]string{
 	"numbers/code":      `<code numbers>a</code>`,
 	"from/code":         `<code numbers from="9">a</code>`,
 	"percent/progress":  `<progress percent="45"/>`,
+	"width/col":         `<table><col width="12">Name</col><item><text>alpha</text></item></table>`,
+	"fill/col":          `<table><col fill>Name</col><item><text>alpha</text></item></table>`,
+	"max/col":           `<table><col max="40%">Name</col><item><text>alpha</text></item></table>`,
+	"align/col":         `<table><col align="end">Age</col><item><text>3h</text></item></table>`,
+	"sort/col":          `<table><col sort="ascending">Name</col><item><text>alpha</text></item></table>`,
+	"show/col":          `<table><col :show="false">Name</col><col>Age</col><item><text>alpha</text><text>3h</text></item></table>`,
 	"drag/surface":      `<item drag/>`,
 	"drop/surface":      `<item drop="halves"/>`,
 	"on/switch":         `<switch on/>`,

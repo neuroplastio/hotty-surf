@@ -1,0 +1,26 @@
+cells 30x12
+text
+>  name       size
+> ──────────────────────────────
+>  file-05.go   35
+>  file-06.go   42             ┃
+>  file-07.go   49
+>  file-08.go   56
+>  file-09.go   63
+> 6–10 of 20
+style
+= .aaaa.......aaaa
+= bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+=
+= .............................c
+=
+=
+= ddddddddddddddddddddddddddddd
+= aaaaaaaaaa
+. fg/bg
+a muted/bg
+b line/bg
+c border/bg
+d fg/tonal
+hits
+@ 0,2 30x5 r.0.2

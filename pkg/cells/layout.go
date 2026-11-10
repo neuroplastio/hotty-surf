@@ -101,6 +101,9 @@ const (
 	fBreak  // a hard break, in a paragraph
 	fProse  // a Prose: its blocks a row apart, at a measure
 	fBar    // a quote's or an alert's: a ▎ bar at its start, in bar's role
+	fItem2  // a table's header, which has an Item's padding but is no Item
+	fShrink // a table's Auto cell: its width is a basis, which shrinks where the row is too narrow
+	fRuled  // a table's row with a hairline under it
 )
 
 // density is the surface's, for the steps.
@@ -134,6 +137,7 @@ type box struct {
 	pt, pb     int
 	ml, mt     int // margins: Indent, Down, a Section in a Section
 	fw, fh     int // a fixed width and height, -1 for none
+	maxp       int // a cap on its width in percent of its row's, a table's cell; 0 for none
 
 	natw         int // the natural width, -1 until known
 	memoW, memoH int // the natural height at width memoW, memoW -1 until known
@@ -553,6 +557,11 @@ func (b *box) look(d density) {
 			b.pr = 1    // and a cell at its end, where they hang (surf.css)
 		case c == "u-keep":
 			b.f |= fKeep
+		case c == "u-shrink":
+			b.f |= fShrink
+		case c == "u-thead":
+			b.f |= fItem2 // a table's header: an Item's room across, muted
+			caption = true
 		case c == "u-fit":
 			b.f |= fFit
 		case c == "u-fit-start":
@@ -644,7 +653,7 @@ func (b *box) look(d density) {
 		b.pl, b.pr, b.pt, b.pb = 0, 0, 0, 0
 	}
 	switch {
-	case b.f&fItem != 0:
+	case b.f&(fItem|fItem2) != 0:
 		b.pl, b.pr, b.pt, b.pb = 1, 1, 0, 0
 	case b.f&fDialog != 0:
 		// The line, and a cell and a half of room beside it.
@@ -656,6 +665,20 @@ func (b *box) look(d density) {
 		// A card's room across, a host's in Dense.
 		b.pl, b.pr = 1, 1
 	}
+	if hasClass(n, "u-table-empty") {
+		b.pl, b.pr = 1, 1 // an Item's room across
+	}
+	if hasClass(n, "u-thead") {
+		if p := surfui.Parent(n); p != nil && hasClass(p, "u-table-scroll") {
+			b.pr++ // the rows' scrollbar takes a column, which the header leaves
+		}
+	}
+	if b.f&fItem != 0 {
+		if p := surfui.Parent(n); p != nil && hasClass(p, "u-table-ruled") {
+			b.f |= fRuled // a hairline under it: a row of its own
+			b.pb++
+		}
+	}
 	for _, v := range surfui.Vars(n) {
 		switch v.K {
 		case "u-in":
@@ -666,6 +689,8 @@ func (b *box) look(d density) {
 			if hasClass(n, "u-width") {
 				b.fw = max(atoi(v.V), 0)
 			}
+		case "u-maxp":
+			b.maxp = min(max(atoi(v.V), 0), 100)
 		case "u-h":
 			if hasClass(n, "u-height") {
 				b.fh = max(atoi(v.V), 0)
@@ -793,7 +818,7 @@ func (b *box) fixed() bool {
 	case chip, glyph, keycap, button, toggle, choose, cycle:
 		return true
 	}
-	return b.fw >= 0 || b.f&(fKeep|fFit|fFitStart) != 0
+	return b.fw >= 0 && b.f&fShrink == 0 || b.f&(fKeep|fFit|fFitStart) != 0
 }
 
 // grows reports whether b takes the room left, flex: 1 1 0.
@@ -934,6 +959,9 @@ func (b *box) widths(inner int) []int {
 		switch {
 		case k.fw >= 0:
 			ws[i] = k.fw
+			if k.maxp > 0 {
+				ws[i] = min(ws[i], inner*k.maxp/100)
+			}
 		case k.f&(fFit|fFitStart) != 0:
 			ws[i] = k.fitMin()
 			grow++

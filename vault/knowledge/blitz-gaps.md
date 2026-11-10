@@ -678,3 +678,38 @@ its textarea in the story.
 Dense draws each label before its field and doesn't align the fields in a
 column (each caption is as wide as its text, as in a row): a look to
 choose, not a Blitz gap.
+
+## Table (2026-11-10, L6)
+
+table/threads came on in the gate: Dense 2× (39–40), Roomy 1.6× (12.1–12.5,
+just over the threshold) and Compact 2× (35–36), in all five themes; and
+table/scroll at Roomy 1.6× on neuroplastio and terminal (26.6, 30.5).
+Looked at in the sheets (graphite): both engines lay the rows out alike
+(rows B/C 6 and 6, 9 and 9), the same widths, header, rule, selection and
+sort chevron. What differs is where a cut text ends. The document column
+is cut with … at its cap, and Blitz ends it a character before Chromium:
+`long-name-of…` against `long-name-of-…` (Dense), `…a-direct…` against
+`…a-directo…` (Compact). The `…` itself and the rows stay put. In
+table/scroll at Roomy 1.6× the "changed" heading is cut to `chang…` in
+both engines (a muted proportional text wider than its 7 cells), and
+Blitz's differs by a pixel of text.
+
+Fixed before the baseline: an inset `box-shadow` for the row hairlines
+followed the row's rounded corners in both engines (a layer now); the
+sorted heading `age` + chevron was cut in Dense by one engine or the
+other (its slot is two cells now and the heading keeps its width).
+
+| Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
+| --- | --- | --- | --- | --- |
+| table/threads (Dense 2×: 39–40; Compact 2×: 35–36; Roomy 1.6×: 12.1–12.5) | A cut text (the document column at its `max` cap) ends a character earlier than Chromium's | 1.6×, 2× | Not verified: Blitz measures the text to the cell's width in its own advance, a letter off Chromium's (as in the text/path cases) | Cosmetic |
+| table/scroll (Roomy 1.6×: neuroplastio 26.6, terminal 30.5) | A pixel of text placement in rows the same width, the "changed" heading cut in both | 1.6× | As above; the cut is the framework's: an auto column is measured in cells, which proportional Roomy text outgrows | Cosmetic |
+
+### The table after the rebase onto L2, L3, L11 and L17 (2026-11-10)
+
+`table/threads` (15 cases) passes now and is off the baseline: its summary and
+chip are shorter and its canvas 80 cells. A Dense table cell's width is in
+the font's own advance (`calc(var(--u-w) * 1ch)`), since the gate's cell
+width, rounded to device pixels, is a few percent under the monospace face's
+advance and cut every Dense cell ("1.0 KB" to "1.0 …"). The legible gate
+passes the table's stories; the 17 cases named above that still fail are
+`table/static`, `table/empty` and `table/scroll`'s, as before.

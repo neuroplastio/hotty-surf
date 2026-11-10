@@ -88,6 +88,8 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 			switch {
 			case len(f) == 2 && f[0] == "click":
 				err = a.Host.Click(a.Name, f[1])
+			case len(f) == 2 && f[0] == "doubleclick":
+				err = a.Host.DoubleClick(a.Name, f[1])
 			case len(f) == 3 && f[0] == "choose": // the select's list opened, and the option clicked
 				a.Pick(f[1], f[2])
 			case len(f) >= 2 && f[0] == "fill":
@@ -121,7 +123,7 @@ func playOn(t testing.TB, ar *txtar.Archive, m surfrun.Model, log, heard func() 
 		// A step of several events logs as many lines as the case says:
 		// the first is no sign the rest are in. A release logs two when
 		// it is a click as well (a drag's end, then the click's handler).
-		if want, ok := File(ar, n+".log"); ok && len(f) > 0 && (strings.Contains(ev, ";") || f[0] == "release" || f[0] == "releaseat") {
+		if want, ok := File(ar, n+".log"); ok && len(f) > 0 && (strings.Contains(ev, ";") || f[0] == "release" || f[0] == "releaseat" || f[0] == "doubleclick") {
 			lines := 0
 			if w := strings.TrimSpace(string(want)); w != "" {
 				lines = strings.Count(w, "\n") + 1

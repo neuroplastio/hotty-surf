@@ -86,6 +86,9 @@ func (p *painter) paint(b *box, dy int, clip rect, in ink) {
 	if b.f&fScroll != 0 {
 		kdy, kclip = p.port(b, dy, clip)
 	}
+	if hasClass(b.n, "u-cell") {
+		kclip = kclip.cut(rect{b.x, b.y - dy, b.w, b.h}) // a table's cell cuts what it holds
+	}
 	if b.kind == custom {
 		kclip = clip.cut(rect{b.x, b.y - dy, b.w, b.h}) // its placed children stay in it
 	}
@@ -322,6 +325,9 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	if off {
 		in.fg = Faint
 	}
+	if hasClass(n, "is-sorted") {
+		in.fg = Fg // the sorted column's chevron, in the ink
+	}
 	return in, bg
 }
 
@@ -403,7 +409,15 @@ func (p *painter) leaf(b *box, r rect, clip rect, in ink) {
 	case custom:
 		p.block(b, r, clip, in)
 	case text:
-		for i, l := range b.textLines(w) {
+		lines := b.textLines(w)
+		if tmpl, ok := surfui.RangeTemplate(b.n); ok {
+			// A table's range, as its body is scrolled now, not as the
+			// tree could tell from its selection (surfui.RangeText).
+			if first, last, total, ok := p.r.tableRange(surfui.TableBodyOf(b.n)); ok {
+				lines = [][]Cluster{clusters(surfui.RangeFill(tmpl, first, last, total))}
+			}
+		}
+		for i, l := range lines {
 			if i >= r.h-b.pt-b.pb {
 				break
 			}
@@ -619,6 +633,11 @@ func (p *painter) field(b *box, x, y, w int, st style, clip rect) {
 // decorate draws a box's lines: a Dialog's and an open list's edges, a
 // Nav Item's bar, the bar of the Entries Item with the keyboard.
 func (p *painter) decorate(b *box, r rect, clip rect, in ink) {
+	if b.f&fRuled != 0 {
+		for x := range r.w {
+			p.g.put(r.x+x, r.y+r.h-1, "─", 1, style{fg: Line}, clip)
+		}
+	}
 	switch {
 	case b.f&fBar != 0:
 		// A quote's or an alert's bar, at its start the height of it.

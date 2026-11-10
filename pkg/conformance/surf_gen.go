@@ -19,7 +19,7 @@ import (
 
 // The templates, embedded.
 //
-//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf tune.surf mark.svg ring.svg
+//go:embed board.surf checkbox-example.surf code-example.surf code-spans-example.surf crew.surf deck.surf draft.surf form.surf frame-tab.surf frame.surf info-panel.surf lab-box.surf lab-card.surf lab-nest.surf lab-part.surf lab-tree.surf links.surf note-row.surf progress-example.surf prose.surf shelf.surf signup.surf tabs-example.surf threads.surf tune.surf mark.svg ring.svg
 var surfFiles embed.FS
 
 // surfSet is the templates, loaded at its first call.
@@ -34,7 +34,7 @@ var (
 )
 
 // surfShapes are what the templates name of the package's types.
-var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeSignup, &surfShapeTabsExample, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard}
+var surfShapes = []*surf.Shape{&surfShapeBoard, &surfShapeCheckboxExample, &surfShapeCodeExample, &surfShapeCodeSpansExample, &surfShapeCrew, &surfShapeDeck, &surfShapeDraft, &surfShapeForm, &surfShapeFrame, &surfShapeInfoPanel, &surfShapeLinks, &surfShapeProgressExample, &surfShapeProse, &surfShapeShelf, &surfShapeSignup, &surfShapeTabsExample, &surfShapeThreads, &surfShapeTune, &surfShapeNote, &surfShapeBranch, &surfShapeSpan, &surfShapeHand, &surfShapeCard, &surfShapeThread}
 
 // surfShapeBoard is Board's shape, a component.
 var surfShapeBoard = surf.Shape{Name: "Board", Component: true,
@@ -988,6 +988,67 @@ func surfInterpTabsExample(c *TabsExample) surflive.Component {
 	return surf.Component(surfSet(), surfTabsExample{c})
 }
 
+// surfShapeThreads is Threads's shape, a component.
+var surfShapeThreads = surf.Shape{Name: "Threads", Component: true,
+	Fields: []surf.Field{{Name: "tree", Type: cellite.Bool}, {Name: "sel", Type: cellite.Int}, {Name: "rows", Type: cellite.ListOf(cellite.StructOf("Thread"))}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
+	Methods: []surf.Method{
+		{Name: "open", Args: []cellite.Type{cellite.String}},
+		{Name: "pick", Args: []cellite.Type{cellite.Int}},
+	},
+}
+
+// surfThreads is a *Threads as its templates read it.
+type surfThreads struct{ p *Threads }
+
+// surfThreadsValue is p as a value: null for nil.
+func surfThreadsValue(p *Threads) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Threads", surfThreads{p})
+}
+
+// surfThreadsOf is a value's *Threads: nil for any other.
+func surfThreadsOf(v cellite.Value) *Threads {
+	if o, ok := v.Object().(surfThreads); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfThreads) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.BoolValue(bool(o.p.Tree))
+	case 1:
+		return cellite.IntValue(int64(o.p.Sel))
+	case 2:
+		return cellite.ListValue(surfList9(o.p.Rows))
+	case 3:
+		return cellite.ListValue(surfList2(o.p.Log))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfThreads) Unwrap() any { return o.p }
+
+func (o surfThreads) Shape() *surf.Shape { return &surfShapeThreads }
+
+func (o surfThreads) Call(m int, args []cellite.Value) cellite.Value {
+	switch m {
+	case 0:
+		o.p.Open(string(args[0].String()))
+	case 1:
+		o.p.Pick(int(args[0].Int()))
+	}
+	return cellite.NullValue()
+}
+
+// surfInterpThreads is c drawn by its template, interpreted.
+func surfInterpThreads(c *Threads) surflive.Component {
+	return surf.Component(surfSet(), surfThreads{c})
+}
+
 // surfShapeTune is Tune's shape, a component.
 var surfShapeTune = surf.Shape{Name: "Tune", Component: true,
 	Fields: []surf.Field{{Name: "replicas", Type: cellite.Int}, {Name: "picked", Type: cellite.ListOf(cellite.String)}, {Name: "log", Type: cellite.ListOf(cellite.String)}},
@@ -1242,6 +1303,52 @@ func (o surfCard) Field(i int) cellite.Value {
 }
 
 func (o surfCard) Unwrap() any { return o.p }
+
+// surfShapeThread is Thread's shape, a struct.
+var surfShapeThread = surf.Shape{Name: "Thread", Component: false,
+	Fields: []surf.Field{{Name: "key", Type: cellite.String}, {Name: "state", Type: cellite.String}, {Name: "doc", Type: cellite.String}, {Name: "summary", Type: cellite.String}, {Name: "age", Type: cellite.String}, {Name: "resolved", Type: cellite.Bool}, {Name: "gone", Type: cellite.Bool}},
+}
+
+// surfThread is a *Thread as its templates read it.
+type surfThread struct{ p *Thread }
+
+// surfThreadValue is p as a value: null for nil.
+func surfThreadValue(p *Thread) cellite.Value {
+	if p == nil {
+		return cellite.NullValue()
+	}
+	return cellite.ObjectValue("Thread", surfThread{p})
+}
+
+// surfThreadOf is a value's *Thread: nil for any other.
+func surfThreadOf(v cellite.Value) *Thread {
+	if o, ok := v.Object().(surfThread); ok {
+		return o.p
+	}
+	return nil
+}
+
+func (o surfThread) Field(i int) cellite.Value {
+	switch i {
+	case 0:
+		return cellite.StringValue(string(o.p.Key))
+	case 1:
+		return cellite.StringValue(string(o.p.State))
+	case 2:
+		return cellite.StringValue(string(o.p.Doc))
+	case 3:
+		return cellite.StringValue(string(o.p.Summary))
+	case 4:
+		return cellite.StringValue(string(o.p.Age))
+	case 5:
+		return cellite.BoolValue(bool(o.p.Resolved))
+	case 6:
+		return cellite.BoolValue(bool(o.p.Gone))
+	}
+	return cellite.NullValue()
+}
+
+func (o surfThread) Unwrap() any { return o.p }
 
 // surfProgsBoard are board.surf's programs, for Board, loaded at the first call.
 func surfProgsBoard() []*cellite.Program {
@@ -4312,6 +4419,211 @@ func surfRenderTabsExample(e *surf.Errs, out []*surfui.Node, c *TabsExample, fil
 	return out
 }
 
+// surfRenderThreads draws threads.surf for Threads.
+func surfRenderThreads(e *surf.Errs, out []*surfui.Node, c *Threads, fill surf.Fill) []*surfui.Node {
+	// threads.surf:5:1 <surface>
+	if e.Enter("threads.surf", 5, 1) {
+		var k1 []*surfui.Node
+		// threads.surf:6:3 <table>
+		if e.Enter("threads.surf", 6, 3) {
+			var k2 []*surfui.Node
+			// threads.surf:7:5 <col>
+			if e.Enter("threads.surf", 7, 5) {
+				n3 := surfui.Col("")
+				surf.ModColWidth(n3, "2")
+				surf.ModKey(n3, "state")
+				k2 = append(k2, n3)
+				e.Leave()
+			}
+			// threads.surf:8:5 <col>
+			if e.Enter("threads.surf", 8, 5) {
+				n4 := surfui.Col("document")
+				surf.ModColWidth(n4, "auto")
+				surf.ModColMax(n4, "40%")
+				surf.ModColShow(n4, c.Tree)
+				surf.ModKey(n4, "doc")
+				k2 = append(k2, n4)
+				e.Leave()
+			}
+			// threads.surf:9:5 <col>
+			if e.Enter("threads.surf", 9, 5) {
+				n5 := surfui.Col("thread")
+				surf.ModColFill(n5, true)
+				surf.ModKey(n5, "thread")
+				k2 = append(k2, n5)
+				e.Leave()
+			}
+			// threads.surf:10:5 <col>
+			if e.Enter("threads.surf", 10, 5) {
+				n6 := surfui.Col("age")
+				surf.ModColWidth(n6, "auto")
+				surf.ModColAlign(n6, "end")
+				surf.ModColSort(n6, "descending")
+				surf.ModKey(n6, "age")
+				surf.ModMuted(n6, true)
+				k2 = append(k2, n6)
+				e.Leave()
+			}
+			for i7, x7 := range c.Rows {
+				// threads.surf:11:5 <item>
+				if e.Enter("threads.surf", 11, 5) {
+					var k8 []*surfui.Node
+					// threads.surf:13:7 <glyph>
+					if e.Enter("threads.surf", 13, 7) {
+						var t11 string
+						switch {
+						default:
+							p10 := x7
+							if p10 == nil {
+								e.Null("threads.surf", 13, 7)
+								break
+							}
+							t11 += p10.State
+						}
+						n9 := surfui.Glyph(t11)
+						surf.ModTone(n9, "ok")
+						k8 = append(k8, n9)
+						e.Leave()
+					}
+					// threads.surf:14:7 <text>
+					if e.Enter("threads.surf", 14, 7) {
+						var t14 string
+						switch {
+						default:
+							p13 := x7
+							if p13 == nil {
+								e.Null("threads.surf", 14, 7)
+								break
+							}
+							t14 += p13.Doc
+						}
+						n12 := surfui.Text(t14)
+						k8 = append(k8, n12)
+						e.Leave()
+					}
+					// threads.surf:15:7 <line>
+					if e.Enter("threads.surf", 15, 7) {
+						var k15 []*surfui.Node
+						// threads.surf:15:13 <text>
+						if e.Enter("threads.surf", 15, 13) {
+							var t18 string
+							switch {
+							default:
+								p17 := x7
+								if p17 == nil {
+									e.Null("threads.surf", 15, 13)
+									break
+								}
+								t18 += p17.Summary
+							}
+							n16 := surfui.Text(t18)
+							k15 = append(k15, n16)
+							e.Leave()
+						}
+						switch {
+						default:
+							p20 := x7
+							if p20 == nil {
+								e.Null("threads.surf", 15, 41)
+								break
+							}
+							if p20.Gone {
+								// threads.surf:15:41 <chip>
+								if e.Enter("threads.surf", 15, 41) {
+									n19 := surfui.Chip("block gone")
+									surf.ModFill(n19, "warn")
+									k15 = append(k15, n19)
+									e.Leave()
+								}
+								break
+							}
+						}
+						n15 := surfui.Line(k15...)
+						k8 = append(k8, n15)
+						e.Leave()
+					}
+					// threads.surf:16:7 <text>
+					if e.Enter("threads.surf", 16, 7) {
+						var t23 string
+						switch {
+						default:
+							p22 := x7
+							if p22 == nil {
+								e.Null("threads.surf", 16, 7)
+								break
+							}
+							t23 += p22.Age
+						}
+						n21 := surfui.Text(t23)
+						k8 = append(k8, n21)
+						e.Leave()
+					}
+					n8 := surfui.Item(k8...)
+					switch {
+					default:
+						p24 := x7
+						if p24 == nil {
+							e.Null("threads.surf", 11, 5)
+							break
+						}
+						surf.ModKey(n8, p24.Key)
+					}
+					switch {
+					default:
+						p25 := x7
+						if p25 == nil {
+							e.Null("threads.surf", 11, 5)
+							break
+						}
+						surf.ModMuted(n8, p25.Resolved)
+					}
+					surf.ModSelected(n8, (int64(i7) == int64(c.Sel)))
+					{
+						a26 := int(int64(i7))
+						n8.On("click", func() { c.Pick(a26) })
+					}
+					n8.On("activate", func(ev surfrun.Event) { c.Open(ev.Value) })
+					k2 = append(k2, n8)
+					e.Leave()
+				}
+			}
+			// threads.surf:18:5 <empty>
+			if e.Enter("threads.surf", 18, 5) {
+				var k27 []*surfui.Node
+				// threads.surf:18:12 <text>
+				if e.Enter("threads.surf", 18, 12) {
+					n28 := surfui.Text("No threads yet. Comment on any block to start one.")
+					surf.ModMuted(n28, true)
+					k27 = append(k27, n28)
+					e.Leave()
+				}
+				n27 := surfui.Empty(k27...)
+				k2 = append(k2, n27)
+				e.Leave()
+			}
+			// threads.surf:19:5 <text>
+			if e.Enter("threads.surf", 19, 5) {
+				n29 := surfui.Text("\u2060$range\u2060")
+				surf.ModKey(n29, "range")
+				surf.ModMuted(n29, true)
+				surf.ModSmall(n29, true)
+				k2 = append(k2, n29)
+				e.Leave()
+			}
+			n2 := surfui.Table(k2...)
+			surf.ModKey(n2, "t")
+			surf.ModHeight(n2, 8)
+			surf.ModScroll(n2, true)
+			k1 = append(k1, n2)
+			e.Leave()
+		}
+		n1 := surf.NewSurface(k1...)
+		out = append(out, n1)
+		e.Leave()
+	}
+	return out
+}
+
 // surfRenderTune draws tune.surf for Tune.
 func surfRenderTune(e *surf.Errs, out []*surfui.Node, c *Tune, fill surf.Fill) []*surfui.Node {
 	// tune.surf:1:1 <surface>
@@ -4497,6 +4809,11 @@ func surfCompiledTabsExample(c *TabsExample) surflive.Component {
 	return surf.Compiled(c, "tabs-example.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderTabsExample(e, nil, c, nil) }, surfPalette)
 }
 
+// surfCompiledThreads is c drawn by its templates compiled into Go.
+func surfCompiledThreads(c *Threads) surflive.Component {
+	return surf.Compiled(c, "threads.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderThreads(e, nil, c, nil) }, surfPalette)
+}
+
 // surfCompiledTune is c drawn by its templates compiled into Go.
 func surfCompiledTune(c *Tune) surflive.Component {
 	return surf.Compiled(c, "tune.surf", func(e *surf.Errs) []*surfui.Node { return surfRenderTune(e, nil, c, nil) }, surfPalette)
@@ -4657,6 +4974,25 @@ func surfList8Of(v cellite.Value) []*InfoPanel {
 	out := make([]*InfoPanel, l.Len())
 	for i := range out {
 		out[i] = surfInfoPanelOf(l.At(i))
+	}
+	return out
+}
+
+// surfList9 is a []*Thread as a list.
+type surfList9 []*Thread
+
+func (l surfList9) Len() int               { return len(l) }
+func (l surfList9) At(i int) cellite.Value { return surfThreadValue(l[i]) }
+
+// surfList9Of is a list's value as a []*Thread.
+func surfList9Of(v cellite.Value) []*Thread {
+	l := v.List()
+	if l == nil {
+		return nil
+	}
+	out := make([]*Thread, l.Len())
+	for i := range out {
+		out[i] = surfThreadOf(l.At(i))
 	}
 	return out
 }

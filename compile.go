@@ -324,6 +324,9 @@ func readFiles(fsys fs.FS) (map[string]*file, map[string]stamp, error) {
 // or one :if chain of them (:if, :else-if, :else) of which one draws.
 func parseFile(name, src string) (*file, error) {
 	nodes, err := markup.Parse(name, src)
+	for i := range nodes {
+		nodes[i] = tablesRead(nodes[i])
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -688,11 +691,13 @@ type scope struct {
 	inProse bool
 	// inMenu says what it compiles is a <menu>'s items.
 	inMenu bool
+	// inTable says it is in a <table>, whose foot's texts may say $range.
+	inTable bool
 }
 
 // with is s with locals added, in the next slots.
 func (s *scope) with(locals ...cellite.Var) *scope {
-	n := &scope{c: s.c, t: s.t, vars: append([]cellite.Var(nil), s.vars...), around: s.around, inLine: s.inLine, inProse: s.inProse}
+	n := &scope{c: s.c, t: s.t, vars: append([]cellite.Var(nil), s.vars...), around: s.around, inLine: s.inLine, inProse: s.inProse, inTable: s.inTable}
 	for _, l := range locals {
 		n.vars = declare(n.vars, s.t.nfields, l)
 	}
@@ -1033,8 +1038,8 @@ func (s *scope) directive(n *markup.Node) string {
 	if _, ok := n.Attr(":each"); ok {
 		return ":each"
 	}
-	if _, ok := n.Attr(":if"); ok {
-		return ":if"
+	if _, ok := n.Attr(":if"); ok && n.Tag != "col" {
+		return ":if" // a col's is its `show`: the column stays, so its cells keep their places
 	}
 	for _, d := range []string{":else-if", ":else"} {
 		if a, ok := n.Attr(d); ok {
@@ -1086,6 +1091,10 @@ func (s *scope) bare(n *markup.Node) *elem {
 		return nil
 	}
 	ks := s.tipOf(e, n, s.menuOf(e, n))
+	if e.w.Tag == "table" {
+		s.tableKids(e, ks)
+		return e
+	}
 	was, wasLine, wasProse := s.around, s.inLine, s.inProse
 	s.around = true // a <bind> in it binds on it
 	if e.w.Form == FormKids || e.w.Form == FormSection || e.w.Form == FormFace {
@@ -1099,6 +1108,18 @@ func (s *scope) bare(n *markup.Node) *elem {
 	}
 	s.around, s.inLine, s.inProse = was, wasLine, wasProse
 	return e
+}
+
+// tableKids compiles a <table>'s children, in a scope where $range is
+// allowed. It is bare's for a table, kept out of bare's frame, which every
+// level of a deep template pays for.
+//
+//go:noinline
+func (s *scope) tableKids(e *elem, ks []*markup.Node) {
+	was, wasLine, wasProse, wasTable := s.around, s.inLine, s.inProse, s.inTable
+	s.around, s.inLine, s.inProse, s.inTable = true, false, false, true
+	e.kids = s.kids(ks)
+	s.around, s.inLine, s.inProse, s.inTable = was, wasLine, wasProse, wasTable
 }
 
 // widgetEl compiles a widget's tag and attributes: nil where n is no
@@ -1126,6 +1147,9 @@ func (s *scope) widgetEl(n *markup.Node) *elem {
 	vals := map[int]value{}
 	for _, a := range n.Attrs {
 		name, bound := strings.CutPrefix(a.Name, ":")
+		if n.Tag == "col" && a.Name == ":if" {
+			name = "show"
+		}
 		switch {
 		case strings.HasPrefix(a.Name, "@"):
 			s.event(e, n, a)
@@ -1863,6 +1887,14 @@ func checkLiteral(at *Attr, v string) error {
 		return ModKind(NewAlert(), v)
 	case "caret":
 		return ModCaret(surfui.Field(), v)
+	case "width":
+		return ModColWidth(surfui.Col(""), v)
+	case "max":
+		return ModColMax(surfui.Col(""), v)
+	case "align":
+		return ModColAlign(surfui.Col(""), v)
+	case "sort":
+		return ModColSort(surfui.Col(""), v)
 	case "rows":
 		return ModRows(surfui.Field(), v)
 	case "type":
@@ -1888,6 +1920,16 @@ func (s *scope) parts(ps []markup.Part) []part {
 	for _, p := range ps {
 		if !p.Expr {
 			out = append(out, part{lit: p.Src})
+			continue
+		}
+		if strings.TrimSpace(p.Src) == "$range" {
+			// The rows a table shows: its own, which it writes in once it
+			// knows its rows (surfui.RangeText).
+			if !s.inTable {
+				s.c.fail(s.t.file, p.Pos, "$range is the rows a <table> shows: it goes in one, in its foot")
+				continue
+			}
+			out = append(out, part{lit: surfui.RangeMark})
 			continue
 		}
 		if prog, ok := s.expr(p.Src, p.Pos); ok {

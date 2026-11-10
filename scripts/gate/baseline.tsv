@@ -68,6 +68,11 @@ chip-fills-paper-compact-1.6	15.2
 chip-fills-paper-dense-1.6	181.6
 chip-fills-stone-dense-1.6	181.6
 chip-fills-terminal-dense-1.6	182.4
+chips-filters-graphite-roomy-1.6	43.0
+chips-filters-neuroplastio-roomy-1.6	32.8
+chips-filters-paper-roomy-1.6	38.3
+chips-filters-stone-roomy-1.6	41.8
+chips-filters-terminal-roomy-1.6	33.2
 code-spans-neuroplastio-dense-1.6	279.7
 code-spans-terminal-dense-1.6	279.7
 cycle-states-graphite-compact-1.6	16.8
@@ -380,6 +385,8 @@ switch-focus-paper-dense-1.6	18.0
 switch-focus-stone-compact-1.6	15.6
 switch-focus-stone-dense-1.6	18.0
 switch-focus-terminal-dense-1.6	18.7
+table-scroll-neuroplastio-roomy-1.6	26.6
+table-scroll-terminal-roomy-1.6	30.5
 tabs-states-graphite-compact-1.6	16.8
 tabs-states-neuroplastio-compact-1.6	337.5
 tabs-states-neuroplastio-roomy-1.6	839.8
@@ -441,8 +448,3 @@ widget-states-stone-compact-1.6	23.0
 widget-states-stone-dense-1.6	874.2
 widget-states-terminal-compact-1.6	19.1
 widget-states-terminal-dense-1.6	874.2
-chips-filters-graphite-roomy-1.6	43.0
-chips-filters-neuroplastio-roomy-1.6	32.8
-chips-filters-paper-roomy-1.6	38.3
-chips-filters-stone-roomy-1.6	41.8
-chips-filters-terminal-roomy-1.6	33.2

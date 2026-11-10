@@ -650,6 +650,18 @@ func (s *Surface) event(e hotty.Event) bool {
 			return true
 		}
 	}
+	if e.Kind == hotty.EventClick {
+		// A click on the selected Item, or a double click, activates it,
+		// after its own click handler has run.
+		if act, ok := surfui.Handler(n, "activate"); ok && (e.Count >= 2 || surfui.IsSelected(n)) {
+			if click, ok := surfui.Handler(n, "click"); ok {
+				s.do(click, ev)
+			}
+			ev.Kind, ev.Value = "activate", surfui.KeyOf(n)
+			s.do(act, ev)
+			return true
+		}
+	}
 	act, ok := surfui.Handler(n, e.Kind)
 	// A click on a checkbox is also its change, which says whether it is
 	// now checked ("true" or "false"): the model owns the state, and a
@@ -771,6 +783,12 @@ func (s *Surface) bound(key string) binding {
 			if s.rn != nil {
 				s.rn.Quit()
 			}
+			return false
+		}
+		if a, ok := b.Act.(surfui.Activation); ok {
+			// A table's Enter: its selected row's @activate, with the
+			// row's key as its value.
+			s.do(a.Act, Event{Kind: "activate", Value: a.Value, Key: key})
 			return false
 		}
 		s.do(b.Act, Event{Kind: "key", Key: key})
