@@ -771,7 +771,7 @@ var All = []Story{
 	{"chips/filters", 60, func() *surfui.Node {
 		// A filter of several values picked at once, as the gallery's: the
 		// picked ones on the accent's soft fill, the pointer on one, the
-		// keyboard on one; beside it a single pick, a segmented row.
+		// keyboard on one.
 		chips := func(hover, focus int) *surfui.Node {
 			row := surfui.Row().Chips()
 			for i, s := range []string{"Errors", "Warnings", "Slow", "Cached", "Retried"} {
@@ -786,9 +786,7 @@ var All = []Story{
 			}
 			return row
 		}
-		return surfui.Stack(chips(1, -1), chips(-1, 3),
-			surfui.Row(surfui.Button("All").Selected(true), surfui.Button("Errors"), surfui.Button("Agents")).Segmented(),
-		).Gap(1)
+		return surfui.Stack(chips(1, -1), chips(-1, 3)).Gap(1)
 	}},
 	{"list/selection", 50, func() *surfui.Node {
 		return surfui.List(
