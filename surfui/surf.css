@@ -1213,20 +1213,26 @@
 .u-prose { max-width: 80ch; gap: 0.76470588rem; }
 .u-prose-compact { max-width: none; gap: 0.47058824rem; }
 .u-dense .u-prose, .u-dense .u-prose-compact { gap: var(--hotty-cell-h); }
-.u-compact .u-prose, .u-roomy .u-prose { font-size: 0.94117647rem; line-height: 1.6; }
+.u-compact .u-prose, .u-roomy .u-prose { font-size: 0.94117647rem; line-height: 1.6em; }
 .u-compact .u-prose-compact, .u-roomy .u-prose-compact { font-size: inherit; line-height: inherit; }
 .u-ul, .u-ol, .u-li-body, .u-alert-body { gap: 0.23529412rem; }
 .u-dense .u-ul, .u-dense .u-ol, .u-dense .u-li-body, .u-dense .u-alert-body { gap: 0; }
 .u-dense .u-alert-body { gap: var(--hotty-cell-h); }
 .u-h { font-weight: 600; }
-.u-h1 { font-size: 1.5em; line-height: 1.3; }
-.u-h2 { font-size: 1.25em; line-height: 1.35; }
+.u-h1 { font-size: 1.5em; line-height: 1.3em; }
+.u-h2 { font-size: 1.25em; line-height: 1.35em; }
 .u-h3 { font-size: 1.1em; }
 .u-h5, .u-h6 { color: var(--u-muted); }
 .u-dense .u-h1, .u-dense .u-h2, .u-dense .u-h3 { font-size: inherit; line-height: inherit; }
 .u-li { display: flex; flex-direction: row; align-items: flex-start; gap: 0.5em; }
 .u-li-mark { flex: 0 0 auto; min-width: calc(var(--u-mw) * 1ch); text-align: right; color: var(--u-muted); }
 .u-li-body { flex: 1 1 0; }
+/* A task's marker is a checkbox's square, as the kit's: 14px, a control's
+   field and hairline, the accent when checked with the check in the icon
+   font (transparent till then). It sits on the first line's middle. */
+.u-li-box { display: inline-flex; align-items: center; justify-content: center; width: 14px; min-width: 14px; height: 14px; margin-top: 5px; padding: 0; border-radius: var(--u-r-xs); line-height: 1; font-family: "AdwaitaMono Nerd Font Propo", var(--hotty-font, monospace); font-size: 14px; color: transparent; background: var(--u-field); box-shadow: inset 0 0 0 1px var(--u-input); }
+.u-li-box.is-on { color: var(--u-on-solid); background: var(--u-accent); box-shadow: none; }
+.u-prose-compact .u-li-box { margin-top: calc((var(--u-row) - 14px) / 2); }
 .u-quote { padding-left: 0.9em; background: linear-gradient(var(--u-border), var(--u-border)) 0 0 / 3px 100% no-repeat; }
 .u-alert { padding: 0.4em 0 0.4em 0.9em; gap: 0.23529412rem; background: linear-gradient(var(--u-bar), var(--u-bar)) 0 0 / 3px 100% no-repeat; }
 .u-alert-note { --u-bar: var(--u-info); }
@@ -1243,6 +1249,8 @@
 .u-img { max-width: 100%; max-height: calc(20 * var(--u-row)); }
 /* Muted reaches every run in it: a link's, a heading's, an alert's. */
 .u-surface .u-prose.u-tone-muted * { color: inherit; }
+.u-surface .u-prose.u-tone-muted .u-li-box { color: transparent; }
+.u-surface .u-prose.u-tone-muted .u-li-box.is-on { color: var(--u-on-solid); }
 .u-surface .u-tone-accent, .u-surface.u-tone-accent { color: var(--u-accent); }
 .u-surface .u-tone-ok, .u-surface.u-tone-ok { color: var(--u-ok); }
 .u-surface .u-tone-warn, .u-surface.u-tone-warn { color: var(--u-warn); }

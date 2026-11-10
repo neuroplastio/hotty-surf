@@ -661,6 +661,12 @@ func (b *box) look(d density) {
 		b.text = textOf(n)
 	}
 	switch {
+	case hasClass(n, "u-li-box"):
+		// A task's square on a host is ☐ or ☑ here.
+		b.text = "☐"
+		if hasClass(n, "is-on") {
+			b.text = "☑"
+		}
 	case hasClass(n, "u-li-mark"):
 		// Right-aligned to the widest marker of its list: the numbers'
 		// ones place lines up.

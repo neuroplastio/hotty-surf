@@ -160,10 +160,10 @@ func (n *Node) mark() *Node {
 			m = strconv.Itoa(start+i) + "."
 		}
 		if slices.Contains(li.class, "is-task") {
-			m = "☐"
-			if slices.Contains(li.class, "is-on") {
-				m = "☑"
-			}
+			// A task's marker is a checkbox's square, drawn by the
+			// stylesheet (the check in its icon font), not a text glyph
+			// a host's face may lack; the cells draw ☐ and ☑.
+			m = checkGlyph
 		}
 		width = max(width, len([]rune(m)))
 		SetText(li.kids[0], m)
@@ -173,6 +173,9 @@ func (n *Node) mark() *Node {
 	}
 	return n
 }
+
+// checkGlyph is MDI's check, in a task's square on a host.
+const checkGlyph = "\U000F012C"
 
 // Li is an item of a Bullets or a Numbered: a marker, and its blocks
 // beside it, hanging. A text among its children is a paragraph's; a list
@@ -185,15 +188,18 @@ func Li(kids ...*Node) *Node {
 // task makes an Li a task's: its marker ☐, or ☑ where on; its list
 // numbers it no more.
 func (n *Node) task(on bool) {
-	n.Class("is-task")
+	n.Class("is-task").Attr("aria-checked", strconv.FormatBool(on))
+	mark := n.kids[0]
+	mark.Class("u-li-box")
+	mark.Unclass("is-on")
+	n.Unclass("is-on")
 	if on {
 		n.Class("is-on")
+		mark.Class("is-on")
 	}
-	n.Attr("aria-checked", strconv.FormatBool(on))
+	SetText(mark, checkGlyph)
 	if p := n.parent; p != nil {
 		p.mark()
-	} else {
-		SetText(n.kids[0], map[bool]string{true: "☑", false: "☐"}[on])
 	}
 }
 

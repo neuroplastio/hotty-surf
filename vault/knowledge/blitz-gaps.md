@@ -497,6 +497,13 @@ underline: Blitz's sits a device row lower than Chromium's (red under
 
 ## Prose and links (a2ui-exit L10 and L11, 2026-11-10)
 
+A task's marker is a checkbox's square (a 14px box, the check in the icon
+font) and not the text glyph ☐ ☑, which Blitz drew from a smaller
+fallback face; every line's height in prose is a length in `em`
+(`line-height: 1.6em`), so that an inline run in another face (an icon, the
+code's) can't change a line box, which had Blitz's blocks creep up by a
+row by the end of `prose/alerts`.
+
 From `make gate GATE_FLAGS="--only prose-"` (and `link-`), hotty-blitz 0.7.0:
 the new stories `prose/doc`, `prose/compact`, `prose/alerts` and
 `link/inline` fail in every theme and density, as every story of
@@ -507,11 +514,13 @@ measure, the gaps, the hanging list items, the quote's and alert's bars
 (a background layer, as the list marker is), the heading sizes, and the
 inline code's ground. What differs, for hotty-blitz's batch:
 
-- **A task's marker (☐ ☑) falls back to another face** than Chromium's and
-  comes out smaller, so the marker is narrower and the text after it sits a
-  few px off. The glyph isn't in the proportional face the host ships.
-- **`em`'s italic** of the proportional face draws oddly at 2× (the glyphs
-  are cut by a stray stroke in `prose/doc`'s "fast"); not isolated.
+- **`em`'s italic is a gate font gap, not a Blitz one.** The gate's fonts
+  (`HOTTY_FONTS`, hotty-blitz 0.7.0's `fonts/`) hold IBM Plex Sans
+  Regular, Medium and SemiBold, and no Italic; the "fast" in `prose/doc`
+  is Blitz's synthetic slant of the Regular, and Chromium (given the same
+  fonts) does the same differently. Nothing is faked here: adding
+  `IBMPlexSans-Italic.woff2` to the fonts (and the `@font-face` the hosts
+  carry) is the fix, and the case is then scored.
 - **An alert's icon** (an MDI glyph, in the Nerd Font Propo) is a size off
   Chromium's, as the icon widget's are.
 - **`text-decoration: underline` and `line-through`** (a link's, `del`'s)

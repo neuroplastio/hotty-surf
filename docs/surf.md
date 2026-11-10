@@ -651,7 +651,7 @@ into these tags.
   it bold) and `anchor`, its `id` on a host, which a `#fragment` link finds
   and `Box` finds in the cells ("Links").
 - **`ul` and `ol`** hold `li`; `start` is the number an `ol` begins with. An
-  item is its marker, `•`, its number, or `☐` and `☑` for a task, and its
+  item is its marker, `•`, its number, or a task's square (`☐` and `☑` in cells; on a host a checkbox's 14px square, the accent with the check once checked), and its
   blocks hanging beside it, so a wrapped line sits under the text, not the
   marker; a list in an item is nested. `checked` on an `li` makes it a
   task (`:checked="done"` binds it); a task isn't numbered.

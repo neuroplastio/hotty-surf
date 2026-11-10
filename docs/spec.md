@@ -475,7 +475,7 @@ the floor's constructors (both modes call the same ones). `data-on` and
 | `br` | none | nothing | none | a hard break in a paragraph | `<br/>` | `<br id="r" class="u-br">` |
 | `ul` | kids | children | none | a bulleted list of li | `<ul><li>One</li></ul>` | `<ul id="r" class="u-ul"><li id="r.0" class="u-li"><span id="r.0.0" class="u-li-mark" style="--u-mw:1">•</span><div id="r.0.1" class="u-li-body"><p id="r.0.1.0" class="u-p">One</p></div></li></ul>` |
 | `ol` | kids | children | none | a numbered list of li, from start | `<ol start="3"><li>Three</li></ol>` | `<ol id="r" class="u-ol" start="3"><li id="r.0" class="u-li"><span id="r.0.0" class="u-li-mark" style="--u-mw:2">3.</span><div id="r.0.1" class="u-li-body"><p id="r.0.1.0" class="u-p">Three</p></div></li></ol>` |
-| `li` | kids | children | none | an item of a ul or an ol: its marker, and its blocks hanging beside it; checked makes it a task's | `<li checked>Done</li>` | `<li id="r" class="u-li is-task is-on" aria-checked="true"><span id="r.0" class="u-li-mark">☑</span><div id="r.1" class="u-li-body"><p id="r.1.0" class="u-p">Done</p></div></li>` |
+| `li` | kids | children | none | an item of a ul or an ol: its marker, and its blocks hanging beside it; checked makes it a task's | `<li checked>Done</li>` | `<li id="r" class="u-li is-task is-on" aria-checked="true"><span id="r.0" class="u-li-mark u-li-box is-on">󰄬</span><div id="r.1" class="u-li-body"><p id="r.1.0" class="u-p">Done</p></div></li>` |
 | `quote` | kids | children | none | a block quote: a bar at its start, its blocks beside it | `<quote>Said</quote>` | `<blockquote id="r" class="u-quote"><p id="r.0" class="u-p">Said</p></blockquote>` |
 | `alert` | kids | children | none | a callout of its kind: a bar, an icon and a title in the kind's tone over its blocks | `<alert kind="tip">Careful</alert>` | `<div id="r" class="u-alert u-alert-tip" role="note"><div id="r.0" class="u-alert-title"><span id="r.0.0" class="u-alert-icon">󰛩</span> Tip</div><div id="r.1" class="u-alert-body"><p id="r.1.0" class="u-p">Careful</p></div></div>` |
 | `img` | none | nothing | none | an image: on a host its src, at most 20 rows tall; in the cells its alt in brackets, nothing for an empty alt | `<img src="cid:logo" alt="Logo"/>` | `<img id="r" class="u-img" src="cid:logo" alt="Logo">` |
@@ -613,7 +613,9 @@ has no Markdown parser, a converter (`surfmd`) writes these tags.
   `ul` and `ol` (`start`) a `ul.u-ul` and an `ol.u-ol`, `li` an
   `li.u-li` of a marker (`span.u-li-mark`, its width in `--u-mw` chars, so
   a numbered list's markers line up) and a body (`div.u-li-body`), a task's
-  `.is-task` (`.is-on` once checked, with `aria-checked`), `quote` a
+  `.is-task` (`.is-on` once checked, with `aria-checked`), whose marker is
+  a checkbox's square, `.u-li-box`, the check in its icon font (the cells
+  draw `☐` and `☑`), `quote` a
   `blockquote.u-quote`, `alert` a `div.u-alert.u-alert-KIND` of a title
   (`.u-alert-title`, its icon `.u-alert-icon`) and a body
   (`.u-alert-body`), `img` an `img.u-img`. `compact` adds `.u-prose-compact`.

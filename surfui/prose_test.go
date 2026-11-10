@@ -25,9 +25,9 @@ func TestProseHTML(t *testing.T) {
 		`<p id="r.0.1" class="u-p">A bare text, <em id="r.0.1.1" class="u-em">then</em> emphasis.</p>`,
 		`<ol id="r.0.2" class="u-ol" start="3">`,
 		`<span id="r.0.2.0.0" class="u-li-mark" style="--u-mw:2">3.</span>`,
-		`<span id="r.0.2.1.0" class="u-li-mark" style="--u-mw:2">☑</span>`,
+		`<span id="r.0.2.1.0" class="u-li-mark u-li-box is-on" style="--u-mw:2">󰄬</span>`,
 		`<span id="r.0.2.2.0" class="u-li-mark" style="--u-mw:2">5.</span>`,
-		`<span id="r.0.3.0.0" class="u-li-mark" style="--u-mw:1">☐</span>`,
+		`<span id="r.0.3.0.0" class="u-li-mark u-li-box" style="--u-mw:1">󰄬</span>`,
 		`class="u-alert u-alert-tip" role="note"`,
 		`<img id="r.0.5.0" class="u-img" src="cid:x" alt="a diagram">`,
 	} {
