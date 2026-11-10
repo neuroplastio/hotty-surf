@@ -494,3 +494,55 @@ underline: Blitz's sits a device row lower than Chromium's (red under
 | Story (cases) | What Blitz draws wrong, next to Chromium | Scale | Cause | How bad |
 | --- | --- | --- | --- | --- |
 | link/inline (Compact 1.6×: 12–14; Dense 2×: 21–23; Roomy 2×: 51–52) | An underline a device row lower and thicker than Chromium's | 1.6×, 2× | Not verified: Blitz places the line from the font's underline metrics, snapped to device px; Chromium 153 rounds its own | Cosmetic |
+
+## Prose and links (a2ui-exit L10 and L11, 2026-11-10)
+
+A task's marker is a checkbox's square (a 14px box, the check in the icon
+font) and not the text glyph ☐ ☑, which Blitz drew from a smaller
+fallback face; every line's height in prose is a length in `em`
+(`line-height: 1.6em`), so that an inline run in another face (an icon, the
+code's) can't change a line box, which had Blitz's blocks creep up by a
+row by the end of `prose/alerts`.
+
+**The baseline's new cases of this leg (33 of 1860, taken 2026-11-10 on
+main's green gate):** `prose/doc` in compact and roomy, every theme, both
+scales (20 cases, 24–47 CSS px²), and `prose/compact` in roomy at both
+scales in each theme and in compact at 1.6× in some (13 cases, 13–28). The
+defects seen in both engines' sheets (`.shots/gate/prose-*`): the italic
+(the gate's fonts have no Plex Italic, below), a pixel of inline code's
+edge, and the proportional text's known 1–2 px. `prose/alerts`, `link/inline`
+and every Dense case pass. Nothing else moved.
+
+From `make gate GATE_FLAGS="--only prose-"` (and `link-`), hotty-blitz 0.7.0:
+the new stories `prose/doc`, `prose/compact`, `prose/alerts` and
+`link/inline` fail in every theme and density, as every story of
+proportional text does (a row's line sits 1–2 CSS px lower in Blitz): 100–600
+CSS px² in `prose/doc`, 2700 at 2× in `prose/alerts`, which is long. Looked
+at in the sheets (`.shots/gate/prose-*`), the layout is Chromium's: the
+measure, the gaps, the hanging list items, the quote's and alert's bars
+(a background layer, as the list marker is), the heading sizes, and the
+inline code's ground. What differs, for hotty-blitz's batch:
+
+- **`em`'s italic is a gate font gap, not a Blitz one.** The gate's fonts
+  (`HOTTY_FONTS`, hotty-blitz 0.7.0's `fonts/`) hold IBM Plex Sans
+  Regular, Medium and SemiBold, and no Italic; the "fast" in `prose/doc`
+  is Blitz's synthetic slant of the Regular, and Chromium (given the same
+  fonts) does the same differently. Nothing is faked here: adding
+  `IBMPlexSans-Italic.woff2` to the fonts (and the `@font-face` the hosts
+  carry) is the fix, and the case is then scored.
+- **Inline padding** (`padding: 0 0.25em` on `code`) widens the text after
+  it in Blitz by more than in Chromium (185 against 26 CSS px² in
+  `prose/compact` once removed), so inline code has none: its ground
+  is flush to the glyphs in both engines.
+- **An alert's title** was a line a pixel shorter in Blitz, which crept the
+  blocks up a row by the end of `prose/alerts` (23 rows against 24); the
+  title has a height of its own (`height: 1.6em`), and `prose/alerts`
+  scores 0.0 in every theme and density since.
+- **An alert's icon** (an MDI glyph, in the Nerd Font Propo) is a size off
+  Chromium's, as the icon widget's are.
+- **`text-decoration: underline` and `line-through`** (a link's, `del`'s)
+  draw, at a different thickness or offset: they are marked unknown in
+  [`css-subset.md`](css-subset.md) until the gate's cases are scored.
+
+No workaround is in the framework. The gate's baseline wasn't written
+(the gate was red on main for other reasons).

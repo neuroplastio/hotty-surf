@@ -1,0 +1,104 @@
+cells 40x40
+text
+> Install guide
+>
+> Run make check first, it is fast and
+> strict, not slow. See usage or the site.
+>
+> • first item that is long enough to wrap
+>   onto a second line
+> • second
+>    8. eight
+>    9. nine
+>   10. ten
+> ☑ a task
+> ☐ an open task
+>
+> ▎ Measure twice,
+> ▎ cut once.
+>
+> ▎ 󰋽 Note
+> ▎ A note, with a body long enough to
+> ▎ wrap.
+>
+> ▎ 󰛩 Tip
+> ▎ A tip.
+>
+> ▎ 󰨄 Important
+> ▎ Important.
+>
+> ▎ 󰀪 Warning
+> ▎ Warning one.
+> ▎
+> ▎ Warning two.
+>
+> ▎ 󰳦 Caution
+> ▎ Careful.
+>
+> A picture: [the diagram] and
+>
+> Usage
+>
+> End.
+style
+= aaaaaaa.aaaaa
+=
+= ....bbbbbbbbbb..............cccc
+= aaaaaa......dddd......eeeee........eeee
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+= f
+= f
+=
+= g.h.hhhh
+= g
+= g
+=
+= i.j.jjj
+= i
+=
+= k.l.lllllllll
+= k
+=
+= m.n.nnnnnnn
+= m
+= m
+= m
+=
+= o.p.ppppppp
+= o
+=
+= ...........qqqq.qqqqqqqq
+=
+= aaaaa
+. fg/bg
+a fg/bg bold
+b fg/tonal
+c fg/bg italic
+d fg/bg strike
+e accent/bg underline
+f border/bg
+g info/bg
+h info/bg bold
+i ok/bg
+j ok/bg bold
+k accent/bg
+l accent/bg bold
+m warn/bg
+n warn/bg bold
+o error/bg
+p error/bg bold
+q muted/bg
+hits
+@ 22,3 5x1 r.0.1.9
+links
+@ 22,3 5x1 #usage
+@ 35,3 4x1 https://example.com

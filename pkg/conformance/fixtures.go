@@ -367,3 +367,22 @@ type Links struct {
 func (l *Links) Go(href string, e surfrun.Event) {
 	l.Log = append(l.Log, "follow "+href+" mods "+strconv.Itoa(e.Mods))
 }
+
+// Prose is a page of long-form text: a heading, a paragraph of every
+// inline, lists with a nested one and tasks, a quote, an alert, images,
+// and a compact muted block (prose.surf). Note is a paragraph's text, and
+// Open the state of one task.
+type Prose struct {
+	Note string
+	Open bool
+	Log  []string
+}
+
+// Follow is the link's follow.
+func (p *Prose) Follow(href string) { p.Log = append(p.Log, "follow "+href) }
+
+// Toggle flips the open task.
+func (p *Prose) Toggle() {
+	p.Open = !p.Open
+	p.Log = append(p.Log, "toggle")
+}

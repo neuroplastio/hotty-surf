@@ -123,6 +123,7 @@ var (
 	// badgeTones are a badge's (Q11, Q12's lean): new, someone waits,
 	// something failed, for information.
 	badgeTones = []string{"accent", "warn", "error", "muted"}
+	alertKinds = surfui.AlertKinds()
 )
 
 var events = []string{"click", "focus"}
@@ -148,7 +149,7 @@ var pointed = func() []string {
 // proseTags are the tags whose texts are the plain runs of one text
 // (surfui.Str), where a text is a run of a paragraph: a link's, and those
 // of the prose elements (prose.go in surfui).
-var proseTags = map[string]bool{"link": true}
+var proseTags = map[string]bool{"link": true, "prose": true, "p": true, "h": true, "em": true, "strong": true, "del": true, "code": true, "li": true, "quote": true, "alert": true}
 
 // floor is one of the floor's widgets.
 func floor(tag, doc string, form Form, fn string, events []string) Widget {
@@ -183,6 +184,20 @@ var Widgets = []Widget{
 	floor("box", "a raised panel", FormKids, "surfui.Box", events),
 	floor("dialog", "the box plx draws round its palette", FormKids, "surfui.Dialog", events),
 	floor("link", "a link, inline in a line or on a row of its own: its text underlined in the link tone, which Enter and a click follow; a #fragment an anchor names scrolls to it", FormKids, "NewLink", []string{"click", "focus", "follow"}),
+	floor("prose", "long-form text: its blocks (p, h, ul, ol, quote, alert, img) one under another at a reading measure of 80 columns, a row apart in the cells; with compact, no measure and the surface's text size; muted reaches every run", FormKids, "surfui.Prose", nil),
+	floor("p", "a paragraph: its inline children (text, em, strong, del, code, link, br, img) flow as one text and wrap at its spaces", FormKids, "surfui.Para", nil),
+	floor("h", "a heading of its level, 1 to 6; its anchor is the id a link's #fragment finds it by", FormKids, "NewH", nil),
+	floor("em", "emphasis, inline: italic", FormKids, "surfui.Em", nil),
+	floor("strong", "strong emphasis, inline: bold", FormKids, "surfui.Strong", nil),
+	floor("del", "struck-through text, inline", FormKids, "surfui.Del", nil),
+	floor("code", "code in a text, inline, on the code ground", FormKids, "surfui.Code", nil),
+	floor("br", "a hard break in a paragraph", FormNone, "surfui.Br", nil),
+	floor("ul", "a bulleted list of li", FormKids, "surfui.Bullets", nil),
+	floor("ol", "a numbered list of li, from start", FormKids, "NewNumbered", nil),
+	floor("li", "an item of a ul or an ol: its marker, and its blocks hanging beside it; checked makes it a task's", FormKids, "surfui.Li", nil),
+	floor("quote", "a block quote: a bar at its start, its blocks beside it", FormKids, "surfui.Quote", nil),
+	floor("alert", "a callout of its kind: a bar, an icon and a title in the kind's tone over its blocks", FormKids, "NewAlert", nil),
+	floor("img", "an image: on a host its src, at most 20 rows tall; in the cells its alt in brackets, nothing for an empty alt", FormNone, "NewImg", nil),
 	floor("face", "a widget's face on a strip: its icon, value and unit in a capsule, or what it holds, which opens a popover or runs its verb", FormFace, "NewFace", events),
 }
 
@@ -202,6 +217,12 @@ var Attrs = []Attr{
 	{Name: "density", Type: TypeString, Doc: "compact (the default), dense or roomy", Tags: []string{"surface"}, Func: "ModDensity", Fails: true, Values: densities},
 	{Name: "href", Type: TypeString, Doc: "where a link goes: a URL, a path, or #name for the element whose anchor it is", Tags: []string{"link"}, Func: "ModHref"},
 	{Name: "external", Type: TypeBool, Doc: "a link to somewhere else: a host opens it in a new tab, a terminal by its OSC 8, and it takes no press on the surface unless it has a follow", Tags: []string{"link"}, Func: "ModExternal"},
+	{Name: "level", Type: TypeInt, Doc: "a heading's level, 1 to 6", Tags: []string{"h"}, Func: "ModLevel"},
+	{Name: "start", Type: TypeInt, Doc: "the number a numbered list's first item has", Tags: []string{"ol"}, Func: "ModStart"},
+	{Name: "kind", Type: TypeString, Doc: "an alert's kind: note, tip, important, warning or caution", Tags: []string{"alert"}, Func: "ModKind", Fails: true, Values: alertKinds},
+	{Name: "src", Type: TypeString, Doc: "an image's source: a URL, or a resource the program sent (cid:name)", Tags: []string{"img"}, Func: "ModSrc"},
+	{Name: "alt", Type: TypeString, Doc: "an image's alternative text, which the cells draw in brackets", Tags: []string{"img"}, Func: "ModAlt"},
+	{Name: "compact", Type: TypeBool, Doc: "prose as a comment has it: no measure, the space between blocks a row at most, the surface's text size", Tags: []string{"prose"}, Func: "ModCompact"},
 	{Name: "anchor", Type: TypeString, Doc: "the name a link's #fragment finds the element by: its id on a host", Func: "ModAnchor"},
 	{Name: "key", Type: TypeString, Doc: "the node's key among its siblings, which the diff follows", Func: "ModKey"},
 	{Name: "tone", Type: TypeString, Doc: "the text's colour: accent, ok, warn, error, info, muted or plain", Func: "ModTone", Fails: true, Values: tones},
@@ -353,6 +374,19 @@ func NewSelect(value string, options []string) *surfui.Node { return surfui.Sele
 // NewLink is a link with no href yet, which its `href` gives.
 func NewLink(kids ...*surfui.Node) *surfui.Node { return surfui.Link("", kids...) }
 
+// NewH is a heading of level 1 with no anchor, which `level` and `anchor`
+// change.
+func NewH(kids ...*surfui.Node) *surfui.Node { return surfui.H(1, "", kids...) }
+
+// NewNumbered is a numbered list from 1, which `start` changes.
+func NewNumbered(kids ...*surfui.Node) *surfui.Node { return surfui.Numbered(1, kids...) }
+
+// NewAlert is a note, which `kind` changes.
+func NewAlert(kids ...*surfui.Node) *surfui.Node { return surfui.Alert("note", kids...) }
+
+// NewImg is an image with no source and no alt text yet.
+func NewImg() *surfui.Node { return surfui.Img("", "") }
+
 // NewCycle is a cycle through options, value showing.
 func NewCycle(value string, options []string) *surfui.Node { return surfui.Cycle(value, options...) }
 
@@ -432,6 +466,30 @@ func ModExternal(n *surfui.Node, v bool) { flag(n, v, n.External) }
 
 // ModAnchor names a node for a link's #fragment.
 func ModAnchor(n *surfui.Node, v string) { n.Anchor(v) }
+
+// ModLevel sets a heading's level.
+func ModLevel(n *surfui.Node, v int64) { n.Level(clampInt(v)) }
+
+// ModStart sets the number a numbered list starts at.
+func ModStart(n *surfui.Node, v int64) { n.Start(clampInt(v)) }
+
+// ModKind sets an alert's kind.
+func ModKind(n *surfui.Node, v string) error {
+	if !contains(alertKinds, v) {
+		return fmt.Errorf("an alert's kind is %s, not %q", orList(alertKinds), v)
+	}
+	n.Kind(v)
+	return nil
+}
+
+// ModSrc sets an image's source.
+func ModSrc(n *surfui.Node, v string) { n.Attr("src", v) }
+
+// ModAlt sets an image's alternative text.
+func ModAlt(n *surfui.Node, v string) { n.Attr("alt", v) }
+
+// ModCompact makes prose compact.
+func ModCompact(n *surfui.Node, v bool) { flag(n, v, n.Compact) }
 
 // ModKey sets a node's key.
 func ModKey(n *surfui.Node, v string) { n.Key(v) }

@@ -200,6 +200,9 @@ func (p *painter) look(b *box, in ink) (ink, Role) {
 	if b.href != "" {
 		in.href = b.href
 	}
+	if b.f&fProse != 0 && b.tone == Muted {
+		in.plain = true // muted reaches every run in it, a link's and an alert's too
+	}
 	foc := p.focus == n
 	var bg Role
 	switch {
@@ -570,6 +573,11 @@ func (p *painter) field(b *box, x, y, w int, st style, clip rect) {
 // Nav Item's bar, the bar of the Entries Item with the keyboard.
 func (p *painter) decorate(b *box, r rect, clip rect, in ink) {
 	switch {
+	case b.f&fBar != 0:
+		// A quote's or an alert's bar, at its start the height of it.
+		for i := range r.h {
+			p.g.put(r.x, r.y+i, "▎", 1, style{fg: b.barRole}, clip)
+		}
 	case b.f&fDialog != 0:
 		p.edges(r, clip, Border)
 	case b.f&(fOptions|fTip) != 0:

@@ -1844,6 +1844,8 @@ func checkLiteral(at *Attr, v string) error {
 		return err
 	case "badge-tone":
 		return ModBadgeTone(surfui.Button(""), v)
+	case "kind":
+		return ModKind(NewAlert(), v)
 	case "caret":
 		return ModCaret(surfui.Field(), v)
 	case "rows":
