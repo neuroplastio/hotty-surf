@@ -31,9 +31,9 @@ require (
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
-	neuroplast.io/hotty-go v0.7.2 // indirect
-	neuroplast.io/hotty-go/hottyedit v0.7.2 // indirect
-	neuroplast.io/hotty-go/hottyterm v0.7.2 // indirect
+	neuroplast.io/hotty-go v0.8.0 // indirect
+	neuroplast.io/hotty-go/hottyedit v0.8.0 // indirect
+	neuroplast.io/hotty-go/hottyterm v0.8.0 // indirect
 	neuroplast.io/myelin/myelinkey v0.2.0 // indirect
 )
 
