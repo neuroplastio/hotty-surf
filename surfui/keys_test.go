@@ -49,9 +49,9 @@ func TestBindingsGiveScrollKeys(t *testing.T) {
 		{"the root", root, "page_down=program"},
 		{"the scroll box", box, ""},
 		{"a row", row, ""},
-		{"a button", btn, "space=scroll-page-down shift+space=scroll-page-up"},
-		{"a switch", sw, "space=scroll-page-down shift+space=scroll-page-up"},
-		{"a select", sel, strings.Join(selectKeys, " ") + " space=scroll-page-down shift+space=scroll-page-up"},
+		{"a button", btn, "space=default shift+space=default"},
+		{"a switch", sw, "space=default shift+space=default"},
+		{"a select", sel, strings.Join(selectKeys, " ") + " space=default shift+space=default"},
 	} {
 		if got := dataKeys(c.n); got != c.want {
 			t.Errorf("%s's data-keys are %q, want %q", c.name, got, c.want)
@@ -95,7 +95,7 @@ func TestBindingsGiveScrollKeys(t *testing.T) {
 
 // A text field keeps the keys it edits with: the arrows, Home and End an
 // element around it gives the program it binds back, and an element with
-// a field in it gives no Space, which the field types.
+// a field in it gives Space back with default, so the list can keep it.
 func TestFieldKeepsItsKeys(t *testing.T) {
 	f := Field()
 	list := List(Item(f).Key("a")).Focusable().
@@ -103,16 +103,17 @@ func TestFieldKeepsItsKeys(t *testing.T) {
 		Bind("home", "First", "first").Bind("end", "Last", "last").
 		Bind("arrow_down", "Next", "next").Bind("space", "Mark", "mark")
 	Resolve(Surface(list), "r")
-	if got, want := dataKeys(list), "arrow_left=program arrow_right=program home=program end=program arrow_down=program"; got != want {
+	if got, want := dataKeys(list), "arrow_left=program arrow_right=program home=program end=program arrow_down=program space=program"; got != want {
 		t.Errorf("the list's data-keys are %q, want %q", got, want)
 	}
-	if got, want := dataKeys(f), "arrow_left=char-backward arrow_right=char-forward home=line-start end=line-end arrow_down=program"; got != want {
+	if got, want := dataKeys(f), "arrow_left=char-backward arrow_right=char-forward home=line-start end=line-end arrow_down=program space=default"; got != want {
 		t.Errorf("the field's data-keys are %q, want %q", got, want)
 	}
 	km := keymap(f)
 	for key, want := range map[string]hotty.Action{
 		"arrow_left": hotty.CharBackward, "arrow_right": hotty.CharForward,
 		"home": hotty.LineStart, "end": hotty.LineEnd,
+		"space": hotty.Insert,
 	} {
 		if got := km.Lookup(key); got != want {
 			t.Errorf("in the field %s is %q, want %q", key, got, want)
@@ -121,7 +122,7 @@ func TestFieldKeepsItsKeys(t *testing.T) {
 	if !km.Program("arrow_down") || km.Program("space") {
 		t.Error("the field gives the program the wrong keys of the list's")
 	}
-	if !keymap(list).Program("arrow_left") || keymap(list).Program("space") {
+	if !keymap(list).Program("arrow_left") || !keymap(list).Program("space") {
 		t.Error("focused, the list gives the wrong keys")
 	}
 

@@ -1251,10 +1251,11 @@ widget it is drawn in.
   (hotty SPEC §10.2): in a document that scrolls, the binding hears it
   before the host would scroll with it. A key nothing binds scrolls.
   What is in the widget keeps what it uses: a button (a `button`, a
-  `switch`, a `select`) Space and Shift+Space, which it binds back to
-  the page scroll a button doesn't do, so that it presses; and a text
-  field the keys below. A widget with a text field in it gives neither
-  Space nor Shift+Space, which the field types and no action gives back.
+  `switch`, a `select`) Space and Shift+Space, which it binds back with
+  `default` so that they press; and a text field the keys below. A field
+  inside a widget that binds Space or Shift+Space binds it back with
+  `default` too, so that it types (hotty 0.8). The outer widget keeps its
+  binding, even with a field in it.
 - **A text field keeps what it needs:** it gives the program, as
   `data-keys`, the keys it and its parents bind that it can do without:
   a key with Ctrl, Alt, Mod or Super, Shift+Delete, the up and down

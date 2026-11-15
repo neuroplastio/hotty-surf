@@ -1005,8 +1005,10 @@ parent element, while that element or something in it has the keyboard.
   (an arrow, Page Up and Down, Home, End, Space, Shift+Space) that a
   `<bind>` binds reaches the bindings first, from everything in its
   widget, in a document that scrolls too. A button there keeps Space,
-  and a field the keys it edits with; a widget with a field in it gives
-  no Space. A key nothing binds scrolls.
+  and a field the keys it edits with. Buttons and fields inside a widget
+  that binds Space give it back with `space=default` (hotty 0.8), so a
+  list can toggle rows while its field still types spaces. A key nothing
+  binds scrolls.
 - **`scroll` in place of `do`** gives the key to the host, to scroll
   with: `<bind key="j" label="Down" scroll="down"/>` scrolls the nearest
   box that scrolls around the focused element as ↓ does. It is `up`,

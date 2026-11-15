@@ -643,6 +643,10 @@ The order is the maintainer's, via gov (2026-10-30):
 
 ## v0
 
+- [x] **A list gives Space back** (hotty 0.8, V6-05): a list keeps its
+  Space binding with a field inside it; its buttons and fields return
+  Space and Shift+Space with `default`. Journal
+  `2026-11-15-space-default`.
 - [x] **Tab completes the palette** (hotty 0.8, V6-02): bound Tab goes
   into a field's `data-keys` as `tab=program`, on a host and in the
   cells. Shift+Tab and Escape keep their meaning. Journal

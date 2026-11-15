@@ -25,6 +25,8 @@ func (m *pane) Render() *surfui.Node {
 	list := surfui.List(
 		surfui.Item(surfui.Text("a"), surfui.Button("Open").Key("open").OnClick(hear("open"))).Key("a"),
 		surfui.Item(surfui.Text("b")).Key("b"),
+		surfui.Item(surfui.Field().Key("entry").Value(m.name).
+			OnInput(func(e surfrun.Event) { m.name = e.Value })).Key("edit"),
 	).Focusable().Autofocus().Key("list").
 		Bind("arrow_down", "Next", hear("next")).Bind("space", "Mark", hear("mark"))
 	form := surfui.Stack(
@@ -87,6 +89,25 @@ func TestBoundKeysInAScrollBox(t *testing.T) {
 	a.Call(func() {
 		if m.heard["back"] != 0 || m.heard["first"] != 0 || m.heard["space"] != 0 || m.heard["mark"] != 1 {
 			t.Errorf("the field gave its keys away: %v", m.heard)
+		}
+	})
+
+	// A field inside the list types Space even though the list keeps its
+	// Space binding for toggling rows (V6-05).
+	const entry = "r.kbox.klist.kedit.kentry"
+	if err := a.Host.Click(a.Name, entry); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
+		t.Fatal(err)
+	}
+	a.Wait("the row's field has the keyboard", func() bool { return a.Surface().Focused() == entry })
+	if err := a.Host.Fill(a.Name, entry, "row"); err != nil {
+		t.Fatal(err)
+	}
+	a.Wait("the row's field filled", func() bool { v, _ := a.Surface().Value(entry); return v == "row" })
+	a.Host.Key("space")
+	a.Wait("Space typed inside the list", func() bool { v, _ := a.Surface().Value(entry); return v == "row " })
+	a.Call(func() {
+		if m.heard["mark"] != 1 {
+			t.Errorf("the list took the field's Space: %d", m.heard["mark"])
 		}
 	})
 }

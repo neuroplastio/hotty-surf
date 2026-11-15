@@ -439,8 +439,10 @@ a handler, as `@click`'s. `:key` and `:label` bind, and a `<bind>` takes
   element: the binding hears it first, as it would where nothing
   scrolls. A key nothing binds still scrolls. What is in the element
   keeps what it uses: a button keeps Space, which presses it, and a
-  field the keys it edits with (below); an element with a field in it
-  gives no Space, which the field types.
+  field the keys it edits with (below). Buttons and fields inside a list
+  that binds Space return it with `space=default` (hotty 0.8): Space
+  presses the button and types in the field, while the list keeps its
+  own binding.
 - **A bare letter is a key too:** `<bind key="j" label="Next"
   do="next"/>`. A `<bind>`'s `key` is the key, not the element `key` the
   diff follows.

@@ -352,10 +352,9 @@ func ValueOf(n *Node) (string, bool) {
 // then the host's, who scrolls with it.
 //
 // What n uses itself it keeps. A button keeps Space, which presses it:
-// in an element that binds Space it binds Space back to the page scroll
-// it has in a browser, which a button doesn't do. A text field is
-// fieldKeys'. An element with a text field in it gives no Space, which
-// the field types and no action gives back.
+// in an element that binds Space it gives Space back with default. A
+// text field is fieldKeys': it gives Space back too, so a list may bind
+// Space while holding a field that types it.
 func dataKeys(n *Node) string {
 	if IsTextField(n) {
 		return fieldKeys(n)
@@ -381,17 +380,14 @@ func dataKeys(n *Node) string {
 		switch {
 		case b.Scroll != "":
 			keys = appendOnce(keys, b.Key+"="+string(b.Scroll))
-		case ScrollKey(b.Key) && !(spaceKey(b.Key) && (press || holdsField(n))):
+		case ScrollKey(b.Key) && !(spaceKey(b.Key) && press):
 			keys = appendOnce(keys, b.Key+"=program")
 		}
 	}
 	if press {
-		for _, k := range [...]struct {
-			key string
-			to  hotty.Action
-		}{{"space", hotty.ScrollPageDown}, {"shift+space", hotty.ScrollPageUp}} {
-			if bindsAbove(n, k.key) {
-				keys = appendOnce(keys, k.key+"="+string(k.to))
+		for _, key := range [...]string{"space", "shift+space"} {
+			if bindsAbove(n, key) {
+				keys = appendOnce(keys, key+"=default")
 			}
 		}
 	}
@@ -401,11 +397,11 @@ func dataKeys(n *Node) string {
 // fieldKeys gives the program, from a text field, the keys that the
 // field and its parents bind (S12), and only those a field can do
 // without: a key with Ctrl, Alt or Mod, the vertical arrows and pages,
-// Enter, the function keys. A field that commits gives Enter, which
+// Enter, Tab, the function keys. A field that commits gives Enter, which
 // commits it (Commits). A letter, Backspace, the left and right arrows,
 // Home and End stay the field's, even where a parent binds them: the
 // arrows, Home and End a parent gives the program (dataKeys) the field
-// binds back to their editing actions. A binding to a scroll action is
+// binds back to their editing actions, and Space to default. A binding to a scroll action is
 // none of a field's: its keymap leaves them out (SPEC §10.2).
 func fieldKeys(n *Node) string {
 	var keys []string
@@ -431,11 +427,12 @@ func fieldKeys(n *Node) string {
 }
 
 // fieldKeeps are the keys a host scrolls with that a text field edits
-// with, by their actions in every host's default keymap (SPEC §10.2).
-// Space and Shift+Space type, which no action does.
+// with. Space and Shift+Space return to insertion with default (hotty
+// 0.8); the arrows retain their default editing actions (SPEC §10.2).
 var fieldKeeps = map[string]hotty.Action{
 	"arrow_left": hotty.CharBackward, "arrow_right": hotty.CharForward,
 	"home": hotty.LineStart, "end": hotty.LineEnd,
+	"space": hotty.Default, "shift+space": hotty.Default,
 }
 
 // ScrollKey reports whether key is one a host scrolls with, where the
@@ -521,21 +518,6 @@ func bindsAbove(n *Node, key string) bool {
 				return true
 			}
 		}
-	}
-	return false
-}
-
-// holdsField reports whether a text field is in n, by a walk of its own:
-// no recursion, for TinyGo's stacks.
-func holdsField(n *Node) bool {
-	todo := append([]*Node(nil), n.kids...)
-	for len(todo) > 0 {
-		k := todo[len(todo)-1]
-		todo = todo[:len(todo)-1]
-		if IsTextField(k) {
-			return true
-		}
-		todo = append(todo, k.kids...)
 	}
 	return false
 }

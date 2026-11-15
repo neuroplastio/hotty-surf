@@ -115,6 +115,29 @@ func TestFieldCompletesOnTab(t *testing.T) {
 	}
 }
 
+func TestListGivesSpaceBack(t *testing.T) {
+	m := &model{}
+	marked, opened := 0, 0
+	text := ""
+	m.render = func() *surfui.Node {
+		return surfui.Surface(surfui.List(
+			surfui.Item(surfui.Button("Open").Key("open").OnClick(func() { opened++ })).Key("buttons"),
+			surfui.Item(surfui.Field().Key("entry").Value(text).
+				OnInput(func(e surfrun.Event) { text = e.Value })).Key("edit"),
+		).Key("list").Focusable().Autofocus().Bind("space", "Mark", func() { marked++ }))
+	}
+	r := show(m)
+	r.Draw(40, 10)
+	keys(r, "space")
+	press(t, r, "r.klist.kbuttons.kopen")
+	keys(r, "space")
+	press(t, r, "r.klist.kedit.kentry")
+	keys(r, "a", "space", "b")
+	if marked != 1 || opened != 2 || text != "a b" {
+		t.Errorf("Space: marked %d, opened %d, text %q", marked, opened, text)
+	}
+}
+
 // A field edits as a host's: typing reports input, Enter commits, and
 // leaving the field commits what was typed since, once.
 func TestField(t *testing.T) {
