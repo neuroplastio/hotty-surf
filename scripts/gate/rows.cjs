@@ -24,6 +24,7 @@
 // reasoning, that Compact and Roomy follow the host's root font.
 "use strict";
 const fs = require("fs");
+const emoji = require("./emoji.cjs");
 const os = require("os");
 const path = require("path");
 const { execFileSync, execFile } = require("child_process");
@@ -86,8 +87,9 @@ async function pool(items, n, fn) {
   const fontCSS = faces
     .map(([f, w, st]) => `@font-face { font-family: "${FONT}"; src: url(/fonts/${FONT_FILE}-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: ${st}; }`)
     .concat(plex.map(([f, w]) => `@font-face { font-family: "IBM Plex Sans"; src: url(/fonts/IBMPlexSans-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: normal; }`))
-    .join("\n");
+    .join("\n") + "\n" + emoji.CSS;
   const served = new Map();
+  emoji.serveEmoji(a.fonts, served);
   for (const [f] of faces) served.set(`/fonts/${FONT_FILE}-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `${FONT_FILE}-${f}.woff2`))]);
   for (const [f] of plex) served.set(`/fonts/IBMPlexSans-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `IBMPlexSans-${f}.woff2`))]);
 
@@ -140,6 +142,7 @@ async function pool(items, n, fn) {
     const p = await page(c.sc, w);
     await p.setViewportSize({ width: Math.ceil(((c.st.cols * c.c.w) / c.sc.scale) * (c.sc.rem / 17)), height: 1 });
     await p.goto(`${ORIGIN}/${c.id}.html`, { waitUntil: "load" });
+    await emoji.emojiFallback(p);
     await p.evaluate(() => document.fonts.ready);
     const bottom = await p.evaluate(() => {
       const r = document.documentElement;

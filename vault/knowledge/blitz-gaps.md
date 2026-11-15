@@ -748,3 +748,44 @@ known to be Blitz's: it is here so that it is looked at. How to see it
 is in [`surf-gaps.md`](surf-gaps.md), "Every gap, once". No fixture and
 no baseline line were made for it.
 
+## hotty-blitz 0.8.0 (2026-11-15)
+
+The gate now uses v0.8.0 (22ee077), the renderer hottyterm 0.8 ships,
+with that checkout's fonts. Chromium is still 153.0.8010.12. This also
+takes the renderer's 0.7.4–0.7.7 changes: the upstream layout and paint
+updates, corrected synthetic italic, and bundled OpenMoji.
+
+**The oracle needs OpenMoji too.** The first run scored 529 failures:
+Blitz drew the crab and octopus from OpenMoji and Chromium drew the
+system's emoji. `scripts/gate/emoji.cjs` loads the host's OpenMoji face
+and places it after named text faces, before generic fallbacks, in the
+browser's font families. It is shared by gate, rows, legible and look.
+The glyph/column comparison then passes all 30 cases (the inspected
+graphite Compact 2× case scores 0.0). The kit's stylesheet is unchanged.
+
+The full aligned run has **420 failures in 2400 cases**. The baseline
+was reconciled by changing only the 69 cases it flagged: **44 removed,
+13 added, 12 scores updated**; every other score is retained. The
+threshold and diff metric are unchanged. The sheets were inspected for
+the groups below; these are the existing gaps, not new CSS allowances.
+
+| Change | Cases | What the sheets show |
+| --- | ---: | --- |
+| Remove prose/doc | 20 | The formerly opposite synthetic italic slant now matches; the remaining text and inline-code edges are within tolerance. hotty-blitz corrected synthetic italic in its 0.7.4 work |
+| Remove prose/compact Dense 1.6× | 3 | The inline-code edge and text placement now score 9.4 |
+| Remove pop/shown 2×, field/rows Dense 2×, menu/shown 2× | 15 | The old box-edge and shadow differences now score 0–1.5; the other scales remain listed |
+| Remove list/selection graphite Roomy 1.6×, list/entries paper and stone Roomy 1.6×, look/agents paper 2× | 6 | The old text, edge and emoji differences are under the threshold with the new renderer and matching fonts |
+| Add key/styles Roomy 1.6× | 5 | 16.8–21.5: the text and key glyphs sit a device pixel off, the known key/styles text-placement gap |
+| Add link/inline paper and graphite Compact 1.6× | 2 | 12.1–12.5: the known underline placement and thickness |
+| Add table/scroll graphite Roomy 1.6× | 1 | 14.5: the selected row's text is a device pixel off, as the table's other text-placement cases |
+| Add pill/icon paper and stone Compact 2× | 2 | 21.8–22.0: the known glyph position and round focus-line edges |
+| Add badge/states neuroplastio and terminal Compact 1.6×, list/entries paper Dense 1.6× | 3 | 12.1 each: the existing glyph and thin-edge differences just cross the threshold |
+| Update text/path Roomy 1.6× | 4 | 1053.5–1066.0, up about 12: the same documented slash-versus-hyphen wrapping, not a new break rule |
+| Update segmented/states graphite and stone Compact 1.6× | 2 | 85.9 and 243.4: the existing rounded box edges and text position |
+| Update look/settings neuroplastio and terminal Roomy and Compact 1.6×, look/agents neuroplastio and terminal Compact 1.6× | 6 | 637.9–1029.7: the existing long box edges snapping a device pixel differently, including the tall sidebar edge; no missing controls or changed content |
+
+The precise upstream cause of each small edge movement is not isolated;
+0.8 includes the intervening rendering-stack migrations. The observed
+differences and their scores are recorded rather than attributed to an
+unverified patch. No renderer checkout was edited for this migration.
+

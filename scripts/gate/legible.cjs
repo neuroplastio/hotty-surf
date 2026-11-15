@@ -65,6 +65,7 @@
 // scale, or a story's states matrix and cells UI.
 "use strict";
 const fs = require("fs");
+const emoji = require("./emoji.cjs");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
@@ -302,8 +303,9 @@ function measure({ canvas, min, tol }) {
   const fontCSS = faces
     .map(([f, w, st]) => `@font-face { font-family: "${FONT}"; src: url(/fonts/${FONT_FILE}-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: ${st}; }`)
     .concat(havePlex ? plex.map(([f, w]) => `@font-face { font-family: "IBM Plex Sans"; src: url(/fonts/IBMPlexSans-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: normal; }`) : [])
-    .join("\n");
+    .join("\n") + "\n" + emoji.CSS;
   const served = new Map();
+  emoji.serveEmoji(a.fonts, served);
   for (const [f] of faces) served.set(`/fonts/${FONT_FILE}-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `${FONT_FILE}-${f}.woff2`))]);
   if (havePlex) for (const [f] of plex) served.set(`/fonts/IBMPlexSans-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `IBMPlexSans-${f}.woff2`))]);
   const style = `<style>${fontCSS}\n@layer hotty-host {\n${hostCSS}\n}</style>`;
@@ -337,6 +339,7 @@ function measure({ canvas, min, tol }) {
         const d = unique[next++];
         await page.setViewportSize({ width: Math.ceil((d.wcols * CELL.w) / SCALE), height: Math.ceil((d.wrows * CELL.h) / SCALE) });
         await page.goto(`${ORIGIN}/${d.hash}.html`, { waitUntil: "load" });
+        await emoji.emojiFallback(page);
         await page.evaluate(() => document.fonts.ready);
         const r = await page.evaluate(measure, { canvas: `r.kpage.kmain.kmid.kc-${d.id}`, min: MIN, tol: TOL });
         if (r.error) throw new Error(`${d.id} (${d.theme} ${d.density}): ${r.error}`);

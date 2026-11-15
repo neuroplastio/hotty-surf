@@ -48,6 +48,7 @@
 // design's directory), --out.
 "use strict";
 const fs = require("fs");
+const emoji = require("../gate/emoji.cjs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const { createRequire } = require("module");
@@ -150,6 +151,7 @@ function hostCSS(a, s) {
 async function servingPage(a, s, scheme) {
   const ctx = await (await browser()).newContext({ deviceScaleFactor: s, colorScheme: scheme, viewport: { width: 800, height: 100 } });
   const docs = new Map();
+  emoji.serveEmoji(a.fonts, docs);
   for (const f of ["Regular", "Bold", "Italic", "BoldItalic"])
     docs.set(`/fonts/${FONT_FILE}-${f}.woff2`, ["font/woff2", fs.readFileSync(path.join(a.fonts, `${FONT_FILE}-${f}.woff2`))]);
   await ctx.route(`${ORIGIN}/**`, (route) => {
@@ -161,7 +163,7 @@ async function servingPage(a, s, scheme) {
 
 const fontCSS = [["Regular", 400, "normal"], ["Bold", 700, "normal"], ["Italic", 400, "italic"], ["BoldItalic", 700, "italic"]]
   .map(([f, w, st]) => `@font-face { font-family: "${FONT}"; src: url(/fonts/${FONT_FILE}-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: ${st}; }`)
-  .join("\n");
+  .join("\n") + "\n" + emoji.CSS;
 
 // The story in Chromium, as gate.cjs draws a case: rows counted as Blitz
 // counts rows=auto, the shot cut to the rows' device px.
@@ -173,6 +175,7 @@ async function chromiumStory(a, file, cols, s, out, fixed) {
   docs.set("/story.html", ["text/html", doc.includes("<head>") ? doc.replace("<head>", "<head>" + style) : style + doc]);
   await page.setViewportSize({ width: (cols * sc.w) / s, height: 1 });
   await page.goto(`${ORIGIN}/story.html`, { waitUntil: "load" });
+  await emoji.emojiFallback(page);
   await page.evaluate(() => document.fonts.ready);
   const bottom = await page.evaluate(() => {
     const r = document.documentElement;

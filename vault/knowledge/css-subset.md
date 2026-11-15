@@ -25,6 +25,10 @@ Since 2026-11-07 the gate renders with hotty-blitz 0.7.0 (b7cbf17),
 hottyterm's since 26.11.06 ([gaps](blitz-gaps.md#hotty-blitz-070-2026-11-07)).
 Since 2026-11-10 it renders with hotty-blitz 0.7.3 (6aa10ca), which adds
 `field-sizing: content` ([gaps](blitz-gaps.md#hotty-blitz-073-2026-11-10)).
+Since 2026-11-15 it renders with hotty-blitz 0.8.0 (22ee077). The
+Chromium oracle loads its OpenMoji face too, ahead of the system emoji
+fallback, as the host does since 0.7.7
+([gaps](blitz-gaps.md#hotty-blitz-080-2026-11-15)).
 
 ## Properties
 

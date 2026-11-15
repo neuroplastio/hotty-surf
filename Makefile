@@ -169,9 +169,10 @@ wasm-tinygo:
 # HOTTY_BLITZ has them), and Node for Playwright. GATE_FLAGS: e.g. --only
 # button-states, or --inject <css>.
 #
-# HOTTY is the hotty-blitz the hosts ship: the baseline is written with
-# v0.7.0, hottyterm's since 26.11.06, so build that tag (make blitz and make
-# release in a hotty-blitz checkout). HOTTY_BLITZ is the checkout, next to
+# HOTTY is the hotty-blitz the hosts ship: use v0.8.0 (22ee077), as
+# hottyterm 0.8 does (make blitz and make release in a hotty-blitz
+# checkout). The existing baseline is checked against that release.
+# HOTTY_BLITZ is the checkout, next to
 # this one by default. HOTTY_FONTS is the fonts/ Chromium loads: AdwaitaMono
 # and IBM Plex Sans, which the kit draws Compact and Roomy in, the same
 # faces hotty-blitz draws with (it ships Plex from 0.6.9), so both sides are

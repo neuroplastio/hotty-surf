@@ -35,6 +35,7 @@ const { execFileSync, execFile } = require("child_process");
 const { Worker, isMainThread, parentPort } = require("worker_threads");
 const { PNG } = require("pngjs");
 const { diff } = require("./diff.cjs");
+const emoji = require("./emoji.cjs");
 
 const THEMES = ["neuroplastio", "terminal", "paper", "graphite", "stone"];
 const DENSITIES = ["dense", "roomy", "compact"];
@@ -181,6 +182,7 @@ function diffWorkers(n) {
 async function chromiumLoad(page, url, sc, cols) {
   await page.setViewportSize({ width: (cols * sc.cell.w) / sc.scale, height: 1 });
   await page.goto(url, { waitUntil: "load" });
+  await emoji.emojiFallback(page);
   await page.evaluate(() => document.fonts.ready);
   const bottom = await page.evaluate(() => {
     const r = document.documentElement;
@@ -275,8 +277,9 @@ async function sheet(page, file, c, files) {
   const fontCSS = faces
     .map(([f, w, st]) => `@font-face { font-family: "${FONT}"; src: url(/fonts/${FONT_FILE}-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: ${st}; }`)
     .concat(havePlex ? plex.map(([f, w]) => `@font-face { font-family: "IBM Plex Sans"; src: url(/fonts/IBMPlexSans-${f}.woff2) format("woff2"); font-weight: ${w}; font-style: normal; }`) : [])
-    .join("\n");
+    .join("\n") + "\n" + emoji.CSS;
   const docs = new Map(); // what ORIGIN serves: path → [type, body]
+  emoji.serveEmoji(a.fonts, docs);
   for (const [f] of faces) {
     const file = path.join(a.fonts, `${FONT_FILE}-${f}.woff2`);
     docs.set(`/fonts/${FONT_FILE}-${f}.woff2`, ["font/woff2", fs.readFileSync(file)]);
