@@ -208,8 +208,10 @@ root := surfui.Surface(list).Bind("alt+s", "Go stale", l.toggleStale)
   `shift+delete`); letters, Backspace and the side arrows stay the
   field's. `mod` is the platform's command key: bind `mod+r`, not
   `ctrl+r`.
-- Tab and Shift+Tab are the host's, for focus. `escape` reaches you if
-  you bind it; `surfrun.Quit{}` as a key's action ends the run.
+- Tab and Shift+Tab move focus, except Tab a text field binds to the
+  program (hotty 0.8 or the cells). Shift+Tab still moves focus back.
+  `escape` reaches you if you bind it; `surfrun.Quit{}` as a key's action
+  ends the run.
 - A binding's set may depend on state: bind `escape` to `surfrun.Quit{}`
   while the query is empty, and to clearing it otherwise.
 

@@ -466,9 +466,10 @@ a handler, as `@click`'s. `:key` and `:label` bind, and a `<bind>` takes
   for a command; in the cells, and in tests, it is Ctrl.
 - **Fields keep what they need.** A field gives the program the keys its
   parents bind that it can do without: a key with Ctrl, Alt or Mod, the
-  up and down arrows, Page Up and Down, Enter, the function keys. A
+  up and down arrows, Page Up and Down, Enter, Tab, the function keys. A
   letter, Space, Backspace, the left and right arrows, Home and End stay
-  the field's, even where a parent binds them.
+  the field's, even where a parent binds them. Bind Tab to complete in a
+  field on hotty 0.8 or in the cells; Shift+Tab still moves focus back.
 - **A Select is the runtime's:** closed, Space, Enter, ↓ and ↑ open its
   list, and Home, End and a letter pick at once; open, the keys move in
   its list, Space, Enter or a click picks, and Escape, Tab or a click

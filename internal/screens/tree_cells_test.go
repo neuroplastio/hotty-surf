@@ -99,6 +99,8 @@ func TestPaletteTreeCells(t *testing.T) {
 		a.typed("zoom")
 		a.until("the query typed", func() bool { return p.Query == "zoom" })
 		a.shows("Pane: Toggle zoom")
+		a.keys("tab")
+		a.until("the query completed", func() bool { return p.Query == "pane.zoom" })
 		a.Host.Key("enter") // and the palette ends the run: nothing takes a Sync
 		a.acted("run pane.zoom")
 		a.until("the palette closes", func() bool { return p.Closed })

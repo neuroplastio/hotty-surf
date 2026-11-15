@@ -140,7 +140,8 @@ func TestCheckedIsSwitchsState(t *testing.T) {
 func TestGiveable(t *testing.T) {
 	for key, want := range map[string]bool{
 		"mod+enter": true, "alt+enter": true, "ctrl+n": true, "enter": true, "arrow_down": true,
-		"shift+delete": true, "f2": true, "page_down": true,
+		"shift+delete": true, "f2": true, "page_down": true, "tab": true,
+		"shift+tab": false, "escape": false,
 		"a": false, "shift+a": false, "delete": false, "backspace": false, "arrow_left": false, "home": false,
 	} {
 		if got := surfui.Giveable(key); got != want {

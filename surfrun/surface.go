@@ -1010,7 +1010,7 @@ func (s *Surface) rehome() {
 //
 // It is for a stop a program moves on from: plx's palette has a stop
 // after its query field, which Tab lands on to complete the line, and
-// the field takes the keyboard back. In hotty 0.6 a field gives the
+// the field takes the keyboard back. In hotty 0.8 a field gives the
 // program Tab itself (V6-02, tab=program), which does without the stop.
 func (s *Surface) Focus(key string) {
 	if s.shown {

@@ -643,6 +643,10 @@ The order is the maintainer's, via gov (2026-10-30):
 
 ## v0
 
+- [x] **Tab completes the palette** (hotty 0.8, V6-02): bound Tab goes
+  into a field's `data-keys` as `tab=program`, on a host and in the
+  cells. Shift+Tab and Escape keep their meaning. Journal
+  `2026-11-15-tab-completion`.
 - [x] **The rename** to hotty-surf, package `surf` (8c89236, 1a4310d):
   B and C out of the tree.
 - [x] **The interpreted mode** on cel-lite (1a0ae0e), surfgen and the
@@ -798,10 +802,6 @@ tree in the public prep (2026-10-31).
 
 ## Parked for the maintainer
 
-- hotty V6-02, a text field may give the program `tab` (hotty's
-  `vault/tasks/0.6.md`): plx's palette completes on Tab, a host keeps it.
-  The spike completes on `ctrl+space` meanwhile, and plx's palette with
-  a stop after its field (`Runner.Focus`).
 - hotty V6-03, Enter commits a text field in a form or not (the same
   file): hotty-blitz does, hottytest doesn't. The floor commits on Enter
   itself meanwhile.

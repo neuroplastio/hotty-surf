@@ -1023,6 +1023,11 @@ platform's default, which follows the browser conventions of the system
 it runs on. On a Mac, for one, `ctrl+backspace` is not a word delete, and
 `ctrl+b` moves the caret back, as Cocoa has it.
 
+- **A binding of `tab`** on a field or around it gives Tab to the
+  program (`tab=program`), for completing what was typed. Shift+Tab
+  still moves focus back, and Escape still reaches the program. Other
+  elements keep Tab's focus order. This needs a hotty 0.8 host; it also
+  works in the cells.
 - **`readline`** on a `surface` (for every field in it) or on a `field`
   gives the fields a terminal's keymap besides, hotty-go's
   `TerminalKeys`, whatever the platform. It is off by default. The keys:
@@ -1100,8 +1105,8 @@ one:
   it off. The cells have no spell check.
 - **`trap`** on a `stack` keeps Tab and Shift+Tab inside it while it shows:
   past its last element that takes the keyboard Tab goes to its first, so
-  from the buttons back to the field. The cells do it; a host keeps Tab
-  until hotty lets a field give it to the program (V6-02).
+  from the buttons back to the field. This applies in the cells; on a
+  host Tab follows the surface's focus order.
 - **It never loses words.** The model's value is the truth, and every edit
   reaches it (`@input`) before any key the program handles next, so a
   Ctrl+S that comes right after the last keystroke sends what was on

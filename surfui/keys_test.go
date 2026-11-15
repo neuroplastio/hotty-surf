@@ -134,6 +134,25 @@ func TestFieldKeepsItsKeys(t *testing.T) {
 	}
 }
 
+// Tab may complete in a field; buttons keep focus order, and Shift+Tab
+// and Escape keep their way out of the field.
+func TestFieldGivesTab(t *testing.T) {
+	f := Field()
+	btn := Button("Open")
+	root := Surface(f, btn).Bind("tab", "Complete", "complete").
+		Bind("shift+tab", "Back", "back").Bind("escape", "Close", "close")
+	Resolve(root, "r")
+	if got := dataKeys(f); got != "tab=program" {
+		t.Errorf("the field's data-keys are %q, want tab=program", got)
+	}
+	if !keymap(f).Program("tab") || keymap(f).Program("shift+tab") || keymap(f).Program("escape") {
+		t.Error("the field gives the wrong focus keys")
+	}
+	if keymap(btn).Program("tab") || dataKeys(root) != "" {
+		t.Error("Tab is given outside the field")
+	}
+}
+
 func TestScrollKey(t *testing.T) {
 	for _, k := range []string{"arrow_up", "arrow_down", "arrow_left", "arrow_right", "page_up", "page_down", "home", "end", "space", "shift+space"} {
 		if !ScrollKey(k) {

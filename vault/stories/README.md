@@ -67,10 +67,11 @@ same screen, keeps its text and its caret through all of it.
 
 I build plx's palette. The query keeps the keyboard. ↑ ↓ move the
 selection while the caret stays in the field. Enter runs the row,
-`mod+enter` its second action. The matched letters are drawn out, and a
-row's keys are keycaps. My code ranks the rows; the palette only draws
-them. When my code rewrites the query (a staged command), what the user
-typed meanwhile wins.
+`mod+enter` its second action. Tab completes the selected row in the
+query; Shift+Tab still leaves the field. The matched letters are drawn
+out, and a row's keys are keycaps. My code ranks the rows; the palette
+only draws them. When my code rewrites the query (a staged command),
+what the user typed meanwhile wins.
 
 - **Done when:** the keys work on a host (the field gives them to the
   program, SPEC §10.2) and in cells; a rewrite goes as `a=field` and an

@@ -77,9 +77,13 @@ func (r *Renderer) Keys() ([]KeyUse, Chars) {
 			}
 		}
 	}
-	own("tab", "shift+tab")
-	progKeys, chars := r.p.Keys()
 	n := r.index[r.focused]
+	if n == nil || !surfui.IsTextField(n) ||
+		!hotty.Resolve(r.Platform, surfui.Tag(n) == "textarea", r.keymaps(n)...).Program("tab") {
+		own("tab")
+	}
+	own("shift+tab")
+	progKeys, chars := r.p.Keys()
 	switch {
 	case r.focused == "" || n == nil:
 		r.ownScroll(nil, nil, own)

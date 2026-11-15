@@ -83,6 +83,38 @@ func TestTab(t *testing.T) {
 	}
 }
 
+func TestFieldCompletesOnTab(t *testing.T) {
+	m := &model{}
+	completed, escaped := 0, 0
+	m.render = func() *surfui.Node {
+		return surfui.Surface(surfui.Field(), surfui.Button("Open")).
+			Bind("tab", "Complete", func() { completed++ }).
+			Bind("escape", "Close", func() { escaped++ })
+	}
+	r := show(m)
+	r.Draw(40, 10)
+	keys(r, "tab")
+	if r.Focused() != "r.0" {
+		t.Fatalf("Tab did not focus the field: %q", r.Focused())
+	}
+	uses, _ := r.Keys()
+	if !slices.ContainsFunc(uses, func(u cells.KeyUse) bool { return u.Name == "tab" && !u.Own }) {
+		t.Fatalf("Tab is not reported as the program's: %s", listed(uses))
+	}
+	keys(r, "tab", "escape")
+	if completed != 1 || escaped != 1 || r.Focused() != "r.0" {
+		t.Errorf("Tab and Escape: completed %d, escaped %d, focus %q", completed, escaped, r.Focused())
+	}
+	keys(r, "shift+tab")
+	if r.Focused() != "" {
+		t.Errorf("Shift+Tab did not leave the field: %q", r.Focused())
+	}
+	keys(r, "shift+tab", "tab") // last button, then out again
+	if r.Focused() != "" || completed != 1 {
+		t.Errorf("Tab on the button: completed %d, focus %q", completed, r.Focused())
+	}
+}
+
 // A field edits as a host's: typing reports input, Enter commits, and
 // leaving the field commits what was typed since, once.
 func TestField(t *testing.T) {

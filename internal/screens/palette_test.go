@@ -274,14 +274,14 @@ func TestPaletteStages(t *testing.T) {
 	})
 }
 
-// Complete (ctrl+space) writes the row's id on the line, and a space
+// Complete (Tab) writes the row's id on the line, and a space
 // where it takes a value.
 func TestPaletteCompletes(t *testing.T) {
 	inModes(t, func(t *testing.T, m mode) {
 		a, _ := openPalette(t, m)
 		a.fill(palQuery, "theme")
 		a.Wait("theme.use selected", func() bool { return a.Has(palRow("theme.use"), "is-sel") })
-		a.keys("ctrl+space")
+		a.keys("tab")
 		a.Wait("the line completed", func() bool { return a.value(palQuery) == "theme.use " })
 		a.Wait("the themes listed", func() bool { return a.Has(palRow("ink"), "is-sel") })
 		if got := a.text(palRow("ink")); !strings.Contains(got, "in effect") {

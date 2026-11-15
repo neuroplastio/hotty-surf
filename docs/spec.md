@@ -1258,7 +1258,7 @@ widget it is drawn in.
 - **A text field keeps what it needs:** it gives the program, as
   `data-keys`, the keys it and its parents bind that it can do without:
   a key with Ctrl, Alt, Mod or Super, Shift+Delete, the up and down
-  arrows, Page Up and Down, Enter, the function keys. A letter, Space,
+  arrows, Page Up and Down, Enter, Tab, the function keys. A letter, Space,
   Backspace, the left and right arrows, Home and End stay the field's:
   the arrows, Home and End a parent gives it binds back to their editing
   actions. A field of one line with a `change` handler, in no form, gives
@@ -1284,8 +1284,10 @@ widget it is drawn in.
   Those are the program's whatever would scroll. One that can move
   nothing goes on to the program; a `scroll` binding's key the host
   uses even then, and it does nothing.
-- Tab and Shift+Tab are the host's. Escape blurs the focused element
-  unless a binding takes it; ctrl+c ends the run unless one does.
+- Tab and Shift+Tab are the host's, except Tab bound in a text field
+  (`tab=program`, hotty 0.8); Shift+Tab still moves focus back. Escape
+  blurs the focused element unless a binding takes it; ctrl+c ends the
+  run unless one does.
 
 ### Context menus
 
@@ -1842,8 +1844,9 @@ for a host draws in cells unchanged.
 - **Input** goes as a host takes it while the surface has the keyboard
   (hotty SPEC §10.2). Tab and Shift+Tab move the focus through what takes
   it, in the tree's order, and past either end the surface loses the
-  keyboard. A focused text field edits with its keymap, and reports each
-  edit as input. On another element, a key its keymap gives the program
+  keyboard, except Tab a text field binds to the program. A focused text
+  field edits with its keymap, and reports each edit as input. On another
+  element, a key its keymap gives the program
   is the program's; then Space and Enter press a button; then a key bound
   to a scroll action, or one a browser scrolls with, scrolls the nearest
   `scroll` box from it outward that can move, or the page; and any other

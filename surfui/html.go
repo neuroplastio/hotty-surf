@@ -543,6 +543,9 @@ func holdsField(n *Node) bool {
 // Giveable reports whether a text field may give key to the program
 // without losing what it needs to edit.
 func Giveable(key string) bool {
+	if key == "tab" {
+		return true
+	}
 	if i := strings.LastIndexByte(key, '+'); i > 0 && i < len(key)-1 {
 		mods := key[:i]
 		if strings.Contains(mods, "ctrl") || strings.Contains(mods, "alt") ||

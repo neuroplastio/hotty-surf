@@ -18,7 +18,8 @@ import (
 // A key goes as SPEC §10.2 has a host take it while the surface has the
 // keyboard. Tab and Shift+Tab move the focus through what takes it, in
 // the tree's order, and past the last or the first leave the surface
-// (blur). A focused text field edits with its keymap (hotty.Resolve, the
+// (blur), except Tab a text field binds to program. A focused text field
+// edits with its keymap (hotty.Resolve, the
 // data-keys from the root down to it), as hottyedit.Field does, and
 // reports each edit as input; a key it doesn't take is the program's. On
 // another element, a key its keymap (the data-keys from the root down)
@@ -58,12 +59,16 @@ func (r *Renderer) key(name string) bool {
 	}
 	mods, base, kind := myelinkey.Split(k)
 	shiftOnly := mods&^myelinkey.Shift == 0
+	n := r.index[r.focused]
 	if base == "tab" && kind == myelinkey.Physical && shiftOnly {
+		if mods == 0 && n != nil && surfui.IsTextField(n) &&
+			hotty.Resolve(r.Platform, surfui.Tag(n) == "textarea", r.keymaps(n)...).Program("tab") {
+			return r.fieldKey(n, name, r.keymaps(n))
+		}
 		r.settle(r.tab(mods != 0))
 		r.changed = true
 		return true
 	}
-	n := r.index[r.focused]
 	if r.focused == "" || n == nil {
 		if r.scrollKey(nil, name) {
 			return true
