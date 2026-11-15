@@ -9,7 +9,7 @@ require (
 	neuroplast.io/hotty-go v0.8.0
 	neuroplast.io/hotty-go/hottytea v0.8.0
 	neuroplast.io/hotty-go/hottytest v0.8.0
-	neuroplast.io/hotty-surf v0.5.4
+	neuroplast.io/hotty-surf v0.6.0
 )
 
 require (
