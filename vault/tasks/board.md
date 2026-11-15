@@ -643,6 +643,10 @@ The order is the maintainer's, via gov (2026-10-30):
 
 ## v0
 
+- [x] **Reduced motion in hottyterm 0.8** (V8-01): the existing pulse
+  rule is checked on a private headless display, on → off → on without
+  a document update. No kit CSS change. Journal
+  `2026-11-15-reduced-motion`.
 - [x] **A list gives Space back** (hotty 0.8, V6-05): a list keeps its
   Space binding with a field inside it; its buttons and fields return
   Space and Shift+Space with `default`. Journal
