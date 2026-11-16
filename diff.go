@@ -1,0 +1,229 @@
+package surf
+
+import (
+	"strings"
+
+	"golang.org/x/net/html"
+	"neuroplast.io/hotty-go"
+)
+
+// differ says how the tree changed between two renders, as the ops of one
+// hotty delta (SPEC §6.1) and the fields the surface sets (§6.4). Every
+// element has an id (number), so each op names its target: an attribute
+// set or removed, a text replaced, an element removed, inserted before a
+// sibling or appended. Where a parent's children changed in a way those
+// can't say (a move, text among elements), its children go whole as inner.
+type differ struct {
+	s      *Surface
+	ops    []hotty.Op
+	fields []string
+	b      strings.Builder
+}
+
+// el compares two elements with the same id.
+func (d *differ) el(o, n *html.Node) {
+	id := attr(n, "id")
+	if o.Data != n.Data {
+		d.ops = append(d.ops, hotty.OpReplace(id, d.render(n)))
+		d.s.remember(n)
+		return
+	}
+	d.attrs(id, o, n)
+	if isField(n) {
+		d.field(id, n)
+		if n.Data == "textarea" {
+			return // its text is its value: the field's, not the tree's
+		}
+	}
+	d.children(id, o, n)
+}
+
+func (d *differ) attrs(id string, o, n *html.Node) {
+	field := isField(n)
+	for _, a := range n.Attr {
+		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") {
+			continue
+		}
+		if v, ok := get(o, a.Key); !ok || v != a.Val {
+			d.ops = append(d.ops, hotty.OpAttr(id, a.Key, a.Val))
+		}
+	}
+	for _, a := range o.Attr {
+		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") {
+			continue
+		}
+		if _, ok := get(n, a.Key); !ok {
+			d.ops = append(d.ops, hotty.OpUnattr(id, a.Key))
+		}
+	}
+}
+
+func get(n *html.Node, k string) (string, bool) {
+	for _, a := range n.Attr {
+		if a.Key == k {
+			return a.Val, true
+		}
+	}
+	return "", false
+}
+
+// field sets a live field's value or state where the render wants another
+// than the host holds: a reset clearing a filter, a select-all ticking the
+// rows' boxes. Where the user's own edit made the state, they agree, and
+// nothing is sent.
+func (d *differ) field(id string, n *html.Node) {
+	s := d.s
+	if isCheck(n) {
+		want := hasAttr(n, "checked")
+		if s.checked[id] != want {
+			s.checked[id] = want
+			d.fields = append(d.fields, hotty.SetField(s.name, id, hotty.FieldChange{Rev: s.revs[id], Checked: &want}))
+		}
+		return
+	}
+	want := fieldValue(n)
+	if s.vals[id] != want {
+		s.vals[id] = want
+		d.fields = append(d.fields, hotty.SetField(s.name, id, hotty.FieldChange{Rev: s.revs[id], Value: &want}))
+	}
+}
+
+func kids(n *html.Node) []*html.Node {
+	var out []*html.Node
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode || c.Type == html.TextNode {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func (d *differ) children(id string, o, n *html.Node) {
+	oc, nc := kids(o), kids(n)
+	same := len(oc) == len(nc)
+	text := false
+	for i := 0; same && i < len(oc); i++ {
+		a, b := oc[i], nc[i]
+		switch {
+		case a.Type != b.Type:
+			same = false
+		case a.Type == html.TextNode:
+			text = true
+		case attr(a, "id") != attr(b, "id"):
+			same = false
+		}
+	}
+	if same {
+		changed := false
+		for i := range oc {
+			if oc[i].Type == html.TextNode && oc[i].Data != nc[i].Data {
+				changed = true
+			}
+		}
+		if changed {
+			if len(nc) == 1 {
+				d.ops = append(d.ops, hotty.OpText(id, nc[0].Data))
+			} else {
+				d.inner(id, n)
+				return
+			}
+		}
+		for i := range oc {
+			if oc[i].Type == html.ElementNode {
+				d.el(oc[i], nc[i])
+			}
+		}
+		return
+	}
+	if text || hasText(oc) || hasText(nc) {
+		d.inner(id, n)
+		return
+	}
+	// Elements only: removals, insertions among the elements that stayed,
+	// in order; anything else (a move) is inner.
+	old := make(map[string]*html.Node, len(oc))
+	for _, c := range oc {
+		old[attr(c, "id")] = c
+	}
+	inNew := make(map[string]bool, len(nc))
+	for _, c := range nc {
+		inNew[attr(c, "id")] = true
+	}
+	var keptOld, keptNew []string
+	for _, c := range oc {
+		if inNew[attr(c, "id")] {
+			keptOld = append(keptOld, attr(c, "id"))
+		}
+	}
+	for _, c := range nc {
+		if old[attr(c, "id")] != nil {
+			keptNew = append(keptNew, attr(c, "id"))
+		}
+	}
+	if !equal(keptOld, keptNew) {
+		d.inner(id, n)
+		return
+	}
+	for _, c := range oc {
+		if !inNew[attr(c, "id")] {
+			d.ops = append(d.ops, hotty.OpRemove(attr(c, "id")))
+		}
+	}
+	for i, c := range nc {
+		cid := attr(c, "id")
+		if o := old[cid]; o != nil {
+			d.el(o, c)
+			continue
+		}
+		// Before the next sibling that stays, or at the end.
+		next := ""
+		for _, x := range nc[i+1:] {
+			if old[attr(x, "id")] != nil {
+				next = attr(x, "id")
+				break
+			}
+		}
+		if next != "" {
+			d.ops = append(d.ops, hotty.OpBefore(next, d.render(c)))
+		} else {
+			d.ops = append(d.ops, hotty.OpAppend(id, d.render(c)))
+		}
+		d.s.remember(c)
+	}
+}
+
+func equal(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func hasText(ns []*html.Node) bool {
+	for _, n := range ns {
+		if n.Type == html.TextNode {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *differ) inner(id string, n *html.Node) {
+	d.b.Reset()
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		html.Render(&d.b, c)
+	}
+	d.ops = append(d.ops, hotty.OpInner(id, d.b.String()))
+	d.s.remember(n)
+}
+
+func (d *differ) render(n *html.Node) string {
+	d.b.Reset()
+	html.Render(&d.b, n)
+	return d.b.String()
+}

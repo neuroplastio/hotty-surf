@@ -22,5 +22,5 @@ type Finding struct {
 // Dir checks the app's sources under dir: its .templ, .go and .css files,
 // not the kit's. err is for files it couldn't read.
 func Dir(dir string) ([]Finding, error) {
-	panic("L0")
+	return walk(dir)
 }

@@ -3,9 +3,13 @@ package surf
 import (
 	"context"
 	"io"
+	"sync"
 
 	"github.com/a-h/templ"
+	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
+
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // A Surface shows a view on one hotty surface: it gives the program the
@@ -20,7 +24,45 @@ import (
 // one goroutine, the driver's. [Surface.Do] and [Surface.Pending] may be
 // called from any goroutine.
 type Surface struct {
-	_ struct{}
+	name string
+	view templ.Component
+	css  string
+
+	// Do's queue, the one thing other goroutines touch.
+	mu      sync.Mutex
+	queue   []func()
+	pending chan struct{}
+
+	out      io.Writer
+	platform hotty.Platform
+
+	// The last frame sent: its tree under #root, the handlers its render
+	// registered, every element by its id, and the ids given by place.
+	prev   *html.Node
+	frame  *rt.Frame
+	byID   map[string]*html.Node
+	ids    map[string]string
+	nextID int
+	faults []string
+
+	// What the host's fields hold, as far as the surface knows: what the
+	// user's events said, or what it last set (SPEC §6.4).
+	vals    map[string]string
+	checked map[string]bool
+	revs    map[string]int
+
+	// Where the keyboard and the pointer are, as the host said: the
+	// element and the ids of it and its ancestors, which Focus and Hover
+	// handlers are told about as they change.
+	focused  string
+	focusIn  []string
+	hoverIn  []string
+	asked    string // the element the last frame's Autofocus asked for
+	askDue   bool   // a Document's Autofocus, sent at the next Update
+	sending  bool
+	deferred []hotty.Event
+
+	r renderer
 }
 
 // New makes a surface named name (a hotty surface name, SPEC §5.1) showing
@@ -32,13 +74,16 @@ type Surface struct {
 // reload, so that a live reload reaches it wherever it was made, a dialog
 // opened late included. A release build has none of that.
 func New(name string, view templ.Component, css string) *Surface {
-	panic("L0")
+	s := &Surface{name: name, view: view, css: css, pending: make(chan struct{}, 1)}
+	s.reset()
+	register(s)
+	return s
 }
 
 // Name is the surface's name, as New was given it: what the host's events
 // name it by.
 func (s *Surface) Name() string {
-	panic("L0")
+	return s.name
 }
 
 // Attach says where the surface's deltas go, w, and what the host is: caps
@@ -59,7 +104,8 @@ func (s *Surface) Name() string {
 //     without Hover, and [Outside] misses a click on the surface's text
 //     without Press. surftea's Place and run.App set both.
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
-	panic("L0")
+	s.out = w
+	s.platform = hotty.PlatformOf(caps)
 }
 
 // Document renders the view and returns the whole document, its stylesheet
@@ -70,7 +116,7 @@ func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 // naming the surface, or an error from w's Write, as a cells.Screen
 // refuses).
 func (s *Surface) Document() (string, error) {
-	panic("L0")
+	return s.document()
 }
 
 // Event gives the surface an event from the host that names it (SPEC §9):
@@ -82,7 +128,7 @@ func (s *Surface) Document() (string, error) {
 // sending (a cells.Screen calls its events that way): the surface runs it
 // once that send is done, before the call that wrote returns.
 func (s *Surface) Event(e hotty.Event) error {
-	panic("L0")
+	return s.event(e)
 }
 
 // Key offers the surface a key while it has the keyboard (a key the host
@@ -92,34 +138,41 @@ func (s *Surface) Event(e hotty.Event) error {
 // first, with the key as [Key] says; taken says whether one took it. A key
 // no handler takes is the program's.
 func (s *Surface) Key(key string) (taken bool, err error) {
-	panic("L0")
+	return s.key(key)
 }
 
 // Update runs the functions [Surface.Do] queued, renders the view, and
 // sends what changed. A driver calls it when Pending fires; a program that
 // changed the app's state on the driver's goroutine calls it itself.
 func (s *Surface) Update() error {
-	panic("L0")
+	return s.update()
 }
 
 // Do queues fn to run on the driver's goroutine at its next Update: for a
 // timer or a background job that changes the app's state. It may be called
 // from any goroutine.
 func (s *Surface) Do(fn func()) {
-	panic("L0")
+	s.mu.Lock()
+	s.queue = append(s.queue, fn)
+	s.mu.Unlock()
+	s.wake()
 }
 
 // Pending receives when Do has queued work, so that the driver calls Update.
 // It is the same channel for the surface's life.
 func (s *Surface) Pending() <-chan struct{} {
-	panic("L0")
+	return s.pending
 }
 
 // Of is the surface rendering the view that ctx belongs to, for a component
 // that keeps work beyond the render (a toast's timer reaches the loop with
 // Of(ctx).Do). It is nil outside a render.
 func Of(ctx context.Context) *Surface {
-	panic("L0")
+	if f := rt.From(ctx); f != nil {
+		s, _ := f.Surface.(*Surface)
+		return s
+	}
+	return nil
 }
 
 // Platform is the host's platform, from the capabilities Attach was given:
@@ -127,5 +180,8 @@ func Of(ctx context.Context) *Surface {
 // §10.2), for a render that shows a shortcut the way the host's platform
 // writes it. It is the zero Platform (ctrl) outside a render.
 func Platform(ctx context.Context) hotty.Platform {
-	panic("L0")
+	if f := rt.From(ctx); f != nil {
+		return f.Platform
+	}
+	return hotty.Platform{}
 }
