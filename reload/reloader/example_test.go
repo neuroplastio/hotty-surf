@@ -16,8 +16,8 @@ func ExampleNew() {
 		return nil, nil
 	}
 	report := func(r reloader.Report) {
-		// show reloader.View(r) over the app while it has a failed build
-		// or findings
+		// show reloader.View(r) over the app, on a surface styled by
+		// ui.Stylesheet(), while it has a failed build or findings
 	}
 	r := reloader.New("./examples/hello", start, report)
 	r.Run(context.Background())

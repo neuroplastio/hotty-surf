@@ -35,8 +35,8 @@ pkg neuroplast.io/hotty-surf/lint, type Finding struct, File string
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Line int
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Rule string
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Text string
-pkg neuroplast.io/hotty-surf/reload, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](*surf.Surface, func() P, func(P))
-pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, *surf.Surface, io.ReadWriter) error
+pkg neuroplast.io/hotty-surf/reload, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](func() P, func(P))
+pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, io.ReadWriter, ...*surf.Surface) error
 pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) (io.ReadWriteCloser, error), func(Report)) *Reloader
 pkg neuroplast.io/hotty-surf/reload/reloader, func View(Report) templ.Component
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
@@ -83,6 +83,7 @@ pkg neuroplast.io/hotty-surf/ui, func DropdownMenu(*DropdownMenuState, DropdownM
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Lucide(string, string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Stylesheet() string
 pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()

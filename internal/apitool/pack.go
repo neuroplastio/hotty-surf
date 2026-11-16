@@ -107,7 +107,15 @@ func packCmd(args []string) error {
 		}
 		v.Names = append(v.Names, name{Key: key, Line: strings.TrimPrefix(c.line, "pkg "+path+", "), Reason: r, Added: c.added})
 	}
-	slices.SortFunc(order, func(a, b string) int { return strings.Compare(label(a), label(b)) })
+	slices.SortFunc(order, func(a, b string) int {
+		if (a == module) != (b == module) { // the root first
+			if a == module {
+				return -1
+			}
+			return 1
+		}
+		return strings.Compare(label(a), label(b))
+	})
 	for _, path := range order {
 		v := byPkg[path]
 		v.Doc, v.Examples = docOf(path, dirs)

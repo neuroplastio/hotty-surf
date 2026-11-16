@@ -14,8 +14,9 @@ import (
 
 func main() {
 	a := NewApp()
+	//lint:ignore SA4006 L0: every body panics, so staticcheck takes s for unused; goes with L1
 	s := surf.New("hello", Page(a), CSS)
-	reload.Keep(s, a.Save, a.Restore)
+	reload.Keep(a.Save, a.Restore)
 	if err := run.App(context.Background(), s); err != nil {
 		fmt.Fprintln(os.Stderr, "hello:", err)
 		os.Exit(1)

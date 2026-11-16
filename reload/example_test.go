@@ -22,6 +22,6 @@ func ExampleServe() {
 	var devWire io.ReadWriter // from the program's host
 	st := &state{}
 
-	reload.Keep(s, func() *state { return st }, func(n *state) { st = n })
-	go reload.Serve(context.Background(), s, devWire)
+	reload.Keep(func() *state { return st }, func(n *state) { st = n })
+	go reload.Serve(context.Background(), devWire, s)
 }

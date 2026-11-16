@@ -44,6 +44,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.Small`: Basecoat's sm size.
 - `ui.Large`: Basecoat's lg size.
 - `ui.Icon`: Basecoat's square icon-only size (btn-icon).
+- `ui.Stylesheet`: a surface with no build of its own needs the kit's look: the reloader's error surface in plx, a host's own dialogs. A function, not a const, so that the stylesheet's contents don't sit in the API file.
 - `ui.Lucide`: shadcn and Basecoat draw Lucide's icons; one icon set, by name. The spike's second set (Material Symbols, ui.Symbol) is left out.
 - `ui.Kbd`: Basecoat's kbd, showing a shortcut as the host's platform writes it (mod as Ctrl or ⌘): the spike's Keycap and MenuKeys in one.
 - `ui.Button`: Basecoat's button (CSS only): the most used component.
@@ -166,8 +167,8 @@ a user can't do without the name, or why a simpler shape won't do.
 
 ## reload (the app's side of live reload)
 
-- `reload.Keep`: the app names the state that survives a Go reload, msgp-encoded (P-3): the spike's native.State, keyed on the surface so that one process can hold several.
-- `reload.Serve`: the app's side of the dev wire, on a reader and writer its host gives it, not a terminal's fds (plx's ask A1): plx's plugins reach their dev parent through plx. run.App calls it itself under `surf run`.
+- `reload.Keep`: the program names the state that survives a Go reload, msgp-encoded (P-3): the spike's native.State. It is the process's, not a surface's, since a plx controller keeps state and has no surface.
+- `reload.Serve`: the program's side of the dev wire, on a reader and writer its host gives it, not a terminal's fds (plx's ask A1): plx's plugins reach their dev parent through plx. It takes the program's surfaces, any number, none for a controller. run.App calls it itself under `surf run`.
 
 ## reload/reloader (the dev parent)
 
@@ -178,7 +179,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `reload/reloader.Report`: a save's outcome as plain data, for the program to show.
 - `reload/reloader.Report.Tier`: which tier the save took: text, css or go.
 - `reload/reloader.Report.Took`: save to screen, as RELOAD.md measured it.
-- `reload/reloader.Report.Build`: the compiler's output for a failed build.
+- `reload/reloader.Report.Build`: what kept a save from the app: the compiler's output, or why start failed.
 - `reload/reloader.Report.Lint`: the save's lint findings.
 - `reload/reloader.View`: the error surface as a view, so plx shows build errors and findings as surf run does (plx's ask A3).
 

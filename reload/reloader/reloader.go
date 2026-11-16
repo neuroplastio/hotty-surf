@@ -42,7 +42,11 @@ func New(dir string, start func(ctx context.Context, bin string) (io.ReadWriteCl
 }
 
 // Run builds and starts the app, then reloads it on every save until ctx is
-// done.
+// done, and closes the running build's wire before it returns. A build that
+// fails, or one that start couldn't start, is reported (Report.Build) and
+// leaves the running one as it was; the next save tries again. Run returns
+// an error only for what stops it watching: dir is no Go main package, or
+// the go command can't be found.
 func (r *Reloader) Run(ctx context.Context) error {
 	panic("L0")
 }
@@ -57,16 +61,18 @@ func (r *Reloader) Wait(ctx context.Context) (Report, error) {
 type Report struct {
 	Tier string        // "text", "css" or "go"
 	Took time.Duration // from the save to the app showing it
-	// Build is the compiler's output when the build failed; the old build
-	// still runs.
+	// Build is what went wrong when the save didn't reach the app: the
+	// compiler's output, or why start failed. The old build still runs.
+	// It is "" when the save showed.
 	Build string
 	Lint  []lint.Finding
 }
 
 // View is the error surface: a failed build over the app, and the lint's
 // findings in a calmer panel under it, as `surf run` shows them. A program
-// shows it as a surface of its own above the app's, while the report has
-// either; it is empty when it has neither.
+// shows it as a surface of its own above the app's, styled by
+// ui.Stylesheet, while the report has either; it is empty when it has
+// neither.
 func View(r Report) templ.Component {
 	panic("L0")
 }

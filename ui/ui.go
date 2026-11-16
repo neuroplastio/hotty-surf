@@ -27,6 +27,14 @@ const (
 	Icon   Size = "icon"
 )
 
+// Stylesheet is the kit's stylesheet: Basecoat's theme and components and
+// the Tailwind utilities the kit's own markup uses. An app's build adds the
+// classes the app uses to it; a surface that has no build of its own (a dev
+// tool's error surface, a host's dialog) uses it as it is.
+func Stylesheet() string {
+	panic("L0")
+}
+
 // Lucide is the icon named name in the Lucide set that shadcn and Basecoat
 // draw with ("plus", "chevron-down"), as an inline SVG sized by class
 // ("size-4").

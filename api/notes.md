@@ -70,8 +70,25 @@ internal/apitool            this pack, and the API lock
 |---|---|
 | A1 live reload as a library: a child behind the dev tag, a parent both surf run and plx call, over a reader and writer the parent hands over | `reload.Keep`, `reload.Serve` (child); `reloader.New(dir, start, report)`, `Run`, `Wait` (parent) |
 | A2 plx embeds a surface: a rect plx owns, input in, bytes out, resize, cells | `surf.Surface` (Attach, Document, Event, Key, Update, Pending); placement and resizes stay plx's; `cells.New`, `Resize` |
-| A3 the lint and the error surface as packages | `lint.Dir`; `reloader.View(report)` |
+| A3 the lint and the error surface as packages | `lint.Dir`; `reloader.View(report)` on a surface styled by `ui.Stylesheet()` |
 | surflua removed | not in v0.7 |
+
+plx builds its plugin dev loop against these signatures before they are
+implemented, so this is every call it makes:
+
+- **The plugin (child), behind `surfdev`:** `reload.Keep(get, set)` once,
+  then `go reload.Serve(ctx, wire, surfaces...)` with the wire plx's SDK
+  hands it; a controller passes no surface. Each surface is driven as
+  any embedded one: `surf.New`, `Attach(w, caps)`, `Document()`,
+  `Event(e)`, `Key(k)`, `Update()` on `Pending()`; `cells.New(s, cols,
+  rows)` and its `Key`, `Click`, `Wheel`, `Resize`, `Lines`, `Cursor` for
+  a viewer without hotty.
+- **plx (parent):** `reloader.New(dir, start, report)`, where `start`
+  starts a build the way plx starts a tool or a controller and returns
+  the wire; `Run(ctx)` until the dev session ends; `Wait(ctx)` for `plx
+  plugin dev ctl reload`; on each `Report`, `reloader.View(r)` on a
+  surface of its own, styled by `ui.Stylesheet()`, over the tool while
+  `Build` or `Lint` has anything.
 
 ### Open, for your call
 
@@ -98,6 +115,19 @@ internal/apitool            this pack, and the API lock
    NavList, Controls, EventLog, ListItem, LayoutThumb, BusyBadge, Fuzzy,
    CommandItem and Popup. They were storybook and app chrome, not
    Basecoat. They come back in a batch only if an example app needs them.
+
+### TinyGo (the shipped wasm)
+
+The spike's runtime (templ, x/net/html and the diff) builds and runs
+under TinyGo 0.43 for js/wasm and wasip1, and its stream is byte for byte
+Go's. Tasks drops from Go's 9.1 MB (2.38 MB gzipped) to 2.51 MB (804 KB),
+and to 1.95 MB (617 KB) with two mods of templ (net/http and
+html/template behind a tag; its regexps as plain matchers). Each act is
+about 20% slower than Go on the host and the same in wasm. Chroma adds
+301 KB gzipped, which is why `ui/code` stands apart. The shape needs
+nothing from this beyond what it has: the terminal code is
+`unix`-tagged, and the reload child is behind `surfdev`. The full report
+is the last appendix.
 
 ### What isn't in this pack
 
