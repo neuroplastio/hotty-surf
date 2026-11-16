@@ -794,7 +794,7 @@ unverified patch. No renderer checkout was edited for this migration.
 
 The kit can take a host's region and window focus on its surface root.
 Its selected rows use `background-color` for the two focus states, and
-`--u-transition` sets their transition duration. The hotty-blitz source's
+`--u-transition` sets their transition duration (160 ms when unset). The hotty-blitz source's
 `tests/animations.rs` exercises a background-color transition and its
 intermediate frames; this kit's still-image gate does not test motion.
 The hover overlay is a background gradient over the selected fill. Its

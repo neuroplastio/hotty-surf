@@ -1565,7 +1565,7 @@
 /* A host may provide region and window focus independently of DOM focus.
    Both attributes opt in; their absence retains the usual list look. */
 .u-surface[data-region][data-window] .u-list > .u-item {
-  transition: background-color var(--u-transition, 0ms) linear;
+  transition: background-color var(--u-transition, 160ms) ease-out, color 180ms ease-out;
 }
 .u-surface[data-region][data-window] .u-list > .u-item.is-sel,
 .u-surface[data-region][data-window] :focus-within > .u-list > .u-item.is-sel {

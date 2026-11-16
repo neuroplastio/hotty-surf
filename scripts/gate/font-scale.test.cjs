@@ -48,7 +48,7 @@ test('region and window state select the current item fill', async () => {
     const css = readFileSync(path.join(__dirname, '../../surfui/surf.css'), 'utf8');
     await page.setContent(`<style>${css}\n*::before{transition:none!important}</style><div id="root" class="u-surface"
       data-region="focused" data-window="focused"
-      style="--u-selected:rgba(255, 255, 255, .04);--u-active:rgba(255, 255, 255, .1);--u-hover:rgba(255, 255, 255, .05)">
+      style="--u-transition:0ms;--u-selected:rgba(255, 255, 255, .04);--u-active:rgba(255, 255, 255, .1);--u-hover:rgba(255, 255, 255, .05)">
       <div class="u-list u-entries" tabindex="0"><div id="item" tabindex="0" class="u-item is-sel">Current</div></div>
       <input id="field" class="u-field"></div>`);
     await page.focus('.u-list');

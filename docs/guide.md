@@ -238,8 +238,8 @@ hover, so a host supplying these roles should use translucent colours. The
 cell renderer emits the `active` or `selected` role for the same states;
 it does not track ordinary pointer hover. Without both attributes the
 usual keyboard-driven selection remains in effect. The cell renderer snaps
-between states. A host can set `--u-transition` to a CSS duration for
-background-color transitions. Hover is a background layer; its fade is not
+between states. The fill fades between states in 160 ms, as
+any item's does; a host can set `--u-transition` to another CSS duration. Hover is a background layer; its fade is not
 established by the fidelity gate. Set `data-current-bar="on"` on the root
 to show a selected item's bar in `--u-edge` (the cells emit the `edge`
 role). A host of a `surfrun.Surface` can set `RootAttrs` before Show or
