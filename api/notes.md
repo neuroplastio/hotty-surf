@@ -100,7 +100,9 @@ implemented, so this is every call it makes:
   back keys that are down; `Report.Failed` names a process that failed or
   "exited before handover". `reloader.View(&last)` on a surface of its
   own, styled by `ui.Stylesheet()`, over the tool while the report has
-  anything. `Document(key)` for a shot is deferred to L4's pack.
+  anything. `reloader.Document(ctx, key)`, an instance's last drawn
+  document, is in L4's pack, not dropped: `plx plugin dev ctl shot`
+  needs it.
 
 ### What the reviews changed
 
