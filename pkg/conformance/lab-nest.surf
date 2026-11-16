@@ -1,6 +1,0 @@
-<props b="Branch"/>
-<stack key="nest">
-  <stack><stack><stack><stack><stack><stack><stack>
-    <lab-tree :b="b"/>
-  </stack></stack></stack></stack></stack></stack></stack>
-</stack>
