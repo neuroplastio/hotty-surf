@@ -4,9 +4,12 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tinylib/msgp/msgp"
@@ -21,8 +24,9 @@ import (
 
 // Under `hotty-surf run`, the app draws through it: `hotty-surf run` owns
 // the terminal and starts the app with HOTTY_SURF_RUN naming two inherited
-// fds, "reload,term": the reload wire, which the app serves as the
-// instance "app" (package reload), and the term wire, msgpack-RPC that
+// fds, "reload,term", and the instance key after them ("reload,term,key")
+// where it isn't "app": the reload wire, which the app serves as that
+// instance (package reload), and the term wire, msgpack-RPC that
 // carries what the terminal sent the app ("input") and the app's hotty
 // commands ("out"), and on which the app names its surface for `hotty-surf
 // run` to place ("show").
@@ -39,8 +43,19 @@ func underRun(ctx context.Context, s *surf.Surface) (bool, error) {
 	}
 	// A program the app starts is no app of hotty-surf run's.
 	os.Unsetenv(runEnv)
+	parts := strings.SplitN(v, ",", 3)
+	key := "app"
+	if len(parts) == 3 && parts[2] != "" {
+		key = parts[2]
+	}
 	var rfd, tfd int
-	if _, err := fmt.Sscanf(v, "%d,%d", &rfd, &tfd); err != nil {
+	var err error
+	if len(parts) < 2 {
+		err = errors.New("want reload,term[,key]")
+	} else if rfd, err = strconv.Atoi(parts[0]); err == nil {
+		tfd, err = strconv.Atoi(parts[1])
+	}
+	if err != nil {
 		return true, fmt.Errorf("run: %s=%q: %w", runEnv, v, err)
 	}
 	reloadF := os.NewFile(uintptr(rfd), "hotty-surf-reload")
@@ -50,7 +65,7 @@ func underRun(ctx context.Context, s *surf.Surface) (bool, error) {
 	}
 	defer reloadF.Close()
 	defer termF.Close()
-	return true, devHost(ctx, s, reloadF, termF)
+	return true, devHost(ctx, s, reloadF, termF, key)
 }
 
 // termOut sends each command the surface writes as one "out".
@@ -71,7 +86,7 @@ type termMsg struct {
 	isDoc bool
 }
 
-func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter) error {
+func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter, key string) error {
 	term := devwire.NewConn(termW)
 	defer term.Close()
 	// The reader is drive's reading goroutine's from the hello on, which
@@ -91,7 +106,7 @@ func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter)
 	s.Attach(termOut{term}, hello.Caps)
 
 	ctx, cancel := context.WithCancel(ctx)
-	done, err := devchild.Serve(ctx, reloadW, "app")
+	done, err := devchild.Serve(ctx, reloadW, key)
 	if err != nil {
 		cancel()
 		devwire.PutReader(tr)
