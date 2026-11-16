@@ -1,6 +1,8 @@
 package rt
 
 import (
+	"time"
+
 	"github.com/tinylib/msgp/msgp"
 	"golang.org/x/net/html"
 )
@@ -33,4 +35,12 @@ var Peek struct {
 	// Document is the whole document the host was last sent (the old
 	// build's, read directly at a handover); "" before the first.
 	Document func(s any) (string, error)
+	// CSS is the surface's stylesheet, as New or the last Restyle gave it
+	// (a dev reload's css tier replaces the app's part of it). It runs on
+	// the driver goroutine, as Restyle does.
+	CSS func(s any) string
+	// Rendered is when the surface's view last rendered, the zero Time
+	// before it first did. It may be called from any goroutine: the
+	// reload child waits out templ's dev-mode recheck from it.
+	Rendered func(s any) time.Time
 }

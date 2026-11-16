@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/tinylib/msgp/msgp"
 	"golang.org/x/net/html"
@@ -21,6 +23,9 @@ import (
 // renderer is a surface's render buffer and parser, kept between renders.
 type renderer struct {
 	buf bytes.Buffer
+	// at is when the view last rendered, in Unix nanoseconds (Peek's
+	// Rendered reads it from another goroutine).
+	at atomic.Int64
 }
 
 func init() {
@@ -41,6 +46,13 @@ func init() {
 		}
 		return x.documentOf(x.prev)
 	}
+	rt.Peek.CSS = func(s any) string { return s.(*Surface).css }
+	rt.Peek.Rendered = func(s any) time.Time {
+		if n := s.(*Surface).r.at.Load(); n != 0 {
+			return time.Unix(0, n)
+		}
+		return time.Time{}
+	}
 }
 
 func (s *Surface) reset() {
@@ -57,7 +69,10 @@ var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Bo
 func (s *Surface) render() (*html.Node, *rt.Frame, map[string]string, map[string]*html.Node, error) {
 	f := &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s}
 	s.r.buf.Reset()
-	if err := s.view.Render(rt.With(context.Background(), f), &s.r.buf); err != nil {
+	err := s.view.Render(rt.With(context.Background(), f), &s.r.buf)
+	// When it ended: templ's dev mode read its strings before then.
+	s.r.at.Store(time.Now().UnixNano())
+	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 	kids, err := html.ParseFragment(&s.r.buf, bodyCtx)

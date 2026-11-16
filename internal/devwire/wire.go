@@ -1,0 +1,133 @@
+// Package devwire is live reload's wires (gov P-3): between a reloader and
+// the processes it reloads (package reload's child side), between
+// `hotty-surf run` and the app it runs, and between `hotty-surf ctl` and
+// `hotty-surf run`. Each is msgpack-RPC: [0, id, method, params] a
+// request, [1, id, error, result] its response, [2, method, params] a
+// notification, where params and result are one of the maps below, keyed
+// by field name, and error is nil or a string.
+//
+// It is internal, so that none of it is API: reloader.Report and
+// lint.Finding cross the ctl wire as the mirrors Report and Finding.
+package devwire
+
+//go:generate msgp -marshal=false -tests=false -file wire.go -o wire_gen.go
+
+//msgp:newtime
+//msgp:limit arrays:65536 maps:65536
+
+import "neuroplast.io/hotty-go"
+
+// The reload wire: a process and its reloader.
+
+// Hello is a process's first request ("hello"): its instance key, and
+// whether templ's dev mode is on in it (TEMPL_DEV_MODE=true when it
+// started), which the text tier needs.
+type Hello struct {
+	Key      string `msg:"key"`
+	TemplDev bool   `msg:"templ_dev"`
+	Pid      int    `msg:"pid"`
+}
+
+// Welcome answers Hello: what the process takes over before it renders.
+type Welcome struct {
+	// State is what Keep's get encoded in the process before, nil in a
+	// fresh start.
+	State []byte `msg:"state"`
+	// Surfaces are the surfaces the process before handed over.
+	Surfaces []Snap `msg:"surfaces"`
+	// TemplRoot and WatchRoot are where templ's dev mode reads the
+	// strings (TEMPL_DEV_MODE_ROOT, TEMPL_DEV_MODE_WATCH_ROOT).
+	TemplRoot string `msg:"templ_root"`
+	WatchRoot string `msg:"watch_root"`
+	// Styles are the stylesheet's edits since the build the process runs:
+	// each Old replaced by its New, in order.
+	Styles []Style `msg:"styles"`
+}
+
+// Snap is one surface as the host has it, handed from one build to the
+// next: its name, its stylesheet then, and the surface's own snapshot.
+type Snap struct {
+	Name string `msg:"name"`
+	CSS  string `msg:"css"`
+	Data []byte `msg:"data"`
+}
+
+// Style is an edit of the app's stylesheet: the request "restyle", and an
+// entry of Welcome.Styles.
+type Style struct {
+	Old string `msg:"old"`
+	New string `msg:"new"`
+}
+
+// Restyled answers "restyle": how many surfaces held the old stylesheet.
+type Restyled struct {
+	Surfaces int `msg:"surfaces"`
+}
+
+// Handed answers "handover": the process's state and its surfaces. The
+// process exits once it has sent it.
+type Handed struct {
+	State    []byte `msg:"state"`
+	Surfaces []Snap `msg:"surfaces"`
+}
+
+// Empty is the params or result of a message that carries nothing:
+// "render", "handover" and "leave" on the reload wire, "bye" and "doc" on
+// the term wire, "reload" and "shot" on the ctl wire.
+type Empty struct{}
+
+// The term wire: `hotty-surf run` and the app it runs.
+
+// TermHello is `hotty-surf run`'s first notification ("hello"): what the
+// terminal is.
+type TermHello struct {
+	Caps hotty.Caps `msg:"caps"`
+}
+
+// Input is what the terminal sent the app ("input"): one hotty message as
+// hotty encodes it (Msg), or one key, as hotty names keys (Key).
+type Input struct {
+	Msg []byte `msg:"msg"`
+	Key string `msg:"key"`
+}
+
+// Out is one hotty command the app sends the terminal ("out").
+type Out struct {
+	Data []byte `msg:"data"`
+}
+
+// Show names the app's surface, once its document is out ("show"):
+// `hotty-surf run` places it.
+type Show struct {
+	Surface string `msg:"surface"`
+}
+
+// Doc answers "doc" (the term wire) and "shot" (the ctl wire): a surface's
+// document as the host has it, and on the ctl wire the terminal's size.
+type Doc struct {
+	Surface string `msg:"surface"`
+	HTML    string `msg:"html"`
+	Cols    int    `msg:"cols"`
+	Rows    int    `msg:"rows"`
+}
+
+// The ctl wire: `hotty-surf ctl` and `hotty-surf run`.
+
+// Report mirrors reloader.Report, which has no codec of its own (it is
+// API): the answer to "reload".
+type Report struct {
+	Tier   string            `msg:"tier"`
+	Took   int64             `msg:"took"` // nanoseconds
+	Build  string            `msg:"build"`
+	Failed map[string]string `msg:"failed"`
+	Lint   []Finding         `msg:"lint"`
+}
+
+// Finding mirrors lint.Finding.
+type Finding struct {
+	File string `msg:"file"`
+	Line int    `msg:"line"`
+	Col  int    `msg:"col"`
+	Rule string `msg:"rule"`
+	Text string `msg:"text"`
+}
