@@ -23,6 +23,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"unicode"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -198,8 +199,13 @@ func (r *Rig) Type(sel, text string) {
 	r.settle()
 	for _, c := range text {
 		k := string(c)
-		if c == ' ' {
+		switch lo := unicode.ToLower(c); {
+		case c == ' ':
 			k = "space"
+		case lo != c:
+			// hotty names a capital by its key and shift (SPEC §10.4):
+			// "A" alone is the key a.
+			k = "shift+" + string(lo)
 		}
 		r.Key(k)
 	}

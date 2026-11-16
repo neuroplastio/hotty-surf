@@ -1,0 +1,31 @@
+package ui
+
+// Tabs' markup: tabs.html.jinja's (Basecoat 1.1.0, MIT; NOTICE.md),
+// written in templ as the macro renders it for the Props, with the shown
+// tab's panel only: the children.
+
+import "neuroplast.io/hotty-surf"
+
+templ tabs(v *tabsView) {
+	<div class={ join("tabs", v.p.Class) } id={ v.id } data-tabs-initialized="true">
+		<nav role="tablist" aria-orientation="horizontal">
+			for i, t := range v.p.Tabs {
+				<button
+					type="button"
+					role="tab"
+					aria-controls={ v.panelID(i) }
+					aria-selected={ bstr(i == v.sel) }
+					tabindex={ v.tabindex(i) }
+					disabled?={ t.Disabled }
+					{ surf.On(ctx, v.tabID(i), surf.Click(func() { v.choose(i) }), surf.Key(v.key(i)))... }
+				>{ t.Label }</button>
+			}
+		</nav>
+		if v.sel >= 0 {
+			<div role="tabpanel" id={ v.panelID(v.sel) } aria-labelledby={ v.tabID(v.sel) } tabindex="-1" aria-selected="true">
+				{ children... }
+			</div>
+		}
+		{{ v.follow(ctx) }}
+	</div>
+}

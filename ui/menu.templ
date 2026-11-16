@@ -1,0 +1,92 @@
+package ui
+
+// DropdownMenu's markup: dropdown-menu.html.jinja's (Basecoat 1.1.0, MIT;
+// NOTICE.md), written in templ as the macro renders it for the Props,
+// with what dropdown-menu.js sets on it from DropdownMenuState.
+
+import "neuroplast.io/hotty-surf"
+
+templ dropdownMenu(v *menuView) {
+	{{ v.check(ctx) }}
+	<div class={ join("dropdown-menu", v.p.Class) } data-dropdown-menu-initialized="true" { v.rootAttrs(ctx)... }>
+		<button
+			type="button"
+			aria-haspopup="menu"
+			aria-controls={ v.id + "-menu" }
+			aria-expanded={ bstr(v.st.open) }
+			if o := v.activeOpt(); o >= 0 {
+				aria-activedescendant={ v.opts[o].id }
+			}
+			if v.st.open {
+				data-keys="enter=program space=program"
+			}
+			class="btn"
+			data-variant="outline"
+			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Focus(moved))... }
+		>
+			if v.p.Trigger != nil {
+				@v.p.Trigger
+			}
+		</button>
+		<div
+			id={ v.id + "-popover" }
+			data-popover
+			aria-hidden={ bstr(!v.st.open) }
+			if v.p.Align != "" {
+				data-align={ v.p.Align }
+			}
+		>
+			<div role="menu" aria-labelledby={ v.id + "-trigger" } { surf.On(ctx, v.id+"-menu", surf.Hover(v.leave))... }>
+				for _, e := range v.entries {
+					switch e.kind {
+						case entryOpt:
+							@menuItem(v, e.opt)
+						case entryGroup:
+							<div role="group" aria-labelledby={ e.labelID }>
+								<div role="heading" id={ e.labelID }>{ e.group }</div>
+								for _, o := range e.opts {
+									@menuItem(v, o)
+								}
+							</div>
+						case entrySeparator:
+							<hr role="separator"/>
+					}
+				}
+			</div>
+		</div>
+		if v.refocus() {
+			{{ surf.Autofocus(ctx, v.id+"-trigger") }}
+		}
+	</div>
+}
+
+// menuItem is render_dropdown_items' item: its icon, label and shortcut.
+// Its click stays live while the menu is closed, as a Select's option's.
+templ menuItem(v *menuView, o int) {
+	{{ it, id := v.item(o), v.opts[o].id }}
+	<div
+		role="menuitem"
+		if it.Disabled {
+			aria-disabled="true"
+		}
+		if it.Variant != Primary {
+			data-variant={ string(it.Variant) }
+		}
+		if o == v.activeOpt() {
+			class="active"
+		}
+		if it.Disabled {
+			id={ id }
+		} else {
+			{ surf.On(ctx, id, surf.Click(func() { v.choose(o) }), surf.Hover(v.hover(o)))... }
+		}
+	>
+		if it.Icon != "" {
+			@icon(it.Icon, "")
+		}
+		{ it.Label }
+		if it.Keys != "" {
+			@kbd(it.Keys)
+		}
+	</div>
+}

@@ -36,6 +36,14 @@ type Frame struct {
 	// Faults are what a test fails on and an app gets away with: an id
 	// registered twice, a value a component doesn't take.
 	Faults []string
+	// Focused is the element the keyboard is on as the surface knows it
+	// when the render starts ("" for none): where a component's keys come
+	// from, and where a dialog gives the keyboard back to.
+	Focused string
+	// Memo is the surface's, the same map from render to render: what a
+	// component that has no State remembers, by a key it makes from its
+	// id (a Dialog: that it is open, and where the keyboard was).
+	Memo map[string]any
 }
 
 type key struct{}

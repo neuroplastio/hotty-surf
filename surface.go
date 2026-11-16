@@ -45,6 +45,7 @@ type Surface struct {
 	ids    map[string]string
 	nextID int
 	faults []string
+	memo   map[string]any // the frames' Memo, kept from render to render
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).
@@ -76,7 +77,7 @@ type Surface struct {
 // reload, so that a live reload reaches it wherever it was made, a dialog
 // opened late included. A release build has none of that.
 func New(name string, view templ.Component, css string) *Surface {
-	s := &Surface{name: name, view: view, css: css, pending: make(chan struct{}, 1)}
+	s := &Surface{name: name, view: view, css: css, pending: make(chan struct{}, 1), memo: map[string]any{}}
 	s.reset()
 	register(s)
 	return s

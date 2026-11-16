@@ -8,7 +8,6 @@ import (
 )
 
 func TestWave(t *testing.T) {
-	t.Skip("L0: the API has signatures only")
 	a := NewApp()
 	r := surftest.Start(t, surf.New("hello", Page(a), CSS))
 	r.Type("#name", "Ada")
@@ -18,6 +17,5 @@ func TestWave(t *testing.T) {
 }
 
 func TestLint(t *testing.T) {
-	t.Skip("L0: the API has signatures only")
 	surftest.Lint(t, ".")
 }
