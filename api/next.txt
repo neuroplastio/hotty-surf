@@ -162,10 +162,10 @@ pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, OnChange func(string)
 pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Tabs []Tab
 pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Category string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
 pkg neuroplast.io/hotty-surf/ui, type Variant string
 pkg neuroplast.io/hotty-surf/ui/code, func Block(string, string, int) templ.Component

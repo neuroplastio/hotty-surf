@@ -67,6 +67,8 @@ func (r *Rig) Update() {
 
 // Key presses a key where the keyboard is, named as hotty names keys
 // ("enter", "arrow_down", "ctrl+s"), and says whether the surface took it.
+// The test host's mod is ctrl: Key("ctrl+s") reaches a surf.Key handler as
+// "mod+s".
 func (r *Rig) Key(key string) bool {
 	panic("L0")
 }

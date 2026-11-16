@@ -3,7 +3,7 @@
 # the README is the framework's page, and the pages in this directory sit
 # under it, where their front matter puts them.
 name: hotty-surf
-description: "A framework for hotty apps in Go: components as structs, layout in .surf templates, and a surface kept current with deltas."
+description: "A framework for hotty apps in Go: templ views, Basecoat's components as a typed Go API, and a surface kept current with deltas."
 readme:
   group: Guides
   order: 50

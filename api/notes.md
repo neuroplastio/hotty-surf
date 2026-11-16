@@ -84,7 +84,7 @@ implemented, so this is every call it makes:
 
 - **A plugin process (child), behind `surfdev`:** `reload.Keep(get, set)`
   once, then `reload.Serve(ctx, wire, key)` inline, with the wire and the
-  instance key plx hands it ("controller", "tool:<viewer>"); it returns
+  instance key plx hands it (`controller`, `tool:<viewer>`); it returns
   with the old build's state set. Its surfaces register themselves at
   `surf.New`. Each surface is driven as any embedded one: `surf.New`,
   `Attach(w, caps)` (one command per Write; placed with Press and Hover),
@@ -152,6 +152,29 @@ versioned require before any tag. Still open, for later packs: a
 `Surface.Close` (a component's timers keep calling Do after the program
 drops a surface; harmless, one name when someone needs it), and a link
 between `MenuItem.Keys` and the handler that binds it.
+
+### Notes for L1 (the verifier's, p-756)
+
+- **The handover reads documents directly.** In a dev build the reload
+  registry holds surfaces the program may have dropped, which nobody
+  drives: the Go tier's handover takes each surface's last-sent document
+  as it is, rather than asking the surface through Do and waiting.
+- **Dialog keeps no State, yet promises focus goes back where it was
+  when it closes.** Either the surface remembers it per id (Dialog's doc
+  says so in L2's batch) or `Dialog(st, p)` comes as a MINOR break, as
+  Tabs' would.
+- **`surftea.Host` has no cursor** for a field drawn in cells
+  (`cells.Screen.Cursor` has no counterpart): a `Host.Cursor`, additive.
+- **If `ctl reload` sends a `Report` over a socket** (L4), `Report` and
+  `lint.Finding` gain msgp codecs and limits (P-3), additively.
+- **The `surf` command.** The docs name the dev command `surf run` (and
+  `surf ctl reload`, `surf build --wasm`, `surf serve`), as the plan
+  does; AGENTS.md's rule says nothing is a bare `surf`, a binary
+  included. The command's name is the maintainer's call before L4 builds
+  it.
+- **NOTICE** still names the Material Design Icons' data, which v0.7
+  drops; it names Lucide's (ISC) once `ui.Icon` ships them.
+- **The vault's board and stories** are v0.6's; L1 starts v0.7's.
 
 ### TinyGo (the shipped wasm)
 

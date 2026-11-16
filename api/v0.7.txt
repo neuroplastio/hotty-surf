@@ -1,7 +1,8 @@
 # The approved API of hotty-surf v0.7, in Go's api/ format. It changes only
 # by make api-approve, on the maintainer's approval of a pack, named in the
 # commit. Approved: the v0 pack, 2026-11-16 (L0), with the blind review
-# (p-754) and plx's review (p-751) applied.
+# (p-754) and plx's review (p-751) applied; Toast.Category for Q2's lean,
+# as the verifier (p-756) found it.
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
@@ -166,10 +167,10 @@ pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, OnChange func(string)
 pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Tabs []Tab
 pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Category string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
 pkg neuroplast.io/hotty-surf/ui, type Variant string
 pkg neuroplast.io/hotty-surf/ui/code, func Block(string, string, int) templ.Component

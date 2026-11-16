@@ -4,7 +4,7 @@
 // host has, and the difference goes to the host as one delta.
 //
 // A [Surface] is one view on one hotty surface. It owns no terminal: it
-// writes hotty commands to the writer it is started with and takes the
+// writes hotty commands to the writer it is attached to and takes the
 // host's events from whoever reads the terminal. So the same Surface is a
 // whole app under package run, a part of another program's screen (a Bubble
 // Tea program through surftea, a raw-mode program through hotty-go's

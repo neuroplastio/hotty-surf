@@ -91,9 +91,13 @@ func (r *Reloader) Run(ctx context.Context) error {
 // Serve serves one process that dialed in, on rw, until rw closes or ctx is
 // done; the process names itself by its key first. A process may connect
 // at any time, a tool opened mid-session included, and gets the current
-// build's strings and stylesheet. A wire that closes without a handover is
-// a crash: it is reported in Report.Failed under the process's key, and the
-// next restart brings the key back.
+// build's strings and stylesheet.
+//
+// A wire that closes without a handover, and without the process saying
+// it is leaving (reload.Serve's ctx ending), is a crash: it is reported in
+// Report.Failed under the process's key, and the next restart brings the
+// key back. A key that left is forgotten: it is no failure, and Reload
+// doesn't wait for it.
 func (r *Reloader) Serve(ctx context.Context, rw io.ReadWriteCloser) error {
 	panic("L0")
 }
@@ -126,8 +130,8 @@ type Report struct {
 
 // View is the error surface: a failed build or process over the app, and
 // the lint's findings in a calmer panel under it, as `surf run` shows them.
-// It shows *r as it is when it renders, so a program keeps one Report,
-// updates it with each report, and calls the surface's Update:
+// It shows *r as it is when it renders, so a program keeps one Report and
+// sets it, in report, through the surface's Do (dev.Do(func() { last = rep })):
 //
 //	dev := surf.New("dev", reloader.View(&last), ui.Stylesheet())
 //

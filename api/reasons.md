@@ -18,7 +18,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Surface.Do`: the one safe way for another goroutine to change the app's state: it runs on the driver's goroutine, so state needs no locks.
 - `surf.Surface.Pending`: the driver's signal that Do queued work, a channel so that it fits a select loop and a tea.Cmd alike.
 - `surf.Of`: a component with work beyond its render (a toast's timer, a tooltip's delay) reaches its surface's Do from the render's ctx, without the app threading the surface through.
-- `surf.Platform`: a shortcut shows as the host's platform writes it (Ctrl+S or ⌘S, SPEC §3.3); ui.Kbd and an app's own markup read it during the render.
+- `surf.Platform`: a shortcut shows as the host's platform writes it (Ctrl+S or ⌘S, SPEC §10.4); ui.Kbd and an app's own markup read it during the render.
 - `surf.On`: the one way to name an element and give it handlers: one id, any handlers, spread as attributes in templ, ui's CSS-only components included (their Attrs). It replaces the spike's Click, Input, Check, Keys, Focus and OnFocus, each of which named the element again. A duplicate id fails surftest.
 - `surf.Handler`: what On takes; opaque, so that a handler kind can be added without a new registration function.
 - `surf.Click`: activation: a click, or Enter or space on the element.
@@ -32,12 +32,12 @@ a user can't do without the name, or why a simpler shape won't do.
 
 ## ui (Basecoat's components; the pattern on one component of each kind)
 
-- `ui.Variant`: Basecoat's data-variant is shared across components (button, badge, alert, toast), so one type serves them all; a value only one component has is that component's own field. surftest fails a variant a component doesn't take.
+- `ui.Variant`: Basecoat's data-variant is shared across components (button, badge, alert, a menu item), so one type serves them all; a value only one component has is that component's own field. surftest fails a variant a component doesn't take.
 - `ui.Primary`: Basecoat's default variant (primary), and Variant's zero value.
 - `ui.Secondary`: Basecoat's secondary variant.
 - `ui.Outline`: Basecoat's outline variant.
 - `ui.Ghost`: Basecoat's ghost variant.
-- `ui.Destructive`: Basecoat's destructive variant: a dangerous action, an error toast.
+- `ui.Destructive`: Basecoat's destructive variant: a dangerous action or menu item.
 - `ui.Link`: Basecoat's link variant of a button.
 - `ui.Size`: Basecoat's data-size, which its components share, as Variant is; icon-only is a field of the component (ButtonProps.IconOnly), so 4 sizes and a bool make Basecoat's 8.
 - `ui.Medium`: Basecoat's default size, and Size's zero value.
@@ -118,7 +118,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.Toast`: one notice as plain data, for ToasterState.Show.
 - `ui.Toast.Title`: what it says.
 - `ui.Toast.Description`: the line under the title.
-- `ui.Toast.Variant`: Destructive for an error.
+- `ui.Toast.Category`: Basecoat's toast has categories (data-category: success, error, info, warning), not a data-variant; a value only the toast has is its own field.
 - `ui.Toast.Duration`: how long it stays, or until dismissed.
 - `ui.ToasterState`: the toasts shown are the toaster's; a handler adds one without keeping a list.
 - `ui.ToasterState.Show`: shows a toast from a handler: an imperative call, the pattern's one kind of state an app pushes in.

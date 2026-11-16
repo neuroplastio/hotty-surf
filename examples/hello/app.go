@@ -2,6 +2,7 @@ package main
 
 //go:generate msgp -marshal=false -tests=false
 //msgp:newtime
+//msgp:ignore App
 
 import (
 	"neuroplast.io/hotty-surf/ui"

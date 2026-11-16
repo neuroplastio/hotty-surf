@@ -67,7 +67,8 @@ func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 // deltas that follow are written against it, so the program sends every
 // Document it takes. It takes one again whenever the host may not hold the
 // document as it was sent: it lost it, or it refused a delta (an error reply
-// naming the surface).
+// naming the surface, or an error from w's Write, as a cells.Screen
+// refuses).
 func (s *Surface) Document() (string, error) {
 	panic("L0")
 }
@@ -76,6 +77,10 @@ func (s *Surface) Document() (string, error) {
 // it updates what it knows of the host's fields and focus, runs the handler
 // the event's element has, renders, and sends what changed. An event the
 // surface has no handler for changes nothing.
+//
+// Event may be called from inside a Write to w, while the surface is
+// sending (a cells.Screen calls its events that way): the surface runs it
+// once that send is done, before the call that wrote returns.
 func (s *Surface) Event(e hotty.Event) error {
 	panic("L0")
 }
@@ -118,7 +123,7 @@ func Of(ctx context.Context) *Surface {
 }
 
 // Platform is the host's platform, from the capabilities Attach was given:
-// the modifier its "mod" stands for and its edit shortcuts (SPEC §3.3), for
+// the modifier its "mod" stands for and its edit shortcuts (SPEC §10.4, §10.2), for
 // a render that shows a shortcut the way the host's platform writes it. It is
 // the zero Platform (ctrl) outside a render.
 func Platform(ctx context.Context) hotty.Platform {

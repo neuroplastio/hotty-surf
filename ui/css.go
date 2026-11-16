@@ -33,7 +33,7 @@ func Button(p ButtonProps) templ.Component {
 
 // BadgeProps are a Badge's attributes.
 type BadgeProps struct {
-	// Variant is Primary, Secondary, Outline or Destructive.
+	// Variant is Primary, Secondary, Outline, Ghost, Destructive or Link.
 	Variant Variant
 	Attrs   templ.Attributes
 	Class   string

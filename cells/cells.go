@@ -30,7 +30,10 @@ type Screen struct {
 
 // New makes a Screen cols wide and rows high. events hears each event the
 // Screen sends the surface, on the goroutine of the call that caused it
-// (Write, Key, Paste, Click, Wheel, Focus); the program hands it to the
+// (Write, Key, Paste, Click, Wheel, Focus); it calls events once it has
+// applied the act, so the callback may write to the Screen (the surface's
+// delta) before it returns, and a call from inside Write is one
+// surf.Surface.Event takes; the program hands it to the
 // surface's Event, and handles what Event returns.
 func New(cols, rows int, events func(hotty.Event)) *Screen {
 	panic("L0")

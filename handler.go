@@ -53,7 +53,7 @@ func Check(fn func(checked bool)) Handler {
 // element.
 //
 // fn sees hotty's names ("enter", "arrow_down", "shift+tab"), with one
-// change: a key whose modifier is the host's mod (SPEC §3.3: ctrl, or super
+// change: a key whose modifier is the host's mod (SPEC §10.4: ctrl, or super
 // on macOS) arrives as "mod+…". So an app matches "mod+s", and is the same
 // on every platform; one that compares "ctrl+s" misses it where ctrl is the
 // mod. It is the notation ui.Kbd and ui.MenuItem.Keys show.

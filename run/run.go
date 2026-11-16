@@ -11,8 +11,10 @@
 // it: xterm.js with xterm-addon-hotty, as `surf build --wasm` and `surf
 // serve` make it. The app's main is the same for both.
 //
-// Under `surf run`, the live reloader, App speaks to the reloader instead
-// (package reload), which owns the terminal and starts each new build.
+// Under `surf run`, App draws through `surf run` instead of the terminal:
+// `surf run` owns the terminal, runs the reloader (package reloader) and
+// starts each new build, and App serves it as the instance "app" (package
+// reload).
 package run
 
 import (
@@ -23,8 +25,9 @@ import (
 
 // App runs s until ctx is done or the user quits, and returns nil then. The
 // user quits with ctrl+c or ctrl+q when the surface doesn't take them: an
-// app that binds either (an editor's ctrl+q) keeps it, and quits by ending
-// ctx. Other keys the surface doesn't take do nothing.
+// app whose handler takes either keeps it, and quits by ending ctx (where
+// ctrl is the host's mod they reach handlers as mod+c and mod+q, see
+// surf.Key). Other keys the surface doesn't take do nothing.
 //
 // It places the surface with Press and Hover on, and under `surf run` it
 // serves the reloader as the instance "app" (package reload).

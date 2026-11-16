@@ -33,6 +33,12 @@ import (
 // text and classes keeps everything, kept or not. A program calls it once,
 // before Serve; one with no state to keep doesn't call it.
 //
+// get runs once, on Serve's goroutine, when a new build is ready: it is
+// the program's last word in this process. A program whose other
+// goroutines change the state stops them, or reads the state through a
+// surface's Do, before get returns. Once the reloader has the state, the
+// process exits, and nothing after get runs.
+//
 // Only the program's own value is kept: what ui's components remember in
 // their …State values (a menu open, an item highlighted) starts closed in
 // the new build. A …State isn't msgp-encodable, so it stays out of the kept
@@ -55,10 +61,14 @@ func Keep[T any, P interface {
 // before it: it has run Keep's set with the old state, and each surface's
 // first frame is a delta from the document the old build showed. Serve
 // returns once that is done (at once, in a fresh start), and serves on in
-// the background until ctx is done or rw closes: a surface renders again
-// when the reloader says the strings or the stylesheet changed, and when a
-// new build is ready, the state and the documents go to it and the process
-// exits.
+// the background until ctx is done or rw closes:
+// a surface renders again when the reloader says the strings or the
+// stylesheet changed (Serve reaches it through its Do, so it still renders
+// only on its driver's goroutine), and when a new build is ready, Keep's
+// get runs, the state and the documents go to it, and the process exits.
+// When ctx is done, Serve tells the reloader that the process is leaving:
+// a program that ends ctx before it exits (run.App does) is no crash, and
+// the reloader forgets its key.
 func Serve(ctx context.Context, rw io.ReadWriter, key string) error {
 	panic("L0")
 }

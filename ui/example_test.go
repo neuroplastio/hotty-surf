@@ -10,7 +10,7 @@ import (
 //
 //	@ui.Select(&a.sizeMenu, ui.SelectProps{ID: "size", Items: sizes,
 //		Value: a.size, OnChange: a.setSize})
-//	@ui.Button(ui.ButtonProps{ID: "save", OnClick: a.save}) { Save }
+//	@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(a.save))}) { Save }
 //	@ui.Toaster(&a.toasts)
 func Example() {
 	type app struct {
