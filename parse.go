@@ -49,12 +49,11 @@ func (p *parser) node() *html.Node {
 	return &p.nodes[len(p.nodes)-1]
 }
 
-// attrList is room for n attributes, capped at n so that an append (an id
-// put first) moves them rather than writing over the next element's.
+// attrList is room for n attributes and one more, for the id a render's
+// numbering puts first (number), capped there so that a later append moves
+// them rather than writing over the next element's.
 func (p *parser) attrList(n int) []html.Attribute {
-	if n == 0 {
-		return nil
-	}
+	n++
 	if cap(p.attrs)-len(p.attrs) < n {
 		p.attrs = make([]html.Attribute, 0, max(attrSlab, n))
 	}
@@ -276,11 +275,9 @@ func (p *parser) start(top *html.Node, s string, i int) (int, bool) {
 	} else {
 		n.Data = strings.ToLower(name)
 	}
-	if len(kv) > 0 {
-		n.Attr = p.attrList(len(kv))
-		for _, x := range kv {
-			n.Attr = append(n.Attr, html.Attribute{Key: x[0], Val: x[1]})
-		}
+	n.Attr = p.attrList(len(kv))
+	for _, x := range kv {
+		n.Attr = append(n.Attr, html.Attribute{Key: x[0], Val: x[1]})
 	}
 	top.AppendChild(n)
 	if void(a) {

@@ -162,7 +162,7 @@ func (s *Surface) number(p *html.Node, pid string, t *tree) {
 				id = "e" + strconv.FormatInt(int64(s.nextID), 36)
 			}
 			t.ids[key] = id
-			c.Attr = append([]html.Attribute{{Key: "id", Val: id}}, c.Attr...)
+			c.Attr = withID(c.Attr, id)
 		}
 		t.byID[id] = c
 		if isField(c) {
@@ -171,6 +171,18 @@ func (s *Surface) number(p *html.Node, pid string, t *tree) {
 		s.number(c, id, t)
 		c = next
 	}
+}
+
+// withID is as with the id attribute put first: in place, when the fast
+// parser left room for it.
+func withID(as []html.Attribute, id string) []html.Attribute {
+	if len(as) < cap(as) {
+		as = as[:len(as)+1]
+		copy(as[1:], as)
+		as[0] = html.Attribute{Key: "id", Val: id}
+		return as
+	}
+	return append([]html.Attribute{{Key: "id", Val: id}}, as...)
 }
 
 func attr(n *html.Node, k string) string {

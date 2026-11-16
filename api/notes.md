@@ -282,3 +282,46 @@ NAV_STREAM=<file> in examples/nav.
   notes): the spike's mock named real workspaces.
 - **Tasks' data is upstream's** (shadcn/ui, MIT), in
   examples/tasks/data with a NOTICE.
+
+### The 2 ms floor
+
+Tasks' acts, the median of three runs of each act's median, in ms, Go on
+the host. The spike and v07 were run alternately on the same machine at
+the same time (the spike's RUNTIME.md row is an earlier machine state;
+this table is the like-for-like one). Rerun: TASKS_ACTS in examples/tasks.
+
+| act | spike 1k | v07 1k | spike 10k | v07 10k |
+|---|---|---|---|---|
+| mount | 5.77 | 4.83 | 6.09 | 5.86 |
+| T1 type | 2.40 | 1.09 | 3.05 | 1.61 |
+| T2 open | 2.39 | 1.38 | 2.00 | 1.53 |
+| T3 on | 3.03 | 2.17 | 5.08 | 4.11 |
+| T3 off | 4.68 | 3.36 | 26.53 | 25.76 |
+| T4 menu | 2.32 | 1.08 | 2.13 | 1.30 |
+| T4 sort | 4.24 | 3.41 | 26.37 | 25.39 |
+| T5 next | 2.40 | 1.04 | 2.05 | 0.99 |
+| T6 on | 2.10 | 0.73 | 1.86 | 0.67 |
+| T7 down | 2.26 | 0.83 | 2.14 | 0.77 |
+| T8 open | 2.21 | 1.01 | 2.11 | 0.84 |
+
+What took the floor from about 2 ms to under 1:
+
+- **A render whose HTML is the last one's** skips the parse and the diff
+  (only the fields are checked). The focus handlers spikeui's popups need
+  made such renders common.
+- **A fast parser for templ's markup** (parse.go): HTML5 parses
+  well-formed markup as its tags' nesting, so it builds that tree from
+  slices of one string, in slabs, and leaves room for the id numbering
+  puts first. Whatever HTML5 parses otherwise goes to x/net/html. The
+  surfparsecheck tag parses every render both ways and panics on a
+  difference; the examples' tests and acts pass under it, a fuzz test
+  holds the two equal (2.4 M inputs), and Tasks and nav never fall back.
+- **Memoising by markup, not by component:** an <svg> (every icon) is
+  parsed by x/net/html once per distinct markup and cloned after. A
+  memo of a component's render would need an API (a surf.Memo); none
+  is in v0.7's lock, and with the above the render itself (templ, 18% of
+  an act) is no longer most of the floor. It is a candidate for L2.
+- **What is left:** T3 off and T4 sort at 10k rows are Tasks' own Go
+  (its sort and facet counts over 10,000 rows), as in the spike. Of the
+  runtime's share, templ's render, the numbering's maps, the diff and
+  hotty-go's encoding are about even, and the GC is about a fifth.
