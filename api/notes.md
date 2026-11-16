@@ -342,3 +342,109 @@ What took the floor from about 2 ms to under 1:
   the same.
 - **`make tinygo`** (in `make check`) builds tasks, nav and hello for
   js/wasm under TinyGo.
+### reload and the command
+
+- **Every wire is msgpack-RPC with one map** for params and result:
+  `[0, id, method, {…}]`, `[1, id, error, {…} or nil]` with error nil
+  or a string, `[2, method, {…}]`. The types are `internal/devwire`'s;
+  `reloader.Report` and `lint.Finding` cross the ctl wire as mirrors
+  (`devwire.Report`, `devwire.Finding`), so neither API type gains a
+  codec. Pooled Readers allow a depth of 5 (the envelope, the term
+  wire's hello, its `hotty.Caps`, `Caps.Edit`, an edit's keys) and 64
+  MiB a string or bin; the generated code limits arrays and maps to
+  65,536.
+- **The child is `internal/devchild`.** reload's surfdev side calls it;
+  run's dev hook calls it directly, to wait (up to 1 s) for the goodbye
+  before the process exits. A program that calls `reload.Serve` itself
+  can exit before its goodbye goes out, which reads as a crash: the API
+  has no way to wait for it.
+- **A panic is no goodbye.** run's dev hook tells the reloader it
+  leaves only when App returns, not from a defer while panicking. A
+  program whose own defer ends `reload.Serve`'s ctx says goodbye as it
+  panics, and its crash isn't reported.
+- **`hotty-surf run` and the app: `HOTTY_SURF_RUN=3,4`** names two
+  inherited socket pairs, the reload wire and a term wire (msgpack-RPC:
+  `hello` {caps}, `input` {msg or key}, `out` {data}, `show` {surface},
+  `bye`, `doc`). The app unsets it, so a program it starts isn't taken
+  for one. Input goes on as hotty messages re-encoded with
+  `hotty.EncodePlain` (a relay's bytes) and keys as their names; the
+  app sends its own documents and run places the surface it names.
+- **templ's dev mode is on from the start or not at all:** templ reads
+  `TEMPL_DEV_MODE` at init, so whoever starts the process sets it
+  (`hotty-surf run` does; plx's restart must, for the text tier). The
+  strings' root and the watch root come in the hello's answer, and the
+  child sets them before its first render. A process without dev mode
+  makes a text save a Go reload.
+- **The watch root is the app's module.** The strings of every .templ
+  of the module's packages the app is built from are written at each Go
+  build, after the handover and before restart. A .templ outside it (a
+  go.work neighbour) always takes the Go tier.
+- **Two hooks in surf:** `rt.Peek.CSS` (a surface's stylesheet) and
+  `rt.Peek.Rendered` (when its last render ended, readable from any
+  goroutine). The child waits until 101 ms after the latest render of
+  any of its surfaces, templ's recheck, and then renders each one.
+- **Work on a surface goes through its Do,** and the child knows it was
+  sent from a second Do queued inside the first, which runs at the next
+  Update. A surface that never rendered isn't waited for; one that
+  doesn't answer in 300 ms (dropped) is given up.
+- **The handover takes each snapshot on the surface's driver,** then
+  detaches the surface (`Attach(nil, …)`) so nothing more goes out of
+  the old build; only a surface whose driver doesn't answer in 300 ms
+  is read directly. The verifier's note had all of them read directly,
+  but that races a surface still driven (the race detector says so), and
+  a frame sent after the snapshot would leave the host ahead of it.
+  Keep's get runs first: a frame drawn between the two is newer than
+  get's state, and the new build's delta takes the host back to it.
+- **A handed-over surface carries its stylesheet,** and the new build's
+  surface is restyled when its own differs, so a Go save that changed
+  the CSS shows it in the first delta.
+- **The css tier is the spike's:** a save of `style/app.css` sends the
+  old and the new text to every process, which replaces the old in each
+  surface's stylesheet that holds it, and keeps the edit for surfaces
+  made later and processes that dial in later (the hello's answer). An
+  empty app.css, or one no surface holds, makes it a Go reload. Text and
+  css in one save report as "css"; both are applied.
+- **`style/build.sh`, when an app has one,** runs after a save of a
+  .templ, a .go or another file of `style/`; what it writes to app.css
+  is a css save of its own, which Reload waits for. **Tasks and nav get
+  no build.sh:** the spike's ran the kit's Tailwind build (Node, the
+  pinned Tailwind and the kit's script), none of which this repository
+  has. Their app.css is edited by hand until `hotty-surf build` exists,
+  and that edit takes the css tier.
+- **Build carries on:** while the Go on disk doesn't build, every report
+  keeps the compiler's output, a text or css save's included.
+- **A crash outside a save is a report of its own:** Failed, the last
+  save's tier, no Took; run adds the app's last 16 KB of output. After a
+  Go reload the Reloader watches 50 ms more, so a process that crashes
+  on its first frame is in that save's report.
+- **The waits:** 5 s to hand over and exit, 10 s to dial in again, 3 s
+  to render or restyle. The Reloader starts no process, so one that
+  crashes before its hello holds Reload for the 10 s.
+- **restart's error** goes under each key the Reloader knows, and in
+  Build when it knows none yet (the first build).
+- **A file is applied once per change of its time,** so the watcher's
+  event after Reload's own look does nothing.
+- **ctl's socket** is `$HOTTY_SURF_SOCK`, or `run.sock` in
+  `$XDG_RUNTIME_DIR/hotty-surf`, or in a directory of the user's under
+  the temporary one. A second run refuses a socket a first one answers.
+- **ctl reload** prints `ok: <tier> in <took>`, or `build failed` and the
+  output, then a line a failed key and the findings; it exits 1 on a
+  failed build or process, not on findings alone.
+- **ctl shot** asks the app for its document (the term wire's `doc`) at
+  the terminal's size and renders it with hotty-blitz's `hotty render`
+  (`$HOTTY_SURF_HOTTY`, or hotty on PATH), or writes the HTML with
+  `-html`. No Chromium. The spike's headless shot (build, run, render,
+  exit) isn't ported.
+- **lint** joins each file with the directory given, so the path works
+  from where the command ran; 1 on findings, 2 on a file it can't read.
+- **new** writes hello's shape: the state with its msgp codec (shipped
+  generated), page.templ and its Go (templ's library), `css.go` as
+  `ui.Stylesheet()` and `style/app.css`, a test on surftest and the
+  lint, and a go.mod outside a module. No build.sh, as above.
+- **run needs a hotty host;** in another terminal it says so (the app in
+  cells is `go run`'s). The app quits on ctrl+c or ctrl+q it doesn't
+  take, telling run first; while no app runs, run quits on them.
+- **The generator is the templ this module links** (`internal/templgen`,
+  shared by the reloader and new): an app on another templ version gets
+  _templ.go files with this version's header.
+- **fsnotify** is a direct dependency, at templ's version (v1.10.1).

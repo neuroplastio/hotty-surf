@@ -1,0 +1,34 @@
+package reloader
+
+// view is View's: the failures in Basecoat's alert, the lint's findings in
+// a calmer one under them, nothing when there is neither.
+templ view(r *Report) {
+	if shows(r) {
+		<div class="flex flex-col gap-2 p-2">
+			if r.Build != "" {
+				<div class="alert text-destructive" role="alert">
+					<h2>The build failed: the app runs the last one</h2>
+					<section>
+						<pre class="m-0 text-xs">{ r.Build }</pre>
+					</section>
+				</div>
+			}
+			for _, k := range failedKeys(r) {
+				<div class="alert text-destructive" role="alert">
+					<h2>{ failedTitle(k) }</h2>
+					<section>
+						<pre class="m-0 text-xs">{ r.Failed[k] }</pre>
+					</section>
+				</div>
+			}
+			if len(r.Lint) > 0 {
+				<div class="alert" role="status">
+					<h2 class="font-medium">{ lintTitle(r) }</h2>
+					<section>
+						<pre class="m-0 text-xs text-muted-foreground">{ lintLines(r) }</pre>
+					</section>
+				</div>
+			}
+		</div>
+	}
+}

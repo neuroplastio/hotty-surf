@@ -1,0 +1,24 @@
+package main
+
+//go:generate msgp -marshal=false -tests=false
+//msgp:newtime
+//msgp:ignore App
+
+// State is what the app keeps across a live reload (hotty-surf run): a
+// field left out of it starts again at each Go reload.
+type State struct {
+	Count int `msg:"count"`
+}
+
+// App is the app's state and its handlers. The view (page.templ) reads it.
+type App struct {
+	State
+}
+
+func NewApp() *App { return &App{} }
+
+func (a *App) Save() *State     { return &a.State }
+func (a *App) Restore(s *State) { a.State = *s }
+
+func (a *App) Add()   { a.Count++ }
+func (a *App) Reset() { a.Count = 0 }

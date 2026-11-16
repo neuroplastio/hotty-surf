@@ -29,15 +29,45 @@ package reloader
 import (
 	"context"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-surf/lint"
+
+	"neuroplast.io/hotty-surf/internal/devwire"
 )
 
 // A Reloader reloads one app: one directory, any number of processes.
 type Reloader struct {
-	_ struct{}
+	dir     string
+	restart func(ctx context.Context, bin string) error
+	report  func(Report)
+	tags    []string
+	output  string
+	env     []string
+
+	// What Run found and keeps; its loop's own state is in loop.
+	mu        sync.Mutex
+	running   bool
+	templRoot string // where templ's dev-mode strings go
+	watchRoot string // the app's module: templ's dev mode reads its files' strings
+	procs     map[string]*proc
+	// known is every key that dialed in and didn't leave: what restart
+	// brings back.
+	known map[string]bool
+	// handed is what each key's process handed over, for the next one
+	// with its key.
+	handed map[string]*devwire.Handed
+	// styles are the stylesheet's edits since the running build.
+	styles []devwire.Style
+	// back hears each key that dials in, while a Go reload waits for it.
+	back map[string]chan struct{}
+	// crashes are the keys whose wire closed without a handover or a
+	// goodbye, for Run's loop to report.
+	crashes []string
+	wake    chan struct{}
+	reqs    chan chan Report
 }
 
 // New makes a Reloader for the app in dir (its main package).
@@ -52,17 +82,25 @@ type Reloader struct {
 // report hears the outcome of every save, on Run's goroutine; a program
 // shows it on a surface through that surface's Do.
 func New(dir string, restart func(ctx context.Context, bin string) error, report func(Report), opts ...Option) *Reloader {
-	panic("L0")
+	r := &Reloader{dir: dir, restart: restart, report: report,
+		procs: map[string]*proc{}, known: map[string]bool{}, handed: map[string]*devwire.Handed{},
+		back: map[string]chan struct{}{}, wake: make(chan struct{}, 1), reqs: make(chan chan Report)}
+	for _, o := range opts {
+		if o.apply != nil {
+			o.apply(r)
+		}
+	}
+	return r
 }
 
 // An Option changes how a Reloader builds.
 type Option struct {
-	_ struct{}
+	apply func(*Reloader)
 }
 
 // Tags are build tags added to surfdev for every build.
 func Tags(tags ...string) Option {
-	panic("L0")
+	return Option{func(r *Reloader) { r.tags = append(r.tags, tags...) }}
 }
 
 // Output is where every build's binary goes, the same path each time: a
@@ -70,13 +108,13 @@ func Tags(tags ...string) Option {
 // path, so a running process is unaffected, and restart always gets path.
 // Without it, builds go to a directory of the Reloader's own.
 func Output(path string) Option {
-	panic("L0")
+	return Option{func(r *Reloader) { r.output = path }}
 }
 
 // Env is added to the go command's environment, as "KEY=value" (GOFLAGS
 // among them).
 func Env(env ...string) Option {
-	panic("L0")
+	return Option{func(r *Reloader) { r.env = append(r.env, env...) }}
 }
 
 // Run builds the app, then watches it and reloads every connected process
@@ -85,7 +123,7 @@ func Env(env ...string) Option {
 // save tries again. Run returns an error only for what stops it watching:
 // dir is no Go main package, or the go command can't be found.
 func (r *Reloader) Run(ctx context.Context) error {
-	panic("L0")
+	return r.run(ctx)
 }
 
 // Serve serves one process that dialed in, on rw, until rw closes or ctx is
@@ -99,7 +137,7 @@ func (r *Reloader) Run(ctx context.Context) error {
 // key back. A key that left is forgotten: it is no failure, and Reload
 // doesn't wait for it.
 func (r *Reloader) Serve(ctx context.Context, rw io.ReadWriteCloser) error {
-	panic("L0")
+	return r.serve(ctx, rw)
 }
 
 // Reload looks at the app's files now, as they are on disk (it doesn't wait
@@ -110,7 +148,7 @@ func (r *Reloader) Serve(ctx context.Context, rw io.ReadWriteCloser) error {
 // `plx plugin dev ctl reload` answer; when nothing changed it reports the
 // last save.
 func (r *Reloader) Reload(ctx context.Context) (Report, error) {
-	panic("L0")
+	return r.reload(ctx)
 }
 
 // A Report is the outcome of a save.
@@ -139,5 +177,5 @@ type Report struct {
 // It is empty when the report has nothing to show; a program shows the
 // surface above the app's while it has.
 func View(r *Report) templ.Component {
-	panic("L0")
+	return view(r)
 }

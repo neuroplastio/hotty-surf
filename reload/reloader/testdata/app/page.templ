@@ -1,0 +1,15 @@
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+)
+
+templ Page(a *App) {
+	<main { surf.On(ctx, "page", surf.Key(a.Key))... }>
+		<p>Count { strconv.Itoa(a.Count) }</p>
+		<button { surf.On(ctx, "add", surf.Click(a.Add))... }>Add</button>
+		<p>Hello</p>
+	</main>
+}

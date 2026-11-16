@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/tinylib/msgp/msgp"
 	"golang.org/x/net/html"
@@ -24,6 +26,9 @@ type renderer struct {
 	p     parser
 	last  []byte // the HTML the tree the host has was parsed from
 	valid bool   // last is that tree's: false before one, and after a snapshot is adopted
+	// at is when the view last rendered, in Unix nanoseconds (Peek's
+	// Rendered reads it from another goroutine).
+	at atomic.Int64
 }
 
 func init() {
@@ -44,6 +49,13 @@ func init() {
 		}
 		return x.documentOf(x.prev)
 	}
+	rt.Peek.CSS = func(s any) string { return s.(*Surface).css }
+	rt.Peek.Rendered = func(s any) time.Time {
+		if n := s.(*Surface).r.at.Load(); n != 0 {
+			return time.Unix(0, n)
+		}
+		return time.Time{}
+	}
 }
 
 func (s *Surface) reset() {
@@ -63,7 +75,10 @@ var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Bo
 func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s}
 	s.r.buf.Reset()
-	if err := s.view.Render(rt.With(context.Background(), f), &s.r.buf); err != nil {
+	err = s.view.Render(rt.With(context.Background(), f), &s.r.buf)
+	// When it ended: templ's dev mode read its strings before then.
+	s.r.at.Store(time.Now().UnixNano())
+	if err != nil {
 		return nil, false, err
 	}
 	s.faults = append(s.faults, f.Faults...)
