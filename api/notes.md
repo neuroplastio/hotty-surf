@@ -1,9 +1,15 @@
-## The v0 shape: what this pack asks you to approve
+## The v0 shape, as approved
 
 hotty-surf v0.7 on Go, templ and Basecoat, as signatures only: every
 exported name, its doc comment and an example, with bodies that panic.
-Nothing is implemented. Approving a name means the implementation
-(L1 onward) fills it as written; a change goes through another pack.
+Nothing is implemented. The implementation (L1 onward) fills each name
+as written; a change goes through another pack.
+
+The maintainer approved the shape on 2026-11-16 and delegated the calls:
+"I see that review agent made some corrections, let's trust it. Let's
+apply the leans." This pack is the first one with the blind review
+(p-754) and plx's review (p-751) applied, every lean of the open
+questions taken; `api/v0.7.txt` holds it.
 
 ```
 neuroplast.io/hotty-surf    surf: a Surface (owns no terminal), On and the handlers
@@ -68,53 +74,82 @@ internal/apitool            this pack, and the API lock
 
 | ask | where |
 |---|---|
-| A1 live reload as a library: a child behind the dev tag, a parent both surf run and plx call, over a reader and writer the parent hands over | `reload.Keep`, `reload.Serve` (child); `reloader.New(dir, start, report)`, `Run`, `Wait` (parent) |
-| A2 plx embeds a surface: a rect plx owns, input in, bytes out, resize, cells | `surf.Surface` (Attach, Document, Event, Key, Update, Pending); placement and resizes stay plx's; `cells.New`, `Resize` |
-| A3 the lint and the error surface as packages | `lint.Dir`; `reloader.View(report)` on a surface styled by `ui.Stylesheet()` |
+| A1 live reload as a library: a child behind the dev tag, a parent both surf run and plx call, over a reader and writer the parent hands over | `reload.Keep`, `reload.Serve(ctx, rw, key)` (child); `reloader.New(dir, restart, report, opts...)`, `Run`, `Serve(ctx, rwc)`, `Reload` (parent) |
+| A2 plx embeds a surface: a rect plx owns, input in, bytes out, resize, cells | `surf.Surface` (Attach, Document, Event, Key, Update, Pending); placement and resizes stay plx's; `cells.New(cols, rows, events)`, a writer of hotty commands |
+| A3 the lint and the error surface as packages | `lint.Dir`; `reloader.View(&report)` on a surface styled by `ui.Stylesheet()` |
 | surflua removed | not in v0.7 |
 
 plx builds its plugin dev loop against these signatures before they are
 implemented, so this is every call it makes:
 
-- **The plugin (child), behind `surfdev`:** `reload.Keep(get, set)` once,
-  then `go reload.Serve(ctx, wire, surfaces...)` with the wire plx's SDK
-  hands it; a controller passes no surface. Each surface is driven as
-  any embedded one: `surf.New`, `Attach(w, caps)`, `Document()`,
-  `Event(e)`, `Key(k)`, `Update()` on `Pending()`; `cells.New(s, cols,
-  rows)` and its `Key`, `Click`, `Wheel`, `Resize`, `Lines`, `Cursor` for
-  a viewer without hotty.
-- **plx (parent):** `reloader.New(dir, start, report)`, where `start`
-  starts a build the way plx starts a tool or a controller and returns
-  the wire; `Run(ctx)` until the dev session ends; `Wait(ctx)` for `plx
-  plugin dev ctl reload`; on each `Report`, `reloader.View(r)` on a
-  surface of its own, styled by `ui.Stylesheet()`, over the tool while
-  `Build` or `Lint` has anything.
+- **A plugin process (child), behind `surfdev`:** `reload.Keep(get, set)`
+  once, then `reload.Serve(ctx, wire, key)` inline, with the wire and the
+  instance key plx hands it ("controller", "tool:<viewer>"); it returns
+  with the old build's state set. Its surfaces register themselves at
+  `surf.New`. Each surface is driven as any embedded one: `surf.New`,
+  `Attach(w, caps)` (one command per Write; placed with Press and Hover),
+  `Document()`, `Event(e)`, `Key(k)` (handlers see `mod+…`), `Update()` on
+  `Pending()`. For a viewer without hotty, `cells.New(cols, rows,
+  events)` is the writer instead, or as well (a tee): `Key`, `Paste`,
+  `Click`, `Wheel`, `Focus`, `Resize`, `Lines`, `Cursor`.
+- **plx (parent):** one `reloader.New(dir, restart, report,
+  reloader.Tags(…), reloader.Output(path), reloader.Env(…))` per plugin
+  directory; `Run(ctx)`; `Serve(ctx, conn)` for each process that dials
+  in; `Reload(ctx)` for `plx plugin dev ctl reload`. `restart(ctx, bin)`
+  runs once per Go build, after every process handed over, and brings
+  back keys that are down; `Report.Failed` names a process that failed or
+  "exited before handover". `reloader.View(&last)` on a surface of its
+  own, styled by `ui.Stylesheet()`, over the tool while the report has
+  anything. `Document(key)` for a shot is deferred to L4's pack.
 
-### Open, for your call
+### What the reviews changed
 
-1. **Props structs vs options** for components (see above). The pack
-   proposes Props.
-2. **Shared enums.** `Variant` and `Size` are shared across components.
-   Basecoat also has tabs' `line`, item's `muted`, the sizes `xs`,
-   `icon-sm` and `icon-lg`, toast categories, and side, align and
-   orientation (popover, tooltip, drawer, toaster). Grow the shared types,
-   or give those components their own fields? The ui batches will need
-   the answer.
-3. **`cells.Screen.Lines` writes SGR** (colours and attributes) in its
-   strings: escape sequences from the framework, which AGENTS.md rules out
-   for hotty's sequences. SGR is what a Bubble Tea or raw-mode program
-   composes. Allowed for cells, or should cells hand over styled cells as
-   data?
-4. **Keys are hotty's names** (`ctrl+s`). A handler matching the host's
-   `mod` compares with `surf.Platform(ctx).ReadKey("mod+s")`. Should
-   `surf.Key`'s handlers see `mod+s` when the key is the host's mod?
-5. **Tabs keep no State**: tabs.js moves the keyboard with the arrows,
-   which `surf.Autofocus` from the shown tab does. If the translation
-   needs more, Tabs gains a `TabsState` in its batch.
-6. **Primitives cut from the spike's ui:** Symbol (Material Symbols),
-   NavList, Controls, EventLog, ListItem, LayoutThumb, BusyBadge, Fuzzy,
-   CommandItem and Popup. They were storybook and app chrome, not
-   Basecoat. They come back in a batch only if an example app needs them.
+- **cells (C1):** `cells.New(cols, rows, events)` makes a Screen that is
+  an `io.Writer` of hotty commands, so it never takes over the surface's
+  output; `Key`, `Click` and `Wheel` return taken; `Paste` and `Focus`
+  are new.
+- **Placement flags (C2):** Attach's doc: each Write is one whole hotty
+  command, and the surface is placed with Press and Hover on;
+  `surftea.Host.Place` and `run.App` set them. `Outside` hears a blur
+  too. A duplicate `On` id fails surftest.
+- **reload (C3):** `reload.Serve(ctx, rw, key)` is called inline and
+  returns after the handover; surfaces register themselves at `surf.New`
+  in a dev build.
+- **reloader:** plx's contract: one Reloader per directory, processes
+  dialing in by key (`Serve`), `Reload` for `ctl reload`, options (`Tags`,
+  `Output`, `Env`), `Report.Failed`, `View(*Report)`.
+- **ui:** `Lucide` is `Icon`; the Size `Icon` is `ButtonProps.IconOnly`,
+  and Size gains `XSmall`; CSS-only components take `Attrs` (handlers
+  through `surf.On`) in place of `ID` and `OnClick`.
+- **surf.Key** handlers see `mod+…`; `run.App` quits on ctrl+c and ctrl+q
+  only when the surface doesn't take them; `surftea.Host` gains `Focus`
+  and `Blur`; `surftest.Rig` gains `Update`; selectors are
+  `:text(…)` and `:text-start(…)`, not `~` and `^`.
+- **Examples** pass `ui.Stylesheet()`, not `""`.
+
+### Decided (the reviewer's leans, 2026-11-16)
+
+1. **Props, not options,** with `Attrs` on CSS-only components.
+2. **Shared enums only where Basecoat's CSS shares them:** `Variant` and
+   `Size` (with `XSmall`, and icon-only as a bool). A value only one
+   component has is a field of its own Props (tabs' line, an item's
+   muted, toast categories); side, align and orientation are strings
+   with their values in the doc. surftest fails a value a component
+   doesn't take.
+3. **SGR in `cells.Lines` is allowed:** AGENTS.md's rule is about hotty's
+   sequences. A `Rows() [][]Cell` can come later, msgp-ready if it
+   crosses plx's wire.
+4. **`surf.Key` handlers see `mod+…`** for a key on the host's mod.
+5. **Tabs keep no State;** `Tabs(st, p)` later would be a MINOR break.
+6. **The spike's primitives stay cut;** Fuzzy and CommandItem come back
+   as Basecoat's command component in L2.
+
+Written down from the review's risks: `reload.Keep` carries only the
+program's value, not ui's `…State`; surftea's `replace ../` becomes a
+versioned require before any tag. Still open, for later packs: a
+`Surface.Close` (a component's timers keep calling Do after the program
+drops a surface; harmless, one name when someone needs it), and a link
+between `MenuItem.Keys` and the handler that binds it.
 
 ### TinyGo (the shipped wasm)
 

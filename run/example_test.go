@@ -7,6 +7,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/run"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 var page templ.Component // the app's view, from its .templ files
@@ -14,7 +15,7 @@ var page templ.Component // the app's view, from its .templ files
 // An app's main: the same in a terminal and, built for js/wasm, in a
 // browser.
 func ExampleApp() {
-	s := surf.New("tasks", page, "")
+	s := surf.New("tasks", page, ui.Stylesheet())
 	if err := run.App(context.Background(), s); err != nil {
 		log.Fatal(err)
 	}

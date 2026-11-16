@@ -3,27 +3,39 @@ package ui
 import "github.com/a-h/templ"
 
 // The components Basecoat makes with CSS alone: typed from a table of their
-// classes and variants (docs/coverage.md, markup css).
+// classes and variants (docs/coverage.md, markup css). Each is one element
+// the app may give any attribute through Attrs: handlers with surf.On, a
+// type, aria-*.
 
 // ButtonProps are a Button's attributes.
 type ButtonProps struct {
-	ID       string
-	Variant  Variant
-	Size     Size
+	// Variant is Primary, Secondary, Outline, Ghost, Destructive or Link.
+	Variant Variant
+	// Size is Medium, XSmall, Small or Large.
+	Size Size
+	// IconOnly makes the button a square that holds only an icon.
+	IconOnly bool
 	Disabled bool
-	// OnClick makes the button report clicks; it needs ID.
-	OnClick func()
-	Class   string
+	// Attrs are more attributes for the button element: its handlers,
+	// surf.On(ctx, "save", surf.Click(a.Save)), and any other.
+	Attrs templ.Attributes
+	Class string
 }
 
-// Button is Basecoat's button, holding its children.
+// Button is Basecoat's button, holding its children:
+//
+//	@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(a.Save))}) {
+//		Save
+//	}
 func Button(p ButtonProps) templ.Component {
 	panic("L0")
 }
 
 // BadgeProps are a Badge's attributes.
 type BadgeProps struct {
+	// Variant is Primary, Secondary, Outline or Destructive.
 	Variant Variant
+	Attrs   templ.Attributes
 	Class   string
 }
 
@@ -34,6 +46,7 @@ func Badge(p BadgeProps) templ.Component {
 
 // CardProps are a Card's attributes.
 type CardProps struct {
+	Attrs templ.Attributes
 	Class string
 }
 

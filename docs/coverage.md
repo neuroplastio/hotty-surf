@@ -65,12 +65,17 @@ Edit the tsv, then run the script; don't edit this page.
 - Parts are `ui.<Name><Part>`; a part that is a plain element in
   Basecoat's markup (a card's `<header>`) stays a plain element. Items are
   plain data structs: `ui.SelectItem`, `ui.Tab`.
-- Variants and sizes are shared: `ui.Variant`, `ui.Size`.
+- Variants and sizes are shared, as Basecoat's `data-variant` and
+  `data-size` are: `ui.Variant`, `ui.Size`. A value only one component
+  has is its own field; icon-only is a bool. A component made from CSS
+  alone takes `Attrs`, its handlers through `surf.On`.
 
 ```templ
 @ui.Select(&a.sizeMenu, ui.SelectProps{ID: "size", Items: sizes,
 	Value: a.size, OnChange: a.setSize})
-@ui.Button(ui.ButtonProps{ID: "save", OnClick: a.save}) { Save }
+@ui.Button(ui.ButtonProps{
+	Attrs: surf.On(ctx, "save", surf.Click(a.save)),
+}) { Save }
 ```
 
 ## The counts
@@ -92,7 +97,7 @@ Of 39 components:
 | avatar | css | - | `<img>` | `ui.Avatar`, `ui.AvatarProps`, `ui.AvatarGroup` | `avatar/default`, `avatar/sizes`, `avatar/badge`, `avatar/group` | `spec` | new | sizes sm, lg; an image comes from cid: or data: only (SPEC §7) |
 | badge | css | - | - | `ui.Badge`, `ui.BadgeProps` | `badge/default`, `badge/every-variant` | `spec` | port | Default (primary), Secondary, Outline, Destructive, Ghost, Link; the spike kit's Badge |
 | breadcrumb | css | - | - | `ui.Breadcrumb`, `ui.BreadcrumbProps`, `ui.BreadcrumbItem` | `breadcrumb/default` | `spec` | new | its links are hyperlinks, the terminal's (SPEC §9) |
-| button | css | - | - | `ui.Button`, `ui.ButtonProps` | `button/default`, `button/destructive`, `button/ghost-with-icon`, `button/disabled`, `button/every-variant-and-size` | `spec`, `keys-cells` | port | sizes xs, icon-xs, icon-sm, icon-lg have no ui.Size; storybook css.go |
+| button | css | - | - | `ui.Button`, `ui.ButtonProps` | `button/default`, `button/destructive`, `button/ghost-with-icon`, `button/disabled`, `button/every-variant-and-size` | `spec`, `keys-cells` | port | sizes: ui.Size (XSmall…Large) and IconOnly give all 8; storybook css.go |
 | button-group | css | - | - | `ui.ButtonGroup`, `ui.ButtonGroupProps`, `ui.ButtonGroupSeparator` | `button-group/default`, `button-group/vertical`, `button-group/with-menu` | `spec`, `keys-cells` | new | data-orientation vertical: no shared enum |
 | card | css | - | - | `ui.Card`, `ui.CardProps` | `card/default`, `card/small` | `spec` | port | size sm; header, section, footer are plain elements (ui/doc.go); storybook css.go |
 | chart | hand | hand | `<canvas>`, `Chart.js` | `ui.Chart`, `ui.ChartProps`, `ui.ChartState`, `ui.ChartSeries` | `chart/bar`, `chart/line`, `chart/pie`, `chart/legend` | `spec`, `keys-cells` | new | chart.js drives Chart.js on a canvas, and a surface runs no script: an SVG plot in Go; no differential; Blitz lacks vector-effect |

@@ -33,5 +33,5 @@ func Example() {
 			a.toasts.Show(ui.Toast{Title: "Size changed"})
 		},
 	})
-	_ = surf.New("sizes", view, "")
+	_ = surf.New("sizes", view, ui.Stylesheet())
 }

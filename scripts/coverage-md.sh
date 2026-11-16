@@ -86,12 +86,17 @@ Edit the tsv, then run the script; don't edit this page.
 - Parts are `ui.<Name><Part>`; a part that is a plain element in
   Basecoat's markup (a card's `<header>`) stays a plain element. Items are
   plain data structs: `ui.SelectItem`, `ui.Tab`.
-- Variants and sizes are shared: `ui.Variant`, `ui.Size`.
+- Variants and sizes are shared, as Basecoat's `data-variant` and
+  `data-size` are: `ui.Variant`, `ui.Size`. A value only one component
+  has is its own field; icon-only is a bool. A component made from CSS
+  alone takes `Attrs`, its handlers through `surf.On`.
 
 ```templ
 @ui.Select(&a.sizeMenu, ui.SelectProps{ID: "size", Items: sizes,
 	Value: a.size, OnChange: a.setSize})
-@ui.Button(ui.ButtonProps{ID: "save", OnClick: a.save}) { Save }
+@ui.Button(ui.ButtonProps{
+	Attrs: surf.On(ctx, "save", surf.Click(a.save)),
+}) { Save }
 ```
 
 EOF

@@ -9,6 +9,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 // counter is an app's state; its view is usually a .templ file (see
@@ -32,7 +33,7 @@ func (c *counter) view() templ.Component {
 // keys while it has the keyboard, and updates it when work is pending.
 func ExampleNew() {
 	c := &counter{}
-	s := surf.New("counter", c.view(), "")
+	s := surf.New("counter", c.view(), ui.Stylesheet())
 
 	var caps hotty.Caps              // from detection (hotty-go's Detector)
 	events := make(chan hotty.Event) // the host's events naming "counter"
@@ -44,7 +45,9 @@ func ExampleNew() {
 		return
 	}
 	os.Stdout.WriteString(hotty.Doc(s.Name(), doc))
-	os.Stdout.WriteString(hotty.Place(s.Name(), hotty.Placement{Cols: 80, Rows: 24}))
+	os.Stdout.WriteString(hotty.Place(s.Name(), hotty.Placement{
+		Cols: 80, Rows: 24, Press: hotty.On, Hover: hotty.On, // as Attach says
+	}))
 	for {
 		select {
 		case e := <-events:

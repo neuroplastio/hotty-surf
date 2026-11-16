@@ -10,17 +10,25 @@
 //     templ's children block: @ui.Button(ui.ButtonProps{…}) { Save }.
 //   - Its attributes are one struct, <Name>Props, whose zero value is
 //     Basecoat's default. Every Props has Class, for Tailwind classes added
-//     to the component's outermost element, and a component that reports
-//     anything has ID, the id its elements are named from (see surf.On).
+//     to the component's outermost element.
+//   - A component made from CSS alone is one element, and its Props has
+//     Attrs for any attribute of it: its handlers, through surf.On, as on
+//     any element. A component made from a Jinja macro has ID, which names
+//     its inner elements, and reports its own events through On…
+//     callbacks.
 //   - The app's data stays the app's: the value a component shows comes in
 //     through Props, and a change goes out through an On… callback in Props,
 //     which the app applies to its own state.
 //   - What only the component needs to remember (whether a menu is open, the
-//     item the arrows highlighted, a select's filter) is in <Name>State. The
+//     item the arrows highlighted) is in <Name>State. The
 //     app keeps one per component in its state, zero value ready, and passes
 //     a pointer: @ui.Select(&a.size, ui.SelectProps{…}).
 //   - Items are plain data: SelectItem, Tab, MenuItem.
-//   - Variants and sizes are shared, not per component: Variant and Size.
+//   - Variants and sizes are shared, as Basecoat's data-variant and
+//     data-size are: Variant and Size. A value only one component has is
+//     that component's own field. Sides, alignments and orientations are
+//     strings, their values in the field's doc. surftest fails a test that
+//     renders a value the component doesn't take.
 //   - Basecoat's parts that are plain elements stay plain elements: a card's
 //     <header>, <section> and <footer> are written in the card's children,
 //     as Basecoat's markup has them.

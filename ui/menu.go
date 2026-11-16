@@ -9,7 +9,7 @@ type DropdownMenuProps struct {
 	Trigger templ.Component
 	Items   []MenuItem
 	// Align is the menu's side along its trigger: "start" (the default),
-	// "center" or "end".
+	// "center" or "end". surftest fails any other.
 	Align string
 	Class string
 }

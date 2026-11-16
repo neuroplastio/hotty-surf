@@ -25,7 +25,12 @@ type Surface struct {
 
 // New makes a surface named name (a hotty surface name, SPEC §5.1) showing
 // view, styled by css: the app's stylesheet, which the build makes from the
-// kit's and the app's classes. It renders nothing until Document.
+// kit's and the app's classes, or ui.Stylesheet for a surface with no build
+// of its own. It renders nothing until Document.
+//
+// In a dev build (the surfdev tag), New registers the surface with package
+// reload, so that a live reload reaches it wherever it was made, a dialog
+// opened late included. A release build has none of that.
 func New(name string, view templ.Component, css string) *Surface {
 	panic("L0")
 }
@@ -39,7 +44,20 @@ func (s *Surface) Name() string {
 // Attach says where the surface's deltas go, w, and what the host is: caps
 // are its capabilities, as detection found them (hotty-go's Detector, or
 // hottytea's ReadyMsg): the version it speaks, and its platform, which
-// [Platform] gives a render. Attach again when they change.
+// [Platform] gives a render. The zero Caps is a host of hotty's current
+// version on the zero Platform (ctrl), which is what a cells.Screen is.
+// Attach again when they change.
+//
+// Two rules for the program that drives it:
+//
+//   - Each Write to w is one whole hotty command. hottyterm's Out already
+//     takes one command per Write; a Bubble Tea program writes through
+//     hottytea's Session.Send (surftea does), never to the terminal
+//     itself, or Bubble Tea's own frames land inside a delta.
+//   - The program places the surface with Press and Hover on
+//     (hotty.Placement's flags, SPEC §5.2): [Hover] handlers hear nothing
+//     without Hover, and [Outside] misses a click on the surface's text
+//     without Press. surftea's Place and run.App set both.
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	panic("L0")
 }
@@ -66,8 +84,8 @@ func (s *Surface) Event(e hotty.Event) error {
 // passed the program because no field in the surface took it, SPEC §10.1),
 // named as hotty names keys ("enter", "arrow_down", "ctrl+s"). The [Key]
 // handlers of the focused element and its ancestors are asked, innermost
-// first; taken says whether one took it. A key no handler takes is the
-// program's.
+// first, with the key as [Key] says; taken says whether one took it. A key
+// no handler takes is the program's.
 func (s *Surface) Key(key string) (taken bool, err error) {
 	panic("L0")
 }

@@ -2,9 +2,11 @@ package ui
 
 import "github.com/a-h/templ"
 
-// A Variant is how a component stands out, as Basecoat's variants name it.
-// A component takes the variants Basecoat gives it; another renders as
-// Primary, Basecoat's default.
+// A Variant is how a component stands out: Basecoat's data-variant, which
+// its components share. A component takes the variants Basecoat gives it,
+// and its doc lists them; surftest fails a test that renders one it doesn't
+// take. A value only one component has (tabs' line, an item's muted) is a
+// field of that component's Props, not a Variant.
 type Variant string
 
 const (
@@ -16,15 +18,17 @@ const (
 	Link        Variant = "link"
 )
 
-// A Size is a component's size, as Basecoat's sizes name it. Icon is a
-// square control that holds only an icon.
+// A Size is a component's size: Basecoat's data-size, which its components
+// share. A component takes the sizes Basecoat gives it, as with Variant. A
+// square control holding only an icon is its component's IconOnly, in any
+// of the sizes (Basecoat's icon, icon-xs, icon-sm and icon-lg).
 type Size string
 
 const (
 	Medium Size = ""
+	XSmall Size = "xs"
 	Small  Size = "sm"
 	Large  Size = "lg"
-	Icon   Size = "icon"
 )
 
 // Stylesheet is the kit's stylesheet: Basecoat's theme and components and
@@ -35,10 +39,10 @@ func Stylesheet() string {
 	panic("L0")
 }
 
-// Lucide is the icon named name in the Lucide set that shadcn and Basecoat
+// Icon is the icon named name in the Lucide set that shadcn and Basecoat
 // draw with ("plus", "chevron-down"), as an inline SVG sized by class
 // ("size-4").
-func Lucide(name, class string) templ.Component {
+func Icon(name, class string) templ.Component {
 	panic("L0")
 }
 

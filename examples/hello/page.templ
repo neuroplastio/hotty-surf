@@ -24,8 +24,8 @@ templ Page(a *App) {
 				OnChange: a.SetGreeting,
 			})
 		</div>
-		@ui.Button(ui.ButtonProps{ID: "wave", OnClick: a.Wave}) {
-			@ui.Lucide("hand", "size-4")
+		@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "wave", surf.Click(a.Wave))}) {
+			@ui.Icon("hand", "size-4")
 			Wave
 		}
 		<p class="text-sm text-muted-foreground">

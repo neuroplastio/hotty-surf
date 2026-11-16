@@ -20,13 +20,16 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
 pkg neuroplast.io/hotty-surf, type Handler struct
 pkg neuroplast.io/hotty-surf, type Surface struct
-pkg neuroplast.io/hotty-surf/cells, func New(*surf.Surface, int, int) (*Screen, error)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) error
+pkg neuroplast.io/hotty-surf/cells, func New(int, int, func(hotty.Event)) *Screen
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cursor() (int, int, bool)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Key(string) (bool, error)
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Focus(bool)
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Key(string) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Lines() []string
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Paste(string) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Resize(int, int)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) error
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) bool
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Write([]byte) (int, error)
 pkg neuroplast.io/hotty-surf/cells, type Screen struct
 pkg neuroplast.io/hotty-surf/lint, func Dir(string) ([]Finding, error)
 pkg neuroplast.io/hotty-surf/lint, type Finding struct
@@ -36,20 +39,28 @@ pkg neuroplast.io/hotty-surf/lint, type Finding struct, Line int
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Rule string
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Text string
 pkg neuroplast.io/hotty-surf/reload, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](func() P, func(P))
-pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, io.ReadWriter, ...*surf.Surface) error
-pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) (io.ReadWriteCloser, error), func(Report)) *Reloader
-pkg neuroplast.io/hotty-surf/reload/reloader, func View(Report) templ.Component
+pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, io.ReadWriter, string) error
+pkg neuroplast.io/hotty-surf/reload/reloader, func Env(...string) Option
+pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) error, func(Report), ...Option) *Reloader
+pkg neuroplast.io/hotty-surf/reload/reloader, func Output(string) Option
+pkg neuroplast.io/hotty-surf/reload/reloader, func Tags(...string) Option
+pkg neuroplast.io/hotty-surf/reload/reloader, func View(*Report) templ.Component
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Reload(context.Context) (Report, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Wait(context.Context) (Report, error)
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
+pkg neuroplast.io/hotty-surf/reload/reloader, type Option struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Reloader struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Build string
+pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Failed map[string]string
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Lint []lint.Finding
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Tier string
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Took time.Duration
 pkg neuroplast.io/hotty-surf/run, func App(context.Context, *surf.Surface) error
 pkg neuroplast.io/hotty-surf/surftea, func New(*surf.Surface, *hottytea.Session) *Host
+pkg neuroplast.io/hotty-surf/surftea, method (*Host) Blur()
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Cells() string
+pkg neuroplast.io/hotty-surf/surftea, method (*Host) Focus()
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Init() tea.Cmd
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Place(hottytea.Rect) hottytea.Surface
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Update(tea.Msg) (tea.Msg, tea.Cmd)
@@ -63,11 +74,11 @@ pkg neuroplast.io/hotty-surf/surftest, method (*Rig) HTML() string
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Key(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) One(string) *html.Node
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Type(string, string)
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Update()
 pkg neuroplast.io/hotty-surf/surftest, type Option struct
 pkg neuroplast.io/hotty-surf/surftest, type Rig struct
 pkg neuroplast.io/hotty-surf/ui, const Destructive Variant = "destructive"
 pkg neuroplast.io/hotty-surf/ui, const Ghost Variant = "ghost"
-pkg neuroplast.io/hotty-surf/ui, const Icon Size = "icon"
 pkg neuroplast.io/hotty-surf/ui, const Large Size = "lg"
 pkg neuroplast.io/hotty-surf/ui, const Link Variant = "link"
 pkg neuroplast.io/hotty-surf/ui, const Medium Size = ""
@@ -75,13 +86,14 @@ pkg neuroplast.io/hotty-surf/ui, const Outline Variant = "outline"
 pkg neuroplast.io/hotty-surf/ui, const Primary Variant = ""
 pkg neuroplast.io/hotty-surf/ui, const Secondary Variant = "secondary"
 pkg neuroplast.io/hotty-surf/ui, const Small Size = "sm"
+pkg neuroplast.io/hotty-surf/ui, const XSmall Size = "xs"
 pkg neuroplast.io/hotty-surf/ui, func Badge(BadgeProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Button(ButtonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Card(CardProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func DropdownMenu(*DropdownMenuState, DropdownMenuProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Icon(string, string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Lucide(string, string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Stylesheet() string
 pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
@@ -89,16 +101,18 @@ pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
 pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Show(Toast)
 pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct
+pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct
+pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, OnClick func()
+pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, IconOnly bool
 pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type CardProps struct
+pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Class string

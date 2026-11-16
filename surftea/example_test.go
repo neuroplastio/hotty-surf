@@ -6,6 +6,7 @@ import (
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftea"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 var page templ.Component // the surface's view
@@ -27,6 +28,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 	msg, cmd2 := m.files.Update(msg)
+	if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "tab" {
+		m.files.Focus() // the program's focus moves onto the surface
+	}
 	if ws, ok := msg.(tea.WindowSizeMsg); ok {
 		m.w, m.h = ws.Width, ws.Height
 		m.sess.Layout([]hottytea.Surface{
@@ -42,6 +46,6 @@ func (m *model) View() tea.View {
 
 func ExampleNew() {
 	sess := hottytea.New()
-	m := &model{sess: sess, files: surftea.New(surf.New("files", page, ""), sess)}
+	m := &model{sess: sess, files: surftea.New(surf.New("files", page, ui.Stylesheet()), sess)}
 	tea.NewProgram(m).Run()
 }

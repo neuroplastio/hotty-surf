@@ -21,8 +21,13 @@ import (
 	"neuroplast.io/hotty-surf"
 )
 
-// App runs s until ctx is done or the user quits (ctrl+c, or ctrl+q), and
-// returns nil then. Keys the surface doesn't take do nothing else.
+// App runs s until ctx is done or the user quits, and returns nil then. The
+// user quits with ctrl+c or ctrl+q when the surface doesn't take them: an
+// app that binds either (an editor's ctrl+q) keeps it, and quits by ending
+// ctx. Other keys the surface doesn't take do nothing.
+//
+// It places the surface with Press and Hover on, and under `surf run` it
+// serves the reloader as the instance "app" (package reload).
 func App(ctx context.Context, s *surf.Surface) error {
 	panic("L0")
 }

@@ -4,6 +4,8 @@ module neuroplast.io/hotty-surf/surftea
 
 go 1.26.0
 
+// Before any tag of either module, this replace becomes a versioned require
+// of hotty-surf (gov P-5).
 replace neuroplast.io/hotty-surf => ../
 
 require (

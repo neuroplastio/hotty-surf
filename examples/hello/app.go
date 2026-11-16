@@ -41,9 +41,10 @@ func (a *App) Wave() {
 	a.toasts.Show(ui.Toast{Title: a.Greeting + ", " + a.who() + "!"})
 }
 
-// Shortcut is the page's keys: ctrl+enter waves from anywhere.
+// Shortcut is the page's keys: mod+enter (ctrl, or ⌘ on macOS) waves from
+// anywhere.
 func (a *App) Shortcut(key string) bool {
-	if key == "ctrl+enter" {
+	if key == "mod+enter" {
 		a.Wave()
 		return true
 	}

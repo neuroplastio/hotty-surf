@@ -1,18 +1,22 @@
-// Package reload is the app's side of live reload: what a dev build links so
-// that a reloader (package reloader, run by `surf run` or by plx's plugin
-// dev loop) can show edits in it as they are saved, keeping its state.
+// Package reload is the program's side of live reload: what a dev build
+// links so that a reloader (package reloader, run by `surf run` or by plx's
+// plugin dev loop) can show edits in it as they are saved, keeping its
+// state.
 //
 // The child's side is the program's whole process: a whole app (run.App
-// serves it itself), a plx tool or a plx controller with no view at all.
+// serves it itself), a plx tool, or a plx controller with no view at all.
+// Its surfaces register themselves: in a dev build, surf.New hands each
+// surface to this package, so one made after Serve (a dialog opened later)
+// reloads too.
 //
 // It does its work only in a build with the surfdev tag, which a reloader
-// passes; in any other build Keep does nothing and Serve returns an error,
-// and none of the dev wire is linked. An app doesn't tag its own files.
+// passes; in any other build Keep does nothing, Serve returns an error, and
+// none of the dev wire is linked. An app doesn't tag its own files.
 //
-// The reloader and the app speak msgpack-RPC (gov P-3) over a reader and a
-// writer the reloader hands the app: run.App finds its own in what `surf
-// run` started it with; a program that embeds its surface (a plx plugin)
-// gets it from its host and calls Serve.
+// The reloader and the program speak msgpack-RPC (gov P-3) over a reader
+// and a writer the program's host hands it: run.App finds its own in what
+// `surf run` started it with; a plx plugin gets it, and its instance key,
+// from plx.
 package reload
 
 import (
@@ -20,16 +24,19 @@ import (
 	"io"
 
 	"github.com/tinylib/msgp/msgp"
-	"neuroplast.io/hotty-surf"
 )
 
 // Keep carries the program's state across a reload: get gives it as a
 // msgp-encodable value when a new build takes over, and the new build's set
-// gets the decoded copy before Serve returns control to its surfaces' first
-// render. What isn't kept starts again as the program's main makes it. An
-// edit that reaches only a .templ file's text and classes keeps everything,
-// kept or not. A program calls it once, before Serve; one with no state to
-// keep doesn't call it.
+// gets the decoded copy before Serve returns. What isn't kept starts again
+// as the program's main makes it. An edit that reaches only a .templ file's
+// text and classes keeps everything, kept or not. A program calls it once,
+// before Serve; one with no state to keep doesn't call it.
+//
+// Only the program's own value is kept: what ui's components remember in
+// their …State values (a menu open, an item highlighted) starts closed in
+// the new build. A …State isn't msgp-encodable, so it stays out of the kept
+// value.
 func Keep[T any, P interface {
 	*T
 	msgp.Encodable
@@ -38,13 +45,20 @@ func Keep[T any, P interface {
 	panic("L0")
 }
 
-// Serve serves the reloader on rw until ctx is done or rw closes. surfaces
-// are the program's surfaces, none for a program with no view (a plx
-// controller): each renders again when the reloader says the strings or the
-// stylesheet changed, and hands its document to the next build, whose first
-// frame is then a delta. The state Keep names goes to the next build too.
-// The program goes on driving its surfaces as before; Serve reaches them
-// through their Do.
-func Serve(ctx context.Context, rw io.ReadWriter, surfaces ...*surf.Surface) error {
+// Serve connects the program to its reloader on rw, as the instance key: a
+// name the program's host gives it that stays the same across builds, so
+// that the reloader pairs the old process with the new one (run.App's is
+// "app"; plx's are "controller" and "tool:<viewer>"). It is called inline,
+// after Keep and before the program's surfaces first render.
+//
+// In a process that a reload started, Serve takes over from the build
+// before it: it has run Keep's set with the old state, and each surface's
+// first frame is a delta from the document the old build showed. Serve
+// returns once that is done (at once, in a fresh start), and serves on in
+// the background until ctx is done or rw closes: a surface renders again
+// when the reloader says the strings or the stylesheet changed, and when a
+// new build is ready, the state and the documents go to it and the process
+// exits.
+func Serve(ctx context.Context, rw io.ReadWriter, key string) error {
 	panic("L0")
 }

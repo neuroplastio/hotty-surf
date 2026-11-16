@@ -6,6 +6,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 var page templ.Component // the app's view
@@ -14,10 +15,10 @@ var page templ.Component // the app's view
 func Example() {
 	var t *testing.T // the test's
 
-	r := surftest.Start(t, surf.New("tasks", page, ""), surftest.Size(120, 40))
+	r := surftest.Start(t, surf.New("tasks", page, ui.Stylesheet()), surftest.Size(120, 40))
 	r.Type("input[name=title]", "Write the docs")
 	r.Key("enter")
-	if len(r.Find("li~Write the docs")) != 1 {
+	if len(r.Find("li:text(Write the docs)")) != 1 {
 		t.Fatal("the task wasn't added")
 	}
 }

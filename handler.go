@@ -13,7 +13,12 @@ import (
 //
 // The id is the element's, unique on the page. On an element that isn't a
 // button, a link, a summary or a field, a [Click] handler makes it report
-// clicks (data-on). A render registers each id once.
+// clicks (data-on).
+//
+// A render registers each id once. A second On for an id in the same render
+// fails a surftest test; elsewhere the first one's handlers stay and the
+// second's are dropped. A list gives each item an id of its own
+// ("row-"+item.ID).
 func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	panic("L0")
 }
@@ -46,6 +51,12 @@ func Check(fn func(checked bool)) Handler {
 // handler is asked before its ancestors', so an open menu hears the arrows
 // before the page does. Shortcuts for the whole page go on its outermost
 // element.
+//
+// fn sees hotty's names ("enter", "arrow_down", "shift+tab"), with one
+// change: a key whose modifier is the host's mod (SPEC §3.3: ctrl, or super
+// on macOS) arrives as "mod+…". So an app matches "mod+s", and is the same
+// on every platform; one that compares "ctrl+s" misses it where ctrl is the
+// mod. It is the notation ui.Kbd and ui.MenuItem.Keys show.
 func Key(fn func(key string) bool) Handler {
 	panic("L0")
 }
@@ -57,13 +68,16 @@ func Focus(fn func(in bool)) Handler {
 }
 
 // Outside calls fn when the user clicks anywhere on the surface outside the
-// element: what closes a popover or a menu.
+// element, and when the surface loses the keyboard (a blur: a click on the
+// program's own cells or on another surface): what closes a popover or a
+// menu. It needs the surface placed with Press on (see Surface.Attach).
 func Outside(fn func()) Handler {
 	panic("L0")
 }
 
 // Hover calls fn with true when the pointer comes onto the element, and
-// false when it leaves (SPEC §9.4): what moves a menu's highlighted item with
+// false when it leaves (SPEC §9.4; it needs the surface placed with Hover
+// on, see Surface.Attach): what moves a menu's highlighted item with
 // the pointer. A style that only changes on hover is CSS's :hover, which
 // needs no handler.
 func Hover(fn func(over bool)) Handler {

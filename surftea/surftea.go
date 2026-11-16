@@ -50,8 +50,22 @@ func (h *Host) Update(msg tea.Msg) (tea.Msg, tea.Cmd) {
 }
 
 // Place puts the surface at r, the screen's cells it covers, and returns its
-// entry for the Session's Layout.
+// entry for the Session's Layout, with Press and Hover on, as the surface's
+// Outside and Hover handlers need (surf.Surface.Attach).
 func (h *Host) Place(r hottytea.Rect) hottytea.Surface {
+	panic("L0")
+}
+
+// Focus gives the surface the keyboard, as the program's own focus moves
+// onto it (Tab between panes): through the Session where the terminal is a
+// hotty host, to its cells otherwise.
+func (h *Host) Focus() {
+	panic("L0")
+}
+
+// Blur takes the keyboard from the surface, as the program's focus moves
+// off it: a field being edited commits, and Outside handlers hear it.
+func (h *Host) Blur() {
 	panic("L0")
 }
 
