@@ -4,11 +4,11 @@ import "github.com/a-h/templ"
 
 // A Variant is how a component stands out, as Basecoat's variants name it.
 // A component takes the variants Basecoat gives it; another renders as
-// Default.
+// Primary, Basecoat's default.
 type Variant string
 
 const (
-	Default     Variant = ""
+	Primary     Variant = ""
 	Secondary   Variant = "secondary"
 	Outline     Variant = "outline"
 	Ghost       Variant = "ghost"

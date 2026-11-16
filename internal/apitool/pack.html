@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+<style>
+:root { --bg:#f7f7f5; --panel:#fff; --ink:#16171a; --ink2:#4b4d52; --ink3:#7a7c82; --rule:#e2e2de; --add:#15803d; --del:#b91c1c; --warn:#b45309; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg:#141517; --panel:#1c1d20; --ink:#ecebe7; --ink2:#b9b8b2; --ink3:#8b8a85; --rule:#2e2f33; --add:#4ade80; --del:#f87171; --warn:#fbbf24; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui, sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 80px; display:grid; gap:36px; }
+h1 { font-size:1.9rem; margin:0; } h2 { font-size:1.4rem; margin:0; padding-top:10px; border-top:1px solid var(--rule); } h3 { font-size:1.05rem; margin:0; }
+.meta { color:var(--ink3); font-family: ui-monospace, monospace; font-size:.85rem; }
+section { display:grid; gap:12px; }
+code, pre { font-family: ui-monospace, "IBM Plex Mono", monospace; font-size:.85rem; }
+pre { background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:12px 14px; overflow-x:auto; margin:0; }
+table { border-collapse:collapse; width:100%; background:var(--panel); border:1px solid var(--rule); font-size:.9rem; }
+th, td { text-align:left; vertical-align:top; padding:6px 10px; border-bottom:1px solid var(--rule); }
+th { color:var(--ink2); font-size:.8rem; font-weight:600; }
+td.k { white-space:nowrap; font-family: ui-monospace, monospace; font-size:.84rem; }
+td.l { font-family: ui-monospace, monospace; font-size:.8rem; color:var(--ink2); }
+.add { color:var(--add); } .del { color:var(--del); text-decoration: line-through; } .miss { color:var(--warn); font-weight:600; }
+details { background:var(--panel); border:1px solid var(--rule); border-radius:6px; padding:8px 12px; }
+details pre { border:0; padding:8px 0 0; }
+summary { cursor:pointer; color:var(--ink2); }
+.md { max-width: 78ch; display:grid; gap:10px; } .md p, .md ul, .md ol { margin:0; } .md table { font-size:.86rem; }
+.counts { display:flex; gap:18px; flex-wrap:wrap; }
+.counts span { background:var(--panel); border:1px solid var(--rule); border-radius:999px; padding:2px 12px; }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:10px">
+  <p class="meta">hotty-surf · API review pack · {{.Date}}{{if .Commit}} · {{.Commit}}{{end}}</p>
+  <h1>{{.Title}}</h1>
+  <div class="counts"><span class="add">+{{.Added}} names</span><span class="del" style="text-decoration:none">−{{.Removed}} names</span>{{if .Missing}}<span class="miss">{{len .Missing}} without a reason</span>{{end}}</div>
+  <p>Each name below is not in the approved API file. Approve, rename or cut it, name by name; what you approve is folded into the approved file and locked by <code>make api-check</code>.</p>
+</header>
+{{if .Notes}}<section class="md">{{.Notes}}</section>{{end}}
+{{range .Packages}}
+<section id="{{.Label}}">
+  <h2>{{.Label}} <span class="meta">{{.Path}}</span></h2>
+  <table>
+    <thead><tr><th>name</th><th>reason</th><th>signature</th></tr></thead>
+    <tbody>
+    {{range .Names}}<tr><td class="k {{if .Added}}add{{else}}del{{end}}">{{if .Added}}+{{else}}−{{end}} {{.Key}}</td><td>{{if .Reason}}{{.Reason}}{{else if .Added}}<span class="miss">no reason</span>{{end}}</td><td class="l">{{.Line}}</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{range .Examples}}<details open><summary>{{.Name}}</summary><pre>{{.Text}}</pre></details>{{end}}
+  <details><summary>go doc -all</summary><pre>{{.Doc}}</pre></details>
+</section>
+{{end}}
+{{if .Files}}
+<section>
+  <h2>An app written against it</h2>
+  {{range .Files}}<details open><summary>{{.Name}}</summary><pre>{{.Text}}</pre></details>{{end}}
+</section>
+{{end}}
+{{range .Appendix}}<section class="md">{{.}}</section>{{end}}
+</main>
+</body>
+</html>

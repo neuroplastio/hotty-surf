@@ -10,10 +10,7 @@ type SelectProps struct {
 	// trigger shows Placeholder.
 	Value       string
 	Placeholder string
-	// Search shows a filter above the items, as Basecoat's select with a
-	// search box.
-	Search   bool
-	Disabled bool
+	Disabled    bool
 	// OnChange hears the value the user chose.
 	OnChange func(value string)
 	Class    string
@@ -28,15 +25,14 @@ type SelectItem struct {
 }
 
 // SelectState is what a Select remembers between renders: whether its list
-// is open, the item the arrows highlighted, and its filter. The zero value
-// is closed.
+// is open and the item the arrows highlighted. The zero value is closed.
 type SelectState struct {
 	_ struct{}
 }
 
 // Select is Basecoat's select: its markup generated from select.html.jinja,
-// its behaviour select.js's, translated to Go (opening, the arrows, typing
-// to find, choosing, Escape).
+// its behaviour select.js's, translated to Go (opening, the arrows, Home,
+// End, choosing, Escape, a click outside closing it).
 func Select(st *SelectState, p SelectProps) templ.Component {
 	panic("L0")
 }

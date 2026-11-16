@@ -9,7 +9,7 @@ import (
 // A Toast is a short notice that goes away by itself.
 type Toast struct {
 	Title, Description string
-	// Variant is how it stands out: Destructive for an error, or Default.
+	// Variant is how it stands out: Destructive for an error, or Primary.
 	Variant Variant
 	// Duration is how long it stays; 0 is Basecoat's default, and a
 	// negative one stays until dismissed.

@@ -24,7 +24,7 @@ type MenuItem struct {
 	// only: the app binds the key itself.
 	Keys     string
 	Group    string
-	Variant  Variant // Destructive, or Default
+	Variant  Variant // Destructive, or Primary
 	Disabled bool
 	// OnSelect runs when the user chooses the item; the menu closes.
 	OnSelect func()
@@ -44,8 +44,7 @@ func (st *DropdownMenuState) Open() {
 
 // DropdownMenu is Basecoat's dropdown menu: its markup generated from
 // dropdown-menu.html.jinja, its behaviour dropdown-menu.js's, translated to
-// Go (the arrows, Home, End, Enter, Escape, typing to find, a click outside
-// closing it).
+// Go (the arrows, Home, End, Enter, Escape, a click outside closing it).
 func DropdownMenu(st *DropdownMenuState, p DropdownMenuProps) templ.Component {
 	panic("L0")
 }
