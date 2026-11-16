@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -92,18 +93,43 @@ type harness struct {
 	dir     string
 	r       *Reloader
 	reports chan Report
-	mu      sync.Mutex
-	procs   []*appProc
+	// keys are the instances each restart starts, one process each, as
+	// plx starts a controller and its tools from one build; none is one
+	// process of the key "app".
+	keys     []string
+	mu       sync.Mutex
+	procs    []*appProc
+	byKey    map[string][]*appProc
+	restarts int
 }
 
 func (h *harness) start(ctx context.Context, bin string) error {
+	h.mu.Lock()
+	h.restarts++
+	h.mu.Unlock()
+	if len(h.keys) == 0 {
+		return h.startKey(bin, "")
+	}
+	for _, k := range h.keys {
+		if err := h.startKey(bin, k); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h *harness) startKey(bin, key string) error {
 	t := h.t
 	reloadF, reloadC := socketPair(t)
 	termF, termC := socketPair(t)
 	p := &appProc{outs: make(chan string, 1024), shown: make(chan string, 4), exited: make(chan struct{})}
 	p.cmd = exec.Command(bin)
 	p.cmd.ExtraFiles = []*os.File{reloadF, termF}
-	p.cmd.Env = append(os.Environ(), "HOTTY_SURF_RUN=3,4", "TEMPL_DEV_MODE=true")
+	run := "HOTTY_SURF_RUN=3,4"
+	if key != "" {
+		run += "," + key
+	}
+	p.cmd.Env = append(os.Environ(), run, "TEMPL_DEV_MODE=true")
 	p.cmd.Stderr = p
 	err := p.cmd.Start()
 	reloadF.Close()
@@ -155,8 +181,23 @@ func (h *harness) start(ctx context.Context, bin string) error {
 	}()
 	h.mu.Lock()
 	h.procs = append(h.procs, p)
+	if h.byKey == nil {
+		h.byKey = map[string][]*appProc{}
+	}
+	h.byKey[key] = append(h.byKey[key], p)
 	h.mu.Unlock()
 	return nil
+}
+
+// of is key's process started last, failing unless it is its n-th.
+func (h *harness) of(key string, n int) *appProc {
+	h.t.Helper()
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if ps := h.byKey[key]; len(ps) != n {
+		h.t.Fatalf("%s: %d processes started, want %d", key, len(ps), n)
+	}
+	return h.byKey[key][n-1]
 }
 
 // proc is the process started last, once it has shown its surface.
@@ -277,9 +318,11 @@ func copyApp(t *testing.T) string {
 	return dir
 }
 
-// TestReload: each tier, picked by what a save changed; a Go reload's
-// handover; a build that fails; a crash.
-func TestReload(t *testing.T) {
+// begin runs a Reloader on a copy of testdata/app, whose restarts start
+// one process for each of keys, until the first build's report; stop ends
+// it.
+func begin(t *testing.T, keys ...string) (h *harness, stop func()) {
+	t.Helper()
 	if testing.Short() {
 		t.Skip("builds an app")
 	}
@@ -287,8 +330,7 @@ func TestReload(t *testing.T) {
 		t.Skip("no go command")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	h := &harness{t: t, ctx: ctx, dir: copyApp(t), reports: make(chan Report, 64)}
+	h = &harness{t: t, ctx: ctx, dir: copyApp(t), reports: make(chan Report, 64), keys: keys}
 	opts := []Option{Output(filepath.Join(t.TempDir(), "app"))}
 	if env := os.Getenv("RELOADER_TEST_ENV"); env != "" {
 		// RELOADER_TEST_ENV=GOFLAGS=-race builds the app with the race
@@ -298,7 +340,7 @@ func TestReload(t *testing.T) {
 	h.r = New(h.dir, h.start, func(r Report) { h.reports <- r }, opts...)
 	ran := make(chan error, 1)
 	go func() { ran <- h.r.Run(ctx) }()
-	defer func() {
+	stop = func() {
 		cancel()
 		<-ran
 		h.mu.Lock()
@@ -310,18 +352,43 @@ func TestReload(t *testing.T) {
 			}
 		}
 		h.mu.Unlock()
-	}()
+	}
 
 	select {
 	case rep := <-h.reports:
 		if rep.Tier != "go" || rep.Build != "" || len(rep.Failed) > 0 {
+			stop()
 			t.Fatalf("the first build: %+v", rep)
 		}
 	case err := <-ran:
+		stop()
 		t.Fatalf("Run: %v", err)
 	case <-time.After(2 * time.Minute):
+		stop()
 		t.Fatal("no first build")
 	}
+	return h, stop
+}
+
+// first is p's first output.
+func (h *harness) first(p *appProc) string {
+	h.t.Helper()
+	select {
+	case o := <-p.outs:
+		return o
+	case <-p.exited:
+		h.t.Fatalf("the app exited: %s", p.errors())
+	case <-time.After(10 * time.Second):
+		h.t.Fatal("the process sent nothing")
+	}
+	return ""
+}
+
+// TestReload: each tier, picked by what a save changed; a Go reload's
+// handover; a build that fails; a crash.
+func TestReload(t *testing.T) {
+	h, stop := begin(t)
+	defer stop()
 	p1 := h.proc(1)
 	h.shown(p1)
 	h.out(p1, "a=doc")
@@ -453,4 +520,141 @@ func TestView(t *testing.T) {
 			t.Errorf("no %q in %s", want, s)
 		}
 	}
+}
+
+// TestReloadKeys: several instances of one build attached at once, as plx
+// runs a controller and its tools. Each save reaches every key; one Go
+// build hands every key over and restarts once, each key coming back
+// with its own state; one key's crash fails only that key.
+func TestReloadKeys(t *testing.T) {
+	keys := []string{"controller", "tool:a", "tool:b"}
+	h, stop := begin(t, keys...)
+	defer stop()
+	for _, k := range keys {
+		p := h.of(k, 1)
+		h.shown(p)
+		h.out(p, "a=doc")
+	}
+	ok := func(t *testing.T, rep Report, tier string) {
+		t.Helper()
+		if rep.Tier != tier || rep.Build != "" || len(rep.Failed) > 0 {
+			t.Fatalf("report: %+v", rep)
+		}
+	}
+	restarts := func(t *testing.T, want int) {
+		t.Helper()
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		if h.restarts != want {
+			t.Fatalf("%d restarts, want %d", h.restarts, want)
+		}
+	}
+
+	t.Run("text", func(t *testing.T) {
+		h.edit("page.templ", "<p>Hello</p>", "<p>Howdy</p>")
+		ok(t, h.reload(), "text")
+		for _, k := range keys {
+			if o := h.out(h.of(k, 1), "Howdy"); !strings.Contains(o, "a=delta") {
+				t.Fatalf("%s: not a delta: %q", k, o)
+			}
+		}
+		restarts(t, 1)
+	})
+
+	t.Run("css", func(t *testing.T) {
+		h.edit("style/app.css", "margin: 0", "margin: 0; padding: 0")
+		ok(t, h.reload(), "css")
+		for _, k := range keys {
+			if o := h.out(h.of(k, 1), "padding: 0"); !strings.Contains(o, "a=delta") {
+				t.Fatalf("%s: not a delta: %q", k, o)
+			}
+		}
+		restarts(t, 1)
+	})
+
+	// Each key's count is its own: the controller's 1, tool:a's 2,
+	// tool:b's 3.
+	for i, k := range keys {
+		p := h.of(k, 1)
+		for n := 1; n <= i+1; n++ {
+			h.click(p, "add")
+			h.out(p, "Count "+strconv.Itoa(n))
+		}
+	}
+
+	t.Run("go", func(t *testing.T) {
+		h.edit("page.templ", "{ strconv.Itoa(a.Count) }", `{ strconv.Itoa(a.Count) + "!" }`)
+		ok(t, h.reload(), "go")
+		restarts(t, 2)
+		for _, k := range keys {
+			select {
+			case <-h.byKey[k][0].exited:
+			case <-time.After(10 * time.Second):
+				t.Fatalf("%s: the old process is still running", k)
+			}
+		}
+		for i, k := range keys {
+			p := h.of(k, 2)
+			h.shown(p)
+			want := "Count " + strconv.Itoa(i+1) + "!"
+			// Its first frame is a delta from its own old document.
+			if o := h.first(p); strings.Contains(o, "a=doc") || !strings.Contains(o, "a=delta") || !strings.Contains(o, strconv.Itoa(i+1)+"!") {
+				t.Fatalf("%s: the new process's first frame: %q", k, o)
+			}
+			var doc devwire.Doc
+			if err := <-p.term.Call(&p.calls, "doc", &devwire.Empty{}, &doc); err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(doc.HTML, "Howdy") || !strings.Contains(doc.HTML, "padding: 0") || !strings.Contains(doc.HTML, want) {
+				t.Fatalf("%s: the new process's document: %s", k, doc.HTML)
+			}
+		}
+	})
+
+	t.Run("crash", func(t *testing.T) {
+		for len(h.reports) > 0 {
+			<-h.reports
+		}
+		crashed := h.of("tool:a", 2)
+		if err := crashed.term.Notify("input", &devwire.Input{Key: "p"}); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case rep := <-h.reports:
+			if len(rep.Failed) != 1 || rep.Failed["tool:a"] != "exited before handover" {
+				t.Fatalf("report: %+v", rep)
+			}
+		case <-time.After(10 * time.Second):
+			t.Fatalf("no report of the crash; the app's stderr: %s", crashed.errors())
+		}
+		<-crashed.exited
+
+		// The others reload as before.
+		h.edit("page.templ", "<p>Howdy</p>", "<p>Hi there</p>")
+		ok(t, h.reload(), "text")
+		for _, k := range []string{"controller", "tool:b"} {
+			if o := h.out(h.of(k, 2), "Hi there"); !strings.Contains(o, "a=delta") {
+				t.Fatalf("%s: not a delta: %q", k, o)
+			}
+		}
+
+		// The next build brings the crashed key back, from nothing, and
+		// the others with their state.
+		h.edit("page.templ", `+ "!" }`, `+ "?" }`)
+		ok(t, h.reload(), "go")
+		restarts(t, 3)
+		for i, k := range keys {
+			p := h.of(k, 3)
+			h.shown(p)
+			o := h.first(p)
+			switch {
+			case k == "tool:a":
+				if !strings.Contains(o, "a=doc") || !strings.Contains(o, "Count 0?") {
+					t.Fatalf("%s: the first frame after its crash: %q", k, o)
+				}
+			case strings.Contains(o, "a=doc") || !strings.Contains(o, strconv.Itoa(i+1)+"?"):
+				t.Fatalf("%s: the new process's first frame: %q", k, o)
+			}
+		}
+	})
 }

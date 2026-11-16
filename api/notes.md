@@ -392,6 +392,15 @@ What took the floor from about 2 ms to under 1:
   for one. Input goes on as hotty messages re-encoded with
   `hotty.EncodePlain` (a relay's bytes) and keys as their names; the
   app sends its own documents and run places the surface it names.
+  A third field names the instance (`HOTTY_SURF_RUN=3,4,tool:a`); without
+  it the app is the instance `app`, the only one `hotty-surf run` starts.
+- **Several keys at once** (TestReloadKeys, as plx runs a controller and
+  its tools from one build): each text and css save reaches every key,
+  one Go build hands every key over and calls restart once, and each key
+  comes back with its own Keep state and snapshot, so its first frame is
+  a delta. One key's crash is a report failing that key alone; the
+  others reload as before, and the next build starts it again from
+  nothing. The reloader needed no change for it.
 - **templ's dev mode is on from the start or not at all:** templ reads
   `TEMPL_DEV_MODE` at init, so whoever starts the process sets it
   (`hotty-surf run` does; plx's restart must, for the text tier). The
