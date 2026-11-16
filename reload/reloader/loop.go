@@ -18,6 +18,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 
 	"neuroplast.io/hotty-surf/internal/devwire"
+	"neuroplast.io/hotty-surf/internal/templgen"
 	"neuroplast.io/hotty-surf/lint"
 )
 
@@ -438,11 +439,11 @@ func (l *loop) prepare() string {
 // its strings: the running processes don't read them (a new file, or one
 // a build will take over anyway).
 func (l *loop) generate(f string) error {
-	out, raw, err := gen(f)
+	out, raw, err := templgen.Gen(f)
 	if err != nil {
 		return err
 	}
-	if err := writeGo(f, raw); err != nil {
+	if err := templgen.WriteGo(f, raw); err != nil {
 		return err
 	}
 	l.gen[f] = out
@@ -537,7 +538,7 @@ func (l *loop) apply() {
 			cssInputs = true
 		case strings.HasSuffix(f, ".templ"):
 			sources = true
-			out, raw, err := gen(f)
+			out, raw, err := templgen.Gen(f)
 			if err != nil {
 				errs = append(errs, err.Error())
 				continue
@@ -547,7 +548,7 @@ func (l *loop) apply() {
 			if !ok || generator.HasGoChanged(prev, out) || !l.underRoot(f) {
 				// The build needs the Go now, and gofmt is where a bad
 				// expression in the .templ shows.
-				if err := writeGo(f, raw); err != nil {
+				if err := templgen.WriteGo(f, raw); err != nil {
 					errs = append(errs, err.Error())
 					continue
 				}
@@ -556,7 +557,7 @@ func (l *loop) apply() {
 			}
 			// The same Go: it can't fail to format now if it didn't before,
 			// so it is written after the processes drew.
-			later = append(later, func() { writeGo(f, raw) })
+			later = append(later, func() { templgen.WriteGo(f, raw) })
 			if generator.HasTextChanged(prev, out) {
 				text[f] = out
 			}
@@ -625,7 +626,7 @@ func (l *loop) apply() {
 	if len(text) > 0 {
 		root := l.templRoot()
 		for f, out := range text {
-			if err := writeText(root, f, out); err != nil {
+			if err := templgen.WriteText(root, f, out); err != nil {
 				l.emit(Report{Tier: tier, Build: err.Error()})
 				return
 			}
@@ -841,7 +842,7 @@ func (l *loop) swap() Report {
 	root := l.templRoot()
 	for f, out := range l.buildGen {
 		if l.underRoot(f) {
-			writeText(root, f, out)
+			templgen.WriteText(root, f, out)
 		}
 	}
 	l.live, l.builtCSS, l.shownCSS = l.buildGen, l.buildCSS, l.buildCSS

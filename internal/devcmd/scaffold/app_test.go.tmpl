@@ -1,0 +1,22 @@
+package main
+
+import (
+	"testing"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surftest"
+)
+
+// TestApp drives the page on a test host, which checks after every act
+// that the host's document is the app's.
+func TestApp(t *testing.T) {
+	r := surftest.Start(t, surf.New("APPNAME", Page(NewApp()), CSS))
+	r.Click("button:text(Add one)")
+	r.Click("button:text(Add one)")
+	r.One("p:text(Clicked 2 times.)")
+	r.Click("button:text(Reset)")
+	r.One("p:text(Clicked 0 times.)")
+}
+
+// TestLint: the app keeps the kit's rules (package lint).
+func TestLint(t *testing.T) { surftest.Lint(t, ".") }

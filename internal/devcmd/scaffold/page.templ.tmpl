@@ -1,0 +1,25 @@
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// Page is the view: a function of the state, rendered again after every
+// event.
+templ Page(a *App) {
+	<main class="flex flex-col gap-4 p-4">
+		<h1 class="text-lg font-semibold">APPNAME</h1>
+		<p class="text-sm text-muted-foreground">Clicked { strconv.Itoa(a.Count) } times.</p>
+		<div class="flex gap-2">
+			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "add", surf.Click(a.Add))}) {
+				Add one
+			}
+			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "reset", surf.Click(a.Reset))}) {
+				Reset
+			}
+		</div>
+	</main>
+}

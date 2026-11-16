@@ -1,4 +1,8 @@
-package reloader
+// Package templgen is what `templ generate` does, done with templ's own
+// packages as a library, so that no templ binary is needed: a .templ's Go,
+// and its strings for templ's dev mode. The reloader and `hotty-surf new`
+// use it.
+package templgen
 
 import (
 	"bytes"
@@ -14,12 +18,11 @@ import (
 	templruntime "github.com/a-h/templ/runtime"
 )
 
-// templ's own packages, as a library, do what `templ generate` does: no
-// templ binary is needed. The generator is the version this module links,
-// which is the app's when the app is in it or requires the same templ.
+// The generator is the version this module links, which is the app's when
+// the app is in it or requires the same templ.
 
-// gen parses and generates a .templ: its literals and its Go, unformatted.
-func gen(path string) (generator.GeneratorOutput, []byte, error) {
+// Gen parses and generates a .templ: its literals and its Go, unformatted.
+func Gen(path string) (generator.GeneratorOutput, []byte, error) {
 	t, err := parser.Parse(path)
 	if err != nil {
 		return generator.GeneratorOutput{}, nil, fmt.Errorf("%s: %w", path, err)
@@ -32,9 +35,9 @@ func gen(path string) (generator.GeneratorOutput, []byte, error) {
 	return out, b.Bytes(), nil
 }
 
-// writeGo formats a .templ's Go (gofmt, where a bad Go expression in the
+// WriteGo formats a .templ's Go (gofmt, where a bad Go expression in the
 // .templ shows) and writes its _templ.go if that changed.
-func writeGo(path string, raw []byte) error {
+func WriteGo(path string, raw []byte) error {
 	src, err := format.Source(raw)
 	if err != nil {
 		return fmt.Errorf("%s: formatting the generated Go: %w", path, err)
@@ -46,17 +49,17 @@ func writeGo(path string, raw []byte) error {
 	return writeFile(target, src)
 }
 
-// stringsFile is where templ's dev mode, with TEMPL_DEV_MODE_ROOT set to
+// StringsFile is where templ's dev mode, with TEMPL_DEV_MODE_ROOT set to
 // root, reads a .templ's strings: the name templ's runtime gives it, in
 // root (the runtime reads the root from the environment, which is the
 // process's, not the Reloader's).
-func stringsFile(root, path string) string {
+func StringsFile(root, path string) string {
 	return filepath.Join(root, filepath.Base(templruntime.GetDevModeTextFileName(path)))
 }
 
-// writeText writes a .templ's strings where templ's dev mode reads them.
-func writeText(root, path string, out generator.GeneratorOutput) error {
-	return writeFile(stringsFile(root, path), []byte(strings.Join(out.Literals, "\n")))
+// WriteText writes a .templ's strings where templ's dev mode reads them.
+func WriteText(root, path string, out generator.GeneratorOutput) error {
+	return writeFile(StringsFile(root, path), []byte(strings.Join(out.Literals, "\n")))
 }
 
 // writeFile writes b to a temporary file beside path and renames it over
