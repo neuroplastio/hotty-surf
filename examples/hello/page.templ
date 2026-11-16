@@ -1,0 +1,36 @@
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+templ Page(a *App) {
+	<main class="flex flex-col gap-4 p-4" { surf.On(ctx, "page", surf.Key(a.Shortcut))... }>
+		<h1 class="text-lg font-semibold">{ a.Greeting }, { a.who() }!</h1>
+		<div class="flex gap-2">
+			<input
+				class="input"
+				placeholder="Your name"
+				value={ a.Name }
+				{ surf.On(ctx, "name", surf.Input(a.SetName))... }
+			/>
+			@ui.Select(&a.greetingMenu, ui.SelectProps{
+				ID:       "greeting",
+				Items:    greetings,
+				Value:    a.Greeting,
+				OnChange: a.SetGreeting,
+			})
+		</div>
+		@ui.Button(ui.ButtonProps{ID: "wave", OnClick: a.Wave}) {
+			@ui.Lucide("hand", "size-4")
+			Wave
+		}
+		<p class="text-sm text-muted-foreground">
+			Waved { strconv.Itoa(a.Waves) } times.
+		</p>
+		@ui.Toaster(&a.toasts)
+	</main>
+}

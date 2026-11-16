@@ -1,4 +1,9 @@
 [tools]
 go = "1.26.8"
-# TinyGo, for make wasm and make stack.
+# TinyGo, for the release wasm (gov NEIO-15: TinyGo is the shipped wasm's
+# compiler; dev builds and live reload stay on Go).
 tinygo = "0.43.0"
+# templ generates the views' Go from .templ files.
+"go:github.com/a-h/templ/cmd/templ" = "0.3.1118"
+# msgp generates the codecs of what goes on a wire or across a reload (gov P-3).
+"go:github.com/tinylib/msgp" = "1.6.5"
