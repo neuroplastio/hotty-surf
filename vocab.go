@@ -318,7 +318,7 @@ var Attrs = []Attr{
 	{Name: "card", Type: TypeBool, Doc: "a group's panel: a fill a step lighter than the page, its rows split by rules", Tags: []string{"box"}, Func: "ModCard"},
 	{Name: "ring", Type: TypeBool, Doc: "a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven", Tags: []string{"dot"}, Func: "ModRing"},
 	{Name: "target", Type: TypeBool, Doc: "a dot in a ring (◉), a state that asks for someone", Tags: []string{"dot"}, Func: "ModTarget"},
-	{Name: "pulse", Type: TypeBool, Doc: "a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells", Tags: []string{"dot"}, Func: "ModPulse"},
+	{Name: "pulse", Type: TypeBool, Doc: "a dot that pulses, slow and calm, for a working state, under reduced motion too; still in the cells", Tags: []string{"dot"}, Func: "ModPulse"},
 	{Name: "attention", Type: TypeBool, Doc: "it waits for someone: drawn in the warn tone", Tags: []string{"button", "item"}, Func: "ModAttention"},
 	{Name: "cap", Type: TypeBool, Doc: "a key drawn boxed, a cap: a sheet of keys", Tags: []string{"key"}, Func: "ModCap"},
 	{Name: "strip", Type: TypeBool, Doc: "a row that is a strip of chrome: its three rows its start, centre and end", Tags: []string{"row"}, Func: "ModStrip"},

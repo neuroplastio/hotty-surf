@@ -175,8 +175,8 @@ func (n *Node) Ring() *Node { return n.dotShape("u-ring", "○") }
 func (n *Node) Target() *Node { return n.dotShape("u-target", "◉") }
 
 // Pulse makes a Dot pulse, for a working state: on a host it fades slowly
-// to 0.4 and back, 1.6 s each way, and holds still where the person asks
-// for less motion (prefers-reduced-motion). The cells draw the dot. On
+// to 0.4 and back, 1.6 s each way, under prefers-reduced-motion too: it
+// tells a state and moves nothing. The cells draw the dot. On
 // other nodes it does nothing.
 func (n *Node) Pulse() *Node {
 	if !slices.Contains(n.class, "u-dot") {

@@ -965,7 +965,7 @@ but in a palette.
 | 84 | `card` | bool | `box` | modifier | a group's panel: a fill a step lighter than the page, its rows split by rules | `<box card/>` | `<div id="r" class="u-box u-card"></div>` |
 | 85 | `ring` | bool | `dot` | modifier | a dot hollow (○), a state told by its shape as well as its tone; a host has no shape for offline (◌) until a dashed ring is proven | `<dot ring/>` | `<span id="r" class="u-glyph u-dot u-ring">○</span>` |
 | 86 | `target` | bool | `dot` | modifier | a dot in a ring (◉), a state that asks for someone | `<dot target/>` | `<span id="r" class="u-glyph u-dot u-target">◉</span>` |
-| 87 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state; still where the person asks for less motion, and in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
+| 87 | `pulse` | bool | `dot` | modifier | a dot that pulses, slow and calm, for a working state, under reduced motion too; still in the cells | `<dot pulse/>` | `<span id="r" class="u-glyph u-dot u-pulse">●</span>` |
 | 88 | `attention` | bool | `button`, `item` | modifier | it waits for someone: drawn in the warn tone | `<button pill attention>build</button>` | `<button id="r" class="u-btn u-pill is-att" type="button">build</button>` |
 | 89 | `cap` | bool | `key` | modifier | a key drawn boxed, a cap: a sheet of keys | `<key cap>ctrl+b</key>` | `<kbd id="r" class="u-key u-cap">ctrl+b</kbd>` |
 | 90 | `strip` | bool | `row` | modifier | a row that is a strip of chrome: its three rows its start, centre and end | `<row strip><row/><row/><row/></row>` | `<div id="r" class="u-row u-strip"><div id="r.0" class="u-row"></div><div id="r.1" class="u-row"></div><div id="r.2" class="u-row"></div></div>` |

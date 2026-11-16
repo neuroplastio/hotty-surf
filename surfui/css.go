@@ -30,8 +30,8 @@ const StyleID = "surf-css"
 //     acts on a click, the text caret over a field only, the arrow over
 //     the rest, text included;
 //   - one animation, a pulse dot's opacity (hotty-blitz runs them from
-//     0.6.1), off under prefers-reduced-motion and in the gate's still
-//     documents; no transitions, filters or text-shadow.
+//     0.6.1), which plays under prefers-reduced-motion too, still only
+//     in the gate's documents; no transitions, filters or text-shadow.
 //
 // Its tokens are custom properties under .u-surface, named for roles
 // (gov R-24), never levels: the layers (canvas, popover, raised, float),

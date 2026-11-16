@@ -554,7 +554,7 @@ registers widgets runs its own cases with `conformance.Suite`
 | `cap` | bool | key | a key drawn boxed, a cap: a sheet of keys. A key is a muted glyph run elsewhere |
 | `card` | bool | box | a group's panel: a fill a step lighter than the page, room across inside it, its rows split by `rule`s; a `semibold` text over it is its title, a `small muted` one under it its note |
 | `ring`, `target` | bool | dot | a dot's shape, so that a state is told by its shape as well as its tone: `ring` hollow (○), `target` a dot in a ring (◉), and the cells draw those glyphs. A host has no shape for ◌ (offline) until a dashed ring is proven, so offline there is a `ring`, told by its tone and its row's text |
-| `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, and holds still where the person asks for less motion (`prefers-reduced-motion`); the cells draw the plain dot |
+| `pulse` | bool | dot | a working state: on a host the dot fades slowly to 0.4 and back, 1.6 s each way, under `prefers-reduced-motion` too, since it tells a state and moves nothing; the cells draw the plain dot |
 | `search` | bool | row | a row drawn as a search field: its `icon` and a `bare` field in one field's box |
 | `fit` | bool | row | a row of what fits, laid out from its right end: its first child is at the right end and the next to its left, each whole; the row keeps its first children and leaves out those it has no room for, the last first ("`fit` and `fit-start`") |
 | `fit-start` | bool | row | the same from its left end: its first child at the left end and the next to its right; it keeps its first children and leaves out the last first |

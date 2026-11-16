@@ -535,11 +535,11 @@
 .u-dot.u-ring { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 .u-dot.u-target { --u-dw: 10px; padding: 3px; background-clip: content-box; box-shadow: inset 0 0 0 1.5px currentColor; }
 /* A working state's dot pulses: slow and calm, its opacity from full to
-   0.4 and back, 1.6s each way; still where the person asks for less
-   motion. (The gate's stories draw it still: stories.CSS.) */
+   0.4 and back, 1.6s each way. It plays under prefers-reduced-motion too:
+   a working state is told by it, and it does not move anything. (The
+   gate's stories draw it still: stories.CSS.) */
 @keyframes u-pulse { from { opacity: 1; } to { opacity: 0.4; } }
 .u-dot.u-pulse { animation: u-pulse 1.6s ease-in-out infinite alternate; }
-@media (prefers-reduced-motion: reduce) { .u-dot.u-pulse { animation: none; } }
 
 /* A chip: on the hover fill, its text muted, no hairline (plx's chrome
    contract); a chip in a tone's fill keeps that. A chip a row tall but in Compact, where Blitz places a
@@ -1039,10 +1039,6 @@
 .u-compact .u-list > .u-item::before, .u-roomy .u-list > .u-item::before { left: 0; top: 8px; bottom: 8px; }
 .u-list:focus-within > .u-item.is-sel::before, :focus-within > .u-list > .u-item.is-sel::before { opacity: 1; transform: none; }
 .u-list > .u-item.is-att::before { background: var(--u-warn); }
-@media (prefers-reduced-motion: reduce) {
-  .u-item, .u-list > .u-item::before { transition: none; }
-  .u-list > .u-item::before { transform: none; }
-}
 .u-item + .u-item { margin-top: var(--u-ig); }
 /* A tree: an item's depth is room in front of it, two cells a level, so
    that its fill and its selection's bar keep the row's left edge; the

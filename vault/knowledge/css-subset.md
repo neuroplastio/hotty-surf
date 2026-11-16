@@ -120,7 +120,7 @@ Gone with the look (2026-10-31), and so no longer shown here: a 1px
 | `:hover`, `:focus`, `:focus-visible`, `:focus-within` | the looks proven, forced | button/bare, field/focus, switch/focus, cycle/states, list/nav, list/entries, list/keyboard, box/scroll. `:focus-within` matches in Blitz from fork patch 0043 (R-23's build), not before |
 | `@media (prefers-color-scheme: light)` | unknown | the gate's host is dark |
 | `[data-on~="click"]` with `:hover`, `:focus-visible` (what acts on a click shows it) | the looks proven, forced | text/clickable |
-| `@keyframes`, `@media (prefers-reduced-motion: reduce)` | proven for the pulse | headless hottyterm 0.8, reduced motion on → off → on without updating the document: the dot is still, pulses, then is still again; journal `2026-11-15-reduced-motion` |
+| `@keyframes`, `@media (prefers-reduced-motion: reduce)` | proven for the pulse | headless hottyterm 0.8, reduced motion on → off → on without updating the document: the dot is still, pulses, then is still again; journal `2026-11-15-reduced-motion`. Since 2026-11-16 the kit sets no reduce rule: the maintainer wants light transitions and progress animations to play under reduced motion |
 
 ## Elements
 
