@@ -1,0 +1,889 @@
+package cells
+
+import (
+	"strconv"
+	"strings"
+	"unicode"
+	"unicode/utf8"
+
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
+)
+
+// The layout: the document drawn in cells, a subset of CSS's (SUBSET.md).
+// Blocks stack; text and controls flow in lines and wrap; a flex row puts
+// its items side by side, sized by their content, the room left going to
+// those that grow; a flex column stacks them with its gap; a table sizes
+// its columns by their cells. What it draws is a canvas as wide as the
+// Screen, with the element under each cell, and each element's box.
+
+// infinite is the width content is measured at: wide enough that nothing
+// wraps.
+const infinite = 1 << 20
+
+type rect struct{ x, y, w, h int }
+
+func (r rect) has(x, y int) bool { return x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h }
+
+func (r rect) union(o rect) rect {
+	if r.w == 0 && r.h == 0 {
+		return o
+	}
+	x0, y0 := min(r.x, o.x), min(r.y, o.y)
+	x1, y1 := max(r.x+r.w, o.x+o.w), max(r.y+r.h, o.y+o.h)
+	return rect{x0, y0, x1 - x0, y1 - y0}
+}
+
+type layout struct {
+	c         *Screen
+	cv        *canvas // nil while measuring
+	boxes     map[*html.Node]rect
+	fields    map[*html.Node]rect // each field's cells, its value's place
+	height    int
+	caret     [2]int
+	hasCaret  bool
+	measuring bool
+	memo      map[memoKey]int
+}
+
+type memoKey struct {
+	n   *html.Node
+	pre bool
+}
+
+// inh is what an element's content inherits: its look, and whether white
+// space is kept.
+type inh struct {
+	look look
+	pre  bool
+}
+
+// layout is the document laid out at the Screen's width, made again after
+// anything changed.
+func (c *Screen) layout() *layout {
+	if c.lay != nil {
+		return c.lay
+	}
+	l := &layout{
+		c:      c,
+		cv:     &canvas{w: max(c.cols, 1)},
+		boxes:  map[*html.Node]rect{},
+		fields: map[*html.Node]rect{},
+		memo:   map[memoKey]int{},
+	}
+	if c.body != nil {
+		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
+	}
+	c.lay = l
+	if t := c.revealAfter; t != nil {
+		c.revealAfter = nil
+		c.reveal(t)
+	}
+	c.scroll = min(c.scroll, max(l.height-c.rows, 0))
+	c.scroll = max(c.scroll, 0)
+	return l
+}
+
+// measure is the width n's content takes when nothing wraps.
+func (l *layout) measure(n *html.Node, in inh) int {
+	k := memoKey{n, in.pre}
+	if w, ok := l.memo[k]; ok {
+		return w
+	}
+	m := &layout{c: l.c, measuring: true, memo: l.memo}
+	_, w := m.node(n, 0, 0, infinite, in)
+	l.memo[k] = w
+	return w
+}
+
+func (l *layout) ext(n *html.Node, r rect) {
+	if l.cv == nil {
+		return
+	}
+	l.boxes[n] = l.boxes[n].union(r)
+}
+
+// lookOf is the look of n's content: what it inherits, what its style
+// adds, reverse while it has the keyboard, dim while disabled.
+func (l *layout) lookOf(n *html.Node, in look, st box) look {
+	lk := in | st.look
+	if st.look&lBold == 0 && in&lBold != 0 && strings.Contains(" "+attr(n, "class")+" ", " font-normal ") {
+		lk &^= lBold
+	}
+	if n == l.c.focused && l.c.active {
+		lk |= lReverse
+	}
+	if disabled(n) {
+		lk |= lDim
+	}
+	return lk
+}
+
+// node lays n out as a block at x, y, w wide, and says how high it is and
+// how wide its content is.
+func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
+	st := styleOf(n)
+	if n.Type != html.ElementNode || st.display == dNone && n != l.c.body {
+		return 0, 0
+	}
+	if n == l.c.body {
+		st = box{}
+	}
+	in.look = l.lookOf(n, in.look, st)
+	in.pre = in.pre || st.pre
+	if n.DataAtom == atom.Hr {
+		for i := 0; i < w && l.cv != nil; i++ {
+			l.cv.put(x+i, y, "─", 1, in.look|lDim, n)
+		}
+		l.done(n, rect{x, y, w, 1})
+		return 1, 1
+	}
+	cx, cy := x+st.padL, y+st.padT
+	cw := max(w-st.padL-st.padR, 1)
+	if m := marker(n); m != "" {
+		mw := widthOf(charsOf(m))
+		if l.cv != nil {
+			px := cx
+			for _, ch := range charsOf(m) {
+				l.cv.put(px, cy, ch.s, ch.w, in.look, n)
+				px += ch.w
+			}
+		}
+		cx += mw
+		cw = max(cw-mw, 1)
+		used += mw
+	}
+	var ch, cu int
+	switch st.display {
+	case dFlex:
+		if st.column {
+			ch, cu = l.children(n, cx, cy, cw, in, true, st.gapY)
+		} else {
+			ch, cu = l.row(n, st, cx, cy, cw, in)
+		}
+	case dTable:
+		ch, cu = l.table(n, cx, cy, cw, in)
+	case dAtom:
+		ch, cu = l.inline([]*html.Node{n}, n.Parent, cx, cy, cw, in, true)
+	default:
+		if n.DataAtom == atom.Details && !has(n, "open") {
+			// Only its summary shows.
+			var sum []*html.Node
+			for k := n.FirstChild; k != nil; k = k.NextSibling {
+				if k.DataAtom == atom.Summary {
+					sum = append(sum, k)
+					break
+				}
+			}
+			for _, k := range sum {
+				ch, cu = l.node(k, cx, cy, cw, in)
+			}
+		} else {
+			ch, cu = l.children(n, cx, cy, cw, in, false, 0)
+		}
+	}
+	h = st.padT + ch + st.padB
+	used += st.padL + cu + st.padR
+	if h == 0 && marker(n) != "" {
+		h = 1
+	}
+	l.done(n, rect{x, y, w, h})
+	return h, used
+}
+
+// done records n's box, and makes its empty cells its own.
+func (l *layout) done(n *html.Node, r rect) {
+	if l.cv == nil {
+		return
+	}
+	l.boxes[n] = r
+	l.cv.own(r.x, r.y, r.w, r.h, n)
+}
+
+// marker is a list item's marker, where its list has one (list-disc,
+// list-decimal: Tailwind's lists have none).
+func marker(n *html.Node) string {
+	if n.DataAtom != atom.Li || n.Parent == nil {
+		return ""
+	}
+	switch styleOf(n.Parent).list {
+	case "disc":
+		return "• "
+	case "decimal":
+		i := 1
+		for k := n.Parent.FirstChild; k != nil && k != n; k = k.NextSibling {
+			if k.DataAtom == atom.Li {
+				i++
+			}
+		}
+		return strconv.Itoa(i) + ". "
+	}
+	return ""
+}
+
+// children lays out n's children as a block's: blocks stacked, and the
+// text and controls between them in lines. As a flex column's (items),
+// every child is an item of its own, gap rows apart.
+func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int) (h, used int) {
+	var run []*html.Node
+	count := 0
+	add := func(hh, u int) {
+		if hh > 0 {
+			if count > 0 {
+				h += gap
+			}
+			count++
+		}
+		h += hh
+		used = max(used, u)
+	}
+	at := func() int {
+		if count > 0 {
+			return y + h + gap
+		}
+		return y + h
+	}
+	flush := func() {
+		if len(run) > 0 {
+			add(l.inline(run, n, x, at(), w, in, false))
+			run = nil
+		}
+	}
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		switch k.Type {
+		case html.TextNode:
+			run = append(run, k)
+		case html.ElementNode:
+			st := styleOf(k)
+			if st.display == dNone {
+				continue
+			}
+			if !items && (st.display == dInline || st.display == dAtom) && !hasBlock(k) {
+				run = append(run, k)
+				continue
+			}
+			flush()
+			add(l.node(k, x, at(), w, in))
+		}
+		if items {
+			flush()
+		}
+	}
+	flush()
+	return h, used
+}
+
+// hasBlock says whether an inline element holds a block, which makes it
+// one.
+func hasBlock(n *html.Node) bool {
+	if isAtom(n) {
+		return false
+	}
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		if k.Type != html.ElementNode {
+			continue
+		}
+		switch st := styleOf(k); st.display {
+		case dBlock, dFlex, dTable:
+			return true
+		case dInline:
+			if hasBlock(k) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// row lays out a flex row: its items side by side, each as wide as its
+// content, the room left to those that grow, or between them
+// (justify-between); too little room is taken from the widest.
+func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
+	type item struct {
+		n    *html.Node
+		w    int
+		grow bool
+	}
+	var items []item
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		switch k.Type {
+		case html.TextNode:
+			if !in.pre && strings.TrimSpace(k.Data) == "" {
+				continue
+			}
+			it := item{n: k}
+			m := &layout{c: l.c, measuring: true, memo: l.memo}
+			_, it.w = m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
+			items = append(items, it)
+		case html.ElementNode:
+			ks := styleOf(k)
+			if ks.display == dNone {
+				continue
+			}
+			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k)})
+		}
+	}
+	if len(items) == 0 {
+		return 0, 0
+	}
+	gaps := st.gapX * (len(items) - 1)
+	sum := 0
+	for _, it := range items {
+		sum += it.w
+	}
+	used = sum + gaps
+	if l.measuring {
+		for _, it := range items {
+			hh := 0
+			if it.n.Type == html.TextNode {
+				hh = 1
+			} else {
+				hh, _ = l.node(it.n, 0, 0, it.w, in)
+			}
+			h = max(h, hh)
+		}
+		return h, used
+	}
+	avail := max(w-gaps, len(items))
+	lead, between := 0, make([]int, len(items))
+	if sum <= avail {
+		extra := avail - sum
+		growers := 0
+		for _, it := range items {
+			if it.grow {
+				growers++
+			}
+		}
+		switch {
+		case growers > 0:
+			for i := range items {
+				if items[i].grow {
+					share := extra / growers
+					extra -= share
+					growers--
+					items[i].w += share
+				}
+			}
+		case st.between && len(items) > 1:
+			for i := 0; extra > 0; i = (i + 1) % (len(items) - 1) {
+				between[i]++
+				extra--
+			}
+		case st.end:
+			lead = extra
+		case st.center:
+			lead = extra / 2
+		}
+	} else {
+		for over := sum - avail; over > 0; over-- {
+			wi := 0
+			for i := range items {
+				if items[i].w > items[wi].w {
+					wi = i
+				}
+			}
+			if items[wi].w <= 1 {
+				break
+			}
+			items[wi].w--
+		}
+	}
+	cx := x + lead
+	for i, it := range items {
+		var hh int
+		if it.n.Type == html.TextNode {
+			hh, _ = l.inline([]*html.Node{it.n}, n, cx, y, it.w, in, false)
+		} else {
+			hh, _ = l.node(it.n, cx, y, it.w, in)
+		}
+		h = max(h, hh)
+		cx += it.w + st.gapX + between[i]
+	}
+	return h, used
+}
+
+// table lays out a table: its rows' cells in columns as wide as their
+// widest cell, two cells apart, a rule under its head.
+func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
+	type row struct {
+		tr    *html.Node
+		cells []*html.Node
+		head  bool
+	}
+	var rows []row
+	addRow := func(tr *html.Node, head bool) {
+		if styleOf(tr).display == dNone {
+			return
+		}
+		r := row{tr: tr, head: head}
+		for k := tr.FirstChild; k != nil; k = k.NextSibling {
+			if (k.DataAtom == atom.Td || k.DataAtom == atom.Th) && styleOf(k).display != dNone {
+				r.cells = append(r.cells, k)
+			}
+		}
+		rows = append(rows, r)
+	}
+	var caption *html.Node
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		switch k.DataAtom {
+		case atom.Tr:
+			addRow(k, false)
+		case atom.Thead, atom.Tbody, atom.Tfoot:
+			if styleOf(k).display == dNone {
+				continue
+			}
+			for r := k.FirstChild; r != nil; r = r.NextSibling {
+				if r.DataAtom == atom.Tr {
+					addRow(r, k.DataAtom == atom.Thead)
+				}
+			}
+		case atom.Caption:
+			caption = k
+		}
+	}
+	if caption != nil {
+		ch, cu := l.node(caption, x, y, w, in)
+		h += ch
+		used = cu
+	}
+	ncols := 0
+	for _, r := range rows {
+		ncols = max(ncols, len(r.cells))
+	}
+	if ncols == 0 {
+		return h, used
+	}
+	const gap = 2
+	colW := make([]int, ncols)
+	for _, r := range rows {
+		for j, td := range r.cells {
+			colW[j] = max(colW[j], l.measure(td, in))
+		}
+	}
+	sum := 0
+	for _, cw := range colW {
+		sum += cw
+	}
+	used = max(used, sum+gap*(ncols-1))
+	if !l.measuring {
+		for over := sum + gap*(ncols-1) - w; over > 0; over-- {
+			wi := 0
+			for j := range colW {
+				if colW[j] > colW[wi] {
+					wi = j
+				}
+			}
+			if colW[wi] <= 1 {
+				break
+			}
+			colW[wi]--
+		}
+	}
+	total := gap * (ncols - 1)
+	for _, cw := range colW {
+		total += cw
+	}
+	for i, r := range rows {
+		cx, rh := x, 0
+		for j, td := range r.cells {
+			hh, _ := l.node(td, cx, y+h, colW[j], in)
+			rh = max(rh, hh)
+			cx += colW[j] + gap
+		}
+		l.done(r.tr, rect{x, y + h, total, rh})
+		h += rh
+		if r.head && (i+1 == len(rows) || !rows[i+1].head) {
+			for k := 0; k < total && l.cv != nil; k++ {
+				l.cv.put(x+k, y+h, "─", 1, in.look|lDim, n)
+			}
+			h++
+		}
+	}
+	return h, used
+}
+
+// piece is a piece of a line: a word, a space, a control, a break.
+type piece struct {
+	kind  uint8
+	chars []char
+	w, h  int
+	look  look
+	own   *html.Node // the innermost element it is of
+	hard  bool       // a kept space, which a line may start with
+	full  bool       // a field as wide as its line
+}
+
+const (
+	pWord uint8 = iota
+	pSpace
+	pAtom
+	pBreak
+)
+
+// inline lays out text and inline elements in lines w wide, wrapping at
+// spaces, and a word too long for a line wherever it must. fill makes a
+// lone field as wide as the line (a flex item's).
+func (l *layout) inline(nodes []*html.Node, stop *html.Node, x, y, w int, in inh, fill bool) (h, used int) {
+	var ps []piece
+	for _, n := range nodes {
+		ps = l.pieces(ps, n, in, fill)
+	}
+	cx, cy, lineH := 0, 0, 1
+	lineUsed := false
+	newline := func() {
+		cy += lineH
+		cx, lineH, lineUsed = 0, 1, false
+	}
+	for _, p := range ps {
+		switch p.kind {
+		case pBreak:
+			newline()
+			continue
+		case pSpace:
+			if cx == 0 && !p.hard {
+				continue
+			}
+			if cx+1 > w {
+				newline()
+				if !p.hard {
+					continue
+				}
+			}
+			l.paint(p.chars, x+cx, y+cy, p.look, p.own, stop)
+			cx++
+		case pWord:
+			if cx > 0 && cx+p.w > w {
+				newline()
+			}
+			for _, ch := range p.chars {
+				if cx > 0 && cx+ch.w > w {
+					newline()
+				}
+				l.paint([]char{ch}, x+cx, y+cy, p.look, p.own, stop)
+				cx += ch.w
+				lineUsed = true
+				used = max(used, cx)
+			}
+			continue
+		case pAtom:
+			aw := p.w
+			if p.full && !l.measuring {
+				if w-cx < 8 && cx > 0 {
+					newline()
+				}
+				aw = w - cx
+			}
+			if cx > 0 && cx+aw > w {
+				newline()
+			}
+			aw = min(aw, w)
+			l.paintAtom(p, x+cx, y+cy, aw, stop)
+			cx += aw
+			lineH = max(lineH, p.h)
+		}
+		lineUsed = true
+		used = max(used, cx)
+	}
+	// A break that ends the text makes no line of its own.
+	h = cy
+	if lineUsed {
+		h += lineH
+	}
+	return h, used
+}
+
+// paint draws characters at x, y as own's, and grows the boxes of own and
+// its inline ancestors up to stop.
+func (l *layout) paint(cs []char, x, y int, lk look, own, stop *html.Node) {
+	if l.cv == nil {
+		return
+	}
+	cx := x
+	for _, ch := range cs {
+		l.cv.put(cx, y, ch.s, ch.w, lk, own)
+		cx += ch.w
+	}
+	r := rect{x, y, cx - x, 1}
+	for n := own; n != nil && n != stop; n = n.Parent {
+		l.ext(n, r)
+	}
+}
+
+// pieces adds n's pieces to ps.
+func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
+	switch n.Type {
+	case html.TextNode:
+		return textPieces(ps, n.Data, in, n.Parent)
+	case html.ElementNode:
+	default:
+		return ps
+	}
+	st := styleOf(n)
+	if st.display == dNone {
+		return ps
+	}
+	if n.DataAtom == atom.Br {
+		return append(ps, piece{kind: pBreak, own: n})
+	}
+	if st.display == dAtom {
+		p := l.atom(n, st, in)
+		p.full = p.full || fill && isField(n)
+		if p.w > 0 || p.full {
+			ps = append(ps, p)
+		}
+		return ps
+	}
+	in.look = l.lookOf(n, in.look, st)
+	in.pre = in.pre || st.pre
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		ps = l.pieces(ps, k, in, false)
+	}
+	return ps
+}
+
+// textPieces are a text's words and spaces: white space collapsed to one
+// space, or kept with pre, its line breaks breaks.
+func textPieces(ps []piece, s string, in inh, own *html.Node) []piece {
+	space := func() piece {
+		return piece{kind: pSpace, chars: []char{{" ", 1}}, w: 1, look: in.look, own: own, hard: in.pre}
+	}
+	for len(s) > 0 {
+		r, size := utf8.DecodeRuneInString(s)
+		switch {
+		case in.pre && (r == '\n' || r == '\r'):
+			if r == '\r' && strings.HasPrefix(s[1:], "\n") {
+				size++
+			}
+			ps = append(ps, piece{kind: pBreak, own: own})
+			s = s[size:]
+		case in.pre && r == '\t':
+			for range 4 {
+				ps = append(ps, space())
+			}
+			s = s[size:]
+		case unicode.IsSpace(r) && r != ' ':
+			if in.pre {
+				ps = append(ps, space())
+			} else if len(ps) == 0 || ps[len(ps)-1].kind != pSpace {
+				ps = append(ps, space())
+			}
+			s = s[size:]
+		default:
+			end := strings.IndexFunc(s, func(r rune) bool { return unicode.IsSpace(r) && r != ' ' })
+			if end < 0 {
+				end = len(s)
+			}
+			cs := charsOf(s[:end])
+			ps = append(ps, piece{kind: pWord, chars: cs, w: widthOf(cs), look: in.look, own: own})
+			s = s[end:]
+		}
+	}
+	return ps
+}
+
+// atom is a control's piece: a button as [ label ], a box as [x] or (•), a
+// field as wide as its size, a select as its option, an image as its alt.
+func (l *layout) atom(n *html.Node, st box, in inh) piece {
+	lk := l.lookOf(n, in.look, st)
+	p := piece{kind: pAtom, h: 1, look: lk, own: n, full: st.full}
+	text := func(s string) piece {
+		p.chars = charsOf(s)
+		p.w = widthOf(p.chars)
+		p.full = false
+		return p
+	}
+	typ := strings.ToLower(attr(n, "type"))
+	switch {
+	case n.DataAtom == atom.Img:
+		if alt := attr(n, "alt"); alt != "" {
+			p.look |= lDim
+			return text("[" + alt + "]")
+		}
+		return text("")
+	case n.DataAtom == atom.Button || n.DataAtom == atom.A ||
+		n.DataAtom == atom.Input && (typ == "button" || typ == "submit" || typ == "reset" || typ == "image"):
+		label := textOf(n)
+		if n.DataAtom == atom.Input {
+			label = attr(n, "value")
+		}
+		if label == "" {
+			label = attr(n, "aria-label")
+		}
+		if label == "" {
+			label = attr(n, "title")
+		}
+		if label == "" {
+			label = "·"
+		}
+		switch attr(n, "role") {
+		case "menuitem", "menuitemcheckbox", "menuitemradio", "option", "tab":
+			return text(" " + label + " ")
+		}
+		return text("[ " + label + " ]")
+	case n.DataAtom == atom.Input && typ == "checkbox":
+		if l.c.field(n).checked {
+			return text("[x]")
+		}
+		return text("[ ]")
+	case n.DataAtom == atom.Input && typ == "radio":
+		if l.c.field(n).checked {
+			return text("(•)")
+		}
+		return text("( )")
+	case n.DataAtom == atom.Select:
+		v := l.c.field(n).ed.Value
+		label := ""
+		for _, o := range options(n) {
+			if o.value == v {
+				label = o.label
+				break
+			}
+		}
+		return text("[" + label + " ▾]")
+	case n.DataAtom == atom.Input && (typ == "range" || typ == "color" || typ == "file"):
+		return text("[" + typ + "]")
+	}
+	// A text field.
+	p.w = 20
+	if v, err := strconv.Atoi(attr(n, "size")); err == nil && v > 0 {
+		p.w = v
+	}
+	if n.DataAtom == atom.Textarea {
+		p.h = 2
+		if v, err := strconv.Atoi(attr(n, "rows")); err == nil && v > 0 {
+			p.h = v
+		}
+		if v, err := strconv.Atoi(attr(n, "cols")); err == nil && v > 0 {
+			p.w = v
+		}
+	}
+	return p
+}
+
+// paintAtom draws a control's piece at x, y, w wide.
+func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
+	if l.cv == nil {
+		return
+	}
+	n := p.own
+	if !isTextField(n) {
+		cs := p.chars
+		if widthOf(cs) > w {
+			cs = clip(cs, w)
+		}
+		l.paint(cs, x, y, p.look, n, stop)
+		return
+	}
+	r := rect{x, y, w, p.h}
+	l.fields[n] = r
+	for m := n; m != nil && m != stop; m = m.Parent {
+		l.ext(m, r)
+	}
+	f := l.c.field(n)
+	base := p.look | lUnderline
+	for j := 0; j < p.h; j++ {
+		for i := 0; i < w; i++ {
+			l.cv.put(x+i, y+j, " ", 1, base, n)
+		}
+	}
+	focused := n == l.c.focused && l.c.active
+	if f.ed.Value == "" {
+		if ph := attr(n, "placeholder"); ph != "" {
+			cs := clip(charsOf(ph), w)
+			cx := x
+			for _, ch := range cs {
+				l.cv.put(cx, y, ch.s, ch.w, base|lDim, n)
+				cx += ch.w
+			}
+		}
+		if focused {
+			l.caret, l.hasCaret = [2]int{x, y}, true
+		}
+		return
+	}
+	chars := graphemesOf(f.ed.Value)
+	if n.DataAtom == atom.Textarea {
+		f.ed.Width, f.ed.Rows = w, p.h
+		rows := f.ed.Wrap()
+		f.top = f.ed.Scroll(f.top)
+		for j := 0; j < p.h && f.top+j < len(rows); j++ {
+			rw := rows[f.top+j]
+			cx := x
+			for _, g := range chars[rw.Start:rw.End] {
+				for _, ch := range charsOf(g) {
+					if cx+ch.w > x+w {
+						break
+					}
+					l.cv.put(cx, y+j, ch.s, ch.w, base, n)
+					cx += ch.w
+				}
+			}
+		}
+		if focused {
+			row, col := f.ed.Cursor()
+			l.caret, l.hasCaret = [2]int{x + col, y + row - f.top}, true
+		}
+		return
+	}
+	// An input: one line, scrolled along to keep the caret in view.
+	var cs []char
+	caretCol := 0
+	for i, g := range chars {
+		if i == f.ed.Caret {
+			caretCol = widthOf(cs)
+		}
+		if f.ed.Password {
+			cs = append(cs, char{"•", 1})
+		} else {
+			cs = append(cs, charsOf(g)...)
+		}
+	}
+	if f.ed.Caret >= len(chars) {
+		caretCol = widthOf(cs)
+	}
+	if focused {
+		if caretCol < f.off {
+			f.off = caretCol
+		}
+		if caretCol >= f.off+w {
+			f.off = caretCol - w + 1
+		}
+	} else {
+		f.off = 0
+	}
+	skip, cx := 0, x
+	for _, ch := range cs {
+		if skip < f.off {
+			skip += ch.w
+			continue
+		}
+		if cx+ch.w > x+w {
+			break
+		}
+		l.cv.put(cx, y, ch.s, ch.w, base, n)
+		cx += ch.w
+	}
+	if focused {
+		l.caret, l.hasCaret = [2]int{x + caretCol - f.off, y}, true
+	}
+}
+
+// clip is cs in w cells, ending in … where it was cut.
+func clip(cs []char, w int) []char {
+	if widthOf(cs) <= w {
+		return cs
+	}
+	if w <= 0 {
+		return nil
+	}
+	var out []char
+	n := 0
+	for _, c := range cs {
+		if n+c.w > w-1 {
+			break
+		}
+		out = append(out, c)
+		n += c.w
+	}
+	return append(out, char{"…", 1})
+}

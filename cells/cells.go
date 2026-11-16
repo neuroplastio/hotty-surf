@@ -20,12 +20,45 @@
 package cells
 
 import (
+	"errors"
+	"fmt"
+
+	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 )
 
 // A Screen is one surface drawn in a rectangle of cells.
 type Screen struct {
 	_ struct{}
+
+	cols, rows int
+	events     func(hotty.Event)
+	plat       hotty.Platform
+
+	// The surface's document: its name, and its tree under a body of the
+	// Screen's own, with its elements by id (made when asked for).
+	name string
+	body *html.Node
+	ids  map[string]*html.Node
+	// What its controls hold (SPEC §6.4).
+	fields map[*html.Node]*field
+	// press is the placement's Press: on unless a placement turns it off.
+	press bool
+
+	// active is whether the Screen has the program's keyboard (Focus);
+	// focused is the element that has the keyboard, and remembered the
+	// one that had it when the Screen lost it.
+	active     bool
+	focused    *html.Node
+	remembered *html.Node
+
+	lay         *layout
+	scroll      int
+	revealAfter *html.Node
+
+	// The events an act sends, sent once it is done (flush).
+	queue    []hotty.Event
+	flushing bool
 }
 
 // New makes a Screen cols wide and rows high. events hears each event the
@@ -36,7 +69,14 @@ type Screen struct {
 // surf.Surface.Event takes; the program hands it to the
 // surface's Event, and handles what Event returns.
 func New(cols, rows int, events func(hotty.Event)) *Screen {
-	panic("L0")
+	return &Screen{
+		cols:   max(cols, 1),
+		rows:   max(rows, 1),
+		events: events,
+		fields: map[*html.Node]*field{},
+		press:  true,
+		active: true,
+	}
 }
 
 // Write takes hotty commands, as a surface writes them to a terminal, one
@@ -44,13 +84,35 @@ func New(cols, rows int, events func(hotty.Event)) *Screen {
 // after. A command the Screen can't apply is an error, as a host's refusal
 // is: the program sends the surface's document again.
 func (c *Screen) Write(p []byte) (int, error) {
-	panic("L0")
+	var sc hotty.Scanner
+	var dec hotty.Decoder
+	segs := append(sc.Feed(p), sc.Flush()...)
+	for _, sg := range segs {
+		if sg.Kind != hotty.SegmentOSC {
+			continue
+		}
+		m, r := dec.Feed(string(sg.Data))
+		var err error
+		switch r {
+		case hotty.Complete:
+			err = c.apply(m)
+		case hotty.Invalid:
+			err = errMalformed
+		}
+		if err != nil {
+			c.flush()
+			return 0, err
+		}
+	}
+	c.flush()
+	return len(p), nil
 }
 
 // Resize makes the Screen cols wide and rows high, and lays the document out
 // again.
 func (c *Screen) Resize(cols, rows int) {
-	panic("L0")
+	c.cols, c.rows = max(cols, 1), max(rows, 1)
+	c.lay = nil
 }
 
 // Key presses a key on the Screen, named as hotty names keys. The focused
@@ -59,25 +121,46 @@ func (c *Screen) Resize(cols, rows int) {
 // what a host passes the program: the program offers it to the surface's
 // Key, and keeps it if the surface doesn't take it either.
 func (c *Screen) Key(key string) (taken bool) {
-	panic("L0")
+	taken = c.key(key)
+	c.flush()
+	return taken
 }
 
 // Paste puts text into the focused field, as a bracketed paste reaches a
 // host; taken is false when no field has the keyboard.
 func (c *Screen) Paste(text string) (taken bool) {
-	panic("L0")
+	n := c.focused
+	if c.body == nil || !c.active || !isTextField(n) {
+		return false
+	}
+	f := c.field(n)
+	if f.ed.Paste(text) {
+		c.edited(n, f)
+	}
+	c.lay = nil
+	c.flush()
+	return true
 }
 
 // Click clicks the cell at col, row of the Screen, from its top left; taken
 // says whether it landed on something of the surface's.
 func (c *Screen) Click(col, row int) (taken bool) {
-	panic("L0")
+	taken = c.click(col, row)
+	c.flush()
+	return taken
 }
 
 // Wheel scrolls what is under the cell at col, row by lines, down for a
 // positive number; taken says whether anything scrolled.
 func (c *Screen) Wheel(col, row, lines int) (taken bool) {
-	panic("L0")
+	if c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
+		return false
+	}
+	h := c.layout().height
+	to := max(min(c.scroll+lines, h-c.rows), 0)
+	taken = to != c.scroll
+	c.scroll = to
+	return taken
 }
 
 // Focus gives the Screen the keyboard (in) or takes it away, as the
@@ -85,17 +168,131 @@ func (c *Screen) Wheel(col, row, lines int) (taken bool) {
 // it commits a field being edited and blurs the surface, as a host's blur
 // does.
 func (c *Screen) Focus(in bool) {
-	panic("L0")
+	switch {
+	case in && !c.active:
+		c.active = true
+		c.lay = nil
+		if n := c.remembered; n != nil && c.attached(n) && focusable(n) {
+			c.remembered = nil
+			c.focusTo(n, true)
+		}
+	case !in && c.active:
+		if c.body != nil {
+			n := c.focused
+			c.blur()
+			if n == nil {
+				// The surface hears it all the same: what a blur closes
+				// (Outside) closes.
+				c.emit(hotty.Event{Kind: hotty.EventBlur})
+			}
+			c.remembered = n
+		}
+		c.active = false
+		c.lay = nil
+	}
+	c.flush()
 }
 
 // Lines are the Screen's rows, each its cells as text with ANSI colours and
 // attributes (SGR), for the program to draw where the surface goes.
 func (c *Screen) Lines() []string {
-	panic("L0")
+	l := c.layout()
+	out := make([]string, c.rows)
+	for i := range out {
+		out[i] = l.cv.line(c.scroll+i, c.cols)
+	}
+	return out
 }
 
 // Cursor is where the focused field's caret is, from the top left, and
 // whether there is one.
 func (c *Screen) Cursor() (col, row int, ok bool) {
-	panic("L0")
+	if c.body == nil || !c.active || c.focused == nil {
+		return 0, 0, false
+	}
+	l := c.layout()
+	if !l.hasCaret {
+		return 0, 0, false
+	}
+	col, row = l.caret[0], l.caret[1]-c.scroll
+	if row < 0 || row >= c.rows || col < 0 || col >= c.cols {
+		return 0, 0, false
+	}
+	return col, row, true
+}
+
+var errMalformed = errors.New("cells: a malformed hotty command")
+
+// apply does one command, as a host does (SPEC §5, §6, §10.1). A Screen
+// shows one surface: the one its last document named.
+func (c *Screen) apply(m hotty.Message) error {
+	a, s := hotty.Get(m.Control, "a"), hotty.Get(m.Control, "s")
+	if a == "doc" {
+		return c.load(s, string(m.Payload))
+	}
+	if s != c.name && c.body != nil {
+		return nil // another surface's
+	}
+	switch a {
+	case "place":
+		p, err := hotty.PlacementOf(m)
+		if err != nil {
+			return err
+		}
+		switch p.Press {
+		case hotty.On:
+			c.press = true
+		case hotty.Off:
+			c.press = false
+		}
+		return nil
+	case "del":
+		c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
+		c.fields = map[*html.Node]*field{}
+		c.changed()
+		return nil
+	case "delta", "field", "focus", "blur":
+	default:
+		return nil
+	}
+	if c.body == nil {
+		return fmt.Errorf("cells: %s for a surface with no document (%s)", a, hotty.ENOENT)
+	}
+	switch a {
+	case "delta":
+		ops, err := hotty.DeltaOf(m)
+		if err != nil {
+			return err
+		}
+		return c.delta(ops)
+	case "field":
+		if err := c.setField(m); err != nil {
+			return fmt.Errorf("cells: a=field: %w", err)
+		}
+	case "focus":
+		var n *html.Node
+		if t := hotty.Get(m.Control, "t"); t != "" {
+			if n = c.byID(t); n == nil {
+				return fmt.Errorf("cells: a=focus: %w", errNoTarget)
+			}
+		} else if n = c.focused; n == nil {
+			l := c.layout()
+			walk(c.body, func(k *html.Node) {
+				if _, shown := l.boxes[k]; n == nil && shown && tabbable(k) {
+					n = k
+				}
+			})
+		}
+		if n == nil {
+			return nil
+		}
+		if !c.active {
+			c.remembered = n
+			return nil
+		}
+		c.focusTo(n, false)
+	case "blur":
+		c.blur()
+	}
+	return nil
 }
