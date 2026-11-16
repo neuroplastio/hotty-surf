@@ -154,9 +154,7 @@ templ CommandItem(id string, c *Command, value string, fn func(), class string) 
 
 // SelectList is shadcn's select content on a Popup: while p is open, a
 // listbox of SelectOption. The trigger is the app's button with Trigger.
-//
-// Deprecated: use NewSelect (Basecoat's select.js, checked against it in a
-// browser). SelectList stays for the Tasks app's parity with its TSX port.
+// An app uses ui.Select; SelectList stays for Tasks' markup, the spike's.
 templ SelectList(id string, p *Popup, side string) {
 	if p.Open {
 		{{ p.begin() }}
@@ -172,8 +170,6 @@ templ SelectList(id string, p *Popup, side string) {
 
 // SelectOption is an option of a SelectList: a click or Enter runs fn and
 // closes it; on marks the picked one.
-//
-// Deprecated: use NewSelect, as for SelectList.
 templ SelectOption(id string, p *Popup, on bool, value string, fn func()) {
 	{{ pick := func() { fn(); p.Close() } }}
 	<div data-slot="select-item" role="option" data-value={ value } aria-selected={ bstr(on) } data-state={ state(on, "checked", "unchecked") } tabindex="-1" class={ cls("relative flex w-full items-center", when(p.item(pick), "active")) } { surf.On(ctx, id, surf.Click(pick))... }>
