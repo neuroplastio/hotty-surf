@@ -1,11 +1,16 @@
 package rt
 
-import "golang.org/x/net/html"
+import (
+	"github.com/tinylib/msgp/msgp"
+	"golang.org/x/net/html"
+)
 
 // Peek is what a test rig and the reload child read of a surface that no
 // exported method gives: package surf fills it in its init, so that the
 // packages that read it need not import surf's insides (and surf need not
-// export them).
+// export them). Snapshot, Adopt, Restyle and Document run on the surface's
+// driver goroutine: reload calls them through the surface's Do, or before
+// its driver starts.
 var Peek struct {
 	// Tree is the tree the host was last sent, under its #root; nil before
 	// the first Document.
@@ -13,4 +18,19 @@ var Peek struct {
 	// Faults are the faults of the renders since the last call, which it
 	// forgets.
 	Faults func(s any) []string
+
+	// Snapshot writes the surface as the host has it, for a dev reload's
+	// handover; an error before its first Document.
+	Snapshot func(s any, w *msgp.Writer) error
+	// Adopt takes a snapshot of the surface of the same name, from the
+	// build before, as what the host has: the next Update sends a delta
+	// from it, where Document would send it all again. Call it before the
+	// surface's first Document; it wakes Pending.
+	Adopt func(s any, r *msgp.Reader) error
+	// Restyle swaps the surface's stylesheet; the next Update sends it (a
+	// dev reload's css tier). It wakes Pending.
+	Restyle func(s any, css string) error
+	// Document is the whole document the host was last sent (the old
+	// build's, read directly at a handover); "" before the first.
+	Document func(s any) (string, error)
 }

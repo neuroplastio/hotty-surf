@@ -59,6 +59,7 @@ type Surface struct {
 	hoverIn  []string
 	asked    string // the element the last frame's Autofocus asked for
 	askDue   bool   // a Document's Autofocus, sent at the next Update
+	cssDue   bool   // the stylesheet changed (a dev reload): sent at the next Update
 	sending  bool
 	deferred []hotty.Event
 

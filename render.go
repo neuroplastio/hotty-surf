@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tinylib/msgp/msgp"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 
@@ -29,6 +30,16 @@ func init() {
 		f := x.faults
 		x.faults = nil
 		return f
+	}
+	rt.Peek.Snapshot = func(s any, w *msgp.Writer) error { return s.(*Surface).snap(w) }
+	rt.Peek.Adopt = func(s any, r *msgp.Reader) error { return s.(*Surface).adopt(r) }
+	rt.Peek.Restyle = func(s any, css string) error { return s.(*Surface).restyle(css) }
+	rt.Peek.Document = func(s any) (string, error) {
+		x := s.(*Surface)
+		if x.prev == nil {
+			return "", nil
+		}
+		return x.documentOf(x.prev)
 	}
 }
 

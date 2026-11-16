@@ -27,7 +27,7 @@ func (s *Surface) document() (string, error) {
 	// what the markup gives them, and the keyboard and the pointer are
 	// heard of again.
 	s.reset()
-	s.focused, s.focusIn, s.hoverIn = "", nil, nil
+	s.focused, s.focusIn, s.hoverIn, s.cssDue = "", nil, nil, false
 	root, f, ids, byID, err := s.render()
 	if err != nil {
 		return "", err
@@ -72,6 +72,11 @@ func (s *Surface) send() error {
 		return err
 	}
 	d := differ{s: s}
+	if s.cssDue {
+		css := s.css
+		d.ops = append(d.ops, hotty.Op{Op: "text", Target: cssID, Value: &css})
+		s.cssDue = false
+	}
 	d.el(s.prev, root)
 	s.prev, s.frame, s.ids, s.byID = root, f, ids, byID
 	var cmds []string
