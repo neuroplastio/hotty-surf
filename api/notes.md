@@ -325,3 +325,20 @@ What took the floor from about 2 ms to under 1:
   (its sort and facet counts over 10,000 rows), as in the spike. Of the
   runtime's share, templ's render, the numbering's maps, the diff and
   hotty-go's encoding are about even, and the GC is about a fifth.
+
+### TinyGo
+
+- **Tasks' release wasm builds under TinyGo 0.43 as it is**, with no mod
+  of templ: 2,633,599 bytes, 846,066 gzipped (the spike's was 2,505,134
+  / 804,387; the cells host and the reload hook aren't linked in js, the
+  kit's stylesheet and the fast parser are the difference). L0's templ
+  mods (net/http and regexp out, about −190 KB gzipped) are a size win,
+  not a need, so they aren't landed: the brief lands them if the build
+  needs them. They are the first thing to land when size matters (L4's
+  build --wasm).
+- **It runs, and writes Go's stream:** scripts/wasm-stream.sh runs Tasks
+  built by Go and by TinyGo in Node on run.App's page glue, sends the
+  same 85 events (internal/wasmcheck), and compares the bytes: 149,893,
+  the same.
+- **`make tinygo`** (in `make check`) builds tasks, nav and hello for
+  js/wasm under TinyGo.

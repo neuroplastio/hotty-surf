@@ -30,9 +30,9 @@ CAP       ?=
 # internal/apitool the API lock's tools.
 SUBMODULES := surftea internal/apitool
 
-.PHONY: check fmt tidy gen vet lint test api api-check api-frozen api-approve pack coverage print-cap clean
+.PHONY: check fmt tidy gen vet lint test tinygo api api-check api-frozen api-approve pack coverage print-cap clean
 
-check: fmt tidy gen vet lint test api-check coverage   ## the gate
+check: fmt tidy gen vet lint test tinygo api-check coverage   ## the gate
 
 fmt:   ## fails, listing them, when gofmt would change files
 	@out="$$($(GOFMT) -l $$(git ls-files -co --exclude-standard '*.go'))"; \
@@ -63,6 +63,13 @@ lint:   ## staticcheck, pinned; from the module cache when it has it
 test:   ## the tests, with the race detector
 	$(GO) test -race ./...
 	@for m in $(SUBMODULES); do $(GO) -C $$m test -race ./... || exit 1; done
+
+# The examples' release wasm, as TinyGo builds it (gov NEIO-15).
+# scripts/wasm-stream.sh holds its stream to Go's, with node.
+TINYGO ?= $(CAP) mise x -- tinygo
+tinygo:   ## the examples build for js/wasm under TinyGo
+	@mkdir -p bin
+	@for e in tasks nav hello; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done
 
 # The API lock (NEIO-15's review loop). api/v0.7.txt is the approved API, in
 # Go's api/ format; it changes only when the maintainer approves a pack.
