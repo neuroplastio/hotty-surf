@@ -9,6 +9,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.8
 	github.com/clipperhouse/displaywidth v0.11.0
 	github.com/clipperhouse/uax29/v2 v2.7.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/tinylib/msgp v1.6.5
 	golang.org/x/net v0.62.0
 	golang.org/x/sys v0.50.0
@@ -20,6 +21,7 @@ require (
 )
 
 require (
+	github.com/a-h/parse v0.0.42 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect

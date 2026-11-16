@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/tinylib/msgp/msgp"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 
@@ -73,26 +74,36 @@ type termMsg struct {
 func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter) error {
 	term := devwire.NewConn(termW)
 	defer term.Close()
+	// The reader is drive's reading goroutine's from the hello on, which
+	// gives it back.
 	tr := devwire.NewReader(termW)
-	defer devwire.PutReader(tr)
 	var hello devwire.TermHello
 	if h, err := devwire.ReadHead(tr); err != nil {
+		devwire.PutReader(tr)
 		return fmt.Errorf("run: the term wire: %w", err)
 	} else if h.Type != devwire.Notification || h.Method != "hello" {
+		devwire.PutReader(tr)
 		return fmt.Errorf("run: the term wire began with %q", h.Method)
 	} else if err := devwire.Decode(tr, &hello); err != nil {
+		devwire.PutReader(tr)
 		return fmt.Errorf("run: the term wire: %w", err)
 	}
-	name := s.Name()
 	s.Attach(termOut{term}, hello.Caps)
 
 	ctx, cancel := context.WithCancel(ctx)
 	done, err := devchild.Serve(ctx, reloadW, "app")
 	if err != nil {
 		cancel()
+		devwire.PutReader(tr)
 		return err
 	}
+	panicking := true
 	defer func() {
+		if panicking {
+			// A panic is a crash, which the reloader hears as the wire
+			// closing: it isn't told the process is leaving.
+			return
+		}
 		// Leaving is no crash: the reloader hears it before the process
 		// ends.
 		cancel()
@@ -101,7 +112,15 @@ func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter)
 		case <-time.After(time.Second):
 		}
 	}()
+	err = drive(ctx, s, term, tr)
+	panicking = false
+	return err
+}
 
+// drive is the app's loop under hotty-surf run: its first frame, then the
+// terminal's input, the surface's updates and the document asked for.
+func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Reader) error {
+	name := s.Name()
 	show := func() error {
 		doc, err := s.Document()
 		if err != nil {
@@ -127,6 +146,7 @@ func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter)
 
 	msgs := make(chan termMsg)
 	go func() {
+		defer devwire.PutReader(tr)
 		defer close(msgs)
 		for {
 			h, err := devwire.ReadHead(tr)
