@@ -60,7 +60,7 @@ templates, cel-lite and the interpreted mode are gone.
 
 ## Where things live
 
-- `ARCHITECTURE.md` (L1 writes it): how the runtime works inside.
+- `ARCHITECTURE.md`: how the runtime works inside.
 - The packages an app imports: the root package `surf` (Surface, On and
   the handlers), `ui` (Basecoat's components; `ui/code` for code
   blocks), `run` (an app in a terminal or a browser), `surftest`, `lint`,
