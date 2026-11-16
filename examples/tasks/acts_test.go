@@ -60,9 +60,20 @@ func pssMB() float64 {
 	return kb / 1024
 }
 
-type counter struct{ n int }
+// counter counts what the surface writes; TASKS_STREAM=<file> keeps it
+// too, for comparing two runtimes' streams.
+type counter struct {
+	n   int
+	tee io.Writer
+}
 
-func (c *counter) Write(p []byte) (int, error) { c.n += len(p); return len(p), nil }
+func (c *counter) Write(p []byte) (int, error) {
+	c.n += len(p)
+	if c.tee != nil {
+		c.tee.Write(p)
+	}
+	return len(p), nil
+}
 
 // TestActs times the acts of the spike's benchmark (T1–T8), in the same
 // order and counts: TASKS_ACTS=<dir> writes native-<size>-r<run>.jsonl
@@ -113,6 +124,14 @@ func acts(t *testing.T, dir string, n, rounds, run int) {
 	enc := json.NewEncoder(f)
 	pss0 := pssMB()
 	out := &counter{}
+	if p := os.Getenv("TASKS_STREAM"); p != "" {
+		f, err := os.Create(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		out.tee = f
+	}
 	var (
 		cur      *sample
 		m0, m1   runtime.MemStats

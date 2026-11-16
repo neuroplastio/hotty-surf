@@ -1611,7 +1611,7 @@ func rowActions(a *App, r string, i int) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", surf.On(ctx, r+"-menu", surf.Click(func() { a.OpenRowMenu(i) }), surf.Key(a.rowMenu.Keys)))
+			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", surf.On(ctx, r+"-menu", surf.Click(func() { a.OpenRowMenu(i) }), surf.Key(a.rowMenu.Keys), surf.Focus(a.rowMenu.Moved)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

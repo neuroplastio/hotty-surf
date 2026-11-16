@@ -1,0 +1,71 @@
+// A sessions sidebar, after plx's nav: a header, then a row for each
+// session. It composes the spike's chrome (internal/spikeui); everything is
+// a function of the App.
+package main
+
+import (
+	"neuroplast.io/hotty-surf"
+	ui "neuroplast.io/hotty-surf/internal/spikeui"
+)
+
+templ Page(a *App) {
+	<div class="pot-surface dark flex flex-col bg-sidebar text-muted-foreground">
+		@header()
+		@ui.List("Sessions") {
+			for _, s := range a.sessions {
+				@sessionRow(a, s)
+			}
+		}
+		if a.selected != "" {
+			{{ surf.Autofocus(ctx, "row-"+a.selected) }}
+		}
+	</div>
+}
+
+templ header() {
+	<div class="mb-2.5 flex h-9 items-center px-4">
+		@ui.Symbol(ui.ShapeAccountTree, "size-3")
+		<span class="ml-2.5 text-xs leading-none">nav</span>
+		<div class="-mr-1.5 ml-auto flex items-center">
+			@ui.IconButton("Hosts", ui.ShapePublic, "text-sidebar-primary", nil)
+			@ui.IconButton("Screens", ui.ShapeDesktopWindows, "", nil)
+			@ui.IconButton("Layout", ui.ShapeGridView, "", nil)
+			@ui.IconButton("More", ui.ShapeMoreHoriz, "", nil)
+			@ui.IconButton("Collapse", ui.ShapeRemove, "", nil)
+		</div>
+	</div>
+}
+
+templ sessionRow(a *App, s Session) {
+	@ui.ListItem(ui.ListItemProps{
+		ID:       rowID(s),
+		Selected: a.selected == s.ID,
+		Active:   a.active == s.ID,
+		OnClick:  func() { a.Pick(s.ID) },
+		Keys:     a.Keys,
+		Leading:  sessionIcon(s),
+		Trailing: ui.LayoutThumb(s.Layout),
+	}) {
+		@ui.ItemTitle() {
+			{ s.Name }
+		}
+		@ui.ItemSubtitle() {
+			{ s.Workspace }
+		}
+		if st := Status(s); st != "" {
+			@ui.ItemDetail() {
+				{ st }
+			}
+		}
+	}
+}
+
+// sessionIcon is a row's terminal glyph, badged while the session is busy.
+templ sessionIcon(s Session) {
+	<span class="relative mt-0.5 mr-2 flex size-4 shrink-0">
+		@ui.Symbol(ui.ShapeTerminal, "size-4")
+		if isBusy(s) {
+			@ui.BusyBadge("absolute -right-1 -bottom-1 size-3")
+		}
+	</span>
+}

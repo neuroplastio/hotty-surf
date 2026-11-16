@@ -197,3 +197,88 @@ is the last appendix.
 - `cmd/hotty-surf`'s commands (new, run, ctl, lint, shot, build --wasm, serve,
   book). They are a CLI, not Go API, and go in the build tools pack (L4).
 - The bodies. L1 moves the spike's runtime in behind these signatures.
+
+## L1 notes
+
+The judgement calls of L1, which moves the spike's runtime in behind the
+locked API, in the order they were made.
+
+### The runtime (package surf)
+
+- **One command per Write, no Sync.** The spike wrapped each act's
+  commands in synchronized output; a Surface writes each command in a
+  Write of its own (Surface.Attach's doc: a cells.Screen hears whole
+  commands). The driver may wrap them.
+- **The first frame's Autofocus is sent at the next Update.** Document
+  returns the document, which the driver sends; the a=focus can't go
+  with it, so Document wakes Pending and the next Update sends it.
+- **Click always adds `data-on="click"`,** as the spike's native.Click
+  did, though a button reports clicks without it: the stream stays the
+  spike's byte for byte. Key, Focus, Outside and Hover add only the id.
+- **Keys are scoped:** a key goes to the Key handlers of the focused
+  element and its ancestors, innermost first; with nothing focused, to
+  #root's children (the page's own). The spike's page-wide keys
+  (native.Keys) are gone: Tasks puts the row menu's keys on its trigger,
+  nav its list's keys on each row (spikeui.ListItemProps.Keys).
+- **Focus from the program calls no Focus handler.** The host sends no
+  focus event for it (SPEC §10.1); the surface moves its own idea of the
+  keyboard, so keys go to the element asked for.
+- **A blur is also Outside** for every Outside handler, as the brief's
+  "outside click, including blur" asks.
+- **Input on a change runs only when the value differs** from the last
+  input event's: a commit after edits Input heard is no edit of its own.
+- **Hidden inputs aren't live fields:** input of type hidden, button,
+  submit, reset and image keep their value attribute in the markup.
+- **A textarea's value is its text,** and its children aren't diffed: the
+  host's text is the field's.
+- **A duplicate surf.On id is a fault** (surftest fails on it); the first
+  registration wins in the frame.
+
+### surftest
+
+- **Click tolerates what reports no click** (text, a field): the test
+  host still presses, focuses or blurs, as a user's click would.
+- **Click on a check box or radio toggles it,** with space, since the
+  test host's click only focuses it. A user's click toggles.
+
+### The kit
+
+- **ui gets the spike's markup** for Button, Badge, Card, Icon and Kbd,
+  and its stylesheet (kit.css, Basecoat 1.1.0 and the kit's Tailwind
+  build). A variant, size or icon a component doesn't take is a fault.
+- **The keycap formatting is internal** (`internal/keycap`): exporting
+  it would change the API.
+- **The spike's hand-written popups and nav's chrome move to
+  `internal/spikeui`,** for the two examples, until L2's ui components
+  replace them. Their keys moved from the page onto the elements that
+  hear them (the trigger, the content).
+- **An item click gives the keyboard back.** A menu item takes no focus,
+  so a click on one blurs the surface (SPEC §10.1) and the popup's keys
+  would go nowhere. A popup that stays open asks for its home (its
+  trigger, or a command's search) in the next frame. Since Autofocus
+  only moves the keyboard when the frame before didn't ask, each home
+  has a Focus handler (Popup.Moved) whose only job is to make the blur
+  render a frame that asks for nothing.
+
+### Byte identity with the spike
+
+Tasks (upstream's 100 rows with two rounds of every act, and 1,000 rows
+with the full 20 rounds) and nav (a click, the arrows, Enter, a click)
+were run on v07 and on a scratch copy of the spike with the same acts.
+nav's copy had the same made-up data. Each stream was decoded message by
+message (internal/streamdump), and the documents, deltas and field sets
+are byte for byte the same. The differences are all intended:
+
+- the spike placed its own surface (a=place); in v0.7 the driver does;
+- v07 sends an a=focus for a command's search after an item click (the
+  bullet above), which the spike's page-wide keys never needed.
+
+To rerun: TASKS_STREAM=<file> with TASKS_ACTS in examples/tasks, and
+NAV_STREAM=<file> in examples/nav.
+
+### Examples
+
+- **nav's data is made up** (sessions named api, docs, web, infra and
+  notes): the spike's mock named real workspaces.
+- **Tasks' data is upstream's** (shadcn/ui, MIT), in
+  examples/tasks/data with a NOTICE.
