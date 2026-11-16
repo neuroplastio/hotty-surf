@@ -1,0 +1,399 @@
+// shadcn/ui's Tasks example (MIT), upstream's page.tsx and components/*,
+// as one templ file on Basecoat (MIT): the same markup the hotty-pot
+// spike's port rendered, with the state and every handler in Go (tasks.go).
+// Its popups are the spike's hand-written ones (internal/spikeui) until
+// L2's ui components replace them.
+//
+// lint:allow-file px,hidden-below: upstream's markup as it is (w-[100px], hidden lg:flex on columns), held byte for byte to the spike's
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/spikeui"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+templ Page(a *App) {
+	<div class="pot-surface dark">
+		<div class="flex h-full flex-1 flex-col gap-8 p-8">
+			<div class="flex items-center justify-between gap-2">
+				<div class="flex flex-col gap-1">
+					<h2 class="text-2xl font-semibold tracking-tight">Welcome back!</h2>
+					<p class="text-muted-foreground">Here's a list of your tasks for this month.</p>
+				</div>
+				<div class="flex items-center gap-2">
+					@userNav(a)
+				</div>
+			</div>
+			<div class="flex flex-col gap-4">
+				@toolbar(a)
+				<div class="overflow-hidden rounded-md border">
+					<div data-slot="table-container" class="table-container">
+						<table data-slot="table" class="table">
+							@header(a)
+							@body(a)
+						</table>
+					</div>
+				</div>
+				@pagination(a)
+			</div>
+		</div>
+	</div>
+}
+
+// Empty is the page with nothing on it: a memory baseline (main --empty).
+templ Empty() {
+	<div class="pot-surface dark"></div>
+}
+
+templ userNav(a *App) {
+	<div data-slot="dropdown-menu" class="dropdown-menu align-middle">
+		<button data-slot="dropdown-menu-trigger" data-variant="ghost" class="btn relative h-8 w-8 rounded-full" { spikeui.Trigger(ctx, "user", "menu", &a.user)... }>
+			<span data-slot="avatar" class="avatar relative flex shrink-0 overflow-hidden h-9 w-9">
+				<span data-slot="avatar-fallback" class="bg-muted flex size-full items-center justify-center rounded-full">SC</span>
+			</span>
+		</button>
+		@spikeui.Menu("user-menu", &a.user, "end", "w-56") {
+			@spikeui.MenuLabel("font-normal") {
+				<div class="flex flex-col space-y-1">
+					<p class="text-sm leading-none font-medium">shadcn</p>
+					<p class="text-xs leading-none text-muted-foreground">m@example.com</p>
+				</div>
+			}
+			@spikeui.MenuSeparator()
+			<div data-slot="dropdown-menu-group" role="group">
+				@spikeui.MenuItem("user-profile", &a.user, nil, "") {
+					Profile
+					@spikeui.MenuShortcut() {
+						⇧⌘P
+					}
+				}
+				@spikeui.MenuItem("user-billing", &a.user, nil, "") {
+					Billing
+					@spikeui.MenuShortcut() {
+						⌘B
+					}
+				}
+				@spikeui.MenuItem("user-settings", &a.user, nil, "") {
+					Settings
+					@spikeui.MenuShortcut() {
+						⌘S
+					}
+				}
+				@spikeui.MenuItem("user-team", &a.user, nil, "") {
+					New Team
+				}
+			</div>
+			@spikeui.MenuSeparator()
+			@spikeui.MenuItem("user-logout", &a.user, nil, "") {
+				Log out
+				@spikeui.MenuShortcut() {
+					⇧⌘Q
+				}
+			}
+		}
+	</div>
+}
+
+templ toolbar(a *App) {
+	<div class="flex items-center justify-between">
+		<div class="flex flex-1 items-center gap-2">
+			<input data-slot="input" type="text" placeholder="Filter tasks..." class="input h-8 w-[150px] lg:w-[250px]" value={ a.filter } { surf.On(ctx, "filter", surf.Input(a.SetFilter))... }/>
+			if !a.hidden["status"] {
+				@facetFilter(a, "status", "Status", statuses)
+			}
+			if !a.hidden["priority"] {
+				@facetFilter(a, "priority", "Priority", priorities)
+			}
+			if a.filtered() {
+				<button data-slot="button" type="button" data-variant="ghost" data-size="sm" class="btn" { surf.On(ctx, "reset", surf.Click(a.ResetFilters))... }>
+					Reset
+					@ui.Icon("x", "")
+				</button>
+			}
+		</div>
+		<div class="flex items-center gap-2">
+			@viewOptions(a)
+			<button data-slot="button" type="button" data-size="sm" class="btn">Add Task</button>
+		</div>
+	</div>
+}
+
+templ facetFilter(a *App, col, title string, opts []Option) {
+	{{ c := a.facetCmd[col] }}
+	{{ picked := a.facet[col] }}
+	<div data-slot="popover" class="popover align-middle">
+		<button data-slot="popover-trigger" data-variant="outline" data-size="sm" class="btn h-8 border-dashed" { spikeui.Trigger(ctx, "facet-"+col, "dialog", &c.Popup)... }>
+			@ui.Icon("circle-plus", "")
+			{ title }
+			if len(picked) > 0 {
+				@spikeui.Separator("vertical", "mx-2 h-4")
+				@ui.Badge(ui.BadgeProps{Variant: ui.Secondary, Class: "rounded-sm px-1 font-normal lg:hidden"}) {
+					{ strconv.Itoa(len(picked)) }
+				}
+				<div class="hidden gap-1 lg:flex">
+					if len(picked) > 2 {
+						@ui.Badge(ui.BadgeProps{Variant: ui.Secondary, Class: "rounded-sm px-1 font-normal"}) {
+							{ strconv.Itoa(len(picked)) } selected
+						}
+					} else {
+						for _, o := range opts {
+							if isPicked(picked, o.Value) {
+								@ui.Badge(ui.BadgeProps{Variant: ui.Secondary, Class: "rounded-sm px-1 font-normal"}) {
+									{ o.Label }
+								}
+							}
+						}
+					}
+				</div>
+			}
+		</button>
+		@spikeui.Popover("facet-"+col, &c.Popup, "start", "w-[200px] p-0") {
+			@spikeui.CommandBox("facet-"+col, c, title) {
+				if !anyMatch(opts, c.Search) {
+					<div data-slot="command-empty" class="py-6 text-center text-sm">No results found.</div>
+				} else {
+					<div data-slot="command-group" role="group">
+						for _, o := range opts {
+							@spikeui.CommandItem("facet-"+col+"-"+slug(o.Value), c, o.Label+count(a.counts[col][o.Value]), toggleFacet(a, col, o.Value), "") {
+								<div class={ cls("flex size-4 items-center justify-center rounded-[4px] border", when(isPicked(picked, o.Value), "border-primary bg-primary text-primary-foreground"), when(!isPicked(picked, o.Value), "border-input [&_svg]:invisible")) }>
+									@ui.Icon("check", "size-3.5 text-primary-foreground")
+								</div>
+								@ui.Icon(o.Icon, "size-4 text-muted-foreground")
+								<span>{ o.Label }</span>
+								if n := a.counts[col][o.Value]; n > 0 {
+									<span class="ml-auto flex size-4 items-center justify-center font-mono text-xs text-muted-foreground">{ strconv.Itoa(n) }</span>
+								}
+							}
+						}
+					</div>
+				}
+				if len(picked) > 0 && spikeui.Fuzzy("Clear filters", c.Search) {
+					<div data-slot="command-separator" role="separator"></div>
+					<div data-slot="command-group" role="group">
+						@spikeui.CommandItem("facet-"+col+"-clear", c, "Clear filters", func() { a.ClearFacet(col) }, "justify-center text-center") {
+							Clear filters
+						}
+					</div>
+				}
+			}
+		}
+	</div>
+}
+
+templ viewOptions(a *App) {
+	<div data-slot="dropdown-menu" class="dropdown-menu align-middle">
+		<button data-slot="dropdown-menu-trigger" data-variant="outline" data-size="sm" class="btn ml-auto hidden h-8 lg:flex" { spikeui.Trigger(ctx, "view", "menu", &a.view)... }>
+			@ui.Icon("settings-2", "")
+			View
+		</button>
+		@spikeui.Menu("view-menu", &a.view, "end", "w-[150px]") {
+			@spikeui.MenuLabel("") {
+				Toggle columns
+			}
+			@spikeui.MenuSeparator()
+			for _, col := range []string{"title", "status", "priority"} {
+				@spikeui.MenuCheck("view-"+col, &a.view, !a.hidden[col], func(on bool) { a.Hide(col, !on) }, "capitalize") {
+					{ col }
+				}
+			}
+		}
+	</div>
+}
+
+templ header(a *App) {
+	{{ all, some := a.pageSelected() }}
+	<thead data-slot="table-header">
+		<tr data-slot="table-row">
+			<th data-slot="table-head" colspan="1">
+				@spikeui.Checkbox("select-all", all, some && !all, "Select all", a.SelectPage)
+			</th>
+			<th data-slot="table-head" colspan="1"><div>Task</div></th>
+			for _, c := range []struct{ id, title string }{{"title", "Title"}, {"status", "Status"}, {"priority", "Priority"}} {
+				if !a.hidden[c.id] {
+					<th data-slot="table-head" colspan="1">
+						@columnHeader(a, c.id, c.title)
+					</th>
+				}
+			}
+			<th data-slot="table-head" colspan="1"></th>
+		</tr>
+	</thead>
+}
+
+templ columnHeader(a *App, col, title string) {
+	{{ p := a.header[col] }}
+	<div class="flex items-center gap-2">
+		<div data-slot="dropdown-menu" class="dropdown-menu align-middle">
+			<button data-slot="dropdown-menu-trigger" data-variant="ghost" data-size="sm" class="btn -ml-3 h-8 data-[state=open]:bg-accent" { spikeui.Trigger(ctx, "sort-"+col, "menu", p)... }>
+				<span>{ title }</span>
+				if a.sortCol == col && a.sortDesc {
+					@ui.Icon("arrow-down", "")
+				} else if a.sortCol == col {
+					@ui.Icon("arrow-up", "")
+				} else {
+					@ui.Icon("chevrons-up-down", "")
+				}
+			</button>
+			@spikeui.Menu("sort-"+col+"-menu", p, "start", "") {
+				@spikeui.MenuItem("sort-"+col+"-asc", p, func() { a.Sort(col, false) }, "") {
+					@ui.Icon("arrow-up", "")
+					Asc
+				}
+				@spikeui.MenuItem("sort-"+col+"-desc", p, func() { a.Sort(col, true) }, "") {
+					@ui.Icon("arrow-down", "")
+					Desc
+				}
+				@spikeui.MenuSeparator()
+				@spikeui.MenuItem("sort-"+col+"-hide", p, func() { a.Hide(col, true) }, "") {
+					@ui.Icon("eye-off", "")
+					Hide
+				}
+			}
+		</div>
+	</div>
+}
+
+templ body(a *App) {
+	<tbody data-slot="table-body">
+		if len(a.rows) == 0 {
+			<tr data-slot="table-row">
+				<td data-slot="table-cell" colspan="6" class="h-24 text-center">No results.</td>
+			</tr>
+		}
+		for k, i := range a.page() {
+			@row(a, k, i)
+		}
+	</tbody>
+}
+
+// row is the k-th row of the page, showing task i: its elements' ids are
+// the row's place, so a new page patches the rows in place.
+templ row(a *App, k, i int) {
+	{{ t := &a.all[i] }}
+	{{ r := "r" + strconv.Itoa(k) }}
+	<tr data-slot="table-row" data-state={ selState(a.selected[i]) }>
+		<td data-slot="table-cell">
+			@spikeui.Checkbox(r+"-sel", a.selected[i], false, "Select row", func(on bool) { a.Select(i, on) })
+		</td>
+		<td data-slot="table-cell"><div class="w-[80px]">{ t.ID }</div></td>
+		if !a.hidden["title"] {
+			<td data-slot="table-cell">
+				<div class="flex gap-2">
+					if l := find(labels, t.Label); l != nil {
+						@ui.Badge(ui.BadgeProps{Variant: ui.Outline}) {
+							{ l.Label }
+						}
+					}
+					<span class="max-w-[500px] truncate font-medium">{ t.Title }</span>
+				</div>
+			</td>
+		}
+		if !a.hidden["status"] {
+			<td data-slot="table-cell">
+				if s := find(statuses, t.Status); s != nil {
+					<div class="flex w-[100px] items-center gap-2">
+						@ui.Icon(s.Icon, "size-4 text-muted-foreground")
+						<span>{ s.Label }</span>
+					</div>
+				}
+			</td>
+		}
+		if !a.hidden["priority"] {
+			<td data-slot="table-cell">
+				if p := find(priorities, t.Priority); p != nil {
+					<div class="flex items-center gap-2">
+						@ui.Icon(p.Icon, "size-4 text-muted-foreground")
+						<span>{ p.Label }</span>
+					</div>
+				}
+			</td>
+		}
+		<td data-slot="table-cell">
+			@rowActions(a, r, i)
+		</td>
+	</tr>
+}
+
+templ rowActions(a *App, r string, i int) {
+	{{ open := a.rowMenu.Open && a.rowFor == i }}
+	<div data-slot="dropdown-menu" class="dropdown-menu align-middle">
+		<button data-slot="dropdown-menu-trigger" aria-haspopup="menu" aria-expanded={ boolStr(open) } data-state={ openState(open) } data-variant="ghost" data-size="icon" class="btn size-8 data-[state=open]:bg-muted" { surf.On(ctx, r+"-menu", surf.Click(func() { a.OpenRowMenu(i) }), surf.Key(a.rowMenu.Keys))... }>
+			@ui.Icon("ellipsis", "")
+			<span class="sr-only">Open menu</span>
+		</button>
+		if open {
+			{{ a.rowMenu.Home(r + "-menu") }}
+			@spikeui.Menu(r+"-actions", &a.rowMenu, "end", "w-[160px]") {
+				@spikeui.MenuItem(r+"-edit", &a.rowMenu, nil, "") {
+					Edit
+				}
+				@spikeui.MenuItem(r+"-copy", &a.rowMenu, nil, "") {
+					Make a copy
+				}
+				@spikeui.MenuItem(r+"-fav", &a.rowMenu, nil, "") {
+					Favorite
+				}
+				@spikeui.MenuSeparator()
+				@spikeui.MenuSub(r+"-labels", &a.rowMenu, &a.labelSub, "Labels", "left") {
+					<div data-slot="dropdown-menu-radio-group" role="group">
+						for _, l := range labels {
+							@spikeui.MenuRadio(r+"-label-"+l.Value, &a.labelSub, a.all[i].Label == l.Value, func() { a.rowMenu.Close() }) {
+								{ l.Label }
+							}
+						}
+					</div>
+				}
+				@spikeui.MenuSeparator()
+				@spikeui.MenuDanger(r+"-delete", &a.rowMenu, nil) {
+					Delete
+					@spikeui.MenuShortcut() {
+						⌘⌫
+					}
+				}
+			}
+		}
+	</div>
+}
+
+templ pagination(a *App) {
+	<div class="flex items-center justify-between px-2">
+		<div class="flex-1 text-sm text-muted-foreground">{ strconv.Itoa(a.selectedCount()) } of { strconv.Itoa(len(a.rows)) } row(s) selected.</div>
+		<div class="flex items-center space-x-6 lg:space-x-8">
+			<div class="flex items-center space-x-2">
+				<p class="text-sm font-medium">Rows per page</p>
+				<div data-slot="select" class="select align-middle">
+					<button data-slot="select-trigger" type="button" role="combobox" data-size="default" class="h-8 w-[70px]" { spikeui.Trigger(ctx, "page-size", "listbox", &a.pageSel)... }>
+						<span data-slot="select-value" class="line-clamp-1 flex items-center gap-2">{ strconv.Itoa(a.pageSize) }</span>
+						@ui.Icon("chevron-down", "size-4 opacity-50")
+					</button>
+					@spikeui.SelectList("page-size-list", &a.pageSel, "top") {
+						for _, n := range []int{10, 20, 25, 30, 40, 50} {
+							@spikeui.SelectOption("page-size-"+strconv.Itoa(n), &a.pageSel, a.pageSize == n, strconv.Itoa(n), func() { a.SetPageSize(n) }) {
+								{ strconv.Itoa(n) }
+							}
+						}
+					}
+				</div>
+			</div>
+			<div class="flex w-[100px] items-center justify-center text-sm font-medium">Page { strconv.Itoa(a.pageIndex + 1) } of { strconv.Itoa(a.pageCount()) }</div>
+			<div class="flex items-center space-x-2">
+				@pageButton("page-first", "Go to first page", "chevrons-left", "btn hidden size-8 lg:flex", a.pageIndex == 0, func() { a.SetPage(0) })
+				@pageButton("page-prev", "Go to previous page", "chevron-left", "btn size-8", a.pageIndex == 0, func() { a.SetPage(a.pageIndex - 1) })
+				@pageButton("page-next", "Go to next page", "chevron-right", "btn size-8", a.pageIndex >= a.pageCount()-1, func() { a.SetPage(a.pageIndex + 1) })
+				@pageButton("page-last", "Go to last page", "chevrons-right", "btn hidden size-8 lg:flex", a.pageIndex >= a.pageCount()-1, func() { a.SetPage(a.pageCount() - 1) })
+			</div>
+		</div>
+	</div>
+}
+
+templ pageButton(id, label, icon, class string, disabled bool, fn func()) {
+	<button data-slot="button" type="button" if disabled {
+		disabled="true"
+	} data-variant="outline" data-size="icon" class={ class } { surf.On(ctx, id, surf.Click(fn))... }>
+		<span class="sr-only">{ label }</span>
+		@ui.Icon(icon, "")
+	</button>
+}

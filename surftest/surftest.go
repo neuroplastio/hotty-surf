@@ -171,11 +171,17 @@ func (r *Rig) consistent() {
 // element or more than one matches.
 func (r *Rig) Click(sel string) {
 	r.t.Helper()
-	id := attr(r.One(sel), "id")
+	n := r.One(sel)
+	id := attr(n, "id")
 	// A click on what reports none (text, a field) still presses, focuses
 	// or blurs, as the user's would.
 	if err := r.host.Click(r.s.Name(), id); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
 		r.t.Fatalf("surftest: click %s: %v", sel, err)
+	}
+	// A click on a check box or a radio button toggles it, as space on it
+	// does: the test host's click focuses it only.
+	if t := strings.ToLower(attr(n, "type")); n.Data == "input" && (t == "checkbox" || t == "radio") && !hasAttr(n, "disabled") {
+		r.host.Key("space")
 	}
 	r.settle()
 }

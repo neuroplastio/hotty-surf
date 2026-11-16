@@ -1,0 +1,199 @@
+// The components on Popup (popup.go): Basecoat's (basecoatui.com, MIT;
+// NOTICE.md) in templ, with the markup and classes shadcn's render, as the
+// hotty-pot spike's Tasks app draws them. The state is the app's.
+package spikeui
+
+import (
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/keycap"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// Backdrop takes the click outside an open popup (the kit's Backdrop).
+templ backdrop(id string, close func()) {
+	<div data-slot="backdrop" class="fixed inset-0 z-40" { surf.On(ctx, id+"-backdrop", surf.Click(close))... }></div>
+}
+
+// Menu is a dropdown menu's content, shown while p is open: Basecoat's
+// [data-popover] with role=menu. Its items are MenuItem and the rest.
+templ Menu(id string, p *Popup, align string, class string) {
+	if p.Open {
+		{{ p.begin() }}
+		{{ p.refocus(ctx) }}
+		@backdrop(id, p.Close)
+		<div data-slot="dropdown-menu-content" data-popover data-side="bottom" data-align={ align } data-state="open" class={ cls("overflow-visible", class) }>
+			<div role="menu" { surf.On(ctx, id+"-content", surf.Key(p.Keys))... } aria-orientation="vertical">
+				{ children... }
+			</div>
+		</div>
+	}
+}
+
+// MenuItem is an item: a click or Enter runs fn and closes the menu.
+templ MenuItem(id string, p *Popup, fn func(), class string) {
+	{{ pick := func() { if fn != nil { fn() }; p.Close() } }}
+	<div data-slot="dropdown-menu-item" role="menuitem" tabindex="-1" class={ cls("relative flex items-center", when(p.item(pick), "active"), class) } { surf.On(ctx, id, surf.Click(pick))... }>
+		{ children... }
+	</div>
+}
+
+// MenuDanger is a destructive item.
+templ MenuDanger(id string, p *Popup, fn func()) {
+	{{ pick := func() { if fn != nil { fn() }; p.Close() } }}
+	<div data-slot="dropdown-menu-item" role="menuitem" tabindex="-1" data-variant="destructive" class={ cls("relative flex items-center", when(p.item(pick), "active")) } { surf.On(ctx, id, surf.Click(pick))... }>
+		{ children... }
+	</div>
+}
+
+// MenuCheck is a checkbox item.
+templ MenuCheck(id string, p *Popup, checked bool, fn func(bool), class string) {
+	{{ pick := func() { fn(!checked); p.Close() } }}
+	<div data-slot="dropdown-menu-checkbox-item" role="menuitemcheckbox" tabindex="-1" aria-checked={ bstr(checked) } data-state={ state(checked, "checked", "unchecked") } class={ cls("relative flex items-center", when(p.item(pick), "active"), class) } { surf.On(ctx, id, surf.Click(pick))... }>
+		{ children... }
+		<span data-indicator class="pointer-events-none">
+			if checked {
+				@ui.Icon("check", "size-4")
+			}
+		</span>
+	</div>
+}
+
+// MenuRadio is a radio item, on when on.
+templ MenuRadio(id string, p *Popup, on bool, fn func()) {
+	{{ pick := func() { fn(); p.Close() } }}
+	<div data-slot="dropdown-menu-radio-item" role="menuitemradio" tabindex="-1" aria-checked={ bstr(on) } data-state={ state(on, "checked", "unchecked") } class={ cls("relative flex items-center", when(p.item(pick), "active")) } { surf.On(ctx, id, surf.Click(pick))... }>
+		{ children... }
+		<span data-indicator class="pointer-events-none">
+			if on {
+				@ui.Icon("circle", "size-2 fill-current")
+			}
+		</span>
+	</div>
+}
+
+templ MenuSeparator() {
+	<div data-slot="dropdown-menu-separator" role="separator"></div>
+}
+
+templ MenuLabel(class string) {
+	<div data-slot="dropdown-menu-label" role="heading" class={ class }>{ children... }</div>
+}
+
+templ MenuShortcut() {
+	<span data-slot="dropdown-menu-shortcut" data-shortcut class="ml-auto">{ children... }</span>
+}
+
+// MenuKeys is an item's shortcut, a key's name as SPEC §10.4 writes it
+// ("mod+shift+p"), shown as the host's platform writes keys: Ctrl+Shift+P,
+// or ⇧⌘P where mod is super (Keycap).
+templ MenuKeys(keys string) {
+	@MenuShortcut() {
+		{ keycap.Text(surf.Platform(ctx), keys) }
+	}
+}
+
+// MenuSub is a sub-menu of parent: its trigger is an item, its content
+// opens beside it (to the left under an end-aligned menu, as the kit's:
+// nothing measures).
+templ MenuSub(id string, parent *Popup, sub *Popup, label string, side string) {
+	<div data-slot="dropdown-menu-sub" class="relative">
+		<div data-slot="dropdown-menu-sub-trigger" role="menuitem" aria-haspopup="menu" aria-expanded={ bstr(sub.Open) } data-state={ state(sub.Open, "open", "closed") } tabindex="-1" class={ cls(when(parent.item(sub.Toggle), "active"), when(sub.Open, "active")) } { surf.On(ctx, id, surf.Click(func() { sub.Toggle(); parent.ask = true }))... }>
+			{ label }
+			@ui.Icon("chevron-right", "ml-auto size-4")
+		</div>
+		if sub.Open {
+			{{ sub.begin() }}
+			{{ parent.nest(sub) }}
+			<div data-slot="dropdown-menu-sub-content" data-popover data-side={ side } data-align="start" data-state="open" class="gap-0 p-1">
+				<div role="menu" { surf.On(ctx, id+"-content", surf.Key(sub.Keys))... } aria-orientation="vertical">
+					{ children... }
+				</div>
+			</div>
+		}
+	</div>
+}
+
+// Popover is a popover's content, shown while p is open.
+templ Popover(id string, p *Popup, align string, class string) {
+	if p.Open {
+		{{ p.refocus(ctx) }}
+		@backdrop(id, p.Close)
+		<div data-slot="popover-content" { surf.On(ctx, id+"-content", surf.Key(p.Keys))... } role="dialog" data-popover data-side="bottom" data-align={ align } data-state="open" class={ class }>
+			{ children... }
+		</div>
+	}
+}
+
+// CommandBox is a command: the search field and the list (cmdk's API on
+// Basecoat's .command). The field keeps the arrows and Enter for the list.
+// It is shadcn's Command: the search is a full-width row with a bottom
+// border, and the list is padded, not the whole (Basecoat 1.1 draws the
+// search as an inset rounded box).
+templ CommandBox(id string, c *Command, placeholder string) {
+	{{ c.begin() }}
+	{{ c.search(ctx, id+"-search") }}
+	<div data-slot="command" class="command flex h-full w-full flex-col overflow-hidden p-0">
+		<header data-slot="command-input-wrapper" class="m-0 flex h-9 items-center gap-2 rounded-none border-0 border-b border-border bg-transparent px-3">
+			@ui.Icon("search", "size-4 shrink-0 opacity-50")
+			<input data-slot="command-input" type="text" placeholder={ placeholder } aria-label={ placeholder } data-keys="arrow_up=program arrow_down=program enter=program" class="w-full bg-transparent px-0 outline-hidden" value={ c.Search } { surf.On(ctx, id+"-search", surf.Input(c.SetSearch))... }/>
+		</header>
+		<div data-slot="command-list" role="menu" class="max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto p-1">
+			{ children... }
+		</div>
+	</div>
+}
+
+// CommandItem is an item of c, shown when the search matches value.
+templ CommandItem(id string, c *Command, value string, fn func(), class string) {
+	if Fuzzy(value, c.Search) {
+		<div data-slot="command-item" role="menuitem" data-value={ value } class={ cls("relative flex items-center gap-2 select-none", when(c.item(fn), "active"), class) } { surf.On(ctx, id, surf.Click(func() { fn(); c.ask = true }))... }>
+			{ children... }
+		</div>
+	}
+}
+
+// SelectList is shadcn's select content on a Popup: while p is open, a
+// listbox of SelectOption. The trigger is the app's button with Trigger.
+//
+// Deprecated: use NewSelect (Basecoat's select.js, checked against it in a
+// browser). SelectList stays for the Tasks app's parity with its TSX port.
+templ SelectList(id string, p *Popup, side string) {
+	if p.Open {
+		{{ p.begin() }}
+		{{ p.refocus(ctx) }}
+		@backdrop(id, p.Close)
+		<div data-slot="select-content" data-popover data-side={ side } data-align="start" data-state="open">
+			<div role="listbox" { surf.On(ctx, id+"-content", surf.Key(p.Keys))... }>
+				{ children... }
+			</div>
+		</div>
+	}
+}
+
+// SelectOption is an option of a SelectList: a click or Enter runs fn and
+// closes it; on marks the picked one.
+//
+// Deprecated: use NewSelect, as for SelectList.
+templ SelectOption(id string, p *Popup, on bool, value string, fn func()) {
+	{{ pick := func() { fn(); p.Close() } }}
+	<div data-slot="select-item" role="option" data-value={ value } aria-selected={ bstr(on) } data-state={ state(on, "checked", "unchecked") } tabindex="-1" class={ cls("relative flex w-full items-center", when(p.item(pick), "active")) } { surf.On(ctx, id, surf.Click(pick))... }>
+		<span class="flex items-center gap-2">{ children... }</span>
+		if on {
+			<span data-indicator class="absolute right-2 flex size-3.5 items-center justify-center">
+				@ui.Icon("check", "size-4")
+			</span>
+		}
+	</div>
+}
+
+// Checkbox is a native check box, as the kit's; "mixed" is shown by
+// aria-checked and data-state.
+templ Checkbox(id string, checked bool, mixed bool, label string, fn func(bool)) {
+	<input data-slot="checkbox" type="checkbox" aria-label={ label } aria-checked={ state(mixed, "mixed", bstr(checked)) } data-state={ state(mixed, "indeterminate", state(checked, "checked", "unchecked")) } class="input" checked?={ checked } { surf.On(ctx, id, surf.Check(fn))... }/>
+}
+
+
+// Separator is shadcn's (Radix's): a div with a role and an orientation.
+templ Separator(orientation string, class string) {
+	<div data-slot="separator" role="none" data-orientation={ orientation } class={ cls("bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px", class) }></div>
+}

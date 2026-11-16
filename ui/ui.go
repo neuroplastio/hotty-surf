@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/a-h/templ"
+import (
+	_ "embed"
+
+	"github.com/a-h/templ"
+)
 
 // A Variant is how a component stands out: Basecoat's data-variant, which
 // its components share. A component takes the variants Basecoat gives it,
@@ -36,19 +40,25 @@ const (
 // classes the app uses to it; a surface that has no build of its own (a dev
 // tool's error surface, a host's dialog) uses it as it is.
 func Stylesheet() string {
-	panic("L0")
+	return kitCSS
 }
+
+// kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind
+// utilities, as the spike's kit built them (kit.css).
+//
+//go:embed kit.css
+var kitCSS string
 
 // Icon is the icon named name in the Lucide set that shadcn and Basecoat
 // draw with ("plus", "chevron-down"), as an inline SVG sized by class
 // ("size-4").
 func Icon(name, class string) templ.Component {
-	panic("L0")
+	return icon(name, class)
 }
 
 // Kbd is a shortcut as the host's platform writes it, in Basecoat's kbd:
 // keys are hotty's names joined by "+", where mod is the host's modifier, so
 // "mod+shift+p" is Ctrl+Shift+P where mod is ctrl and ⇧⌘P where it is super.
 func Kbd(keys string) templ.Component {
-	panic("L0")
+	return kbd(keys)
 }

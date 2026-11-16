@@ -28,7 +28,7 @@ type ButtonProps struct {
 //		Save
 //	}
 func Button(p ButtonProps) templ.Component {
-	panic("L0")
+	return button(p)
 }
 
 // BadgeProps are a Badge's attributes.
@@ -41,7 +41,7 @@ type BadgeProps struct {
 
 // Badge is Basecoat's badge, holding its children.
 func Badge(p BadgeProps) templ.Component {
-	panic("L0")
+	return badge(p)
 }
 
 // CardProps are a Card's attributes.
@@ -54,5 +54,5 @@ type CardProps struct {
 // Basecoat's markup has them: <header> (an <h2> and a <p>), <section> and
 // <footer>.
 func Card(p CardProps) templ.Component {
-	panic("L0")
+	return card(p)
 }

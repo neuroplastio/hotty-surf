@@ -104,6 +104,8 @@ func get(n *html.Node, k string) (string, bool) {
 
 func attr(n *html.Node, k string) string { v, _ := get(n, k); return v }
 
+func hasAttr(n *html.Node, k string) bool { _, ok := get(n, k); return ok }
+
 func text(n *html.Node) string {
 	if n.Type == html.TextNode {
 		return n.Data

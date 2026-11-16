@@ -1,0 +1,7 @@
+/* The shell's own theme colours, as Tailwind utilities: bg-busy-tint, fill-badge,
+   stroke-busy. Their values are the app's variables (--busy, --busy-tint, --badge). */
+@theme inline {
+  --color-busy: var(--busy);
+  --color-busy-tint: var(--busy-tint);
+  --color-badge: var(--badge);
+}
