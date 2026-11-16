@@ -4,7 +4,7 @@
 
 // shadcn/ui's Tasks example (MIT), upstream's page.tsx and components/*,
 
-// as one templ file on Basecoat (MIT): the same markup the hotty-pot
+// as one templ file on Basecoat (MIT): the same markup the
 
 // spike's port rendered, with the state and every handler in Go (tasks.go).
 

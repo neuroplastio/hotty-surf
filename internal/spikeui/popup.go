@@ -1,4 +1,4 @@
-// Package spikeui is the hotty-pot spike's hand-written kit (shadcn's
+// Package spikeui is the spike's hand-written kit (shadcn's
 // markup on Basecoat's CSS, and the nav's chrome), moved as it was so that
 // the Tasks and nav examples render byte for byte what the spike rendered.
 // It is internal: no app imports it, and L2's components (package ui,

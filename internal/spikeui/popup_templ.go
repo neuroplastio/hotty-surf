@@ -6,7 +6,7 @@
 
 // NOTICE.md) in templ, with the markup and classes shadcn's render, as the
 
-// hotty-pot spike's Tasks app draws them. The state is the app's.
+// spike's Tasks app draws them. The state is the app's.
 
 package spikeui
 

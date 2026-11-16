@@ -19,7 +19,7 @@ import (
 	"neuroplast.io/hotty-surf"
 )
 
-// sample is one act's cost, in the shape the hotty-pot spike's benchmark
+// sample is one act's cost, in the shape the spike's benchmark
 // wrote, so the two compare line by line: the whole act is Go's, from the
 // event to the delta's bytes.
 type sample struct {

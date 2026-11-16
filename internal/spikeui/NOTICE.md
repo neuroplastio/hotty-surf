@@ -1,4 +1,4 @@
-popup.templ and popup.go are the hotty-pot spike's translation of Basecoat
+popup.templ and popup.go are the spike's translation of Basecoat
 1.1.0's components (Copyright (c) 2025 Ronan Berder, MIT licensed) and of
 shadcn/ui's (Copyright (c) 2023 shadcn, MIT licensed): their markup and
 classes, so Basecoat's CSS styles them. The popups' behaviour that

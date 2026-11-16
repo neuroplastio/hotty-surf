@@ -41,7 +41,9 @@ func attr(n *html.Node, k string) string {
 	return ""
 }
 
-func has(n *html.Node, class string) bool { return slices.Contains(strings.Fields(attr(n, "class")), class) }
+func has(n *html.Node, class string) bool {
+	return slices.Contains(strings.Fields(attr(n, "class")), class)
+}
 
 // row is a session's button.
 func (r *rig) row(id string) *html.Node {
