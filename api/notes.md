@@ -283,6 +283,29 @@ NAV_STREAM=<file> in examples/nav.
 - **Tasks' data is upstream's** (shadcn/ui, MIT), in
   examples/tasks/data with a NOTICE.
 
+### cells (first cut; L3 completes it)
+
+What a Screen draws is `cells/SUBSET.md`; what it doesn't do yet is
+morph (it refuses one, so the program resends the document), the
+selection, hover, caret, view and fit events, double clicks, a
+secondary press, prefix keys (SPEC §10.5), the surface's scroll keys
+(§5.3), scrolling inside an element, margins, widths but full, colspan,
+colours, editing hosts, and relayout of only what changed.
+
+- **Tab past the last element** blurs and focuses nothing, but the
+  Screen keeps the keyboard, so the next Tab starts from the first
+  again. SPEC hands the keyboard back to the terminal there; a program
+  in cells has no terminal around it to hand it to.
+- **Press is on until a placement says otherwise.**
+- **A stale a=field** (an old rev) changes nothing and isn't an error,
+  so the program doesn't resend its document.
+- **Focus(false)** sends blur and makes Key take nothing until
+  Focus(true), which gives the keyboard back to the element that had it
+  and sends focus.
+- **No clipboard:** copy, cut and paste keys go to the program, which
+  pastes with Paste.
+- **Headings are bold, and `grid` lays out as a flex column.**
+
 ### The 2 ms floor
 
 Tasks' acts, the median of three runs of each act's median, in ms, Go on

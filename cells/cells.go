@@ -5,7 +5,7 @@
 // document out in cells (blocks, flex, tables, text), keeps its focus and
 // its fields, and gives the program the events a host would send. It has to
 // work, not look good: the CSS it reads is a subset, written down in
-// docs/coverage.md.
+// cells/SUBSET.md.
 //
 // The driver's loop is the same as with a host: the program writes the
 // surface's document to the Screen (hotty-go's Doc), hands the events the
