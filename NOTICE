@@ -3,14 +3,23 @@ Copyright 2026 Anatoly Rugalev
 
 Licensed under the Apache License, Version 2.0 (LICENSE).
 
-This product includes data from these works:
+This product includes code and data from these works. The NOTICE.md
+beside each says what was taken and how.
 
-pkg/mdi (md.tsv, names_gen.go): the names and code points of the
-Material Design Icons, by Pictogrammers (https://pictogrammers.com),
-under the Apache License, Version 2.0. They are taken from
-glyphnames.json of Nerd Fonts 3.5.1 (https://www.nerdfonts.com), its
-md-* entries; Nerd Fonts is Copyright (c) 2014 Ryan L McIntyre, under
-the MIT License:
+- ui/kit.css: Basecoat 1.1.0, Copyright (c) 2025 Ronan Berder, MIT
+  License; and Tailwind CSS 4.1.18's utilities, Copyright (c) Tailwind
+  Labs, Inc., MIT License (ui/NOTICE.md).
+- ui/icons_gen.go: lucide-react 0.474.0's icons, Copyright (c) Lucide
+  Contributors 2022, ISC License (ui/NOTICE.md).
+- internal/spikeui: markup and classes of Basecoat 1.1.0's and
+  shadcn/ui's components, shadcn/ui Copyright (c) 2023 shadcn, MIT
+  License; and shapes_gen.go, Material Symbols' paths, Copyright Google,
+  Apache License, Version 2.0, from @iconify-json/material-symbols
+  1.2.93 (internal/spikeui/NOTICE.md).
+- examples/tasks/data/tasks.json: shadcn/ui's Tasks example data,
+  Copyright (c) 2023 shadcn, MIT License (examples/tasks/data/NOTICE.md).
+
+The MIT License:
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -30,3 +39,19 @@ the MIT License:
   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+The ISC License:
+
+  Permission to use, copy, modify, and/or distribute this software for
+  any purpose with or without fee is hereby granted, provided that the
+  above copyright notice and this permission notice appear in all
+  copies.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+  WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+  AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+  DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+  PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
