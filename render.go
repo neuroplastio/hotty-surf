@@ -21,6 +21,7 @@ import (
 // renderer is a surface's render buffer and parser, kept between renders.
 type renderer struct {
 	buf   bytes.Buffer
+	p     parser
 	last  []byte // the HTML the tree the host has was parsed from
 	valid bool   // last is that tree's: false before one, and after a snapshot is adopted
 }
@@ -73,21 +74,39 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 // id on every element. It doesn't touch what the surface last sent: the
 // caller swaps the tree in with keep.
 func (s *Surface) tree() (*tree, error) {
-	kids, err := html.ParseFragment(bytes.NewReader(s.r.buf.Bytes()), bodyCtx)
-	if err != nil {
-		return nil, err
-	}
 	t := &tree{
-		root: &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []html.Attribute{{Key: "id", Val: "root"}}},
+		root: newRoot(),
 		ids:  make(map[string]string, len(s.ids)),
 		byID: make(map[string]*html.Node, len(s.byID)),
 	}
-	for _, k := range kids {
-		t.root.AppendChild(k)
+	src := s.r.buf.Bytes()
+	if !s.r.p.parse(t.root, src) {
+		t.root = newRoot()
+		if err := parseSlow(t.root, src); err != nil {
+			return nil, err
+		}
+	} else if parseCheck {
+		checkParse(t.root, src)
 	}
 	t.byID["root"] = t.root
 	s.number(t.root, "root", t)
 	return t, nil
+}
+
+func newRoot() *html.Node {
+	return &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []html.Attribute{{Key: "id", Val: "root"}}}
+}
+
+// parseSlow parses a render as x/net/html does, under root.
+func parseSlow(root *html.Node, src []byte) error {
+	kids, err := html.ParseFragment(bytes.NewReader(src), bodyCtx)
+	if err != nil {
+		return err
+	}
+	for _, k := range kids {
+		root.AppendChild(k)
+	}
+	return nil
 }
 
 // A tree is a render's document under its #root, with its ids.
