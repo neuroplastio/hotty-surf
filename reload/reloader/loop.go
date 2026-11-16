@@ -791,6 +791,16 @@ func (l *loop) onBuilt(res buildResult) {
 		}
 		l.broken = msg
 		l.emit(Report{Tier: tierGo, Build: msg})
+		if l.cssLater {
+			// The stylesheet saved during the build reaches the processes
+			// that still run.
+			l.cssLater = false
+			l.saveAt = time.Now()
+			failed := map[string]string{}
+			if l.restyle(failed) {
+				l.emit(Report{Tier: tierCSS, Failed: failed})
+			}
+		}
 		return
 	}
 	l.broken = ""
