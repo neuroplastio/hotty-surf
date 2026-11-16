@@ -28,8 +28,9 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   - [x] reload and reload/reloader (text, css and go tiers, msgpack-RPC);
     `hotty-surf` run, ctl reload, ctl shot, lint, new;
   - [x] cells, first cut (L3 completes it);
-  - [ ] ui's components the API names: Button, Badge, Card, Icon, Kbd
-    done; Select, DropdownMenu, Dialog, Tabs, Toaster, code.Block;
+  - [x] ui's components the API names: Button, Badge, Card, Icon, Kbd,
+    Select, DropdownMenu, Dialog, Tabs, Toaster, code.Block, each tested
+    through surftest; hello's tests run;
   - [x] ARCHITECTURE.md.
 - [ ] **L2, every Basecoat component:** the jinja ones generated, the
   CSS-only ones typed, the behaviour scripts translated with a Chromium
@@ -54,6 +55,19 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   build` exists (L4): they are edited by hand.
 - `hotty-surf run` needs a hotty host; it has no cells fallback yet.
 - A process that dies before its hello makes a reload wait its 10 s.
+- kit.css has no `.dialog`, `.toaster` or `.toast` rules (the spike's
+  build left out what its pages didn't use): Dialog and Toaster draw
+  unstyled until L2 builds the kit's CSS whole and Blitz is shown to draw
+  it (F5). No text class for `--color-primary` or the chart colours, so
+  ui/code leaves strings and literals plain.
+- Dialog has no focus trap and can't make the page behind it inert; a
+  click on its own text gives the keyboard away, so Escape waits for a
+  click on one of its controls. Whether hotty needs a modal region is a
+  question for the spec (the maintainer's), not one to work around.
+- No cross-component close (Basecoat's `basecoat:popover`): opening one
+  popup by keyboard leaves another open. L2's translated scripts.
+- A toast's pause on hover is written but untested: surftest has no
+  hover.
 
 ## v0.1.0, the first public tag
 
