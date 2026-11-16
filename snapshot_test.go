@@ -68,7 +68,9 @@ func TestAdopt(t *testing.T) {
 	if !strings.Contains(doc, ">two</p>") || !strings.Contains(doc, "p{color:red}") {
 		t.Fatalf("document after the delta: %q", doc)
 	}
-	if c.vals["f"] != "typed" {
-		t.Fatalf("the field's value wasn't kept: %q", c.vals["f"])
+	// The markup sets the field (it has no value attribute, so ""), which
+	// the field's rev, kept, makes a set of the user's latest edit.
+	if c.revs["f"] != 3 {
+		t.Fatalf("the field's rev wasn't kept: %d", c.revs["f"])
 	}
 }
