@@ -443,3 +443,75 @@ func TestBadDeltaIsAnError(t *testing.T) {
 		t.Fatal("a delta with no target was applied")
 	}
 }
+
+func TestSelectAndTextarea(t *testing.T) {
+	size, notes := "m", ""
+	v := view(func(ctx context.Context, w io.Writer, on on) {
+		fmt.Fprintf(w, `<div class="flex flex-col"><select%s>`, on("size", surf.Input(func(v string) { size = v })))
+		for _, o := range []string{"s", "m", "l"} {
+			sel := ""
+			if o == size {
+				sel = " selected"
+			}
+			fmt.Fprintf(w, `<option value="%s"%s>Size %s</option>`, o, sel, strings.ToUpper(o))
+		}
+		fmt.Fprintf(w, `</select><textarea rows="3"%s>%s</textarea></div>`, on("notes", surf.Input(func(v string) { notes = v })), notes)
+	})
+	r := start(t, 20, 4, v)
+	if !strings.Contains(r.text(), "[Size M ▾]") {
+		t.Fatalf("the select:\n%s", r.text())
+	}
+	r.key("tab", "arrow_down")
+	if size != "l" || !strings.Contains(r.text(), "[Size L ▾]") {
+		t.Fatalf("size %q:\n%s", size, r.text())
+	}
+	r.key("tab", "o", "n", "e", "enter", "t", "w", "o")
+	if notes != "one\ntwo" || !strings.Contains(r.text(), "one\ntwo") {
+		t.Fatalf("notes %q:\n%s", notes, r.text())
+	}
+	if col, row, ok := r.c.Cursor(); !ok || col != 3 || row != 2 {
+		t.Fatalf("caret at %d,%d %v", col, row, ok)
+	}
+}
+
+func TestRemovingTheFocusedElement(t *testing.T) {
+	items := []string{"a", "b"}
+	v := view(func(ctx context.Context, w io.Writer, on on) {
+		io.WriteString(w, `<ul>`)
+		for i, it := range items {
+			fmt.Fprintf(w, `<li><button%s>drop %s</button></li>`, on("drop-"+it, surf.Click(func() {
+				items = append(items[:i:i], items[i+1:]...)
+			})), it)
+		}
+		io.WriteString(w, `</ul>`)
+	})
+	r := start(t, 20, 3, v)
+	r.key("tab", "enter")
+	if r.text() != "[ drop b ]" {
+		t.Fatalf("after the drop:\n%s", r.text())
+	}
+	// The button that had the keyboard is gone: tab starts again.
+	r.key("tab", "enter")
+	if r.text() != "" || len(items) != 0 {
+		t.Fatalf("items %v:\n%s", items, r.text())
+	}
+}
+
+func TestStaleFieldChangesNothing(t *testing.T) {
+	r := start(t, 20, 2, view(func(ctx context.Context, w io.Writer, on on) {
+		fmt.Fprintf(w, `<input%s value="x"/>`, on("f"))
+	}))
+	v := "y"
+	r.write(hotty.SetField("t", "f", hotty.FieldChange{Rev: 5, Value: &v}))
+	if r.text() != "x" {
+		t.Fatalf("a stale change was made:\n%s", r.text())
+	}
+	r.write(hotty.SetField("t", "f", hotty.FieldChange{Rev: 0, Value: &v}))
+	if r.text() != "y" {
+		t.Fatalf("the change wasn't made:\n%s", r.text())
+	}
+	on := true
+	if _, err := r.c.Write([]byte(hotty.SetField("t", "f", hotty.FieldChange{Rev: 0, Checked: &on}))); err == nil {
+		t.Fatal("a text field was checked")
+	}
+}
