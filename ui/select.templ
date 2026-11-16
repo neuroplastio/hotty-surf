@@ -1,0 +1,97 @@
+package ui
+
+// Select's markup: select.html.jinja's (Basecoat 1.1.0, MIT; NOTICE.md),
+// written in templ as the macro renders it for a SelectProps, with the
+// attributes select.js sets on it (aria-expanded, aria-hidden, the active
+// option, the label) from SelectState.
+
+import "neuroplast.io/hotty-surf"
+
+templ selectBox(v *selectView) {
+	<div
+		class={ join("select", v.p.Class) }
+		if v.p.Placeholder != "" {
+			data-placeholder={ v.p.Placeholder }
+		}
+		data-select-initialized="true"
+		{ v.rootAttrs(ctx)... }
+	>
+		<button
+			type="button"
+			aria-haspopup="listbox"
+			aria-expanded={ bstr(v.st.open) }
+			aria-controls={ v.id + "-listbox" }
+			if i := v.activeOpt(); i >= 0 {
+				aria-activedescendant={ v.opts[i].id }
+			}
+			if v.st.open {
+				data-keys="enter=program"
+			}
+			disabled?={ v.p.Disabled }
+			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key), surf.Focus(moved))... }
+		>
+			{{ label, muted := v.label() }}
+			<span
+				if muted {
+					class="truncate text-muted-foreground"
+				} else {
+					class="truncate"
+				}
+			>{ label }</span>
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down text-muted-foreground opacity-50 shrink-0"><path d="m6 9 6 6 6-6"></path></svg>
+		</button>
+		<div id={ v.id + "-popover" } data-popover aria-hidden={ bstr(!v.st.open) }>
+			<div
+				role="listbox"
+				aria-orientation="vertical"
+				aria-labelledby={ v.id + "-trigger" }
+				{ surf.On(ctx, v.id+"-listbox", surf.Hover(v.leave))... }
+			>
+				for _, e := range v.entries {
+					switch e.kind {
+						case entryOpt:
+							@selectOption(v, e.opt)
+						case entryGroup:
+							<div role="group" aria-labelledby={ e.labelID }>
+								<div role="heading" id={ e.labelID }>{ e.group }</div>
+								for _, i := range e.opts {
+									@selectOption(v, i)
+								}
+							</div>
+						case entrySeparator:
+							<hr role="separator"/>
+					}
+				}
+			</div>
+		</div>
+		<input type="hidden" name={ v.id + "-value" } value={ v.value() }/>
+		if v.refocus() {
+			{{ surf.Autofocus(ctx, v.id+"-trigger") }}
+		}
+	</div>
+}
+
+// selectOption is render_select_items' option. Its click stays live while
+// the list is closed: a click on it blurs the surface first, which closes
+// the list (Outside hears a blur), and the click comes after.
+templ selectOption(v *selectView, i int) {
+	{{ o := v.opts[i] }}
+	<div
+		role="option"
+		data-value={ o.value }
+		if i == v.chosen {
+			aria-selected="true"
+		}
+		if o.disabled {
+			aria-disabled="true"
+		}
+		if i == v.activeOpt() {
+			class="active"
+		}
+		if o.disabled {
+			id={ o.id }
+		} else {
+			{ surf.On(ctx, o.id, surf.Click(func() { v.choose(i) }), surf.Hover(v.hover(i)))... }
+		}
+	>{ o.label }</div>
+}
