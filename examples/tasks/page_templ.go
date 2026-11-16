@@ -48,7 +48,7 @@ func Page(a *App) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"pot-surface dark\"><div class=\"flex h-full flex-1 flex-col gap-8 p-8\"><div class=\"flex items-center justify-between gap-2\"><div class=\"flex flex-col gap-1\"><h2 class=\"text-2xl font-semibold tracking-tight\">Welcome back!</h2><p class=\"text-muted-foreground\">Here's a list of your tasks for this month.</p></div><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"kit-surface dark\"><div class=\"flex h-full flex-1 flex-col gap-8 p-8\"><div class=\"flex items-center justify-between gap-2\"><div class=\"flex flex-col gap-1\"><h2 class=\"text-2xl font-semibold tracking-tight\">Welcome back!</h2><p class=\"text-muted-foreground\">Here's a list of your tasks for this month.</p></div><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -110,7 +110,7 @@ func Empty() templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"pot-surface dark\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"kit-surface dark\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

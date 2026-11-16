@@ -9,7 +9,7 @@ import (
 )
 
 templ Page(a *App) {
-	<div class="pot-surface dark flex flex-col bg-sidebar text-muted-foreground">
+	<div class="kit-surface dark flex flex-col bg-sidebar text-muted-foreground">
 		@header()
 		@ui.List("Sessions") {
 			for _, s := range a.sessions {
