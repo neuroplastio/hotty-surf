@@ -41,6 +41,7 @@ type Surface struct {
 	prev   *html.Node
 	frame  *rt.Frame
 	byID   map[string]*html.Node
+	fields []string // the live fields' ids in prev
 	ids    map[string]string
 	nextID int
 	faults []string

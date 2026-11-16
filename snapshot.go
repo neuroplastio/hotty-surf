@@ -81,6 +81,9 @@ func (s *Surface) adopt(r *msgp.Reader) error {
 		if n.Type == html.ElementNode {
 			if id := attr(n, "id"); id != "" {
 				s.byID[id] = n
+				if isField(n) {
+					s.fields = append(s.fields, id)
+				}
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {

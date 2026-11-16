@@ -20,7 +20,9 @@ import (
 
 // renderer is a surface's render buffer and parser, kept between renders.
 type renderer struct {
-	buf bytes.Buffer
+	buf   bytes.Buffer
+	last  []byte // the HTML the tree the host has was parsed from
+	valid bool   // last is that tree's: false before one, and after a snapshot is adopted
 }
 
 func init() {
@@ -44,6 +46,8 @@ func init() {
 }
 
 func (s *Surface) reset() {
+	s.r.valid = false
+	s.fields = nil
 	s.ids = map[string]string{}
 	s.byID = map[string]*html.Node{}
 	s.vals, s.checked, s.revs = map[string]string{}, map[string]bool{}, map[string]int{}
@@ -51,29 +55,55 @@ func (s *Surface) reset() {
 
 var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
 
-// render renders the view into a fresh tree under a root, with an id on
-// every element, and the frame of handlers it registered. It doesn't touch
-// what the surface last sent: the caller swaps them in.
-func (s *Surface) render() (*html.Node, *rt.Frame, map[string]string, map[string]*html.Node, error) {
-	f := &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s}
+// paint renders the view into the renderer's buffer, with the frame of
+// handlers it registers, and says whether the HTML is the last tree's, byte
+// for byte: then the tree is the last one, ids and all, and needs no parse
+// and no diff.
+func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
+	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s}
 	s.r.buf.Reset()
 	if err := s.view.Render(rt.With(context.Background(), f), &s.r.buf); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, false, err
 	}
-	kids, err := html.ParseFragment(&s.r.buf, bodyCtx)
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-	root := &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []html.Attribute{{Key: "id", Val: "root"}}}
-	for _, k := range kids {
-		root.AppendChild(k)
-	}
-	ids := make(map[string]string, len(s.ids))
-	byID := make(map[string]*html.Node, len(s.byID))
-	byID["root"] = root
-	s.number(root, "root", ids, byID)
 	s.faults = append(s.faults, f.Faults...)
-	return root, f, ids, byID, nil
+	return f, s.r.valid && bytes.Equal(s.r.buf.Bytes(), s.r.last), nil
+}
+
+// tree parses what paint rendered into a fresh tree under a root, with an
+// id on every element. It doesn't touch what the surface last sent: the
+// caller swaps the tree in with keep.
+func (s *Surface) tree() (*tree, error) {
+	kids, err := html.ParseFragment(bytes.NewReader(s.r.buf.Bytes()), bodyCtx)
+	if err != nil {
+		return nil, err
+	}
+	t := &tree{
+		root: &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []html.Attribute{{Key: "id", Val: "root"}}},
+		ids:  make(map[string]string, len(s.ids)),
+		byID: make(map[string]*html.Node, len(s.byID)),
+	}
+	for _, k := range kids {
+		t.root.AppendChild(k)
+	}
+	t.byID["root"] = t.root
+	s.number(t.root, "root", t)
+	return t, nil
+}
+
+// A tree is a render's document under its #root, with its ids.
+type tree struct {
+	root   *html.Node
+	ids    map[string]string     // an element's place → its id, for those without their own
+	byID   map[string]*html.Node // every element by id
+	fields []string              // the live fields' ids, in order
+}
+
+// keep takes t as what the host has, and the HTML paint rendered as its
+// source.
+func (s *Surface) keep(t *tree) {
+	s.prev, s.ids, s.byID, s.fields = t.root, t.ids, t.byID, t.fields
+	s.r.last = append(s.r.last[:0], s.r.buf.Bytes()...)
+	s.r.valid = true
 }
 
 // number gives every element under p an id: its own, or the one its place
@@ -83,7 +113,7 @@ func (s *Surface) render() (*html.Node, *rt.Frame, map[string]string, map[string
 // Whitespace-only text beside elements is dropped, as JSX drops it: the
 // template's indentation is not the page's, and a parent whose children
 // are all elements can be told as narrow ops.
-func (s *Surface) number(p *html.Node, pid string, ids map[string]string, byID map[string]*html.Node) {
+func (s *Surface) number(p *html.Node, pid string, t *tree) {
 	n := 0
 	for c := p.FirstChild; c != nil; {
 		next := c.NextSibling
@@ -112,11 +142,14 @@ func (s *Surface) number(p *html.Node, pid string, ids map[string]string, byID m
 				s.nextID++
 				id = "e" + strconv.FormatInt(int64(s.nextID), 36)
 			}
-			ids[key] = id
+			t.ids[key] = id
 			c.Attr = append([]html.Attribute{{Key: "id", Val: id}}, c.Attr...)
 		}
-		byID[id] = c
-		s.number(c, id, ids, byID)
+		t.byID[id] = c
+		if isField(c) {
+			t.fields = append(t.fields, id)
+		}
+		s.number(c, id, t)
 		c = next
 	}
 }

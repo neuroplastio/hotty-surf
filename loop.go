@@ -28,16 +28,21 @@ func (s *Surface) document() (string, error) {
 	// heard of again.
 	s.reset()
 	s.focused, s.focusIn, s.hoverIn, s.cssDue = "", nil, nil, false
-	root, f, ids, byID, err := s.render()
+	f, _, err := s.paint()
 	if err != nil {
 		return "", err
 	}
-	doc, err := s.documentOf(root)
+	t, err := s.tree()
 	if err != nil {
 		return "", err
 	}
-	s.prev, s.frame, s.ids, s.byID = root, f, ids, byID
-	s.remember(root)
+	doc, err := s.documentOf(t.root)
+	if err != nil {
+		return "", err
+	}
+	s.keep(t)
+	s.frame = f
+	s.remember(t.root)
 	s.asked = f.Focus
 	if f.Focus != "" {
 		// The document isn't shown until the program sends it: the
@@ -67,7 +72,7 @@ func (s *Surface) send() error {
 	if s.prev == nil || s.out == nil {
 		return nil
 	}
-	root, f, ids, byID, err := s.render()
+	f, same, err := s.paint()
 	if err != nil {
 		return err
 	}
@@ -77,8 +82,21 @@ func (s *Surface) send() error {
 		d.ops = append(d.ops, hotty.Op{Op: "text", Target: cssID, Value: &css})
 		s.cssDue = false
 	}
-	d.el(s.prev, root)
-	s.prev, s.frame, s.ids, s.byID = root, f, ids, byID
+	if same {
+		// The tree is the host's already; only the fields may have moved
+		// from what the markup gives them.
+		for _, id := range s.fields {
+			d.field(id, s.byID[id])
+		}
+	} else {
+		t, err := s.tree()
+		if err != nil {
+			return err
+		}
+		d.el(s.prev, t.root)
+		s.keep(t)
+	}
+	s.frame = f
 	var cmds []string
 	if len(d.ops) > 0 {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))
