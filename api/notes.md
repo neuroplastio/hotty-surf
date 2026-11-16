@@ -342,3 +342,95 @@ What took the floor from about 2 ms to under 1:
   the same.
 - **`make tinygo`** (in `make check`) builds tasks, nav and hello for
   js/wasm under TinyGo.
+
+### ui's behaviour components
+
+Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
+
+- **The markup is templ written to render what the macro renders**, not
+  generated at dev time. The Props are typed and closed (no attribute
+  dicts), so a generator would only reproduce the spike's Jinja
+  semantics (its `jor`/`jget` helpers), and the spike then parsed that
+  HTML on every render to patch the scripts' state onto it. Each
+  component writes the macro's elements, ids and attributes for its
+  Props, with the attributes the script sets (`aria-expanded`,
+  `aria-hidden`, `.active`, `aria-activedescendant`,
+  `data-*-initialized`) written from its state. What differs from the
+  macro: no random ids (an empty ID is the component's name: `select`,
+  `dropdown-menu`, `dialog`, `tabs`), labels escaped where the macro
+  prints them raw, no empty `class=""`.
+- **A frame knows the focused element and has a memo** (`rt.Frame`'s
+  `Focused` and `Memo`, internal). Tabs needs the first to move the
+  keyboard with the selection; Dialog needs both, since it keeps no
+  State: the surface remembers, by the dialog's id, that it is open and
+  where the keyboard was when it opened. No exported name changes.
+- **An item's click survives the blur.** An option or a menu item takes
+  no focus, so a click on one blurs the surface first (SPEC §10.1), and
+  the blur is Outside, which closes the list before the click arrives.
+  The items stay in the markup while closed, as Basecoat's do (the
+  popover is `aria-hidden`), with their handlers live, so the click
+  still chooses. The same blur means a click on a menu's heading or a
+  separator closes it, where Basecoat's wouldn't.
+- **The keyboard comes back by a one-shot ask.** Where a script calls
+  `trigger.focus()` (Escape, a choice, `DropdownMenuState.Open`), the
+  state asks `surf.Autofocus` for the trigger in the next frame only.
+  The trigger has spikeui's empty Focus handler, so a frame that asks
+  for nothing comes between two that ask.
+- **Enter (and a menu's space) go to the program while open**
+  (`data-keys` on the trigger), where the script picks the active item;
+  closed, they are the button's own click, as in a browser.
+- **Select:** single only, as SelectProps is. `Value` "" is none (the
+  Props' doc), where select.js would show the first option without a
+  placeholder. Consecutive items of one Group are a group, with a
+  separator between a group and what is beside it. The pointer moves the
+  highlight (surf.Hover), and leaving the list highlights the chosen
+  option again, as select.js's mouseleave.
+- **DropdownMenu:** the trigger is `.btn` with `data-variant="outline"`,
+  as Basecoat's docs give it (`btn-outline`); Props has no field for it.
+  An Align other than "", start, center or end, and an item Variant
+  other than Primary or Destructive, are faults. The keys are on the
+  root, as dropdown-menu.js has them.
+- **Dialog:** shown only while Open: closed, it renders nothing, so its
+  body's ids and fields aren't in the page. The children are rendered
+  once into a buffer; on the render that opens it, the first element in
+  them that takes focus and has an id gets the keyboard (showModal's
+  first focusable), else the close button. The children go straight
+  into the dialog's box (a `<section>` and a `<footer>` are the app's,
+  as a Card's parts). The backdrop's click is Outside on the box, and a
+  blur while the keyboard is in the dialog isn't one (a Focus handler
+  marks it in the same event): a click on the dialog's text, or on
+  another surface, leaves it open. Not done, and not doable here: a
+  focus trap (Tab leaves the dialog; the page under it isn't `inert`,
+  and the dialog can't mark it) and a top layer. A click on the
+  dialog's own text takes the keyboard to the terminal, so Escape
+  reaches it again only after a click on one of its controls.
+- **Tabs:** the shown tab's panel only (the children), with the roving
+  tabindex. The keys are on each tab; while the keyboard is on one of
+  them, the selected tab asks for it, so it follows a key's OnChange. A
+  Value no enabled tab has selects the first enabled one, as tabs.js's
+  refresh. Horizontal only: TabsProps has no orientation or line
+  variant.
+- **Toaster:** its id is Basecoat's `toaster`, a toast's `toast-<n>`. A
+  toast's timer starts at its first render on a surface
+  (`surf.Of(ctx).Do`), for Basecoat's 3 s (5 s for an error); it goes
+  `aria-hidden`, and is removed 300 ms later, toast.css's transition,
+  whose end toast.js waits for. The pointer over the toaster pauses the
+  timers (surf.Hover); surftest can't hover, so that is untested.
+  Toast has no action or cancel: one that stays (a negative Duration)
+  gets the macro's cancel button, Dismiss, or it could never go.
+- **code.Block links Chroma's lexers package**, every lexer, since its
+  doc names "json" and "sh"; the spike embedded five XML lexers. Each
+  line is a `<div>` in the `<pre>`: the runtime drops whitespace-only
+  text beside elements even inside a `<pre>` (render.go's number), so a
+  line break as text would be lost. A token's class is one kit.css has:
+  comments `text-muted-foreground`, keywords `font-semibold`, types and
+  functions `font-medium`, errors `text-destructive`; strings and
+  literals are plain, since the kit has no class for another theme
+  colour.
+- **kit.css has no `.dialog`, `.toaster` or `.toast` rules**, nor a text
+  class for `--color-primary` or the chart colours: the spike's build
+  kept only what its markup used. The components write Basecoat's
+  classes; the stylesheet's rebuild is the kit's, not worked round here.
+- **surftest.Type types a capital as shift and its key** (SPEC §10.4):
+  `Type("Ada")` typed "ada", which hello's test caught.
+- **The kit's icons gain lucide's `hand`**, which hello's Wave draws.
