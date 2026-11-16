@@ -61,7 +61,7 @@ var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Bo
 // for byte: then the tree is the last one, ids and all, and needs no parse
 // and no diff.
 func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
-	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s}
+	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s, Focused: s.focused, Memo: s.memo}
 	s.r.buf.Reset()
 	if err := s.view.Render(rt.With(context.Background(), f), &s.r.buf); err != nil {
 		return nil, false, err
