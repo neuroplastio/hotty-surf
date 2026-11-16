@@ -48,7 +48,16 @@ func Keep[T any, P interface {
 	msgp.Encodable
 	msgp.Decodable
 }](get func() P, set func(P)) {
-	panic("L0")
+	keep(
+		func(w *msgp.Writer) error { return get().EncodeMsg(w) },
+		func(r *msgp.Reader) error {
+			p := P(new(T))
+			if err := p.DecodeMsg(r); err != nil {
+				return err
+			}
+			set(p)
+			return nil
+		})
 }
 
 // Serve connects the program to its reloader on rw, as the instance key: a
@@ -70,5 +79,5 @@ func Keep[T any, P interface {
 // a program that ends ctx before it exits (run.App does) is no crash, and
 // the reloader forgets its key.
 func Serve(ctx context.Context, rw io.ReadWriter, key string) error {
-	panic("L0")
+	return serve(ctx, rw, key)
 }

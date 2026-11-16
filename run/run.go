@@ -32,5 +32,18 @@ import (
 // It places the surface with Press and Hover on, and under `hotty-surf run`
 // it serves the reloader as the instance "app" (package reload).
 func App(ctx context.Context, s *surf.Surface) error {
-	panic("L0")
+	if dev != nil {
+		if served, err := dev(ctx, s); served {
+			return err
+		}
+	}
+	return app(ctx, s)
 }
+
+// dev serves s under `hotty-surf run`, in a build with the surfdev tag
+// (dev.go): served says whether this process is one `hotty-surf run`
+// started. It is nil in any other build.
+var dev func(ctx context.Context, s *surf.Surface) (served bool, err error)
+
+// quits says whether k, a key the surface didn't take, quits the app.
+func quits(k string) bool { return k == "ctrl+c" || k == "ctrl+q" }
