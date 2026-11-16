@@ -233,6 +233,10 @@ locked API, in the order they were made.
   host's text is the field's.
 - **A duplicate surf.On id is a fault** (surftest fails on it); the first
   registration wins in the frame.
+- **Whitespace-only text beside elements is dropped,** as the spike did
+  (and JSX does), **except inside a pre, textarea or listing,** where it
+  is the text's own. The spike dropped it there too; ui's review found
+  it.
 
 ### surftest
 
@@ -271,7 +275,10 @@ are byte for byte the same. The differences are all intended:
 
 - the spike placed its own surface (a=place); in v0.7 the driver does;
 - v07 sends an a=focus for a command's search after an item click (the
-  bullet above), which the spike's page-wide keys never needed.
+  bullet above), which the spike's page-wide keys never needed;
+- the kit's own classes are `kit-` where the spike's carried its old
+  name (`kit-surface`, `kit-popup`, …: AGENTS.md's names rule); the
+  spike's streams are compared with the same rename applied.
 
 To rerun: TASKS_STREAM=<file> with TASKS_ACTS in examples/tasks, and
 NAV_STREAM=<file> in examples/nav.

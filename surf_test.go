@@ -178,3 +178,22 @@ func (f *fakeT) Error(args ...any) { f.errs = append(f.errs, fmt.Sprint(args...)
 func (f *fakeT) Errorf(format string, args ...any) {
 	f.errs = append(f.errs, fmt.Sprintf(format, args...))
 }
+
+func TestWhitespaceInPreStays(t *testing.T) {
+	word := "b"
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, "<div>\n  <pre><span>a</span>\n  <span>%s</span>\n</pre>\n  <button%s>go</button>\n</div>",
+			word, on("go", surf.Click(func() { word = "c" })))
+	})
+	r := surftest.Start(t, surf.New("t", v, ""))
+	if !strings.Contains(r.HTML(), "a</span>\n  <span") {
+		t.Fatalf("the pre's line break is gone: %q", r.HTML())
+	}
+	r.Click("button")
+	if h := r.HTML(); !strings.Contains(h, "a</span>\n  <span") || !strings.Contains(h, ">c</span>\n</pre>") {
+		t.Fatalf("the pre's whitespace after a change: %q", h)
+	}
+	if strings.Contains(r.HTML(), "</pre>\n") {
+		t.Fatalf("whitespace beside elements outside a pre stays: %q", r.HTML())
+	}
+}

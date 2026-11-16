@@ -104,7 +104,7 @@ func (s *Surface) tree() (*tree, error) {
 		checkParse(t.root, src)
 	}
 	t.byID["root"] = t.root
-	s.number(t.root, "root", t)
+	s.number(t.root, "root", t, false)
 	return t, nil
 }
 
@@ -146,12 +146,13 @@ func (s *Surface) keep(t *tree) {
 //
 // Whitespace-only text beside elements is dropped, as JSX drops it: the
 // template's indentation is not the page's, and a parent whose children
-// are all elements can be told as narrow ops.
-func (s *Surface) number(p *html.Node, pid string, t *tree) {
+// are all elements can be told as narrow ops. Inside a pre (pre is true)
+// it is the text's own, and stays.
+func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 	n := 0
 	for c := p.FirstChild; c != nil; {
 		next := c.NextSibling
-		if c.Type == html.TextNode && strings.TrimSpace(c.Data) == "" && (c.PrevSibling != nil || next != nil) {
+		if !pre && c.Type == html.TextNode && strings.TrimSpace(c.Data) == "" && (c.PrevSibling != nil || next != nil) {
 			p.RemoveChild(c)
 			c = next
 			continue
@@ -183,7 +184,7 @@ func (s *Surface) number(p *html.Node, pid string, t *tree) {
 		if isField(c) {
 			t.fields = append(t.fields, id)
 		}
-		s.number(c, id, t)
+		s.number(c, id, t, pre || c.Data == "pre" || c.Data == "textarea" || c.Data == "listing")
 		c = next
 	}
 }
