@@ -230,6 +230,22 @@ lists what you get; the points that matter when writing a screen:
 
 ## Lists
 
+A host that tracks focus outside a surface can put `data-region` and
+`data-window` on its root, each `focused` or `unfocused`. Both attributes
+opt in: a selected list item uses `--u-active` only when both are focused,
+and `--u-selected` otherwise. `--u-hover` is layered over either fill on
+hover, so a host supplying these roles should use translucent colours. The
+cell renderer emits the `active` or `selected` role for the same states;
+it does not track ordinary pointer hover. Without both attributes the
+usual keyboard-driven selection remains in effect. The cell renderer snaps
+between states. A host can set `--u-transition` to a CSS duration for
+background-color transitions. Hover is a background layer; its fade is not
+established by the fidelity gate. Set `data-current-bar="on"` on the root
+to show a selected item's bar in `--u-edge` (the cells emit the `edge`
+role). A host of a `surfrun.Surface` can set `RootAttrs` before Show or
+Update; the model leaves those attribute names to the host.
+
+
 ```go
 // examples/hello/tasks.go
 // Tasks is the guide's second screen (tasks.surf): a list of tasks with

@@ -32,6 +32,8 @@
   --u-ink: #eeeeef;
   --u-hover: rgb(255 255 255 / 0.055);
   --u-selected: rgb(255 255 255 / 0.09);
+  --u-active: rgb(255 255 255 / 0.10);
+  --u-edge: var(--u-accent);
   --u-border: rgb(255 255 255 / 0.094);
   --u-input: rgb(255 255 255 / 0.14);
   --u-field: rgb(0 0 0 / 0.22);
@@ -55,6 +57,7 @@
     --u-ink: #1b1b1e;
     --u-hover: rgb(0 0 0 / 0.04);
     --u-selected: rgb(0 0 0 / 0.07);
+    --u-active: rgb(0 0 0 / 0.10);
     --u-border: rgb(0 0 0 / 0.1);
     --u-input: rgb(0 0 0 / 0.16);
     --u-field: #ffffff;
@@ -74,6 +77,7 @@
   --u-ink: #1b1b1e;
   --u-hover: rgb(0 0 0 / 0.04);
   --u-selected: rgb(0 0 0 / 0.07);
+  --u-active: rgb(0 0 0 / 0.10);
   --u-border: rgb(0 0 0 / 0.1);
   --u-input: rgb(0 0 0 / 0.16);
   --u-field: #ffffff;
@@ -1557,5 +1561,34 @@
 .u-table-empty { padding: var(--u-iy) var(--u-px); }
 .u-table-ruled > .u-item { background: linear-gradient(var(--u-border), var(--u-border)) bottom / 100% 1px no-repeat; }
 .u-table-ruled > .u-item:hover { background: linear-gradient(var(--u-border), var(--u-border)) bottom / 100% 1px no-repeat, var(--u-hover); }
+
+/* A host may provide region and window focus independently of DOM focus.
+   Both attributes opt in; their absence retains the usual list look. */
+.u-surface[data-region][data-window] .u-list > .u-item {
+  transition: background-color var(--u-transition, 0ms) linear;
+}
+.u-surface[data-region][data-window] .u-list > .u-item.is-sel,
+.u-surface[data-region][data-window] :focus-within > .u-list > .u-item.is-sel {
+  color: var(--u-ink);
+  background: var(--u-selected);
+}
+.u-surface[data-region="focused"][data-window="focused"] .u-list > .u-item.is-sel,
+.u-surface[data-region="focused"][data-window="focused"] :focus-within > .u-list > .u-item.is-sel {
+  background: var(--u-active);
+}
+.u-surface[data-region][data-window] .u-list > .u-item.is-sel:hover,
+.u-surface[data-region][data-window] :focus-within > .u-list > .u-item.is-sel:hover {
+  background: linear-gradient(var(--u-hover), var(--u-hover)), var(--u-selected);
+}
+.u-surface[data-region="focused"][data-window="focused"] .u-list > .u-item.is-sel:hover,
+.u-surface[data-region="focused"][data-window="focused"] :focus-within > .u-list > .u-item.is-sel:hover {
+  background: linear-gradient(var(--u-hover), var(--u-hover)), var(--u-active);
+}
+.u-surface[data-region][data-window] .u-list > .u-item.is-sel::before { opacity: 0; }
+.u-surface[data-region][data-window][data-current-bar="on"] .u-list > .u-item.is-sel::before {
+  opacity: 1; transform: none; background: var(--u-edge);
+}
+.u-surface[data-region][data-window] .u-list > .u-item.is-sel .u-icon { color: var(--u-ink); }
+.u-surface[data-region][data-window] .u-list > .u-item:focus-visible { box-shadow: none; }
 .u-table-sort { flex: 0 0 auto; color: var(--u-muted); }
 .u-table-sort.is-sorted { color: var(--u-ink); }

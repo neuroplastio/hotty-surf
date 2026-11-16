@@ -789,3 +789,34 @@ The precise upstream cause of each small edge movement is not isolated;
 differences and their scores are recorded rather than attributed to an
 unverified patch. No renderer checkout was edited for this migration.
 
+
+## Region selection motion (2026-11-16)
+
+The kit can take a host's region and window focus on its surface root.
+Its selected rows use `background-color` for the two focus states, and
+`--u-transition` sets their transition duration. The hotty-blitz source's
+`tests/animations.rs` exercises a background-color transition and its
+intermediate frames; this kit's still-image gate does not test motion.
+The hover overlay is a background gradient over the selected fill. Its
+fade, and a host backdrop's fade, have not been established. Cells snap
+between selection states, and their renderer does not track ordinary
+pointer hover outside menus.
+
+A switcher body must leave keyboard ownership with its host. Removing a
+list item's `tabindex` only covers elements whose focusability came from
+that attribute; native buttons, links and inputs may still take focus on a
+press. The host tests exercise that native focus behavior. A general
+per-surface policy to suppress that default while preserving pointer and
+menu events has not been established; the kit does not rewrite controls.
+
+The `list/region` story's 15 cases at 1.6× fail on full-width device
+rows at the boundaries between the stacked backgrounds (296.9–1195.7
+CSS px²); every case at 2× passes (0–5 CSS px²). A control using the
+same story and geometry with the region, window and bar attributes
+removed still fails on the same boundary rows in 13 cases at 1.6×,
+including paper Dense at exactly 1195.7 and graphite Compact at 1222.7
+(the opted-in case is 609.8). The two dark Roomy controls pass; the
+other opted-in Roomy cases expose the same boundary mismatch as their
+backgrounds change. This is a fractional-scale host rendering gap, not
+an inversion of the selected or active roles. The 15 new failures are
+recorded in the fidelity baseline; the threshold is unchanged.

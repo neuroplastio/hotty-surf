@@ -56,8 +56,8 @@ func (p Palette) Derive() Palette {
 		t    float64
 	}{
 		{Surface, fg, 0.04}, {Field, fg, 0.10}, {Tonal, fg, 0.08},
-		{Selected, fg, 0.12}, {Sel, fg, 0.20},
-		{Border, fg, 0.25}, {Line, fg, 0.25},
+		{Selected, fg, 0.12}, {Active, fg, 0.20}, {Sel, fg, 0.20},
+		{Border, fg, 0.25}, {Edge, fg, 0.25}, {Line, fg, 0.25},
 		{Muted, bg, 0.40}, {Faint, bg, 0.60},
 	} {
 		if _, ok := out[d.role]; !ok {

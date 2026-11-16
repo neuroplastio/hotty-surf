@@ -44,6 +44,8 @@ const (
 	Tonal        = cellblock.Tonal
 	Line         = cellblock.Line
 	Selected     = cellblock.Selected
+	Active       = cellblock.Active
+	Edge         = cellblock.Edge
 	Sel          = cellblock.Sel
 	OnAccent     = cellblock.OnAccent
 	SynKeyword   = cellblock.SynKeyword

@@ -152,6 +152,9 @@ func (n *Node) Attr(k, v string) *Node {
 	return n
 }
 
+// WithoutAttr removes an attribute from n.
+func (n *Node) WithoutAttr(k string) *Node { n.dropAttr(k); return n }
+
 // AttrIf sets a boolean attribute while on holds.
 func (n *Node) AttrIf(k string, on bool) *Node {
 	if on {
@@ -170,6 +173,12 @@ func (n *Node) Var(name, v string) *Node {
 		}
 	}
 	n.vars = append(n.vars, attr{name, v})
+	return n
+}
+
+// WithoutVar removes a custom property from n.
+func (n *Node) WithoutVar(name string) *Node {
+	n.vars = slices.DeleteFunc(n.vars, func(a attr) bool { return a.k == name })
 	return n
 }
 
@@ -312,6 +321,9 @@ func MenuOf(n *Node) []MenuItem { return n.menu }
 
 // Autofocus gives n the keyboard when the surface is shown.
 func (n *Node) Autofocus() *Node { n.focus = true; return n }
+
+// WithoutAutofocus removes a request for initial keyboard focus.
+func (n *Node) WithoutAutofocus() *Node { n.focus = false; return n }
 
 // Readline makes the text fields in n (n itself, a Field) edit by the
 // SDK's keymap, hotty.TerminalKeys: the readline keys of a terminal's

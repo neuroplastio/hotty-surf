@@ -78,6 +78,16 @@ func writeAttr(b *strings.Builder, k, v string) {
 	b.WriteByte('"')
 }
 
+// StyleOf is the complete inline style that HTML emits for n, including vars.
+func StyleOf(n *Node) (string, bool) {
+	for _, a := range attrsOf(n) {
+		if a.k == "style" {
+			return a.v, true
+		}
+	}
+	return "", false
+}
+
 // attrsOf is every attribute n renders with but its id, in a fixed order:
 // class, the author's, the style that holds its vars, data-on,
 // data-steps and data-keys.

@@ -40,6 +40,8 @@ const (
 	Tonal    Role = "tonal"     // a selection's, a button's, a Compact box's fill
 	Line     Role = "line"      // a rule
 	Selected Role = "selected"  // a list's selection, while it or what drives it has the keyboard
+	Active   Role = "active"    // a current item in a focused region
+	Edge     Role = "edge"      // a current item's optional bar
 	Sel      Role = "sel"       // a control with the keyboard; an open Select's highlight
 	OnAccent Role = "on-accent" // text on an accent fill
 
@@ -77,6 +79,10 @@ func (r Role) Base() Role {
 		return Fg
 	case CodeGround:
 		return Surface
+	case Active:
+		return Selected
+	case Edge:
+		return Border
 	}
 	return r
 }

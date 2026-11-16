@@ -938,6 +938,26 @@ var All = []Story{
 			surfui.Item(surfui.Text("workspace.new").Grow()),
 		)
 	}},
+	{"list/region", 50, func() *surfui.Node {
+		row := func(label, region, window string, hover, bar bool) *surfui.Node {
+			item := surfui.Item(surfui.Text(label)).Selected(true)
+			if hover {
+				Force(item, "hover")
+			}
+			root := surfui.El("div", surfui.List(item)).Class("u-surface").
+				Attr("data-region", region).Attr("data-window", window).
+				Attr("style", "--u-selected:rgb(255 255 255 / 0.04);--u-active:rgb(255 255 255 / 0.10);--u-hover:rgb(255 255 255 / 0.05);--u-edge:#8facdb")
+			if bar {
+				root.Attr("data-current-bar", "on")
+			}
+			return root
+		}
+		return surfui.Stack(row("Focused", "focused", "focused", false, true),
+			row("Unfocused", "unfocused", "focused", false, true),
+			row("Window unfocused", "focused", "unfocused", false, true),
+			row("Focused and hovered", "focused", "focused", true, false),
+			row("Unfocused and hovered", "unfocused", "focused", true, false))
+	}},
 	{"list/states", 50, func() *surfui.Node {
 		// A list's rows in their states, as the board's hosts: at rest,
 		// under the pointer, selected, and the keyboard's row, the

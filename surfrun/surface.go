@@ -2,6 +2,7 @@ package surfrun
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -49,6 +50,19 @@ type Surface struct {
 	// the model gives it: a host whose screen is in one, as a
 	// multiplexer's panes in "terminal".
 	Theme string
+	// RootAttrs are host-owned attributes applied to the model's root. Set
+	// again before Update to change them; removing a key removes that
+	// attribute. The model must not use the same attribute names. An ordinary
+	// model renders a fresh tree each time; Fine retains and updates its tree.
+	RootAttrs map[string]string
+	// RootVars are host-owned custom properties, named without the leading
+	// --. They are merged with the model's root style on Show and Update.
+	RootVars map[string]string
+	// ExternalKeyboard leaves keyboard ownership outside the surface. It
+	// removes autofocus from all nodes and tabindex from non-native nodes;
+	// native controls and links can still take focus on a press. Set before
+	// Show. It does not disable clicks, hover or context menus.
+	ExternalKeyboard bool
 	// KeyStyle is how the tree's keys are drawn on their caps
 	// (surfkeys.Style), where the model says none (KeyStyler): each surfui.Key's
 	// sequence in the person's style, as a host draws keys, for the
@@ -120,8 +134,10 @@ type Surface struct {
 	index surfui.Index
 	stale bool
 	// The tree the host holds, the last frame's, which Update diffs from.
-	held   *surfui.Node
-	heldIx surfui.Index
+	held      *surfui.Node
+	heldIx    surfui.Index
+	rootAttrs map[string]string // host attributes last applied to the tree
+	rootVars  map[string]string // host custom properties last applied
 
 	reveals []string // the anchors links followed, which the next frame scrolls to
 
@@ -470,6 +486,15 @@ func (s *Surface) update() Frame {
 		if restructured {
 			s.index = surfui.Resolve(s.prev, "r")
 		}
+		if s.ExternalKeyboard {
+			f.Ops = append(f.Ops, externalKeyboard(s.prev, true)...)
+		}
+		rootReplaced := s.prev != nil && slices.ContainsFunc(f.Ops, func(op hotty.Op) bool {
+			return (op.Target == "" || op.Target == surfui.IDOf(s.prev)) &&
+				(op.Op == hotty.OpMorph("", "").Op || op.Op == hotty.OpReplace("", "").Op)
+		})
+		f.Ops = append(f.Ops, s.updateRootAttrs(rootReplaced)...)
+		f.Ops = append(f.Ops, s.updateRootVars(rootReplaced)...)
 	} else {
 		// Rendered again whether fresh rendered since or not: a posted
 		// function may have changed the model since (Runner.Post).
@@ -855,6 +880,19 @@ func (s *Surface) do(act surfui.Action, ev Event) {
 // giving the program its keys (Program), its keys drawn in KeyStyle.
 func (s *Surface) tree() *surfui.Node {
 	t := s.m.Render()
+	if t != nil {
+		for _, k := range slices.Sorted(maps.Keys(s.RootAttrs)) {
+			t.Attr(k, s.RootAttrs[k])
+		}
+		for _, k := range slices.Sorted(maps.Keys(s.RootVars)) {
+			t.Var(k, s.RootVars[k])
+		}
+		if s.ExternalKeyboard {
+			externalKeyboard(t, false)
+		}
+	}
+	s.rootAttrs = maps.Clone(s.RootAttrs)
+	s.rootVars = maps.Clone(s.RootVars)
 	if t != nil && s.Density != "" {
 		t.Density(s.Density)
 	}
@@ -867,6 +905,92 @@ func (s *Surface) tree() *surfui.Node {
 	surfkeys.Expand(t, surfkeys.OnPlatform(s.keyStyle(), s.Platform.Mod), true)
 	s.checkHues(t)
 	return t
+}
+
+func (s *Surface) updateRootVars(force bool) []hotty.Op {
+	if s.prev == nil {
+		return nil
+	}
+	removed := false
+	for _, k := range slices.Sorted(maps.Keys(s.rootVars)) {
+		if _, ok := s.RootVars[k]; !ok {
+			s.prev.WithoutVar(k)
+			removed = true
+		}
+	}
+	var ops []hotty.Op
+	id := surfui.IDOf(s.prev)
+	for _, k := range slices.Sorted(maps.Keys(s.RootVars)) {
+		v := s.RootVars[k]
+		if old, ok := s.rootVars[k]; force || !ok || old != v {
+			s.prev.Var(k, v)
+			if !removed {
+				ops = append(ops, hotty.OpVar(id, k, v))
+			}
+		}
+	}
+	if removed {
+		if style, ok := surfui.StyleOf(s.prev); ok {
+			ops = append(ops, hotty.OpAttr(id, "style", style))
+		} else {
+			ops = append(ops, hotty.OpUnattr(id, "style"))
+		}
+	}
+	s.rootVars = maps.Clone(s.RootVars)
+	return ops
+}
+
+// externalKeyboard drops explicit focusability only from non-native nodes.
+// Fine models have already made their ops, so their removals follow those ops.
+func externalKeyboard(root *surfui.Node, ops bool) []hotty.Op {
+	if root == nil {
+		return nil
+	}
+	var out []hotty.Op
+	stack := []*surfui.Node{root}
+	for len(stack) > 0 {
+		n := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		stack = append(stack, surfui.Kids(n)...)
+		n.WithoutAutofocus()
+		tag := surfui.Tag(n)
+		_, editable := surfui.AttrOf(n, "contenteditable")
+		if editable || tag == "a" || tag == "button" || tag == "input" || tag == "select" || tag == "textarea" || tag == "summary" || tag == "iframe" || tag == "audio" || tag == "video" {
+			continue
+		}
+		if _, ok := surfui.AttrOf(n, "tabindex"); ok {
+			n.WithoutAttr("tabindex")
+			if ops {
+				out = append(out, hotty.OpUnattr(surfui.IDOf(n), "tabindex"))
+			}
+		}
+	}
+	return out
+}
+
+// updateRootAttrs updates a Fine model's retained tree and the host's
+// document. A coarse model receives them on each newly rendered tree.
+func (s *Surface) updateRootAttrs(force bool) []hotty.Op {
+	if s.prev == nil {
+		return nil
+	}
+	var ops []hotty.Op
+	id := surfui.IDOf(s.prev)
+	for _, k := range slices.Sorted(maps.Keys(s.rootAttrs)) {
+		if _, ok := s.RootAttrs[k]; !ok {
+			s.prev.WithoutAttr(k)
+			ops = append(ops, hotty.OpUnattr(id, k))
+		}
+	}
+	for _, k := range slices.Sorted(maps.Keys(s.RootAttrs)) {
+		v := s.RootAttrs[k]
+		if old, ok := s.rootAttrs[k]; force || !ok || old != v {
+			s.prev.Attr(k, v)
+			ops = append(ops, hotty.OpAttr(id, k, v))
+		}
+	}
+	s.rootAttrs = maps.Clone(s.RootAttrs)
+	return ops
 }
 
 // rawHues is the hues of the surface as declared: the model's templates',
@@ -1013,7 +1137,7 @@ func (s *Surface) rehome() {
 // the field takes the keyboard back. In hotty 0.8 a field gives the
 // program Tab itself (V6-02, tab=program), which does without the stop.
 func (s *Surface) Focus(key string) {
-	if s.shown {
+	if s.shown && !s.ExternalKeyboard {
 		s.refocus, s.due = key, true
 	}
 }

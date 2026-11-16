@@ -360,12 +360,20 @@ func (p *painter) item(b *box, in *ink, bg *Role) {
 		*bg = Sel
 		return
 	}
+	list := surfui.Parent(b.n)
+	if focused, ok := regionState(b.n); ok && b.f&fSel != 0 && list != nil && hasClass(list, "u-list") {
+		*bg = Selected
+		if focused {
+			*bg = Active
+		}
+		in.fg = Fg
+		return
+	}
 	if hasClass(b.n, "is-cur") {
 		// The item open in the program, told from the selected row: bold
 		// in the accent's tone.
 		in.fg, in.attr = Accent, in.attr|Bold
 	}
-	list := surfui.Parent(b.n)
 	// A standalone focusable item has no list selection to mark where
 	// the keyboard is. Use the quiet list-selection role for its row.
 	if p.focus == b.n && (list == nil || !hasClass(list, "u-list")) {
@@ -385,6 +393,29 @@ func (p *painter) item(b *box, in *ink, bg *Role) {
 		// ▎ (decorate) stays in sight on it.
 		*bg = Selected
 	}
+}
+
+// regionState is supplied by a host on a surface root. Without both
+// attributes the ordinary keyboard-driven look remains in effect.
+func regionState(n *surfui.Node) (focused, ok bool) {
+	for ; n != nil; n = surfui.Parent(n) {
+		if hasClass(n, "u-surface") {
+			region, r := surfui.AttrOf(n, "data-region")
+			window, w := surfui.AttrOf(n, "data-window")
+			return region == "focused" && window == "focused", r && w
+		}
+	}
+	return false, false
+}
+
+func regionBar(n *surfui.Node) bool {
+	for ; n != nil; n = surfui.Parent(n) {
+		if hasClass(n, "u-surface") {
+			v, _ := surfui.AttrOf(n, "data-current-bar")
+			return v == "on"
+		}
+	}
+	return false
 }
 
 // keyed is whether the keyboard is on list or on what drives it beside
@@ -665,6 +696,15 @@ func (p *painter) decorate(b *box, r rect, clip rect, in ink) {
 	case b.f&(fOptions|fTip) != 0:
 		p.edges(r, clip, Line)
 	case b.f&fItem != 0:
+		if _, ok := regionState(b.n); ok {
+			list := surfui.Parent(b.n)
+			if b.f&fSel != 0 && list != nil && hasClass(list, "u-list") && regionBar(b.n) {
+				for i := range r.h {
+					p.g.put(r.x, r.y+i, "▎", 1, style{fg: Edge}, clip)
+				}
+			}
+			return
+		}
 		list := surfui.Parent(b.n)
 		if list == nil || p.list {
 			return
