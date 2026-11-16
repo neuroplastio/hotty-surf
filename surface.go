@@ -123,9 +123,9 @@ func Of(ctx context.Context) *Surface {
 }
 
 // Platform is the host's platform, from the capabilities Attach was given:
-// the modifier its "mod" stands for and its edit shortcuts (SPEC §10.4, §10.2), for
-// a render that shows a shortcut the way the host's platform writes it. It is
-// the zero Platform (ctrl) outside a render.
+// the modifier its "mod" stands for and its edit shortcuts (SPEC §10.4,
+// §10.2), for a render that shows a shortcut the way the host's platform
+// writes it. It is the zero Platform (ctrl) outside a render.
 func Platform(ctx context.Context) hotty.Platform {
 	panic("L0")
 }

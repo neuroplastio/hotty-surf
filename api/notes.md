@@ -20,7 +20,7 @@ neuroplast.io/hotty-surf    surf: a Surface (owns no terminal), On and the handl
   surftest                  a surface on hotty-go's test host
   lint                      the kit's rules for an app's sources
   reload                    the app's side of live reload (surfdev tag only)
-  reload/reloader           the dev parent: surf run's, and plx's plugin dev
+  reload/reloader           the dev parent (hotty-surf run, plx's dev loop)
 surftea (its own module)    a surface in a Bubble Tea program
 internal/apitool            this pack, and the API lock
 ```
@@ -74,7 +74,7 @@ internal/apitool            this pack, and the API lock
 
 | ask | where |
 |---|---|
-| A1 live reload as a library: a child behind the dev tag, a parent both surf run and plx call, over a reader and writer the parent hands over | `reload.Keep`, `reload.Serve(ctx, rw, key)` (child); `reloader.New(dir, restart, report, opts...)`, `Run`, `Serve(ctx, rwc)`, `Reload` (parent) |
+| A1 live reload as a library: a child behind the dev tag, a parent both hotty-surf run and plx call, over a reader and writer the parent hands over | `reload.Keep`, `reload.Serve(ctx, rw, key)` (child); `reloader.New(dir, restart, report, opts...)`, `Run`, `Serve(ctx, rwc)`, `Reload` (parent) |
 | A2 plx embeds a surface: a rect plx owns, input in, bytes out, resize, cells | `surf.Surface` (Attach, Document, Event, Key, Update, Pending); placement and resizes stay plx's; `cells.New(cols, rows, events)`, a writer of hotty commands |
 | A3 the lint and the error surface as packages | `lint.Dir`; `reloader.View(&report)` on a surface styled by `ui.Stylesheet()` |
 | surflua removed | not in v0.7 |
@@ -167,11 +167,11 @@ between `MenuItem.Keys` and the handler that binds it.
   (`cells.Screen.Cursor` has no counterpart): a `Host.Cursor`, additive.
 - **If `ctl reload` sends a `Report` over a socket** (L4), `Report` and
   `lint.Finding` gain msgp codecs and limits (P-3), additively.
-- **The `surf` command.** The docs name the dev command `surf run` (and
-  `surf ctl reload`, `surf build --wasm`, `surf serve`), as the plan
-  does; AGENTS.md's rule says nothing is a bare `surf`, a binary
-  included. The command's name is the maintainer's call before L4 builds
-  it.
+- **The command is `hotty-surf`** (`cmd/hotty-surf`): new, run, ctl,
+  lint, shot, build --wasm, serve, book; the project's own name, the
+  review's call under the maintainer's delegation (p-756, 2026-11-16).
+  Its environment variables and files take the same name
+  (`HOTTY_SURF_…`).
 - **NOTICE** still names the Material Design Icons' data, which v0.7
   drops; it names Lucide's (ISC) once `ui.Icon` ships them.
 - **The vault's board and stories** are v0.6's; L1 starts v0.7's.
@@ -194,6 +194,6 @@ is the last appendix.
 - The other 30-odd components. Each follows the pattern, has its row in
   docs/coverage.md (in the appendix below), and comes in a batch pack
   (L2).
-- `cmd/surf`'s commands (new, run, ctl, lint, shot, build --wasm, serve,
+- `cmd/hotty-surf`'s commands (new, run, ctl, lint, shot, build --wasm, serve,
   book). They are a CLI, not Go API, and go in the build tools pack (L4).
 - The bodies. L1 moves the spike's runtime in behind these signatures.

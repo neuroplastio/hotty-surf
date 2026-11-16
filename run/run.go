@@ -8,13 +8,13 @@
 // the surface drawn in character cells (package cells).
 //
 // Built with GOOS=js GOARCH=wasm, the same App speaks to the page that runs
-// it: xterm.js with xterm-addon-hotty, as `surf build --wasm` and `surf
-// serve` make it. The app's main is the same for both.
+// it: xterm.js with xterm-addon-hotty, as `hotty-surf build --wasm` and
+// `hotty-surf serve` make it. The app's main is the same for both.
 //
-// Under `surf run`, App draws through `surf run` instead of the terminal:
-// `surf run` owns the terminal, runs the reloader (package reloader) and
-// starts each new build, and App serves it as the instance "app" (package
-// reload).
+// Under `hotty-surf run`, App draws through `hotty-surf run` instead of the
+// terminal: `hotty-surf run` owns the terminal, runs the reloader (package
+// reloader) and starts each new build, and App serves it as the instance
+// "app" (package reload).
 package run
 
 import (
@@ -29,8 +29,8 @@ import (
 // ctrl is the host's mod they reach handlers as mod+c and mod+q, see
 // surf.Key). Other keys the surface doesn't take do nothing.
 //
-// It places the surface with Press and Hover on, and under `surf run` it
-// serves the reloader as the instance "app" (package reload).
+// It places the surface with Press and Hover on, and under `hotty-surf run`
+// it serves the reloader as the instance "app" (package reload).
 func App(ctx context.Context, s *surf.Surface) error {
 	panic("L0")
 }

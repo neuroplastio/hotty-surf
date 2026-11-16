@@ -91,8 +91,8 @@ func (r *Rig) HTML() string {
 
 // Lint fails the test for each rule of the kit's lint that the app's sources
 // under dir break (colours outside the theme, px sizes, the root font,
-// hiding the page below a breakpoint), as `surf lint` and `surf run` report
-// them.
+// hiding the page below a breakpoint), as `hotty-surf lint` and
+// `hotty-surf run` report them.
 func Lint(t testing.TB, dir string) {
 	panic("L0")
 }

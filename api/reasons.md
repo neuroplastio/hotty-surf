@@ -163,7 +163,7 @@ a user can't do without the name, or why a simpler shape won't do.
 
 ## lint
 
-- `lint.Dir`: the kit's rules as a package, so `surf run`, surftest and plx's plugin dev loop lint the same way (plx's ask A3).
+- `lint.Dir`: the kit's rules as a package, so `hotty-surf run`, surftest and plx's plugin dev loop lint the same way (plx's ask A3).
 - `lint.Finding`: one finding as plain data, for a dev tool to show its own way.
 - `lint.Finding.File`: where.
 - `lint.Finding.Line`: where.
@@ -178,8 +178,8 @@ a user can't do without the name, or why a simpler shape won't do.
 
 ## reload/reloader (the dev parent)
 
-- `reload/reloader.Reloader`: the dev parent as a library, so `surf run` and plx's `plx plugin dev` share the tiers, the build and the handover (plx's ask A1): one per directory, any number of processes, one build for all of them.
-- `reload/reloader.New`: the app's directory, how to restart its processes from a new binary (the program's own way: exec for surf run, tool slots and daemons for plx), where reports go (on Run's goroutine), and options; restart runs once a build, after every process handed over, and brings back keys that are down.
+- `reload/reloader.Reloader`: the dev parent as a library, so `hotty-surf run` and plx's `plx plugin dev` share the tiers, the build and the handover (plx's ask A1): one per directory, any number of processes, one build for all of them.
+- `reload/reloader.New`: the app's directory, how to restart its processes from a new binary (the program's own way: exec for hotty-surf run, tool slots and daemons for plx), where reports go (on Run's goroutine), and options; restart runs once a build, after every process handed over, and brings back keys that are down.
 - `reload/reloader.Reloader.Run`: watches and reloads until ctx is done.
 - `reload/reloader.Reloader.Serve`: one process that dialed in, until its wire closes: plx runs a plugin as many processes, which connect by key; it mirrors reload.Serve on the other end. (Named Serve, not Attach, which means something else on Surface and on hottytea's Session.)
 - `reload/reloader.Reloader.Reload`: what `ctl reload` answers: it reads the files now (the watcher may not have heard the save) and waits until the save is fully applied, every key back or reported, without hanging on a crash.
@@ -193,7 +193,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `reload/reloader.Report.Build`: what kept a save from the app: the compiler's output, or why start failed.
 - `reload/reloader.Report.Failed`: per-process failures by key: restart's error, a key that didn't come back, a process that exited before handover.
 - `reload/reloader.Report.Lint`: the save's lint findings.
-- `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as surf run does (plx's ask A3).
+- `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
 
 ## surftea (a module of its own)
 

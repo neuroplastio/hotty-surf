@@ -1,7 +1,7 @@
 // Package lint is the kit's rules for an app's sources: what keeps an app
 // right in a terminal, whose font, width and colours are not a browser's.
-// `surf lint`, `surf run` after every save, surftest.Lint and a dev parent
-// such as plx's run it.
+// `hotty-surf lint`, `hotty-surf run` after every save, surftest.Lint and a
+// dev parent such as plx's run it.
 //
 // The rules: colour (a colour value outside the theme's files), px (a px
 // size, where rem follows the terminal's font), root-font (a font size on

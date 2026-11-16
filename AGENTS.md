@@ -19,7 +19,8 @@ templates, cel-lite and the interpreted mode are gone.
   question for a pack, not a change in code.
 - **NEIO-15 is the brief.** Its decisions are the maintainer's. Don't
   settle an open question in code.
-- **The names are hotty-surf and package `surf`.** Nothing is a bare
+- **The names are hotty-surf, package `surf`, and the command
+  `hotty-surf` (`cmd/hotty-surf`).** Nothing is a bare
   `surf` (suckless's browser), and nothing takes back the project's old
   short name: not a binary, a variable or a file. That's the
   maintainer's rule.

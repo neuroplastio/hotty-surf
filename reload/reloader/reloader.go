@@ -1,9 +1,9 @@
 // Package reloader is the dev parent of live reload: it watches an app's
 // packages, decides what a save needs, builds, and hands every running
-// process of the app over to the new build (package reload is the
-// processes' side). `surf run` runs it with one process, the app in a
-// terminal it owns; plx runs it with a plugin's processes, a controller
-// beside each daemon and a tool in each viewer, all from one build.
+// process of the app over to the new build (package reload is the processes'
+// side). `hotty-surf run` runs it with one process, the app in a terminal it
+// owns; plx runs it with a plugin's processes, a controller beside each
+// daemon and a tool in each viewer, all from one build.
 //
 // It doesn't start processes or own a terminal itself. The processes dial
 // in: each connects to the program that runs the Reloader and is handed to
@@ -44,10 +44,10 @@ type Reloader struct {
 //
 // restart starts the app's processes again from the binary at bin, once per
 // Go build that succeeded, after every live process handed over: the
-// program's own way of starting them (exec for surf run, its tool slots and
-// daemons for plx). It also brings back processes that are down (one that
-// crashed, a key that didn't come back): restart covers every key the
-// Reloader knows.
+// program's own way of starting them (exec for hotty-surf run, its tool
+// slots and daemons for plx). It also brings back processes that are down
+// (one that crashed, a key that didn't come back): restart covers every key
+// the Reloader knows.
 //
 // report hears the outcome of every save, on Run's goroutine; a program
 // shows it on a surface through that surface's Do.
@@ -105,10 +105,10 @@ func (r *Reloader) Serve(ctx context.Context, rw io.ReadWriteCloser) error {
 // Reload looks at the app's files now, as they are on disk (it doesn't wait
 // for the watcher to have heard the last save), and waits until what they
 // set off is fully applied: built, restarted, and every key the Reloader
-// expected back connected again or reported in Report.Failed. A process
-// that crashes doesn't make it hang. It is what `surf ctl reload` and `plx
-// plugin dev ctl reload` answer; when nothing changed it reports the last
-// save.
+// expected back connected again or reported in Report.Failed. A process that
+// crashes doesn't make it hang. It is what `hotty-surf ctl reload` and
+// `plx plugin dev ctl reload` answer; when nothing changed it reports the
+// last save.
 func (r *Reloader) Reload(ctx context.Context) (Report, error) {
 	panic("L0")
 }
@@ -128,10 +128,11 @@ type Report struct {
 	Lint   []lint.Finding
 }
 
-// View is the error surface: a failed build or process over the app, and
-// the lint's findings in a calmer panel under it, as `surf run` shows them.
-// It shows *r as it is when it renders, so a program keeps one Report and
-// sets it, in report, through the surface's Do (dev.Do(func() { last = rep })):
+// View is the error surface: a failed build or process over the app, and the
+// lint's findings in a calmer panel under it, as `hotty-surf run` shows
+// them. It shows *r as it is when it renders, so a program keeps one Report
+// and sets it, in report, through the surface's Do (dev.Do(func() { last =
+// rep })):
 //
 //	dev := surf.New("dev", reloader.View(&last), ui.Stylesheet())
 //

@@ -1,6 +1,6 @@
 // Package reload is the program's side of live reload: what a dev build
-// links so that a reloader (package reloader, run by `surf run` or by plx's
-// plugin dev loop) can show edits in it as they are saved, keeping its
+// links so that a reloader (package reloader, run by `hotty-surf run` or by
+// plx's plugin dev loop) can show edits in it as they are saved, keeping its
 // state.
 //
 // The child's side is the program's whole process: a whole app (run.App
@@ -13,10 +13,10 @@
 // passes; in any other build Keep does nothing, Serve returns an error, and
 // none of the dev wire is linked. An app doesn't tag its own files.
 //
-// The reloader and the program speak msgpack-RPC (gov P-3) over a reader
-// and a writer the program's host hands it: run.App finds its own in what
-// `surf run` started it with; a plx plugin gets it, and its instance key,
-// from plx.
+// The reloader and the program speak msgpack-RPC (gov P-3) over a reader and
+// a writer the program's host hands it: run.App finds its own in what
+// `hotty-surf run` started it with; a plx plugin gets it, and its instance
+// key, from plx.
 package reload
 
 import (
