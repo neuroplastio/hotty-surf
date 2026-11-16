@@ -1,11 +1,59 @@
 # Board
 
-Last updated: 2026-11-10
+Last updated: 2026-11-17
 
-**Phase:** hotty-surf v0 (gov NEIO-15, the maintainer's pick of R-23 on
-2026-10-30): candidate A (Live) with layout in `.surf` templates and
-expressions in cel-lite, interpreted and compiled from the same files.
-R-23's spike, below, is the record.
+**Phase:** hotty-surf v0.7 (branch `v07`): Go, templ and Basecoat, by the
+plan of 2026-11-16. Each leg starts with its API as signatures, which a
+blind reviewer settles and `api/v0.7.txt` locks; the leg then fills it.
+v0.6's board follows below as the record; main keeps v0.6.3.
+
+## v0.7.0
+
+- [x] **L0, the shape** (journal 2026-11-16): the API as signatures, the
+  lock and its tooling, the coverage table of Basecoat's 39 components,
+  TinyGo checked.
+- [x] **L1, the runtime** (journal 2026-11-17, `api/notes.md` › L1 notes):
+  - [x] the spike's runtime as the root package: render, number, diff,
+    fields, focus; keys scoped to the focused element's chain, outside
+    press and blur, hover, focus and blur handlers;
+  - [x] the 2 ms floor gone: an unchanged render skips the parse and the
+    diff, a fast parser for templ's markup (x/net/html behind it, held
+    equal by a fuzz test and the `surfparsecheck` tag), Tasks' acts at
+    0.7–1.1 ms on 1k rows;
+  - [x] Tasks and nav byte-identical to the spike's streams, tested
+    through surftest, linted clean;
+  - [x] run: a hotty host, cells on a plain terminal, js/wasm;
+  - [x] TinyGo: Tasks' release wasm builds with no mods, its stream
+    Go's byte for byte (`make tinygo`, `scripts/wasm-stream.sh`);
+  - [x] reload and reload/reloader (text, css and go tiers, msgpack-RPC);
+    `hotty-surf` run, ctl reload, ctl shot, lint, new;
+  - [x] cells, first cut (L3 completes it);
+  - [ ] ui's components the API names: Button, Badge, Card, Icon, Kbd
+    done; Select, DropdownMenu, Dialog, Tabs, Toaster, code.Block;
+  - [x] ARCHITECTURE.md.
+- [ ] **L2, every Basecoat component:** the jinja ones generated, the
+  CSS-only ones typed, the behaviour scripts translated with a Chromium
+  differential test each; the spike's popups (`internal/spikeui`)
+  retired. `ui/coverage.tsv` is the list.
+- [ ] **L3, the storybook, in cells too:** `hotty-surf book`, a story per
+  component and variant, every story usable by keyboard in cells.
+- [ ] **L4, the build tools:** `hotty-surf build --wasm` and `serve`,
+  `shot`'s headless run, the embedding proven in Bubble Tea (surftea)
+  and in plx.
+- [ ] **L5, the example apps:** settings, a file browser, a log viewer,
+  a dashboard, a command palette, the embed demo; each in hottyterm, the
+  browser and cells, tested and linted, its authoring time recorded.
+- [ ] **L6, the consumers and the release:** margin first, then plx;
+  v0.7.0 on the maintainer's go-ahead.
+
+### Found in L1, for later legs
+
+- `ctl shot` renders through hotty-blitz's `hotty render`; the spike's
+  headless shot (build, run, render, exit) is L4's.
+- Tasks' and nav's `style/app.css` have no build.sh until `hotty-surf
+  build` exists (L4): they are edited by hand.
+- `hotty-surf run` needs a hotty host; it has no cells fallback yet.
+- A process that dies before its hello makes a reload wait its 10 s.
 
 ## v0.1.0, the first public tag
 
