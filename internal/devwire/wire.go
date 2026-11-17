@@ -6,8 +6,8 @@
 // notification, where params and result are one of the maps below, keyed
 // by field name, and error is nil or a string.
 //
-// It is internal, so that none of it is API: reloader.Report and
-// lint.Finding cross the ctl wire as the mirrors Report and Finding.
+// It is internal, so that none of it is API. "reload"'s answer on the ctl
+// wire is reloader.Report, with its own codec.
 package devwire
 
 //go:generate msgp -marshal=false -tests=false -file wire.go -o wire_gen.go
@@ -149,23 +149,4 @@ type Doc struct {
 type Shot struct {
 	Key     string `msg:"key"`
 	Surface string `msg:"surface"`
-}
-
-// Report mirrors reloader.Report, which has no codec of its own (it is
-// API): the answer to "reload".
-type Report struct {
-	Tier   string            `msg:"tier"`
-	Took   int64             `msg:"took"` // nanoseconds
-	Build  string            `msg:"build"`
-	Failed map[string]string `msg:"failed"`
-	Lint   []Finding         `msg:"lint"`
-}
-
-// Finding mirrors lint.Finding.
-type Finding struct {
-	File string `msg:"file"`
-	Line int    `msg:"line"`
-	Col  int    `msg:"col"`
-	Rule string `msg:"rule"`
-	Text string `msg:"text"`
 }

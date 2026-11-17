@@ -34,6 +34,9 @@ pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Write([]byte) (int, error)
 pkg neuroplast.io/hotty-surf/cells, type Screen struct
 pkg neuroplast.io/hotty-surf/lint, func Dir(string) ([]Finding, error)
+pkg neuroplast.io/hotty-surf/lint, method (*Finding) DecodeMsg(*msgp.Reader) error
+pkg neuroplast.io/hotty-surf/lint, method (*Finding) EncodeMsg(*msgp.Writer) error
+pkg neuroplast.io/hotty-surf/lint, method (*Finding) Msgsize() int
 pkg neuroplast.io/hotty-surf/lint, type Finding struct
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Col int
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, File string
@@ -47,12 +50,16 @@ pkg neuroplast.io/hotty-surf/reload/reloader, func Env(...string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) error, func(Report), ...Option) *Reloader
 pkg neuroplast.io/hotty-surf/reload/reloader, func Output(string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func Tags(...string) Option
+pkg neuroplast.io/hotty-surf/reload/reloader, func Text(*Report) string
 pkg neuroplast.io/hotty-surf/reload/reloader, func View(*Report) templ.Component
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Document(context.Context, string, string) (string, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Instances() map[string][]Placed
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Reload(context.Context) (Report, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Report) DecodeMsg(*msgp.Reader) error
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Report) EncodeMsg(*msgp.Writer) error
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Report) Msgsize() int
 pkg neuroplast.io/hotty-surf/reload/reloader, type Option struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Cols int

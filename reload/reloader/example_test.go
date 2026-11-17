@@ -1,9 +1,13 @@
 package reloader_test
 
 import (
+	"fmt"
+	"time"
+
 	"context"
 	"io"
 	"net"
+	"neuroplast.io/hotty-surf/lint"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/reload/reloader"
@@ -66,4 +70,22 @@ func ExampleReloader_Instances() {
 			_ = doc // rendered at s.Cols by s.Rows
 		}
 	}
+}
+
+// A dev parent prints a save's outcome as `hotty-surf ctl reload` does.
+func ExampleText() {
+	rep := reloader.Report{
+		Tier:   "go",
+		Took:   312 * time.Millisecond,
+		Failed: map[string]string{"tool:viewer": "exited before handover"},
+		Lint: []lint.Finding{
+			{File: "app.templ", Line: 12, Col: 5, Rule: "px", Text: "14px: use rem"},
+		},
+	}
+	fmt.Print(reloader.Text(&rep))
+	// Output:
+	// ok: go in 312ms
+	// tool:viewer: exited before handover
+	// lint: 1 finding
+	//   app.templ:12:5: px: 14px: use rem
 }

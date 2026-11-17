@@ -134,9 +134,9 @@ func servePage(ctx context.Context, ln, ctl net.Listener, dir string, log io.Wri
 	report := func(rep reloader.Report) {
 		text := ""
 		if rep.Build != "" || len(rep.Failed) > 0 || len(rep.Lint) > 0 {
-			text = ReportText(wireReport(rep))
+			text = reloader.Text(&rep)
 		}
-		fmt.Fprint(log, ReportText(wireReport(rep)))
+		fmt.Fprint(log, reloader.Text(&rep))
 		p.mu.Lock()
 		p.report = text
 		p.changed()
