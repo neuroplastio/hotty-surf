@@ -53,6 +53,18 @@ func checkIconButtonName(ctx context.Context, attrs templ.Attributes) string {
 	return ""
 }
 
+func disableIconButton(ctx context.Context, attrs templ.Attributes) string {
+	value, exists := attrs["disabled"]
+	if !exists || value == nil || value == false {
+		return ""
+	}
+	id, _ := attrs["id"].(string)
+	if f := rt.From(ctx); f != nil && f.On[id] != nil {
+		f.On[id].Click = nil
+	}
+	return ""
+}
+
 const itemBase = "relative flex min-h-16 w-full cursor-default items-start rounded-sm border-0 px-2.5 pt-1.5 text-left font-[inherit] outline-offset-0 transition-colors duration-300 ease-out focus-visible:outline-2 focus-visible:outline-sidebar-ring"
 
 func itemClass(p ListItemProps) string {

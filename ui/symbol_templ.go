@@ -108,6 +108,7 @@ func IconButton(p IconButtonProps) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		checkAttrs(ctx, "IconButton", p.Attrs, "type", "class")
 		checkIconButtonName(ctx, p.Attrs)
+		disableIconButton(ctx, p.Attrs)
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()

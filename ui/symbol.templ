@@ -15,6 +15,7 @@ templ Symbol(s Shape, class string) {
 templ IconButton(p IconButtonProps) {
 	{{ checkAttrs(ctx, "IconButton", p.Attrs, "type", "class") }}
 	{{ checkIconButtonName(ctx, p.Attrs) }}
+	{{ disableIconButton(ctx, p.Attrs) }}
 	<button type="button" class={ iconButtonClass(p.Class) } { p.Attrs... }>
 		@Symbol(p.Shape, "size-3.5")
 	</button>
