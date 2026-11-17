@@ -61,6 +61,8 @@ const evaluate = async (expression) => {
 const KEYS = {
   arrow_down: { key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
   arrow_up: { key: 'ArrowUp', code: 'ArrowUp', windowsVirtualKeyCode: 38 },
+  arrow_left: { key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 },
+  arrow_right: { key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 },
   home: { key: 'Home', code: 'Home', windowsVirtualKeyCode: 36 },
   end: { key: 'End', code: 'End', windowsVirtualKeyCode: 35 },
   escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },

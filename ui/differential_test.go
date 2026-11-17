@@ -40,6 +40,7 @@ type subject struct {
 var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"select":        selectSubject,
 	"dropdown-menu": menuSubject,
+	"tabs":          tabsSubject,
 }
 
 func init() {
@@ -281,5 +282,30 @@ func menuSubject(t *testing.T, args map[string]any) subject {
 			return ui.DropdownMenu(&st, p).Render(ctx, w)
 		}),
 		events: func() []map[string]any { h := heard; heard = nil; return h },
+	}
+}
+
+// tabsSubject is a Tabs for tabs' macro arguments: id, tabsets (tab text,
+// tab_attrs' disabled) and default_tab_index (1-based, 1 by default). Its
+// OnChange shows the tab chosen; the macro's tabs.js tells the page
+// nothing, so it reports nothing.
+func tabsSubject(t *testing.T, args map[string]any) subject {
+	p := ui.TabsProps{}
+	p.ID, _ = args["id"].(string)
+	for i, x := range args["tabsets"].([]any) {
+		ts := x.(map[string]any)
+		attrs, _ := ts["tab_attrs"].(map[string]any)
+		p.Tabs = append(p.Tabs, ui.Tab{Value: fmt.Sprint(i + 1), Label: ts["tab"].(string), Disabled: attrs["disabled"] == true})
+	}
+	p.Value = "1"
+	if n, ok := args["default_tab_index"].(float64); ok {
+		p.Value = fmt.Sprint(int(n))
+	}
+	p.OnChange = func(v string) { p.Value = v }
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Tabs(p).Render(templ.WithChildren(ctx, templ.Raw("<p>"+p.Value+"</p>")), w)
+		}),
+		events: func() []map[string]any { return nil },
 	}
 }
