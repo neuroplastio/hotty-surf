@@ -26,6 +26,13 @@ import (
 // "destructive/10" is that much of the colour over what is under it, as
 // Basecoat's tinted fills are. "" is none: the terminal's own text or
 // ground. A literal colour is not read, and is "".
+//
+// One role names no variable: "selected", the fill of the selected band
+// (a list's or a tree's selected row, a nav list's current item, a
+// selected tab), whether or not it has the keyboard. The kit fills it
+// with "accent", which other fills use too, so a program that draws a
+// selection of its own tells it apart by this name; one that has none
+// paints it as "accent".
 type Role string
 
 // Attr is a cell's text attributes, as SGR draws them.
@@ -211,12 +218,10 @@ func kitColours(n *html.Node, dark bool) (fg, bg Role) {
 		return "primary", ""
 	case attr(n, "role") == "tablist" && variant != "line" && n.Parent != nil && tokens(n.Parent, "class", "tabs"):
 		return "", "muted"
-	case attr(n, "role") == "tab" && attr(n, "aria-selected") == "true":
-		return "accent-foreground", "accent"
-	case tokens(n, "class", "nav-item") && attr(n, "aria-current") == "true":
-		return "accent-foreground", "accent"
-	case selectedRow(n):
-		return "accent-foreground", "accent"
+	case attr(n, "role") == "tab" && attr(n, "aria-selected") == "true",
+		tokens(n, "class", "nav-item") && attr(n, "aria-current") == "true",
+		selectedRow(n):
+		return "accent-foreground", "selected"
 	case isTextField(n) || n.DataAtom == atom.Select || cls("select") && n.DataAtom == atom.Button:
 		if dark {
 			return "", "input/30"
