@@ -8,6 +8,7 @@ import (
 
 	"github.com/a-h/templ"
 
+	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
 
@@ -169,4 +170,45 @@ func TestSelectDisabled(t *testing.T) {
 	}
 	r.One("span:text(Medium)")
 	want(t, r, "input[type=hidden]", "value", "m")
+}
+
+// A choice's ask for the trigger is for the next frame only. A Select whose
+// OnChange hides it, shown again later by a shortcut while the user types
+// elsewhere, doesn't take the keyboard back.
+func TestSelectAskExpires(t *testing.T) {
+	var st ui.SelectState
+	shown, typed := true, ""
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		a := surf.On(ctx, "app", surf.Key(func(k string) bool {
+			if k == "mod+b" {
+				shown = true
+				return true
+			}
+			return false
+		}))
+		io.WriteString(w, `<main id="`+a["id"].(string)+`">`)
+		if shown {
+			if err := ui.Select(&st, ui.SelectProps{ID: "s", Items: sizes,
+				OnChange: func(string) { shown = false }}).Render(ctx, w); err != nil {
+				return err
+			}
+		}
+		if err := field("editor", typed, func(v string) { typed = v }).Render(ctx, w); err != nil {
+			return err
+		}
+		_, err := io.WriteString(w, `</main>`)
+		return err
+	})
+	r := start(t, view)
+	r.Click("#s-trigger")
+	r.Click("#s-items-1") // hides the Select
+	r.Type("#editor", "ab")
+	r.Key("ctrl+b") // the Select comes back
+	if !shown {
+		t.Fatal("the shortcut didn't show the Select")
+	}
+	r.Key("c")
+	if typed != "abc" {
+		t.Errorf("the editor holds %q: the Select's return took the keyboard to its trigger", typed)
+	}
 }

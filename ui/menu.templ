@@ -8,6 +8,7 @@ import "neuroplast.io/hotty-surf"
 
 templ dropdownMenu(v *menuView) {
 	{{ v.check(ctx) }}
+	{{ v.n = frameN(ctx) }}
 	<div class={ join("dropdown-menu", v.p.Class) } data-dropdown-menu-initialized="true" { v.rootAttrs(ctx)... }>
 		<button
 			type="button"

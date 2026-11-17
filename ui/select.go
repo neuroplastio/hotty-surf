@@ -7,6 +7,7 @@ import (
 	"github.com/a-h/templ"
 
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // SelectProps are a Select's attributes.
@@ -39,9 +40,10 @@ type SelectState struct {
 	// into the options not disabled; -1 for none. It means something only
 	// while open.
 	active int
-	// focus is select.js's trigger.focus(): the next render asks for the
-	// keyboard on the trigger.
-	focus bool
+	// focus is select.js's trigger.focus(): render focusAt asks for the
+	// keyboard on the trigger, and the ask goes with it (oneShot).
+	focus   bool
+	focusAt uint64
 }
 
 // Select is Basecoat's select: its markup generated from select.html.jinja,
@@ -61,6 +63,7 @@ type selectView struct {
 	opts    []listOpt   // every option, in order (select.js's allOptions)
 	enabled []int       // the options not disabled, as indexes into opts (its options)
 	chosen  int         // the option whose value is Value, into opts; -1 for none
+	n       uint64      // the frame rendering it (rt.Frame.N), its handlers'
 }
 
 // A listEntry is a child of a select's listbox or a menu's menu, as the
@@ -201,7 +204,7 @@ func (v *selectView) close(focus bool) {
 		return
 	}
 	if focus {
-		v.st.focus = true
+		v.ask()
 	}
 	v.st.open, v.st.active = false, -1
 }
@@ -245,8 +248,12 @@ func (v *selectView) choose(i int) {
 	// takes no focus, SPEC §10.1), and that blur closed the list before
 	// the click came (Outside hears a blur): the trigger takes it back
 	// all the same.
-	v.st.focus = true
+	v.ask()
 }
+
+// ask is trigger.focus(), from a handler of this view's frame: for the
+// frame after it.
+func (v *selectView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
 // key is handleKeyNavigation, for the keys the trigger hears.
 func (v *selectView) key(k string) bool {
@@ -314,9 +321,26 @@ func (v *selectView) leave(over bool) {
 // refocus says whether this render gives the trigger the keyboard, as
 // select.js's trigger.focus() would have, once.
 func (v *selectView) refocus() bool {
-	f := v.st.focus
-	v.st.focus = false
-	return f
+	return oneShot(&v.st.focus, v.st.focusAt, v.n)
+}
+
+// frameN is the number of the frame ctx renders (rt.Frame.N), 0 outside a
+// surface: what a view's handlers know their frame by.
+func frameN(ctx context.Context) uint64 {
+	if f := rt.From(ctx); f != nil {
+		return f.N
+	}
+	return 0
+}
+
+// oneShot says whether frame n takes a one-shot ask for the keyboard made
+// for frame at (0 for the next render, as an app's Open is), and clears
+// it: an ask whose frame went by without the component in it expires,
+// rather than take the keyboard whenever the component is next shown.
+func oneShot(asked *bool, at, n uint64) bool {
+	ok := *asked && (at == 0 || at == n)
+	*asked = false
+	return ok
 }
 
 // or is s, or def when s is "".
