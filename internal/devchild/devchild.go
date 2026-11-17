@@ -17,6 +17,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tinylib/msgp/msgp"
@@ -54,7 +55,18 @@ var (
 	// before the process stops waiting for it: a surface the program
 	// dropped is never driven again.
 	answerWait = 300 * time.Millisecond
+	// busyWait is how long a handover waits for a driver that is busy (it
+	// rendered within goneAfter): the reloader's 5 s, less a margin.
+	busyWait = 4 * time.Second
+	// goneAfter tells a dropped surface from a busy one: a driver that
+	// hasn't answered in answerWait, and last rendered longer ago than
+	// this, drives it no more.
+	goneAfter = 3 * time.Second
 )
+
+// stateDepth is the depth a kept state is read to: msgp counts depth only
+// in Skip, so a field the save removed is skipped however deep it was.
+const stateDepth = 64
 
 // SetWaits changes the waits, for a test; zero leaves one as it is.
 func SetWaits(devMode, answer time.Duration) {
@@ -75,6 +87,10 @@ type child struct {
 	surfaces []*surf.Surface
 	snaps    []devwire.Snap // handed over and not yet taken
 	styles   []devwire.Style
+
+	// leaving is set once ctx ended and the reloader was told: from then
+	// on the process serves nothing, and a handover never ends it.
+	leaving atomic.Bool
 }
 
 // Serve is reload.Serve's. done is closed when it is done serving: when it
@@ -98,11 +114,18 @@ func Serve(ctx context.Context, rw io.ReadWriter, key string) (done <-chan struc
 		keepMu.Unlock()
 		if s != nil {
 			r := devwire.NewReader(bytes.NewReader(w.State))
+			r.SetMaxRecursionDepth(stateDepth)
 			err := s(r)
 			devwire.PutReader(r)
 			if err != nil {
-				c.close()
-				return nil, fmt.Errorf("reload: the state handed over: %w", err)
+				// A save changed a kept field's type: the build starts
+				// without the state, and the reloader's report says so.
+				text := "the state handed over didn't decode, so it started without it: " + err.Error()
+				fmt.Fprintln(os.Stderr, "reload: "+text)
+				if err := c.conn.Notify("dropped", &devwire.Dropped{Text: text}); err != nil {
+					c.close()
+					return nil, fmt.Errorf("reload: %w", err)
+				}
 			}
 		}
 	}
@@ -126,6 +149,7 @@ func Serve(ctx context.Context, rw io.ReadWriter, key string) (done <-chan struc
 		select {
 		case <-ctx.Done():
 			// The program is leaving, which is no crash.
+			c.leaving.Store(true)
 			c.conn.Notify("leave", &devwire.Empty{})
 			finish()
 		case <-stop:
@@ -214,11 +238,20 @@ func (c *child) take(s *surf.Surface) {
 // restyled is css with each edit made that it holds.
 func restyled(css string, styles []devwire.Style) string {
 	for _, st := range styles {
-		if st.Old != "" && strings.Contains(css, st.Old) {
-			css = strings.Replace(css, st.Old, st.New, 1)
-		}
+		css, _ = replaceLast(css, st)
 	}
 	return css
+}
+
+// replaceLast replaces st.Old's last occurrence in css with st.New: the
+// app's stylesheet comes after the kit's (ui.Stylesheet() + "\n" +
+// appCSS), and the last match is the app's own, which beats the kit's.
+func replaceLast(css string, st devwire.Style) (string, bool) {
+	i := strings.LastIndex(css, st.Old)
+	if st.Old == "" || i < 0 {
+		return css, false
+	}
+	return css[:i] + st.New + css[i+len(st.Old):], true
 }
 
 // serve answers the reloader's requests until the wire closes or the
@@ -232,6 +265,14 @@ func (c *child) serve() {
 		}
 		if h.Type != devwire.Request {
 			if devwire.Skip(c.r) != nil {
+				return
+			}
+			continue
+		}
+		if c.leaving.Load() {
+			// The program ended Serve's ctx and lives on: a handover
+			// would run Keep's get in it, and end it.
+			if devwire.Skip(c.r) != nil || c.conn.Respond(h.ID, "reload: the process is leaving", nil) != nil {
 				return
 			}
 			continue
@@ -359,11 +400,8 @@ func (c *child) restyle(st devwire.Style) (int, error) {
 	c.styles = append(c.styles, st)
 	c.mu.Unlock()
 	answered, held := c.each(func(s *surf.Surface) bool {
-		css := rt.Peek.CSS(s)
-		if !strings.Contains(css, st.Old) {
-			return false
-		}
-		return rt.Peek.Restyle(s, strings.Replace(css, st.Old, st.New, 1)) == nil
+		css, ok := replaceLast(rt.Peek.CSS(s), st)
+		return ok && rt.Peek.Restyle(s, css) == nil
 	})
 	if answered > 0 && held == 0 {
 		return 0, errors.New("reload: no surface's stylesheet holds the app's as it was built")
@@ -372,14 +410,21 @@ func (c *child) restyle(st devwire.Style) (int, error) {
 }
 
 // handover runs Keep's get and takes every surface's snapshot, as the
-// host has it. Each surface's driver takes its own, and then sends
-// nothing more; one that isn't driven (the program dropped it) is read
-// directly once answerWait has passed.
+// host has it. get runs on the first live surface's driver, as its
+// handlers do, ahead of that surface's snapshot; each driver takes its
+// own surface's, and then sends nothing more. A driver that hasn't
+// answered in answerWait is waited for up to busyWait if it rendered
+// lately (it is busy), and read directly otherwise (the program dropped
+// the surface, so nothing else reads it).
 func (c *child) handover(out *devwire.Handed) error {
 	keepMu.Lock()
 	g := get
 	keepMu.Unlock()
-	if g != nil {
+	state := func() error {
+		if g == nil {
+			return nil
+		}
+		// One buffer a process, once: the bytes are the reply.
 		var b bytes.Buffer
 		w := devwire.NewWriter(&b)
 		err := g(w)
@@ -391,15 +436,19 @@ func (c *child) handover(out *devwire.Handed) error {
 			return fmt.Errorf("reload: Keep's get: %w", err)
 		}
 		out.State = b.Bytes()
-	}
-	type snapped struct {
-		s  *surf.Surface
-		sn devwire.Snap
-		ok bool
+		return nil
 	}
 	live := c.live()
-	got := make(chan snapped, len(live))
-	snap := func(s *surf.Surface) snapped {
+	if len(live) == 0 {
+		return state()
+	}
+	type snapped struct {
+		i   int
+		sn  devwire.Snap
+		ok  bool
+		err error // get's, on the first surface
+	}
+	snap := func(i int, s *surf.Surface) snapped {
 		var b bytes.Buffer
 		w := devwire.NewWriter(&b)
 		err := rt.Peek.Snapshot(s, w)
@@ -407,33 +456,69 @@ func (c *child) handover(out *devwire.Handed) error {
 			err = w.Flush()
 		}
 		devwire.PutWriter(w)
-		return snapped{s, devwire.Snap{Name: s.Name(), CSS: rt.Peek.CSS(s), Data: b.Bytes()}, err == nil}
+		return snapped{i: i, sn: devwire.Snap{Name: s.Name(), CSS: rt.Peek.CSS(s), Data: b.Bytes()}, ok: err == nil}
 	}
-	for _, s := range live {
+	// claimed[i] is set by whoever takes surface i's snapshot: its driver,
+	// or the handover reading a dropped surface directly.
+	claimed := make([]atomic.Bool, len(live))
+	take := func(i int) snapped {
+		var err error
+		if i == 0 {
+			err = state()
+		}
+		sn := snap(i, live[i])
+		sn.err = err
+		return sn
+	}
+	got := make(chan snapped, len(live))
+	for i, s := range live {
 		s.Do(func() {
-			got <- snap(s)
+			if !claimed[i].CompareAndSwap(false, true) {
+				return
+			}
+			got <- take(i)
 			// What the snapshot holds is what the host has: nothing more
 			// goes out from this build.
 			s.Attach(nil, hotty.Caps{})
 		})
 	}
-	done := map[*surf.Surface]snapped{}
-	timeout := time.NewTimer(answerWait)
-	defer timeout.Stop()
+	done := make([]*snapped, len(live))
+	n := 0
+	short := time.NewTicker(answerWait)
+	defer short.Stop()
+	long := time.NewTimer(busyWait)
+	defer long.Stop()
 wait:
-	for len(done) < len(live) {
+	for n < len(live) {
 		select {
 		case sn := <-got:
-			done[sn.s] = sn
-		case <-timeout.C:
+			done[sn.i] = &sn
+			n++
+		case <-short.C:
+			for i, s := range live {
+				if done[i] == nil && time.Since(rt.Peek.Rendered(s)) > goneAfter && claimed[i].CompareAndSwap(false, true) {
+					sn := take(i)
+					done[i] = &sn
+					n++
+				}
+			}
+		case <-long.C:
 			break wait
 		}
 	}
-	for _, s := range live {
-		sn, ok := done[s]
-		if !ok {
-			// Not driven: nothing else reads it.
-			sn = snap(s)
+	for i, s := range live {
+		sn := done[i]
+		if sn == nil {
+			// Still busy: claimed, so its driver doesn't take it late.
+			claimed[i].Store(true)
+			if i == 0 {
+				return fmt.Errorf("reload: %s's driver didn't answer in %v", s.Name(), busyWait)
+			}
+			fmt.Fprintf(os.Stderr, "reload: %s's driver didn't answer in %v; it starts again\n", s.Name(), busyWait)
+			continue
+		}
+		if sn.err != nil {
+			return sn.err
 		}
 		if sn.ok {
 			out.Surfaces = append(out.Surfaces, sn.sn)

@@ -122,6 +122,67 @@ func (z *Doc) Msgsize() (s int) {
 }
 
 // DecodeMsg implements msgp.Decodable
+func (z *Dropped) DecodeMsg(dc *msgp.Reader) (err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, err = dc.ReadMapHeader()
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z5817a858limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, err = dc.ReadMapKeyPtr()
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "text":
+			z.Text, err = dc.ReadString()
+			if err != nil {
+				err = msgp.WrapError(err, "Text")
+				return
+			}
+		default:
+			err = dc.Skip()
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	return
+}
+
+// EncodeMsg implements msgp.Encodable
+func (z Dropped) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 1
+	// write "text"
+	err = en.Append(0x81, 0xa4, 0x74, 0x65, 0x78, 0x74)
+	if err != nil {
+		return
+	}
+	err = en.WriteString(z.Text)
+	if err != nil {
+		err = msgp.WrapError(err, "Text")
+		return
+	}
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z Dropped) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Text)
+	return
+}
+
+// DecodeMsg implements msgp.Decodable
 func (z *Empty) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field

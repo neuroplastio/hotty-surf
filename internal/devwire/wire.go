@@ -74,6 +74,13 @@ type Handed struct {
 	Surfaces []Snap `msg:"surfaces"`
 }
 
+// Dropped is a process's notification ("dropped"), after its welcome,
+// that the state handed over no longer decodes (a save changed a kept
+// field's type), so it started without it: why.
+type Dropped struct {
+	Text string `msg:"text"`
+}
+
 // Empty is the params or result of a message that carries nothing:
 // "render", "handover" and "leave" on the reload wire, "bye" and "doc" on
 // the term wire, "reload" and "shot" on the ctl wire.

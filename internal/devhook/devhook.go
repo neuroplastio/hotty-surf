@@ -31,3 +31,11 @@ func Listen(f func(s any)) []any {
 	added = f
 	return append([]any(nil), surfaces...)
 }
+
+// Reset forgets every surface and the listener, for a test that serves
+// more than once in one process.
+func Reset() {
+	mu.Lock()
+	defer mu.Unlock()
+	surfaces, added = nil, nil
+}
