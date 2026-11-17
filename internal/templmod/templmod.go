@@ -1,15 +1,20 @@
 // Package templmod is how the reloader's dev builds carry mods/templ, the
 // patch that lets a process make templ's development mode read its strings
-// again at once (gov P-7). The patch is applied to templ's files as the
-// app's build finds them, into a directory of the reloader's own, and the
-// build maps them over templ's with `go build -overlay`. go.mod is never
-// changed, the module cache is only read, and a build without the overlay
-// (a release build, any other tool's) is plain templ.
+// again at once (gov P-7). The patch is applied to templ's module as the
+// app's build finds it, into a directory of the reloader's own (a mirror of
+// symlinks to the module cache, and the patched file), and the dev build
+// runs with GOWORK set to a go.work of the reloader's own that replaces
+// templ with it: the app's go.work as it is, with that replace added, or a
+// fresh one that uses the app's module. An overlay can't do it: Go refuses
+// one that replaces a file under GOMODCACHE. go.mod and go.work are never
+// changed, the module cache is only read, and a build without the
+// reloader's GOWORK (a release build, any other tool's) is plain templ.
 package templmod
 
 //go:generate go run ./gen
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,36 +27,22 @@ import (
 	"strings"
 )
 
-// Tag is the build tag a build with the overlay adds: it compiles the
-// files that call what the patch adds (devchild's templmod.go).
+// Tag is the build tag a build with the patch adds: it compiles the files
+// that call what the patch adds (devchild's templmod.go), which a build of
+// plain templ, a vet or a lint can't.
 const Tag = "surftemplmod"
 
 // module is templ's module path.
 const module = "github.com/a-h/templ"
 
-// Overlay writes the patched files and the overlay file into out, for a
-// build in dir with env, and returns the overlay file's path, for
-// `go build -overlay`. It fails when the app's templ isn't the version the
-// patch is for, or the patch doesn't apply to its files; the build then
-// goes without it.
-func Overlay(ctx context.Context, dir string, env []string, out string) (string, error) {
-	files, err := parse(patch)
-	if err != nil {
-		return "", err
-	}
-	if err := os.MkdirAll(out, 0o755); err != nil {
-		return "", err
-	}
-	replace := map[string]string{}
-	for _, f := range files {
-		if strings.HasSuffix(f.path, "_test.go") {
-			continue // not built
-		}
-		pkg := module
-		if d := path.Dir(f.path); d != "." {
-			pkg += "/" + d
-		}
-		cmd := exec.CommandContext(ctx, "go", "list", "-f", "{{if .Module}}{{.Module.Version}}{{end}}\t{{.Dir}}", pkg)
+// Workspace makes templ's patched module and a go.work replacing templ
+// with it in out, for a build in dir with env, and returns the go.work's
+// path, for the build's GOWORK. It fails, and the build goes without the
+// patch, when the app vendors its modules, its templ is replaced already
+// or isn't the version the patch is for, or the patch doesn't apply.
+func Workspace(ctx context.Context, dir string, env []string, out string) (string, error) {
+	goCmd := func(args ...string) (string, error) {
+		cmd := exec.CommandContext(ctx, "go", args...)
 		cmd.Dir, cmd.Env = dir, env
 		b, err := cmd.Output()
 		if err != nil {
@@ -59,36 +50,202 @@ func Overlay(ctx context.Context, dir string, env []string, out string) (string,
 			if errors.As(err, &ee) {
 				err = errors.New(strings.TrimSpace(string(ee.Stderr)))
 			}
-			return "", fmt.Errorf("go list %s: %w", pkg, err)
+			return "", fmt.Errorf("go %s: %w", strings.Join(args, " "), err)
 		}
-		version, pkgDir, _ := strings.Cut(strings.TrimSpace(string(b)), "\t")
-		if version != base {
-			return "", fmt.Errorf("the app's templ is %s, and mods/templ is for %s", version, base)
-		}
-		orig := filepath.Join(pkgDir, path.Base(f.path))
-		src, err := os.ReadFile(orig)
-		if err != nil {
-			return "", err
-		}
-		patched, err := f.apply(src)
-		if err != nil {
-			return "", fmt.Errorf("mods/templ doesn't apply to %s: %w", orig, err)
-		}
-		to := filepath.Join(out, filepath.FromSlash(f.path))
-		if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
-			return "", err
-		}
-		if err := os.WriteFile(to, patched, 0o644); err != nil {
-			return "", err
-		}
-		replace[orig] = to
+		return strings.TrimRight(string(b), "\n"), nil
 	}
-	j, err := json.Marshal(struct{ Replace map[string]string }{replace})
+	e, err := goCmd("env", "GOFLAGS", "GOWORK", "GOMOD", "GOVERSION")
 	if err != nil {
 		return "", err
 	}
-	o := filepath.Join(out, "overlay.json")
-	return o, os.WriteFile(o, j, 0o644)
+	vars := strings.Split(e, "\n")
+	if len(vars) != 4 {
+		return "", fmt.Errorf("go env: %q", e)
+	}
+	flags, work, gomod, version := " "+vars[0]+" ", vars[1], vars[2], strings.TrimPrefix(vars[3], "go")
+	if work == "off" {
+		work = ""
+	}
+	if gomod == "" || gomod == os.DevNull {
+		return "", errors.New("the app is in no module")
+	}
+	vendor := filepath.Join(filepath.Dir(gomod), "vendor")
+	if work != "" {
+		vendor = filepath.Join(filepath.Dir(work), "vendor")
+	}
+	if strings.Contains(flags, " -mod=vendor ") || exists(vendor) {
+		return "", errors.New("the app vendors its modules, so its build takes templ from vendor/")
+	}
+	if strings.Contains(flags, " -mod=mod ") {
+		return "", errors.New("GOFLAGS has -mod=mod, which a workspace doesn't take")
+	}
+	m, err := goCmd("list", "-m", "-f", "{{.Version}}\t{{.Dir}}\t{{with .Replace}}{{.Path}}{{end}}", module)
+	if err != nil {
+		return "", err
+	}
+	got, modDir, replaced := cut3(m)
+	if replaced != "" {
+		return "", fmt.Errorf("templ is replaced already (by %s), and the app builds that", replaced)
+	}
+	if got != base {
+		return "", fmt.Errorf("the app's templ is %s, and mods/templ is for %s", got, base)
+	}
+	if err := mirrorPatched(modDir, filepath.Join(out, "templ")); err != nil {
+		return "", err
+	}
+
+	var w bytes.Buffer
+	if work != "" {
+		j, err := goCmd("work", "edit", "-json", work)
+		if err != nil {
+			return "", err
+		}
+		if err := copyWork(&w, []byte(j), filepath.Dir(work)); err != nil {
+			return "", fmt.Errorf("%s: %w", work, err)
+		}
+		// Its sums, beside it, as the original has them.
+		if sum, err := os.ReadFile(work + ".sum"); err == nil {
+			if err := os.WriteFile(filepath.Join(out, "go.work.sum"), sum, 0o644); err != nil {
+				return "", err
+			}
+		}
+	} else {
+		fmt.Fprintf(&w, "go %s\n\nuse %s\n", version, strconv.Quote(filepath.Dir(gomod)))
+	}
+	fmt.Fprintf(&w, "\nreplace %s => %s\n", module, strconv.Quote(filepath.Join(out, "templ")))
+	gw := filepath.Join(out, "go.work")
+	return gw, os.WriteFile(gw, w.Bytes(), 0o644)
+}
+
+func cut3(s string) (a, b, c string) {
+	a, rest, _ := strings.Cut(s, "\t")
+	b, c, _ = strings.Cut(rest, "\t")
+	return a, b, c
+}
+
+func exists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+// work is go work edit -json's view of a go.work.
+type work struct {
+	Go        string
+	Toolchain string
+	Godebug   []struct{ Key, Value string }
+	Use       []struct{ DiskPath string }
+	Replace   []struct {
+		Old, New struct{ Path, Version string }
+	}
+}
+
+// copyWork writes the go.work j describes, whose directory is from, with
+// every path absolute: the copy lives elsewhere.
+func copyWork(w *bytes.Buffer, j []byte, from string) error {
+	var wk work
+	if err := json.Unmarshal(j, &wk); err != nil {
+		return err
+	}
+	abs := func(p string) string {
+		if filepath.IsAbs(p) {
+			return p
+		}
+		return filepath.Join(from, filepath.FromSlash(p))
+	}
+	fmt.Fprintf(w, "go %s\n", wk.Go)
+	if wk.Toolchain != "" {
+		fmt.Fprintf(w, "toolchain %s\n", wk.Toolchain)
+	}
+	for _, g := range wk.Godebug {
+		fmt.Fprintf(w, "godebug %s=%s\n", g.Key, g.Value)
+	}
+	for _, u := range wk.Use {
+		fmt.Fprintf(w, "use %s\n", strconv.Quote(abs(u.DiskPath)))
+	}
+	for _, r := range wk.Replace {
+		if r.Old.Path == module {
+			return errors.New("it replaces templ already")
+		}
+		old := r.Old.Path
+		if r.Old.Version != "" {
+			old += " " + r.Old.Version
+		}
+		to := r.New.Path
+		if r.New.Version != "" {
+			to += " " + r.New.Version
+		} else {
+			to = strconv.Quote(abs(to)) // a directory
+		}
+		fmt.Fprintf(w, "replace %s => %s\n", old, to)
+	}
+	return nil
+}
+
+// mirrorPatched makes to a copy of templ's module at from for a build:
+// symlinks to its files and directories, and the patch's files patched.
+// from, the module cache, is only read.
+func mirrorPatched(from, to string) error {
+	files, err := parse(patch)
+	if err != nil {
+		return err
+	}
+	patched := map[string][]byte{} // by the module's slash path
+	for _, f := range files {
+		if strings.HasSuffix(f.path, "_test.go") {
+			continue // not built
+		}
+		src, err := os.ReadFile(filepath.Join(from, filepath.FromSlash(f.path)))
+		if err != nil {
+			return err
+		}
+		if patched[f.path], err = f.apply(src); err != nil {
+			return fmt.Errorf("mods/templ doesn't apply to %s: %w", f.path, err)
+		}
+	}
+	return mirror(from, to, "", patched)
+}
+
+// mirror fills to with from's entries under rel: a patched file written,
+// a directory holding one mirrored, another directory a symlink, and
+// another file copied (go:embed takes no symlink, and templ embeds its
+// .version).
+func mirror(from, to, rel string, patched map[string][]byte) error {
+	if err := os.MkdirAll(to, 0o755); err != nil {
+		return err
+	}
+	es, err := os.ReadDir(from)
+	if err != nil {
+		return err
+	}
+	for _, e := range es {
+		r := path.Join(rel, e.Name())
+		src, dst := filepath.Join(from, e.Name()), filepath.Join(to, e.Name())
+		if b, ok := patched[r]; ok {
+			if err := os.WriteFile(dst, b, 0o644); err != nil {
+				return err
+			}
+			continue
+		}
+		holds := false
+		for p := range patched {
+			holds = holds || strings.HasPrefix(p, r+"/")
+		}
+		switch {
+		case holds && e.IsDir():
+			err = mirror(src, dst, r, patched)
+		case e.IsDir():
+			err = os.Symlink(src, dst)
+		default:
+			var b []byte
+			if b, err = os.ReadFile(src); err == nil {
+				err = os.WriteFile(dst, b, 0o644)
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // A filePatch is one file's hunks in a patch.

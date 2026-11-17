@@ -1,10 +1,11 @@
 package templmod
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -78,35 +79,69 @@ func TestModSet(t *testing.T) {
 	}
 }
 
-// TestOverlay: on this module, whose templ is the base, the patch applies
-// to templ's file in the module cache, and the overlay maps that file to
-// the patched copy, which adds ReloadWatchedStrings and keeps the rest.
-func TestOverlay(t *testing.T) {
+// TestWorkspace: on this module, whose templ is the base and which is in
+// no workspace, the go.work uses the module and replaces templ with a
+// mirror of the module cache's: its directories symlinks, but those
+// holding watchmode.go, which is patched.
+func TestWorkspace(t *testing.T) {
 	out := t.TempDir()
-	o, err := Overlay(context.Background(), "../..", os.Environ(), out)
+	env := append(os.Environ(), "GOWORK=off")
+	gw, err := Workspace(context.Background(), "../..", env, out)
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := os.ReadFile(o)
+	b, err := os.ReadFile(gw)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var ov struct{ Replace map[string]string }
-	if err := json.Unmarshal(b, &ov); err != nil {
+	root, _ := filepath.Abs("../..")
+	mirror := filepath.Join(out, "templ")
+	for _, want := range []string{"use " + strconv.Quote(root), "replace github.com/a-h/templ => " + strconv.Quote(mirror)} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("the go.work has no %s:\n%s", want, b)
+		}
+	}
+	st, err := os.Lstat(filepath.Join(mirror, "runtime", "watchmode.go"))
+	if err != nil || !st.Mode().IsRegular() {
+		t.Fatalf("watchmode.go isn't a file of its own: %v", err)
+	}
+	patched, _ := os.ReadFile(filepath.Join(mirror, "runtime", "watchmode.go"))
+	if !strings.Contains(string(patched), "func ReloadWatchedStrings()") {
+		t.Error("the patched file doesn't add ReloadWatchedStrings")
+	}
+	for _, f := range []string{"generator", "parser"} {
+		if st, err := os.Lstat(filepath.Join(mirror, f)); err != nil || st.Mode()&os.ModeSymlink == 0 {
+			t.Errorf("%s isn't a symlink: %v", f, err)
+		}
+	}
+}
+
+// TestCopyWork: a go.work copied elsewhere keeps its directives, with its
+// use and directory replace paths absolute; one that replaces templ
+// already isn't copied.
+func TestCopyWork(t *testing.T) {
+	j := `{"Go":"1.26.0","Toolchain":"go1.26.8","Godebug":[{"Key":"panicnil","Value":"1"}],
+		"Use":[{"DiskPath":"./app"},{"DiskPath":"/abs/lib"}],
+		"Replace":[{"Old":{"Path":"neuroplast.io/hotty-surf"},"New":{"Path":"../hotty-surf"}},
+			{"Old":{"Path":"example.com/x","Version":"v1.0.0"},"New":{"Path":"example.com/y","Version":"v1.1.0"}}]}`
+	var b bytes.Buffer
+	if err := copyWork(&b, []byte(j), "/w/plx"); err != nil {
 		t.Fatal(err)
 	}
-	if len(ov.Replace) != 1 {
-		t.Fatalf("the overlay: %s", b)
+	want := `go 1.26.0
+toolchain go1.26.8
+godebug panicnil=1
+use "/w/plx/app"
+use "/abs/lib"
+replace neuroplast.io/hotty-surf => "/w/hotty-surf"
+replace example.com/x v1.0.0 => example.com/y v1.1.0
+`
+	if b.String() != want {
+		t.Errorf("copied:\n%s\nwant:\n%s", b.String(), want)
 	}
-	for from, to := range ov.Replace {
-		if !strings.HasSuffix(filepath.ToSlash(from), "github.com/a-h/templ@"+base+"/runtime/watchmode.go") {
-			t.Errorf("the overlay replaces %s", from)
-		}
-		orig, _ := os.ReadFile(from)
-		patched, _ := os.ReadFile(to)
-		if !strings.Contains(string(patched), "func ReloadWatchedStrings()") || len(patched) <= len(orig) {
-			t.Errorf("the patched file doesn't add ReloadWatchedStrings")
-		}
+	j = `{"Go":"1.26.0","Replace":[{"Old":{"Path":"github.com/a-h/templ"},"New":{"Path":"../templ"}}]}`
+	if err := copyWork(&b, []byte(j), "/w"); err == nil {
+		t.Error("a go.work that replaces templ was copied")
 	}
 }
 
