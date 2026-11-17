@@ -103,6 +103,8 @@
 }
 .book-main > .tabs > nav {
   flex: 0 0 auto;
+  height: 2.375rem;
+  padding: 0 0.75rem;
   background: transparent;
   border-bottom: var(--hotty-px) solid var(--border);
 }
@@ -111,7 +113,20 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  font-size: 0.875rem;
+}
+/* A source's title and path above its code, as the spike's: small, the
+   path muted, a gap before each source after the first. */
+.book-source-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.5rem;
+  margin-bottom: 0.25rem;
   font-size: 0.75rem;
+}
+.book-source-next {
+  margin-top: 1rem;
 }
 .book-panel pre {
   background: var(--muted);

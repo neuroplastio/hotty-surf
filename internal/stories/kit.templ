@@ -155,7 +155,7 @@ templ buttonDefault(s *kitState) {
 }
 
 templ bookButton(p *Button) {
-	<div class="flex flex-col gap-3 p-4">
+	<div class="flex flex-col gap-3">
 		<div>
 			@ui.Button(ui.ButtonProps{Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, Attrs: surf.On(ctx, "save", surf.Click(func() { p.Clicks++ }))}) {
 				if p.Icon {
