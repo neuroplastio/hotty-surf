@@ -374,6 +374,18 @@ func (s *Surface) fault(fs ...string) {
 	}
 }
 
+// chooses says whether a select's markup chooses an option (one of its
+// options has selected). One that doesn't is the host's, as an input
+// without a value attribute is.
+func chooses(n *html.Node) bool {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode && (c.Data == "option" && hasAttr(c, "selected") || c.Data == "optgroup" && chooses(c)) {
+			return true
+		}
+	}
+	return false
+}
+
 // selectValue is the value of the option a select's markup chooses, as
 // HTML chooses it: the last with selected, or else the first that isn't
 // disabled; "" for none.

@@ -84,7 +84,7 @@ func (d *differ) field(id string, n *html.Node) {
 		}
 		return
 	}
-	if n.Data == "input" && !hasAttr(n, "value") {
+	if n.Data == "input" && !hasAttr(n, "value") || n.Data == "select" && !chooses(n) {
 		return // the markup asks for no value: the field is the host's
 	}
 	want := fieldValue(n)

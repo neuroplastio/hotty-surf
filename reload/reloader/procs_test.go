@@ -279,3 +279,42 @@ func TestReloadWhileStarting(t *testing.T) {
 		t.Errorf("Reload after Run returned: %v, in %v", err, time.Since(start))
 	}
 }
+
+// TestReloadBeforeRun: a Reload made before Run's goroutine has started
+// waits for Run's first build (recommendation 15), where the 1 ms sleep of
+// TestReloadWhileStarting lets Run start first.
+func TestReloadBeforeRun(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds")
+	}
+	dir := t.TempDir()
+	for f, b := range map[string]string{"go.mod": "module x\n\ngo 1.26.0\n", "main.go": "package main\n\nfunc main() {}\n"} {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte(b), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := New(dir, func(context.Context, string) error { return nil }, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	type result struct {
+		rep Report
+		err error
+	}
+	got := make(chan result, 1)
+	go func() {
+		rctx, rcancel := context.WithTimeout(ctx, time.Minute)
+		defer rcancel()
+		rep, err := r.Reload(rctx)
+		got <- result{rep, err}
+	}()
+	time.Sleep(20 * time.Millisecond) // the Reload waits before Run is called
+	ran := make(chan error, 1)
+	go func() { ran <- r.Run(ctx) }()
+	if g := <-got; g.err != nil || g.rep.Tier != tierGo || g.rep.Build != "" {
+		t.Errorf("a Reload made before Run: %+v %v", g.rep, g.err)
+	}
+	cancel()
+	if err := <-ran; err != nil {
+		t.Fatal(err)
+	}
+}

@@ -677,3 +677,101 @@ func TestReloadKeys(t *testing.T) {
 		}
 	})
 }
+
+// TestNewFileImportFollowed: the app's main package is cmd/app of its
+// module, and lib a package of the module the app doesn't import yet. A
+// save adds a file that imports lib; a later save of lib's own file is
+// then a Go reload, since lib is followed.
+func TestNewFileImportFollowed(t *testing.T) {
+	needGo(t)
+	m := t.TempDir()
+	app := copyAppTo(t, filepath.Join(m, "cmd", "app"))
+	for _, f := range []string{"go.mod", "go.sum"} {
+		if err := os.Rename(filepath.Join(app, f), filepath.Join(m, f)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.MkdirAll(filepath.Join(m, "lib"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	libFile := filepath.Join(m, "lib", "lib.go")
+	if err := os.WriteFile(libFile, []byte("package lib\n\nconst Text = \"one\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	h, stop := beginIn(t, app)
+	defer stop()
+	h.shown(h.proc(1))
+	extra := "package main\n\nimport \"example.com/app/lib\"\n\nvar _ = lib.Text\n"
+	if err := os.WriteFile(filepath.Join(app, "extra.go"), []byte(extra), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if rep := h.reload(); rep.Tier != tierGo || rep.Build != "" || len(rep.Failed) > 0 {
+		t.Fatalf("the save that adds extra.go: %+v", rep)
+	}
+	h.shown(h.proc(2))
+	time.Sleep(200 * time.Millisecond)
+	if err := os.WriteFile(libFile, []byte("package lib\n\nconst Text = \"two\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for deadline := time.Now().Add(15 * time.Second); time.Now().Before(deadline); time.Sleep(100 * time.Millisecond) {
+		h.mu.Lock()
+		n := len(h.procs)
+		h.mu.Unlock()
+		if n == 3 {
+			return
+		}
+	}
+	t.Error("a save of lib/lib.go, which the new extra.go imports, started no build")
+}
+
+// TestWorkEditedMidSession: an app in a go.work, as TestModWorkspace has
+// it. The user adds a module of their own to the go.work, and a file of
+// the app imports it: the next dev build sees the go.work as it is now.
+func TestWorkEditedMidSession(t *testing.T) {
+	needGo(t)
+	w := t.TempDir()
+	app := copyAppTo(t, filepath.Join(w, "app"))
+	mod := filepath.Join(app, "go.mod")
+	b, err := os.ReadFile(mod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	i := bytes.Index(b, []byte("replace "))
+	if i < 0 {
+		t.Fatal("go.mod has no replace")
+	}
+	if err := os.WriteFile(mod, b[:i], 0o644); err != nil {
+		t.Fatal(err)
+	}
+	root, _ := filepath.Abs("../..")
+	rel, _ := filepath.Rel(w, root)
+	work := func(use string) []byte {
+		return []byte("go 1.26.0\n\nuse (\n" + use + ")\n\nreplace neuroplast.io/hotty-surf => " + filepath.ToSlash(rel) + "\n")
+	}
+	if err := os.WriteFile(filepath.Join(w, "go.work"), work("\t./app\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	h, stop := beginIn(t, app)
+	defer stop()
+	h.shown(h.proc(1))
+	lib := filepath.Join(w, "lib")
+	for f, s := range map[string]string{"go.mod": "module example.com/lib\n\ngo 1.26.0\n", "lib.go": "package lib\n\nconst Text = \"one\"\n"} {
+		if err := os.MkdirAll(lib, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(lib, f), []byte(s), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(w, "go.work"), work("\t./app\n\t./lib\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(200 * time.Millisecond)
+	extra := "package main\n\nimport \"example.com/lib\"\n\nvar _ = lib.Text\n"
+	if err := os.WriteFile(filepath.Join(app, "extra.go"), []byte(extra), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if rep := h.reload(); rep.Build != "" {
+		t.Errorf("the dev build after go.work gained ./lib failed:\n%s", rep.Build)
+	}
+}

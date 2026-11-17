@@ -78,6 +78,10 @@ type loop struct {
 	modFile  string            // the app's module's go.mod
 	workFile string            // the go.work in use, "" for none
 	imports  map[string]string // each Go file's imports, as last read
+	// workStale says go.mod or go.work changed: the next build makes the
+	// dev build's go.work (templmod) again from them.
+	workStale atomic.Bool
+	baseTags  string // tags without templmod's
 
 	mtimes  map[string]time.Time
 	pending map[string]bool
@@ -165,15 +169,8 @@ func (r *Reloader) run(ctx context.Context) error {
 	// mods/templ, in the dev build's own go.work: a text save renders at
 	// once. Without it (a vendoring app, another templ), the processes
 	// wait out templ's recheck, and each report says why.
-	l.buildEnv = l.env
-	if gw, err := templmod.Workspace(ctx, dir, l.env, filepath.Join(l.state, "templmod")); err != nil {
-		file, _ := filepath.Rel(dir, l.modFile)
-		l.notices = append(l.notices, lint.Finding{File: file, Line: 1, Col: 1, Rule: "templ-mod",
-			Text: "a text save waits out templ's 100 ms recheck: " + err.Error()})
-	} else {
-		l.buildEnv = append(slices.Clip(l.env), "GOWORK="+gw)
-		l.tags += "," + templmod.Tag
-	}
+	l.baseTags = l.tags
+	l.workspace()
 	templRoot := filepath.Join(l.state, "templ")
 	if err := os.MkdirAll(templRoot, 0o755); err != nil {
 		return err
@@ -464,11 +461,35 @@ func (l *loop) watch() {
 	}
 }
 
+// workspace sets the build's environment and tags from the app's go.mod
+// and go.work as they are now: GOWORK naming a go.work of the
+// Reloader's own that carries mods/templ, or the app's own, with a
+// notice of why not.
+func (l *loop) workspace() {
+	l.buildEnv, l.tags, l.notices = l.env, l.baseTags, nil
+	out, err := os.MkdirTemp(l.state, "templmod-")
+	if err == nil {
+		var gw string
+		if gw, err = templmod.Workspace(l.ctx, l.dir, l.env, out); err == nil {
+			l.buildEnv = append(slices.Clip(l.env), "GOWORK="+gw)
+			l.tags += "," + templmod.Tag
+			return
+		}
+	}
+	file, _ := filepath.Rel(l.dir, l.modFile)
+	l.notices = []lint.Finding{{File: file, Line: 1, Col: 1, Rule: "templ-mod",
+		Text: "a text save waits out templ's 100 ms recheck: " + err.Error()}}
+}
+
 // structural says whether ev changes which packages the app is built
 // from: a directory made or removed, or go.mod or go.work written.
 func (l *loop) structural(ev fsnotify.Event) bool {
 	if ev.Name == l.modFile || ev.Name == l.workFile && l.workFile != "" {
-		return ev.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Remove) != 0
+		changed := ev.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Remove) != 0
+		if changed {
+			l.workStale.Store(true)
+		}
+		return changed
 	}
 	switch {
 	case ev.Op&fsnotify.Create != 0:
@@ -647,6 +668,11 @@ func (l *loop) apply() {
 		}
 		if st.ModTime().Equal(l.mtimes[f]) {
 			continue // applied already
+		}
+		if _, known := l.mtimes[f]; !known && source(f) {
+			// A new file can import a package of the module that isn't
+			// followed yet.
+			l.stale.Store(true)
 		}
 		l.mtimes[f] = st.ModTime()
 		changed = true
@@ -887,6 +913,9 @@ func (l *loop) startBuild() {
 		return
 	}
 	l.building, l.again = true, false
+	if l.workStale.Swap(false) {
+		l.workspace()
+	}
 	if l.stale.Swap(false) {
 		l.rescan()
 	}

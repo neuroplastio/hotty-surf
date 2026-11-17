@@ -218,9 +218,10 @@ locked API, in the order they were made.
   spike's byte for byte. Key, Focus, Outside and Hover add only the id.
 - **Keys are scoped:** a key goes to the Key handlers of the focused
   element and its ancestors, innermost first; with nothing focused, to
-  #root's children (the page's own). The spike's page-wide keys
-  (native.Keys) are gone: Tasks puts the row menu's keys on its trigger,
-  nav its list's keys on each row (spikeui.ListItemProps.Keys).
+  the outermost elements with Key handlers (below). The spike's
+  page-wide keys (native.Keys) are gone: Tasks puts the row menu's keys
+  on its trigger, nav its list's keys on each row
+  (spikeui.ListItemProps.Keys).
 - **Focus from the program calls no Focus handler.** The host sends no
   focus event for it (SPEC §10.1); the surface moves its own idea of the
   keyboard, so keys go to the element asked for.
@@ -251,9 +252,10 @@ locked API, in the order they were made.
   after a replace, an insert or an append. One the host morphs in an
   inner (the same id under the same parent) keeps its rev.
 - **A native select is a live field** unless it is `multiple`: its value
-  is the option its markup chooses (the last `selected`, else the first
-  that isn't disabled), set by a=field, and its options' `selected` isn't
-  diffed. hotty-go's test host moves a focused select when an option's
+  is the option its markup chooses (the last `selected`), set by
+  a=field, and its options' `selected` isn't diffed. One whose options
+  have no `selected` is the host's, as an input without a value is.
+  hotty-go's test host moves a focused select when an option's
   `selected` changes, which SPEC §6.2 doesn't allow (it checks the
   option, not the select, for focus): a hotty-go fix, noted for it.
 - **Focus handlers hear the user's moves only** (Focus's doc says so):
@@ -296,9 +298,8 @@ locked API, in the order they were made.
   so a click on one blurs the surface (SPEC §10.1) and the popup's keys
   would go nowhere. A popup that stays open asks for its home (its
   trigger, or a command's search) in the next frame. Since Autofocus
-  only moves the keyboard when the frame before didn't ask, each home
-  has a Focus handler (Popup.Moved) whose only job is to make the blur
-  render a frame that asks for nothing.
+  only moves the keyboard when the frame before didn't ask, the blur
+  renders a frame that asks for nothing (every focus and blur renders).
 
 ### Byte identity with the spike
 
@@ -366,7 +367,8 @@ colours, editing hosts, and relayout of only what changed.
   pastes with Paste.
 - **Headings are bold, and `grid` lays out as a flex column.**
 - **inner keeps what matters of a morph** (review 14): the elements it
-  remakes with an old one's id and tag take its field and its focus. A
+  remakes with an old one's id and tag, under a parent of the same id,
+  take its field and its focus, as the surface keeps the field's rev. A
   full SPEC §6.2 morph, and append's morph of an existing id, are L3's.
 - **A changed default sets an unfocused control** (review 15): a value,
   checked, a select's selected option or a textarea's text that a delta
@@ -536,10 +538,11 @@ What took the floor from about 2 ms to under 1:
   patched file. The dev build runs with GOWORK naming a go.work that is
   the app's effective one (`go env GOWORK`) with every `use` and
   `replace` kept, or a fresh one using the app's module, plus templ's
-  replace. The copy's paths are made absolute rather than the copy kept
-  beside the original, so nothing is written in the app's tree. The
-  app's go.mod and go.work, and release builds, never see it; `go list`
-  and lint run on the app's own setup.
+  replace. It is made at Run's start, and again before the first build
+  after go.mod or go.work changes. The copy's paths are made absolute
+  rather than the copy kept beside the original, so nothing is written
+  in the app's tree. The app's go.mod and go.work, and release builds,
+  never see it; `go list` and lint run on the app's own setup.
 - **Without it, the wait, and a line in every report** (a `templ-mod`
   entry in Lint, which fails nothing): when the app vendors (a vendor/
   directory, or `-mod=vendor`), when templ is replaced already (by

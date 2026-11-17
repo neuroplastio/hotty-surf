@@ -141,14 +141,21 @@ func TestDialogBackdrop(t *testing.T) {
 }
 
 // A click on the backdrop gives the keyboard back to the opener, after the
-// blur the press causes: keys then reach the opener's own Key.
+// blur the press causes: keys then reach the opener's own Key. The opener
+// is in a bar with a Key of its own, which hears the key instead when the
+// surface thinks nothing is focused (tops).
 func TestDialogBackdropGivesTheKeyboardBack(t *testing.T) {
 	var open bool
-	var heard []string
+	var heard, bar []string
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		var opener strings.Builder
+		if err := element("button", `type="button"`, "open", "Open", surf.Click(func() { open = true }),
+			surf.Key(func(k string) bool { heard = append(heard, k); return k == "arrow_down" })).Render(ctx, &opener); err != nil {
+			return err
+		}
 		return page(
-			element("button", `type="button"`, "open", "Open", surf.Click(func() { open = true }),
-				surf.Key(func(k string) bool { heard = append(heard, k); return k == "arrow_down" })),
+			element("section", "", "bar", opener.String(),
+				surf.Key(func(k string) bool { bar = append(bar, k); return k == "arrow_down" })),
 			text("note", "n"),
 			with(ui.Dialog(ui.DialogProps{ID: "d", Open: open, Title: "T", OnClose: func() { open = false }}),
 				button("ok", "OK", func() { open = false })),
@@ -160,8 +167,9 @@ func TestDialogBackdropGivesTheKeyboardBack(t *testing.T) {
 	if open {
 		t.Fatal("a click on the backdrop didn't close the dialog")
 	}
-	if !r.Key("arrow_down") {
-		t.Errorf("after a backdrop click the keyboard isn't back on #open, whose Key takes arrow_down; heard %v", heard)
+	r.Key("arrow_down")
+	if len(heard) == 0 {
+		t.Errorf("after a backdrop click the keyboard isn't back on #open: #open heard %v, the bar %v", heard, bar)
 	}
 }
 

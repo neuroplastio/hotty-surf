@@ -201,9 +201,9 @@ func (c *Screen) op(o hotty.Op) error {
 	return nil
 }
 
-// adopt gives each element under t that has an old one's id and tag the
-// old one's field and focus, as inner's morph keeps the element (SPEC
-// §6.1, §6.2).
+// adopt gives each element under t that has an old one's id and tag, under
+// a parent of the same id, the old one's field and focus, as inner's morph
+// keeps the element (SPEC §6.1, §6.2).
 func (c *Screen) adopt(t *html.Node, old map[string]*html.Node) {
 	walk(t, func(n *html.Node) {
 		if n == t || n.Type != html.ElementNode {
@@ -212,6 +212,16 @@ func (c *Screen) adopt(t *html.Node, old map[string]*html.Node) {
 		id, _ := get(n, "id")
 		o := old[id]
 		if o == nil || o.DataAtom != n.DataAtom {
+			return
+		}
+		// Under a parent of the same id, as the surface keeps a field's
+		// rev (fresh in package surf): one that moved elsewhere enters
+		// again. clear detached t's own children, whose parent was t.
+		from := o.Parent
+		if from == nil {
+			from = t
+		}
+		if idOf(from) != idOf(n.Parent) {
 			return
 		}
 		if f := c.fields[o]; f != nil {
@@ -339,4 +349,10 @@ func textOf(n *html.Node) string {
 
 func inSVG(n *html.Node) bool {
 	return closest(n, func(n *html.Node) bool { return n.DataAtom == atom.Svg }) != nil
+}
+
+// idOf is n's id, "" for none.
+func idOf(n *html.Node) string {
+	id, _ := get(n, "id")
+	return id
 }

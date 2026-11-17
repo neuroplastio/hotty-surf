@@ -271,3 +271,44 @@ func TestClickAfterFocusFalse(t *testing.T) {
 		t.Fatalf("events %v", evs)
 	}
 }
+
+// A default the markup changes sets a control the user changed, unless it
+// has the keyboard (SPEC §6.2). Sent at a bare Screen, as any program's
+// attr and unattr reach a host: the surface sets a select with a=field.
+func TestChangedDefaultSetsState(t *testing.T) {
+	c := cells.New(40, 2, func(hotty.Event) {})
+	c.Write([]byte(hotty.Doc("t", `<div><select id="s"><option id="o-a" value="a" selected>Apple</option>`+
+		`<option id="o-b" value="b">Banana</option><option id="o-c" value="c">Cherry</option></select>`+
+		`<button id="x">X</button></div>`)))
+	c.Key("tab")
+	c.Key("b")   // the user picks Banana
+	c.Key("tab") // the keyboard leaves the select
+	empty := ""
+	c.Write([]byte(hotty.Delta("t", []hotty.Op{{Op: "unattr", Target: "o-a", Key: "selected"},
+		{Op: "attr", Target: "o-c", Key: "selected", Value: &empty}})))
+	if l := sgrRE.ReplaceAllString(c.Lines()[0], ""); !strings.Contains(l, "Cherry") {
+		t.Errorf("a changed selected didn't set the select: %q", l)
+	}
+}
+
+// A field an inner moves to another parent enters again, as the surface
+// takes it (rev 0): the program's a=field then reaches it.
+func TestInnerFieldMovedEntersAgain(t *testing.T) {
+	n, moved, val := 0, false, ""
+	r, lw := logged(t, 40, 4, func(ctx context.Context, w io.Writer, on on) {
+		in := fmt.Sprintf(`<input%s value="%s"/>`, on("name", surf.Input(func(s string) { val = s })), val)
+		a, b := in, ""
+		if moved {
+			a, b = "", in
+		}
+		fmt.Fprintf(w, `<div id="page">n %d <div id="pa">%s</div><div id="pb">%s</div></div><button%s>Move</button><button%s>Fill</button>`,
+			n, a, b, on("mv", surf.Click(func() { moved = true; n++ })), on("fill", surf.Click(func() { val = "filled" })))
+	})
+	r.c.Click(0, 1)
+	r.key("a", "b", "c") // the field's rev is past 0
+	r.c.Click(r.at("Move"))
+	r.c.Click(r.at("Fill"))
+	if !strings.Contains(r.text(), "filled") {
+		t.Errorf("the program's value didn't reach the moved field: %q; the surface wrote %v", r.text(), lw.log)
+	}
+}

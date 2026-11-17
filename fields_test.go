@@ -269,3 +269,23 @@ func TestPageKeysUnderAWrapper(t *testing.T) {
 		t.Fatalf("ctrl+k: heard %q", got)
 	}
 }
+
+// A select whose markup chooses no option (no selected) is the host's, as
+// an input without a value is: the user's pick stays through renders.
+func TestSelectWithoutSelectedIsTheHosts(t *testing.T) {
+	n, picked := 0, ""
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div><select%s><option value="a">A</option><option value="b">B</option></select><button%s>n=%d</button></div>`,
+			on("s", surf.Input(func(s string) { picked = s })), on("b", surf.Click(func() { n++ })), n)
+	})
+	r := startHost(t, surf.New("t", v, ""))
+	r.click("s")
+	r.key("arrow_down")
+	if got := r.value("s"); got != "b" || picked != "b" {
+		t.Fatalf("after ↓ the host has %q, the program heard %q", got, picked)
+	}
+	r.click("b")
+	if got := r.value("s"); n != 1 || got != "b" {
+		t.Errorf("after a render elsewhere (n=%d) the host's select has %q, not the user's b", n, got)
+	}
+}

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/surftest"
 )
 
 // A one-shot ask for the same element moves the keyboard each time, though
@@ -25,13 +24,16 @@ func TestOneShotAskAfterABlur(t *testing.T) {
 			on("x", surf.Key(func(k string) bool { heard = append(heard, k); return k == "arrow_down" })),
 			on("go", surf.Click(func() { ask = true })))
 	})
-	r := surftest.Start(t, surf.New("t", v, ""))
+	// The host rig renders only when the surface is Pending, as run.App's
+	// driver does, and says where the host's keyboard is: with nothing
+	// focused, #x's Key would hear arrow_down all the same (tops).
+	r := startHost(t, surf.New("t", v, ""))
 	// The span takes no focus: each press on it blurs the surface, then
 	// its click asks for #x. A key in between would render too, so the
 	// two clicks come one after the other.
-	r.Click("span#go")
-	r.Click("span#go")
-	if !r.Key("arrow_down") {
-		t.Fatalf("after the second ask the keyboard isn't on #x (heard %v)", heard)
+	r.click("go")
+	r.click("go")
+	if f := r.h.Surface("t").Focused(); f != "x" {
+		t.Fatalf("after the second ask the host's keyboard is on %q, not #x (heard %v)", f, heard)
 	}
 }

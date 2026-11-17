@@ -68,10 +68,9 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   popup by keyboard leaves another open. L2's translated scripts.
 - A Select at the right edge opens its list past the window's edge
   (hello, in hottyterm): Basecoat's popover alignment, L2.
-- The text tier still waits out templ's 100 ms recheck after a render
-  (60–100 ms inside plx): templ has no hook to reread at once, and a mod
-  needs a replaced templ in every app's build or a `-overlay` in the
-  reloader's; the choice is open.
+- A vendoring app's text tier still waits out templ's 100 ms recheck
+  after a render: mods/templ reaches dev builds through the module
+  cache's templ, which vendor/ replaces (internal/templmod).
 - hotty-go's test host moves a focused select when an option's
   `selected` changes (it checks the option for focus, not the select),
   which SPEC §6.2 doesn't allow: a hotty-go fix.

@@ -42,6 +42,9 @@ func TestWideCharacterInANarrowBox(t *testing.T) {
 	if w := displaywidth.String(plain); w != 2 {
 		t.Fatalf("the line is %d cells on a Screen 2 wide: %q", w, plain)
 	}
+	if plain != "…b" {
+		t.Fatalf("the wide character isn't shown as …: %q", plain)
+	}
 }
 
 // An input scrolled to its caret starts at a character: the caret is
