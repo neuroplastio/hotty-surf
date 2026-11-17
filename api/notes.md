@@ -2534,9 +2534,10 @@ same for the kit's popups, which only the kit opens and closes: a
 ContextMenu's press, a Select's trigger, Escape, a click outside, one
 popup closing another.
 
-**Shape: `func (s *Surface) Open() []string`,** a query like Focused and
+**Shape: `func (s *Surface) Overlays() []string`,** a query like Focused and
 Chars. It gives the ids of the kit's overlays open in the last frame
-rendered: the modals outermost first (`rt.Frame.Modal`, as the runtime
+rendered (by any call that renders: Document, Update, Event, Key, Focus,
+Blur): the modals outermost first (`rt.Frame.Modal`, as the runtime
 already keeps them), then the one popup.
 
 Inside:
@@ -2550,11 +2551,11 @@ Inside:
   already list themselves.
 
 Tests:
-- `ui.TestSurfaceOpen`: each kind, one closing another, Escape, a click
+- `ui.TestSurfaceOverlays`: each kind, one closing another, Escape, a click
   outside, a popup dropped from the view, a menu in a dialog.
-- `TestSurfaceOpenFirstDocument`: a popover its State opened.
-- `cells.TestOpenInCells`.
-- `ExampleSurface_Open`: the driver's read between Update and its write.
+- `TestSurfaceOverlaysFirstDocument`: a popover its State opened.
+- `cells.TestOverlaysInCells`.
+- `ExampleSurface_Overlays`: the driver's read between Update and its write.
 
 Open questions, with a lean:
 1. **A query, not an event (lean).** plx's frame loop collects a frame's
@@ -2573,7 +2574,18 @@ Open questions, with a lean:
    - Tooltip: takes no keys.
    - Toaster: not modal, and takes the keyboard only as any element
      does.
+   - A native `<select>`'s open list: the host's, which never reaches
+     the program. Not to be added.
 4. **Ids are the components' IDs** (their defaults when ID is ""), the
    names the app gave, not element ids.
-5. **The name.** `Open` is plx's ask, and reads beside Focused.
-   `Overlays` would say more on its own; lean `Open`.
+5. **The name.** `Open` was plx's ask.
+
+As reviewed (p-796, review-open.md):
+- **The name is `Overlays`.** On Surface, a bare verb acts (Focus, Blur,
+  Update, Do), and a query is a noun or a participle (Focused, Chars,
+  Name, Pending), so `Open()` read as "open it".
+- **The doc** names every call that renders. It adds that an overlay
+  opened in its State but not rendered is not open. It drops "gives the
+  keyboard to the surface", which is the driver's policy.
+- **Q1–Q4 as leaned.** plx's port: `if len(s.Overlays()) > 0 { name =
+  s.Name() }`.

@@ -221,7 +221,7 @@ func ExampleSurface_Blur() {
 // A driver that hands the keyboard to whatever holds an open menu writes
 // the surface's output through a buffer of its own: after Update, Open
 // says an overlay is opening before the host is sent it.
-func ExampleSurface_Open() {
+func ExampleSurface_Overlays() {
 	var st ui.PopoverState
 	s := surf.New("tool", ui.Popover(&st, ui.PopoverProps{ID: "filter", Trigger: templ.Raw("Filter")}), ui.Stylesheet())
 	var out bytes.Buffer
@@ -229,13 +229,13 @@ func ExampleSurface_Open() {
 	if _, err := s.Document(); err != nil {
 		return
 	}
-	fmt.Printf("%q\n", s.Open())
+	fmt.Printf("%q\n", s.Overlays())
 
 	s.Do(st.Open) // the app's key opens it
 	if err := s.Update(); err != nil {
 		return
 	}
-	fmt.Println(s.Open()) // lease the keyboard here, then pass out on
+	fmt.Println(s.Overlays()) // lease the keyboard here, then pass out on
 	out.WriteTo(io.Discard)
 	// Output:
 	// []

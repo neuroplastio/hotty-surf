@@ -195,17 +195,17 @@ func (s *Surface) Focused() string {
 	return s.focused
 }
 
-// Open is the ids of the kit's overlays open in the last frame the
-// surface rendered (its last Document or Update), as their components'
-// IDs: the modals (a Dialog, AlertDialog, Drawer or CommandDialog)
-// outermost first, then the popup (a DropdownMenu, ContextMenu, Select,
-// Combobox or Popover), of which one at most is open. nil is none. A
-// driver that writes the surface's output through a writer of its own
-// reads it after Update and before it passes the bytes on, so it knows
-// an overlay is opening before the host draws it, and gives the keyboard
-// to the surface while one is. It is the same in cells. It runs on the
-// driver's goroutine, as Event does.
-func (s *Surface) Open() []string {
+// Overlays is the ids of the kit's overlays open in the last frame the
+// surface rendered (by Document, Update, Event, Key, Focus or Blur), as
+// their components' IDs: the modals (a Dialog, AlertDialog, Drawer or
+// CommandDialog) outermost first, then the popup (a DropdownMenu,
+// ContextMenu, Select, Combobox or Popover), of which one at most is open.
+// nil is none. An overlay the app opened in its State but didn't render
+// is not open. A driver that writes the surface's output through a writer
+// of its own reads it after rendering and before it passes the bytes on,
+// so it knows an overlay is opening before the host draws it. It is the
+// same in cells. It runs on the driver's goroutine, as Event does.
+func (s *Surface) Overlays() []string {
 	if s.frame == nil || len(s.frame.Modal)+len(s.frame.Popups) == 0 {
 		return nil
 	}

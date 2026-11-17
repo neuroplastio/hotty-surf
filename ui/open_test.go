@@ -45,16 +45,16 @@ func (a *openApp) view() templ.Component {
 	})
 }
 
-// Open says which of the kit's overlays the last frame drew open: the
+// Overlays says which of the kit's overlays the last frame drew open: the
 // modals outermost first, then the one popup.
-func TestSurfaceOpen(t *testing.T) {
+func TestSurfaceOverlays(t *testing.T) {
 	a := &openApp{}
 	s := surf.New("open", a.view(), ui.Stylesheet())
 	r := surftest.Start(t, s)
 	open := func(want ...string) {
 		t.Helper()
-		if got := s.Open(); !slices.Equal(got, want) || (want == nil) != (got == nil) {
-			t.Fatalf("Open() = %q, want %q", got, want)
+		if got := s.Overlays(); !slices.Equal(got, want) || (want == nil) != (got == nil) {
+			t.Fatalf("Overlays() = %q, want %q", got, want)
 		}
 	}
 	open()
@@ -91,14 +91,14 @@ func TestSurfaceOpen(t *testing.T) {
 }
 
 // A popup its State opened before the first document is open in it.
-func TestSurfaceOpenFirstDocument(t *testing.T) {
+func TestSurfaceOverlaysFirstDocument(t *testing.T) {
 	var st ui.PopoverState
 	st.Open()
 	s := surf.New("open", ui.Popover(&st, ui.PopoverProps{ID: "p", Trigger: templ.Raw("Pop")}), ui.Stylesheet())
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	if got := s.Open(); !slices.Equal(got, []string{"p"}) {
-		t.Fatalf("Open() = %q, want the popover", got)
+	if got := s.Overlays(); !slices.Equal(got, []string{"p"}) {
+		t.Fatalf("Overlays() = %q, want the popover", got)
 	}
 }

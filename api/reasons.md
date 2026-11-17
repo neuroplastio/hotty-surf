@@ -702,4 +702,4 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.ToasterProps.Class`: K1: a behavioural component's class, for the app's own; plx's way out if the fixed toaster doesn't fit its surface.
 - `ui.Toaster`: its signature takes ToasterProps (K30).
 - `ui.Toast.OnClose`: plx parity (p-653): plx's toasts have a corner x; it asks the app, which owns the toast and removes it.
-- `surf.Surface.Open`: plx's menu lease (p-653): a driver gives the keyboard to whatever holds an open kit overlay (ContextMenu, Select, DropdownMenu, Popover, Combobox, CommandDialog; on a host and in cells). Only the kit knows when its popups open, and a driver can't read the State of a tool's components.
+- `surf.Surface.Overlays`: plx's menu lease (p-653): a driver gives the keyboard to whatever holds an open kit overlay (ContextMenu, Select, DropdownMenu, Popover, Combobox, CommandDialog; on a host and in cells). Only the kit knows when its popups open, and a driver can't read the State of a tool's components.
