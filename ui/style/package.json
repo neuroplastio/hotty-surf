@@ -1,0 +1,13 @@
+{
+  "name": "hotty-surf-kit-style",
+  "private": true,
+  "type": "module",
+  "description": "Builds ui/kit.css: Basecoat 1.1.0 (internal/basecoat) and the Tailwind utilities the kit uses.",
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.18",
+    "tailwindcss": "4.1.18"
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  }
+}
