@@ -363,6 +363,10 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.SliderProps.OnChange`, `ui.RangeSliderProps.OnChange`: callbacks
   reporting values to the application.
 - `ui.SliderProps.Class`, `ui.RangeSliderProps.Class`: as every Props.
+- `ui.SelectProps.Multiple`, `.Values`, `.OnValuesChange`: select.js's
+  multiple mode with controlled values (K2(b)).
+- `ui.SelectProps.CloseOnSelect`: select.js's multiple-mode configuration
+  (data-close-on-select).
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

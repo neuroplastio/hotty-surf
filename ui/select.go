@@ -2,8 +2,11 @@ package ui
 
 import (
 	"context"
+	"encoding/json"
 	"io"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/a-h/templ"
 
@@ -20,12 +23,20 @@ type SelectProps struct {
 	// Value is the value of the item shown as chosen; "" is none, and the
 	// trigger shows Placeholder. With neither, the trigger is blank, which
 	// is a fault: a Select with nothing chosen takes a Placeholder.
-	Value       string
-	Placeholder string
-	Disabled    bool
+	Value string
+	// Multiple selects more than one value, reported through OnValuesChange.
+	Multiple bool
+	// Values are the selected item values when Multiple is true.
+	Values []string
+	// CloseOnSelect closes a multiple-select list after each choice.
+	CloseOnSelect bool
+	Placeholder   string
+	Disabled      bool
 	// OnChange hears the value the user chose.
 	OnChange func(value string)
-	Class    string
+	// OnValuesChange hears selected values in item order when Multiple.
+	OnValuesChange func(values []string)
+	Class          string
 }
 
 // A SelectItem is an option of a Select, NativeSelect or Combobox.
@@ -169,7 +180,7 @@ func newSelectView(st *SelectState, p SelectProps) *selectView {
 		// select.js finds the chosen among the options not disabled. ""
 		// is none, as the Props say, where select.js would show the
 		// first option when there is no placeholder.
-		if v.chosen < 0 && p.Value != "" && o.value == p.Value {
+		if v.chosen < 0 && v.selected(i) {
 			v.chosen = i
 		}
 	}
@@ -205,6 +216,18 @@ func (v *selectView) activeOpt() int {
 // label is what the trigger shows: the chosen option's label, or the
 // placeholder (muted).
 func (v *selectView) label() (string, bool) {
+	if v.p.Multiple {
+		var labels []string
+		for _, i := range v.enabled {
+			if v.selected(i) {
+				labels = append(labels, v.opts[i].label)
+			}
+		}
+		if len(labels) > 0 {
+			return strings.Join(labels, ", "), false
+		}
+		return v.p.Placeholder, v.p.Placeholder != ""
+	}
 	if v.chosen >= 0 {
 		return v.opts[v.chosen].label, false
 	}
@@ -213,10 +236,27 @@ func (v *selectView) label() (string, bool) {
 
 // value is the hidden input's: the chosen value, or "".
 func (v *selectView) value() string {
+	if v.p.Multiple {
+		values := make([]string, 0)
+		for _, i := range v.enabled {
+			if v.selected(i) {
+				values = append(values, v.opts[i].value)
+			}
+		}
+		data, _ := json.Marshal(values)
+		return string(data)
+	}
 	if v.chosen >= 0 {
 		return v.opts[v.chosen].value
 	}
 	return ""
+}
+
+func (v *selectView) selected(i int) bool {
+	if v.p.Multiple {
+		return slices.Contains(v.p.Values, v.opts[i].value)
+	}
+	return v.p.Value != "" && v.opts[i].value == v.p.Value
 }
 
 // open is root.open(): the list shows, the chosen option highlighted.
@@ -265,6 +305,28 @@ func (v *selectView) rootAttrs(ctx context.Context) templ.Attributes {
 // closes and the trigger takes the keyboard.
 func (v *selectView) choose(i int) {
 	o := v.opts[i]
+	if v.p.Multiple {
+		values := make([]string, 0)
+		for _, j := range v.enabled {
+			selected := v.selected(j)
+			if j == i {
+				selected = !selected
+			}
+			if selected {
+				values = append(values, v.opts[j].value)
+			}
+		}
+		if v.p.OnValuesChange != nil {
+			v.p.OnValuesChange(values)
+		}
+		if v.p.CloseOnSelect {
+			v.close(true)
+		} else {
+			v.st.active = v.pos(i)
+			v.ask()
+		}
+		return
+	}
 	if v.p.OnChange != nil {
 		if v.p.Placeholder != "" && o.value == "" {
 			v.p.OnChange("")

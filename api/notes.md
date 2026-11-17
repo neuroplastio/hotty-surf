@@ -1066,6 +1066,15 @@ scrollbar classes and Avatar's image for the looks pass.
   track has at most 40 drag steps, following hotty-a2ui. Chromium and Blitz
   renders of the two stories differ in 0.30% and 0.49% of pixels, mainly
   text and control edges.
+- **Select multiple: draft for review.** Basecoat's select.js supports
+  multiple values and keeps the list open on selection unless configured
+  otherwise. The draft adds Multiple, Values, OnValuesChange and
+  CloseOnSelect to the existing SelectProps, with values in item order and
+  selection by value. The single Value and OnChange stay as locked. The
+  reviewer should decide whether one component with both modes or a
+  separate multiple-select API is preferable. A Chromium differential
+  covers keyboard selection and pointer toggling; the story runs in cells.
+  Its initial Blitz/Chromium rendering differs in 0.21% of pixels.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup

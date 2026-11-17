@@ -60,7 +60,7 @@ component values and applies the changes its callbacks report.
 | Radio | Space selects it; Enter submits its form when it belongs to one. |
 | Range / slider | Arrows step, Page Up and Page Down move ten steps, and Home and End go to the ends. Pointer taps and drags also change values. Each range thumb is a Tab stop and cannot pass the other. |
 | Scrollbar | A class on a scrolling element; no component-owned keys. |
-| Select | Up, Down, Home or End opens the list; when open these move its highlight among enabled items, Enter chooses, and Escape closes. |
+| Select | Up, Down, Home or End opens the list; when open these move its highlight among enabled items, Enter chooses, and Escape closes. In multiple mode Enter toggles the highlighted value and keeps the list open unless configured to close. |
 | Sidebar | Planned; no new kit implementation yet. |
 | Skeleton | None of its own. |
 | Switch | Space toggles it; Enter submits its form when it belongs to one. |

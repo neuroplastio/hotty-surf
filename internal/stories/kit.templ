@@ -2,6 +2,7 @@ package stories
 
 import (
 	"strconv"
+	"strings"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -13,6 +14,7 @@ import (
 type kitState struct {
 	clicks int
 	value  string
+	values []string
 	ran    string
 	open   bool
 	sel    ui.SelectState
@@ -74,6 +76,8 @@ func init() {
 	add(Story{ID: "kbd/default", Doc: "Shortcuts as the host's platform writes them", View: kit(kbdDefault, nil)})
 	add(Story{ID: "select/default", Doc: "A select with a placeholder",
 		View: kit(selectDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
+	add(Story{ID: "select/multiple", Doc: "Select several sizes",
+		View: kit(selectMultiple, nil), Keys: []string{"tab", "enter", "arrow_down", "enter", "arrow_down", "enter"}, Want: "sizes: s,m"})
 	add(Story{ID: "select/grouped", Doc: "A select with groups and a disabled option",
 		View: kit(selectGrouped, func(s *kitState) { s.value = "apple" }), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "fruit: banana"})
 	add(Story{ID: "dropdown-menu/default", Doc: "A menu with an icon, a shortcut, a disabled item and a group",
@@ -287,6 +291,13 @@ templ selectGrouped(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		@ui.Select(&s.sel, ui.SelectProps{ID: "fruit", Items: fruitItems, Value: s.value, OnChange: s.choose})
 		<p class="text-sm text-muted-foreground">fruit: { s.value }</p>
+	</div>
+}
+
+templ selectMultiple(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Select(&s.sel, ui.SelectProps{ID:"sizes", Items:sizeItems, Multiple:true, Values:s.values, Placeholder:"Pick sizes", OnValuesChange:func(v []string){s.values=v}})
+		<p>sizes: { strings.Join(s.values, ",") }</p>
 	</div>
 }
 

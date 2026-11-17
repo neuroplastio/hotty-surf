@@ -315,6 +315,15 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 	p.ID, _ = args["id"].(string)
 	p.Placeholder, _ = args["placeholder"].(string)
 	p.Value, _ = args["selected"].(string)
+	p.Multiple, _ = args["multiple"].(bool)
+	p.CloseOnSelect, _ = args["close_on_select"].(bool)
+	if values, ok := args["selected"].([]any); ok {
+		for _, value := range values {
+			if s, ok := value.(string); ok {
+				p.Values = append(p.Values, s)
+			}
+		}
+	}
 	var walk func(items []any, group string)
 	walk = func(items []any, group string) {
 		for _, x := range items {
@@ -335,7 +344,7 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 	// With no selected and no placeholder the macro chooses its first
 	// option (its default_option); ui's Value "" is none, so the app says
 	// it.
-	if _, ok := args["selected"]; !ok && p.Placeholder == "" && len(p.Items) > 0 {
+	if _, ok := args["selected"]; !ok && !p.Multiple && p.Placeholder == "" && len(p.Items) > 0 {
 		p.Value = p.Items[0].Value
 	}
 	var heard []map[string]any
@@ -343,6 +352,7 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 		p.Value = v
 		heard = append(heard, map[string]any{"value": v})
 	}
+	p.OnValuesChange = func(v []string) { p.Values = v; heard = append(heard, map[string]any{"value": v}) }
 	var st ui.SelectState
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {

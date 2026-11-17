@@ -233,3 +233,47 @@ func TestSelectAskExpires(t *testing.T) {
 		t.Errorf("the editor holds %q: the Select's return took the keyboard to its trigger", typed)
 	}
 }
+
+func TestSelectMultiple(t *testing.T) {
+	var st ui.SelectState
+	values := []string{}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Select(&st, ui.SelectProps{ID: "sizes", Items: sizes, Multiple: true, Values: values, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { values = v }}).Render(ctx, w)
+	})
+	r := start(t, view)
+	r.Click("#sizes-trigger")
+	r.Key("arrow_down")
+	r.Key("enter")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"s", "m"}) {
+		t.Fatalf("values: %v", values)
+	}
+	want(t, r, "#sizes-trigger", "aria-expanded", "true")
+	r.One("#sizes-listbox[aria-multiselectable=true]")
+	r.One("#sizes-items-1[aria-selected=true]")
+	r.One("#sizes-items-2[aria-selected=true]")
+	r.Click("#sizes-items-1")
+	if !slices.Equal(values, []string{"m"}) {
+		t.Fatalf("toggle: %v", values)
+	}
+	want(t, r, "#sizes-trigger", "aria-expanded", "true")
+	r.Key("escape")
+	want(t, r, "#sizes-trigger", "aria-expanded", "false")
+}
+
+func TestSelectMultipleCloseOnSelect(t *testing.T) {
+	var st ui.SelectState
+	values := []string{}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Select(&st, ui.SelectProps{ID: "sizes", Items: sizes, Multiple: true, Values: values, CloseOnSelect: true, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { values = v }}).Render(ctx, w)
+	})
+	r := start(t, view)
+	r.Click("#sizes-trigger")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"s"}) {
+		t.Fatalf("values: %v", values)
+	}
+	want(t, r, "#sizes-trigger", "aria-expanded", "false")
+}

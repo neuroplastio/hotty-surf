@@ -355,12 +355,16 @@ pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, CloseOnSelect bool
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, ID string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Items []SelectItem
+pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Multiple bool
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, OnChange func(string)
+pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, OnValuesChange func([]string)
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Placeholder string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Value string
+pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Values []string
 pkg neuroplast.io/hotty-surf/ui, type SelectState struct
 pkg neuroplast.io/hotty-surf/ui, type Size string
 pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct

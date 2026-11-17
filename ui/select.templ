@@ -14,6 +14,9 @@ templ selectBox(v *selectView) {
 		if v.p.Placeholder != "" {
 			data-placeholder={ v.p.Placeholder }
 		}
+		if v.p.Multiple && v.p.CloseOnSelect {
+			data-close-on-select="true"
+		}
 		data-select-initialized="true"
 		{ v.rootAttrs(ctx)... }
 	>
@@ -42,6 +45,9 @@ templ selectBox(v *selectView) {
 			<div
 				role="listbox"
 				aria-orientation="vertical"
+				if v.p.Multiple {
+					aria-multiselectable="true"
+				}
 				aria-labelledby={ v.id + "-trigger" }
 				{ surf.On(ctx, v.id+"-listbox", surf.Hover(v.leave))... }
 			>
@@ -77,7 +83,7 @@ templ selectOption(v *selectView, i int) {
 	<div
 		role="option"
 		data-value={ o.value }
-		if i == v.chosen {
+		if v.selected(i) && !o.disabled {
 			aria-selected="true"
 		}
 		if o.disabled {
