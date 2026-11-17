@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"maps"
 	"os"
 	"os/exec"
@@ -68,6 +70,13 @@ type loop struct {
 	dirs    []string // the app's module's packages it is built from
 	watcher *fsnotify.Watcher
 	changes chan string
+	// stale says dirs needs go list again before the next build: a
+	// directory was made or removed, go.mod or go.work changed, or a
+	// file's imports did. Otherwise a build doesn't run go list.
+	stale    atomic.Bool
+	modFile  string            // the app's module's go.mod
+	workFile string            // the go.work in use, "" for none
+	imports  map[string]string // each Go file's imports, as last read
 
 	mtimes  map[string]time.Time
 	pending map[string]bool
@@ -119,7 +128,7 @@ func (r *Reloader) run(ctx context.Context) error {
 		return err
 	}
 	l := &loop{r: r, ctx: ctx, dir: dir, changes: make(chan string, 256),
-		mtimes: map[string]time.Time{}, pending: map[string]bool{},
+		mtimes: map[string]time.Time{}, pending: map[string]bool{}, imports: map[string]string{},
 		live: map[string]generator.GeneratorOutput{}, gen: map[string]generator.GeneratorOutput{},
 		built: make(chan buildResult, 1), cssDone: make(chan error, 1),
 		tags: strings.Join(append([]string{"surfdev"}, r.tags...), ","),
@@ -134,6 +143,10 @@ func (r *Reloader) run(ctx context.Context) error {
 	module = strings.TrimSpace(module)
 	if module == "" {
 		module = dir
+	}
+	l.modFile = filepath.Join(module, "go.mod")
+	if work, err := l.goEnv("GOWORK"); err == nil && work != "" && work != "off" {
+		l.workFile = work
 	}
 	if l.dirs, err = l.listDirs(); err != nil {
 		return err
@@ -172,6 +185,11 @@ func (r *Reloader) run(ctx context.Context) error {
 	defer l.watcher.Close()
 	for _, d := range l.watchDirs() {
 		l.watcher.Add(d)
+	}
+	// go.mod's and go.work's directories, for a change of either.
+	l.watcher.Add(filepath.Dir(l.modFile))
+	if l.workFile != "" {
+		l.watcher.Add(filepath.Dir(l.workFile))
 	}
 	go l.watch()
 
@@ -303,6 +321,14 @@ func (l *loop) goList(args ...string) (string, string, error) {
 	return first, rest, nil
 }
 
+// goEnv is go env's value of name, with the build's environment.
+func (l *loop) goEnv(name string) (string, error) {
+	cmd := exec.CommandContext(l.ctx, "go", "env", name)
+	cmd.Dir, cmd.Env = l.dir, l.env
+	out, err := cmd.Output()
+	return strings.TrimSpace(string(out)), err
+}
+
 // listDirs is the directories of the app's module's packages it is built
 // from, and every directory under the app's own with .go or .templ files
 // (go list can't see a directory with only .templ files yet).
@@ -399,6 +425,9 @@ func (l *loop) watch() {
 			if !ok {
 				return
 			}
+			if l.structural(ev) {
+				l.stale.Store(true)
+			}
 			if ev.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Remove) != 0 && l.watched(ev.Name) {
 				select {
 				case l.changes <- ev.Name:
@@ -414,6 +443,50 @@ func (l *loop) watch() {
 			return
 		}
 	}
+}
+
+// structural says whether ev changes which packages the app is built
+// from: a directory made or removed, or go.mod or go.work written.
+func (l *loop) structural(ev fsnotify.Event) bool {
+	if ev.Name == l.modFile || ev.Name == l.workFile && l.workFile != "" {
+		return ev.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Remove) != 0
+	}
+	switch {
+	case ev.Op&fsnotify.Create != 0:
+		st, err := os.Stat(ev.Name)
+		return err == nil && st.IsDir()
+	case ev.Op&(fsnotify.Remove|fsnotify.Rename) != 0:
+		// It is gone, so whether it was a directory is whether one was
+		// followed in it.
+		l.dirsMu.Lock()
+		defer l.dirsMu.Unlock()
+		for _, d := range l.dirs {
+			if d == ev.Name || strings.HasPrefix(d, ev.Name+string(filepath.Separator)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// importsChanged notes the imports of the Go file f (src, or f on disk
+// when src is nil), and says whether they changed since it last did: a
+// new import can bring in a package of the module that isn't followed
+// yet.
+func (l *loop) importsChanged(f string, src any) bool {
+	file, err := parser.ParseFile(token.NewFileSet(), f, src, parser.ImportsOnly)
+	if err != nil {
+		return false // the build says what is wrong
+	}
+	var paths []string
+	for _, im := range file.Imports {
+		paths = append(paths, im.Path.Value)
+	}
+	slices.Sort(paths)
+	now := strings.Join(paths, " ")
+	before, seen := l.imports[f]
+	l.imports[f] = now
+	return seen && before != now
 }
 
 // scan notes every followed file whose time changed, or that went: Reload
@@ -446,6 +519,8 @@ func (l *loop) prepare() string {
 			if err := l.generate(f); err != nil {
 				errs = append(errs, err.Error())
 			}
+		} else if strings.HasSuffix(f, ".go") {
+			l.importsChanged(f, nil)
 		}
 	}
 	if l.appCSS != "" {
@@ -465,6 +540,9 @@ func (l *loop) generate(f string) error {
 	}
 	if err := templgen.WriteGo(f, raw); err != nil {
 		return err
+	}
+	if l.importsChanged(f, raw) {
+		l.stale.Store(true)
 	}
 	l.gen[f] = out
 	return nil
@@ -541,8 +619,10 @@ func (l *loop) apply() {
 				delete(l.mtimes, f)
 				delete(l.live, f)
 				delete(l.gen, f)
+				delete(l.imports, f)
 				changed, sources = true, true
 				build = build || source(f)
+				l.stale.Store(true)
 			}
 			continue
 		}
@@ -572,6 +652,9 @@ func (l *loop) apply() {
 					errs = append(errs, err.Error())
 					continue
 				}
+				if l.importsChanged(f, raw) {
+					l.stale.Store(true)
+				}
 				build = true
 				continue
 			}
@@ -584,6 +667,9 @@ func (l *loop) apply() {
 		default:
 			sources = true
 			build = true
+			if l.importsChanged(f, nil) {
+				l.stale.Store(true)
+			}
 		}
 	}
 	defer func() {
@@ -782,7 +868,9 @@ func (l *loop) startBuild() {
 		return
 	}
 	l.building, l.again = true, false
-	l.rescan()
+	if l.stale.Swap(false) {
+		l.rescan()
+	}
 	l.buildGen = maps.Clone(l.gen)
 	l.buildCSS = ""
 	if l.appCSS != "" {
