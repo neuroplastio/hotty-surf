@@ -197,3 +197,33 @@ func TestInstancesOfAnApp(t *testing.T) {
 	}
 	until(map[string][]Placed{"app": {{Name: "t", Cols: 80, Rows: 24}}})
 }
+
+// TestNewStateFieldKept: a Go save adds a field to the kept state. The
+// save regenerates msgp's code with it (no msgp on PATH), so from the next
+// build on the field is kept across a handover like the others.
+func TestNewStateFieldKept(t *testing.T) {
+	h, stop := begin(t)
+	defer stop()
+	p1 := h.proc(1)
+	h.shown(p1)
+	h.edit("app.go", "\tCount int `msg:\"count\"`", "\tCount int `msg:\"count\"`\n\tSeen  int `msg:\"seen\"`")
+	h.edit("app.go", "func (a *App) Add() { a.Count++ }", "func (a *App) Add() { a.Count++; a.Seen++ }")
+	h.edit("page.templ", "<p>Count { strconv.Itoa(a.Count) }</p>", "<p>Count { strconv.Itoa(a.Count) }</p>\n\t\t<p>Seen { strconv.Itoa(a.Seen) }</p>")
+	if rep := h.reload(); rep.Build != "" || len(rep.Failed) > 0 {
+		t.Fatalf("the save: %+v", rep)
+	}
+	p2 := h.proc(2)
+	h.shown(p2)
+	h.click(p2, "add")
+	h.click(p2, "add")
+	h.out(p2, "Seen 2")
+	h.edit("app.go", "// App is the state and its handlers.", "// App is the state and its handlers, saved again.")
+	if rep := h.reload(); rep.Build != "" || len(rep.Failed) > 0 {
+		t.Fatalf("the second save: %+v", rep)
+	}
+	p3 := h.proc(3)
+	h.shown(p3)
+	if doc := h.document("app"); !strings.Contains(doc, "Seen 2") {
+		t.Fatalf("the new field wasn't kept: %.400q", doc)
+	}
+}

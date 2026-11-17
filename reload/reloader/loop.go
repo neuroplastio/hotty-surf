@@ -560,6 +560,11 @@ func (l *loop) prepare() string {
 				errs = append(errs, err.Error())
 			}
 		} else if strings.HasSuffix(f, ".go") {
+			if msgpStale(f) {
+				if err := l.genMsgp(f); err != nil {
+					errs = append(errs, err.Error())
+				}
+			}
 			l.importsChanged(f, nil)
 		}
 	}
@@ -712,6 +717,10 @@ func (l *loop) apply() {
 		default:
 			sources = true
 			build = true
+			if err := l.genMsgp(f); err != nil {
+				errs = append(errs, err.Error())
+				continue
+			}
 			if l.importsChanged(f, nil) {
 				l.stale.Store(true)
 			}
