@@ -88,6 +88,20 @@ const settle = () => evaluate(`Promise.race([
   new Promise(r => setTimeout(r, 1000)),
 ]).then(() => true)`);
 
+// hover moves the pointer onto the element with an id.
+async function hover(id) {
+  await settle();
+  const box = await evaluate(`(() => {
+    const el = document.getElementById(${JSON.stringify(id)});
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+  })()`);
+  if (!box || box.w === 0 || box.h === 0) return `not shown: ${id}`;
+  await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: box.x, y: box.y });
+  return '';
+}
+
 async function click(id, sel) {
   await settle();
   const box = await evaluate(`(() => {
@@ -127,9 +141,12 @@ for (const c of spec.cases) {
   for (const s of c.steps) {
     let note = '';
     if (s.click || s.select) note = await click(s.click, s.select);
+    else if (s.hover) note = await hover(s.hover);
+    else if (s.type) for (const ch of s.type) await send('Input.insertText', { text: ch });
     else await key(s.key);
     await sleep(20);
-    snaps.push({ step: s.click || s.select ? `click ${s.click || s.select}` : `key ${s.key}`, note, ...(await evaluate(SNAP(c.root))) });
+    const name = s.click || s.select ? `click ${s.click || s.select}` : s.hover ? `hover ${s.hover}` : s.type ? `type ${s.type}` : `key ${s.key}`;
+    snaps.push({ step: name, note, ...(await evaluate(SNAP(c.root))) });
   }
   out[c.name] = snaps;
 }

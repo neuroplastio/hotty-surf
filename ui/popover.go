@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"io"
 
 	"github.com/a-h/templ"
 
@@ -59,7 +60,10 @@ func (st *PopoverState) Close() {
 // popover.js does for one with autofocus, the view calls surf.Autofocus
 // on it while the popover is open.
 func Popover(st *PopoverState, p PopoverProps) templ.Component {
-	return scoped(popover(newPopoverView(st, p)), false)
+	// The view is made at each render, from the state as it is then.
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return scoped(popover(newPopoverView(st, p)), false).Render(ctx, w)
+	})
 }
 
 var (

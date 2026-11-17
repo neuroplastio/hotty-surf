@@ -45,6 +45,7 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"toast":         toastSubject,
 	"dialog":        dialogSubject,
 	"popover":       popoverSubject,
+	"command":       commandSubject,
 }
 
 func init() {
@@ -86,9 +87,13 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 	r.Click("#outside")
 	sub.events()
 	root := differential.RootSel(cs)
+	// pristine is that no step has moved the keyboard yet: a hover
+	// doesn't, so the click on #outside still counts as nothing focused.
+	pristine := true
 	for i, w := range want {
 		if i > 0 {
 			st := cs.Steps[i-1]
+			pristine = pristine && st.Hover != ""
 			switch {
 			case st.Click != "":
 				r.Click("#" + st.Click)
@@ -99,6 +104,18 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 					t.Fatalf("step %d: nothing matches %s", i, st.Select)
 				}
 				r.Click("#" + attr(ns[0], "id"))
+			case st.Hover != "":
+				hover(t, s, r, st.Hover)
+			case st.Type != "":
+				// Into the field that has the keyboard, a key at a
+				// time, as surftest's Type types once it has clicked.
+				for _, c := range st.Type {
+					k := string(c)
+					if c == ' ' {
+						k = "space"
+					}
+					r.Key(k)
+				}
 			default:
 				r.Key(st.Key)
 			}
@@ -114,7 +131,7 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 		gotHTML := canonical(t, b.String(), sp.Drop)
 		wantHTML := canonical(t, shown(t, sp, w.HTML), sp.Drop)
 		gotFocus := focusOf(s, sp.Drop)
-		if i == 0 && gotFocus == "outside" {
+		if pristine && gotFocus == "outside" {
 			gotFocus = ""
 		}
 		gotEvents := sub.events()
@@ -320,6 +337,41 @@ func menuSubject(t *testing.T, args map[string]any) subject {
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.DropdownMenu(&st, p).Render(ctx, w)
+		}),
+		events: func() []map[string]any { h := heard; heard = nil; return h },
+	}
+}
+
+// commandSubject is a Command for command's macro arguments: id, and
+// items (label, keywords, disabled; separators; groups of them). Its items
+// report their clicks, as the page's do.
+func commandSubject(t *testing.T, args map[string]any) subject {
+	p := ui.CommandProps{}
+	p.ID, _ = args["id"].(string)
+	var heard []map[string]any
+	add := func(it map[string]any, group, id string) {
+		l, _ := it["label"].(string)
+		k, _ := it["keywords"].(string)
+		p.Items = append(p.Items, ui.MenuItem{Label: l, Keywords: k, Group: group, Disabled: it["disabled"] == true,
+			OnSelect: func() { heard = append(heard, map[string]any{"item": id}) }})
+	}
+	for n, x := range args["items"].([]any) {
+		it := x.(map[string]any)
+		id := fmt.Sprintf("%s-items-%d", p.ID, n+1)
+		switch it["type"] {
+		case "separator":
+		case "group":
+			for m, y := range it["items"].([]any) {
+				add(y.(map[string]any), it["label"].(string), fmt.Sprintf("%s-%d", id, m+1))
+			}
+		default:
+			add(it, "", id)
+		}
+	}
+	var st ui.CommandState
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Command(&st, p).Render(ctx, w)
 		}),
 		events: func() []map[string]any { h := heard; heard = nil; return h },
 	}

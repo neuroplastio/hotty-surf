@@ -287,6 +287,23 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.PopoverState`: K2 (b): open is the popover's, and the ask for the keyboard that Escape and Close leave; as DropdownMenuState.
 - `ui.PopoverState.Open`: the app opens it (a shortcut, a first-run hint); it closes any other open popup when it renders.
 - `ui.PopoverState.Close`: the app closes it, as Escape does, giving the trigger the keyboard (closePopover's default), for a form inside that is done.
+- `ui.Command`: Basecoat's command menu: command.html.jinja's markup with command.js translated; replaces the spike's hand CommandBox. K1's first kind (a script that hears events, a State).
+- `ui.CommandProps`: a command menu's attributes.
+- `ui.CommandProps.ID`: names its elements (K14): `-input`, `-menu`, `-items-…`.
+- `ui.CommandProps.Items`: K2 (c), what it lists. MenuItem's shape (Label, Icon, Keys, Group, Variant, Disabled, OnSelect) fits a command, so it is reused (K12), with Keywords added to it.
+- `ui.CommandProps.Placeholder`: K2 (e), the field's placeholder, the macro's `placeholder`; "" is the macro's default.
+- `ui.CommandProps.Empty`: the macro's `empty_text` (data-empty), which Basecoat's CSS shows when nothing matches: K2 (a), an attribute its CSS reads. "" is the macro's default.
+- `ui.CommandProps.Class`: as every Props.
+- `ui.CommandState`: K2 (b): the search and the highlighted item are the menu's.
+- `ui.CommandState.Search`: the app sets the search: a palette that opens afresh clears it, which command.js leaves to the page.
+- `ui.CommandDialog`: Basecoat's command_dialog: a Command in a modal <dialog>, a command palette. Its own component, as the macro is: no title, no close button, and choosing closes it.
+- `ui.CommandDialogProps`: a command dialog's attributes.
+- `ui.CommandDialogProps.ID`: as DialogProps.ID: unique among the surface's dialogs, which share the memo where each remembers the keyboard.
+- `ui.CommandDialogProps.Open`: K2 (b), as DialogProps.Open: the app keeps it.
+- `ui.CommandDialogProps.Items`, `.Placeholder`, `.Empty`: as CommandProps'.
+- `ui.CommandDialogProps.OnClose`: as DialogProps.OnClose, and a choice closes it too (command.js's handleMenuClick).
+- `ui.CommandDialogProps.Class`: as every Props.
+- `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 
 ## ui/code
 

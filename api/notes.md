@@ -1002,6 +1002,26 @@ scrollbar classes and Avatar's image for the looks pass.
   Select take part, and Combobox will. A popup opened by its State's
   Open joins at its next render, so one drawn earlier in that frame
   stays drawn open until the next frame.
+- **Command and CommandDialog** (18 names, MenuItem.Keywords among
+  them). Their items are MenuItem (K12), which gains Keywords. The
+  search matches an item's Label and Keywords, not its shortcut's text,
+  which command.js's textContent would also match. The field writes the
+  search as its value (K6). It binds the arrows, Home and End to the
+  program only while an item is shown, since command.js gives them back
+  to the field otherwise; Enter is always bound. The differential
+  matches command.js in Chromium for the keys, a search and the pointer.
+  It needed two new step kinds, `type` and `hover`.
+  - **Open question:** should the field's value come back to the app
+    (CommandState.Query) for a list the app filters itself
+    (command.js's data-filter="manual")? It isn't ported.
+  - **Open question:** Keywords on MenuItem, which a DropdownMenu
+    ignores, or a CommandItem with MenuItem's fields and Keywords. The
+    lean is Keywords, by K12.
+- **Fixed on the way:** DropdownMenu, Select and Popover made their
+  view when called, not when rendered. A component made once and
+  rendered many times read its state as it was when made, so a menu
+  opened by its State's Open highlighted nothing. Each is now made at
+  every render.
 - **Open question: the keyboard after a click outside.** popover.js
   gives the trigger the keyboard after any click outside, even one on
   another control. On a surface, an Outside handler hears the press

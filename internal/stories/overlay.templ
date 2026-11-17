@@ -5,12 +5,29 @@ import (
 	"neuroplast.io/hotty-surf/ui"
 )
 
-// The stories of B3's overlays: Popover. Their data is made up.
+// The stories of B3's overlays: Popover and Command. Their data is made
+// up.
 
 type overlayState struct {
 	pop   ui.PopoverState
 	sides [4]ui.PopoverState
 	width string
+	cmd   ui.CommandState
+	ran   string
+	open  bool
+}
+
+// commands are the stories' command list: a few loose, two groups.
+func (s *overlayState) commands() []ui.MenuItem {
+	run := func(v string) func() { return func() { s.ran = v } }
+	return []ui.MenuItem{
+		{Label: "New note", Icon: "plus", Keys: "mod+n", OnSelect: run("New note")},
+		{Label: "Search notes", Icon: "search", Keywords: "find, lookup", OnSelect: run("Search notes")},
+		{Label: "Archive", Icon: "folder", Disabled: true},
+		{Label: "Profile", Icon: "user", Group: "Settings", Keys: "mod+p", OnSelect: run("Profile")},
+		{Label: "Notifications", Icon: "bell", Group: "Settings", Keywords: "alerts", OnSelect: run("Notifications")},
+		{Label: "Inbox", Icon: "inbox", Group: "Settings", OnSelect: run("Inbox")},
+	}
 }
 
 func init() {
@@ -25,6 +42,22 @@ func init() {
 			s.sides[0].Open()
 			return popoverSides(s)
 		}, Keys: []string{"tab", "tab", "enter"}, Want: "Opens to the bottom"})
+	add(Story{ID: "popover/with-command", Doc: "A popover holding a command menu",
+		View: func() templ.Component {
+			s := &overlayState{}
+			s.pop.Open()
+			return popoverCommand(s)
+		}, Keys: []string{"tab", "tab", "arrow_down", "enter"}, Want: "ran: Search notes"})
+	add(Story{ID: "command/default", Doc: "A command menu: the arrows move over what isn't disabled, Enter chooses",
+		View: show(commandDefault), Keys: []string{"tab", "arrow_down", "arrow_down", "enter"}, Want: "ran: Profile."})
+	add(Story{ID: "command/empty", Doc: "A command menu whose search matches nothing",
+		View: func() templ.Component {
+			s := &overlayState{}
+			s.cmd.Search("zzz")
+			return commandDefault(s)
+		}, Keys: []string{"tab", "enter"}, Want: "ran: ."})
+	add(Story{ID: "command/dialog", Doc: "A command palette its button opens; choosing an item closes it",
+		View: show(commandDialog), Keys: []string{"tab", "enter", "end", "enter"}, Want: "ran: Inbox"})
 }
 
 templ popoverDefault(s *overlayState) {
@@ -51,5 +84,35 @@ templ popoverSides(s *overlayState) {
 				<p>Opens to the { side }.</p>
 			}
 		}
+	</div>
+}
+
+templ popoverCommand(s *overlayState) {
+	<div class="p-4 flex flex-col gap-3">
+		@ui.Popover(&s.pop, ui.PopoverProps{ID: "go", Trigger: templ.Raw("Go to…"), Class: "w-80"}) {
+			@ui.Command(&s.cmd, ui.CommandProps{ID: "go-command", Items: s.commands()})
+		}
+		<p class="text-sm text-muted-foreground" style="margin-top: 16rem;">ran: { s.ran }</p>
+	</div>
+}
+
+templ commandDefault(s *overlayState) {
+	<div class="p-4 flex flex-col gap-3">
+		<div class="max-w-md" style="border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+			@ui.Command(&s.cmd, ui.CommandProps{Items: s.commands()})
+		</div>
+		<p class="text-sm text-muted-foreground">ran: { s.ran }.</p>
+	</div>
+}
+
+templ commandDialog(s *overlayState) {
+	<div class="p-4 flex flex-col gap-3">
+		<div>
+			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "palette", surf.Click(func() { s.open = true }))}) {
+				Open the palette
+			}
+		</div>
+		@ui.CommandDialog(&s.cmd, ui.CommandDialogProps{Open: s.open, Items: s.commands(), OnClose: func() { s.open = false; s.cmd.Search("") }})
+		<p class="text-sm text-muted-foreground">ran: { s.ran }</p>
 	</div>
 }

@@ -231,3 +231,17 @@ func TestDropdownMenuAskExpires(t *testing.T) {
 		t.Errorf("the menu opened: aria-hidden=%s", got)
 	}
 }
+
+// A menu made once and rendered many times reads its state at each
+// render: a shortcut's Open highlights its first item.
+func TestMenuMadeOnce(t *testing.T) {
+	var st ui.DropdownMenuState
+	menu := ui.DropdownMenu(&st, ui.DropdownMenuProps{ID: "m", Items: []ui.MenuItem{{Label: "One"}, {Label: "Two"}}})
+	s := surf.New("t", menu, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	st.Open()
+	r.Update()
+	if got := attr(r.One("#m-trigger"), "aria-activedescendant"); got != "m-items-1" {
+		t.Errorf("opened by its State: %q highlighted, want the first item", got)
+	}
+}

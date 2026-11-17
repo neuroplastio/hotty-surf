@@ -295,6 +295,47 @@ func TestRenderPopover(t *testing.T) {
 	}})
 }
 
+// A Command and a CommandDialog, as their macros write them; what
+// command.js sets as it starts (each item's aria-hidden, the first
+// highlighted, the field's aria-activedescendant) and the field's value,
+// which the surface keeps, aside.
+func TestRenderCommand(t *testing.T) {
+	var st ui.CommandState
+	items := []ui.MenuItem{
+		{Label: "New note"}, {Label: "Search", Keywords: "find, lookup"}, {Label: "Archive", Disabled: true},
+		{Label: "Profile", Group: "Settings"}, {Label: "Inbox", Group: "Settings"},
+	}
+	argItems := []any{
+		map[string]any{"label": "New note"}, map[string]any{"label": "Search", "keywords": "find, lookup"},
+		map[string]any{"label": "Archive", "disabled": true}, map[string]any{"type": "separator"},
+		map[string]any{"type": "group", "label": "Settings", "items": []any{
+			map[string]any{"label": "Profile"}, map[string]any{"label": "Inbox"}}},
+	}
+	js := []string{"*@aria-hidden", "div@class~active", "input@aria-activedescendant", "input@value", "*@data-command-initialized"}
+	runRender(t, "command", []renderCase{{
+		name:  "default",
+		ui:    ui.Command(&st, ui.CommandProps{ID: "c", Items: items}),
+		macro: "command",
+		drop:  js,
+		args:  map[string]any{"id": "c", "items": argItems},
+	}, {
+		name:  "words",
+		ui:    ui.Command(&st, ui.CommandProps{ID: "c", Items: items[:1], Placeholder: "Find…", Empty: "Nothing.", Class: "max-w-md"}),
+		macro: "command",
+		drop:  js,
+		args: map[string]any{"id": "c", "items": argItems[:1], "placeholder": "Find…", "empty_text": "Nothing.",
+			"main_attrs": map[string]any{"class": "max-w-md"}},
+	}, {
+		name:  "dialog",
+		ui:    ui.CommandDialog(&st, ui.CommandDialogProps{ID: "cd", Open: true, Items: items, OnClose: func() {}}),
+		macro: "command_dialog",
+		// The macro's inline handlers are Go here, and ui names the box
+		// for its handlers, as Dialog's.
+		drop: append([]string{"dialog@onclick", "dialog@onpointerdown", "div#cd-content@id"}, js...),
+		args: map[string]any{"id": "cd", "items": argItems, "open": true},
+	}})
+}
+
 func TestRenderToast(t *testing.T) {
 	var st ui.ToasterState
 	st.Show(ui.Toast{Title: "Saved", Description: "All of it."})
@@ -311,7 +352,7 @@ func TestRenderToast(t *testing.T) {
 }
 
 func init() {
-	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast", "popover"} {
+	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast", "popover", "command"} {
 		renderTests[c] = true
 	}
 }

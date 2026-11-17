@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"io"
 	"strconv"
 
 	"github.com/a-h/templ"
@@ -52,7 +53,10 @@ type SelectState struct {
 // its behaviour select.js's, translated to Go (opening, the arrows, Home,
 // End, choosing, Escape, a click outside closing it).
 func Select(st *SelectState, p SelectProps) templ.Component {
-	return selectBox(newSelectView(st, p))
+	// The view is made at each render, from the state as it is then.
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return selectBox(newSelectView(st, p)).Render(ctx, w)
+	})
 }
 
 // selectView is one render of a Select: the macro's entries for its items,

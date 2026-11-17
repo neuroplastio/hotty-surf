@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"fmt"
+	"io"
 	"slices"
 
 	"github.com/a-h/templ"
@@ -33,8 +34,12 @@ type MenuItem struct {
 	Icon string
 	// Keys is the item's shortcut, shown as Kbd shows it. The menu shows it
 	// only: the app binds the key itself.
-	Keys     string
-	Group    string
+	Keys  string
+	Group string
+	// Keywords are more words a Command's search finds the item by,
+	// separated by spaces or commas (data-keywords). A DropdownMenu has no
+	// search, and doesn't use them.
+	Keywords string
 	Variant  Variant // Destructive, or Primary
 	Disabled bool
 	// OnSelect runs when the user chooses the item; the menu closes.
@@ -76,7 +81,10 @@ func (st *DropdownMenuState) Open() {
 // dropdown-menu.html.jinja, its behaviour dropdown-menu.js's, translated to
 // Go (the arrows, Home, End, Enter, Escape, a click outside closing it).
 func DropdownMenu(st *DropdownMenuState, p DropdownMenuProps) templ.Component {
-	return dropdownMenu(newMenuView(st, p))
+	// The view is made at each render, from the state as it is then.
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return dropdownMenu(newMenuView(st, p)).Render(ctx, w)
+	})
 }
 
 var (

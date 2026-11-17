@@ -100,6 +100,8 @@ pkg neuroplast.io/hotty-surf/ui, func Button(ButtonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Card(CardProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Chart(ChartProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Checkbox(CheckboxProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Command(*CommandState, CommandProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func CommandDialog(*CommandState, CommandDialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func DropdownMenu(*DropdownMenuState, DropdownMenuProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Empty(EmptyProps) templ.Component
@@ -126,6 +128,7 @@ pkg neuroplast.io/hotty-surf/ui, func Table(TableProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Textarea(TextareaProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
+pkg neuroplast.io/hotty-surf/ui, method (*CommandState) Search(string)
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Open()
@@ -179,6 +182,21 @@ pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Checked bool
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Invalid bool
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Empty string
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Items []MenuItem
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, OnClose func()
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Open bool
+pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Placeholder string
+pkg neuroplast.io/hotty-surf/ui, type CommandProps struct
+pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Empty string
+pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Items []MenuItem
+pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Placeholder string
+pkg neuroplast.io/hotty-surf/ui, type CommandState struct
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Description string
@@ -241,6 +259,7 @@ pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Group string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Icon string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keys string
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keywords string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
