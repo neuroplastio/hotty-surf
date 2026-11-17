@@ -324,6 +324,9 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `lint.Finding.Col`: where.
 - `lint.Finding.Rule`: which rule, the name an allow comment uses.
 - `lint.Finding.Text`: what is wrong and what to write instead.
+- `lint.Finding.EncodeMsg`: msgp's generated codec (gov P-3), so a dev parent carries findings on its own msgpack wire without a mirror type; plx's ask. A map keyed by the tags' names: file, line, col, rule, text.
+- `lint.Finding.DecodeMsg`: the codec's other half; Finding is decoded inside Report and on plx's wire.
+- `lint.Finding.Msgsize`: generated with the codec; msgp's Encodable and Sizer use it, and generating without it isn't an option msgp has.
 
 ## reload (the app's side of live reload)
 
@@ -355,6 +358,10 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `reload/reloader.Placed.Cols`: the columns it was last placed at: the word hotty.Placement and cells use.
 - `reload/reloader.Placed.Rows`: the rows it was last placed at.
 - `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
+- `reload/reloader.Report.EncodeMsg`: msgp's generated codec (gov P-3), so `hotty-surf ctl reload` and plx carry the same Report on their wires; until now the ctl wire had an internal mirror, and plx would have needed another (plx's ask). A map keyed by the tags' names (tier, took, build, failed, lint), Took in nanoseconds.
+- `reload/reloader.Report.DecodeMsg`: the codec's other half: ctl and plx decode the answer to a reload.
+- `reload/reloader.Report.Msgsize`: generated with the codec, as for lint.Finding.
+- `reload/reloader.Text`: a Report as `hotty-surf ctl reload` prints it, so plx prints the same lines instead of copying the format, which would drift (plx's ask). A free function, not a String method: P-3 keeps hand-written methods off a type that goes on a wire. A pointer, as View takes.
 
 ## surftea (a module of its own)
 

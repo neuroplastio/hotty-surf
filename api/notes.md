@@ -1413,3 +1413,44 @@ in the same delta as the changes; public reveal remains a separate pack.
 
 Review the public shapes against the spike and v0.7's existing conventions,
 including the number of NavList methods and the string control kinds.
+
+## L5: plx's asks for a Report on its wire (a pack of its own)
+
+plx's plugins agent asked for three things (via p-653, 2026-11-17), in
+one pack:
+
+1. **msgp codecs on `reloader.Report` and `lint.Finding`.** plx carries a
+   reload's outcome on its own msgpack wire. Until now the ctl wire carried
+   internal mirrors (`devwire.Report`, `devwire.Finding`), because the API
+   types had no codec; plx would have had to write a third copy. Both types
+   now get msgp's generated `EncodeMsg`, `DecodeMsg` and `Msgsize`
+   (`-marshal=false`, `//msgp:newtime`, `//msgp:limit` 65536 as devwire's),
+   and the mirrors are gone: "reload"'s answer on the ctl wire is
+   `reloader.Report` itself. Its keys are the mirrors' (tier, took in
+   nanoseconds, build, failed, lint; file, line, col, rule, text), so the
+   ctl wire's bytes do not change. Report moves to `report.go` beside its
+   codec; its fields and docs are as they were, with `msg` tags added.
+2. **A text form: `func Text(r *Report) string`.** What `ctl reload` and
+   `hotty-surf serve`'s log printed (devcmd's `ReportText`), moved as it
+   was. A free function, since P-3 keeps hand-written methods (a `String`)
+   off a type on a wire. A pointer, as `View` takes.
+3. **`reload.Serve`'s key:** its doc now says that a key is an opaque
+   string the dev parent chooses, which names one process at a time and
+   keys Report.Failed. No name changes.
+
+7 new names, all in `lint` and `reload/reloader`; none changed or removed.
+
+### As reviewed (p-796, 2026-11-17): all 7, two docs and two tests changed
+
+All 7 names approved as named, with no cuts. The ctl wire's bytes are
+unchanged (msgp 1.6.5's `WriteDuration` is `WriteInt64`), and the release
+wasm gains nothing (`./reload`'s release deps include neither reloader nor
+lint). Applied:
+`reload.Serve`'s key doc says the key is non-empty and also keys
+`Instances`, `Document` and `ctl shot -key`; `Report.Failed` is "by the key
+it gave reload.Serve"; ExampleText's imports are grouped as goimports
+groups them; `TestReportCodec` locks Finding's keys and that took is a
+plain int, since the `msg` tags are plx's wire and api-check doesn't see
+them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
+Left for plx: decode within its capped frame (msgp:limit doesn't cap
+strings), and drop any mirror of its own.
