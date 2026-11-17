@@ -65,8 +65,14 @@ goes to the renderer's buffer.
   - an element whose only child is text gets the text;
   - children that are all elements: removals, and insertions among the
     elements that stayed;
-  - anything else (mixed text, a move) gets its inner HTML;
+  - anything else (mixed text, a move among siblings) gets its inner
+    HTML;
   - an element whose tag changed is replaced.
+
+  An element the render moved to another parent is taken out first, one
+  op before all the others, and its new parent inserts it as new: the
+  walk may reach the new parent first, and an id is never in the
+  document twice.
 
   A live field's value and checked state aren't attributes. They are the
   host's (SPEC §6.4): the differ sets them with `a=field` when the markup
