@@ -177,27 +177,22 @@ func (r *Reloader) Document(ctx context.Context, key, surface string) (string, e
 }
 
 // Instances is who is attached now: each process serving, by its instance
-// key, with its surfaces and the size each was last placed at. It is a
-// snapshot, sorted by key and each instance's surfaces by name, and a
-// program may call it from any goroutine: what `hotty-surf ctl shot`
-// names when it is given no key or surface, and the size it renders at. A
-// process that is handing over, or that left, is not in it; its next
-// build's is, once it has dialed in.
-func (r *Reloader) Instances() []Instance {
+// key, with its surfaces sorted by name and the cells each was last placed
+// at. A key lists every surface its process made, a controller's views
+// included, whoever drives them; a process with no surface is there with
+// none. It is a copy, read with no call to a process, so it never blocks
+// and a program may call it from any goroutine: what a ctl shot that isn't
+// given a key or a surface names, and the size it renders at. A process
+// that is handing over, or that left, is not in it; its next build's is,
+// once it has dialed in.
+func (r *Reloader) Instances() map[string][]Placed {
 	return r.instances()
 }
 
-// An Instance is a process serving, by its key (Instances).
-type Instance struct {
-	Key      string
-	Surfaces []Placed
-}
-
-// Placed is a surface of an instance, by its name, and the cells it was
-// last placed at: by package run where it shows the app (a terminal, a
-// page, cells), or by `hotty-surf run`. It is 0 by 0 before the surface
-// was placed, and for a surface its program places itself (a raw-mode
-// program, Bubble Tea's).
+// Placed is a surface of a process, by its name, and the cells its program
+// last said it placed it at (reload.Placed). It is 0 by 0 when the program
+// hasn't said, or has said the surface isn't on screen: a caller renders
+// such a surface at a size of its own, or not at all.
 type Placed struct {
 	Name       string
 	Cols, Rows int

@@ -149,22 +149,21 @@ func (r *Reloader) serve(ctx context.Context, rw io.ReadWriteCloser) error {
 }
 
 // instances is Instances': the processes serving, and not handing over.
-func (r *Reloader) instances() []Instance {
+func (r *Reloader) instances() map[string][]Placed {
 	r.mu.Lock()
 	ps := make([]*proc, 0, len(r.procs))
 	for _, p := range r.procs {
 		ps = append(ps, p)
 	}
 	r.mu.Unlock()
-	out := make([]Instance, 0, len(ps))
+	out := make(map[string][]Placed, len(ps))
 	for _, p := range ps {
 		p.mu.Lock()
 		if !p.handing && !p.handedOver && !p.left {
-			out = append(out, Instance{Key: p.key, Surfaces: slices.Clone(p.areas)})
+			out[p.key] = slices.Clone(p.areas)
 		}
 		p.mu.Unlock()
 	}
-	slices.SortFunc(out, func(a, b Instance) int { return strings.Compare(a.Key, b.Key) })
 	return out
 }
 

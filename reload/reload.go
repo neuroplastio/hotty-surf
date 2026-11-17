@@ -24,6 +24,7 @@ import (
 	"io"
 
 	"github.com/tinylib/msgp/msgp"
+	"neuroplast.io/hotty-surf"
 )
 
 // Keep carries the program's state across a reload: get gives it as a
@@ -84,4 +85,16 @@ func Keep[T any, P interface {
 // the reloader forgets its key.
 func Serve(ctx context.Context, rw io.ReadWriter, key string) error {
 	return serve(ctx, rw, key)
+}
+
+// Placed tells the reloader where the program placed s: cols by rows of the
+// screen's cells, so that a shot of it renders at the size the user sees
+// (reloader.Instances, Document). A program calls it each time it places s
+// at another size, and with 0, 0 when it hides or drops it. run.App and
+// surftea's Host call it themselves; a program that places its surfaces
+// itself (a raw-mode program, a plx tool's main surface and its overlays)
+// calls it. It may be called from any goroutine and never waits. Outside a
+// dev build (the surfdev tag) it does nothing, as Keep does.
+func Placed(s *surf.Surface, cols, rows int) {
+	placed(s, cols, rows)
 }

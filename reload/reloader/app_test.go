@@ -181,7 +181,7 @@ func TestInstancesOfAnApp(t *testing.T) {
 	defer stop()
 	p1 := h.proc(1)
 	h.shown(p1)
-	until := func(want []Instance) {
+	until := func(want map[string][]Placed) {
 		t.Helper()
 		deadline := time.Now().Add(10 * time.Second)
 		for !reflect.DeepEqual(h.r.Instances(), want) {
@@ -191,9 +191,9 @@ func TestInstancesOfAnApp(t *testing.T) {
 			time.Sleep(5 * time.Millisecond)
 		}
 	}
-	until([]Instance{{Key: "app", Surfaces: []Placed{{Name: "t"}}}})
+	until(map[string][]Placed{"app": {{Name: "t"}}})
 	if err := p1.term.Notify("placed", &devwire.Area{Name: "t", Cols: 80, Rows: 24}); err != nil {
 		t.Fatal(err)
 	}
-	until([]Instance{{Key: "app", Surfaces: []Placed{{Name: "t", Cols: 80, Rows: 24}}}})
+	until(map[string][]Placed{"app": {{Name: "t", Cols: 80, Rows: 24}}})
 }

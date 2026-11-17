@@ -3,7 +3,6 @@ package devcmd
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,12 +33,11 @@ import (
 // P-3): dev/events tells the pages when a new build is up and what the last
 // save did, as server-sent events, "restart" (the build's number) and
 // "report" (ctl reload's text, "" when there is nothing to show). A page
-// posts dev/page ({"key", "surface", "cols", "rows"}) once its app shows and
-// as its terminal resizes, for ctl shot, and dev/leave (its key) as it goes:
-// a tab closed or reloaded is a leave, not a crash.
+// posts dev/leave (its key) as it goes: a tab closed or reloaded is a
+// leave, not a crash.
 //
 // It answers ctl as run does, at the same socket: ctl reload, and ctl shot
-// of the newest page, at its terminal's size.
+// of a page's app, at its terminal's size (shotOf).
 func Serve(ctx context.Context, args []string, out, errOut io.Writer) int {
 	fs := Flags("serve", "serve [-addr localhost:7279] [dir]")
 	addr := fs.String("addr", "localhost:7279", "where to listen")
@@ -78,33 +75,12 @@ type pages struct {
 	wasm   []byte // its app.wasm
 	report string // the last report's text
 	subs   map[chan struct{}]bool
-	open   []*page1 // by when each first said where it is, the newest last
 	wires  map[string]*pageWire
-}
-
-// page1 is an open page, as it last posted dev/page.
-type page1 struct {
-	Key     string `json:"key"`
-	Surface string `json:"surface"`
-	Cols    int    `json:"cols"`
-	Rows    int    `json:"rows"`
-}
-
-// newest is the page ctl shot shows: the one opened last.
-func (p *pages) newest() *page1 {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if len(p.open) == 0 {
-		return nil
-	}
-	c := *p.open[len(p.open)-1]
-	return &c
 }
 
 // leave forgets the page of key and ends its wire with a leave.
 func (p *pages) leave(key string) {
 	p.mu.Lock()
-	p.open = slices.DeleteFunc(p.open, func(o *page1) bool { return o.Key == key })
 	w := p.wires[key]
 	delete(p.wires, key)
 	p.mu.Unlock()
@@ -205,24 +181,6 @@ func servePage(ctx context.Context, ln, ctl net.Listener, dir string, log io.Wri
 			p.mu.Unlock()
 		},
 	})
-	mux.HandleFunc("POST /dev/page", func(w http.ResponseWriter, req *http.Request) {
-		if !fromPage(req) {
-			http.Error(w, "not the page's", http.StatusForbidden)
-			return
-		}
-		var at page1
-		if err := json.NewDecoder(io.LimitReader(req.Body, 4<<10)).Decode(&at); err != nil || at.Key == "" {
-			http.Error(w, "want {key, surface, cols, rows}", http.StatusBadRequest)
-			return
-		}
-		p.mu.Lock()
-		if i := slices.IndexFunc(p.open, func(o *page1) bool { return o.Key == at.Key }); i >= 0 {
-			*p.open[i] = at
-		} else {
-			p.open = append(p.open, &at)
-		}
-		p.mu.Unlock()
-	})
 	mux.HandleFunc("POST /dev/leave", func(w http.ResponseWriter, req *http.Request) {
 		if !fromPage(req) {
 			http.Error(w, "not the page's", http.StatusForbidden)
@@ -233,16 +191,11 @@ func servePage(ctx context.Context, ln, ctl net.Listener, dir string, log io.Wri
 	})
 	go serveCtl(ctx, ctl, ctlTarget{
 		reload: r.Reload,
-		shot: func(ctx context.Context) (devwire.Doc, error) {
-			at := p.newest()
-			if at == nil || at.Surface == "" {
+		shot: func(ctx context.Context, key, surface string) (devwire.Doc, error) {
+			if len(r.Instances()) == 0 {
 				return devwire.Doc{}, errors.New("no page shows the app: open the page serve printed")
 			}
-			html, err := r.Document(ctx, at.Key, at.Surface)
-			if err != nil {
-				return devwire.Doc{}, err
-			}
-			return devwire.Doc{Surface: at.Surface, HTML: html, Cols: at.Cols, Rows: at.Rows}, nil
+			return shotOf(ctx, r, key, surface)
 		},
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) { page.Serve(w, req, files) })

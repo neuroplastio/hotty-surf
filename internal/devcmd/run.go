@@ -322,12 +322,6 @@ func (h *host) send(in *devwire.Input) {
 	devwire.PutInput(in)
 }
 
-// size is the app's size: the terminal's.
-func (h *host) size() (cols, rows int) {
-	z := h.t.Size()
-	return z.Cols, z.Rows
-}
-
 func (h *host) placeApp() {
 	h.mu.Lock()
 	name, a := h.surface, h.app
@@ -564,18 +558,13 @@ func (h *host) stop() {
 	}
 }
 
-// shot is the app's document as its surface last sent it, for ctl shot, at the
-// terminal's size.
-func (h *host) shot(ctx context.Context) (devwire.Doc, error) {
+// shot is the app's document as its surface last sent it, for ctl shot, at
+// the size run placed it at (shotOf).
+func (h *host) shot(ctx context.Context, key, surface string) (devwire.Doc, error) {
 	if !h.running() {
 		return devwire.Doc{}, errors.New("no app is running")
 	}
-	html, err := h.r.Document(ctx, "app", h.appName())
-	if err != nil {
-		return devwire.Doc{}, err
-	}
-	cols, rows := h.size()
-	return devwire.Doc{HTML: html, Cols: cols, Rows: rows}, nil
+	return shotOf(ctx, h.r, key, surface)
 }
 
 // socketPair is two connected unix sockets: the app's end as a file to

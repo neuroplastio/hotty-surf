@@ -144,6 +144,13 @@ type Doc struct {
 
 // The ctl wire: `hotty-surf ctl` and `hotty-surf run`.
 
+// Shot is "shot"'s params: which surface, by its process's key and its
+// name, either "" to take the only one on screen.
+type Shot struct {
+	Key     string `msg:"key"`
+	Surface string `msg:"surface"`
+}
+
 // Report mirrors reloader.Report, which has no codec of its own (it is
 // API): the answer to "reload".
 type Report struct {

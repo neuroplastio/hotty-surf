@@ -8,9 +8,9 @@
 // app as its files are saved: each build's app dials the reloader back
 // over a WebSocket (dev/wire) as the instance page:<key>, and dev/events
 // says when a new build is up (restart) and what the last save did
-// (report). The page tells serve where it is (dev/page: its key, the app's
-// surface and the terminal's size, for ctl shot) and that it goes
-// (dev/leave), as JSON and text: the site's own data (gov P-3).
+// (report). The page tells serve that it goes (dev/leave, its key as
+// text). Where the app is, and at what size, the app says on its own wire
+// (reload.Placed), for ctl shot.
 
 import { Terminal } from "./xterm.mjs";
 import { FitAddon } from "./addon-fit.mjs";
@@ -37,19 +37,8 @@ term.write("\x1b[?1049h\x1b[?25l");
 
 const mac = /Mac|iPhone|iPad/.test(navigator.platform);
 const dev = document.documentElement.hasAttribute("data-dev");
-// surface is the app's surface, as its first a=doc or a=place names it
-// (serve's ctl shot asks the app for it by name).
-let surface = "";
-const named = /\x1b\]7279;a=(?:doc|place):(?:[^;\x1b]*:)?s=([^:;\x1b]+)/;
 const glue = {
   write(bytes) {
-    if (dev && !surface) {
-      const m = named.exec(new TextDecoder().decode(bytes.subarray(0, 256)));
-      if (m) {
-        surface = m[1];
-        where();
-      }
-    }
     term.write(bytes);
   },
   cols: term.cols,
@@ -68,15 +57,7 @@ term.onResize(({ cols, rows }) => {
   glue.cols = cols;
   glue.rows = rows;
   if (alive.ok) glue.resize?.(cols, rows);
-  where();
 });
-
-// where tells serve where the page is.
-function where() {
-  if (!dev || !surface) return;
-  const body = JSON.stringify({ key: glue.dev.key, surface, cols: term.cols, rows: term.rows });
-  fetch("dev/page", { method: "POST", body, keepalive: true }).catch(() => {});
-}
 let running = 0; // the build whose app runs, 0 for none
 let exits = 0; // how many apps exited
 

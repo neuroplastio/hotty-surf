@@ -34,7 +34,7 @@ func TestCtl(t *testing.T) {
 	var repErr error
 	go serveCtl(ctx, ln, ctlTarget{
 		reload: func(context.Context) (reloader.Report, error) { return rep, repErr },
-		shot: func(context.Context) (devwire.Doc, error) {
+		shot: func(context.Context, string, string) (devwire.Doc, error) {
 			return devwire.Doc{Surface: "app", HTML: "<p>hi</p>", Cols: 80, Rows: 24}, nil
 		},
 	})

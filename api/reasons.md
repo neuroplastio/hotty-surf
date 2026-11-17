@@ -259,6 +259,7 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 
 - `reload.Keep`: the program names the state that survives a Go reload, msgp-encoded (P-3): the spike's native.State. It is the process's, not a surface's, since a plx controller keeps state and has no surface. ui's …State values aren't kept, and the doc says so.
 - `reload.Serve`: the program's side of the dev wire, on a reader and writer its host gives it, not a terminal's fds (plx's ask A1), and its instance key, which pairs the old process with the new. Called inline, it returns once the old state is set, so the program's goroutines never race the handover; surfaces register themselves at surf.New in a dev build, a late one included. run.App serves as "app".
+- `reload.Placed`: a surface's size is known only to whoever places it, and plx's tools place theirs (a main surface and overlays) through their SDK. It is the process's half of Instances' sizes, a no-op outside a dev build as Keep is, so surf.Surface's API stays as it is. run.App and surftea's Host call it themselves.
 
 ## reload/reloader (the dev parent)
 
@@ -277,15 +278,12 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 - `reload/reloader.Report.Build`: what kept a save from the app: the compiler's output, or why start failed.
 - `reload/reloader.Report.Failed`: per-process failures by key: restart's error, a key that didn't come back, a process that exited before handover.
 - `reload/reloader.Report.Lint`: the save's lint findings.
-- `reload/reloader.Reloader.Document`: the document of a surface of an instance, as the surface last sent it to its host, asked of its process over the reload wire: `plx plugin dev ctl shot` renders a tool that plx relays, where hotty-surf run's term wire doesn't reach (L0's deferral, A1). It takes the key, as Serve's processes name themselves, and the surface's name, which the caller has because it places the surface. A process can have more than one surface (a dialog opened later, two surftea Hosts), and the one that rendered last changes with a toast's timer.
-- `reload/reloader.Reloader.Instances`: who is attached now, for a ctl shot that isn't given a key or a surface: plx's `plugin dev ctl shot` relays tools it doesn't place, so it has neither name nor size from anywhere else, and `hotty-surf ctl shot` can take the one surface there is. It is a snapshot, sorted, read under the Reloader's lock with no call to a process: each process says what it has on its own (an "areas" notification), when a surface is made or placed at another size. A process handing over or gone is left out, as a shot of it would fail.
-- `reload/reloader.Instance`: a process serving, as Instances lists it.
-- `reload/reloader.Instance.Key`: the process's instance key, as it named itself to Serve, and as Document takes it.
-- `reload/reloader.Instance.Surfaces`: the process's surfaces, sorted by name, each with its last size.
-- `reload/reloader.Placed`: a surface of an instance and the cells it was last placed at, so a shot renders at the size the user sees. Package run says where it placed the app, and `hotty-surf run` where it did; a program that places a surface itself (a raw-mode program, surftea's) is 0 by 0. Not `Surface`, which would read as surf.Surface in a caller that imports both.
+- `reload/reloader.Reloader.Document`: the document of a surface of an instance, as the surface last sent it to its host, asked of its process over the reload wire: `plx plugin dev ctl shot` renders a tool that plx relays, where hotty-surf run's term wire doesn't reach (L0's deferral, A1). It takes the key, as Serve's processes name themselves, and the surface's name, which the caller has from placing it, or from Instances. A process can have more than one surface (a dialog opened later, two surftea Hosts), and the one that rendered last changes with a toast's timer.
+- `reload/reloader.Reloader.Instances`: who is attached now, for a ctl shot that isn't given a key or a surface: plx's `plugin dev ctl shot` relays tools it doesn't place, so it has neither name nor size from anywhere else, and `hotty-surf ctl shot` can take the one surface there is. It is a snapshot, each key's surfaces sorted by name, read under the Reloader's lock with no call to a process: each process says what it has on its own (an "areas" notification), when a surface is made or placed at another size. A process handing over or gone is left out, as a shot of it would fail. A map by instance key, as Report.Failed is.
+- `reload/reloader.Placed`: a surface of a process and the cells its program last said it placed it at (reload.Placed), so a shot renders at the size the user sees; 0 by 0 when it hasn't said, or said it isn't on screen. Not `Surface`, which would read as surf.Surface in a caller that imports both; the same word as reload.Placed, which says it.
 - `reload/reloader.Placed.Name`: the surface's name, as Document takes it.
-- `reload/reloader.Placed.Cols`: the columns it was last placed at, 0 before it was.
-- `reload/reloader.Placed.Rows`: the rows it was last placed at, 0 before it was.
+- `reload/reloader.Placed.Cols`: the columns it was last placed at: the word hotty.Placement and cells use.
+- `reload/reloader.Placed.Rows`: the rows it was last placed at.
 - `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
 
 ## surftea (a module of its own)
