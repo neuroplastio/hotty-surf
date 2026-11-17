@@ -89,12 +89,12 @@ templ alertDefault(s *displayState) {
 }
 
 templ bookAlert(p *Alert) {
-	@ui.Alert(ui.AlertProps{Variant: alertVariant(p.Variant), Class: "book-alert"}) {
+	@ui.Alert(ui.AlertProps{Variant: alertVariant(p.Variant), Class: "max-w-lg"}) {
 		if p.Icon {
 			@ui.Icon("circle-help", "")
 		}
 		<h2>{ p.Title }</h2>
-		<section><p>{ p.Text }</p></section>
+		<section>{ p.Text }</section>
 	}
 }
 

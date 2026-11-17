@@ -180,4 +180,4 @@
 }
 .book-controls { margin-bottom: 0.75rem; }
 
-.book-alert { max-width: 32rem; }
+.book-preview .max-w-lg { max-width: 32rem; }
