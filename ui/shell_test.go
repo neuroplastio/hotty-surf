@@ -89,7 +89,7 @@ func TestIconButtonInKeyScope(t *testing.T) {
 		attrs := surf.On(ctx, "icon", surf.Click(func() { clicks++ }))
 		attrs["aria-label"] = "Hosts"
 		btn := ui.IconButton(ui.IconButtonProps{Shape: ui.ShapePublic, Attrs: attrs})
-		scope := ui.KeyScope([]string{"x", "enter"}, func(k string) bool {
+		scope := keysScope([]string{"x", "enter"}, func(k string) bool {
 			asked = append(asked, k)
 			return k == "x"
 		})

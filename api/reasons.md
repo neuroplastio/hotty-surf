@@ -323,6 +323,31 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   decline. Tab remains focus traversal. It adds no wrapper or per-component
   Props fields; its open native-select and editing limitations are in the
   keyboard model.
+  Changed for plx (pack "key labels", p-796): it takes []KeyBinding, each
+  with its own Run, so one way to scope keys also names the actions a menu
+  and a palette list; and it reaches all focus inside it (plain elements
+  whose surf.On ran in it, and nothing focused for the outermost), as
+  plx's surface-wide `bind label=…` needs.
+- `ui.KeyBinding`: one action of a KeyScope, keyed or not: the item of a
+  hotty menu (SPEC §10.7) and of an app's palette, made where the key is.
+  Not MenuItem: its Keys is display text, and it has no Name.
+- `ui.KeyBinding.Key`: the key, in surf.Key's notation; empty for an
+  action only a pick reaches (a palette's keyless actions, plx's ask).
+- `ui.KeyBinding.Label`: what a menu's level and a palette show.
+- `ui.KeyBinding.Name`: the command a hotty menu's pick sends (SPEC §10.7's
+  item name), and what Pick takes; one Name is one action on a surface.
+- `ui.KeyBinding.Disabled`: a menu shows an item that does nothing now as
+  disabled (SPEC §10.7's enabled), and its key goes on. Disabled rather
+  than Enabled so that the zero value is an action that works.
+- `ui.KeyBinding.Run`: the action on the binding, as MenuItem.OnSelect is:
+  no list and switch to keep in step.
+- `ui.Bindings`: plx's which-key overlay and palette read what a surface
+  offers now as plain data, from the last render, in a stable order.
+- `ui.HostMenu`: the same list as hotty-go's MenuTree, so a host draws the
+  which-key level and lists the actions in its palette. Not `Menu`: every
+  other noun function in ui is a component.
+- `ui.Pick`: a pick from a host's menu or an app's palette arrives as a
+  name (a command event); this runs that action's nearest binding.
 - `ui.Combobox`: Basecoat's searchable selection, with the combobox.js
   interaction translated to Go; it reuses SelectItem (K12).
 - `ui.ComboboxProps`: a combobox's attributes.

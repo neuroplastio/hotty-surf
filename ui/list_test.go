@@ -52,7 +52,7 @@ func (a *listApp) view() templ.Component {
 		if a.scope != nil {
 			inner := c
 			c = templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-				return ui.KeyScope(a.scopeKey, a.scope).Render(templ.WithChildren(ctx, inner), w)
+				return keysScope(a.scopeKey, a.scope).Render(templ.WithChildren(ctx, inner), w)
 			})
 		}
 		return c.Render(ctx, w)
@@ -326,4 +326,13 @@ func TestTwoLists(t *testing.T) {
 	if !strings.Contains(strings.Join(f.got, "\n"), `two lists with id "list"`) {
 		t.Fatalf("no fault for two Lists without ids: %v", f.got)
 	}
+}
+
+// keysScope is a KeyScope binding keys, each running fn with its key.
+func keysScope(keys []string, fn func(string) bool) templ.Component {
+	bs := make([]ui.KeyBinding, len(keys))
+	for i, k := range keys {
+		bs[i] = ui.KeyBinding{Key: k, Run: func() bool { return fn(k) }}
+	}
+	return ui.KeyScope(bs)
 }
