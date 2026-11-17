@@ -29,8 +29,10 @@ import (
 // ctrl is the host's mod they reach handlers as mod+c and mod+q, see
 // surf.Key). Other keys the surface doesn't take do nothing.
 //
-// It places the surface with Press and Hover on, and under `hotty-surf run`
-// it serves the reloader as the instance "app" (package reload).
+// It places the surface with Press and Hover on. Started by `hotty-surf
+// run`, it serves the reloader (package reload) as the instance its
+// starter names: "app", the one instance `hotty-surf run` starts, unless a
+// starter that runs one build as several instances names another.
 func App(ctx context.Context, s *surf.Surface) error {
 	if dev != nil {
 		if served, err := dev(ctx, s); served {

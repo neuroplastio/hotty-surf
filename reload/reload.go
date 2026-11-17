@@ -66,7 +66,8 @@ func Keep[T any, P interface {
 // Serve connects the program to its reloader on rw, as the instance key: a
 // name the program's host gives it that stays the same across builds, so
 // that the reloader pairs the old process with the new one (run.App's is
-// "app"; plx's are "controller" and "tool:<viewer>"). It is called inline,
+// the one its starter names, "app" under hotty-surf run; plx's are
+// "controller" and "tool:<viewer>"). It is called inline,
 // after Keep and before the program's surfaces first render.
 //
 // In a process that a reload started, Serve takes over from the build

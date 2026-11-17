@@ -71,17 +71,22 @@ func underRun(ctx context.Context, s *surf.Surface) (bool, error) {
 // termOut sends each command the surface writes as one "out".
 type termOut struct{ c *devwire.Conn }
 
-func (o termOut) Write(p []byte) (int, error) {
-	if err := o.c.Notify("out", &devwire.Out{Data: p}); err != nil {
+func (t termOut) Write(p []byte) (int, error) {
+	o := devwire.GetOut()
+	o.Data = p // the surface's own bytes, sent before Write returns
+	err := t.c.Notify("out", o)
+	o.Data = nil
+	devwire.PutOut(o)
+	if err != nil {
 		return 0, err
 	}
 	return len(p), nil
 }
 
-// termMsg is what the term wire brought: an input, or a request for the
-// surface's document.
+// termMsg is what the term wire brought: an input (pooled: the driver
+// puts it back once handled), or a request for the surface's document.
 type termMsg struct {
-	in    devwire.Input
+	in    *devwire.Input
 	docID uint32
 	isDoc bool
 }
@@ -112,11 +117,12 @@ func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter,
 		devwire.PutReader(tr)
 		return err
 	}
-	panicking := true
+	crashed := true
 	defer func() {
-		if panicking {
-			// A panic is a crash, which the reloader hears as the wire
-			// closing: it isn't told the process is leaving.
+		if crashed {
+			// A panic or an error is a crash, which the reloader hears as
+			// the wire closing: it isn't told the process is leaving, and
+			// reports it with what the app said on its way out.
 			return
 		}
 		// Leaving is no crash: the reloader hears it before the process
@@ -128,7 +134,7 @@ func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter,
 		}
 	}()
 	err = drive(ctx, s, term, tr)
-	panicking = false
+	crashed = err != nil
 	return err
 }
 
@@ -141,7 +147,11 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 		if err != nil {
 			return err
 		}
-		if err := term.Notify("out", &devwire.Out{Data: []byte(hotty.Doc(name, doc, hotty.Scroll(hotty.ScrollVertical|hotty.ScrollHorizontal)))}); err != nil {
+		o := devwire.GetOut()
+		o.Data = append(o.Data, hotty.Doc(name, doc, hotty.Scroll(hotty.ScrollVertical|hotty.ScrollHorizontal))...)
+		err = term.Notify("out", o)
+		devwire.PutOut(o)
+		if err != nil {
 			return err
 		}
 		return term.Notify("show", &devwire.Show{Surface: name})
@@ -171,7 +181,9 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 			var m termMsg
 			switch {
 			case h.Type == devwire.Notification && h.Method == "input":
-				if devwire.Decode(tr, &m.in) != nil {
+				m.in = devwire.GetInput()
+				if devwire.Decode(tr, m.in) != nil {
+					devwire.PutInput(m.in)
 					return
 				}
 			case h.Type == devwire.Request && h.Method == "doc":
@@ -188,6 +200,9 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 			select {
 			case msgs <- m:
 			case <-ctx.Done():
+				if m.in != nil {
+					devwire.PutInput(m.in)
+				}
 				return
 			}
 		}
@@ -226,19 +241,31 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 				if err := term.Respond(m.docID, errText, &devwire.Doc{Surface: name, HTML: doc}); err != nil {
 					return err
 				}
-			case m.in.Key != "":
-				taken, err := s.Key(m.in.Key)
+			default:
+				quit, err := handle(s, &in, handlers, m.in)
+				devwire.PutInput(m.in)
 				if err != nil {
 					return err
 				}
-				if !taken && quits(m.in.Key) {
+				if quit {
 					return term.Notify("bye", &devwire.Empty{})
-				}
-			case len(m.in.Msg) > 0:
-				if err := in.Feed(m.in.Msg, handlers); err != nil {
-					return err
 				}
 			}
 		}
 	}
+}
+
+// handle gives the surface one input; quit says the user quit.
+func handle(s *surf.Surface, r *input.Reader, handlers input.Handlers, in *devwire.Input) (quit bool, err error) {
+	switch {
+	case in.Key != "":
+		taken, err := s.Key(in.Key)
+		if err != nil {
+			return false, err
+		}
+		return !taken && quits(in.Key), nil
+	case len(in.Msg) > 0:
+		return false, r.Feed(in.Msg, handlers)
+	}
+	return false, nil
 }
