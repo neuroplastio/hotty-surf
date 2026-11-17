@@ -13,6 +13,7 @@ import (
 
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/differential"
@@ -42,6 +43,7 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"dropdown-menu": menuSubject,
 	"tabs":          tabsSubject,
 	"toast":         toastSubject,
+	"dialog":        dialogSubject,
 }
 
 func init() {
@@ -101,12 +103,16 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 			}
 		}
 		var b bytes.Buffer
-		if err := html.Render(&b, r.One(root)); err != nil {
-			t.Fatal(err)
+		if ns := r.Find(root); len(ns) > 1 {
+			t.Fatalf("%q matches %d elements", root, len(ns))
+		} else if len(ns) == 1 {
+			if err := html.Render(&b, ns[0]); err != nil {
+				t.Fatal(err)
+			}
 		}
 		gotHTML := canonical(t, b.String(), sp.Drop)
-		wantHTML := canonical(t, w.HTML, sp.Drop)
-		gotFocus := focusOf(s)
+		wantHTML := canonical(t, shown(t, sp, w.HTML), sp.Drop)
+		gotFocus := focusOf(s, sp.Drop)
 		if i == 0 && gotFocus == "outside" {
 			gotFocus = ""
 		}
@@ -143,11 +149,35 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 	}
 }
 
+// shown is the browser's root, or "" for one the spec's Shown attribute
+// says isn't shown.
+func shown(t *testing.T, sp differential.Spec, root string) string {
+	if sp.Shown == "" {
+		return root
+	}
+	n, err := html.ParseFragment(strings.NewReader(root), &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, x := range n {
+		if x.Type == html.ElementNode {
+			for _, a := range x.Attr {
+				if a.Key == sp.Shown {
+					return root
+				}
+			}
+			return ""
+		}
+	}
+	return ""
+}
+
 // focusOf is where the surface holds the keyboard is, as the browser names
-// it: the element's id, or its tag for one with only the runtime's.
-func focusOf(s *surf.Surface) string {
+// it: the element's id, or its tag for one whose id is only ui's (the
+// runtime's, or one drop leaves out as tag#id@id).
+func focusOf(s *surf.Surface, drop []string) string {
 	id := rt.Peek.Focused(s)
-	if !runtimeID.MatchString(id) {
+	if !runtimeID.MatchString(id) && !slices.ContainsFunc(drop, func(d string) bool { return strings.HasSuffix(d, "#"+id+"@id") }) {
 		return id
 	}
 	var tag string
@@ -340,3 +370,30 @@ func toastSubject(t *testing.T, args map[string]any) subject {
 		events: func() []map[string]any { return nil },
 	}
 }
+
+// dialogSubject is a Dialog for dialog's macro arguments (id, title,
+// description, the caller as its body), and the macro's trigger as a
+// ui.Button that opens it, before it as the macro writes it. The dialog
+// tells the page nothing, so it reports nothing.
+func dialogSubject(t *testing.T, args map[string]any) subject {
+	p := ui.DialogProps{}
+	p.ID, _ = args["id"].(string)
+	p.Title, _ = args["title"].(string)
+	p.Description, _ = args["description"].(string)
+	p.OnClose = func() { p.Open = false }
+	trigger, _ := args["trigger"].(string)
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, p.ID+"-trigger", surf.Click(func() { p.Open = true }))})
+			if err := open.Render(templ.WithChildren(ctx, templ.Raw(trigger)), w); err != nil {
+				return err
+			}
+			return ui.Dialog(p).Render(templ.WithChildren(ctx, templ.Raw(dialogBody)), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
+}
+
+// dialogBody is the dialog cases' caller, in the <section> the macro
+// wraps it in: ui's children go straight into the box.
+const dialogBody = `<section><input id="d-name" class="input"><button id="d-save" type="button" class="btn">Save</button></section>`

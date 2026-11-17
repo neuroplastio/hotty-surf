@@ -67,6 +67,7 @@ const KEYS = {
   end: { key: 'End', code: 'End', windowsVirtualKeyCode: 35 },
   escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
   tab: { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 },
+  'shift+tab': { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers: 8 },
   enter: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
   space: { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' },
 };

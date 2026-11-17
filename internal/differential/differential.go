@@ -53,7 +53,11 @@ type Spec struct {
 	// Drop are attributes left out of both sides at every step, as ui's
 	// render tests drop them (tag@attr, tag#id@attr, *@attr,
 	// tag@class~name), each with its reason in Why.
-	Drop  []string `json:"drop,omitempty"`
+	Drop []string `json:"drop,omitempty"`
+	// Shown, when set, is the attribute that marks the root shown (a
+	// dialog's open): a root without it counts as no root, as ui writes
+	// none for a closed Dialog where the macro keeps a closed <dialog>.
+	Shown string `json:"shown,omitempty"`
 	Why   string   `json:"why,omitempty"`
 	Cases []Case   `json:"cases"`
 }
