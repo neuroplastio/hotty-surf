@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/net/html"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/surftest"
 )
@@ -52,7 +51,7 @@ func TestEveryStory(t *testing.T) {
 // The list by keyboard, in cells (a terminal that is no host).
 func TestListByKeyboard(t *testing.T) {
 	a := New()
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	visible := a.model.Visible()
 	if len(visible) < 2 || a.ID != visible[0].ID() {
 		t.Fatalf("the book opened on %q, want the first in its list", a.ID)
@@ -74,7 +73,7 @@ func TestListByKeyboard(t *testing.T) {
 
 func TestFilterFromLaunch(t *testing.T) {
 	a := New()
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Key("/")
 	for _, k := range strings.Split("block", "") {
 		r.Key(k)
@@ -87,7 +86,7 @@ func TestFilterFromLaunch(t *testing.T) {
 func TestBookInspection(t *testing.T) {
 	a := New()
 	a.show("button/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	if events := a.model.Events(a.model.Sel); len(events) == 0 || !strings.Contains(events[0].Text, "save") {
 		t.Fatalf("click event not recorded: %v", events)
@@ -112,7 +111,7 @@ func TestBookInspection(t *testing.T) {
 func TestBookLogsStoryStateChanges(t *testing.T) {
 	a := New()
 	a.show("button/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	for _, event := range a.model.Events(a.model.Sel) {
 		if event.Kind == "state" && strings.Contains(event.Text, "Clicks") {
@@ -139,7 +138,7 @@ func TestStoryHTMLIsComponentOnly(t *testing.T) {
 func TestRenditionsShareStoryState(t *testing.T) {
 	a := New()
 	a.show("button/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	r.Key("r")
 	if !a.Cells || !strings.Contains(paneText(a), "Button") {
@@ -270,7 +269,7 @@ func TestNoControlsNoTab(t *testing.T) {
 	a := New()
 	a.show("chart/bar")
 	a.setRendition(true)
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if a.cur.controls {
 		t.Fatal("chart/bar has controls")
 	}
@@ -290,7 +289,7 @@ func TestNoControlsNoTab(t *testing.T) {
 // as it shows, and Escape there closes the dialog.
 func TestListKeepsTheKeyboard(t *testing.T) {
 	a := New()
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("button[aria-current=true]") // the list takes the keyboard
 	a.show("dialog/default")
 	r.Update()
@@ -342,7 +341,7 @@ func TestPaneKeysOnlyItsOwn(t *testing.T) {
 func TestCodeStoryPropsChangePreview(t *testing.T) {
 	a := New()
 	a.show("code/go")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if !a.model.Sel.Set("First", "120") {
 		t.Fatal("could not change the first line number")
 	}
@@ -355,7 +354,7 @@ func TestCodeStoryPropsChangePreview(t *testing.T) {
 func TestBookEventLogDemoClears(t *testing.T) {
 	a := New()
 	a.show("event-log/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if !strings.Contains(r.HTML(), "Popup.Open") {
 		t.Fatal("event log demo did not show its entries")
 	}
@@ -378,7 +377,7 @@ func TestBookDemonstrationsHaveSource(t *testing.T) {
 func TestTabsDemoSharesSelectionAndProps(t *testing.T) {
 	a := New()
 	a.show("tabs-demo/line")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#demo-tab-2")
 	if got := a.storyHTML(); !strings.Contains(got, "password panel") {
 		t.Fatalf("tab selection did not update demo: %s", got)
@@ -395,7 +394,7 @@ func TestTabsDemoSharesSelectionAndProps(t *testing.T) {
 func TestShellStoriesUseTheirEditableState(t *testing.T) {
 	a := New()
 	a.show("list-item/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#row-0")
 	if got := storyControl(a, "Selected"); got != "0" {
 		t.Fatalf("list selection = %q, want 0", got)

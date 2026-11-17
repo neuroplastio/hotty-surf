@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"golang.org/x/net/html"
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -23,7 +22,7 @@ func start(t *testing.T) *rig {
 		t.Fatal(err)
 	}
 	a := NewApp(tasks)
-	return &rig{surftest.Start(t, surf.New(surface, Page(a), CSS), surftest.Size(160, 50)), a}
+	return &rig{surftest.Start(t, newSurface(surface, Page(a)), surftest.Size(160, 50)), a}
 }
 
 func (r *rig) has(sel string) bool { return len(r.Find(sel)) > 0 }

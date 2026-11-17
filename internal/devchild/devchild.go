@@ -285,8 +285,10 @@ func restyled(css string, styles []devwire.Style) string {
 }
 
 // replaceLast replaces st.Old's last occurrence in css with st.New: the
-// app's stylesheet comes after the kit's (ui.Stylesheet() + "\n" +
-// appCSS), and the last match is the app's own, which beats the kit's.
+// app's stylesheet comes after the kit's when it carries it
+// (ui.Stylesheet() + "\n" + appCSS), and the last match is the app's own,
+// which beats the kit's. An app that links the kit (ui.Sheet) carries
+// only its own.
 func replaceLast(css string, st devwire.Style) (string, bool) {
 	i := strings.LastIndex(css, st.Old)
 	if st.Old == "" || i < 0 {

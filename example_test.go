@@ -195,6 +195,24 @@ func ExampleSecondary() {
 	})
 }
 
+// A program with several surfaces on one connection sends the kit's sheet
+// once and links it from each; an app with one surface lets the surface
+// send it (ui.Sheet as it is).
+func ExampleSurface_Link() {
+	kit := ui.Sheet()
+	os.Stdout.WriteString(hotty.Res(kit.ID, "text/css", []byte(kit.CSS)))
+	for _, name := range []string{"left", "right"} {
+		s := surf.New(name, templ.Raw(`<p>hi</p>`), "")
+		s.Link(surf.Sheet{ID: kit.ID}) // no CSS: the program sent it
+		s.Attach(os.Stdout, hotty.Caps{})
+		doc, err := s.Document()
+		if err != nil {
+			return
+		}
+		os.Stdout.WriteString(hotty.Doc(name, doc))
+	}
+}
+
 // A program whose own keys sometimes need the keyboard (a menu, a prompt)
 // lends it with Blur and gives it back with Focus. Between the two, a key
 // that types a character goes to the program's bindings only when the

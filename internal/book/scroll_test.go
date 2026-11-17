@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	"neuroplast.io/hotty-go"
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
 )
 
 func TestStoryListRevealsEndInCells(t *testing.T) {
 	a := New()
-	s := surf.New("book", View(a), CSS)
+	s := newSurface("book", View(a))
 	c := cells.New(120, 30, func(e hotty.Event) {
 		if err := s.Event(e); err != nil {
 			t.Error(err)
@@ -48,7 +47,7 @@ func TestStoryListRevealsEndInCells(t *testing.T) {
 
 func TestInspectorScrollKeepsTabsVisibleInCells(t *testing.T) {
 	a := New()
-	s := surf.New("book", View(a), CSS)
+	s := newSurface("book", View(a))
 	c := cells.New(120, 50, func(e hotty.Event) {
 		if err := s.Event(e); err != nil {
 			t.Error(err)

@@ -45,7 +45,7 @@ type program struct {
 type rect struct{ X, Y, W, H int }
 
 func newProgram(t *hottyterm.Term, a *App) *program {
-	return &program{t: t, a: a, s: surf.New(t.Surface("details"), Details(a), CSS), calls: make(chan func())}
+	return &program{t: t, a: a, s: newSurface(t.Surface("details"), Details(a)), calls: make(chan func())}
 }
 
 // run shows the program until ctx is done or the user quits.

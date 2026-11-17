@@ -2,6 +2,7 @@ package surf
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"slices"
 	"strconv"
@@ -25,6 +26,9 @@ func (s *Surface) wake() {
 
 // document renders the whole document, and takes it as what the host has.
 func (s *Surface) document() (string, error) {
+	if err := s.sendSheets(); err != nil {
+		return "", err
+	}
 	// A new document starts from nothing the host had: its fields hold
 	// what the markup gives them, and the keyboard and the pointer are
 	// heard of again.
@@ -711,6 +715,59 @@ func (s *Surface) takeFocus() (bool, error) {
 	}
 	return true, s.event(hotty.Event{Kind: hotty.EventFocus, Surface: s.name, Target: id})
 }
+
+// sendSheets sends the linked sheets the writer doesn't have yet.
+func (s *Surface) sendSheets() error {
+	if s.out == nil {
+		return nil
+	}
+	var cmds []string
+	for _, sh := range s.sheets {
+		if sh.CSS == "" || s.sheetSent[sh.ID] {
+			continue
+		}
+		if limit, n := s.overLimit(sh); limit != "" {
+			// Not sent: the document carries it. Marked all the same, so
+			// that the fault is recorded once per Attach.
+			s.fault(fmt.Sprintf("surf: the sheet %q (%d bytes) is past the host's limits.%s (%d): the document carries it", sh.ID, len(sh.CSS), limit, n))
+			continue
+		}
+		cmds = append(cmds, hotty.Res(sh.ID, "text/css", []byte(sh.CSS)))
+	}
+	if err := s.write(cmds); err != nil {
+		return err
+	}
+	for _, sh := range s.sheets {
+		if sh.CSS != "" {
+			if s.sheetSent == nil {
+				s.sheetSent = map[string]bool{}
+			}
+			s.sheetSent[sh.ID] = true
+		}
+	}
+	return nil
+}
+
+// overLimit names the host's limit a sheet with CSS is past, and the
+// limit: a resource is one message (SPEC §7.1, §13), within the quota.
+// limits.message counts the whole decoded message, the command's keys
+// with the CSS, so the sheet must leave resMargin under it.
+func (s *Surface) overLimit(sh Sheet) (string, int) {
+	if sh.CSS == "" {
+		return "", 0
+	}
+	if n := s.limits["message"]; n > 0 && len(sh.CSS)+resMargin > n {
+		return "message", n
+	}
+	if n := s.limits["resources"]; n > 0 && len(sh.CSS) > n {
+		return "resources", n
+	}
+	return "", 0
+}
+
+// resMargin is room for an a=res command's keys (a, id, type) beside its
+// payload: more than an ID of a few hundred bytes needs.
+const resMargin = 1024
 
 // blur is Blur: the blur first, so the surface knows at once, then a=blur,
 // whose echo (which a cells.Screen sends while it is written to) the

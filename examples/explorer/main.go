@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"os"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/reload"
 	"neuroplast.io/hotty-surf/run"
 )
 
 func main() {
 	a := NewApp()
-	s := surf.New("explorer", Page(a), CSS)
+	s := newSurface("explorer", Page(a))
 	reload.Keep(a.Save, a.Restore)
 	if err := run.App(context.Background(), s); err != nil {
 		fmt.Fprintln(os.Stderr, "explorer:", err)

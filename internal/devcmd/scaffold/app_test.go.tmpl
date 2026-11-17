@@ -3,14 +3,13 @@ package main
 import (
 	"testing"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
 // TestApp drives the page on a test host, which checks after every act
 // that the host's document is the app's.
 func TestApp(t *testing.T) {
-	r := surftest.Start(t, surf.New("APPNAME", Page(NewApp()), CSS))
+	r := surftest.Start(t, newSurface("APPNAME", Page(NewApp())))
 	r.Click("button:text(Add)")
 	r.Click("button:text(Add)")
 	r.One("p:text(Count: 2)")

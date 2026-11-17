@@ -714,3 +714,13 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 ## L5: the focused element's own keys (plx's G-keys-decl, the Own half)
 
 - `surf.Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.
+
+
+
+## L5: the kit's sheet as a resource (plx's G-kit-sheet)
+
+- `surf.Sheet`: a stylesheet named for SPEC §7.1's a=res: an ID the documents link as cid:<ID>, and the CSS (empty when the program sends it). Every full send carried the kit's 229 KB (33 KB on the wire, compressed) in each document of each surface; over a pty or SSH, with many surfaces, that is most of what goes.
+- `surf.Sheet.ID`: what the document links; a content hash, so a host never styles with an older sheet of the same name.
+- `surf.Sheet.CSS`: the bytes the surface sends; empty, the program sends them once for all its surfaces (plx's surfhost already sends its theme this way).
+- `surf.Surface.Link`: only the surface knows when it hands out a document and on which writer, so only it can send the sheet once per Attach ahead of the first document that links it; New's css stays the app's own.
+- `ui.Sheet`: the kit's sheet with its hashed ID, so apps and hosts agree on the name without computing it.

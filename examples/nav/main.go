@@ -11,13 +11,12 @@ import (
 	"fmt"
 	"os"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/run"
 )
 
 func main() {
 	a := NewApp(Mock())
-	if err := run.App(context.Background(), surf.New(surface, Page(a), CSS)); err != nil {
+	if err := run.App(context.Background(), newSurface(surface, Page(a))); err != nil {
 		fmt.Fprintln(os.Stderr, "nav:", err)
 		os.Exit(1)
 	}

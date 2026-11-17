@@ -2744,3 +2744,87 @@ control declares its keys on the element that takes focus. Applied:
     open.
   - A menu item never takes focus (aria-activedescendant on the trigger),
     so there is no item case.
+
+## L5: the kit's sheet as a resource (plx's G-kit-sheet)
+
+`ui.Stylesheet()` is 228,864 bytes, and an app carries it in every
+document (New's css), on every full send, for every surface. hotty's
+a=res (SPEC §7.1) stores it once per session; documents link it as
+`cid:<id>`.
+
+The pack: `surf.Sheet{ID, CSS}`, `Surface.Link(sheets ...Sheet)` and
+`ui.Sheet()`.
+
+- A linked sheet is a `<link rel="stylesheet" href="cid:ID">` ahead of
+  the surface's own `<style>` (New's css, which a dev reload restyles; it
+  is written even empty while a sheet is linked, for the reload to fill).
+- A sheet with CSS is sent by the surface: a=res on Attach's writer, once
+  per Attach, before the next document Document returns. That covers
+  run.App (term, wasm, dev, cells) with no change there.
+- A sheet without CSS is the program's to send: a host that owns one
+  connection for many surfaces (plx's surfhost) sends `hotty.Res` once
+  and links `surf.Sheet{ID: ui.Sheet().ID}` from each.
+- `ui.Sheet()`'s ID is `hotty-surf-kit-` and 8 hex digits of FNV-1a (32
+  bits) over the sheet, computed once.
+- **Cells:** nothing to do. A cells.Screen reads Basecoat classes and
+  inline styles, never a stylesheet (SUBSET.md); it ignores a=res and
+  `<link>` as it ignores `<style>`.
+- Every example, the `hotty-surf new` scaffold and the book link the kit:
+  each package's css.go has `newSurface(name, view)`, which is New with
+  the package's own CSS, then `Link(ui.Sheet())`.
+
+Measured on examples/hello (bytes written, hotty-go's encoding):
+
+| | once per connection | each full send |
+| --- | ---: | ---: |
+| kit embedded (v07) | 0 | 33,907 |
+| kit linked | 32,907 | 1,279 |
+
+1 surface, 3 full sends: 101,721 → 36,744. 10 surfaces, 3 full sends
+each: 1,017,210 → 71,277. TinyGo release wasm of hello, on v07
+cf1cb8f: 2,267,015 → 2,274,821 raw (+7,806), 726,158 → 728,008 gzip -9n
+(+1,850). The ID's hash is little of that: with crypto/sha256 in place of
+FNV-1a the same build is 2,275,330 raw, 728,195 gzip, so FNV-1a saves 509
+bytes raw, 187 gzip; the rest is Link and Sheet themselves. (The draft's
++6,345 was all of Link, not sha256's.)
+
+Questions for the review:
+
+1. Once per Attach per surface: two surfaces of one program on one writer
+   that both carry CSS each send it (the second replaces the first, and
+   the host redraws). A program with many surfaces links without CSS.
+   Enough, or a shared sender?
+2. a=res is sent NoReply. A host that refuses it (EQUOTA, limits.message)
+   shows the documents unstyled with no error; the embedded sheet would
+   have gone over limits.message as well. Ask for errors and surface them?
+3. Move the other examples and the book to Link in the apply, or leave
+   them as the embedded shape's examples?
+
+Reviewed (review-sheet.md): approved as named; Q1 per Attach, no shared
+sender; Q2 no error API, the caps decide; Q3 every example and the book
+on Link. Applied:
+
+- **Past the caps.** A sheet with CSS longer than the host's
+  limits.message or limits.resources (Attach's caps) isn't sent: the
+  document carries it in a `<style>` where its link would be, and the
+  surface records a fault once per Attach (TestSheetPastLimits).
+- **Docs.** Sheet.ID is the program's to change with the CSS; CSS
+  without, the program sends it before the first document; Link
+  replaces, and Link() links none (TestLinkReplaces); Link names the
+  fallback and the re-Attach after a host drops its resources;
+  Document's doc states its a=res write; Stylesheet and Sheet point at
+  each other.
+- **TinyGo.** FNV-1a inline in place of crypto/sha256 (ui.Sheet's test
+  checks it against hash/fnv).
+- **Examples.** Every one, the scaffold and the book link the kit through
+  `newSurface` in its css.go; surftea's commits and files examples and its
+  Example link it where they make the surface.
+
+Verified (verify-sheet.md, p-801), fixes applied: v07 merged in (notes
+and reasons a union); the scaffold's css.go imports in gofmt's order,
+kept so by TestScaffoldIsFormatted over every rendered Go template;
+Document's and Link's sentences word for word as the review wrote them;
+surftea's examples on Link. Also: limits.message counts the whole
+decoded message, so a sheet must leave resMargin (1 KiB) under it for
+the command's keys; the over-limit sheet is marked sent so that its
+fault is recorded once per Attach (commented).
