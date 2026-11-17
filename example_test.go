@@ -216,3 +216,68 @@ func ExampleSurface_Blur() {
 	// ""
 	// name
 }
+
+// attrs writes a's attributes, as a .templ file's spread does.
+func attrs(w io.Writer, a templ.Attributes) {
+	for _, kv := range a.Items() {
+		fmt.Fprintf(w, " %s=%q", kv.Key, fmt.Sprint(kv.Value))
+	}
+}
+
+// A list row selects on a click and opens on a double click: Clicks hears
+// the click's count.
+func ExampleClicks() {
+	selected, opened := "", ""
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		for _, name := range []string{"notes", "todo"} {
+			io.WriteString(w, "<button")
+			attrs(w, surf.On(ctx, "row-"+name, surf.Clicks(func(n int) {
+				selected = name
+				if n >= 2 {
+					opened = name
+				}
+			})))
+			fmt.Fprintf(w, ">%s</button>", name)
+		}
+		return nil
+	})
+	s := surf.New("files", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	s.Document()
+	s.Update()
+	// The host's events for a double click on todo: count 1, then 2.
+	for _, n := range []int{1, 2} {
+		s.Event(hotty.Event{Surface: "files", Kind: hotty.EventClick, Target: "row-todo", Count: n})
+	}
+	fmt.Println(selected, opened)
+	// Output: todo todo
+}
+
+// A palette's query keeps the keyboard: Tab leaves it for a stop, whose
+// Focus handler hands Tab to the program and asks for the query again.
+// Refocus moves it in the same frame, though every frame asks for the
+// query (which Autofocus would take as no change).
+func ExampleRefocus() {
+	stopped := false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if stopped {
+			stopped = false
+			surf.Refocus(ctx, "query")
+		} else {
+			surf.Autofocus(ctx, "query")
+		}
+		io.WriteString(w, `<input id="query"><span tabindex="0"`)
+		attrs(w, surf.On(ctx, "stop", surf.Focus(func(in bool) {
+			stopped = in // and the program runs its Tab
+		})))
+		_, err := io.WriteString(w, `></span>`)
+		return err
+	})
+	s := surf.New("palette", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	s.Document()
+	s.Update()
+	s.Event(hotty.Event{Surface: "palette", Kind: hotty.EventFocus, Target: "stop"})
+	fmt.Println(s.Focused())
+	// Output: query
+}

@@ -702,3 +702,9 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.ToasterProps.Class`: K1: a behavioural component's class, for the app's own; plx's way out if the fixed toaster doesn't fit its surface.
 - `ui.Toaster`: its signature takes ToasterProps (K30).
 - `ui.Toast.OnClose`: plx parity (p-653): plx's toasts have a corner x; it asks the app, which owns the toast and removes it.
+
+## L5: a click's count and taking the keyboard back (plx's G-click-count, G-focus-now)
+
+- `surf.Clicks`: plx's palette selects a row on a click and runs it on a double click. The host and cells.Screen both send the click's count (SPEC §9, count), but surf.Click's func takes nothing, so the count never reaches the app. A variant of Click, not a new event: kit wrappers that wrap an element's Click (ListItem) keep working.
+- `surftest.Rig.DoubleClick`: every gesture surf hears has its Rig verb (Drag, DragStep, Secondary), and plx's palette test (select on one click, run on two) is the first caller of a double click. Added at the review (p-796).
+- `surf.Refocus`: plx's palette query must have the keyboard back in the frame where Tab left it for a stop, whose Focus handler gives Tab to plx. Autofocus asked on every frame is edge-triggered, so asking again moves nothing, and Surface.Focus gives the keyboard to the stop, which had it last. Only the render can say "this element, again, now".
