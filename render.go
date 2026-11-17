@@ -26,6 +26,7 @@ type renderer struct {
 	p     parser
 	last  []byte // the HTML the tree the host has was parsed from
 	valid bool   // last is that tree's: false before one, and after a snapshot is adopted
+	modal string // modal whose guards and background restrictions are in last
 	// at is when the view last rendered, in Unix nanoseconds (Peek's
 	// Rendered reads it from another goroutine).
 	at atomic.Int64
@@ -87,13 +88,13 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 		f.After[i]()
 	}
 	s.fault(f.Faults...)
-	return f, s.r.valid && bytes.Equal(s.r.buf.Bytes(), s.r.last), nil
+	return f, s.r.valid && activeModal(f) == s.r.modal && bytes.Equal(s.r.buf.Bytes(), s.r.last), nil
 }
 
 // tree parses what paint rendered into a fresh tree under a root, with an
 // id on every element. It doesn't touch what the surface last sent: the
 // caller swaps the tree in with keep.
-func (s *Surface) tree() (*tree, error) {
+func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 	t := &tree{
 		root: newRoot(),
 		ids:  make(map[string]string, len(s.ids)),
@@ -108,6 +109,7 @@ func (s *Surface) tree() (*tree, error) {
 	} else if parseCheck {
 		checkParse(t.root, src)
 	}
+	prepareModal(t.root, activeModal(f))
 	t.byID["root"] = t.root
 	s.number(t.root, "root", t, false)
 	return t, nil
@@ -139,10 +141,11 @@ type tree struct {
 
 // keep takes t as what the host has, and the HTML paint rendered as its
 // source.
-func (s *Surface) keep(t *tree) {
+func (s *Surface) keep(t *tree, f *rt.Frame) {
 	s.prev, s.ids, s.byID, s.fields = t.root, t.ids, t.byID, t.fields
 	s.r.last = append(s.r.last[:0], s.r.buf.Bytes()...)
 	s.r.valid = true
+	s.r.modal = activeModal(f)
 }
 
 // number gives every element under p an id: its own, or the one its place

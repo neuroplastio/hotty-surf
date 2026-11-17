@@ -676,7 +676,8 @@ func (c *Screen) tab(back bool) bool {
 		if n == c.focused {
 			at = len(order)
 		}
-		if _, shown := l.boxes[n]; shown && tabbable(n) {
+		_, shown := l.boxes[n]
+		if (shown || has(n, "data-hotty-modal-guard")) && tabbable(n) {
 			order = append(order, n)
 		}
 	})
@@ -753,6 +754,11 @@ func (c *Screen) click(col, row int) bool {
 	var hit *html.Node
 	if y < len(l.cv.rows) {
 		hit = l.cv.rows[y][col].own
+	}
+	// The runtime marks the background of an open modal as pointer-inert.
+	// It is still drawn, but must not focus or activate a control.
+	if closest(hit, func(n *html.Node) bool { return has(n, "data-hotty-modal-inert") }) != nil {
+		return true
 	}
 	if c.press {
 		e := hotty.Event{Kind: hotty.EventPress}

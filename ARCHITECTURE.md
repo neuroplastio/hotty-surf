@@ -109,6 +109,14 @@ pointer.
 An event that arrives while the surface is writing (a `cells.Screen`
 answers inside its Write) is deferred until the write is done.
 
+An open kit modal registers its id in the frame. The runtime adds a
+focus guard at each end, removes background controls from the Tab order,
+and makes the background pointer-inert. Focus on a guard moves to the
+opposite end, and a press on modal text that blurs focus restores it
+inside. Cells draws the background faint and observes the same guards.
+Only the active modal and its descendants hear keys while it is open.
+The original markup and attributes return when it closes.
+
 ## Drivers
 
 - **`run.App`** (run/term.go) opens the terminal with hottyterm, puts it

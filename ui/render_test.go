@@ -109,6 +109,11 @@ func canonical(t *testing.T, s string, drop []string) string {
 	var b strings.Builder
 	var walk func(n *x.Node, depth int)
 	walk = func(n *x.Node, depth int) {
+		for _, a := range n.Attr {
+			if a.Key == "data-hotty-modal-guard" {
+				return // the runtime's focus guard, not the macro's markup
+			}
+		}
 		pad := strings.Repeat("  ", depth)
 		switch n.Type {
 		case x.TextNode:

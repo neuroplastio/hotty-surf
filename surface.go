@@ -60,16 +60,17 @@ type Surface struct {
 	focused string
 	// lastFocus is the element that had the keyboard last, which Focus
 	// gives it back to.
-	lastFocus string
-	focusIn   []string
-	hoverIn   []string
-	hoverAt   string // the element under the pointer, as the host last said
-	pressed   bool   // the last event was a press on the surface (see event)
-	asked     string // the element the last frame's Autofocus asked for
-	askDue    bool   // a Document's Autofocus, sent at the next Update
-	cssDue    bool   // the stylesheet changed (a dev reload): sent at the next Update
-	sending   bool
-	deferred  []hotty.Event
+	lastFocus  string
+	focusIn    []string
+	hoverIn    []string
+	hoverAt    string // the element under the pointer, as the host last said
+	pressed    bool   // the last event was a press on the surface (see event)
+	modalFocus string // first or last modal control to focus after an event
+	asked      string // the element the last frame's Autofocus asked for
+	askDue     bool   // a Document's Autofocus, sent at the next Update
+	cssDue     bool   // the stylesheet changed (a dev reload): sent at the next Update
+	sending    bool
+	deferred   []hotty.Event
 
 	r renderer
 }

@@ -766,11 +766,12 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   second takes no part in the keyboard's moves. A Dialog left out of the
   render, rather than rendered closed, gives the keyboard back only if
   another Dialog renders in that frame.
-- **Dialog, not done, and not doable here:** a focus trap (Tab leaves
-  the dialog; the page under it isn't `inert`, and the dialog can't mark
-  it) and a top layer. A click on the
-  dialog's own text takes the keyboard to the terminal, so Escape
-  reaches it again only after a click on one of its controls.
+- **Dialog modality (B3, in progress):** the runtime marks background
+  controls out of the tab order and makes the background pointer-inert.
+  Focus guards at the modal's ends wrap Tab, and a press on its text
+  restores focus inside. A surface has no browser chrome; Chromium visits
+  it once on Tab past the last control, while the surface wraps directly.
+  The application-level keyboard override is still a B3 review question.
 - **Tabs:** the shown tab's panel only (the children), with the roving
   tabindex. The keys are on each tab; while the keyboard is on one of
   them, the selected tab asks for it, so it follows a key's OnChange. A
@@ -992,6 +993,23 @@ scrollbar classes and Avatar's image for the looks pass.
 
 ### Batch B3: overlays (in progress)
 
+- **KeyScope: reviewed, not implemented.** The B3 keyboard review accepts
+  `ui.KeyScope(keys []string, fn func(string) bool) templ.Component` for
+  scoped, named-key overrides. The nearest scope is offered a named key
+  first; a decline proceeds through enclosing scopes to the kit default.
+  Tab and Shift+Tab are reserved, and an open native select list may keep
+  keys. The implementation and its representative host/cells vectors
+  remain to be added. The known editing limitations are in
+  `docs/keyboard-model.md`.
+- **Combobox selection: open for review.** Basecoat's combobox supports
+  both single and multiple selection. The single case follows Select:
+  `Items`, `Value`, `Placeholder`, `Disabled` and `OnChange`, selecting
+  by item value rather than label. Labels can repeat or change. The
+  multiple case uses `Values []string` and `OnChange func([]string)`.
+  Two possible shapes are one component with a mode and separate single
+  and multiple value fields and callbacks, or separate Props and component
+  names for the two modes. The reviewer should decide the shape. Selection
+  labels come from the items, not from a second object-valued selection.
 - **Popover** (10 names). Side and Align are strings. Its trigger
   toggles it, and Escape closes it and gives the trigger the keyboard.
   The differential matches popover.js in Chromium except in one place.

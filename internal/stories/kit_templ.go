@@ -76,7 +76,7 @@ func init() {
 	add(Story{ID: "dialog/default", Doc: "A dialog its button opens, with a field and a footer",
 		View: kit(dialogDefault, nil), Keys: []string{"tab", "enter", "escape"}, Want: "open: off"})
 	add(Story{ID: "dialog/open", Doc: "A dialog open from the start",
-		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "tab", "enter"}, Want: "open: off"})
+		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "enter"}, Want: "open: off"})
 	add(Story{ID: "tabs/default", Doc: "Three tabs, the shown one's panel below",
 		View: kit(tabsDefault, func(s *kitState) { s.value = "account" }), Keys: []string{"tab", "arrow_right"}, Want: "tab: password"})
 	add(Story{ID: "tabs/many", Doc: "More tabs than fit, one disabled",

@@ -35,7 +35,7 @@ func (s *Surface) document() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	t, err := s.tree()
+	t, err := s.tree(f)
 	if err != nil {
 		return "", err
 	}
@@ -43,7 +43,7 @@ func (s *Surface) document() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s.keep(t)
+	s.keep(t, f)
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
 	s.submits(f)
@@ -95,14 +95,21 @@ func (s *Surface) send() error {
 			d.field(id, s.byID[id])
 		}
 	} else {
-		t, err := s.tree()
+		t, err := s.tree(f)
 		if err != nil {
 			return err
 		}
 		d.el(s.prev, t.root)
-		s.keep(t)
+		s.keep(t, f)
 		s.unlabelled(t.root)
 	}
+	if s.modalFocus != "" && activeModal(f) != "" {
+		if id := s.modalTarget(activeModal(f), s.modalFocus == "last"); id != "" {
+			f.Focus = id
+			s.askDue = true
+		}
+	}
+	s.modalFocus = ""
 	s.frame = f
 	s.submits(f)
 	var cmds []string
@@ -174,6 +181,17 @@ func (s *Surface) event(e hotty.Event) error {
 	// that click's, not a click off the surface.
 	afterPress := s.pressed
 	s.pressed = e.Kind == hotty.EventPress
+	modal := activeModal(s.frame)
+	inside := modal == "" || contains(s.chain(e.Target), modal)
+	if modal != "" && !inside {
+		switch e.Kind {
+		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress:
+			return nil
+		case hotty.EventFocus:
+			s.modalFocus = "first"
+			return s.send()
+		}
+	}
 	switch e.Kind {
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
@@ -214,10 +232,21 @@ func (s *Surface) event(e hotty.Event) error {
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
 		// asks again once the user moved the keyboard off it.
-		s.focus(e.Target)
+		if n := s.byID[e.Target]; modal != "" && n != nil && hasAttr(n, modalGuard) {
+			if attr(n, modalGuard) == "start" {
+				s.modalFocus = "last"
+			} else {
+				s.modalFocus = "first"
+			}
+		} else {
+			s.focus(e.Target)
+		}
 		ran = true
 	case hotty.EventBlur:
 		s.focus("")
+		if modal != "" && afterPress {
+			s.modalFocus = "first"
+		}
 		if !afterPress {
 			s.outside("")
 		}
@@ -309,6 +338,9 @@ func (s *Surface) outside(id string) bool {
 	ran := false
 	for _, x := range s.frame.Order {
 		h := s.frame.On[x]
+		if modal := activeModal(s.frame); modal != "" && !contains(s.chain(x), modal) {
+			continue
+		}
 		if h.Outside != nil && !contains(in, x) {
 			h.Outside()
 			ran = true
@@ -326,7 +358,13 @@ func (s *Surface) key(k string) (bool, error) {
 	}
 	k = modName(s.platform, k)
 	ids := s.chain(s.focused)
-	if len(ids) == 0 {
+	if modal := activeModal(s.frame); modal != "" {
+		if at := slices.Index(ids, modal); at >= 0 {
+			ids = ids[:at+1]
+		} else {
+			ids = []string{modal}
+		}
+	} else if len(ids) == 0 {
 		ids = s.tops()
 	}
 	for _, id := range ids {
@@ -337,21 +375,6 @@ func (s *Surface) key(k string) (bool, error) {
 		for _, fn := range h.Key {
 			if fn(k) {
 				return true, s.send()
-			}
-		}
-	}
-	// An open modal hears what the keyboard outside it didn't take
-	// (rt.Frame.Modal): its Escape.
-	for i := len(s.frame.Modal) - 1; i >= 0; i-- {
-		id := s.frame.Modal[i]
-		if slices.Contains(ids, id) {
-			continue
-		}
-		if h := s.frame.On[id]; h != nil {
-			for _, fn := range h.Key {
-				if fn(k) {
-					return true, s.send()
-				}
 			}
 		}
 	}

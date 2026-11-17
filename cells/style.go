@@ -78,6 +78,9 @@ func styleOf(n *html.Node) box {
 		b.display = dNone
 		return b
 	}
+	if has(n, "data-hotty-modal-inert") {
+		b.look |= lDim
+	}
 	switch {
 	case inlines[n.DataAtom]:
 		b.display = dInline

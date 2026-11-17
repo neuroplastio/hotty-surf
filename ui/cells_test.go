@@ -8,6 +8,7 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/ui"
 )
@@ -30,6 +31,48 @@ func TestKeysCells(t *testing.T) {
 				t.Errorf("after %v the lines don't show %q:\n%s", st.Keys, st.Want, text)
 			}
 		})
+	}
+}
+
+func TestDialogModalInCells(t *testing.T) {
+	a := &dialogApp{}
+	s := surf.New("modal", a.view(), ui.Stylesheet())
+	c := cells.New(80, 24, func(e hotty.Event) {
+		if err := s.Event(e); err != nil {
+			t.Fatal(err)
+		}
+	})
+	s.Attach(c, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = c.Write([]byte(hotty.Doc(s.Name(), doc))); err != nil {
+		t.Fatal(err)
+	}
+	key := func(k string) {
+		if !c.Key(k) {
+			if _, err := s.Key(k); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	key("tab")
+	key("enter")
+	if got := rt.Peek.Focused(s); got != "name" {
+		t.Fatalf("opened on %q", got)
+	}
+	key("shift+tab")
+	if got := rt.Peek.Focused(s); got != "d-close" {
+		t.Fatalf("reverse wrap focused %q", got)
+	}
+	key("tab")
+	if got := rt.Peek.Focused(s); got != "name" {
+		t.Fatalf("forward wrap focused %q", got)
+	}
+	key("escape")
+	if a.open {
+		t.Fatal("Escape did not close the dialog")
 	}
 }
 
