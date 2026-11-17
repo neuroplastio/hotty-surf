@@ -1194,3 +1194,31 @@ approved with changes, applied as written:
   not a break, once a shot needs them.
 - **Rows the host chose** (a placement with Rows 0) are what the program
   says: one that reads the place reply's Rows says those.
+
+## L4: what the trial needed (a pack of its own)
+
+The L4 trial (a fresh agent with the README and `help` only, building a
+todo app, 2026-11-17) found two things no app could do.
+
+- **Enter in a text field.** The host keeps Enter in a field: it commits
+  the field (`change`) and submits the field's form (`submit`, SPEC §9),
+  and no key reaches the program. surf dropped `submit`, so nothing could
+  act on it. **`surf.Submit(fn func())`** on a form hears it, and a submit
+  button's click; fn takes no fields, since a form's values are the app's
+  already, through its fields' Input and Check (surf's fields are
+  controlled). The alternative, `func(fields [][2]string)`, would give an
+  app a second copy of its own state; it is an addition later if an
+  uncontrolled form needs it. `surf.Key`'s doc says Enter in a field is
+  Submit's. cells submits as the SPEC says already.
+- **`surftest.Rig.Key` said "the surface took it"** for Enter in a field
+  while no handler ran. It is true that the surface took it (the field
+  used it, and the program never sees it), so the result stays and its doc
+  says what true means: the host's element or a Key handler took it, and a
+  test reads what a handler did in the document. surftest's own doc and
+  example, which pressed Enter as if it added a task, now say the form's
+  Submit does.
+- **A field's value and a check box's state** are the host's, which its
+  document doesn't show: a value or checked attribute is only where the
+  field starts. **`Rig.Value(sel) string`** and **`Rig.Checked(sel)
+  bool`** read them, and fail the test on an element that isn't such a
+  field.

@@ -7,7 +7,7 @@
 //	r := surftest.Start(t, surf.New("tasks", Page(a), CSS))
 //	r.Click("button:text(Add task)")
 //	r.Type("input[name=title]", "Write the docs")
-//	r.Key("enter")
+//	r.Key("enter") // the field's form submits (surf.Submit)
 //	if len(r.Find("li:text(Write the docs)")) != 1 { … }
 //
 // A selector is tag#id[attr=value]:text(…), every part optional: [attr]
@@ -211,6 +211,39 @@ func (r *Rig) Type(sel, text string) {
 	}
 }
 
+// Value is the value of the one field matching sel as the user sees it:
+// what they typed, or what the app set. The host's document doesn't show
+// it, as a field's value attribute is only where it starts. It fails the
+// test if sel matches no element, more than one, or one that isn't a
+// field.
+func (r *Rig) Value(sel string) string {
+	r.t.Helper()
+	n := r.One(sel)
+	if t := strings.ToLower(attr(n, "type")); n.Data == "input" && (t == "checkbox" || t == "radio") {
+		r.t.Fatalf("surftest: %s is a check box or a radio button: Checked reads it", sel)
+	}
+	v, ok := r.host.Surface(r.s.Name()).Value(attr(n, "id"))
+	if !ok || n.Data != "input" && n.Data != "textarea" && n.Data != "select" {
+		r.t.Fatalf("surftest: %s is no field", sel)
+	}
+	return v
+}
+
+// Checked says whether the one check box or radio button matching sel is
+// checked, as the user sees it. The host's document doesn't show it, as
+// its checked attribute is only where it starts. It fails the test if sel
+// matches no element, more than one, or one that isn't a check box or a
+// radio button.
+func (r *Rig) Checked(sel string) bool {
+	r.t.Helper()
+	n := r.One(sel)
+	if t := strings.ToLower(attr(n, "type")); n.Data != "input" || t != "checkbox" && t != "radio" {
+		r.t.Fatalf("surftest: %s is no check box or radio button", sel)
+	}
+	v, _ := r.host.Surface(r.s.Name()).Value(attr(n, "id"))
+	return v == "true"
+}
+
 // Update runs what the surface's Do has queued (a load, a toast's timer),
 // renders, and checks the host's document, as after any act.
 func (r *Rig) Update() {
@@ -222,7 +255,11 @@ func (r *Rig) Update() {
 }
 
 // Key presses a key where the keyboard is, named as hotty names keys
-// ("enter", "arrow_down", "ctrl+s"), and says whether the surface took it.
+// ("enter", "arrow_down", "ctrl+s"), and says whether the surface took it:
+// the host's element used it (a text field keeps the keys it edits with,
+// Enter among them, which commits the field and submits its form) or a
+// surf.Key handler did. A key the surface took never reaches the program;
+// true doesn't say a handler ran, which the test reads in the document.
 // The test host's mod is ctrl: Key("ctrl+s") reaches a surf.Key handler as
 // "mod+s".
 func (r *Rig) Key(key string) bool {

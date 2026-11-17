@@ -63,6 +63,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Outside = h.fn.(func())
 		case kindHover:
 			e.Hover = h.fn.(func(bool))
+		case kindSubmit:
+			e.Submit = h.fn.(func())
 		}
 	}
 	f.On[id] = e
@@ -71,7 +73,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 }
 
 // A Handler is one of an element's handlers, for [On]. Click, Input, Check,
-// Key, Focus, Outside and Hover make them.
+// Key, Focus, Outside, Hover and Submit make them.
 type Handler struct {
 	kind kind
 	fn   any // the func the kind takes; nil is no handler
@@ -88,6 +90,7 @@ const (
 	kindFocus
 	kindOutside
 	kindHover
+	kindSubmit
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -123,6 +126,9 @@ func Check(fn func(checked bool)) Handler {
 // before the page does. Shortcuts for the whole page go on its outermost
 // element.
 //
+// A text field keeps the keys it edits with, and the host commits it on
+// Enter, so no Key handler hears Enter in one: its form's [Submit] does.
+//
 // fn sees hotty's names ("enter", "arrow_down", "shift+tab"), with one
 // change: a key whose modifier is the host's mod (SPEC §10.4: ctrl, or super
 // on macOS) arrives as "mod+…". So an app matches "mod+s", and is the same
@@ -141,6 +147,15 @@ func Key(fn func(key string) bool) Handler {
 // heard true.
 func Focus(fn func(in bool)) Handler {
 	return handler(kindFocus, fn, fn == nil)
+}
+
+// Submit calls fn when the user submits the element, a form: Enter in one
+// of its text fields, after that field's commit (its Input, when the value
+// changed), or a click of its submit button. It is how a field acts on
+// Enter. The form's values are the app's already, through its fields'
+// Input and Check, so fn takes none.
+func Submit(fn func()) Handler {
+	return handler(kindSubmit, fn, fn == nil)
 }
 
 // Outside calls fn when the user clicks anywhere on the surface outside the

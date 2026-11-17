@@ -192,6 +192,11 @@ func (s *Surface) event(e hotty.Event) error {
 				ran = true
 			}
 		}
+	case hotty.EventSubmit:
+		if h := on[e.Target]; h != nil && h.Submit != nil {
+			h.Submit()
+			ran = true
+		}
 	case hotty.EventPress:
 		ran = s.outside(e.Target)
 	case hotty.EventFocus:

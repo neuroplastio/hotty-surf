@@ -29,6 +29,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Focus`: the keyboard coming onto an element or leaving it: what roving focus (tabs, a list) and a field's commit on blur need.
 - `surf.Outside`: a click outside an element, or the surface losing the keyboard (a click on the program's cells or on another surface gives only a blur): how Basecoat's popover, dropdown menu, select and combobox close; the spike had no way to hear it.
 - `surf.Hover`: the pointer onto an element and off it (SPEC §9.4): Basecoat's menus move their highlighted item with the pointer, which CSS's :hover can't do.
+- `surf.Submit`: a form submitted (SPEC §9 `submit`): Enter in a text field, or its submit button. A text field keeps Enter, which the host turns into a commit and a submit, so without it no app could act on Enter in a field: the L4 trial's todo, "type and press Enter", had no way to.
 - `surf.Autofocus`: moving the keyboard after a frame (a dialog opens, a menu closes back to its trigger); edge-triggered, so a view can ask on every render.
 
 ## ui (Basecoat's components; the pattern on one component of each kind)
@@ -243,6 +244,8 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 - `surftest.Rig.Find`: what the user would see: the elements matching a selector. The spike's Has is len(Find) > 0, and its ClickID, ClickNth, Press and Check are cut.
 - `surftest.Rig.One`: the one element matching, failing the test otherwise: the common assertion.
 - `surftest.Rig.HTML`: the host's document, for a golden file or a failure message.
+- `surftest.Rig.Value`: a field's value as the user sees it, which the host's document doesn't show (a value attribute is where the field starts): the L4 trial couldn't test its draft.
+- `surftest.Rig.Checked`: a check box's or a radio button's state as the user sees it, as Value; the L4 trial tested its todo's done state through a label's class instead.
 - `surftest.Lint`: every app keeps a lint test (TestLint), as the scaffold writes it.
 
 ## lint
