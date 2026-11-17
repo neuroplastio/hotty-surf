@@ -106,6 +106,14 @@ func (r *Reloader) serve(ctx context.Context, rw io.ReadWriteCloser) error {
 			p.left = true
 			p.mu.Unlock()
 			err = devwire.Skip(rd)
+		case h.Type == devwire.Notification && h.Method == "dropped":
+			var d devwire.Dropped
+			if err = devwire.Decode(rd, &d); err == nil {
+				r.mu.Lock()
+				r.dropped[p.key] = d.Text
+				r.mu.Unlock()
+				r.poke()
+			}
 		case h.Type == devwire.Request:
 			if err = devwire.Skip(rd); err == nil {
 				err = conn.Respond(h.ID, "reloader: no method "+h.Method, nil)
@@ -176,13 +184,20 @@ func (r *Reloader) poke() {
 	}
 }
 
-// live is the processes connected now.
+// live is the processes connected now that haven't said they are
+// leaving: a program that ended reload.Serve's ctx and lives on is asked
+// for nothing.
 func (r *Reloader) live() []*proc {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	out := make([]*proc, 0, len(r.procs))
 	for _, p := range r.procs {
-		out = append(out, p)
+		p.mu.Lock()
+		left := p.left
+		p.mu.Unlock()
+		if !left {
+			out = append(out, p)
+		}
 	}
 	return out
 }

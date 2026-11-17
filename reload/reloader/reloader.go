@@ -66,8 +66,13 @@ type Reloader struct {
 	// crashes are the keys whose wire closed without a handover or a
 	// goodbye, for Run's loop to report.
 	crashes []string
+	// dropped is why a key's new process started without the state
+	// handed over (it no longer decodes), for Run's loop to report.
+	dropped map[string]string
 	wake    chan struct{}
 	reqs    chan chan Report
+	// done is closed when the Run under way returns.
+	done chan struct{}
 }
 
 // New makes a Reloader for the app in dir (its main package).
@@ -84,7 +89,8 @@ type Reloader struct {
 func New(dir string, restart func(ctx context.Context, bin string) error, report func(Report), opts ...Option) *Reloader {
 	r := &Reloader{dir: dir, restart: restart, report: report,
 		procs: map[string]*proc{}, known: map[string]bool{}, handed: map[string]*devwire.Handed{},
-		back: map[string]chan struct{}{}, wake: make(chan struct{}, 1), reqs: make(chan chan Report)}
+		back: map[string]chan struct{}{}, dropped: map[string]string{},
+		wake: make(chan struct{}, 1), reqs: make(chan chan Report)}
 	for _, o := range opts {
 		if o.apply != nil {
 			o.apply(r)
@@ -161,7 +167,8 @@ type Report struct {
 	Build string
 	// Failed is what went wrong for a process, by its key: restart's
 	// error, a key that didn't come back in time, a process that "exited
-	// before handover".
+	// before handover", a handover's own error, or a new process that
+	// started without the state handed over, which no longer decoded.
 	Failed map[string]string
 	Lint   []lint.Finding
 }

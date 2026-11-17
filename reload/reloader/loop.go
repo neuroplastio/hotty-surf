@@ -94,6 +94,22 @@ type loop struct {
 }
 
 func (r *Reloader) run(ctx context.Context) error {
+	// Running from the start: a Reload while Run looks at the app waits
+	// for its first build.
+	r.mu.Lock()
+	if r.running {
+		r.mu.Unlock()
+		return errors.New("reloader: Run is running already")
+	}
+	done := make(chan struct{})
+	r.running, r.done = true, done
+	r.mu.Unlock()
+	defer func() {
+		r.mu.Lock()
+		r.running = false
+		r.mu.Unlock()
+		close(done)
+	}()
 	if _, err := exec.LookPath("go"); err != nil {
 		return fmt.Errorf("reloader: the go command: %w", err)
 	}
@@ -146,17 +162,8 @@ func (r *Reloader) run(ctx context.Context) error {
 	}
 
 	r.mu.Lock()
-	if r.running {
-		r.mu.Unlock()
-		return errors.New("reloader: Run is running already")
-	}
-	r.running, r.templRoot, r.watchRoot = true, templRoot, module
+	r.templRoot, r.watchRoot = templRoot, module
 	r.mu.Unlock()
-	defer func() {
-		r.mu.Lock()
-		r.running = false
-		r.mu.Unlock()
-	}()
 
 	if l.watcher, err = fsnotify.NewWatcher(); err != nil {
 		return err
@@ -238,23 +245,28 @@ func (l *loop) idle() bool {
 // is applied.
 func (r *Reloader) reload(ctx context.Context) (Report, error) {
 	r.mu.Lock()
-	running := r.running
+	running, done := r.running, r.done
 	r.mu.Unlock()
 	if !running {
 		return Report{}, errors.New("reloader: Run isn't running")
 	}
+	ended := errors.New("reloader: Run ended")
 	w := make(chan Report, 1)
 	select {
 	case r.reqs <- w:
+	case <-done:
+		return Report{}, ended
 	case <-ctx.Done():
 		return Report{}, ctx.Err()
 	}
 	select {
 	case rep, ok := <-w:
 		if !ok {
-			return Report{}, errors.New("reloader: Run ended")
+			return Report{}, ended
 		}
 		return rep, nil
+	case <-done:
+		return Report{}, ended
 	case <-ctx.Done():
 		return Report{}, ctx.Err()
 	}
@@ -667,6 +679,11 @@ func (l *loop) restyle(failed map[string]string) bool {
 	if err != nil || string(b) == l.shownCSS {
 		return err == nil
 	}
+	if strings.TrimSpace(l.shownCSS) == "" {
+		// Nothing to find it by, or only whitespace, which the kit's
+		// stylesheet holds too: a build puts the new one in its place.
+		return false
+	}
 	st := devwire.Style{Old: l.shownCSS, New: string(b)}
 	l.r.mu.Lock()
 	l.r.styles = append(l.r.styles, st)
@@ -728,18 +745,21 @@ func (l *loop) emit(rep Report) {
 }
 
 // crashed reports the processes whose wire closed without a handover or a
-// goodbye.
+// goodbye, and the ones that started without the state handed over.
 func (l *loop) crashed() {
+	failed := map[string]string{}
 	l.r.mu.Lock()
-	keys := l.r.crashes
+	for k, why := range l.r.dropped {
+		failed[k] = why
+	}
+	clear(l.r.dropped)
+	for _, k := range l.r.crashes {
+		failed[k] = errExited.Error()
+	}
 	l.r.crashes = nil
 	l.r.mu.Unlock()
-	if len(keys) == 0 {
+	if len(failed) == 0 {
 		return
-	}
-	failed := map[string]string{}
-	for _, k := range keys {
-		failed[k] = errExited.Error()
 	}
 	saveAt := l.saveAt
 	l.saveAt = time.Time{}
@@ -906,6 +926,10 @@ func (l *loop) swap() Report {
 	r.mu.Lock()
 	crashes := r.crashes
 	r.crashes = nil
+	for k, why := range r.dropped {
+		failed[k] = why
+	}
+	clear(r.dropped)
 	r.mu.Unlock()
 	for _, k := range crashes {
 		// A handover that failed says why; only a process that just died

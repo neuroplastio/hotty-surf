@@ -176,3 +176,106 @@ func TestRestyleRefused(t *testing.T) {
 		t.Errorf("failed: %v", failed)
 	}
 }
+
+// TestLeftAskedNothing: a process that said it is leaving (its program
+// ended reload.Serve's ctx) and lives on is asked for nothing: no render,
+// no restyle, no handover.
+func TestLeftAskedNothing(t *testing.T) {
+	r := New(".", func(context.Context, string) error { return nil }, nil)
+	asked := make(chan string, 4)
+	f := dial(t, r, "tool:a", func(f *fake, h devwire.Head) { asked <- h.Method })
+	if err := f.conn.Notify("leave", &devwire.Empty{}); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for len(r.live()) > 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("the process is still live after it left")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	l := &loop{r: r, ctx: context.Background()}
+	failed := map[string]string{}
+	l.each(failed, func(p *proc) error { return p.call("render", &devwire.Empty{}, &devwire.Empty{}, answerWait) })
+	select {
+	case m := <-asked:
+		t.Errorf("asked %s after it left", m)
+	default:
+	}
+}
+
+// TestDroppedReported: the new build can't decode the state handed over
+// (a save changed a kept field's type), starts without it and says so;
+// the Go reload's report has why under its key.
+func TestDroppedReported(t *testing.T) {
+	defer func(s time.Duration) { settle = s }(settle)
+	settle = 50 * time.Millisecond
+	var r *Reloader
+	r = New(".", func(context.Context, string) error {
+		go func() {
+			f := dial(t, r, "app", handsOverAndExits)
+			f.conn.Notify("dropped", &devwire.Dropped{Text: "the state handed over didn't decode"})
+		}()
+		return nil
+	}, nil)
+	dial(t, r, "app", handsOverAndExits)
+	l := &loop{r: r, ctx: context.Background()}
+	rep := l.swap()
+	if !strings.Contains(rep.Failed["app"], "didn't decode") {
+		t.Errorf("Failed: %q", rep.Failed)
+	}
+}
+
+// TestRestyleWhitespace: the stylesheet the processes show is only
+// whitespace, which the kit's holds too: restyle asks no process and says
+// a build is needed.
+func TestRestyleWhitespace(t *testing.T) {
+	r := New(".", func(context.Context, string) error { return nil }, nil)
+	asked := make(chan string, 4)
+	dial(t, r, "app", func(f *fake, h devwire.Head) { asked <- h.Method })
+	css := filepath.Join(t.TempDir(), "app.css")
+	if err := os.WriteFile(css, []byte(".btn { color: red }\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	l := &loop{r: r, ctx: context.Background(), appCSS: css, shownCSS: "\n"}
+	if l.restyle(map[string]string{}) {
+		t.Error("restyle took a stylesheet it had nothing to find by")
+	}
+	select {
+	case m := <-asked:
+		t.Errorf("asked %s", m)
+	default:
+	}
+}
+
+// TestReloadWhileStarting: a Reload as soon as Run has started waits for
+// the first build, and one after Run returned says so at once.
+func TestReloadWhileStarting(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds")
+	}
+	dir := t.TempDir()
+	for f, b := range map[string]string{"go.mod": "module x\n\ngo 1.26.0\n", "main.go": "package main\n\nfunc main() {}\n"} {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte(b), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := New(dir, func(context.Context, string) error { return nil }, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	ran := make(chan error, 1)
+	go func() { ran <- r.Run(ctx) }()
+	time.Sleep(time.Millisecond)
+	rctx, rcancel := context.WithTimeout(ctx, time.Minute)
+	defer rcancel()
+	if rep, err := r.Reload(rctx); err != nil || rep.Tier != tierGo || rep.Build != "" {
+		t.Errorf("Reload 1 ms after Run: %+v %v", rep, err)
+	}
+	cancel()
+	if err := <-ran; err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	if _, err := r.Reload(context.Background()); err == nil || time.Since(start) > time.Second {
+		t.Errorf("Reload after Run returned: %v, in %v", err, time.Since(start))
+	}
+}
