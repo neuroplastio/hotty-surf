@@ -1,0 +1,114 @@
+package main
+
+import (
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+templ Page(a *App) {
+	{{ surf.Autofocus(ctx, "name") }}
+	<main class="p-4" { surf.On(ctx, "page", surf.Key(a.Shortcut))... }>
+		<form class="flex flex-col gap-4" { surf.On(ctx, "settings", surf.Submit(a.Save))... }>
+			<header class="flex items-center gap-2">
+				<h1 class="text-lg font-semibold flex-1">Settings</h1>
+				<p class="text-sm text-muted-foreground">
+					if a.Changed() {
+						Unsaved changes
+					} else {
+						All changes saved
+					}
+				</p>
+				@ui.Button(ui.ButtonProps{
+					Variant:  ui.Outline,
+					Disabled: !a.Changed(),
+					Attrs:    surf.On(ctx, "reset", surf.Click(a.Reset)),
+				}) {
+					Reset
+				}
+				@ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
+					Save
+				}
+			</header>
+			<div class="sections">
+				@ui.FieldSet(ui.FieldSetProps{}) {
+					<legend>Account</legend>
+					@ui.Field(ui.FieldProps{Invalid: a.NameErr() != ""}) {
+						<label for="name">Name</label>
+						@ui.Input(ui.InputProps{
+							Value:   a.Form.Name,
+							Invalid: a.NameErr() != "",
+							Attrs:   surf.On(ctx, "name", surf.Input(a.SetName)),
+						})
+						if a.NameErr() != "" {
+							<p role="alert">{ a.NameErr() }</p>
+						}
+					}
+					@ui.Field(ui.FieldProps{Invalid: a.EmailErr() != ""}) {
+						<label for="email">Email</label>
+						@ui.Input(ui.InputProps{
+							Type:    "email",
+							Value:   a.Form.Email,
+							Invalid: a.EmailErr() != "",
+							Attrs:   surf.On(ctx, "email", surf.Input(a.SetEmail)),
+						})
+						if a.EmailErr() != "" {
+							<p role="alert">{ a.EmailErr() }</p>
+						}
+					}
+					@ui.Field(ui.FieldProps{}) {
+						<label for="bio">Bio</label>
+						@ui.Textarea(ui.TextareaProps{
+							Value:       a.Form.Bio,
+							Placeholder: "A line about you",
+							Attrs:       surf.On(ctx, "bio", surf.Input(a.SetBio)),
+						})
+					}
+				}
+				@ui.FieldSet(ui.FieldSetProps{}) {
+					<legend>Notifications</legend>
+					@switchField(a.Form.EmailMe, "email-me", "Email me", "News about your account.", a.SetEmailMe)
+					@switchField(a.Form.Push, "push", "Push", "Alerts on your devices.", a.SetPush)
+					@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+						<label for="digest">Digest</label>
+						@ui.NativeSelect(ui.NativeSelectProps{
+							Items: digests,
+							Value: a.Form.Digest,
+							Attrs: surf.On(ctx, "digest", surf.Input(a.SetDigest)),
+						})
+					}
+				}
+				@ui.FieldSet(ui.FieldSetProps{}) {
+					<legend>Appearance</legend>
+					@ui.Field(ui.FieldProps{}) {
+						<label>Theme</label>
+						<div role="radiogroup" class="flex flex-row gap-4">
+							for _, t := range themes {
+								@ui.Label(ui.LabelProps{}) {
+									@ui.Radio(ui.RadioProps{
+										Name:    "theme",
+										Checked: a.Form.Theme == t.Value,
+										Attrs:   surf.On(ctx, "theme-"+t.Value, surf.Check(a.SetTheme(t.Value))),
+									})
+									{ t.Label }
+								}
+							}
+						</div>
+					}
+					@switchField(a.Form.Compact, "compact", "Compact rows", "Fit more on a screen.", a.SetCompact)
+				}
+			</div>
+		</form>
+		@ui.Toaster(&a.toasts)
+	</main>
+}
+
+// switchField is a switch with its label and a line about it, beside it.
+templ switchField(on bool, id, label, about string, set func(bool)) {
+	@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+		<section>
+			<label for={ id }>{ label }</label>
+			<p>{ about }</p>
+		</section>
+		@ui.Switch(ui.SwitchProps{Checked: on, Attrs: surf.On(ctx, id, surf.Check(set))})
+	}
+}
