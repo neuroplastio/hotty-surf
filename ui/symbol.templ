@@ -1,0 +1,22 @@
+package ui
+
+// Symbol draws s as a filled 24-unit SVG path in the text's color; class
+// sizes or styles it. It is decorative: its containing control supplies
+// the accessible name. The caller supplies a size class.
+templ Symbol(s Shape, class string) {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" class={ class }>
+		<path d={ string(s) }></path>
+	</svg>
+}
+
+// IconButton is the spike's compact icon-only button. Its Symbol is
+// decorative; Attrs must give the button an accessible name, for
+// example aria-label. Set title in Attrs when a native tooltip is wanted.
+templ IconButton(p IconButtonProps) {
+	{{ checkAttrs(ctx, "IconButton", p.Attrs, "type", "class") }}
+	{{ checkIconButtonName(ctx, p.Attrs) }}
+	{{ disableIconButton(ctx, p.Attrs) }}
+	<button type="button" class={ iconButtonClass(p.Class) } { scopeNativeAttrs(ctx, p.Attrs, "button")... }>
+		@Symbol(p.Shape, "size-3.5")
+	</button>
+}
