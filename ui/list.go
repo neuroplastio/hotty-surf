@@ -24,7 +24,8 @@ type ListProps struct {
 	// name, e.g. templ.Attributes{"aria-label": "Sessions"} or
 	// aria-labelledby, and any surf.On handlers. The component owns
 	// role and class; repeating either is a fault. The list is single
-	// selection and owns aria-multiselectable.
+	// selection and owns aria-multiselectable. Two Lists on one surface
+	// need ids of their own, given here through surf.On.
 	Attrs templ.Attributes
 	// Class adds classes after the list's own.
 	Class string
@@ -58,6 +59,19 @@ func List(p ListProps) templ.Component {
 		id := attrString(p.Attrs, "id")
 		v.base = or(id, "list")
 		if f := rt.From(ctx); f != nil {
+			ls, _ := f.Memo[listsKey].(*listsSeen)
+			if ls == nil {
+				ls = &listsSeen{}
+				f.Memo[listsKey] = ls
+			}
+			if ls.n != f.N || ls.seen == nil {
+				// The first List of this frame.
+				ls.n, ls.seen = f.N, map[string]bool{}
+			}
+			if ls.seen[v.base] {
+				rt.Fault(ctx, fmt.Sprintf("ui.List: two lists with id %q: give each its own through Attrs (surf.On)", v.base))
+			}
+			ls.seen[v.base] = true
 			k := "ui.list:" + v.base
 			v.memo, _ = f.Memo[k].(*listMemo)
 			if v.memo == nil {
@@ -77,6 +91,16 @@ func List(p ListProps) templ.Component {
 		}
 		if n := v.selectedCount(); n > 1 {
 			rt.Fault(ctx, fmt.Sprintf("ui.List: %d items are Selected (a List selects at most one)", n))
+		}
+		// A selection the app changed moves the Tab stop to it; keyboard
+		// moves and clicks between such changes keep theirs.
+		if i := v.selectedIndex(); i < 0 {
+			v.memo.selected = ""
+		} else if v.items[i].id != v.memo.selected {
+			v.memo.selected = v.items[i].id
+			if !v.items[i].disabled {
+				v.memo.current = v.items[i].id
+			}
 		}
 		stop := v.stop()
 		out := body.String()
@@ -100,6 +124,15 @@ func List(p ListProps) templ.Component {
 // listKey is the context key of the List an item renders in.
 type listKey struct{}
 
+// listsKey keeps the ids of the Lists one frame rendered, in f.Memo: two
+// with one id are a fault.
+const listsKey = "ui.lists"
+
+type listsSeen struct {
+	n    uint64
+	seen map[string]bool
+}
+
 // listView is one render of a List: its items in render order.
 type listView struct {
 	p     ListProps
@@ -119,6 +152,9 @@ type listMemo struct {
 	current string // the item the keyboard or a click last reached
 	focused string // the item that has the keyboard, by its Focus events
 	focus   string // the item to give the keyboard at the next render
+	// selected is the selected item the last render saw: a change moves
+	// the Tab stop to the new one.
+	selected string
 }
 
 func (v *listView) index(id string) int {
@@ -149,9 +185,9 @@ func (v *listView) selectedIndex() int {
 	return -1
 }
 
-// stop is the item Tab reaches: where the keyboard or a click last was,
-// else the selected enabled item, else the first enabled one; -1 with
-// none enabled.
+// stop is the item Tab reaches: where the keyboard or a click last was
+// (which a selection the app changes moves, see List), else the selected
+// enabled item, else the first enabled one; -1 with none enabled.
 func (v *listView) stop() int {
 	if i := v.index(v.memo.current); i >= 0 && !v.items[i].disabled {
 		return i

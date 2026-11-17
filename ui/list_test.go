@@ -253,3 +253,77 @@ func TestListFaults(t *testing.T) {
 		t.Fatalf("no fault for an item outside a List: %v", f2.got)
 	}
 }
+
+// A selection the app makes moves the Tab stop to it, though a click
+// last reached another row.
+func TestListStopFollowsAppSelection(t *testing.T) {
+	a := &listApp{rows: []string{"a", "b", "c"}, noChange: true}
+	r := startList(t, a)
+	focus(r, a, "a")
+	if got := tabindexes(r); got != "0,-1,-1" {
+		t.Fatalf("tabindexes %s after a click on a", got)
+	}
+	a.selected = 2
+	r.Update()
+	if got := tabindexes(r); got != "-1,-1,0" {
+		t.Fatalf("tabindexes %s: Tab should enter at the selected c", got)
+	}
+	// The keyboard moves on from there, and the stop with it.
+	focus(r, a, "b")
+	if got := tabindexes(r); got != "-1,0,-1" {
+		t.Fatalf("tabindexes %s after a click on b", got)
+	}
+}
+
+// Two Lists keep their own stops and selections when each has an id;
+// two without ids are a fault.
+func TestTwoLists(t *testing.T) {
+	sel := map[string]int{"l1": 0, "l2": 0}
+	twoView := func(ids bool) templ.Component {
+		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			for _, l := range []string{"l1", "l2"} {
+				items := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					for i, name := range []string{"x", "y"} {
+						attrs := templ.Attributes{}
+						if ids {
+							attrs = surf.On(ctx, l+"-"+name)
+						}
+						item := ui.ListItem(ui.ListItemProps{Selected: sel[l] == i, Attrs: attrs})
+						if err := item.Render(templ.WithChildren(ctx, templ.Raw(name)), w); err != nil {
+							return err
+						}
+					}
+					return nil
+				})
+				attrs := templ.Attributes{"aria-label": l}
+				if ids {
+					attrs = surf.On(ctx, l)
+					attrs["aria-label"] = l
+				}
+				p := ui.ListProps{Attrs: attrs, OnChange: func(i int) { sel[l] = i }}
+				if err := ui.List(p).Render(templ.WithChildren(ctx, items), w); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+	}
+	r := surftest.Start(t, surf.New("two", twoView(true), ui.Stylesheet()))
+	r.Click("#l2-y")
+	r.Key("arrow_up")
+	if sel["l1"] != 0 || sel["l2"] != 0 {
+		t.Fatalf("selections %v: l2 went to y and back, l1 untouched", sel)
+	}
+	r.Click("#l1-y")
+	if sel["l1"] != 1 || sel["l2"] != 0 {
+		t.Fatalf("selections %v after a click on l1's y", sel)
+	}
+	r.One(`#l1-y[tabindex="0"]`)
+	r.One(`#l2-x[tabindex="0"]`)
+
+	f := &faults{T: t}
+	surftest.Start(f, surf.New("dup", twoView(false), ui.Stylesheet()))
+	if !strings.Contains(strings.Join(f.got, "\n"), `two lists with id "list"`) {
+		t.Fatalf("no fault for two Lists without ids: %v", f.got)
+	}
+}

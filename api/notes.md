@@ -1749,9 +1749,9 @@ OnClick for Attrs (the id and surf.On handlers) and Class; List takes
 ListProps (OnChange by item index, Attrs for its name, Class); the
 text lines, IconButton and the Symbol names were applied earlier.
 
-List now has the listbox keys. Tab enters at the item the keyboard or a
-click last reached, else the selected enabled one, else the first
-enabled; ↑ ↓ move one enabled item, Home and End to the ends, stopping
+List now has the listbox keys. Tab enters at the selected enabled item
+when the app changes selection, else where the keyboard or a click last
+was, else the first enabled; ↑ ↓ move one enabled item, Home and End to the ends, stopping
 there (an end is taken with no request). A move asks OnChange and moves
 the keyboard; it never runs the row's click. A click asks OnChange (if
 the row isn't selected already) and then runs the row's own click once.
@@ -1774,7 +1774,13 @@ without activating, ends, disabled and none enabled, empty, no
 OnChange, removal, KeyScope take and decline, faults) and the host and
 cells key vectors (TestNativeKeyVectors/list).
 
-Open for the reviewer: an app's own surf.Key on a ListItem's id runs
-after the list's keys, and then the list's are not marked as the kit's
-default (they would hide the app's from a KeyScope's interception); a
-KeyScope can't override the list's keys on such a row.
+An app's own surf.Key on a ListItem's id runs after the list's keys. A
+KeyScope still takes a named key first (the row is a kit control to it);
+only a declined key's path differs: the list's navigation then runs
+among the ordinary Key handlers (first of them) rather than as the kit's
+default, with the same result.
+
+Verified (verify-shell-components.md), with three fixes applied: two
+Lists with one id (none given) are a fault, and ListProps.Attrs says two
+need their own; a selection the app changes moves the Tab stop to it;
+IconButton is a kit button to a KeyScope (scopeNativeAttrs, as Button).
