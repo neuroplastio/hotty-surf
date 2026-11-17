@@ -1810,7 +1810,6 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
 - G-menu-rows (MenuItem slots for all three menus) is next after the
   toast pack (p-653's queue).
 
-
 ## plx: menu rows of the app's own (G-menu-rows, a pack of its own)
 
 plx won't build stand-in rows, so this blocks its copy's removal
