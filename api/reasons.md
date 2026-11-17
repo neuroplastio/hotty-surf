@@ -382,10 +382,6 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.NavList.ItemID`: The list names an item for focus and accessibility.
 - `ui.NavList.Keys`: The list handles the navigation key bindings.
 - `ui.NavList.List`: The list renders the grouped scrollable list.
-- `ui.NavList.Move`: The list moves the selection by an amount.
-- `ui.NavList.Select`: The list selects an item through the same callback as a click.
-- `ui.NavList.SetFilter`: The list applies a new filter and repairs the selection.
-- `ui.NavList.Shown`: The list returns the groups that pass the filter.
 - `ui.Control`: Controls needs a typed name, value and optional choices for each editable property.
 - `ui.Control.Kind`: The Control selects the control or event kind.
 - `ui.Control.Name`: The Control names this value.
@@ -401,7 +397,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.NavGroup.Name`: The NavGroup names this value.
 - `ui.NavItem`: A navigation item needs a stable ID and a visible label.
 - `ui.NavItem.ID`: The NavItem keeps element IDs distinct.
-- `ui.NavItem.Label`: The NavItem supplies the visible or accessible name.
+- `ui.NavItem.Label`: K2(c): visible text is input the list reads to render a navigation item.
 - `ui.NavList`: The spike navigation is a reusable grouped, filterable list with keyboard movement and a scrollable view.
 - `ui.NavList.Current`: The NavList identifies the current item.
 - `ui.NavList.Empty`: The NavList supplies the empty-list message.
@@ -409,26 +405,24 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.NavList.FilterLabel`: The NavList names the filter for assistive technology.
 - `ui.NavList.Groups`: The NavList supplies the grouped items.
 - `ui.NavList.ID`: The NavList keeps element IDs distinct.
-- `ui.NavList.Label`: The NavList supplies the visible or accessible name.
+- `ui.NavList.Label`: K18 exception: the list owns its internal element and needs an accessible name; it is not visible text.
 - `ui.NavList.OnFilter`: The NavList reports changes to the filter.
 - `ui.NavList.OnSelect`: The NavList reports the newly selected item.
 - `ui.NavList.Placeholder`: The NavList supplies the filter hint.
-- `ui.TabsProps.Label`: The TabsProps supplies the visible or accessible name.
-- `ui.TabsProps.ListClass`: The TabsProps styles the tab list.
-- `ui.TabsProps.PanelClass`: The TabsProps styles the tab panel.
-- `ui.TabsProps.Variant`: The TabsProps selects the spike’s line or standard tabs.
+- `ui.TabsProps.Label`: K18 exception: Tabs owns the internal tablist and needs its accessible name; it is not visible text.
+- `ui.TabsProps.ListClass`: K2 exception: the caller must style the internally owned tab list separately from the outer tabs.
+- `ui.TabsProps.PanelClass`: K2 exception: the caller must style the internally owned panel separately from the outer tabs.
 - `ui/code.TokenClass`: An event log can colour kinds consistently with the code view.
 - `ui/code.View`: The spike book and other inspectors need highlighted source with line numbers and wrapping.
-- `ui/code.CSS`: A caller adds the highlighter palette to its surface stylesheet.
 - `ui.ControlsProps`: the inspector's options follow the kit's Props pattern without changing its controls.
-- `ui.ControlsProps.Class`: the caller positions and styles the controls grid.
-- `ui.ControlsProps.Controls`: the component needs the ordered values to render.
-- `ui.ControlsProps.ID`: the caller prefixes the generated control IDs to keep them distinct.
-- `ui.ControlsProps.OnChange`: the app owns and updates the values when the user edits them.
+- `ui.ControlsProps.Class`: K2 exception: Controls owns the grid and provides a class for its positioning and styling.
+- `ui.ControlsProps.Controls`: K2(c): the ordered controls are the inputs it reads to render.
+- `ui.ControlsProps.ID`: K2(d): generated control IDs need a caller-supplied prefix to remain distinct.
+- `ui.ControlsProps.OnChange`: K2 exception: edits must be reported to the app that owns the controlled values.
 - `ui.EventLogProps`: the event log's inputs follow the kit's Props pattern.
-- `ui.EventLogProps.Empty`: the app supplies its own empty-state text.
-- `ui.EventLogProps.Entries`: the app owns the chronological event list.
-- `ui.EventLogProps.ID`: the clear button's ID must be distinct on the surface.
-- `ui.EventLogProps.OnClear`: the app decides how to clear its own event list.
-- `ui.TabsProps.Line`: the spike's underlined tabs are a component-specific style, expressed as a bool.
+- `ui.EventLogProps.Empty`: K2(c): the empty-state text is read to render when there are no entries.
+- `ui.EventLogProps.Entries`: K2(c): the chronological entries are read to render the log.
+- `ui.EventLogProps.ID`: K2(d): the internal Clear button needs a distinct ID.
+- `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
+- `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
