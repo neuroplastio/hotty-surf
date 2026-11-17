@@ -368,3 +368,61 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surftea.Host.Cells`: the surface's rectangle as the program's View composes it: in cells for a terminal that is no host, blank for one that is, so one View joins it the same way in both.
 - `surftea.Host.Focused`: where the keyboard is: the user gives it to the surface with a click and takes it back with Tab past the last element or a click elsewhere, which the Host hears and the program doesn't. A program draws its own pane's focus, and routes its keys, from it.
 - `surftea.Host.Cursor`: a field edited in cells needs the terminal's caret, which only the program's tea.View sets. It is `*tea.Cursor`, as bubbles' textinput and textarea give theirs, in the screen's cells because the Host knows its rectangle.
+
+## Storybook component port (draft)
+
+- `ui.ControlID`: A caller can associate its own label or focus request with a named control.
+- `ui.Controls`: A property inspector needs the same editable controls as the spike book.
+- `ui.EventLog`: An inspector needs the same chronological event list and clearing action as the spike book.
+- `ui.Fuzzy`: The navigation filter and its callers can share the spike matching rule.
+- `ui.NavList.FilterID`: The list names the filter for focus and labels.
+- `ui.NavList.FilterInput`: The list renders the filter separately for the app’s layout.
+- `ui.NavList.FocusFilter`: The list moves the keyboard to the filter.
+- `ui.NavList.FocusList`: The list moves the keyboard to the current item.
+- `ui.NavList.ItemID`: The list names an item for focus and accessibility.
+- `ui.NavList.Keys`: The list handles the navigation key bindings.
+- `ui.NavList.List`: The list renders the grouped scrollable list.
+- `ui.Control`: Controls needs a typed name, value and optional choices for each editable property.
+- `ui.Control.Kind`: The Control selects the control or event kind.
+- `ui.Control.Name`: The Control names this value.
+- `ui.Control.Options`: The Control supplies enum choices.
+- `ui.Control.Value`: The Control supplies the controlled value.
+- `ui.LogEntry`: EventLog needs the time, kind and text of each entry and its optional kind styling.
+- `ui.LogEntry.At`: The LogEntry records the event time.
+- `ui.LogEntry.Kind`: The LogEntry selects the control or event kind.
+- `ui.LogEntry.KindClass`: The LogEntry chooses the event kind colour.
+- `ui.LogEntry.Text`: The LogEntry holds the event text.
+- `ui.NavGroup`: A navigation list needs a heading and its items together.
+- `ui.NavGroup.Items`: The NavGroup supplies the items in the group.
+- `ui.NavGroup.Name`: The NavGroup names this value.
+- `ui.NavItem`: A navigation item needs a stable ID and a visible label.
+- `ui.NavItem.ID`: The NavItem keeps element IDs distinct.
+- `ui.NavItem.Label`: K2(c): visible text is input the list reads to render a navigation item.
+- `ui.NavList`: The spike navigation is a reusable grouped, filterable list with keyboard movement and a scrollable view.
+- `ui.NavList.Current`: The NavList identifies the current item.
+- `ui.NavList.Empty`: The NavList supplies the empty-list message.
+- `ui.NavList.Filter`: The NavList holds the current search text.
+- `ui.NavList.FilterLabel`: The NavList names the filter for assistive technology.
+- `ui.NavList.Groups`: The NavList supplies the grouped items.
+- `ui.NavList.ID`: The NavList keeps element IDs distinct.
+- `ui.NavList.Label`: K18 exception: the list owns its internal element and needs an accessible name; it is not visible text.
+- `ui.NavList.OnFilter`: The NavList reports changes to the filter.
+- `ui.NavList.OnSelect`: The NavList reports the newly selected item.
+- `ui.NavList.Placeholder`: The NavList supplies the filter hint.
+- `ui.TabsProps.Label`: K18 exception: Tabs owns the internal tablist and needs its accessible name; it is not visible text.
+- `ui.TabsProps.ListClass`: K2 exception: the caller must style the internally owned tab list separately from the outer tabs.
+- `ui.TabsProps.PanelClass`: K2 exception: the caller must style the internally owned panel separately from the outer tabs.
+- `ui/code.TokenClass`: An event log can colour kinds consistently with the code view.
+- `ui/code.View`: The spike book and other inspectors need highlighted source with line numbers and wrapping.
+- `ui.ControlsProps`: the inspector's options follow the kit's Props pattern without changing its controls.
+- `ui.ControlsProps.Class`: K2 exception: Controls owns the grid and provides a class for its positioning and styling.
+- `ui.ControlsProps.Controls`: K2(c): the ordered controls are the inputs it reads to render.
+- `ui.ControlsProps.ID`: K2(d): generated control IDs need a caller-supplied prefix to remain distinct.
+- `ui.ControlsProps.OnChange`: K2 exception: edits must be reported to the app that owns the controlled values.
+- `ui.EventLogProps`: the event log's inputs follow the kit's Props pattern.
+- `ui.EventLogProps.Empty`: K2(c): the empty-state text is read to render when there are no entries.
+- `ui.EventLogProps.Entries`: K2(c): the chronological entries are read to render the log.
+- `ui.EventLogProps.ID`: K2(d): the internal Clear button needs a distinct ID.
+- `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
+- `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
+- `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.

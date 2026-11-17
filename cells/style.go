@@ -36,24 +36,26 @@ const (
 
 // box is what the layout reads of an element.
 type box struct {
-	display display
-	column  bool // a flex column (flex-col); a grid is one too
-	reverse bool // flex-col-reverse, flex-row-reverse: its items the other way
-	gapX    int  // between a flex row's items, in cells
-	gapY    int  // between a column's items, in rows
-	padT    int
-	padR    int
-	padB    int
-	padL    int
-	grow    bool // flex-1, grow: takes a flex row's room left
-	full    bool // w-full: a field or a button as wide as its line
-	pre     bool // white space kept
-	between bool // justify-between
-	end     bool // justify-end
-	center  bool // justify-center
-	wrap    bool // flex-wrap: a row's items go on to more lines
-	look    look // what the element adds to its text's look
-	list    string
+	display   display
+	column    bool // a flex column (flex-col); a grid is one too
+	reverse   bool // flex-col-reverse, flex-row-reverse: its items the other way
+	gapX      int  // between a flex row's items, in cells
+	gapY      int  // between a column's items, in rows
+	padT      int
+	padR      int
+	padB      int
+	padL      int
+	grow      bool // flex-1, grow: takes a flex row's room left
+	full      bool // w-full: a field or a button as wide as its line
+	pre       bool // white space kept
+	between   bool // justify-between
+	end       bool // justify-end
+	center    bool // justify-center
+	wrap      bool // flex-wrap: a row's items go on to more lines
+	look      look // what the element adds to its text's look
+	list      string
+	scrollY   bool
+	maxHeight string
 }
 
 // skipped are the elements that draw nothing, whatever their style.
@@ -158,7 +160,12 @@ func (b *box) class(c string) {
 		// doesn't know: left out.
 		return
 	}
+	if strings.HasPrefix(c, "max-h-[") && strings.HasSuffix(c, "]") {
+		b.maxHeight = strings.TrimSuffix(strings.TrimPrefix(c, "max-h-["), "]")
+	}
 	switch c {
+	case "overflow-y-auto", "overflow-y-scroll", "overflow-auto", "overflow-scroll":
+		b.scrollY = true
 	case "hidden", "sr-only":
 		b.display = dNone
 	case "block":
@@ -289,6 +296,10 @@ func (b *box) inline(style string) {
 		k, v = strings.ToLower(strings.TrimSpace(k)), strings.ToLower(strings.TrimSpace(v))
 		v = strings.TrimSpace(strings.TrimSuffix(v, "!important"))
 		switch k {
+		case "overflow", "overflow-y":
+			b.scrollY = v == "auto" || v == "scroll"
+		case "max-height", "height":
+			b.maxHeight = v
 		case "display":
 			switch v {
 			case "none":

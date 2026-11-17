@@ -1,0 +1,6 @@
+/* The spike's inspector grid and event-log header. */
+.kit-controls { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); align-items: center; column-gap: 0.75rem; row-gap: 0.5rem; }
+.kit-controls input[type="text"] { max-width: 20rem; }
+.kit-controls select { max-width: 15rem; }
+.kit-event-log-header { display: flex; align-items: center; }
+.kit-event-log-header button { margin-left: auto; }

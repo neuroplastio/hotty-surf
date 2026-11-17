@@ -1397,3 +1397,18 @@ Not ours: ui.Checkbox drawn as Blitz's native box is hotty-blitz's gap 6.
 - **Open:** `shot -h` saying it draws the starting state.
 - **Not ours:** `hotty version`, which is hotty-blitz's; ui.Checkbox drawn
   as Blitz's native box, hotty-blitz's gap 6.
+
+
+## Draft: spike storybook components
+
+The maintainer asked to port the spike's storybook and its reusable
+NavList, Controls, EventLog and code view. This draft carries the spike's
+component shapes, with existing v0.7 surf handlers in place of the spike
+runtime. The reviewer kept the retained NavList but made its helper
+mechanics private, changed Controls and EventLog to Props, kept distinct
+code View and Block with code.Stylesheet, and chose TabsProps.Line.
+The approved API is not changed by this draft. NavList requests reveal
+in the same delta as the changes; public reveal remains a separate pack.
+
+Review the public shapes against the spike and v0.7's existing conventions,
+including the number of NavList methods and the string control kinds.
