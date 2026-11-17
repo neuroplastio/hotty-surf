@@ -316,6 +316,20 @@ are byte for byte the same. The differences are all intended:
   name (`kit-surface`, `kit-popup`, …: AGENTS.md's names rule); the
   spike's streams are compared with the same rename applied.
 
+That held through the blind review, which re-ran it. **After the review's
+fixes the identity is a migration record, not a contract.** The streams
+were recorded again (1,000 rows, 20 rounds; nav) and compared with the
+spike's, its generated ids mapped from `e…` to `_…`. Every difference is
+one of:
+- the generated ids' prefix (`_`, recommendation 13);
+- a space kept between two inline elements (REQUIRED 1): 108 bytes over
+  Tasks' whole 2.1 MB stream, in its header buttons and the facet
+  popovers; nav's first document;
+- the a=focus and a=place above.
+
+No other delta differs. Later legs check streams against v07's own, as
+recorded after the review round.
+
 To rerun: TASKS_STREAM=<file> with TASKS_ACTS in examples/tasks, and
 NAV_STREAM=<file> in examples/nav.
 
@@ -422,17 +436,18 @@ What took the floor from about 2 ms to under 1:
 ### TinyGo
 
 - **Tasks' release wasm builds under TinyGo 0.43 as it is**, with no mod
-  of templ: 2,633,599 bytes, 846,066 gzipped (the spike's was 2,505,134
-  / 804,387; the cells host and the reload hook aren't linked in js, the
-  kit's stylesheet and the fast parser are the difference). L0's templ
+  of templ: 2,641,378 bytes, 848,143 gzipped after the review round
+  (2,633,599 / 846,066 before it; the spike's was 2,505,134 / 804,387;
+  the cells host and the reload hook aren't linked in js, the kit's
+  stylesheet and the fast parser are the difference). L0's templ
   mods (net/http and regexp out, about −190 KB gzipped) are a size win,
   not a need, so they aren't landed: the brief lands them if the build
   needs them. They are the first thing to land when size matters (L4's
   build --wasm).
 - **It runs, and writes Go's stream:** scripts/wasm-stream.sh runs Tasks
   built by Go and by TinyGo in Node on run.App's page glue, sends the
-  same 85 events (internal/wasmcheck), and compares the bytes: 149,893,
-  the same.
+  same 85 events (internal/wasmcheck), and compares the bytes: 150,041
+  after the review round (149,893 before it), the same.
 - **`make tinygo`** (in `make check`) builds tasks, nav and hello for
   js/wasm under TinyGo.
 ### reload and the command

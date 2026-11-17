@@ -66,10 +66,20 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   question for the spec (the maintainer's), not one to work around.
 - No cross-component close (Basecoat's `basecoat:popover`): opening one
   popup by keyboard leaves another open. L2's translated scripts.
-- A toast's pause on hover is written but untested: surftest has no
-  hover.
 - A Select at the right edge opens its list past the window's edge
   (hello, in hottyterm): Basecoat's popover alignment, L2.
+- The text tier still waits out templ's 100 ms recheck after a render
+  (60–100 ms inside plx): templ has no hook to reread at once, and a mod
+  needs a replaced templ in every app's build or a `-overlay` in the
+  reloader's; the choice is open.
+- hotty-go's test host moves a focused select when an option's
+  `selected` changes (it checks the option for focus, not the select),
+  which SPEC §6.2 doesn't allow: a hotty-go fix.
+- The blind review's "What L2–L4 should know" (in its report) is the
+  next legs' list: two components asking for the keyboard in one frame,
+  a ToasterState on one surface only, the rest of §6.2's morph in cells,
+  release builds linking the snapshot code, the ctl socket's fallback
+  directory's owner and mode.
 
 ## v0.1.0, the first public tag
 
