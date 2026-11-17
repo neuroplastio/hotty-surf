@@ -48,6 +48,12 @@ func (z *State) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Book")
 				return
 			}
+		case "cells":
+			z.Cells, err = dc.ReadBool()
+			if err != nil {
+				err = msgp.WrapError(err, "Cells")
+				return
+			}
 		default:
 			err = dc.Skip()
 			if err != nil {
@@ -61,9 +67,9 @@ func (z *State) DecodeMsg(dc *msgp.Reader) (err error) {
 
 // EncodeMsg implements msgp.Encodable
 func (z *State) EncodeMsg(en *msgp.Writer) (err error) {
-	// map header, size 2
+	// map header, size 3
 	// write "id"
-	err = en.Append(0x82, 0xa2, 0x69, 0x64)
+	err = en.Append(0x83, 0xa2, 0x69, 0x64)
 	if err != nil {
 		return
 	}
@@ -82,11 +88,21 @@ func (z *State) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "Book")
 		return
 	}
+	// write "cells"
+	err = en.Append(0xa5, 0x63, 0x65, 0x6c, 0x6c, 0x73)
+	if err != nil {
+		return
+	}
+	err = en.WriteBool(z.Cells)
+	if err != nil {
+		err = msgp.WrapError(err, "Cells")
+		return
+	}
 	return
 }
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *State) Msgsize() (s int) {
-	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + z.Book.Msgsize()
+	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID) + 5 + z.Book.Msgsize() + 6 + msgp.BoolSize
 	return
 }

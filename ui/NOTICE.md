@@ -16,3 +16,8 @@ SVGs, and dialog.templ's close icon the dialog macro's.
 
 code highlights with Chroma (github.com/alecthomas/chroma/v2, Copyright
 (C) 2017 Alec Thomas, MIT licensed), its lexers' definitions included.
+
+code.View uses the embedded XML lexers in internal/highlight/lexers. The
+CSS, HTML, JavaScript and templ lexers are from Chroma (MIT; their license
+is in that directory's COPYING). The Go lexer is from hotty-a2ui
+(Apache-2.0, neuroplastio).

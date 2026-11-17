@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/tinylib/msgp/msgp"
-	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/devhook"
@@ -55,13 +54,9 @@ var (
 	// before the process stops waiting for it: a surface the program
 	// dropped is never driven again.
 	answerWait = 300 * time.Millisecond
-	// busyWait is how long a handover waits for a driver that is busy (it
-	// rendered within goneAfter): the reloader's 5 s, less a margin.
+	// busyWait is how long a handover waits for a driver to start its
+	// queued work: the reloader's 5 s, less a margin.
 	busyWait = 4 * time.Second
-	// goneAfter tells a dropped surface from a busy one: a driver that
-	// hasn't answered in answerWait, and last rendered longer ago than
-	// this, drives it no more.
-	goneAfter = 3 * time.Second
 )
 
 // stateDepth is the depth a kept state is read to: msgp counts depth only
@@ -407,9 +402,8 @@ func (c *child) live() []*surf.Surface {
 var docWait = 2500 * time.Millisecond
 
 // document is the document of the live surface named name, as it last
-// sent it to its host, read on its driver through Do and never off it: a
-// handover reads a dropped surface directly only because the process exits
-// after it, and this one lives on. A driver busy for docWait is a failure.
+// sent it to its host, read on its driver through Do and never off it.
+// A driver busy for docWait is a failure.
 func (c *child) document(name string) (devwire.Doc, error) {
 	var s *surf.Surface
 	for _, x := range c.live() {
@@ -526,10 +520,9 @@ func (c *child) restyle(st devwire.Style) (int, error) {
 // handover runs Keep's get and takes every surface's snapshot, as the
 // host has it. get runs on the first live surface's driver, as its
 // handlers do, ahead of that surface's snapshot; each driver takes its
-// own surface's, and then sends nothing more. A driver that hasn't
-// answered in answerWait is waited for up to busyWait if it rendered
-// lately (it is busy), and read directly otherwise (the program dropped
-// the surface, so nothing else reads it).
+// own surface's, and then sends nothing more. A driver must start within
+// busyWait. A last-render timestamp cannot distinguish an idle, busy or
+// dropped driver, so a driver that doesn't answer is never read directly.
 func (c *child) handover(out *devwire.Handed) error {
 	keepMu.Lock()
 	g := get
@@ -557,87 +550,129 @@ func (c *child) handover(out *devwire.Handed) error {
 		return state()
 	}
 	type snapped struct {
-		i   int
-		sn  devwire.Snap
-		ok  bool
-		err error // get's, on the first surface
+		sn     devwire.Snap
+		ok     bool
+		err    error
+		resume func()
 	}
-	snap := func(i int, s *surf.Surface) snapped {
-		// One buffer a surface, once a process: the bytes are the reply.
-		var b bytes.Buffer
-		w := devwire.NewWriter(&b)
-		err := rt.Peek.Snapshot(s, w)
-		if err == nil {
-			err = w.Flush()
-		}
-		devwire.PutWriter(w)
-		return snapped{i: i, sn: devwire.Snap{Name: s.Name(), CSS: rt.Peek.CSS(s), Data: b.Bytes()}, ok: err == nil}
-	}
-	// claimed[i] is set by whoever takes surface i's snapshot: its driver,
-	// or the handover reading a dropped surface directly.
-	claimed := make([]atomic.Bool, len(live))
-	take := func(i int) snapped {
+	snap := func(s *surf.Surface, keep bool) snapped {
 		var err error
-		if i == 0 {
+		if keep {
 			err = state()
 		}
-		sn := snap(i, live[i])
-		sn.err = err
-		return sn
+		var b bytes.Buffer
+		w := devwire.NewWriter(&b)
+		snapErr := rt.Peek.Snapshot(s, w)
+		if snapErr == nil {
+			snapErr = w.Flush()
+		}
+		devwire.PutWriter(w)
+		return snapped{sn: devwire.Snap{Name: s.Name(), CSS: rt.Peek.CSS(s), Data: b.Bytes()}, ok: snapErr == nil, err: err}
 	}
-	got := make(chan snapped, len(live))
-	for i, s := range live {
+	// One deadline for the entire handover, leaving the reloader's margin.
+	deadline, cancel := context.WithTimeout(context.Background(), busyWait)
+	defer cancel()
+	results := make([]snapped, len(live))
+	finished := make([]bool, len(live))
+	success := false
+	defer func() {
+		if success {
+			return
+		}
+		// A later busy surface must not leave earlier ones detached when
+		// this build keeps running. Restore each on its own driver.
+		for i, result := range results {
+			if result.resume == nil {
+				continue
+			}
+			restored := make(chan struct{}, 1)
+			live[i].Do(func() { result.resume(); restored <- struct{}{} })
+			select {
+			case <-restored:
+			case <-time.After(answerWait):
+			}
+		}
+	}()
+	// A stopped driver can be read after its done signal. A live or unknown
+	// driver must do its own work. The claim prevents late queued work from
+	// running after the deadline or after the driver has stopped.
+	run := func(s *surf.Surface, keep bool) (snapped, bool, error) {
+		done := devhook.DriverDone(s)
+		select {
+		case <-done:
+			return snap(s, false), true, nil
+		default:
+		}
+		var claimed atomic.Bool
+		got := make(chan snapped, 1)
 		s.Do(func() {
-			if !claimed[i].CompareAndSwap(false, true) {
+			if !claimed.CompareAndSwap(false, true) {
 				return
 			}
-			got <- take(i)
-			// What the snapshot holds is what the host has: nothing more
-			// goes out from this build.
-			s.Attach(nil, hotty.Caps{})
-		})
-	}
-	done := make([]*snapped, len(live))
-	n := 0
-	short := time.NewTicker(answerWait)
-	defer short.Stop()
-	long := time.NewTimer(busyWait)
-	defer long.Stop()
-wait:
-	for n < len(live) {
-		select {
-		case sn := <-got:
-			done[sn.i] = &sn
-			n++
-		case <-short.C:
-			for i, s := range live {
-				if done[i] == nil && time.Since(rt.Peek.Rendered(s)) > goneAfter && claimed[i].CompareAndSwap(false, true) {
-					sn := take(i)
-					done[i] = &sn
-					n++
-				}
+			result := snap(s, keep)
+			if result.err == nil && result.ok {
+				result.resume = rt.Peek.Pause(s)
 			}
-		case <-long.C:
-			break wait
+			got <- result
+		})
+		select {
+		case result := <-got:
+			return result, false, nil
+		case <-done:
+			if claimed.CompareAndSwap(false, true) {
+				return snap(s, false), true, nil
+			}
+			return <-got, false, nil
+		case <-deadline.Done():
+			if claimed.CompareAndSwap(false, true) {
+				return snapped{}, false, fmt.Errorf("reload waited %v for a busy handler; kept the running version", busyWait)
+			}
+			// The driver started before the deadline. Wait for it to finish:
+			// Keep and Snapshot must never run after a failed handover.
+			return <-got, false, nil
+		}
+	}
+	// Find the first still-running driver for Keep. Drivers that have
+	// returned are snapshotted as dropped, then the next driver is tried.
+	kept := false
+	for i, s := range live {
+		result, stopped, err := run(s, true)
+		if err != nil {
+			return err
+		}
+		if result.err != nil {
+			return result.err
+		}
+		results[i], finished[i] = result, true
+		if !stopped {
+			kept = true
+			break
+		}
+	}
+	if !kept {
+		// Every known driver has returned, so none can mutate kept state.
+		if err := state(); err != nil {
+			return err
 		}
 	}
 	for i, s := range live {
-		sn := done[i]
-		if sn == nil {
-			// Still busy: claimed, so its driver doesn't take it late.
-			claimed[i].Store(true)
-			if i == 0 {
-				return fmt.Errorf("reload: %s's driver didn't answer in %v", s.Name(), busyWait)
-			}
-			fmt.Fprintf(os.Stderr, "reload: %s's driver didn't answer in %v; it starts again\n", s.Name(), busyWait)
+		if finished[i] {
 			continue
 		}
-		if sn.err != nil {
-			return sn.err
+		result, _, err := run(s, false)
+		if err != nil {
+			return err
 		}
-		if sn.ok {
-			out.Surfaces = append(out.Surfaces, sn.sn)
+		if result.err != nil {
+			return result.err
+		}
+		results[i] = result
+	}
+	for _, result := range results {
+		if result.ok {
+			out.Surfaces = append(out.Surfaces, result.sn)
 		}
 	}
+	success = true
 	return nil
 }

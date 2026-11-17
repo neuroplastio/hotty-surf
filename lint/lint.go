@@ -18,12 +18,20 @@
 // before: // lint:allow px: <why>. An allow without a reason is a finding.
 package lint
 
-// A Finding is one place an app breaks a rule.
+//go:generate msgp -marshal=false -tests=false -file lint.go -o lint_gen.go
+
+//msgp:newtime
+//msgp:limit arrays:65536 maps:65536
+
+// A Finding is one place an app breaks a rule. It has msgp's codec
+// (EncodeMsg, DecodeMsg), a map keyed by the names in its tags, so that a
+// dev parent such as plx can carry it on a wire of its own (gov P-3).
 type Finding struct {
-	File      string // relative to the directory checked
-	Line, Col int
-	Rule      string // the rule's name, as above
-	Text      string // what is wrong, and what to write instead
+	File string `msg:"file"` // relative to the directory checked
+	Line int    `msg:"line"`
+	Col  int    `msg:"col"`
+	Rule string `msg:"rule"` // the rule's name, as above
+	Text string `msg:"text"` // what is wrong, and what to write instead
 }
 
 // Dir checks the app's sources under dir: its .templ, .go and .css files,

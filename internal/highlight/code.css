@@ -18,3 +18,29 @@
 .light .tok-literal { color: #1c00cf; }
 .light .tok-meta { color: #643820; }
 .light .tok-invalid { color: #d12f1b; }
+
+.book-code {
+  background: var(--muted);
+  border: var(--hotty-px) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  font-family: var(--hotty-font);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.book-code-line {
+  display: flex;
+  min-height: 1.5em;
+}
+.book-code-number {
+  width: 4ch;
+  margin-right: 1.5ch;
+  flex: 0 0 auto;
+  text-align: right;
+  color: var(--muted-foreground);
+}
+.book-code-text {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

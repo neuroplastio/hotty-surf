@@ -1,6 +1,7 @@
 // Package code shows source code highlighted, in the kit's look: Chroma's
 // lexers, coloured by the theme's tokens. It is a package of its own so that
-// an app that shows no code doesn't link Chroma.
+// an app that shows no code doesn't link Chroma. Block and View have
+// distinct markup and lexer sets.
 package code
 
 import (
@@ -14,11 +15,33 @@ import (
 	"github.com/a-h/templ"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
+
+	bookhighlight "neuroplast.io/hotty-surf/internal/highlight"
 )
+
+// Stylesheet is the light and dark palette and layout for View. Append
+// it to the surface's stylesheet after the kit stylesheet.
+func Stylesheet() string { return bookhighlight.CSS }
+
+// View shows source with wrapping lines, optional line numbers starting
+// at first, and the spike palette. first <= 0 hides the numbers. lang
+// selects Go, templ, HTML, CSS or JavaScript; an unknown language is
+// shown plain. Append Stylesheet() to the surface's stylesheet.
+func View(src, lang string, first int) templ.Component {
+	return bookhighlight.View(src, lang, first)
+}
+
+// TokenClass is the CSS class used by View for kind. An empty kind
+// returns ""; another kind returns "tok-" followed by kind. The
+// supplied palette colors comment, keyword, type, function, string,
+// literal, meta and invalid. Append Stylesheet to use those colors.
+func TokenClass(kind string) string { return bookhighlight.TokenClass(kind) }
 
 // Block is src highlighted as lang (a Chroma lexer's name or alias: "go",
 // "json", "sh"), in Basecoat's pre. first is the first line's number; 0
-// shows no numbers. A lang Chroma doesn't know shows src plain.
+// shows no numbers. A lang Chroma doesn't know shows src plain. Block
+// uses the kit stylesheet and Chroma's broad lexer set; View wraps its
+// lines and uses a separate palette and a smaller lexer set.
 func Block(src, lang string, first int) templ.Component {
 	return templ.ComponentFunc(func(_ context.Context, w io.Writer) error {
 		_, err := io.WriteString(w, block(highlight(src, lang), lang, first))
