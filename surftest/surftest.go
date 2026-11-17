@@ -200,6 +200,69 @@ func (r *Rig) Click(sel string) {
 	r.settle()
 }
 
+// Drag drags the one element matching from onto the one matching to, as a
+// user's pointer does (SPEC §9.1): a press on from, a move onto to, and the
+// release there. from's surf.Drag hears Start, a move Over to, and End;
+// to's surf.Drop hears the End. The test host lays nothing out, so the
+// pointer's cells are 0 and no step is said: DragStep says one. It fails
+// the test if either selector matches no element or more than one, or if
+// from takes no drag.
+func (r *Rig) Drag(from, to string) {
+	r.t.Helper()
+	r.drag(from, to, -1, -1)
+}
+
+// DragStep is Drag released at step tx, ty of to (TX, TY in the
+// DragEvent), for a to with surf.Drop and data-steps: in a row split into
+// halves (data-steps="0 1"), ty 0 is before it and 1 after it. A step
+// along an axis to does not count is not said.
+func (r *Rig) DragStep(from, to string, tx, ty int) {
+	r.t.Helper()
+	r.drag(from, to, tx, ty)
+}
+
+func (r *Rig) drag(from, to string, tx, ty int) {
+	r.t.Helper()
+	src, dst := attr(r.One(from), "id"), attr(r.One(to), "id")
+	if err := r.host.DragStart(r.s.Name(), src, 0, 0); err != nil {
+		r.t.Fatalf("surftest: drag %s: %v", from, err)
+	}
+	r.settle()
+	var err error
+	if tx < 0 {
+		err = r.host.DragMove(dst, 0, 0)
+	} else {
+		err = r.host.DragOver(dst, 0, 0, tx, ty)
+	}
+	if err != nil {
+		r.t.Fatalf("surftest: drag %s onto %s: %v", from, to, err)
+	}
+	r.settle()
+	if tx < 0 {
+		err = r.host.DragEnd(dst, 0, 0)
+	} else {
+		err = r.host.DragEndOver(dst, 0, 0, tx, ty)
+	}
+	if err != nil && !errors.Is(err, hottytest.ErrNoReport) {
+		r.t.Fatalf("surftest: drop %s on %s: %v", from, to, err)
+	}
+	r.settle()
+}
+
+// Secondary makes a secondary press (a right click) on the one element
+// matching sel, as a user's does (SPEC §9): the surf.Secondary handler of
+// the nearest element from it outward that has one hears it, at cell 0, 0
+// (the test host lays nothing out). It fails the test if no element or
+// more than one matches.
+func (r *Rig) Secondary(sel string) {
+	r.t.Helper()
+	id := attr(r.One(sel), "id")
+	if err := r.host.SecondaryPress(r.s.Name(), id, 0, 0); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
+		r.t.Fatalf("surftest: secondary press on %s: %v", sel, err)
+	}
+	r.settle()
+}
+
 // Type gives the keyboard to the one field matching sel and types text into
 // it, a key at a time.
 func (r *Rig) Type(sel, text string) {

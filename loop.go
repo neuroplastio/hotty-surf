@@ -176,7 +176,7 @@ func (s *Surface) event(e hotty.Event) error {
 	// already told the Outside handlers where the click was; the blur is
 	// that click's, not a click off the surface.
 	afterPress := s.pressed
-	s.pressed = e.Kind == hotty.EventPress
+	s.pressed = e.Kind == hotty.EventPress && e.Button == 0
 	switch e.Kind {
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
@@ -212,7 +212,12 @@ func (s *Surface) event(e hotty.Event) error {
 			ran = true
 		}
 	case hotty.EventPress:
-		ran = s.outside(e.Target)
+		if e.Button == 2 {
+			ran = s.secondary(e)
+		}
+		ran = s.outside(e.Target) || ran
+	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
+		ran = s.dragged(e)
 	case hotty.EventFocus:
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
@@ -236,6 +241,69 @@ func (s *Surface) event(e hotty.Event) error {
 		return nil
 	}
 	return s.send()
+}
+
+// secondary runs the Secondary handler of a secondary press's element.
+func (s *Surface) secondary(e hotty.Event) bool {
+	h := s.frame.On[e.Target]
+	if h == nil || h.Secondary == nil {
+		return false
+	}
+	var at hotty.Cell
+	var area hotty.Area
+	if e.At != nil {
+		at = *e.At
+	}
+	if e.Area != nil {
+		area = *e.Area
+	}
+	h.Secondary(at, area)
+	return true
+}
+
+// dragged takes a drag's event (SPEC §9.1): the dragged element's Drag
+// hears each one, and at the End, the Drop of the element it is over. The
+// element gets the class dragging at the drag's first move, and loses it
+// at the End; the render after either is parsed again, so number puts it
+// on or leaves it off (the same HTML is otherwise the same tree).
+func (s *Surface) dragged(e hotty.Event) bool {
+	on := s.frame.On
+	ran := false
+	d := DragEvent{Over: e.Target}
+	if e.Drag != nil {
+		d.Drag = *e.Drag
+	}
+	switch e.Kind {
+	case hotty.EventDragStart:
+		s.drag, s.lifted = e.Target, false
+		d.Start = true
+	case hotty.EventDrag:
+		if s.drag != "" && !s.lifted {
+			s.lifted, s.r.valid, ran = true, false, true
+		}
+	case hotty.EventDragEnd:
+		d.End = true
+		if s.lifted {
+			s.r.valid, ran = false, true
+		}
+	}
+	d.ID = s.drag
+	if h := on[s.drag]; h != nil {
+		if fn, ok := h.Drag.(func(DragEvent)); ok {
+			fn(d)
+			ran = true
+		}
+	}
+	if d.End {
+		if h := on[e.Target]; e.Target != "" && s.drag != "" && h != nil {
+			if fn, ok := h.Drop.(func(DragEvent)); ok {
+				fn(d)
+				ran = true
+			}
+		}
+		s.drag, s.lifted = "", false
+	}
+	return ran
 }
 
 // chain is the ids of id's element and its ancestors, innermost first, up

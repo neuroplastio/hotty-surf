@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/rt"
 )
@@ -31,6 +32,12 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			on = append(on, "click")
 		case kindInput:
 			on = append(on, "input")
+		case kindDrag:
+			on = append(on, "drag")
+		case kindDrop:
+			on = append(on, "drop")
+		case kindSecondary:
+			on = append(on, "secondary")
 		}
 	}
 	if len(on) > 0 {
@@ -65,6 +72,12 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Hover = h.fn.(func(bool))
 		case kindSubmit:
 			e.Submit = h.fn.(func())
+		case kindDrag:
+			e.Drag = h.fn
+		case kindDrop:
+			e.Drop = h.fn
+		case kindSecondary:
+			e.Secondary = h.fn.(func(hotty.Cell, hotty.Area))
 		}
 	}
 	f.On[id] = e
@@ -73,7 +86,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 }
 
 // A Handler is one of an element's handlers, for [On]. Click, Input, Check,
-// Key, Focus, Outside, Hover and Submit make them.
+// Key, Focus, Outside, Hover, Submit, Drag, Drop and Secondary make them.
 type Handler struct {
 	kind kind
 	fn   any // the func the kind takes; nil is no handler
@@ -91,6 +104,9 @@ const (
 	kindOutside
 	kindHover
 	kindSubmit
+	kindDrag
+	kindDrop
+	kindSecondary
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -179,6 +195,87 @@ func Outside(fn func()) Handler {
 // needs no handler.
 func Hover(fn func(over bool)) Handler {
 	return handler(kindHover, fn, fn == nil)
+}
+
+// A DragEvent is where a drag is (SPEC §9.1), as Drag's and Drop's
+// handlers hear it.
+type DragEvent struct {
+	// Start is true for the press that starts the drag, and End for its
+	// release, or for the host cutting it short (the surface hidden, a new
+	// document); both are false for each move between them.
+	Start, End bool
+	// ID is the element dragged: the one whose On has Drag.
+	ID string
+	// Over is the element under the pointer: the nearest one, from it
+	// outward, whose On has Drag or Drop. It is ID itself at the Start,
+	// and "" over nothing that takes a drag (a gap, outside the surface)
+	// and at an End the host cut short.
+	Over string
+	// Drag is where the pointer is, as hotty-go reads the host's detail:
+	// its cell (Col, Row, counted from the surface's top left and going
+	// on past its edges), its step in ID's box (X, Y) and its step in
+	// Over's (TX, TY), each with whether the host said it (HasX, …). Steps
+	// are counted only for an element with data-steps (below, Drag).
+	hotty.Drag
+}
+
+// Drag makes the element draggable (data-on drag) and calls fn as the
+// user drags it, with the mouse's or a pen's primary button, or a touch
+// on an element whose touch-action allows no pan (SPEC §9.1): once at the
+// press (Start), each time the pointer comes onto another element that
+// takes a drag, or another step (below), and once at the release (End).
+// A drag costs a few calls for each element crossed, not one for every
+// move. fn decides what the drag means: a list reorders on End by Over
+// and TY, a slider sets its value from X on every call.
+//
+// Steps: an element that writes data-steps="<x>" or data-steps="<x> <y>"
+// beside the attributes On gives it divides its box into that many steps
+// across and down, and each call carries the pointer's step in it (X, Y),
+// wherever the pointer is; "0" counts none along that axis. So a slider
+// from 0 to 20 has data-steps="20", and a row that a drop lands before or
+// after has data-steps="0 1" (with Drop, which is what carries TX, TY).
+//
+// While the pointer is moving the element, from the first move after the
+// press to the release, the surface adds the class dragging to it, so a
+// stylesheet shows it lifted (.dragging { opacity: .5 }); a press and
+// release with no move in between leaves it off. A release on the element
+// the drag began on is also its click, after End, which Click hears. A
+// press with Alt held is the program's and starts no drag (SPEC §9.2).
+// Escape is not the host's: an app that cancels a drag by key does so in
+// a Key handler, and ignores the drag's End.
+//
+// A drag needs a pointer: in cells (package cells) and from the keyboard
+// there is none, so an app that reorders by drag also gives the keyboard a
+// way (a Key handler that moves the item).
+func Drag(fn func(d DragEvent)) Handler {
+	return handler(kindDrag, fn, fn == nil)
+}
+
+// Drop makes the element a place to drop on (data-on drop): the host names
+// it as a drag's Over while the pointer is over it, though a press on it
+// drags nothing, and with data-steps it says where in it the pointer is
+// (TX, TY). fn is called once, at the End of a drag released over the
+// element, with that drag's DragEvent (ID is what was dragged); what it
+// was over before that, the dragged element's Drag handler hears. An
+// element may have both Drag and Drop: the rows of a list that reorders
+// are dragged and dropped on.
+func Drop(fn func(d DragEvent)) Handler {
+	return handler(kindDrop, fn, fn == nil)
+}
+
+// Secondary calls fn when the user makes a secondary press on the element
+// or inside it (data-on secondary): a mouse's secondary button, Control
+// and the primary button on macOS, a pen's barrel button, or a long press
+// of a touch, as the user's platform makes one (SPEC §9). at is the cell
+// the pointer was on, from the surface's top left, where a context menu
+// opens; area is the element's cells. The press does nothing else: no
+// click, no focus, no drag, and the terminal's own menu doesn't open. It
+// tells Outside handlers, as a primary press does. Shift with it makes it
+// the terminal's, and Alt the program's (SPEC §9.2), and a host with no
+// secondary gesture sends none, so whatever it opens can also be opened
+// another way (a key, a button).
+func Secondary(fn func(at hotty.Cell, area hotty.Area)) Handler {
+	return handler(kindSecondary, fn, fn == nil)
 }
 
 // Autofocus asks for the keyboard to go to the element id once this frame

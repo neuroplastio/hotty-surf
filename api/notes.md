@@ -1454,3 +1454,49 @@ plain int, since the `msg` tags are plx's wire and api-check doesn't see
 them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
 Left for plx: decode within its capped frame (msgp:limit doesn't cap
 strings), and drop any mirror of its own.
+
+## L5: drags and the secondary press for plx (a pack of its own)
+
+plx asked (via p-653, 2026-11-17) for drags in the root package, for its
+nav and machines lists, which reorder by drag, and for a secondary press,
+on which p-794 builds the kit's context menu. Both are SPEC's, and
+hotty-go already reads them (hotty.Drag; Event.Button, At, Area);
+hottytest drives them. Ported from hotty-a2ui's rendition (drag.go: the
+same events, data-steps "0 1" halves for before and after, a class on what
+was lifted, k-lifted there), adapted to handlers.
+
+- `surf.Drag(func(DragEvent)) Handler` → data-on drag; one func hears
+  Start, the moves and End. `surf.Drop(func(DragEvent)) Handler` → data-on
+  drop; its func runs at the release over it. `DragEvent` is Start, End,
+  ID (the dragged element, which the host's t no longer names after
+  dragstart), Over (the host's t), and hotty.Drag embedded (cell, steps).
+  data-steps is the app's own attribute, beside On's.
+- **The class dragging** is added by the surface to the dragged element
+  from the drag's first move to its release (not at the press, so a click
+  doesn't flash it): the render after either is parsed again and the class
+  put on in `number`. An app styles `.dragging`; the kit defines none.
+- `surf.Secondary(func(at hotty.Cell, area hotty.Area)) Handler` → data-on
+  secondary. It also tells Outside handlers, as a primary press does, so a
+  right click elsewhere closes an open popover. It no longer counts as the
+  press that a blur follows (it moves no focus).
+- surftest: `Rig.Drag(from, to)`, `Rig.DragStep(from, to, tx, ty)`,
+  `Rig.Secondary(sel)`, on hottytest's DragStart/DragOver/DragEnd and
+  SecondaryPress.
+- **cells: none of it.** cells (and `hotty-surf run` in a plain terminal)
+  has no drag and no secondary press: its pointer is Click and Wheel. An
+  app that reorders by drag also gives the keyboard a way, as the docs
+  say. A cells drag (mouse reporting's motion with the button down) and a
+  right click mapped to Secondary are a later cells change, with names of
+  its own on cells.Screen if wanted.
+
+Open for the reviewer:
+1. Drop(nil) adds nothing, as every nil handler does, so a row that only
+   needs drop's steps (tx, ty) for the dragged row's own handler has to
+   give Drop a func. The example does the move in Drop's func, which reads
+   naturally; the alternative is Drag writing "drag drop".
+2. Mods (shift, alt…) are not in DragEvent, as Click carries none; a
+   copy-instead-of-move drag would need them.
+3. Escape cancelling a drag isn't SPEC's; the doc leaves it to a Key
+   handler.
+
+12 new names; none changed or removed.

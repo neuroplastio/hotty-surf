@@ -65,6 +65,8 @@ type Surface struct {
 	hoverIn   []string
 	hoverAt   string // the element under the pointer, as the host last said
 	pressed   bool   // the last event was a press on the surface (see event)
+	drag      string // the element a drag under way began on, "" for none
+	lifted    bool   // that drag has moved: the element has the class dragging
 	asked     string // the element the last frame's Autofocus asked for
 	askDue    bool   // a Document's Autofocus, sent at the next Update
 	cssDue    bool   // the stylesheet changed (a dev reload): sent at the next Update
