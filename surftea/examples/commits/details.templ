@@ -1,0 +1,91 @@
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+templ DetailsView(d *Details) {
+	{{ c := d.Commit() }}
+	<main class="dark flex flex-col gap-4 p-4">
+		<header class="flex flex-col gap-1">
+			<h1 class="text-lg font-semibold">{ c.Subject }</h1>
+			<p class="text-sm text-muted-foreground">
+				<span class="font-medium text-foreground">{ c.Author }</span>
+				committed { c.When.Format("2 Jan 2006, 15:04") } · { c.Hash }
+			</p>
+			if len(c.Tags) > 0 {
+				<div class="flex flex-wrap gap-2 mt-1">
+					for _, t := range c.Tags {
+						@ui.Badge(ui.BadgeProps{Variant: ui.Secondary}) {
+							{ t.Name }
+						}
+					}
+				</div>
+			}
+		</header>
+		if c.Body != "" {
+			<pre class="message text-sm">{ c.Body }</pre>
+		}
+		<section class="flex flex-col gap-2">
+			<h2 class="text-sm font-semibold">{ strconv.Itoa(len(c.Files)) } files changed</h2>
+			@ui.Table(ui.TableProps{}) {
+				<tbody>
+					for _, f := range c.Files {
+						<tr>
+							<td class="truncate">{ f.Path }</td>
+							<td class="added">+{ strconv.Itoa(f.Add) }</td>
+							<td class="text-destructive">−{ strconv.Itoa(f.Remove) }</td>
+						</tr>
+					}
+				</tbody>
+			}
+		</section>
+		if len(c.Tags) > 0 {
+			<section class="flex flex-col gap-2">
+				<h2 class="text-sm font-semibold">Tags</h2>
+				for _, t := range c.Tags {
+					<p class="text-sm">
+						<span class="font-medium">{ t.Name }</span>
+						if t.Note != "" {
+							<span class="text-muted-foreground">— { t.Note }</span>
+						}
+					</p>
+				}
+			</section>
+		}
+		<form class="flex flex-col gap-3" { surf.On(ctx, "tag-form", surf.Submit(d.AddTag))... }>
+			<h2 class="text-sm font-semibold">Tag this commit</h2>
+			@ui.Field(ui.FieldProps{Invalid: d.Missing}) {
+				@ui.Label(ui.LabelProps{For: "tag-name"}) {
+					Name
+				}
+				@ui.Input(ui.InputProps{
+					Value:       d.TagName,
+					Placeholder: "v1.0.0",
+					Invalid:     d.Missing,
+					Attrs:       surf.On(ctx, "tag-name", surf.Input(d.SetTagName)),
+				})
+				if d.Missing {
+					<p class="text-sm text-destructive">A tag needs a name.</p>
+				}
+			}
+			@ui.Field(ui.FieldProps{}) {
+				@ui.Label(ui.LabelProps{For: "tag-note"}) {
+					Note
+				}
+				@ui.Input(ui.InputProps{
+					Value:       d.TagNote,
+					Placeholder: "Optional",
+					Attrs:       surf.On(ctx, "tag-note", surf.Input(d.SetTagNote)),
+				})
+			}
+			@ui.Button(ui.ButtonProps{Class: "w-fit", Attrs: templ.Attributes{"type": "submit"}}) {
+				@ui.Icon("plus", "")
+				Add tag
+			}
+		</form>
+	</main>
+}

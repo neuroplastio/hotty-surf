@@ -1,0 +1,20 @@
+/* The app's own CSS, after the kit's (css.go). */
+
+/* A commit's message keeps its line breaks. */
+.message {
+	margin: 0;
+	white-space: pre-wrap;
+	font-family: var(--font-mono);
+}
+
+/* Added lines; the theme has no green of its own, so a chart's colour. */
+.added {
+	color: var(--chart-2);
+}
+
+/* The surface takes the kit's dark theme (the class on main), and draws its
+   own background in it, since the document's root stays light. */
+main.dark {
+	background-color: var(--color-background);
+	color: var(--color-foreground);
+}
