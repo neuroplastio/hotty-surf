@@ -1,6 +1,7 @@
 package surf_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -280,4 +281,28 @@ func ExampleRefocus() {
 	s.Event(hotty.Event{Surface: "palette", Kind: hotty.EventFocus, Target: "stop"})
 	fmt.Println(s.Focused())
 	// Output: query
+}
+
+// A driver that hands the keyboard to whatever holds an open menu writes
+// the surface's output through a buffer of its own: after Update,
+// Overlays says an overlay is opening before the host is sent it.
+func ExampleSurface_Overlays() {
+	var st ui.PopoverState
+	s := surf.New("tool", ui.Popover(&st, ui.PopoverProps{ID: "filter", Trigger: templ.Raw("Filter")}), ui.Stylesheet())
+	var out bytes.Buffer
+	s.Attach(&out, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		return
+	}
+	fmt.Printf("%q\n", s.Overlays())
+
+	s.Do(st.Open) // the app's key opens it
+	if err := s.Update(); err != nil {
+		return
+	}
+	fmt.Println(s.Overlays()) // lease the keyboard here, then pass out on
+	out.WriteTo(io.Discard)
+	// Output:
+	// []
+	// [filter]
 }

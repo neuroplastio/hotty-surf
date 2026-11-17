@@ -168,7 +168,7 @@ func (v *comboboxView) join(ctx context.Context) string {
 	}
 	v.n = frameN(ctx)
 	v.popups = popups(ctx)
-	v.popups.track(v.st, v.st.open, v.shut)
+	v.popups.track(ctx, v.st, v.id, v.st.open, v.shut)
 	return ""
 }
 func (v *comboboxView) shut() { v.st.open = false; v.st.moved = false }

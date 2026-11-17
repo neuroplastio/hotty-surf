@@ -92,7 +92,7 @@ func (v *popoverView) start(ctx context.Context) string {
 	checkEnum(ctx, "Popover", "Align", v.p.Align, popoverAligns)
 	v.n = frameN(ctx)
 	v.popups = popups(ctx)
-	v.popups.track(v.st, v.st.open, v.shut)
+	v.popups.track(ctx, v.st, v.id, v.st.open, v.shut)
 	return ""
 }
 

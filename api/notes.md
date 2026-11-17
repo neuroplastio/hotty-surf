@@ -2603,3 +2603,67 @@ elements its layout drew, so an empty `<span tabindex="0">` (plx's
 invisible stops) is skipped, and Tab from the query blurs. A browser
 and the hosts tab to it. plx draws its cells palette itself, so it
 doesn't block plx now; it goes to cells' owner.
+
+## plx: which overlays are open (the menu lease, a pack of its own)
+
+plx's SDK hands the keyboard to a tool while the tool's menu is open (its
+"menu lease"). It does so today for its own overlay menu. It needs the
+same for the kit's popups, which only the kit opens and closes: a
+ContextMenu's press, a Select's trigger, Escape, a click outside, one
+popup closing another.
+
+**Shape: `func (s *Surface) Overlays() []string`,** a query like Focused and
+Chars. It gives the ids of the kit's overlays open in the last frame
+rendered (by any call that renders: Document, Update, Event, Key, Focus,
+Blur): the modals outermost first (`rt.Frame.Modal`, as the runtime
+already keeps them), then the one popup.
+
+Inside:
+- A kit popup's render already joins the surface's popup record (one open
+  at a time). The record now keeps the open popup's ID and the frame that
+  drew it.
+- Once the view has rendered, the frame lists the popup the record holds,
+  if this frame drew it (`rt.Frame.Popups`). A popup dropped from the view
+  while open is open nowhere.
+- No new state for modals: Dialog, AlertDialog, Drawer and CommandDialog
+  already list themselves.
+
+Tests:
+- `ui.TestSurfaceOverlays`: each kind, one closing another, Escape, a click
+  outside, a popup dropped from the view, a menu in a dialog.
+- `TestSurfaceOverlaysFirstDocument`: a popover its State opened.
+- `cells.TestOverlaysInCells`.
+- `ExampleSurface_Overlays`: the driver's read between Update and its write.
+
+Open questions, with a lean:
+1. **A query, not an event (lean).** plx's frame loop collects a frame's
+   hotty commands in its own buffer, sends the lease (a Call, acknowledged
+   before the menu reaches the host), then writes. A query read after
+   Update is therefore early enough. A hook run between render and write
+   (`OnOpen(func([]string))`) would serve a driver that writes straight
+   to the pty, but it would be a second name for the same fact, and a
+   callback the Surface runs mid-send. Add one only if a driver needs it.
+2. **Modals included (lean).** Command's list is a CommandDialog, which
+   is a modal, and plx's SDK can't see a tool's Open props. If the kit's
+   modal should not take the lease, `Open` could keep popups only, and
+   modals would wait for an ask of their own.
+3. **What isn't an overlay here:**
+   - `ui.Menu`: the app's own panel, which the app shows itself.
+   - Tooltip: takes no keys.
+   - Toaster: not modal, and takes the keyboard only as any element
+     does.
+   - A native `<select>`'s open list: the host's, which never reaches
+     the program. Not to be added.
+4. **Ids are the components' IDs** (their defaults when ID is ""), the
+   names the app gave, not element ids.
+5. **The name.** `Open` was plx's ask.
+
+As reviewed (p-796, review-open.md):
+- **The name is `Overlays`.** On Surface, a bare verb acts (Focus, Blur,
+  Update, Do), and a query is a noun or a participle (Focused, Chars,
+  Name, Pending), so `Open()` read as "open it".
+- **The doc** names every call that renders. It adds that an overlay
+  opened in its State but not rendered is not open. It drops "gives the
+  keyboard to the surface", which is the driver's policy.
+- **Q1–Q4 as leaned.** plx's port: `if len(s.Overlays()) > 0 { name =
+  s.Name() }`.
