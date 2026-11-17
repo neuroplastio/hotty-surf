@@ -36,6 +36,11 @@ fixed before the audit is complete.
   (`TestVariantOrder`); groups and components stay sorted by name, as the
   category groups have no spike order.
 
+- [ ] The story list goes blank when a filter shortens it while it is
+  scrolled down: Blitz keeps the old scroll offset (gap 11 in
+  `vault/knowledge/blitz-gaps.md`), for hotty-blitz. Found by the full
+  side-by-side run (below).
+
 ## In progress
 
 - [x] The host drew a native select arrow despite Basecoat `appearance:none`,

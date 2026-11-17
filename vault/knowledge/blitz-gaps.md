@@ -890,3 +890,12 @@ probe. The reporter is rerunning the original comparison on 0.8.7.
 Rechecked with 0.8.8's `hotty render` (2026-11-17): a select with
 `appearance: none` draws no ▾, and a native one keeps it. The kit's CSS
 was never changed for it.
+
+## A scroll box keeps an offset past its shrunk content (2026-11-17)
+
+| Gap | Where it shows in the kit | How bad |
+| --- | --- | --- |
+| 11. When a scrolling element's content shrinks (a delta removes rows), its scroll offset stays where it was, past the new end, so the box shows nothing. A browser clamps the offset to the new scroll range at layout. blitz-dom clamps a text input's own offset (`clamp_scroll_offset`, `layout/mod.rs`) and nothing else; no hotty-blitz mod does it for elements. | The book's story list (NavList): scrolled to its end (End), then a filter that keeps a few stories at the top leaves the list blank, with the filter and the first match selected (`scroll-end.png`, `scroll-filtered.png` in the audit captures, hottyterm on 0.8.7). Any list a delta shortens while scrolled | Functional: the matches can't be seen until the list is scrolled |
+
+For hotty-blitz: clamp each element's scroll offset to its scrollable
+overflow after layout, as CSSOM View does. The kit keeps its markup.
