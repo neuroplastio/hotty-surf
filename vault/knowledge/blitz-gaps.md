@@ -881,12 +881,12 @@ CSS px cell metrics measured the flex row at 68 CSS px at both 1× and 2×:
 with the same host stylesheet. The tooltip pseudo-element was present in the
 probe. The reporter is rerunning the original comparison on 0.8.7.
 
-## A styled select keeps Blitz's arrow (2026-11-17)
+## A styled select kept Blitz's arrow (2026-11-17): fixed in 0.8.8
 
-| Gap | Where it shows in the kit | How bad |
+| Gap | Where it showed in the kit | How bad |
 | --- | --- | --- |
-| 10. A closed `<select>` with `appearance: none` still draws Blitz's ▾. The UA sheet's `select:not([multiple])::after { content: "\25BE" }` (blitz-dom `assets/default.css`, from fork patch 0023) has no way to tell native appearance from none, so the author's background chevron and Blitz's glyph both draw. Chromium drops its arrow with the native appearance. | Basecoat's select, as in the book's Props (`alert-props-arrow-fixed.png` in the audit captures, hotty-blitz 0.8.7) | Cosmetic: two arrows |
+| 10. **Fixed in hotty-blitz 0.8.8** (v0.8.8, mod 0102 "select-appearance-none"). Up to 0.8.7 a closed `<select>` with `appearance: none` still drew Blitz's ▾: the UA sheet's `select:not([multiple])::after { content: "\25BE" }` (blitz-dom `assets/default.css`, from fork patch 0023) applied whatever the appearance, so the author's background chevron and Blitz's glyph both drew. | Basecoat's select, as in the book's Props (`alert-props-arrow-fixed.png` in the audit captures, hottyterm on 0.8.7) | Was cosmetic: two arrows |
 
-The fix is in hotty-blitz: draw the arrow only for a select with native
-appearance (in layout, as `construct.rs` does for check boxes, or a UA
-rule the engine can scope), not in the kit's CSS.
+Rechecked with 0.8.8's `hotty render` (2026-11-17): a select with
+`appearance: none` draws no ▾, and a native one keeps it. The kit's CSS
+was never changed for it.
