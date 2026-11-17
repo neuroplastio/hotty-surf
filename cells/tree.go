@@ -23,6 +23,7 @@ func (c *Screen) load(name, doc string) error {
 	for _, n := range nodes {
 		body.AppendChild(n)
 	}
+	c.cutDrag()
 	c.name, c.body = name, body
 	c.fields = map[*html.Node]*field{}
 	c.focused, c.remembered = nil, nil

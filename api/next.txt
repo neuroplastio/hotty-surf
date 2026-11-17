@@ -38,14 +38,20 @@ pkg neuroplast.io/hotty-surf/cells, const Reverse Attr = 16
 pkg neuroplast.io/hotty-surf/cells, const Strike Attr = 32
 pkg neuroplast.io/hotty-surf/cells, const Underline Attr = 8
 pkg neuroplast.io/hotty-surf/cells, func New(int, int, func(hotty.Event)) *Screen
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) At(int, int) (string, hotty.Area)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cells() [][]Cell
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cursor() (int, int, bool)
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cut() string
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Focus(bool)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Key(string) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Lines() []string
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Move(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Paste(string) bool
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Press(int, int, int, int) bool
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Release(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Resize(int, int)
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Selection() string
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Write([]byte) (int, error)
 pkg neuroplast.io/hotty-surf/cells, type Attr uint8
