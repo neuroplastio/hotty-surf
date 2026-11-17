@@ -1,0 +1,57 @@
+package ui
+
+import "neuroplast.io/hotty-surf"
+
+// ContextMenu's markup: a DropdownMenu's popover and items
+// (dropdown-menu.html.jinja's, Basecoat 1.1.0, MIT; NOTICE.md) in an area
+// of the app's, in place of its button.
+
+templ contextMenu(v *contextView, area templ.Component) {
+	{{ v.join(ctx) }}
+	{{ v.m.check(ctx) }}
+	<div class={ join("dropdown-menu context-menu", v.p.Class) } data-dropdown-menu-initialized="true" { v.areaAttrs(ctx)... }>
+		if area != nil {
+			@area
+		}
+		<div
+			id={ v.id + "-popover" }
+			data-popover
+			aria-hidden={ bstr(!v.st.menu.open) }
+			if v.st.menu.open && v.st.placed {
+				data-at
+				style={ v.placement() }
+			}
+		>
+			<div
+				role="menu"
+				tabindex="0"
+				aria-label="Context menu"
+				if o := v.m.activeOpt(); o >= 0 {
+					aria-activedescendant={ v.m.opts[o].id }
+				}
+				{ v.menuAttrs(ctx)... }
+			>
+				for _, e := range v.m.entries {
+					switch e.kind {
+						case entryOpt:
+							@menuItem(v.m, e.opt)
+						case entryGroup:
+							<div role="group" aria-labelledby={ e.labelID }>
+								<div role="heading" id={ e.labelID }>{ e.group }</div>
+								for _, o := range e.opts {
+									@menuItem(v.m, o)
+								}
+							</div>
+						case entrySeparator:
+							<hr role="separator"/>
+					}
+				}
+			</div>
+		</div>
+		if v.into() {
+			{{ surf.Autofocus(ctx, v.id+"-menu") }}
+		} else if b := v.backTo(); b != "" {
+			{{ surf.Autofocus(ctx, b) }}
+		}
+	</div>
+}
