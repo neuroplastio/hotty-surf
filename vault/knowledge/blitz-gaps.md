@@ -927,3 +927,18 @@ For hotty-blitz: find which node keeps its old measure (likely the
 inline box whose text node a delta replaced isn't marked for a layout
 of its own; see mod 0041 for the transform and overflow side). The kit
 keeps its markup.
+
+## Toasts don't draw on hottyterm 0.8 (2026-11-17)
+
+**Closed by hotty-blitz 0.8.9** (the same day), which fixes animations
+stalling and frames not coming due. Found by the toast bar's live check
+(l2-toast) on a stale host: hottyterm on hotty-blitz v0.8.0 (22ee077).
+There, with `run` serving a full-height surface and two toasts shown at
+start, neither toast drew for two seconds, then both showed as a partial
+paint between two deltas and went again: Basecoat's `toast-up` enter
+animation on `.toaster .toast` (first keyframe `opacity: 0`) never
+finished. On hottyterm with hotty-blitz 0.8.9 (caps Version "0.8.9") the
+toasts enter and stay, and the bar runs as written (css-subset.md). Any
+host on hotty-blitz 0.8.8 or earlier still shows it. The gate can't: it
+renders still documents. The probe and its shots are local cache
+artifacts.

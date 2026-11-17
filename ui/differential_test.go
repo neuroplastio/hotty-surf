@@ -518,11 +518,11 @@ func toastSubject(t *testing.T, args map[string]any) subject {
 		ts.Description, _ = m["description"].(string)
 		if action, ok := m["action"].(map[string]any); ok {
 			label, _ := action["label"].(string)
-			ts.Action = &ui.ToastAction{Label: label}
+			ts.Actions = append(ts.Actions, ui.ToastAction{Label: label})
 		}
 		if cancel, ok := m["cancel"].(map[string]any); ok {
 			label, _ := cancel["label"].(string)
-			ts.Cancel = &ui.ToastAction{Label: label}
+			ts.Actions = append(ts.Actions, ui.ToastAction{Label: label, Variant: ui.Outline})
 		}
 		if d, ok := m["duration"].(float64); ok && d < 0 {
 			ts.Duration = -1
@@ -530,7 +530,7 @@ func toastSubject(t *testing.T, args map[string]any) subject {
 		st.Show(ts)
 	}
 	return subject{
-		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Toaster(&st).Render(ctx, w) }),
+		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Toaster(&st, ui.ToasterProps{}).Render(ctx, w) }),
 		events: func() []map[string]any { return nil },
 	}
 }
