@@ -562,6 +562,12 @@ func (h *host) stop() {
 // the size run placed it at (shotOf).
 func (h *host) shot(ctx context.Context, key, surface string) (devwire.Doc, error) {
 	if !h.running() {
+		h.mu.Lock()
+		started := h.app != nil
+		h.mu.Unlock()
+		if !started {
+			return devwire.Doc{}, errors.New("no app is running yet: its first build is under way, or failed (ctl reload says which)")
+		}
 		return devwire.Doc{}, errors.New("no app is running")
 	}
 	return shotOf(ctx, h.r, key, surface)

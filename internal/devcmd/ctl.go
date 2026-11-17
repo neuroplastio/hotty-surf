@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/tinylib/msgp/msgp"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/devwire"
 	"neuroplast.io/hotty-surf/lint"
@@ -331,7 +332,7 @@ func writeShot(who string, doc devwire.Doc, html bool, path string, out, errOut 
 	if bin == "" {
 		var err error
 		if bin, err = exec.LookPath("hotty"); err != nil {
-			fmt.Fprintf(errOut, "%s: no hotty to render with (hotty-blitz's hotty, on PATH or in $HOTTY_SURF_HOTTY); the document is %s\n", who, page)
+			fmt.Fprintf(errOut, "%s: no hotty to render with: a shot is drawn by hotty-blitz's hotty %s (github.com/neuroplastio/hotty-blitz, whose README says how to build it), on PATH or in $HOTTY_SURF_HOTTY; the document is %s\n", who, hotty.Version, page)
 			return 1
 		}
 	}

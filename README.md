@@ -75,6 +75,25 @@ hotty-surf build -wasm hello   # a static page: TinyGo's wasm in xterm.js
 `run` draws the app in character cells where the terminal is no hotty
 host. `hotty-surf help` lists every command, and each takes `-h`.
 
+### What it needs
+
+| Tool | Version | For |
+| --- | --- | --- |
+| Go | 1.26 | everything |
+| [templ](https://templ.guide) | 0.3.1118 | a view's Go from its `.templ` (`templ generate`) |
+| [msgp](https://github.com/tinylib/msgp) | 1.6.5 | the kept state's codec (`go generate`) |
+| [TinyGo](https://tinygo.org) | 0.43.0 | `build -wasm` (`$HOTTY_SURF_TINYGO` or PATH) |
+| hotty-blitz's `hotty` | 0.8 | `shot` and `ctl shot` render with it (`$HOTTY_SURF_HOTTY` or PATH); build it from [hotty-blitz](https://github.com/neuroplastio/hotty-blitz) |
+
+`run` and `serve` generate templ's and msgp's code themselves as you save;
+`go test` and `go build` read what was generated last, so after an edit
+made without them, run `templ generate` and `go generate`.
+
+v0.7 isn't published yet: `go get neuroplast.io/hotty-surf` gets v0.6.3,
+an older API. Until it is, install `hotty-surf` from a checkout
+(`go install ./cmd/hotty-surf`); `hotty-surf new` then writes an app whose
+go.mod replaces hotty-surf with that checkout.
+
 A program that owns its terminal shows a surface in part of its screen
 with `surftea` (Bubble Tea,
 [`surftea/examples/files`](surftea/examples/files)) or with `surf`,
