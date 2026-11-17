@@ -84,3 +84,78 @@ func TestTooltipEdges(t *testing.T) {
 		t.Errorf("the tooltip's cell is %q on %q", cell.Fg, cell.Bg)
 	}
 }
+
+// Dirty says when the Screen changed by itself, with no Write: a
+// tooltip showing or going on a Move, and not a move within the same
+// element; Lines and Cells both take what they draw as drawn.
+func TestDirty(t *testing.T) {
+	c := tipScreen(t, `<p>plain</p><span data-tooltip="a hint">tip me</span>`, 30, 4)
+	if !c.Dirty() {
+		t.Fatal("not dirty before the first draw")
+	}
+	c.Lines()
+	steps := []struct {
+		do    func()
+		dirty bool
+		what  string
+	}{
+		{func() { c.Move(1, 0, 0) }, false, "a move over no tooltip"},
+		{func() { c.Move(1, 1, 0) }, true, "the tooltip shows"},
+		{func() { c.Lines() }, false, "drawn by Lines"},
+		{func() {
+			lay := c.lay
+			c.Move(2, 1, 0)
+			if c.lay != lay {
+				t.Error("a move within the element laid the Screen out again")
+			}
+		}, false, "a move within the element"},
+		{func() { c.Move(25, 3, 0) }, true, "the tooltip goes"},
+		{func() { c.Cells() }, false, "drawn by Cells"},
+		{func() { c.Write([]byte(hotty.Doc("t", `<p>new</p>`))) }, true, "a new document"},
+		{func() { c.Lines() }, false, "drawn"},
+		{func() { c.Resize(30, 4) }, false, "a resize to the same size draws the same"},
+		{func() { c.Resize(20, 4) }, true, "a resize"},
+	}
+	for _, s := range steps {
+		s.do()
+		if got := c.Dirty(); got != s.dirty {
+			t.Errorf("%s: Dirty %v, want %v", s.what, got, s.dirty)
+		}
+	}
+}
+
+// A change that shows only in Cells' roles is dirty too: a colour class,
+// the selected band moving to another row (a list without the keyboard);
+// an attribute that draws nothing is not (p-801's probes).
+func TestDirtyRoles(t *testing.T) {
+	for _, tc := range []struct {
+		name, doc string
+		ops       []hotty.Op
+		dirty     bool
+	}{
+		{"a colour class", `<p><span id="s" class="text-primary">word</span></p>`,
+			[]hotty.Op{hotty.OpAttr("s", "class", "text-destructive")}, true},
+		{"the selection moves", `<ul role="listbox"><li id="a" role="option" aria-selected="true">Alpha</li><li id="b" role="option">Beta</li></ul>`,
+			[]hotty.Op{hotty.OpAttr("a", "aria-selected", "false"), hotty.OpAttr("b", "aria-selected", "true")}, true},
+		{"a data attribute", `<p><span id="s" class="text-primary">word</span></p>`,
+			[]hotty.Op{hotty.OpAttr("s", "data-x", "1")}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := tipScreen(t, tc.doc, 30, 4)
+			lines, cells := fmt.Sprint(c.Lines()), fmt.Sprint(c.Cells())
+			if _, err := c.Write([]byte(hotty.Delta("t", tc.ops))); err != nil {
+				t.Fatal(err)
+			}
+			if got := c.Dirty(); got != tc.dirty {
+				t.Errorf("Dirty %v, want %v", got, tc.dirty)
+			}
+			sameLines, sameCells := fmt.Sprint(c.Lines()) == lines, fmt.Sprint(c.Cells()) == cells
+			if tc.dirty && (!sameLines || sameCells) {
+				t.Errorf("not a roles-only change: Lines same %v, Cells same %v", sameLines, sameCells)
+			}
+			if c.Dirty() {
+				t.Error("dirty after drawing")
+			}
+		})
+	}
+}

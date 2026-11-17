@@ -22,6 +22,7 @@ package cells
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -57,6 +58,11 @@ type Screen struct {
 	drag     *dragging
 	hoverID  string
 	hoverOut bool
+	// shown is what Lines or Cells last drew (Dirty): its cells, and
+	// the layout and scroll they came from.
+	shown       snapshot
+	shownLay    *layout
+	shownScroll int
 	// tip is the element with a tooltip (data-tooltip) the pointer is
 	// over, whose tooltip the layout draws beside it (drawTip).
 	tip    *html.Node
@@ -255,7 +261,83 @@ func (c *Screen) Lines() []string {
 	for i := range out {
 		out[i] = l.cv.line(c.scroll+i, c.cols)
 	}
+	c.drew(l)
 	return out
+}
+
+// Dirty says whether Lines, or Cells, would now return other than what
+// either last returned: after a Write that changed the screen, a key or
+// a paste that edited a field, a press that moved the focus, a wheel that
+// scrolled, or by itself, as a tooltip shows or goes when the pointer
+// moves. A program asks it after whatever it hands the Screen and draws
+// where it says so, with no need to know which calls change what. It is
+// true before the first Lines or Cells. A call that changed nothing costs
+// nothing to ask about.
+func (c *Screen) Dirty() bool {
+	if c.shown.raw == nil {
+		return true
+	}
+	// Every change that can draw differently drops the layout (c.lay):
+	// the one drawn last, at the same scroll, draws the same.
+	if c.lay != nil && c.lay == c.shownLay && c.scroll == c.shownScroll {
+		return false
+	}
+	if !c.visible().same(c.shown) {
+		return true
+	}
+	// Laid out again, the same: what was drawn is this layout's.
+	c.shownLay, c.shownScroll = c.lay, c.scroll
+	return false
+}
+
+// drew records l, at the scroll, as what Lines or Cells drew last
+// (Dirty), copying its cells only where it isn't the one recorded.
+func (c *Screen) drew(l *layout) {
+	if c.shown.raw != nil && l == c.shownLay && c.scroll == c.shownScroll {
+		return
+	}
+	c.shown, c.shownLay, c.shownScroll = c.visible(), l, c.scroll
+}
+
+// visible is a copy of the cells Lines and Cells draw: the rows from
+// the scroll, as wide as the Screen.
+func (c *Screen) visible() snapshot {
+	l := c.layout()
+	raw := make([][]cell, c.rows)
+	for i := range raw {
+		row := make([]cell, c.cols)
+		if y := c.scroll + i; y >= 0 && y < len(l.cv.rows) {
+			copy(row, l.cv.rows[y])
+		}
+		raw[i] = row
+	}
+	return snapshot{raw: raw, cells: c.cellsOf(l)}
+}
+
+// snapshot is what Lines and Cells drew: the cells Lines draws from, and
+// Cells' grid, whose roles come from the elements' classes and
+// attributes as Cells is called.
+type snapshot struct {
+	raw   [][]cell
+	cells [][]Cell
+}
+
+// same says whether two snapshots draw the same in Lines and in Cells.
+func (a snapshot) same(b snapshot) bool {
+	if len(a.raw) != len(b.raw) || len(a.cells) != len(b.cells) {
+		return false
+	}
+	for i := range a.raw {
+		if !slices.Equal(a.raw[i], b.raw[i]) {
+			return false
+		}
+	}
+	for i := range a.cells {
+		if !slices.Equal(a.cells[i], b.cells[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // Cursor is where the focused field's caret is, from the top left, and
