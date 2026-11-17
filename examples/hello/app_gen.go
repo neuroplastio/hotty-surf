@@ -6,6 +6,12 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
+// Size limits for msgp deserialization
+const (
+	z0e79618flimitArrays = 1048576
+	z0e79618flimitMaps   = 4096
+)
+
 // DecodeMsg implements msgp.Decodable
 func (z *State) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
@@ -14,6 +20,10 @@ func (z *State) DecodeMsg(dc *msgp.Reader) (err error) {
 	zb0001, err = dc.ReadMapHeader()
 	if err != nil {
 		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z0e79618flimitMaps {
+		err = msgp.ErrLimitExceeded
 		return
 	}
 	for zb0001 > 0 {
