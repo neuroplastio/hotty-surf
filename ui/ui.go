@@ -36,9 +36,12 @@ const (
 )
 
 // Stylesheet is the kit's stylesheet: Basecoat's theme and components and
-// the Tailwind utilities the kit's own markup uses. An app's build adds the
-// classes the app uses to it; a surface that has no build of its own (a dev
-// tool's error surface, a host's dialog) uses it as it is.
+// the Tailwind utilities the kit's own markup uses, not all of Tailwind's.
+// A class an app uses that no stylesheet defines does nothing, so an app
+// defines its other classes in its own CSS, after this one (style/app.css
+// in an app hotty-surf new made), and lint's class rule names those it
+// doesn't. A surface with no CSS of its own (a dev tool's error surface, a
+// host's dialog) uses it as it is.
 func Stylesheet() string {
 	return kitCSS
 }
