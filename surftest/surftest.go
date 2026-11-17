@@ -14,6 +14,10 @@
 // alone for presence, :text(t) for an element whose whole text is t
 // (spaces normalised) and :text-start(t) for one whose text starts with t.
 //
+// A field's value and a check box's state are the host's, not attributes:
+// a value or checked in the markup is only where the field starts. Read
+// them with Rig.Value and Rig.Checked.
+//
 // What would go wrong silently in an app fails the test: two surf.On for
 // one id in a render, a ui component given a variant, size or side it
 // doesn't take.
@@ -215,7 +219,7 @@ func (r *Rig) Type(sel, text string) {
 // what they typed, or what the app set. The host's document doesn't show
 // it, as a field's value attribute is only where it starts. It fails the
 // test if sel matches no element, more than one, or one that isn't a
-// field.
+// field. A select's is its picked option's value.
 func (r *Rig) Value(sel string) string {
 	r.t.Helper()
 	n := r.One(sel)
@@ -262,7 +266,7 @@ func (r *Rig) Update() {
 // true doesn't say a handler ran, which the test reads in the document.
 // The test host's mod is ctrl: Key("ctrl+s") reaches a surf.Key handler as
 // "mod+s".
-func (r *Rig) Key(key string) bool {
+func (r *Rig) Key(key string) (taken bool) {
 	r.t.Helper()
 	r.taken = false
 	used := r.host.Key(key)
@@ -296,7 +300,11 @@ func (r *Rig) One(sel string) *html.Node {
 	r.t.Helper()
 	ns := r.Find(sel)
 	if len(ns) != 1 {
-		r.t.Fatalf("surftest: %q matches %d elements, not 1", sel, len(ns))
+		hint := ""
+		if len(ns) == 0 && (strings.Contains(sel, "[checked") || strings.Contains(sel, "[value")) {
+			hint = " (a field's value and a check box's state are the host's, not attributes: Rig.Value and Rig.Checked read them)"
+		}
+		r.t.Fatalf("surftest: %q matches %d elements, not 1%s", sel, len(ns), hint)
 	}
 	return ns[0]
 }

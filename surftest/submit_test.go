@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -90,5 +91,28 @@ func TestValueAndChecked(t *testing.T) {
 	r.Click("input#done")
 	if !r.Checked("input#done") || !done {
 		t.Errorf("Checked %v, the app's %v", r.Checked("input#done"), done)
+	}
+}
+
+type faults struct {
+	*testing.T
+	got []string
+}
+
+func (f *faults) Error(args ...any) { f.got = append(f.got, fmt.Sprint(args...)) }
+
+// A Submit on an element that isn't a form can never run: the test fails,
+// naming the element.
+func TestSubmitOnNoForm(t *testing.T) {
+	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		io.WriteString(w, "<div")
+		attrs(w, surf.On(ctx, "box", surf.Submit(func() {})))
+		_, err := io.WriteString(w, `><input name="title"></div>`)
+		return err
+	})
+	f := &faults{T: t}
+	surftest.Start(f, surf.New("t", page, ""))
+	if len(f.got) != 1 || !strings.Contains(f.got[0], "surf.Submit: the element box is a <div>, not a form") {
+		t.Fatalf("faults: %q", f.got)
 	}
 }

@@ -360,6 +360,19 @@ func runtimeID(id string) bool {
 	return true
 }
 
+// submits faults a Submit on an element that isn't a form: it can never
+// run.
+func (s *Surface) submits(f *rt.Frame) {
+	for id, h := range f.On {
+		if h.Submit == nil {
+			continue
+		}
+		if n := s.byID[id]; n != nil && n.DataAtom != atom.Form {
+			s.fault("surf.Submit: the element " + id + " is a <" + n.Data + ">, not a form: only a form submits (put its fields and its submit button in one)")
+		}
+	}
+}
+
 // maxFaults is as many faults as a surface holds: surftest drains them
 // after each act, and outside a test they would otherwise pile up, one
 // per render.

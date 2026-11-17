@@ -1290,3 +1290,37 @@ todo app, 2026-11-17) found two things no app could do.
   field starts. **`Rig.Value(sel) string`** and **`Rig.Checked(sel)
   bool`** read them, and fail the test on an element that isn't such a
   field.
+
+### As reviewed (p-767, 2026-11-17): all three, docs and examples changed
+
+The reviewer approved the three names and kept Rig.Key's meaning. Applied
+exactly:
+- **Submit's doc** is the review's, with its four points: a field outside a
+  form only commits on Enter; a submit button's own Click runs first, so the
+  action goes on the form alone; which buttons submit (none or
+  type="submit"; ui.Button with `Attrs: templ.Attributes{"type":
+  "submit"}`); and on an element that isn't a form it is a fault. **The
+  fault** is surf's: a render that puts a Submit on an element that isn't a
+  `<form>` records it, and surftest fails the test naming the element, as it
+  fails a duplicate `On`.
+- **surf.Key's sentence** is the review's: Enter commits the field and
+  submits its form, which the form's Submit hears.
+- **Value's doc** says a select's is its picked option's value.
+  **surftest's package doc** says a field's value and a box's state are the
+  host's, and a selector with `[checked` or `[value` that matches nothing
+  fails with that hint.
+- **Rig.Key's result is named** `taken`, as Surface.Key's and
+  cells.Screen.Key's are. The API file lists no result names, so the lock
+  doesn't move.
+- **`ExampleSubmit`**: a form with `surf.Submit(a.Add)`, a field with Input,
+  and a ui.Button of type submit with no `surf.On`. Its doc shows the
+  .templ and the test's lines; TestExampleSubmit drives it (Enter and the
+  button both add, and the field reads "" after).
+- **examples/hello and the scaffold** put their field and their button in a
+  form whose Submit acts. hello's name field and Wave button: Enter in the
+  name waves, and TestWave presses it. The scaffold had no field, so it
+  gains a step field ("Count: N", Add adds the step, 1 when it says none),
+  and its TestApp types a step and presses Enter. That puts the idiom in
+  the app `hotty-surf new` writes.
+- **The risk lean, a lint rule:** `button-type`, a raw `<button>` in a raw
+  `<form>` that doesn't say its type. The kit's buttons say theirs.

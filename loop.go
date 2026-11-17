@@ -45,6 +45,7 @@ func (s *Surface) document() (string, error) {
 	s.keep(t)
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
+	s.submits(f)
 	s.remember(t.root)
 	s.asked = f.Focus
 	if f.Focus != "" {
@@ -100,6 +101,7 @@ func (s *Surface) send() error {
 		s.keep(t)
 	}
 	s.frame = f
+	s.submits(f)
 	var cmds []string
 	if len(d.ops) > 0 {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))

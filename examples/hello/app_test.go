@@ -14,6 +14,9 @@ func TestWave(t *testing.T) {
 	r.Click("button:text(Wave)")
 	r.One("p:text(Waved 1 times.)")
 	r.One("h1:text(Hello, Ada!)")
+	// Enter in the name field submits its form, which waves too.
+	r.Key("enter")
+	r.One("p:text(Waved 2 times.)")
 }
 
 func TestLint(t *testing.T) {
