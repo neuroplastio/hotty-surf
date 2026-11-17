@@ -156,7 +156,7 @@ func cmd(ctx context.Context, args []string, out, errOut io.Writer) int {
 	case "serve":
 		return devcmd.Serve(ctx, args[1:], out, errOut)
 	case "classes":
-		fs := devcmd.Flags("classes", "classes")
+		fs := devcmd.Flags("classes", "classes\n\nThe classes the kit's stylesheet defines, one a line: what a class\nattribute can use. Any other goes in the app's style/app.css.")
 		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
 			return code
 		}

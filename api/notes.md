@@ -1367,3 +1367,33 @@ what changed, with no exported name:
    surftest says a fault once rather than at every render.
 
 Not ours: ui.Checkbox drawn as Blitz's native box is hotty-blitz's gap 6.
+
+### As verified (p-769, 2026-11-17)
+
+- **F1:** the class rule reads a string as classes only inside its own
+  `class={ … }` or `templ.Classes( … )`, which `classesAt` walks to its
+  close: a `title={ "Hello world" }` after one is no longer classes.
+- **F2:** the render fault follows HTML's name for a button. An image's
+  alt is text, and a `<label for>` it or a `<label>` around it names it.
+  Its message offers text (beside an icon, a `<span class="sr-only">`),
+  an aria-label or a `<label for>`, and says a ui.Select with nothing
+  chosen takes a Placeholder. SelectProps.Value's and
+  DropdownMenuProps.Trigger's docs say the same.
+- **L1–L3:** `classes -h` says what it lists. The list leaves out the
+  kit's own `kit-*` classes, which lint still accepts. The fault names
+  where to find a button with no id of its own: the nearest app id ("in
+  #todo-list"), else its first class.
+
+### What the second trial left
+
+- **Open:** Autofocus's templ form (`{{ surf.Autofocus(ctx, id) }}`) in its
+  doc, and the scaffold's field autofocused.
+- **Open:** One's failure listing the nearest candidates' texts.
+- **Open:** `help` saying that under serve a text save is a Go reload (the
+  page runs Go's wasm, which reads no strings file).
+- **Open:** the served page's `<title>`, which is "hotty-surf", not the
+  app's.
+- **Open:** cells draws no gap between a check box and its label.
+- **Open:** `shot -h` saying it draws the starting state.
+- **Not ours:** `hotty version`, which is hotty-blitz's; ui.Checkbox drawn
+  as Blitz's native box, hotty-blitz's gap 6.

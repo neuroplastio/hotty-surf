@@ -55,6 +55,8 @@ func TestRules(t *testing.T) {
 		{"a button in a form", "page.templ", "<form>\n\t<input name=\"t\">\n\t<button { surf.On(ctx, \"x\")... }>Cancel</button>\n</form>", "3:2:button-type"},
 		{"a button with a type", "page.templ", `<form><button type="button">Cancel</button><button type="submit">Add</button></form>`, ""},
 		{"a button outside a form", "page.templ", `<div><button>Go</button></div>`, ""},
+		{"a string after a class expression", "page.templ", `<div class={ "p-2" } title={ "Hello world" }></div>`, ""},
+		{"an aria-label after a KV", "page.templ", `<span class={ templ.KV("text-sm", a.On) } aria-label={ "Close panel" }></span>`, ""},
 		{"a button after a form", "page.templ", "<form></form>\n<button>Go</button>", ""},
 		{"an icon-only button", "page.templ", "<button type=\"button\">\n\t@ui.Icon(\"x\", \"\")\n</button>", "1:1:button-label"},
 		{"an icon button with a label", "page.templ", "<button type=\"button\" aria-label=\"Close\">@ui.Icon(\"x\", \"\")</button>", ""},

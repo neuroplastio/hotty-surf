@@ -244,15 +244,25 @@ func classesAt(prefix string) bool {
 	if kvRe.MatchString(prefix) || classFldRe.MatchString(prefix) {
 		return true
 	}
-	open := func(start, opening, closing string) bool {
+	open := func(start string, opening, closing byte) bool {
 		i := strings.LastIndex(prefix, start)
 		if i < 0 {
 			return false
 		}
-		rest := prefix[i+len(start):]
-		return strings.Count(rest, opening)+1 > strings.Count(rest, closing)
+		depth := 1
+		for _, c := range []byte(prefix[i+len(start):]) {
+			switch c {
+			case opening:
+				depth++
+			case closing:
+				if depth--; depth == 0 {
+					return false // it closed before the string
+				}
+			}
+		}
+		return true
 	}
-	return open("class={", "{", "}") || open("templ.Classes(", "(", ")")
+	return open("class={", '{', '}') || open("templ.Classes(", '(', ')')
 }
 
 // styled says whether a literal can hold a colour: a Go string, or the

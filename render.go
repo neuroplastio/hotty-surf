@@ -373,25 +373,51 @@ func (s *Surface) submits(f *rt.Frame) {
 	}
 }
 
-// unlabelled faults a button with no text and no label (aria-label,
-// aria-labelledby or title), such as one holding only an icon: the cells
-// fallback draws it as "[ · ]", and a screen reader has nothing to say.
-func (s *Surface) unlabelled(n *html.Node) {
-	if n.Type == html.ElementNode && n.DataAtom == atom.Button {
-		if !hasLabel(n) && strings.TrimSpace(textOf(n)) == "" {
-			id := ""
-			for _, a := range n.Attr {
-				if a.Key == "id" {
-					id = a.Val
-				}
-			}
-			s.fault("a button with no text and no label (#" + id + "): give it an aria-label; the cells fallback and a screen reader show a button by its text or its label")
+// unlabelled faults a button with no name, as HTML names one: no text (an
+// image's alt counts), no aria-label, aria-labelledby or title, and no
+// <label> for it or around it. The cells fallback draws such a button as
+// "[ · ]", and a screen reader has nothing to say.
+func (s *Surface) unlabelled(root *html.Node) {
+	named := map[string]bool{}
+	var labels func(n *html.Node)
+	labels = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.DataAtom == atom.Label && attr(n, "for") != "" {
+			named[attr(n, "for")] = true
 		}
-		return
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			labels(c)
+		}
 	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		s.unlabelled(c)
+	labels(root)
+	// near is where the author finds the button: the nearest app id.
+	var walk func(n *html.Node, inLabel bool, near string)
+	walk = func(n *html.Node, inLabel bool, near string) {
+		if n.Type == html.ElementNode {
+			if id := attr(n, "id"); id != "" && !runtimeID(id) {
+				near = "#" + id
+			}
+			switch n.DataAtom {
+			case atom.Label:
+				inLabel = true
+			case atom.Button:
+				if !inLabel && !named[attr(n, "id")] && !hasLabel(n) && strings.TrimSpace(textOf(n)) == "" {
+					where := near
+					if id := attr(n, "id"); id == "" || runtimeID(id) {
+						where = "in " + near
+						if near == "" {
+							where = "class " + strings.Fields(attr(n, "class") + " none")[0]
+						}
+					}
+					s.fault("a button with no text and no label (" + where + "): give it text (an icon's beside a <span class=\"sr-only\">), an aria-label in its Attrs, or a <label for> it; a ui.Select with nothing chosen takes a Placeholder")
+				}
+				return
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c, inLabel, near)
+		}
 	}
+	walk(root, false, "")
 }
 
 func hasLabel(n *html.Node) bool {
@@ -410,6 +436,9 @@ func textOf(n *html.Node) string {
 	}
 	if n.Type == html.ElementNode && n.Data == "svg" {
 		return ""
+	}
+	if n.Type == html.ElementNode && n.DataAtom == atom.Img {
+		return attr(n, "alt")
 	}
 	var b strings.Builder
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

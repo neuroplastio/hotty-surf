@@ -17,7 +17,8 @@ type SelectProps struct {
 	ID    string
 	Items []SelectItem
 	// Value is the value of the item shown as chosen; "" is none, and the
-	// trigger shows Placeholder.
+	// trigger shows Placeholder. With neither, the trigger is blank, which
+	// is a fault: a Select with nothing chosen takes a Placeholder.
 	Value       string
 	Placeholder string
 	Disabled    bool
