@@ -39,16 +39,34 @@ type subject struct {
 
 // subjects make each component's subject from a case's macro arguments.
 var subjects = map[string]func(t *testing.T, args map[string]any) subject{
-	"select":        selectSubject,
-	"dropdown-menu": menuSubject,
-	"tabs":          tabsSubject,
-	"toast":         toastSubject,
-	"dialog":        dialogSubject,
-	"popover":       popoverSubject,
-	"command":       commandSubject,
-	"combobox":      comboboxSubject,
-	"drawer":        drawerSubject,
-	"alert-dialog":  alertDialogSubject,
+	"select":         selectSubject,
+	"dropdown-menu":  menuSubject,
+	"dropdown-check": menuCheckSubject,
+	"tabs":           tabsSubject,
+	"toast":          toastSubject,
+	"dialog":         dialogSubject,
+	"popover":        popoverSubject,
+	"command":        commandSubject,
+	"combobox":       comboboxSubject,
+	"drawer":         drawerSubject,
+	"alert-dialog":   alertDialogSubject,
+}
+
+func menuCheckSubject(_ *testing.T, _ map[string]any) subject {
+	p := ui.DropdownMenuProps{ID: "check", Trigger: templ.Raw("Choices"), Items: []ui.MenuItem{
+		{Label: "Status", Role: "menuitemcheckbox"},
+		{Label: "Light", Group: "Theme", Role: "menuitemradio", Checked: true},
+		{Label: "Dark", Group: "Theme", Role: "menuitemradio"},
+	}}
+	var heard []map[string]any
+	for i := range p.Items {
+		i := i
+		p.Items[i].OnCheckedChange = func(v bool) { p.Items[i].Checked = v }
+		id := []string{"check-items-1", "check-items-3-1", "check-items-3-2"}[i]
+		p.Items[i].OnSelect = func() { heard = append(heard, map[string]any{"item": id}) }
+	}
+	var st ui.DropdownMenuState
+	return subject{view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.DropdownMenu(&st, p).Render(ctx, w) }), events: func() []map[string]any { h := heard; heard = nil; return h }}
 }
 
 func alertDialogSubject(_ *testing.T, _ map[string]any) subject {

@@ -44,6 +44,14 @@ type MenuItem struct {
 	Keywords string
 	Variant  Variant // Destructive, or Primary
 	Disabled bool
+	// Role is "" or "menuitem" for an action, "menuitemcheckbox" for a
+	// toggle, or "menuitemradio" for a choice. Command ignores it.
+	Role string
+	// Checked and OnCheckedChange control a checkbox or radio item. Radio
+	// items in the same rendered group are exclusive; selecting one calls
+	// the changed items' callbacks. Command ignores these fields.
+	Checked         bool
+	OnCheckedChange func(bool)
 	// OnSelect runs when the user chooses the item; the menu closes.
 	OnSelect func()
 }
@@ -155,6 +163,7 @@ func (v *menuView) check(ctx context.Context) string {
 	}
 	for _, it := range v.p.Items {
 		checkVariant(ctx, "MenuItem", it.Variant, menuItemVariants)
+		checkEnum(ctx, "MenuItem", "Role", it.Role, []string{"", "menuitem", "menuitemcheckbox", "menuitemradio"})
 	}
 	return ""
 }
@@ -222,6 +231,14 @@ func (v *menuView) choose(o int) {
 	if it.Disabled {
 		return
 	}
+	switch it.Role {
+	case "menuitemcheckbox":
+		if it.OnCheckedChange != nil {
+			it.OnCheckedChange(!it.Checked)
+		}
+	case "menuitemradio":
+		v.checkRadio(o)
+	}
 	if it.OnSelect != nil {
 		it.OnSelect()
 	}
@@ -229,6 +246,32 @@ func (v *menuView) choose(o int) {
 	// As a Select's option: the click blurred the surface, and the blur
 	// closed the menu before the click came.
 	v.ask()
+}
+
+// checkRadio follows dropdown-menu.js's nearest group, or the whole menu
+// for an ungrouped radio; disabled radios are left alone.
+func (v *menuView) checkRadio(chosen int) {
+	indices := make([]int, 0, len(v.opts))
+	for _, e := range v.entries {
+		if e.kind == entryGroup && slices.Contains(e.opts, chosen) {
+			indices = e.opts
+			break
+		}
+	}
+	if len(indices) == 0 {
+		for i := range v.opts {
+			indices = append(indices, i)
+		}
+	}
+	for _, i := range indices {
+		it := v.item(i)
+		if it.Role != "menuitemradio" || it.Disabled || it.Checked == (i == chosen) {
+			continue
+		}
+		if it.OnCheckedChange != nil {
+			it.OnCheckedChange(i == chosen)
+		}
+	}
 }
 
 // ask is trigger.focus(), from a handler of this view's frame: for the

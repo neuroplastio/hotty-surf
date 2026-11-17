@@ -45,7 +45,7 @@ component values and applies the changes its callbacks report.
 | Command dialog | Command's keys; Escape closes the dialog and choosing an item also closes it. |
 | Dialog | Escape closes; Tab and Shift+Tab cycle its controls. On close, focus returns to the opener where available. |
 | Drawer | As Dialog: focus stays inside, Tab wraps, and Escape requests a close. The closing transition retains the modal until it finishes. |
-| Dropdown menu | Enter or Space opens the trigger; Down opens at the first enabled item and Up at the last. In the open menu, Up and Down move, Home and End go to the ends, Enter or Space chooses, and Escape closes. |
+| Dropdown menu | Enter or Space opens the trigger; Down opens at the first enabled item and Up at the last. In the open menu, Up and Down move, Home and End go to the ends, Enter or Space chooses, and Escape closes. Choosing a checkbox toggles it; choosing a radio selects it within its group. |
 | Empty | None of its own. |
 | Field, field set and field separator | None of their own; their controls have their own keys. |
 | Form | No separate kit component; its fields and buttons determine submission. |

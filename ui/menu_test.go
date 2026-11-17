@@ -245,3 +245,30 @@ func TestMenuMadeOnce(t *testing.T) {
 		t.Errorf("opened by its State: %q highlighted, want the first item", got)
 	}
 }
+
+func TestMenuCheckboxAndRadio(t *testing.T) {
+	var st ui.DropdownMenuState
+	checked, first, second := false, true, false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.DropdownMenu(&st, ui.DropdownMenuProps{ID: "menu", Trigger: templ.Raw("Choices"), Items: []ui.MenuItem{
+			{Label: "Enabled", Role: "menuitemcheckbox", Checked: checked, OnCheckedChange: func(v bool) { checked = v }},
+			{Label: "First", Group: "Mode", Role: "menuitemradio", Checked: first, OnCheckedChange: func(v bool) { first = v }},
+			{Label: "Second", Group: "Mode", Role: "menuitemradio", Checked: second, OnCheckedChange: func(v bool) { second = v }},
+		}}).Render(ctx, w)
+	})
+	r := start(t, view)
+	r.Click("#menu-trigger")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !checked {
+		t.Fatal("checkbox did not toggle")
+	}
+	r.One("[role=menuitemcheckbox][aria-checked=true]")
+	r.Click("#menu-trigger")
+	r.Key("end")
+	r.Key("enter")
+	if first || !second {
+		t.Fatalf("radio values: %v %v", first, second)
+	}
+	r.One("#menu-items-3-2[role=menuitemradio][aria-checked=true]")
+}

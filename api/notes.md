@@ -1075,6 +1075,16 @@ scrollbar classes and Avatar's image for the looks pass.
   separate multiple-select API is preferable. A Chromium differential
   covers keyboard selection and pointer toggling; the story runs in cells.
   Its initial Blitz/Chromium rendering differs in 0.21% of pixels.
+- **DropdownMenu checkbox and radio items: draft for review.** The spike's
+  MenuCheck and MenuRadio supply the indicator markup; dropdown-menu.js
+  supplies toggling and radio grouping. The draft extends the shared
+  MenuItem with Role, Checked and OnCheckedChange; Command ignores them.
+  Selecting a radio reports changes to the enabled radios in its nearest
+  rendered group, or the menu when ungrouped, as the script does. The
+  reviewer should decide this shared item shape and callbacks versus
+  separate checkbox and radio item types. Its initial story render differs
+  by 0.25% of pixels between Blitz and Chromium; a Chromium differential
+  exercises both roles.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup
