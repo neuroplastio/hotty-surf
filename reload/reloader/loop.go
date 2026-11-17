@@ -138,8 +138,8 @@ func (r *Reloader) run(ctx context.Context) error {
 		mtimes: map[string]time.Time{}, pending: map[string]bool{}, imports: map[string]string{},
 		live: map[string]generator.GeneratorOutput{}, gen: map[string]generator.GeneratorOutput{},
 		built: make(chan buildResult, 1),
-		tags: strings.Join(append([]string{"surfdev"}, r.tags...), ","),
-		env:  append(os.Environ(), r.env...)}
+		tags:  strings.Join(append([]string{"surfdev"}, r.tags...), ","),
+		env:   append(os.Environ(), r.env...)}
 	name, module, err := l.goList("-e", "-f", "{{.Name}}\n{{if .Module}}{{.Module.Dir}}{{end}}", ".")
 	if err != nil {
 		return fmt.Errorf("reloader: %s: %w", dir, err)
@@ -622,10 +622,10 @@ func (l *loop) apply() {
 	paths := slices.Sorted(maps.Keys(l.pending))
 	l.pending = map[string]bool{}
 	var (
-		errs                  []string
-		build, css            bool
-		text                  = map[string]generator.GeneratorOutput{}
-		later                 []func()
+		errs       []string
+		build, css bool
+		text       = map[string]generator.GeneratorOutput{}
+		later      []func()
 	)
 	changed := false
 	for _, f := range paths {
