@@ -80,6 +80,7 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 		c.dragTo(hotty.EventDrag, col, row, mods)
 	case c.down == nil:
 		c.hoverAt(col, row)
+		c.tipAt(col, row)
 	}
 	taken = c.held || !c.pressing && c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
 	c.flush()
@@ -345,4 +346,18 @@ func (c *Screen) hoverAt(col, row int) bool {
 	c.hoverOut, c.hoverID = false, id
 	c.emit(hotty.Event{Kind: hotty.EventHover, Target: id, Hover: &hotty.Hover{Col: col, Row: row}})
 	return true
+}
+
+// tipAt shows the tooltip of the element with one (data-tooltip) the
+// pointer is over at col, row, with no button down, as a host's :hover
+// does whether or not the surface hears hovers; off the Screen, or over
+// none, no tooltip.
+func (c *Screen) tipAt(col, row int) {
+	var tip *html.Node
+	if c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows {
+		tip = closest(c.hitAt(col, row), func(n *html.Node) bool { return attr(n, "data-tooltip") != "" })
+	}
+	if tip != c.tip {
+		c.tip, c.lay = tip, nil
+	}
 }

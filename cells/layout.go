@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"github.com/clipperhouse/displaywidth"
 	"strconv"
 	"strings"
 	"unicode"
@@ -112,6 +113,7 @@ func (c *Screen) layout() *layout {
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
 		l.drawOverlays()
+		l.drawTip()
 	}
 	if l.adjusted {
 		c.lay = nil
@@ -493,6 +495,61 @@ func (l *layout) drawOverlays() {
 			}
 		}
 		l.node(o.n, o.x, o.y, pw, o.in)
+	}
+}
+
+// drawTip draws the tooltip of the element the pointer is over
+// (data-tooltip, ui.Tooltip's), as a host shows it on hover: its text, a
+// cell in from each end, on one row beside the element, on its side
+// (data-side: above unless it says otherwise; the other side where the
+// screen has no room, as a browser flips one), over everything else, inside the screen and cut
+// with an ellipsis where the screen is narrower.
+func (l *layout) drawTip() {
+	c := l.c
+	n := c.tip
+	if n == nil || !c.attached(n) {
+		return
+	}
+	b, ok := l.boxes[n]
+	if !ok {
+		return
+	}
+	text := " " + strings.Join(strings.Fields(attr(n, "data-tooltip")), " ") + " "
+	if displaywidth.String(text) > c.cols {
+		text = displaywidth.TruncateString(text, c.cols, "…")
+	}
+	w := displaywidth.String(text)
+	above, below := b.y-1, b.y+b.h
+	x, y := b.x+(b.w-w)/2, above
+	switch attr(n, "data-side") {
+	case "bottom":
+		y = below
+	case "left", "inline-start":
+		x, y = b.x-w, b.y
+		if x < 0 {
+			x = b.x + b.w
+		}
+	case "right", "inline-end":
+		x, y = b.x+b.w, b.y
+		if x+w > c.cols && b.x-w >= 0 {
+			x = b.x - w
+		}
+	}
+	top, end := c.scroll, c.scroll+c.rows
+	switch {
+	case y < top:
+		y = below
+	case y >= end:
+		y = above
+	}
+	if y < top || y >= end {
+		return
+	}
+	x = max(0, min(x, c.cols-w))
+	g := displaywidth.StringGraphemes(text)
+	for g.Next() {
+		l.cv.put(x, y, g.Value(), g.Width(), lTip, n)
+		x += g.Width()
 	}
 }
 
