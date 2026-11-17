@@ -58,7 +58,7 @@ does for a few of its components. This is the subset (v0.7, L1 and L3).
 - **Rules**: `hr` and an empty `role=separator` are a row of `─`; a
   vertical one (`aria-orientation` or `data-orientation`) a `│`.
 - Not done: other margins, alignment of text, `position`, horizontal
-  overflow, colours.
+  overflow.
 
 ## Looks (SGR)
 
@@ -69,6 +69,55 @@ does for a few of its components. This is the subset (v0.7, L1 and L3).
 - **Italic**: `em`, `i`, `italic`. **Underline**: `a[href]`, `u`,
   `underline`, a text field's cells.
 - **Reverse**: the element that has the keyboard.
+
+## Colours (Cells)
+
+`Lines` draws attributes only. `Cells` gives each cell's colours as
+roles: the stylesheet's variable names, which the program paints (K28).
+The Screen never resolves a colour value.
+
+- **A role** is a variable's name without the dashes (`primary`,
+  `muted-foreground`, an app's `plx-warn`, the host's `hotty-ansi-3`),
+  and may carry Tailwind's opacity as `/` and a whole percent 0–100
+  (`destructive/10`). An opacity in another form (`/[.5]`) is left off.
+  `""` is the terminal's own colour.
+- **Read from**: `text-<token>` and `bg-<token>` of the kit's variables
+  (`foreground`, `background`, `primary`, `secondary`, `muted`, `accent`,
+  `destructive`, `card`, `popover`, `border`, `input`, `ring`,
+  `chart-1`…`5`, `sidebar-*`, each with its `-foreground`);
+  `text-[var(--x)]`, `bg-[var(--x)]` and v4's `text-(--x)`, `bg-(--x)`;
+  inline `color`, `fill`, `stroke`, `--chart-indicator-color` (text) and
+  `background`, `background-color` (fill) when they are a `var()`. A
+  literal colour (`red`, a hex, `text-red-500`) is not read.
+- **Order**: the kit's component, then its classes, then its inline
+  style, each over the one before. Text inherits its nearest colour; a
+  fill covers its element's cells, blank ones too, and what it holds.
+- **The scheme**: `dark:` classes apply under the nearest `.dark` (the
+  root's, as the kit and plx set it), not under `.light` or neither.
+  Other variants aren't read.
+- **Roles the Screen draws itself**: muted text, a placeholder, a chart's
+  labels and values, a progress bar's track: `muted-foreground` (Dim in
+  Lines, not in Cells). `hr` and a table head's rule: `border`. A text
+  colour of an element's own takes it out of the muted text around it.
+- **Attributes**: as Lines, and Strike (`s`, `del`, `strike`,
+  `line-through`), which Lines doesn't draw. The focused element is
+  Reverse and keeps its roles.
+
+| the kit's component (Basecoat's vega.css) | Fg | Bg |
+| --- | --- | --- |
+| `.btn`, `.badge` (primary) | `primary-foreground` | `primary` |
+| `data-variant=secondary` | `secondary-foreground` | `secondary` |
+| `data-variant=destructive` | `destructive` | `destructive/10` |
+| `data-variant=link` | `primary` | |
+| `data-variant=outline`, under `.dark` | | `input/30` |
+| a text field, a `select`, under `.dark` | | `input/30` |
+| `.alert`, `.card` | `card-foreground` | `card` |
+| `.alert[data-variant=destructive]` | `destructive` | `card` |
+| `[data-popover]`, `dialog` | `popover-foreground` | `popover` |
+| `kbd`, `.kbd` | | `muted` |
+| `[role=progressbar]` | `primary` | |
+| a `.tabs` tab list (not `line`) | | `muted` |
+| the selected band: a selected tab, `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `accent` |
 
 ## Controls
 
@@ -98,6 +147,22 @@ What ui's stylesheet lays out, the Screen knows (`kit.go`):
 | `.avatar-group` | a row, a cell apart |
 | a Command's menu, a Combobox's list | an item its filter hid (`aria-hidden=true`) and a group with none left aren't drawn; with none left, its `data-empty` (or "No results found") is |
 | `.popover` | an open popover (`[data-popover]`, a select's, a combobox's or a dropdown menu's too) below its trigger is drawn over what follows, as wide as its content, and takes no rows; before its trigger, in the flow, with `data-side` `top` or `inline-start`, and beside it (a row) with `inline-start` or `inline-end`. `data-align` is not read |
+
+## The pointer
+
+Handed the terminal's mouse (`Press`, `Move`, `Release`, `Wheel`), the
+Screen sends what a host sends (SPEC §9): a press with its mods; a click
+on the release over what was pressed, counted in a run on one element
+(500 ms) for a double click; a secondary press (button 2) to the nearest
+`data-on~=secondary`, unless Shift or Alt is held; a drag from a
+`data-on~=drag` handle with an id (not with Alt), its `drag` events where
+the element (`drag` or `drop`, with an id) or a step changes, measured
+from the middle of the pointer's cell; and a hover, with no button down,
+where the nearest element with an id under the pointer changes, Out off
+the Screen. A drag ends short (a dragend with no target) on
+`Focus(false)`, a new document, the dragged element leaving, or a Press
+before its Release. Escape doesn't end a drag. `At` names the innermost
+element with an id of the app's.
 
 ## The gate
 

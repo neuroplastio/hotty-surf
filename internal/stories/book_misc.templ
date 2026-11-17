@@ -1,0 +1,45 @@
+package stories
+
+import "neuroplast.io/hotty-surf/ui"
+
+// SeparatorProps is the editable state of the separator story.
+type SeparatorProps struct {
+	Orientation string `enum:"horizontal,vertical"`
+}
+
+// Icons is the editable icon-gallery state.
+type Icons struct { Class string }
+
+var bookIconNames = []string{
+	"arrow-down", "arrow-right", "arrow-up", "bell", "check", "chevron-down", "chevron-left", "chevron-right", "chevrons-left", "chevrons-right", "chevrons-up-down", "circle", "circle-alert", "circle-check-big", "circle-help", "circle-off", "circle-plus", "ellipsis", "eye-off", "folder", "hand", "inbox", "plus", "search", "settings-2", "timer", "user", "x",
+}
+
+templ separatorDemo(p *SeparatorProps) {
+	<div class={ "flex gap-3 text-sm", templ.KV("flex-col w-60", p.Orientation == "horizontal"), templ.KV("h-6 items-center", p.Orientation == "vertical") }>
+		<span>Blog</span>
+		<div data-slot="separator" role="none" data-orientation={ p.Orientation } class="book-separator"></div>
+		<span>Docs</span>
+		<div data-slot="separator" role="none" data-orientation={ p.Orientation } class="book-separator"></div>
+		<span>Source</span>
+	</div>
+}
+
+templ iconsDemo(p *Icons) {
+	<div class="book-icon-grid">
+		for _, name := range bookIconNames {
+			<div class="flex flex-col items-center gap-1 rounded-md border p-2">
+				@ui.Icon(name, p.Class)
+				<span class="text-muted-foreground text-xs">{ name }</span>
+			</div>
+		}
+	</div>
+}
+
+func init() {
+	sep := func() (any, templ.Component) { p := &SeparatorProps{Orientation: "vertical"}; return p, separatorDemo(p) }
+	icons := func() (any, templ.Component) { p := &Icons{Class: "size-5"}; return p, iconsDemo(p) }
+	bookStories = append(bookStories,
+		Story{ID: "separator/default", Doc: "A horizontal or vertical separator", View: func() templ.Component { _, c := sep(); return c }, Props: sep},
+		Story{ID: "icons/default", Doc: "Lucide icons, as the kit ships them", View: func() templ.Component { _, c := icons(); return c }, Props: icons},
+	)
+}

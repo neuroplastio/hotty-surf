@@ -53,7 +53,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
 		return a
 	}
-	e := &rt.Handlers{}
+	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
 	for _, h := range hs {
 		switch h.kind {
 		case kindClick:
@@ -252,9 +252,10 @@ type DragEvent struct {
 // and the Drop's, while the element keeps the class dragging until the
 // release.
 //
-// A drag needs a pointer: in cells (package cells) and from the keyboard
-// there is none, so an app that reorders by drag also gives the keyboard a
-// way (a Key handler that moves the item).
+// A drag needs a pointer: in cells it is the terminal's mouse, which the
+// program hands the Screen (cells.Screen.Press, Move, Release), and from
+// the keyboard there is none, so an app that reorders by drag also gives
+// the keyboard a way (a Key handler that moves the item).
 func Drag(fn func(d DragEvent)) Handler {
 	return handler(kindDrag, fn, fn == nil)
 }

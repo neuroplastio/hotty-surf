@@ -119,6 +119,12 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   a ToasterState on one surface only, the rest of §6.2's morph in cells,
   release builds linking the snapshot code, the ctl socket's fallback
   directory's owner and mode.
+- [ ] **SPEC proposal, deferred:** an area on focus; host-placed
+  popovers (`review-ctx.md`, ContextMenu's Q2 and Q3). To p-653 for the
+  maintainer after plx's cutover.
+- [ ] **Before v0.7.0:** hotty-go/hottytest v0.8.2 replaces the
+  pseudo-versions (`e31f778`) in go.mod and surftea/go.mod. p-653 tags,
+  on the maintainer's go.
 
 ## v0.1.0, the first public tag
 

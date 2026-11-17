@@ -100,7 +100,7 @@ func TestSliderKeyScopeAndDisabled(t *testing.T) {
 	value, intercepted := 20.0, false
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		p := ui.SliderProps{ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }}
-		return with(ui.KeyScope([]string{"arrow_right"}, func(string) bool { intercepted = true; return true }), ui.Slider(p)).Render(ctx, w)
+		return with(ui.KeyScope([]ui.KeyBinding{{Key: "arrow_right", Run: func() bool { intercepted = true; return true }}}), ui.Slider(p)).Render(ctx, w)
 	})
 	r := surftest.Start(t, surf.New("slider", view, ui.Stylesheet()))
 	r.Click("#volume-thumb")
@@ -142,7 +142,7 @@ func TestSliderInvalidNumbersAndAttrs(t *testing.T) {
 	f := &faults{T: t}
 	attrs := templ.Attributes{"aria-label": "Value", "ID": "wrong", "DATA-KEYS": "home=field", "ARIA-VALUENOW": "bad", "Data-Hotty-KeyScope": "999"}
 	slider := ui.Slider(ui.SliderProps{ID: "number", Min: 0, Max: 10, Value: math.NaN(), Attrs: attrs})
-	r := surftest.Start(f, surf.New("slider", with(ui.KeyScope([]string{"home"}, func(string) bool { return false }), slider), ui.Stylesheet()))
+	r := surftest.Start(f, surf.New("slider", with(ui.KeyScope([]ui.KeyBinding{{Key: "home", Run: func() bool { return false }}}), slider), ui.Stylesheet()))
 	r.One(`#number-thumb[aria-valuenow="0"][aria-label="Value"]`)
 	if got := attr(r.One("#number-thumb"), "data-keys"); !strings.Contains(got, "home=program") || strings.Contains(got, "home=field") {
 		t.Fatalf("key bindings %q", got)

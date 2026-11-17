@@ -155,6 +155,10 @@ func (l *layout) ext(n *html.Node, r rect) {
 // adds, reverse while it has the keyboard, dim while disabled.
 func (l *layout) lookOf(n *html.Node, in look, st box) look {
 	lk := in | st.look
+	if fg, _ := coloursOf(n); fg != "" && fg != "muted-foreground" {
+		// A colour of its own: no longer the muted text around it.
+		lk &^= lMuted
+	}
 	if st.look&lBold == 0 && in&lBold != 0 && strings.Contains(" "+attr(n, "class")+" ", " font-normal ") {
 		lk &^= lBold
 	}
@@ -238,14 +242,14 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	in.nowrap = in.nowrap || st.truncate
 	if separator(n) == "vertical" {
 		if l.cv != nil {
-			l.cv.put(x, y, "│", 1, in.look|lDim, n)
+			l.cv.put(x, y, "│", 1, in.look|lRule, n)
 		}
 		l.done(n, rect{x, y, 1, 1})
 		return 1, 1
 	}
 	if n.DataAtom == atom.Hr || separator(n) == "horizontal" {
 		for i := 0; i < w && l.cv != nil; i++ {
-			l.cv.put(x+i, y, "─", 1, in.look|lDim, n)
+			l.cv.put(x+i, y, "─", 1, in.look|lRule, n)
 		}
 		l.done(n, rect{x, y, w, 1})
 		return 1, 1
@@ -272,7 +276,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		if widthOf(cs) > cw {
 			cs = clip(cs, cw)
 		}
-		l.paint(cs, cx, cy, in.look|lDim, n, n)
+		l.paint(cs, cx, cy, in.look|lMuted, n, n)
 		ew = widthOf(cs)
 		cy++
 		lead = 1
@@ -892,7 +896,7 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 		h += rh
 		if r.head && (i+1 == len(rows) || !rows[i+1].head) {
 			for k := 0; k < total && l.cv != nil; k++ {
-				l.cv.put(x+k, y+h, "─", 1, in.look|lDim, n)
+				l.cv.put(x+k, y+h, "─", 1, in.look|lRule, n)
 			}
 			h++
 		}
@@ -1236,7 +1240,7 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 			cs := clip(charsOf(ph), w)
 			cx := x
 			for _, ch := range cs {
-				l.cv.put(cx, y, ch.s, ch.w, base|lDim, n)
+				l.cv.put(cx, y, ch.s, ch.w, base|lMuted, n)
 				cx += ch.w
 			}
 		}
