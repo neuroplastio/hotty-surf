@@ -63,7 +63,7 @@ func init() {
 	}, Props: func() (any, templ.Component) {
 		p := &Check{Mixed: true, Label: "Select all"}
 		return p, bookCheck(p)
-	}})
+	}, Keys: []string{"tab", "space"}, Want: "Select all", Gap: "The kit's native checkbox has no mixed-state rendition yet."})
 	add(Story{ID: "checkbox/disabled", Doc: "A check box that can't change",
 		View: form(checkboxDisabled, formState{on: true}), Keys: []string{"tab", "space"}, Want: "accepted: on"})
 	add(Story{ID: "radio/default", Doc: "A group of three radios",
