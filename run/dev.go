@@ -251,11 +251,7 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 func handle(s *surf.Surface, r *input.Reader, handlers input.Handlers, in *devwire.Input) (quit bool, err error) {
 	switch {
 	case in.Key != "":
-		taken, err := s.Key(in.Key)
-		if err != nil {
-			return false, err
-		}
-		return !taken && quits(in.Key), nil
+		return key(s, in.Key)
 	case len(in.Msg) > 0:
 		return false, r.Feed(in.Msg, handlers)
 	}

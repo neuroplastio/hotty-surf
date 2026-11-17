@@ -1,0 +1,76 @@
+/* The book's own: the list, the panes, and the cells pane's lines in the
+   terminal's grid. */
+.book {
+  min-height: 100vh;
+  align-items: flex-start;
+}
+.book-list {
+  flex: 0 0 auto;
+  width: calc(26 * var(--hotty-cell-w));
+}
+.book-list ul {
+  outline: 0;
+}
+.book-item {
+  padding: 0 0.5ch;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.book-chosen {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.book-list ul:focus .book-chosen {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.book-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.book-html {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* cells reads the hidden class and leaves the pane out; a host shows it. */
+.book-cells.hidden {
+  display: flex;
+  flex: 0 0 auto;
+}
+.book-pane {
+  font-family: var(--hotty-font);
+  font-size: 1rem;
+  line-height: var(--hotty-cell-h);
+  white-space: pre;
+  width: calc(56 * var(--hotty-cell-w));
+  box-shadow: inset 0 0 0 var(--hotty-px) var(--border);
+  outline: 0;
+}
+/* A line is a cell high, an empty one too, so that the pane is as high as
+   its lines and its last isn't cut. */
+.book-line {
+  height: var(--hotty-cell-h);
+}
+/* "in cells", the Tab stop before the pane: where Shift+Tab past the
+   pane's first control rests. */
+.book-edge {
+  outline: 0;
+}
+.book-edge:focus {
+  box-shadow: 0 0 0 var(--hotty-px) var(--ring);
+}
+.book-pane:focus {
+  box-shadow: inset 0 0 0 var(--hotty-px) var(--ring);
+}
+.book-rev {
+  background: var(--foreground);
+  color: var(--background);
+}
+.book-italic {
+  font-style: italic;
+}
+.book-underline {
+  text-decoration: underline;
+}

@@ -56,3 +56,21 @@ func didPlace(s *surf.Surface, cols, rows int) {
 
 // quits says whether k, a key the surface didn't take, quits the app.
 func quits(k string) bool { return k == "ctrl+c" || k == "ctrl+q" }
+
+// key gives s a key the program got (the terminal had the keyboard, or
+// the surface passed it on, SPEC §10.2), and says whether it quits the
+// app. The app owns the whole terminal, so Tab or Shift+Tab that nothing
+// took gives the surface the keyboard (SPEC §10.1: a surface has it only
+// by a click or the program's focus), at the element it had or its first,
+// as Tab into a page does.
+func key(s *surf.Surface, k string) (quit bool, err error) {
+	taken, err := s.Key(k)
+	if err != nil || taken {
+		return false, err
+	}
+	if k == "tab" || k == "shift+tab" {
+		_, err := s.Focus()
+		return false, err
+	}
+	return quits(k), nil
+}

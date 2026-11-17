@@ -13,6 +13,8 @@
 // A selector is tag#id[attr=value]:text(…), every part optional: [attr]
 // alone for presence, :text(t) for an element whose whole text is t
 // (spaces normalised) and :text-start(t) for one whose text starts with t.
+// An element's ancestors that hold nothing else have the same whole text,
+// so :text alone matches them too: name the tag (h2:text(Saved)).
 //
 // A field's value and a check box's state are the host's, not attributes:
 // a value or checked in the markup is only where the field starts. Read
@@ -25,6 +27,7 @@ package surftest
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"unicode"
@@ -310,6 +313,9 @@ func (r *Rig) One(sel string) *html.Node {
 		if len(ns) == 0 && (strings.Contains(sel, "[checked") || strings.Contains(sel, "[value")) {
 			hint = " (a field's value and a check box's state are the host's, not attributes: Rig.Value and Rig.Checked read them)"
 		}
+		for _, n := range ns {
+			hint += "\n  " + opening(n)
+		}
 		r.t.Fatalf("surftest: %q matches %d elements, not 1%s", sel, len(ns), hint)
 	}
 	return ns[0]
@@ -337,4 +343,15 @@ func Lint(t testing.TB, dir string) {
 	for _, f := range fs {
 		t.Errorf("%s:%d:%d: %s: %s", f.File, f.Line, f.Col, f.Rule, f.Text)
 	}
+}
+
+// opening is n's start tag, as a failure names a match.
+func opening(n *html.Node) string {
+	var b strings.Builder
+	b.WriteString("<" + n.Data)
+	for _, a := range n.Attr {
+		fmt.Fprintf(&b, " %s=%q", a.Key, a.Val)
+	}
+	b.WriteString(">")
+	return b.String()
 }

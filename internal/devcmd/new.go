@@ -50,6 +50,14 @@ func New(dir string, out io.Writer) error {
 	cmd.Dir = abs
 	gomod, _ := cmd.Output()
 	inModule := strings.TrimSpace(string(gomod)) != "" && strings.TrimSpace(string(gomod)) != os.DevNull
+	// In hotty-surf's own module (an example in a checkout), hotty-surf
+	// is no requirement: it is the module.
+	own := false
+	if inModule {
+		if b, err := os.ReadFile(strings.TrimSpace(string(gomod))); err == nil {
+			own = modulePath(b) == "neuroplast.io/hotty-surf"
+		}
+	}
 
 	var made []string // what it writes, as it prints them
 	err = fs.WalkDir(scaffold, "scaffold", func(path string, d fs.DirEntry, err error) error {
@@ -93,6 +101,8 @@ func New(dir string, out io.Writer) error {
 	v, src := moduleVersion(), checkout()
 	next, note := "go mod tidy", ""
 	switch {
+	case own:
+		next = ""
 	case v != "" && inModule:
 		next = "go get neuroplast.io/hotty-surf@" + v + " && go mod tidy"
 	case v != "":
@@ -117,9 +127,12 @@ func New(dir string, out io.Writer) error {
 		made = append(made, "go.mod")
 	}
 	slices.Sort(made)
+	req := "  cd " + dir + " && " + next + "       its requirements\n"
+	if next == "" {
+		req = "  cd " + dir + "                 in hotty-surf's own module: nothing to require\n"
+	}
 	fmt.Fprintf(out, `made %s: %s
-  cd %[1]s && %[3]s       its requirements
-%[4]s  go test .                 its tests, the lint among them
+%[3]s%[4]s  go test .                 its tests, the lint among them
   hotty-surf run .          the app in this terminal, reloading as you save
   hotty-surf ctl reload     from another shell: wait for a save to show
   hotty-surf shot .         the app headless, as shot.png
@@ -132,7 +145,7 @@ versions, and where to get them.
 To show its surface in a program of your own, see hotty-surf's examples:
   examples/pane             a raw-mode program (surf, cells, hottyterm)
   surftea/examples/files    a Bubble Tea program (surftea)
-`, dir, strings.Join(made, " "), next, note)
+`, dir, strings.Join(made, " "), req, note)
 	return nil
 }
 
@@ -182,4 +195,14 @@ func Lint(dir string, out, errOut io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+// modulePath is the module a go.mod declares, "" for none.
+func modulePath(gomod []byte) string {
+	for _, l := range strings.Split(string(gomod), "\n") {
+		if f := strings.Fields(l); len(f) >= 2 && f[0] == "module" {
+			return strings.Trim(f[1], `"`)
+		}
+	}
+	return ""
 }

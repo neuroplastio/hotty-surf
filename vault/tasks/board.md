@@ -38,6 +38,16 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   retired. `ui/coverage.tsv` is the list.
 - [ ] **L3, the storybook, in cells too:** `hotty-surf book`, a story per
   component and variant, every story usable by keyboard in cells.
+  - [x] cells knows the kit's layouts (`cells/kit.go`, SUBSET.md): field
+    rows, input-group order, breadcrumb, progress, skeleton, charts,
+    Command's empty text, popover side; merged into v07 e83925f;
+  - [x] the gate as a test: cells' `TestEveryStoryByKeyboard`, over every
+    story;
+  - [x] `hotty-surf book`: the list, the story drawn by the host and in
+    cells beside it, live reload from a checkout, cells alone on a plain
+    terminal; merged into v07 16d6956;
+  - [x] shots in hottyterm and tmux (`vault/journal/2026-11-17-v07-l3.md`);
+  - [ ] the maintainer's try, in hottyterm and in a plain terminal.
 - [ ] **L4, the build tools:** `hotty-surf build --wasm` and `serve`,
   `shot`'s headless run, the embedding proven in Bubble Tea (surftea)
   and in plx. Merged into v07 through c2d0349

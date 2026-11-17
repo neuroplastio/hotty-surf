@@ -1,0 +1,96 @@
+package main
+
+import (
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// Page is the view: parcel-relay's log, the newest line at the bottom.
+// The rows come newest first and the stylesheet reverses the list: cells,
+// which reads no stylesheet and clips nothing, then shows the newest at
+// the top, not below the screen.
+templ Page(a *App) {
+	{{ lines, newer := a.Shown() }}
+	<main class="logs flex flex-col gap-3 p-3" { surf.On(ctx, "page", surf.Key(a.Keys))... }>
+		<header class="flex items-center gap-2">
+			<h1 class="text-lg font-semibold">parcel-relay</h1>
+			if a.Paused {
+				@ui.Badge(ui.BadgeProps{Variant: ui.Outline}) { Paused }
+			} else if a.Follow {
+				@ui.Badge(ui.BadgeProps{Variant: ui.Secondary}) { Following }
+			} else {
+				@ui.Badge(ui.BadgeProps{Variant: ui.Outline}) { Scrolled back }
+			}
+			<span class="text-sm text-muted-foreground">
+				{ plural(len(a.Lines), "line") }, { plural(a.errors(), "error") }
+			</span>
+		</header>
+		<div class="flex items-center gap-2 flex-wrap">
+			@ui.InputGroup(ui.InputGroupProps{Class: "search"}) {
+				@ui.Input(ui.InputProps{Type: "search", Value: a.Query, Placeholder: "Search",
+					Attrs: surf.On(ctx, "q", surf.Input(a.SetQuery))})
+				@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-start"}) {
+					@ui.Icon("search", "")
+				}
+			}
+			@ui.Select(&a.levelMenu, ui.SelectProps{ID: "level", Items: levelItems,
+				Value: levels[a.Min], OnChange: a.SetMin})
+			<label class="label">
+				@ui.Switch(ui.SwitchProps{Checked: a.Follow,
+					Attrs: surf.On(ctx, "follow", surf.Check(a.SetFollow))})
+				Follow
+			</label>
+			@ui.Button(ui.ButtonProps{Variant: ui.Outline,
+				Attrs: surf.On(ctx, "pause", surf.Click(a.TogglePause))}) {
+				if a.Paused {
+					Resume
+				} else {
+					Pause
+				}
+			}
+			@ui.Button(ui.ButtonProps{Variant: ui.Outline,
+				Attrs: surf.On(ctx, "clear", surf.Click(a.Clear))}) {
+				Clear
+			}
+		</div>
+		<div class="log flex flex-col">
+			if len(lines) == 0 {
+				@ui.Empty(ui.EmptyProps{}) {
+					<header>
+						<h3>No lines</h3>
+						if len(a.Lines) == 0 {
+							<p>New lines show here as parcel-relay writes them.</p>
+						} else {
+							<p>None match the level and the search.</p>
+						}
+					</header>
+				}
+			}
+			for _, l := range lines {
+				<div class={ "row flex items-center gap-2", templ.KV("row-error", l.Level == 3) } data-level={ levels[l.Level] }>
+					<span class="time text-muted-foreground">{ l.Time.Format("15:04:05.000") }</span>
+					@ui.Badge(ui.BadgeProps{Variant: levelVariant(l.Level), Class: "level"}) {
+						{ levels[l.Level] }
+					}
+					<span class={ "text truncate", templ.KV("text-destructive font-semibold", l.Level == 3) }>
+						for _, p := range a.parts(l.Text) {
+							if p.Match {
+								<mark class="font-semibold">{ p.Text }</mark>
+							} else {
+								{ p.Text }
+							}
+						}
+					</span>
+				</div>
+			}
+		</div>
+		if newer > 0 {
+			@ui.Button(ui.ButtonProps{Variant: ui.Secondary, Size: ui.Small,
+				Attrs: surf.On(ctx, "newest", surf.Click(a.Newest))}) {
+				@ui.Icon("arrow-down", "")
+				{ plural(newer, "newer line") }
+			}
+		}
+		{{ surf.Autofocus(ctx, "q") }}
+	</main>
+}

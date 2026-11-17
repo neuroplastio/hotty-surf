@@ -17,7 +17,7 @@ templ tabs(v *tabsView) {
 					aria-selected={ bstr(i == v.sel) }
 					tabindex={ v.tabindex(i) }
 					disabled?={ t.Disabled }
-					{ surf.On(ctx, v.tabID(i), surf.Click(func() { v.choose(i) }), surf.Key(v.key(i)))... }
+					{ surf.On(ctx, v.tabID(i), v.handlers(i)...)... }
 				>{ t.Label }</button>
 			}
 		</nav>
