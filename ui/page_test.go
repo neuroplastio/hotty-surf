@@ -10,6 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 	x "golang.org/x/net/html"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
@@ -87,6 +88,21 @@ func with(c templ.Component, children templ.Component) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		return c.Render(templ.WithChildren(ctx, children), w)
 	})
+}
+
+// hover moves the pointer onto the element id, or off the surface for "",
+// as a host's hover event does (the rig has no pointer), and sends what
+// that changed.
+func hover(t *testing.T, s *surf.Surface, r *surftest.Rig, id string) {
+	t.Helper()
+	e := hotty.Event{Kind: hotty.EventHover, Target: id}
+	if id == "" {
+		e.Hover = &hotty.Hover{Out: true}
+	}
+	if err := s.Event(e); err != nil {
+		t.Fatal(err)
+	}
+	r.Update()
 }
 
 func start(t *testing.T, view templ.Component) *surftest.Rig {

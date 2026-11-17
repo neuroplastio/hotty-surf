@@ -9,6 +9,7 @@ import (
 	"github.com/a-h/templ"
 
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
 )
 
@@ -170,6 +171,26 @@ func TestSelectDisabled(t *testing.T) {
 	}
 	r.One("span:text(Medium)")
 	want(t, r, "input[type=hidden]", "value", "m")
+}
+
+// The pointer highlights the option it is over, as select.js's mousemove
+// does, and leaving the list puts the highlight back on the chosen.
+func TestSelectHover(t *testing.T) {
+	a := &selectApp{value: "m"}
+	s := surf.New("t", a.view(), ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#size-trigger")
+	if got := active(r, "#size-listbox"); got != "size-items-2" {
+		t.Fatalf("open: %q active", got)
+	}
+	hover(t, s, r, "size-items-1")
+	if got := active(r, "#size-listbox"); got != "size-items-1" {
+		t.Errorf("hover over Small: %q active", got)
+	}
+	hover(t, s, r, "note")
+	if got := active(r, "#size-listbox"); got != "size-items-2" {
+		t.Errorf("pointer left the list: %q active, not the chosen", got)
+	}
 }
 
 // A choice's ask for the trigger is for the next frame only. A Select whose

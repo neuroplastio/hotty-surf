@@ -81,3 +81,21 @@ func TestToastFaults(t *testing.T) {
 		t.Errorf("faults: %q", f.got)
 	}
 }
+
+// The toaster pauses its toasts while the pointer is over it, as toast.js's
+// mouseenter does, and they go once it leaves.
+func TestToasterPausesUnderThePointer(t *testing.T) {
+	var st ui.ToasterState
+	s := surf.New("t", page(button("show", "Show", func() { st.Show(ui.Toast{Title: "Hi", Duration: 60 * time.Millisecond}) }),
+		text("note", "n"), ui.Toaster(&st)), ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#show")
+	hover(t, s, r, "toast-1")
+	time.Sleep(200 * time.Millisecond)
+	r.Update()
+	if got := attr(r.One("#toast-1"), "aria-hidden"); got != "false" {
+		t.Errorf("paused under the pointer, yet aria-hidden=%s", got)
+	}
+	hover(t, s, r, "note")
+	eventually(t, r, "gone after the pointer left", func() bool { return len(r.Find("#toast-1")) == 0 })
+}
