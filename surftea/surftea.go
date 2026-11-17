@@ -59,6 +59,9 @@ type Host struct {
 
 	mode    hottytea.Mode
 	focused bool
+	// refocused is set once Focus picked again after the host refused the
+	// element it named, until the program's next Focus.
+	refocused bool
 
 	// scr is the surface in cells, where the terminal is no host: made at
 	// the first Place after detection found Text.
@@ -130,13 +133,18 @@ func (h *Host) Update(msg tea.Msg) (tea.Msg, tea.Cmd) {
 			// the surface thinks, so it gets the document again.
 			h.sess.Send(hotty.Doc(h.name, h.document(), hotty.Scroll(scroll)))
 		} else if m.Re == "focus" && h.focused {
-			// The element Focus named is gone. The surface took the move
-			// already, so it hears that it didn't happen, then picks again
-			// from its tree as it is now: the host never holds a keyboard
-			// the surface doesn't know of.
+			// The host refused the element Focus named. The surface took
+			// the move already, so it hears that it didn't happen. Where
+			// the element is gone (ENOTARGET) it picks again from its
+			// tree as it is now, once; a second refusal, or a surface that
+			// can't have the keyboard (EDETACHED, EINVAL), leaves the
+			// keyboard with the program.
 			h.check(h.s.Event(hotty.Event{Kind: hotty.EventBlur, Surface: h.name}))
 			h.focused = false
-			h.Focus()
+			if m.Code == hotty.ENOTARGET && !h.refocused {
+				h.refocused = true
+				h.focus()
+			}
 		}
 		return nil, nil
 	case tea.KeyPressMsg:
@@ -327,6 +335,12 @@ func (h *Host) check(err error) bool {
 // Focused is true from then on, unless nothing in the surface takes focus
 // (or it isn't shown yet): then the program keeps the keyboard.
 func (h *Host) Focus() {
+	h.refocused = false
+	h.focus()
+}
+
+// focus is Focus's, and a refused focus's one retry.
+func (h *Host) focus() {
 	switch {
 	case h.scr != nil:
 		// The Screen's keyboard first, and the element it kept, if any: the

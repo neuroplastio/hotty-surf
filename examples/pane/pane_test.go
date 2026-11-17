@@ -185,3 +185,49 @@ func lastFocus(h *hottytest.Host) string {
 	}
 	return ""
 }
+
+// A host that refuses the surface's a=focus: where the element is gone
+// (ENOTARGET) the program picks again once, then leaves the keyboard with
+// the list; the next Tab tries afresh.
+func TestRefusedFocusRetriesOnce(t *testing.T) {
+	h := hottytest.New(t, hottytest.Size(80, 16))
+	r, stop := start(t, h)
+	defer stop()
+	name := r.p.s.Name()
+	eventually(t, "the surface placed", func() bool {
+		s := h.Surface(name)
+		return s != nil && s.Placed()
+	})
+	focuses := func() (n int) {
+		for _, c := range h.Commands() {
+			if hotty.Get(c.Control, "a") == "focus" {
+				n++
+			}
+		}
+		return n
+	}
+	h.Key("tab")
+	eventually(t, "the surface has the keyboard", r.inPane)
+	if n := focuses(); n != 1 {
+		t.Fatalf("%d a=focus after Tab", n)
+	}
+	// Replies come to the program as the user's keys do; r.at isn't
+	// ordered with them, so each step waits for what it changes.
+	refuse := func() { h.Type(hotty.ReplyErr("", name, "focus", hotty.ENOTARGET, "name")) }
+	refuse()
+	eventually(t, "the retry", func() bool { return focuses() == 2 && r.inPane() })
+	refuse()
+	eventually(t, "the list has the keyboard", func() bool { return !r.inPane() })
+	time.Sleep(100 * time.Millisecond) // a second retry would be sent by now
+	if n := focuses(); n != 2 {
+		t.Fatalf("%d a=focus after the host refused twice, want 2", n)
+	}
+	// The program's next Tab (the host here took the first a=focus and
+	// would keep a typed Tab, so the program gets it straight).
+	r.at(func(p *program) {
+		if _, err := p.own("tab"); err != nil {
+			t.Error(err)
+		}
+	})
+	eventually(t, "Tab tries afresh", func() bool { return focuses() == 3 && r.inPane() })
+}

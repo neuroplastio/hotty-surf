@@ -28,6 +28,9 @@ type program struct {
 	// focus and blur say so: the host's (or the Screen's) when the user
 	// clicks or tabs, and the program's when it gives it (focus).
 	inPane bool
+	// refocused is set once focus picked again after the host refused the
+	// element it named, until the program's next Tab.
+	refocused bool
 
 	// On a terminal that is no host, the surface is in cells: scr, drawn
 	// by the program at at.
@@ -203,14 +206,20 @@ func (p *program) input(ev hottyterm.Event) (quit bool, err error) {
 			case r.Re == "delta":
 				return false, p.show() // what the host has is no longer the surface's
 			case r.Re == "focus" && p.inPane:
-				// The element focus named is gone. The surface took the
-				// move already: it hears that it didn't happen, then picks
-				// again from its tree as it is now.
+				// The host refused the element focus named. The surface
+				// took the move already: it hears that it didn't happen.
+				// Where the element is gone (ENOTARGET) it picks again from
+				// its tree as it is now, once; a second refusal, or a
+				// surface that can't have the keyboard, leaves the keyboard
+				// with the list.
 				p.inPane = false
 				if err := p.s.Event(hotty.Event{Kind: hotty.EventBlur, Surface: name}); err != nil {
 					return false, err
 				}
-				return false, p.focus()
+				if r.Code == hotty.ENOTARGET && !p.refocused {
+					p.refocused = true
+					return false, p.giveFocus()
+				}
 			}
 		}
 	case uv.KeyPressEvent:
@@ -281,7 +290,8 @@ func (p *program) own(k string) (quit bool, err error) {
 	case "k", "arrow_up":
 		p.pick(max(p.a.Sel-1, 0))
 	case "tab":
-		return false, p.focus()
+		p.refocused = false
+		return false, p.giveFocus()
 	}
 	return false, nil
 }
@@ -291,7 +301,7 @@ func (p *program) pick(i int) {
 	p.s.Do(func() { p.a.Sel = i })
 }
 
-// focus gives the surface the keyboard (the program's Tab). In cells the
+// giveFocus gives the surface the keyboard (the program's Tab). In cells the
 // Screen gets it first, and gives the element it kept back, which the
 // surface hears as the user's focus; otherwise (Tab went past the last
 // element, which leaves the Screen active with nothing focused) the
@@ -299,7 +309,7 @@ func (p *program) pick(i int) {
 // Focus sends a=focus to the host, which echoes nothing (SPEC §10.1): the
 // surface takes the move as its focus event itself. Where nothing in the
 // surface takes focus, the list keeps the keyboard.
-func (p *program) focus() error {
+func (p *program) giveFocus() error {
 	if p.scr != nil {
 		p.scr.Focus(true)
 	}

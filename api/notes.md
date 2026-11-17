@@ -1026,3 +1026,7 @@ hotty-surf book                (L3)
   end can't: x/net's websocket reads a frame with io.ReadAll, which a
   Codec can't hand a buffer; its comment says so.
 - **L7:** `new` prints every file it writes.
+- **D1 (the delta's verification):** L3's retry is once, and only when
+  the element is gone (`ENOTARGET`): a host that refuses every a=focus (a
+  backdrop's `EINVAL`, a detached surface's `EDETACHED`) gets no new one,
+  and the keyboard stays with the program until its next Focus.

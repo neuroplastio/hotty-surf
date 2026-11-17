@@ -421,13 +421,18 @@ func firstFocusable(n *html.Node) string {
 		if c.Data == "details" && !hasAttr(c, "open") {
 			// Closed: only its summary is drawn.
 			for k := c.FirstChild; k != nil; k = k.NextSibling {
-				if k.Type == html.ElementNode && k.Data == "summary" && !hides(k) {
+				if k.Type == html.ElementNode && k.Data == "summary" {
+					// HTML draws the first summary only.
+					if hides(k) {
+						break
+					}
 					if focusable(k) && attr(k, "id") != "" {
 						return attr(k, "id")
 					}
 					if id := firstFocusable(k); id != "" {
 						return id
 					}
+					break
 				}
 			}
 			continue

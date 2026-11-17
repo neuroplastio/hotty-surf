@@ -144,7 +144,7 @@ func (w *wire) Read(p []byte) (int, error) {
 				*w.took = (*w.took)[:0]
 				frames.Put(w.took)
 			}
-			w.took = nil
+			w.took, w.part = nil, nil
 		}
 		w.mu.Lock()
 		if len(w.queue) > 0 {
