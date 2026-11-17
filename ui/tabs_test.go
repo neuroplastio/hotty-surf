@@ -87,3 +87,16 @@ func TestTabsUnknownValue(t *testing.T) {
 	want(t, r, "#t-tab-2", "aria-selected", "true")
 	want(t, r, "#t-tab-1", "aria-selected", "false")
 }
+
+// With nothing focused, an arrow reaches the outermost Key handlers: only
+// the selected tab's, so each arrow moves the selection on from it.
+func TestTabsKeysWithNothingFocused(t *testing.T) {
+	a := &tabsApp{value: "account"}
+	r := start(t, a.view())
+	for _, want := range []string{"password", "team", "account"} {
+		r.Key("arrow_right")
+		if a.value != want {
+			t.Fatalf("value %q after arrow_right, want %q", a.value, want)
+		}
+	}
+}
