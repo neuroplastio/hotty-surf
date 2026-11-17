@@ -8,7 +8,7 @@ import "neuroplast.io/hotty-surf"
 
 templ dropdownMenu(v *menuView) {
 	{{ v.check(ctx) }}
-	{{ v.n = frameN(ctx) }}
+	{{ v.join(ctx) }}
 	<div class={ join("dropdown-menu", v.p.Class) } data-dropdown-menu-initialized="true" { v.rootAttrs(ctx)... }>
 		<button
 			type="button"
@@ -18,12 +18,9 @@ templ dropdownMenu(v *menuView) {
 			if o := v.activeOpt(); o >= 0 {
 				aria-activedescendant={ v.opts[o].id }
 			}
-			if v.st.open {
-				data-keys="enter=program space=program"
-			}
 			class="btn"
 			data-variant="outline"
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle))... }
+			{ scopeWithKeys(ctx, surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle)), v.triggerKeys())... }
 		>
 			if v.p.Trigger != nil {
 				@plain(v.p.Trigger)
@@ -66,7 +63,10 @@ templ dropdownMenu(v *menuView) {
 templ menuItem(v *menuView, o int) {
 	{{ it, id := v.item(o), v.opts[o].id }}
 	<div
-		role="menuitem"
+		role={ or(it.Role,"menuitem") }
+		if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
+			aria-checked={ bstr(it.Checked) }
+		}
 		if it.Disabled {
 			aria-disabled="true"
 		}
@@ -86,6 +86,15 @@ templ menuItem(v *menuView, o int) {
 			@icon(it.Icon, "")
 		}
 		{ it.Label }
+		if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
+			<span data-indicator>
+				if it.Role == "menuitemcheckbox" {
+					@icon("check", "size-4")
+				} else {
+					@icon("circle", "size-2 fill-current")
+				}
+			</span>
+		}
 		if it.Keys != "" {
 			@kbd(it.Keys)
 		}

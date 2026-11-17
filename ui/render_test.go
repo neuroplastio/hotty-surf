@@ -109,6 +109,11 @@ func canonical(t *testing.T, s string, drop []string) string {
 	var b strings.Builder
 	var walk func(n *x.Node, depth int)
 	walk = func(n *x.Node, depth int) {
+		for _, a := range n.Attr {
+			if a.Key == "data-hotty-modal-guard" {
+				return // the runtime's focus guard, not the macro's markup
+			}
+		}
 		pad := strings.Repeat("  ", depth)
 		switch n.Type {
 		case x.TextNode:
@@ -277,6 +282,65 @@ func TestRenderTabs(t *testing.T) {
 	}})
 }
 
+func TestRenderPopover(t *testing.T) {
+	var st ui.PopoverState
+	runRender(t, "popover", []renderCase{{
+		name: "default",
+		ui: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Popover(&st, ui.PopoverProps{ID: "p", Trigger: templ.Raw("Open"), Side: "top", Align: "end"}).
+				Render(templ.WithChildren(ctx, templ.Raw("<p>Hi</p>")), w)
+		}),
+		macro:  "popover",
+		caller: "<p>Hi</p>",
+		// popover.js marks the popovers it started.
+		drop: []string{"div#p@data-popover-initialized"},
+		args: map[string]any{"id": "p", "trigger": "Open",
+			"trigger_attrs": map[string]any{"class": "btn", "data-variant": "outline"},
+			"popover_attrs": map[string]any{"data-side": "top", "data-align": "end"}},
+	}})
+}
+
+// A Command and a CommandDialog, as their macros write them; what
+// command.js sets as it starts (each item's aria-hidden, the first
+// highlighted, the field's aria-activedescendant) and the field's value,
+// which the surface keeps, aside.
+func TestRenderCommand(t *testing.T) {
+	var st ui.CommandState
+	items := []ui.MenuItem{
+		{Label: "New note"}, {Label: "Search", Keywords: "find, lookup"}, {Label: "Archive", Disabled: true},
+		{Label: "Profile", Group: "Settings"}, {Label: "Inbox", Group: "Settings"},
+	}
+	argItems := []any{
+		map[string]any{"label": "New note"}, map[string]any{"label": "Search", "keywords": "find, lookup"},
+		map[string]any{"label": "Archive", "disabled": true}, map[string]any{"type": "separator"},
+		map[string]any{"type": "group", "label": "Settings", "items": []any{
+			map[string]any{"label": "Profile"}, map[string]any{"label": "Inbox"}}},
+	}
+	js := []string{"*@aria-hidden", "div@class~active", "input@aria-activedescendant", "input@value", "*@data-command-initialized"}
+	runRender(t, "command", []renderCase{{
+		name:  "default",
+		ui:    ui.Command(&st, ui.CommandProps{ID: "c", Items: items}),
+		macro: "command",
+		drop:  js,
+		args:  map[string]any{"id": "c", "items": argItems},
+	}, {
+		name:  "words",
+		ui:    ui.Command(&st, ui.CommandProps{ID: "c", Items: items[:1], Placeholder: "Find…", Empty: "Nothing.", Class: "max-w-md"}),
+		macro: "command",
+		drop:  js,
+		args: map[string]any{"id": "c", "items": argItems[:1], "placeholder": "Find…", "empty_text": "Nothing.",
+			"main_attrs": map[string]any{"class": "max-w-md"}},
+	}, {
+		name:  "dialog",
+		ui:    ui.CommandDialog(&st, ui.CommandDialogProps{ID: "cd", Open: true, Items: items, OnClose: func() {}}),
+		macro: "command_dialog",
+		// The macro's inline handlers are Go here, and ui names the box
+		// for its handlers, as Dialog's.
+		drop: append([]string{"dialog@onclick", "dialog@onpointerdown", "div#cd-content@id"}, js...),
+		args: map[string]any{"id": "cd", "items": argItems, "open": true},
+	}})
+}
+
 func TestRenderToast(t *testing.T) {
 	var st ui.ToasterState
 	st.Show(ui.Toast{Title: "Saved", Description: "All of it."})
@@ -292,8 +356,23 @@ func TestRenderToast(t *testing.T) {
 	}})
 }
 
+func TestRenderCombobox(t *testing.T) {
+	var st ui.ComboboxState
+	runRender(t, "combobox", []renderCase{{
+		name: "single",
+		ui: ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", Placeholder: "Choose fruit", Items: []ui.SelectItem{
+			{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"},
+		}}),
+		macro:  "combobox",
+		args:   map[string]any{"id": "fruit", "name": "fruit-value", "placeholder": "Choose fruit", "input_attrs": map[string]any{"id": "fruit-input"}},
+		caller: `<div role="option" id="fruit-items-1" data-value="a" aria-hidden="false">Apple</div><div role="option" id="fruit-items-2" data-value="b" aria-hidden="false">Banana</div>`,
+		// Initialization and the empty-state flag come from combobox.js.
+		drop: []string{"div@data-combobox-initialized", "div#fruit-popover@data-empty", "input#fruit-input@value"},
+	}})
+}
+
 func init() {
-	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast"} {
+	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast", "popover", "command", "combobox"} {
 		renderTests[c] = true
 	}
 }

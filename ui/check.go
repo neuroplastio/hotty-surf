@@ -63,7 +63,14 @@ func checkAttrs(ctx context.Context, comp string, attrs templ.Attributes, writte
 	}
 	for _, w := range written {
 		n, field, _ := strings.Cut(w, "=")
-		if _, ok := attrs[n]; !ok {
+		found := false
+		for key := range attrs {
+			if strings.EqualFold(key, n) {
+				found = true
+				break
+			}
+		}
+		if !found {
 			continue
 		}
 		hint := "it is the component's own"

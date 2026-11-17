@@ -20,7 +20,7 @@ templ cssButton(p ButtonProps) {
 			data-size={ s }
 		}
 		class={ join("btn", p.Class) }
-		{ p.Attrs... }
+		{ scopeNativeAttrs(ctx, p.Attrs, "button")... }
 	>
 		{ children... }
 	</button>
@@ -70,7 +70,7 @@ templ cssCheckbox(p CheckboxProps) {
 			aria-invalid="true"
 		}
 		class={ join("input", p.Class) }
-		{ p.Attrs... }
+		{ scopeNativeAttrs(ctx, p.Attrs, "checkbox")... }
 	/>
 }
 
@@ -89,7 +89,7 @@ templ cssRadio(p RadioProps) {
 			aria-invalid="true"
 		}
 		class={ join("input", p.Class) }
-		{ p.Attrs... }
+		{ scopeNativeAttrs(ctx, p.Attrs, "radio")... }
 	/>
 }
 
@@ -110,7 +110,7 @@ templ cssSwitch(p SwitchProps) {
 			aria-invalid="true"
 		}
 		class={ join("input", p.Class) }
-		{ p.Attrs... }
+		{ scopeNativeAttrs(ctx, p.Attrs, "switch")... }
 	/>
 }
 
@@ -132,7 +132,7 @@ templ cssInput(p InputProps) {
 			aria-invalid="true"
 		}
 		class={ join(bare(ctx, "input"), p.Class) }
-		{ p.Attrs... }
+		{ scopeTextAttrs(ctx, p.Attrs)... }
 	/>
 }
 
@@ -149,7 +149,7 @@ templ cssTextarea(p TextareaProps) {
 			aria-invalid="true"
 		}
 		class={ join(bare(ctx, "textarea"), p.Class) }
-		{ p.Attrs... }
+		{ scopeTextAttrs(ctx, p.Attrs)... }
 	>{ p.Value }</textarea>
 }
 

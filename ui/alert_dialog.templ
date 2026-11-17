@@ -1,0 +1,40 @@
+package ui
+
+import "neuroplast.io/hotty-surf"
+
+templ alertDialog(p AlertDialogProps, children templ.Component) {
+ {{ checkAlertDialog(ctx,p) }}
+ {{ checkSize(ctx, "AlertDialog", p.Size, cardSizes) }}
+ {{ d := newDialogView(ctx, DialogProps{ID:or(p.ID,"alert-dialog"), Open:p.Open, OnClose:p.OnClose}) }}
+ if p.Open {
+  {{ body, err := d.body(ctx, children) }}
+  if err != nil {
+   {{ return err }}
+  }
+  <dialog class={ join("alert-dialog",p.Class) } role="alertdialog" open
+   if p.Size != "" {
+    data-size={ string(p.Size) }
+   }
+   if p.Title != "" {
+    aria-labelledby={ d.id+"-title" }
+   }
+   if p.Description != "" {
+    aria-describedby={ d.id+"-description" }
+   }
+   { kitOn(ctx,d.id,surf.Key(d.key))... }>
+   <div { surf.On(ctx,d.id+"-content",surf.Focus(d.focus),surf.Outside(d.outside))... }>
+    if p.Title != "" || p.Description != "" {
+     <header>
+      if p.Title != "" {
+       <h2 id={ d.id+"-title" }>{ p.Title }</h2>
+      }
+      if p.Description != "" {
+       <p id={ d.id+"-description" }>{ p.Description }</p>
+      }
+     </header>
+    }
+    @templ.Raw(body)
+   </div>
+  </dialog>
+ }
+}

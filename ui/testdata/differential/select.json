@@ -695,6 +695,51 @@
      "why": "A click on a disabled option takes no focus. In a browser the keyboard goes to the body, where select.js hears no keys, so arrow_down and enter do nothing while the list stays open. On a hotty host it goes to the terminal, which gives the keys to the program (SPEC \u00a710.1), and the open list takes them: enter chooses Apple. Every later step follows from that choice."
     }
    ]
+  },
+  {
+   "name": "multiple",
+   "args": {
+    "id": "multi",
+    "multiple": true,
+    "placeholder": "Pick sizes",
+    "items": [
+     {
+      "value": "s",
+      "label": "Small"
+     },
+     {
+      "value": "m",
+      "label": "Medium"
+     },
+     {
+      "value": "l",
+      "label": "Large"
+     }
+    ]
+   },
+   "steps": [
+    {
+     "click": "multi-trigger"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "enter"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "enter"
+    },
+    {
+     "click": "multi-items-3"
+    },
+    {
+     "key": "escape"
+    }
+   ]
   }
  ],
  "drop": [

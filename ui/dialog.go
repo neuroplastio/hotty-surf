@@ -26,6 +26,10 @@ type DialogProps struct {
 	Open        bool
 	Title       string
 	Description string
+	// HideCloseButton omits the built-in close button. Escape and a backdrop
+	// press still call OnClose; provide a visible action in the children if
+	// needed.
+	HideCloseButton bool
 	// OnClose hears that the user dismissed the dialog: Escape, the close
 	// button, or a click on the backdrop.
 	OnClose func()
@@ -130,6 +134,7 @@ func newDialogView(ctx context.Context, p DialogProps) *dialogView {
 	}
 	d.f = f
 	f.Modal = append(f.Modal, d.id)
+	f.ModalOps = &rt.ModalOps{Prepare: rt.PrepareModal, Scope: rt.ModalScope, Applies: rt.ModalApplies, Target: rt.ModalTarget}
 	m := ds.open[d.id]
 	if m == nil || m.openAt != f.N-1 {
 		d.opening = true

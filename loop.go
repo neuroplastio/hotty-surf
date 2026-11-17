@@ -35,7 +35,7 @@ func (s *Surface) document() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	t, err := s.tree()
+	t, err := s.tree(f)
 	if err != nil {
 		return "", err
 	}
@@ -43,7 +43,16 @@ func (s *Surface) document() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s.keep(t)
+	s.keep(t, f)
+	if modal := activeModal(f); modal != "" {
+		if s.modalScope(f, modal) != s.prev {
+			if f.Focus != "" && s.modalApplies(f, modal, f.Focus) {
+				f.Focus = ""
+			}
+		} else if f.Focus == "" || !contains(s.chain(f.Focus), modal) {
+			f.Focus = s.modalTarget(f, modal, false)
+		}
+	}
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
 	s.submits(f)
@@ -95,14 +104,29 @@ func (s *Surface) send() error {
 			d.field(id, s.byID[id])
 		}
 	} else {
-		t, err := s.tree()
+		t, err := s.tree(f)
 		if err != nil {
 			return err
 		}
 		d.el(s.prev, t.root)
-		s.keep(t)
+		s.keep(t, f)
 		s.unlabelled(t.root)
 	}
+	modal := activeModal(f)
+	if modal != "" {
+		opening := activeModal(s.frame) != modal
+		inScope := s.modalApplies(f, modal, s.focused)
+		if opening && !inScope && f.Focus != "" && s.modalApplies(f, modal, f.Focus) {
+			f.Focus = ""
+		} else if (inScope || s.modalFocus != "" || f.Focus != "" && s.modalApplies(f, modal, f.Focus)) &&
+			(s.modalFocus != "" || f.Focus != "" && !contains(s.chain(f.Focus), modal) || opening && f.Focus == "") {
+			if id := s.modalTarget(f, modal, s.modalFocus == "last"); id != "" {
+				f.Focus = id
+				s.askDue = true
+			}
+		}
+	}
+	s.modalFocus = ""
 	s.frame = f
 	s.submits(f)
 	if f.Reveal != "" {
@@ -113,6 +137,18 @@ func (s *Surface) send() error {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))
 	}
 	cmds = append(cmds, d.fields...)
+	for id, change := range s.pendingNative {
+		if s.byID[id] != nil {
+			cmds = append(cmds, hotty.SetField(s.name, id, change))
+			if change.Value != nil {
+				s.vals[id] = *change.Value
+			}
+			if change.Checked != nil {
+				s.checked[id] = *change.Checked
+			}
+		}
+		delete(s.pendingNative, id)
+	}
 	if f.Focus != "" && (f.Focus != s.asked || s.askDue) {
 		cmds = append(cmds, hotty.Focus(s.name, f.Focus))
 		// The host sends no focus for focus the program gives (SPEC
@@ -175,9 +211,43 @@ func (s *Surface) event(e hotty.Event) error {
 	// terminal (SPEC §10.1), so a blur comes right after it. The press
 	// already told the Outside handlers where the click was; the blur is
 	// that click's, not a click off the surface.
-	afterPress := s.pressed
+	afterPress, scopedPress := s.pressed, s.modalPressed
 	s.pressed = e.Kind == hotty.EventPress
+	modal := activeModal(s.frame)
+	inside := modal == "" || contains(s.chain(e.Target), modal)
+	if e.Kind == hotty.EventPress {
+		s.modalPressed = modal != "" && s.modalApplies(s.frame, modal, e.Target)
+	}
+	if modal != "" && s.modalApplies(s.frame, modal, e.Target) && !inside {
+		switch e.Kind {
+		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress, hotty.EventDragStart:
+			return nil
+		case hotty.EventFocus:
+			s.modalFocus = "first"
+			return s.send()
+		}
+	}
 	switch e.Kind {
+	case hotty.EventDragStart:
+		s.dragTarget = ""
+		if h := on[e.Target]; h != nil && h.Drag != nil {
+			s.dragTarget = e.Target
+			h.Drag(e)
+			ran = true
+		}
+	case hotty.EventDrag, hotty.EventDragEnd:
+		target := s.dragTarget
+		if target != "" && modal != "" && s.modalApplies(s.frame, modal, target) && !contains(s.chain(target), modal) {
+			s.dragTarget = ""
+			return nil
+		}
+		if e.Kind == hotty.EventDragEnd {
+			s.dragTarget = ""
+		}
+		if h := on[target]; target != "" && h != nil && h.Drag != nil {
+			h.Drag(e)
+			ran = true
+		}
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
 			h.Click()
@@ -185,6 +255,9 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 	case hotty.EventInput:
 		s.vals[e.Target], s.revs[e.Target] = e.Value, e.Rev
+		if e.Sel != nil {
+			s.sels[e.Target] = *e.Sel
+		}
 		if h := on[e.Target]; h != nil && h.Input != nil {
 			h.Input(e.Value)
 			ran = true
@@ -206,6 +279,11 @@ func (s *Surface) event(e hotty.Event) error {
 				ran = true
 			}
 		}
+	case hotty.EventCaret:
+		s.revs[e.Target] = e.Rev
+		if e.Sel != nil {
+			s.sels[e.Target] = *e.Sel
+		}
 	case hotty.EventSubmit:
 		if h := on[e.Target]; h != nil && h.Submit != nil {
 			h.Submit()
@@ -217,10 +295,21 @@ func (s *Surface) event(e hotty.Event) error {
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
 		// asks again once the user moved the keyboard off it.
-		s.focus(e.Target)
+		if n := s.byID[e.Target]; modal != "" && n != nil && hasAttr(n, modalGuard) {
+			if attr(n, modalGuard) == "start" {
+				s.modalFocus = "last"
+			} else {
+				s.modalFocus = "first"
+			}
+		} else {
+			s.focus(e.Target)
+		}
 		ran = true
 	case hotty.EventBlur:
 		s.focus("")
+		if modal != "" && afterPress && scopedPress {
+			s.modalFocus = "first"
+		}
 		if !afterPress {
 			s.outside("")
 		}
@@ -312,6 +401,12 @@ func (s *Surface) outside(id string) bool {
 	ran := false
 	for _, x := range s.frame.Order {
 		h := s.frame.On[x]
+		if modal := activeModal(s.frame); modal != "" && id != "" && !s.modalApplies(s.frame, modal, id) && s.modalApplies(s.frame, modal, x) {
+			continue
+		}
+		if modal := activeModal(s.frame); modal != "" && (s.modalApplies(s.frame, modal, s.focused) || s.modalApplies(s.frame, modal, id)) && !contains(s.chain(x), modal) {
+			continue
+		}
 		if h.Outside != nil && !contains(in, x) {
 			h.Outside()
 			ran = true
@@ -327,14 +422,60 @@ func (s *Surface) key(k string) (bool, error) {
 	if s.frame == nil {
 		return false, errNoDocument
 	}
+	physical := k
+	if len(s.frame.KeyScopes) > 0 && s.frame.KeyScopes[0].Canonical != nil {
+		physical, _ = s.frame.KeyScopes[0].Canonical(s.platform, k)
+	}
 	k = modName(s.platform, k)
+	intercepted := false
+	var fallback func(rt.KeyDefault) rt.KeyResult
+	var native func(*rt.KeyEnvironment, string, func(rt.KeyDefault) rt.KeyResult) bool
+	if n := s.byID[s.focused]; len(s.frame.KeyScopes) > 0 && n != nil && !hasAttr(n, "disabled") {
+		if dispatch := s.frame.KeyScopes[0].Dispatch; dispatch != nil {
+			var taken bool
+			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, attr(n, "data-hotty-keyscope"), physical, k)
+			if taken {
+				return true, s.send()
+			}
+		}
+	}
+	var env rt.KeyEnvironment
+	if intercepted {
+		env = rt.KeyEnvironment{Node: s.byID[s.focused], Focused: s.focused, On: s.frame.On, Platform: s.platform,
+			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
+			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
+	}
+	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && native != nil && native(&env, physical, fallback) {
+		return true, s.send()
+	}
 	ids := s.chain(s.focused)
-	if len(ids) == 0 {
+	modal := activeModal(s.frame)
+	if modal != "" && s.modalApplies(s.frame, modal, s.focused) {
+		if at := slices.Index(ids, modal); at >= 0 {
+			ids = ids[:at+1]
+		} else {
+			ids = []string{modal}
+		}
+	} else if len(ids) == 0 {
 		ids = s.tops()
+	}
+	if intercepted {
+		for _, id := range ids {
+			if h := s.frame.On[id]; h != nil && h.KitKey {
+				for _, fn := range h.Key {
+					if fn(k) {
+						return true, s.send()
+					}
+				}
+			}
+		}
+		if native != nil && native(&env, physical, fallback) {
+			return true, s.send()
+		}
 	}
 	for _, id := range ids {
 		h := s.frame.On[id]
-		if h == nil {
+		if h == nil || intercepted && h.KitKey {
 			continue
 		}
 		for _, fn := range h.Key {
@@ -343,20 +484,17 @@ func (s *Surface) key(k string) (bool, error) {
 			}
 		}
 	}
-	// An open modal hears what the keyboard outside it didn't take
-	// (rt.Frame.Modal): its Escape.
-	for i := len(s.frame.Modal) - 1; i >= 0; i-- {
-		id := s.frame.Modal[i]
-		if slices.Contains(ids, id) {
-			continue
-		}
-		if h := s.frame.On[id]; h != nil {
+	if modal != "" && !s.modalApplies(s.frame, modal, s.focused) && !slices.Contains(ids, modal) {
+		if h := s.frame.On[modal]; h != nil {
 			for _, fn := range h.Key {
 				if fn(k) {
 					return true, s.send()
 				}
 			}
 		}
+	}
+	if intercepted {
+		return false, s.send()
 	}
 	return false, nil
 }

@@ -94,7 +94,7 @@ func nativeSelect(p NativeSelectProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "select", p.Attrs)
+			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "select", scopeNativeAttrs(ctx, p.Attrs, "select"))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
