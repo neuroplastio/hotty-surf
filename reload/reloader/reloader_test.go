@@ -201,6 +201,18 @@ func (h *harness) of(key string, n int) *appProc {
 	return h.byKey[key][n-1]
 }
 
+// document is the document of key's surface, asked over its reload wire.
+func (h *harness) document(key string) string {
+	h.t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	doc, err := h.r.Document(ctx, key, "t")
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	return doc
+}
+
 // proc is the process started last, once it has shown its surface.
 func (h *harness) proc(n int) *appProc {
 	h.t.Helper()
@@ -465,12 +477,9 @@ func TestReload(t *testing.T) {
 			t.Fatal("the new process sent nothing")
 		}
 		// The text and the stylesheet since the first build are its own.
-		var doc devwire.Doc
-		if err := <-p2.term.Call(&p2.calls, "doc", &devwire.Empty{}, &doc); err != nil {
-			t.Fatal(err)
-		}
-		if !strings.Contains(doc.HTML, "Howdy") || !strings.Contains(doc.HTML, "padding: 0") || !strings.Contains(doc.HTML, "Count 2!") {
-			t.Fatalf("the new process's document: %s", doc.HTML)
+		doc := h.document("app")
+		if !strings.Contains(doc, "Howdy") || !strings.Contains(doc, "padding: 0") || !strings.Contains(doc, "Count 2!") {
+			t.Fatalf("the new process's document: %s", doc)
 		}
 	})
 
@@ -620,12 +629,9 @@ func TestReloadKeys(t *testing.T) {
 			if o := h.first(p); strings.Contains(o, "a=doc") || !strings.Contains(o, "a=delta") || !strings.Contains(o, strconv.Itoa(i+1)+"!") {
 				t.Fatalf("%s: the new process's first frame: %q", k, o)
 			}
-			var doc devwire.Doc
-			if err := <-p.term.Call(&p.calls, "doc", &devwire.Empty{}, &doc); err != nil {
-				t.Fatal(err)
-			}
-			if !strings.Contains(doc.HTML, "Howdy") || !strings.Contains(doc.HTML, "padding: 0") || !strings.Contains(doc.HTML, want) {
-				t.Fatalf("%s: the new process's document: %s", k, doc.HTML)
+			doc := h.document(k)
+			if !strings.Contains(doc, "Howdy") || !strings.Contains(doc, "padding: 0") || !strings.Contains(doc, want) {
+				t.Fatalf("%s: the new process's document: %s", k, doc)
 			}
 		}
 	})
