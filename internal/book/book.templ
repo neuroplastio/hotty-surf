@@ -61,7 +61,7 @@ templ View(a *App) {
 					<p class="book-keys text-sm text-muted-foreground">{ k }</p>
 				}
 				<div class="book-previews flex gap-4">
-					<section class="book-html" aria-label="Preview" tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
+					<section class="book-html" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
 						@a.cur.view
 					</section>
 					<section id="book-cells" class="book-cells hidden flex-col gap-2" aria-label="the story in cells">
