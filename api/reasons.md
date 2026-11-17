@@ -426,3 +426,32 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
 - `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
+
+## List, icon button and symbols spike port (draft)
+
+- `ui.List`: The spike list gives ListItem rows a named listbox.
+- `ui.ListItem`: Apps need the spike's selectable row with leading and trailing slots.
+- `ui.ListItemProps`: The row needs its state, slots and activation callback.
+- `ui.ListItemProps.ID`: K2(d): the callback-bearing button needs a distinct ID.
+- `ui.ListItemProps.Selected`: K2(b): the selected state is shown by the row and its accent bar.
+- `ui.ListItemProps.Active`: K2(b): the active state is shown as a tint.
+- `ui.ListItemProps.OnClick`: K2 exception: the spike row reports activation to the app.
+- `ui.ListItemProps.Leading`: K2(c): the optional leading component is read to render the row.
+- `ui.ListItemProps.Trailing`: K2(c): the optional trailing component is read to render the row.
+- `ui.ItemTitle`: A row needs the spike's truncated bold title slot.
+- `ui.ItemSubtitle`: A row needs the spike's truncated muted subtitle slot.
+- `ui.ItemDetail`: A row needs the spike's truncated detail slot.
+- `ui.IconButton`: The spike's named icon-only button is used by its navigation chrome.
+- `ui.Symbol`: The spike's filled Material Symbols are used by its chrome and list rows.
+- `ui.Shape`: A Symbol needs the spike's filled path on a 24-unit grid.
+- `ui.NamedShape`: A gallery needs a shape and its Go name together.
+- `ui.NamedShape.Name`: The gallery displays the shape's Go name.
+- `ui.NamedShape.Shape`: The gallery passes the named shape to Symbol.
+- `ui.Symbols`: The spike's gallery enumerates the shipped shapes.
+- `ui.ShapeAccountTree`: The spike uses the account-tree symbol in chrome.
+- `ui.ShapeDesktopWindows`: The spike uses the desktop-windows symbol in chrome.
+- `ui.ShapeGridView`: The spike uses the grid-view symbol in chrome.
+- `ui.ShapeMoreHoriz`: The spike uses the more-horiz symbol in chrome.
+- `ui.ShapePublic`: The spike uses the public symbol in chrome.
+- `ui.ShapeRemove`: The spike uses the remove symbol in chrome.
+- `ui.ShapeTerminal`: The spike uses the terminal symbol in list rows.

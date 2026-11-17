@@ -53,9 +53,10 @@ fixed before the audit is complete.
   fields and control kinds. Code, NavList, Controls, EventLog and Tabs kit
   demonstrations and variants have been added. Check's mixed visual state
   is an existing kit limitation and is recorded in coverage.
-- [ ] The spike's shell demonstrations (List, icon buttons, thumbnails,
-  busy badge and symbols) depend on components absent from v0.7's public
-  kit; determine their port path without adding unreviewed public API.
+- [ ] ListItem, icon buttons and Symbols have been ported to ui with their
+  book stories; the new API is in a separate review pack and is not approved
+  yet. LayoutThumb and BusyBadge belong with plx in L6 and are intentionally
+  omitted from this kit and book.
 - [ ] The dropdown and popover stories wait for B3's public API. If that API
   does not expose Open/Active, omit those fields and record that decision
   rather than accessing private state.

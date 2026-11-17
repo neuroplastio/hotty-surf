@@ -1,0 +1,72 @@
+package ui
+
+import "neuroplast.io/hotty-surf"
+
+// ListItemProps is a list item's state and slots: what it is called (ID, which names
+// its button for the host and for focus), whether it is the selected row or
+// the active one, what a click does, and what goes before and after its
+// text. The text itself is the component's children (ItemTitle,
+// ItemSubtitle, ItemDetail).
+type ListItemProps struct {
+	// ID names the button on its surface.
+	ID string
+	// Selected highlights the selected row and its accent bar.
+	Selected bool
+	// Active tints an active row when it is not selected.
+	Active bool
+	// OnClick runs when the row is activated.
+	OnClick func()
+	// Leading is an optional component before the text.
+	Leading templ.Component
+	// Trailing is an optional component after the text.
+	Trailing templ.Component
+}
+
+// ListItem is a row of a list: a button with a leading slot, the text, and
+// a trailing slot. The selected row is lighter and has an accent bar that
+// grows from its middle; the active one is tinted, and so is a hovered one.
+// Put it in a List.
+templ ListItem(p ListItemProps) {
+	<button
+		type="button"
+		role="option"
+		aria-selected={ bstr(p.Selected) }
+		class={ itemClass(p) }
+		{ surf.On(ctx, p.ID, surf.Click(p.OnClick))... }
+	>
+		<span aria-hidden="true" class={ barClass(p.Selected) }></span>
+		if p.Leading != nil {
+			@p.Leading
+		}
+		<span class="flex min-w-0 flex-1 flex-col">
+			{ children... }
+		</span>
+		if p.Trailing != nil {
+			<span class="ml-1.5 self-center">
+				@p.Trailing
+			</span>
+		}
+	</button>
+}
+
+// List is a listbox of ListItems.
+templ List(label string) {
+	<div role="listbox" aria-label={ label } class="flex flex-col gap-0.5 px-1.5">
+		{ children... }
+	</div>
+}
+
+// ItemTitle is the bold title line of a ListItem, truncated when long.
+templ ItemTitle() {
+	<span class="truncate text-base leading-4 font-bold text-sidebar-foreground">{ children... }</span>
+}
+
+// ItemSubtitle is the muted subtitle line of a ListItem, truncated when long.
+templ ItemSubtitle() {
+	<span class="truncate text-xs leading-5">{ children... }</span>
+}
+
+// ItemDetail is the plain detail line of a ListItem, truncated when long.
+templ ItemDetail() {
+	<span class="truncate text-xs leading-5 text-sidebar-foreground">{ children... }</span>
+}

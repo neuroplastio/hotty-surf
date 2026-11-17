@@ -1412,3 +1412,22 @@ in the same delta as the changes; public reveal remains a separate pack.
 
 Review the public shapes against the spike and v0.7's existing conventions,
 including the number of NavList methods and the string control kinds.
+
+## Draft: spike list rows, icon buttons and symbols
+
+The maintainer asked to port the spike's ListItem, IconButton and Symbols
+into `ui`, with their book stories, and to review these new names as one
+small pack. LayoutThumb and BusyBadge belong with plx and are not in this
+port. The code follows the spike's public shape and markup for review; no
+lock has been approved for these names.
+
+The spike's List is a named listbox of button rows. ListItem carries the
+selection and active visuals, slots and a click callback; the app owns the
+selected index. The spike's list has no default arrow-key handling. Review
+whether the kit's keyboard-default rule calls for that behavior here and
+how it is overridden, and whether the spike's ID, callback and accessible
+label need adaptation to the v0.7 kit conventions. IconButton is the
+spike's icon-only button with a name and caller attributes. Symbol renders
+a decorative filled Material Symbol from a Shape; Symbols enumerates the
+seven paths the spike shipped. None of these names include thumbnails or
+busy badges.

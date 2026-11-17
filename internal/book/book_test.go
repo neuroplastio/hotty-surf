@@ -387,3 +387,28 @@ func TestTabsDemoSharesSelectionAndProps(t *testing.T) {
 		t.Fatalf("active prop did not update demo: %s", got)
 	}
 }
+
+func TestShellStoriesUseTheirEditableState(t *testing.T) {
+	a := New()
+	a.show("list-item/default")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#row-0")
+	if got := storyControl(a, "Selected"); got != "0" {
+		t.Fatalf("list selection = %q, want 0", got)
+	}
+	a.show("icon-button/default")
+	r.Update()
+	r.Click("#ib-Layout")
+	if got := storyControl(a, "Accent"); got != "Layout" {
+		t.Fatalf("icon button accent = %q, want Layout", got)
+	}
+}
+
+func storyControl(a *App, path string) string {
+	for _, c := range a.model.Sel.Controls() {
+		if c.Path == path {
+			return c.Value
+		}
+	}
+	return ""
+}

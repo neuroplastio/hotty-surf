@@ -1,0 +1,72 @@
+package stories
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// Rows is the editable selection state of the ListItem demonstration.
+type Rows struct {
+	Selected int
+	Active int
+}
+
+// Buttons is the selected accent in the IconButton demonstration.
+type Buttons struct {
+	Accent string `enum:"Hosts,Screens,Layout,More,Collapse"`
+}
+
+var bookRowNames = []string{"hotty-storybook", "nav-editor", "core-arch"}
+var bookShellButtons = []struct { label string; shape ui.Shape }{
+	{"Hosts", ui.ShapePublic}, {"Screens", ui.ShapeDesktopWindows}, {"Layout", ui.ShapeGridView}, {"More", ui.ShapeMoreHoriz}, {"Collapse", ui.ShapeRemove},
+}
+
+templ rowsDemo(p *Rows) {
+	<div class="bg-sidebar text-sidebar-foreground w-72 rounded-md py-2">
+		@ui.List("Sessions") {
+			for i, name := range bookRowNames {
+				@ui.ListItem(ui.ListItemProps{ID: "row-" + strconv.Itoa(i), Selected: p.Selected == i, Active: p.Active == i, OnClick: func() { p.Selected = i }, Leading: ui.Symbol(ui.ShapeTerminal, "size-4")}) {
+					@ui.ItemTitle() { { name } }
+					@ui.ItemSubtitle() { p-70{ strconv.Itoa(i) } }
+				}
+			}
+		}
+	</div>
+}
+
+templ iconButtonsDemo(p *Buttons) {
+	<div class="bg-sidebar text-sidebar-foreground flex h-7 w-fit items-stretch rounded-md px-1">
+		for _, button := range bookShellButtons {
+			@ui.IconButton(button.label, button.shape, shellAccent(p, button.label), surf.On(ctx, "ib-"+button.label, surf.Click(func() { p.Accent = button.label })))
+		}
+	</div>
+}
+
+func shellAccent(p *Buttons, label string) string {
+	if p.Accent == label { return "text-sidebar-primary" }
+	return ""
+}
+
+templ symbolsDemo(p *Icons) {
+	<div class="book-symbol-grid">
+		for _, symbol := range ui.Symbols() {
+			<div class="flex flex-col items-center gap-1 rounded-md border p-2">
+				@ui.Symbol(symbol.Shape, p.Class)
+				<span class="text-muted-foreground text-xs">{ symbol.Name }</span>
+			</div>
+		}
+	</div>
+}
+
+func init() {
+	rows := func() (any, templ.Component) { p := &Rows{Selected: 1, Active: 0}; return p, rowsDemo(p) }
+	buttons := func() (any, templ.Component) { p := &Buttons{Accent: "Hosts"}; return p, iconButtonsDemo(p) }
+	symbols := func() (any, templ.Component) { p := &Icons{Class: "size-5"}; return p, symbolsDemo(p) }
+	bookStories = append(bookStories,
+		Story{ID: "list-item/default", Doc: "List items with selection and an active row", View: func() templ.Component { _, c := rows(); return c }, Props: rows},
+		Story{ID: "icon-button/default", Doc: "Shell icon buttons", View: func() templ.Component { _, c := buttons(); return c }, Props: buttons},
+		Story{ID: "symbols/default", Doc: "Material Symbols, as the kit draws them", View: func() templ.Component { _, c := symbols(); return c }, Props: symbols},
+	)
+}

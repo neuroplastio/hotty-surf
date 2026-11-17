@@ -52,11 +52,11 @@ func Wrap(id, doc string, makeView func() templ.Component, makeProps func() (any
 	group, name, _ := strings.Cut(id, "/")
 	family := "Components"
 	switch group {
-	case "alert", "avatar", "badge", "button", "card", "chart", "code", "controls", "event-log", "icons", "separator", "empty", "item", "kbd", "progress", "scrollbar", "skeleton", "table":
+	case "alert", "avatar", "badge", "button", "card", "chart", "code", "controls", "event-log", "icons", "separator", "icon-button", "symbols", "empty", "item", "kbd", "progress", "scrollbar", "skeleton", "table":
 		family = "Display"
 	case "checkbox", "field", "input", "input-group", "label", "native-select", "radio", "select", "switch", "textarea":
 		family = "Forms"
-	case "breadcrumb", "tabs", "nav-list", "tabs-demo":
+	case "breadcrumb", "tabs", "nav-list", "tabs-demo", "list-item":
 		family = "Navigation"
 	case "dialog", "dropdown-menu", "toast":
 		family = "Overlays"

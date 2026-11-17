@@ -187,3 +187,7 @@
 .book-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: 0.75rem; }
 .book-icon-grid > div { border: var(--hotty-px) solid var(--border); border-radius: var(--radius-md); padding: 0.5rem; }
 .book-icon-grid .size-5 { width: 1.25rem; height: 1.25rem; }
+
+.book-symbol-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.75rem; }
+.book-symbol-grid > div { border: var(--hotty-px) solid var(--border); border-radius: var(--radius-md); padding: 0.5rem; }
+.book-symbol-grid .size-5 { width: 1.25rem; height: 1.25rem; }
