@@ -1722,3 +1722,81 @@ above; Secondary's doc says at and area are zero when the host doesn't say
 them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
+
+## L6: the pointer in cells, for plx (a pack of its own)
+
+plx draws its surfaces in cells where the terminal is no hotty host, and
+hands its cells host the terminal's mouse: press, held motion and
+release, each with mods, the right button, and motion with no button
+down. v0.7's `cells.Screen` took only `Click(col,row)` and `Wheel`, so
+nothing in cells could drag (surf.Drag/Drop, L5), right-click
+(surf.Secondary), double-click, shift-click or hover. plx also couldn't
+ask what is under a cell for a carry that began outside the surface
+(`l4c-gaps.md`, G-cells-hit). This includes the cells half of L5's drags
+and secondary press.
+
+### The names
+
+```go
+func (c *Screen) Press(col, row, mods, button int) (taken bool)
+func (c *Screen) Move(col, row, mods int) (taken bool)
+func (c *Screen) Release(col, row, mods int) (taken bool)
+func (c *Screen) At(col, row int) (id string, area hotty.Area)
+```
+
+- The Screen is the host for the pointer too. It sends the surface the
+  events a host sends for the same gesture (SPEC §9, §9.1, §9.4), so the
+  existing handlers (Click, Drag, Drop, Secondary, Hover) need no new
+  names. These are:
+  - a press, with its Button (0 or 2), At, Area and Mods;
+  - a click, with its Count and Mods;
+  - dragstart, drag and dragend, with Col, Row and the steps;
+  - a hover, with Out where the pointer leaves.
+
+  Ported from v0.6.3's `pkg/cells` (input.go's Press, Release and count;
+  drag.go's start, move and end, and its steps), adapted to v0.7's tree.
+- `button` is numbered as `hotty.Event.Button` is: 0 the primary, 2 the
+  secondary. One Press covers both. `mods` comes third in all three, so
+  `ModAlt` (2) can't be taken for the secondary button.
+- `taken` has one meaning in all three: the gesture is the surface's. That
+  is a press the surface took, the moves and release of that press, and a
+  move with no button down over the Screen's cells. While a press the
+  surface didn't take is down, its moves are the program's.
+- `Click(col, row)` stays: it is Press(col, row, 0, 0), then Release(col,
+  row, 0). A drag it starts on a handle ends with it.
+- `At` is the innermost element with an id of the app's (generated ids
+  skipped, by `rt.RuntimeID`, the rule surf faults an app's id with), and
+  its cells. The half plx asks for is `row < area.Row + area.H/2`.
+- A drag ends short (a dragend with no target and its last steps, no drop
+  and no click) on `Focus(false)`, a new document, a=del, the dragged
+  element leaving, or a Press before its Release. A press of any button
+  also drops a click whose release was lost. Escape doesn't end a drag,
+  as on a host.
+- `surf.Drag`'s doc no longer says cells has no pointer.
+
+### As reviewed (p-796, 2026-11-17): all four, with changes, applied
+
+The open questions were settled with the leans:
+1. At returns `(id, area)`: neither a half nor a `Hits()` list.
+2. Hover goes through Move with no button down, not a `Hover` method. A
+   move with a non-primary button down is a hover too.
+3. The double click's clock is internal: 500 ms on one element, by the
+   wall clock, tested through an internal hook.
+4. Escape during a drag does what it does without one, as on a host.
+
+The changes:
+- Press's order became `(col, row, mods, button)`.
+- At skips generated ids.
+- `taken` got one meaning.
+- The cut-short cases were added, in the docs and in behaviour.
+
+### As verified (p-801, 2026-11-17): three fixes, applied
+
+- Move's `taken` holds only with no button down, or for a press the surface
+  took (F1).
+- A press of any button resets the primary press waiting for its click
+  (F2).
+- Click is literally Press and Release (F3).
+
+Each has a test (`TestMoveOfUntakenPress`, `TestPressAfterLostRelease`,
+`TestClickOnDragHandle`). This pack's notes were folded in here (F4).

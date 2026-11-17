@@ -11,7 +11,7 @@ import (
 )
 
 // The surface's own handlers hear the pointer in cells as on a host:
-// a reorder by Drag and Drop, a Secondary, a double Click.
+// a reorder by Drag and Drop, and a Secondary.
 func TestPointerHandlersInCells(t *testing.T) {
 	var heard []string
 	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {

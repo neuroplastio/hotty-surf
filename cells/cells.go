@@ -53,6 +53,7 @@ type Screen struct {
 	// clicks a double click counts.
 	down     *pressed
 	held     bool // a press the Screen took is down
+	pressing bool // a press of any button is down, the Screen's or not
 	drag     *dragging
 	hoverID  string
 	hoverOut bool
@@ -171,12 +172,10 @@ func (c *Screen) Paste(text string) (taken bool) {
 // Click clicks the cell at col, row of the Screen, from its top left; taken
 // says whether it landed on something of the surface's.
 func (c *Screen) Click(col, row int) (taken bool) {
-	c.cutDrag()
-	taken = c.pressAt(col, row, 0)
+	taken = c.Press(col, row, 0, 0)
 	if taken {
-		c.releaseAt(col, row, 0)
+		c.Release(col, row, 0)
 	}
-	c.flush()
 	return taken
 }
 

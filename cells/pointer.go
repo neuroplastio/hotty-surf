@@ -47,7 +47,9 @@ import (
 // click, as the terminal lost its release.
 func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 	c.cutDrag()
-	c.held = false
+	// A press of any button ends what an earlier one left: its click,
+	// whose release was lost, is no longer due.
+	c.down, c.held, c.pressing = nil, false, true
 	switch button {
 	case 0:
 		taken = c.pressAt(col, row, mods)
@@ -79,7 +81,7 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 	case c.down == nil:
 		c.hoverAt(col, row)
 	}
-	taken = c.held || c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
+	taken = c.held || !c.pressing && c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
 	c.flush()
 	return taken
 }
@@ -94,7 +96,7 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 // focus (Focus(false)), takes a new document, loses the dragged element,
 // or hears a Press before this Release.
 func (c *Screen) Release(col, row, mods int) (taken bool) {
-	taken, c.held = c.held, false
+	taken, c.held, c.pressing = c.held, false, false
 	if d := c.drag; d != nil {
 		c.dragTo(hotty.EventDragEnd, col, row, mods)
 		c.drag = nil

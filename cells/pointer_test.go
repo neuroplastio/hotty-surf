@@ -216,3 +216,55 @@ func TestAt(t *testing.T) {
 		t.Errorf("At off the Screen: %q", id)
 	}
 }
+
+// While a press the surface didn't take is down (the middle button, a
+// secondary press on nothing that takes one), its moves are the
+// program's; after its release, a move over the Screen is a hover again.
+func TestMoveOfUntakenPress(t *testing.T) {
+	c, _ := pointerScreen(t, `<p id="x">text</p>`)
+	for _, button := range []int{1, 2} {
+		if c.Press(1, 0, 0, button) {
+			t.Fatalf("button %d's press taken", button)
+		}
+		if c.Move(2, 0, 0) {
+			t.Errorf("a move with button %d down, untaken, is taken", button)
+		}
+		if c.Release(2, 0, 0) {
+			t.Errorf("button %d's release taken", button)
+		}
+		if !c.Move(2, 0, 0) {
+			t.Errorf("a move with no button down, after button %d, isn't taken", button)
+		}
+	}
+}
+
+// A press of another button after a primary press whose release was lost
+// clicks nothing: the old press's click is no longer due.
+func TestPressAfterLostRelease(t *testing.T) {
+	for _, button := range []int{1, 2} {
+		c, got := pointerScreen(t, `<button id="b">go</button>`)
+		c.Press(1, 0, 0, 0) // its release lost
+		*got = nil
+		c.Press(1, 0, 0, button)
+		c.Release(1, 0, 0)
+		for _, e := range *got {
+			if strings.HasPrefix(e, "click") {
+				t.Errorf("button %d after a lost release clicked: %q", button, e)
+			}
+		}
+	}
+}
+
+// Click on a drag handle is a press and its release: the drag it starts
+// ends with it, and a move after is no drag.
+func TestClickOnDragHandle(t *testing.T) {
+	c, got := pointerScreen(t, dragRows)
+	c.Click(1, 0)
+	wantEvents(t, got, "press a", "dragstart a c=1,0 y=1", "dragend a c=1,0 y=1 ty=1")
+	c.Move(1, 2, 0)
+	for _, e := range *got {
+		if strings.HasPrefix(e, "drag") {
+			t.Errorf("a move after Click on a drag handle sent %q", e)
+		}
+	}
+}
