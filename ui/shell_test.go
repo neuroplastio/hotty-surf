@@ -79,3 +79,30 @@ func TestSymbolsAreCallerOwnedAndAcceptCustomPath(t *testing.T) {
 		t.Fatalf("custom symbol: %s", b.String())
 	}
 }
+
+// A KeyScope around an IconButton takes the key it names, as around any
+// kit button, and a declined Enter still clicks it once.
+func TestIconButtonInKeyScope(t *testing.T) {
+	clicks := 0
+	var asked []string
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		attrs := surf.On(ctx, "icon", surf.Click(func() { clicks++ }))
+		attrs["aria-label"] = "Hosts"
+		btn := ui.IconButton(ui.IconButtonProps{Shape: ui.ShapePublic, Attrs: attrs})
+		scope := keysScope([]string{"x", "enter"}, func(k string) bool {
+			asked = append(asked, k)
+			return k == "x"
+		})
+		return scope.Render(templ.WithChildren(ctx, btn), w)
+	})
+	r := start(t, view)
+	r.Click("#icon")
+	clicks = 0
+	if !r.Key("x") || strings.Join(asked, ",") != "x" {
+		t.Fatalf("the scope wasn't asked x: %v", asked)
+	}
+	r.Key("enter")
+	if strings.Join(asked, ",") != "x,enter" || clicks != 1 {
+		t.Fatalf("asked %v, clicks %d: a declined enter clicks once", asked, clicks)
+	}
+}

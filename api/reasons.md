@@ -317,6 +317,31 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   decline. Tab remains focus traversal. It adds no wrapper or per-component
   Props fields; its open native-select and editing limitations are in the
   keyboard model.
+  Changed for plx (pack "key labels", p-796): it takes []KeyBinding, each
+  with its own Run, so one way to scope keys also names the actions a menu
+  and a palette list; and it reaches all focus inside it (plain elements
+  whose surf.On ran in it, and nothing focused for the outermost), as
+  plx's surface-wide `bind label=…` needs.
+- `ui.KeyBinding`: one action of a KeyScope, keyed or not: the item of a
+  hotty menu (SPEC §10.7) and of an app's palette, made where the key is.
+  Not MenuItem: its Keys is display text, and it has no Name.
+- `ui.KeyBinding.Key`: the key, in surf.Key's notation; empty for an
+  action only a pick reaches (a palette's keyless actions, plx's ask).
+- `ui.KeyBinding.Label`: what a menu's level and a palette show.
+- `ui.KeyBinding.Name`: the command a hotty menu's pick sends (SPEC §10.7's
+  item name), and what Pick takes; one Name is one action on a surface.
+- `ui.KeyBinding.Disabled`: a menu shows an item that does nothing now as
+  disabled (SPEC §10.7's enabled), and its key goes on. Disabled rather
+  than Enabled so that the zero value is an action that works.
+- `ui.KeyBinding.Run`: the action on the binding, as MenuItem.OnSelect is:
+  no list and switch to keep in step.
+- `ui.Bindings`: plx's which-key overlay and palette read what a surface
+  offers now as plain data, from the last render, in a stable order.
+- `ui.HostMenu`: the same list as hotty-go's MenuTree, so a host draws the
+  which-key level and lists the actions in its palette. Not `Menu`: every
+  other noun function in ui is a component.
+- `ui.Pick`: a pick from a host's menu or an app's palette arrives as a
+  name (a command event); this runs that action's nearest binding.
 - `ui.Combobox`: Basecoat's searchable selection, with the combobox.js
   interaction translated to Go; it reuses SelectItem (K12).
 - `ui.ComboboxProps`: a combobox's attributes.
@@ -430,6 +455,20 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `cells.Screen.Focus`: without a host, the pane's focus is the program's; leaving the pane commits a field and blurs the surface.
 - `cells.Screen.Lines`: what the program draws: rows of styled text, which Bubble Tea and a raw program both compose.
 - `cells.Screen.Cursor`: where the program puts the terminal's cursor for a field being typed in.
+- `cells.Screen.Cells`: plx paints a surface in cells in its own theme, into its own grid, mixing fills into the terminal's ground and keeping muted ink legible on them: it needs each cell's colours as the theme's names, which Lines' SGR can't carry. v0.6's cells gave it runs in roles; Lines alone left plx's two cells hosts with no colour at all (G-cells-colour).
+- `cells.Cell`: one cell of Cells: its text, its colours as roles and its attributes, which plx's grid takes cell by cell.
+- `cells.Cell.Text`: the cell's grapheme cluster; "" marks a wide character's second cell, as a terminal grid has it.
+- `cells.Cell.Fg`: the role of the cell's text.
+- `cells.Cell.Bg`: the role of the cell's fill: a primary button, a selected row, a card.
+- `cells.Cell.Attr`: bold, italic, underline and the focused element's reverse, which colour doesn't replace.
+- `cells.Role`: a theme colour named as the kit's CSS variable, so a program maps it as it already writes those variables (plx's kitVarRoles), and its own var() names pass through. A string, not an enum, so a program's own variables and the opacity Basecoat's tinted fills use need no new names.
+- `cells.Attr`: a cell's text attributes as a set.
+- `cells.Bold`: an attribute.
+- `cells.Dim`: an attribute: a disabled control, a placeholder.
+- `cells.Italic`: an attribute.
+- `cells.Underline`: an attribute: a link, a text field's cells.
+- `cells.Reverse`: the element that has the keyboard, as Lines draws it.
+- `cells.Strike`: an attribute: `s`, `del`, `line-through`, which plx's v0.6 cells drew.
 
 ## surftest
 
