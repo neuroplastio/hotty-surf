@@ -338,3 +338,13 @@ func TestBookEventLogDemoClears(t *testing.T) {
 		t.Fatal("event log demo did not clear")
 	}
 }
+
+func TestBookDemonstrationsHaveSource(t *testing.T) {
+	a := New()
+	for _, id := range []string{"code/go", "nav-list/default", "controls/default", "event-log/default"} {
+		a.show(id)
+		if src := a.model.Sel.Sources(); len(src) < 2 || !strings.HasPrefix(src[1].Title, "render:") {
+			t.Errorf("%s source: %+v", id, src)
+		}
+	}
+}
