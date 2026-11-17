@@ -347,6 +347,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.TooltipProps.Side`, `.Align`, `.Arrow`: Basecoat's placement and arrow
   attributes (K2(a)).
 - `ui.TooltipProps.Class`: as every Props.
+- `ui.TooltipProps.Attrs`: K1's attributes for the CSS-only wrapper.
 - `ui.Slider`, `ui.SliderProps`: a single-thumb slider with Go-owned keys,
   stepping and pointer drag.
 - `ui.RangeSlider`, `ui.RangeSliderProps`: a two-thumb slider, each thumb
@@ -376,6 +377,65 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.Toast.Action`, `.Cancel`: the macro's optional footer buttons (K2(c)).
 - `ui.DialogProps.HideCloseButton`: the macro's close_button option with a
   zero value that preserves the existing close button (K2(a)).
+- `ui.AlertDialog`: A modal confirmation with Basecoat's alert-dialog CSS and shared Dialog behavior (K1).
+- `ui.AlertDialogProps`: Attributes of the modal confirmation (K1).
+- `ui.AlertDialogProps.Title`: Visible heading, which names the dialog (K2(c)).
+- `ui.AlertDialogProps.Description`: Visible description of the confirmation (K2(c)).
+- `ui.ChartProps.Aspect`: The plot's width-to-height ratio, needed to render the SVG (K2(c)).
+- `ui.ComboboxProps.AutoHighlight`: combobox.js's auto-highlight configuration, outside K2's listed cases and for review.
+- `ui.ComboboxProps.Clear`: The macro's optional clear button, part of its rendered content (K2(c)).
+- `ui.ComboboxProps.CloseOnSelect`: combobox.js's close-on-select configuration, outside K2's listed cases and for review.
+- `ui.ComboboxProps.Multiple`: Selects the script's single or multiple mode; the combined shape is for review (K2(b)).
+- `ui.ComboboxProps.Value`: The app-controlled single selection by item value (K2(b)).
+- `ui.ComboboxProps.Values`: The app-controlled multiple selection by item values (K2(b)).
+- `ui.ComboboxProps.OnChange`: Reports the single selected value to the application (K1).
+- `ui.ComboboxProps.OnValuesChange`: Reports multiple selected values to the application (K1).
+- `ui.CommandDialogProps.Empty`: The command's empty text, an attribute its CSS reads (K2(a)).
+- `ui.CommandDialogProps.Items`: The command's rendered items (K2(c)).
+- `ui.CommandDialogProps.Placeholder`: The command field's placeholder (K2(e)).
+- `ui.Drawer`: Basecoat's modal drawer with drawer.js's transition in Go (K1).
+- `ui.DrawerProps`: The modal drawer's attributes (K1).
+- `ui.DrawerState`: The drawer's close transition and cancellation state (K2(b)).
+- `ui.MenuItem.Role`: The Basecoat menu item's checkbox or radio role (K2(a)); Command ignores it.
+- `ui.MenuItem.Checked`: The controlled checked state for checkbox and radio items (K2(b)).
+- `ui.MenuItem.OnCheckedChange`: Reports checkbox and radio state changes to the application (K1).
+- `ui.RangeSlider`: A two-thumb slider with shared Go keyboard and drag behavior (K1).
+- `ui.RangeSliderProps`: The two-thumb slider's attributes (K1).
+- `ui.RangeSliderProps.ID`: Names the track, notches and thumbs (K14).
+- `ui.RangeSliderProps.StartAttrs`: Names the start thumb using ARIA attributes (K18); this exception to K1 is for review.
+- `ui.RangeSliderProps.EndAttrs`: Names the end thumb using ARIA attributes (K18); this exception to K1 is for review.
+- `ui.RangeSliderProps.Min`: The lower numeric bound used for rendering and interaction (K2(c)).
+- `ui.RangeSliderProps.Max`: The upper numeric bound used for rendering and interaction (K2(c)).
+- `ui.RangeSliderProps.Step`: The increment and snap interval used for interaction (K2(c)).
+- `ui.RangeSliderProps.Start`: The app-controlled start value (K2(b)).
+- `ui.RangeSliderProps.End`: The app-controlled end value (K2(b)).
+- `ui.RangeSliderProps.Disabled`: Disables pointer and keyboard interaction (K2(a)).
+- `ui.RangeSliderProps.OnChange`: Reports both controlled values to the application (K1).
+- `ui.RangeSliderProps.Class`: Additional classes on the track, as every Props.
+- `ui.SelectProps.Multiple`: Selects select.js's multiple-selection mode; the shape is for review (K2(b)).
+- `ui.SelectProps.Values`: The app-controlled multiple values (K2(b)).
+- `ui.SelectProps.OnValuesChange`: Reports selected values in item order (K1).
+- `ui.Slider`: A single-thumb slider with shared Go keyboard and drag behavior (K1).
+- `ui.SliderProps`: The single-thumb slider's attributes (K1).
+- `ui.SliderProps.ID`: Names its track, notches and thumb (K14).
+- `ui.SliderProps.Attrs`: Names its thumb using ARIA attributes (K18); this exception to K1 is for review.
+- `ui.SliderProps.Min`: The lower numeric bound used for rendering and interaction (K2(c)).
+- `ui.SliderProps.Max`: The upper numeric bound used for rendering and interaction (K2(c)).
+- `ui.SliderProps.Step`: The increment and snap interval used for interaction (K2(c)).
+- `ui.SliderProps.Value`: The app-controlled numeric value (K2(b)).
+- `ui.SliderProps.Disabled`: Disables pointer and keyboard interaction (K2(a)).
+- `ui.SliderProps.OnChange`: Reports the new value to the application (K1).
+- `ui.SliderProps.Class`: Additional classes on the track, as every Props.
+- `ui.Toast.Action`: The macro's optional action button (K2(c)).
+- `ui.Toast.Cancel`: The macro's optional cancel button (K2(c)).
+- `ui.ToastAction`: A toast footer button and its callback, shared by action and cancel (K12).
+- `ui.ToastAction.Label`: Visible button text, needed to render the action (K2(c)).
+- `ui.ToastAction.OnSelect`: A Go callback before closing, replacing the macro's onclick (K1).
+- `ui.Tooltip`: Basecoat's CSS hover tooltip wrapping children (K1).
+- `ui.TooltipProps`: The tooltip wrapper's attributes (K1).
+- `ui.TooltipProps.Side`: Basecoat's data-side placement attribute (K2(a)).
+- `ui.TooltipProps.Align`: Basecoat's data-align placement attribute (K2(a)).
+- `ui.TooltipProps.Arrow`: Basecoat's data-arrow attribute (K2(a)).
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

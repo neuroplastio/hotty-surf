@@ -13,6 +13,9 @@ type TooltipProps struct {
 	Align string
 	// Arrow shows Basecoat's arrow.
 	Arrow bool
+	// Attrs are more wrapper attributes. data-tooltip, data-side,
+	// data-align, data-arrow and class are owned by the component.
+	Attrs templ.Attributes
 	// Class adds classes to the wrapper.
 	Class string
 }

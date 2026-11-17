@@ -426,6 +426,7 @@ pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Align string
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Arrow bool
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Side string
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Text string

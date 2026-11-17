@@ -1,6 +1,7 @@
 package ui
 
 templ tooltip(p TooltipProps) {
+ {{ checkAttrs(ctx,"Tooltip",p.Attrs,"data-tooltip","data-side","data-align","data-arrow","class") }}
  {{ checkEnum(ctx,"Tooltip","Side",p.Side,[]string{"","top","bottom","left","right","inline-start","inline-end"}) }}
  {{ checkEnum(ctx,"Tooltip","Align",p.Align,[]string{"","center","start","end"}) }}
  <span data-tooltip={ p.Text }
@@ -15,5 +16,6 @@ templ tooltip(p TooltipProps) {
   }
   if p.Class != "" {
    class={ p.Class }
-  }>{ children... }</span>
+  }
+  { p.Attrs... }>{ children... }</span>
 }

@@ -27,6 +27,7 @@ func tooltip(p TooltipProps) templ.Component {
 		ctx = templ.InitializeContext(ctx)
 		templ_7745c5c3_Var1 := templ.GetChildren(ctx)
 		ctx = templ.ClearChildren(ctx)
+		checkAttrs(ctx, "Tooltip", p.Attrs, "data-tooltip", "data-side", "data-align", "data-arrow", "class")
 		checkEnum(ctx, "Tooltip", "Side", p.Side, []string{"", "top", "bottom", "left", "right", "inline-start", "inline-end"})
 		checkEnum(ctx, "Tooltip", "Align", p.Align, []string{"", "center", "start", "end"})
 		{
@@ -40,7 +41,7 @@ func tooltip(p TooltipProps) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templruntime.NewAttributeExpression(p.Text).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tooltip.templ`, Line: 6, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tooltip.templ`, Line: 7, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 			if templ_7745c5c3_Err != nil {
@@ -58,7 +59,7 @@ func tooltip(p TooltipProps) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templruntime.NewAttributeExpression(p.Side).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tooltip.templ`, Line: 8, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tooltip.templ`, Line: 9, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 				if templ_7745c5c3_Err != nil {
@@ -77,7 +78,7 @@ func tooltip(p TooltipProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.NewAttributeExpression(p.Align).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tooltip.templ`, Line: 11, Col: 23}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/tooltip.templ`, Line: 12, Col: 23}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 				if templ_7745c5c3_Err != nil {
@@ -117,6 +118,10 @@ func tooltip(p TooltipProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
+			}
+			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "span", p.Attrs)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_ElementWriter, templ_7745c5c3_ElementScripts...)
 			if templ_7745c5c3_Err != nil {
