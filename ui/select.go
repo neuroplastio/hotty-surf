@@ -30,8 +30,11 @@ type SelectProps struct {
 	Values []string
 	// CloseOnSelect closes a multiple-select list after each choice.
 	CloseOnSelect bool
-	Placeholder   string
-	Disabled      bool
+	// Align places the list along its trigger: "" or "start" (the
+	// default), "center" or "end". End fits a trigger at the right edge.
+	Align       string
+	Placeholder string
+	Disabled    bool
 	// OnChange hears the value the user chose.
 	OnChange func(value string)
 	// OnValuesChange hears selected values in item order when Multiple.

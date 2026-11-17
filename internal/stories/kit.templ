@@ -80,6 +80,8 @@ func init() {
 		View: kit(selectDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
 	add(Story{ID: "select/multiple", Doc: "Select several sizes",
 		View: kit(selectMultiple, nil), Keys: []string{"tab", "enter", "arrow_down", "enter", "arrow_down", "enter"}, Want: "sizes: s,m"})
+	add(Story{ID: "select/end-aligned", Doc: "A select aligned to the right edge",
+		View: kit(selectEndAligned, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "size: s"})
 	add(Story{ID: "select/grouped", Doc: "A select with groups and a disabled option",
 		View: kit(selectGrouped, func(s *kitState) { s.value = "apple" }), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "fruit: banana"})
 	add(Story{ID: "dropdown-menu/default", Doc: "A menu with an icon, a shortcut, a disabled item and a group",
@@ -306,6 +308,16 @@ templ selectMultiple(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		@ui.Select(&s.sel, ui.SelectProps{ID:"sizes", Items:sizeItems, Multiple:true, Values:s.values, Placeholder:"Pick sizes", OnValuesChange:func(v []string){s.values=v}})
 		<p>sizes: { strings.Join(s.values, ",") }</p>
+	</div>
+}
+
+templ selectEndAligned(s *kitState) {
+	<div class="p-4">
+		<div class="flex flex-row justify-between">
+			<span></span>
+			@ui.Select(&s.sel, ui.SelectProps{ID:"edge", Items:sizeItems, Value:s.value, Placeholder:"Pick a size", Align:"end", OnChange:s.choose})
+		</div>
+		<p>size: { s.value }</p>
 	</div>
 }
 

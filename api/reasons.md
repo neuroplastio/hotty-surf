@@ -367,6 +367,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   multiple mode with controlled values (K2(b)).
 - `ui.SelectProps.CloseOnSelect`: select.js's multiple-mode configuration
   (data-close-on-select).
+- `ui.SelectProps.Align`: the popover's data-align placement (K2(a)), so an
+  app can align a Select's list to the right edge of its trigger.
 - `ui.MenuItem.Role`, `.Checked`, `.OnCheckedChange`: checkbox and radio
   items and their controlled state (K2(a), K2(b)); Command ignores them.
 - `ui.ToastAction`, `.Label`, `.OnSelect`: a footer action or cancel

@@ -1026,7 +1026,7 @@ scrollbar classes and Avatar's image for the looks pass.
   exercises each. Chromium differential cases cover search, single and
   multiple selection, and removing the last chip. `CloseOnSelect` and
   `AutoHighlight` are script configuration outside K2's listed cases.
-  The four initial stories were rendered with hotty-blitz 0.8.7 and
+  The four initial stories were rendered with the current live hotty-blitz and
   Chromium from the same documents; the image comparison reported
   0.07–0.13% differing pixels, concentrated on text and control edges.
 - **Drawer: draft for review.** Drawer reuses the Dialog modal behavior and
@@ -1068,7 +1068,7 @@ scrollbar classes and Avatar's image for the looks pass.
   two-thumb components separately;
   the reviewer should decide those shapes and the Page increment. Each
   track has at most 40 drag steps, following hotty-a2ui. Chromium and Blitz
-  renders of the two stories differ in 0.30% and 0.49% of pixels, mainly
+  renders of the two stories differ in 0.06% and 0.10% of pixels, mainly
   text and control edges.
 - **Select multiple: draft for review.** Basecoat's select.js supports
   multiple values and keeps the list open on selection unless configured
@@ -1078,7 +1078,19 @@ scrollbar classes and Avatar's image for the looks pass.
   reviewer should decide whether one component with both modes or a
   separate multiple-select API is preferable. A Chromium differential
   covers keyboard selection and pointer toggling; the story runs in cells.
-  Its initial Blitz/Chromium rendering differs in 0.21% of pixels.
+  Its initial live Blitz/Chromium rendering differs in 0.07% of pixels.
+- **Select alignment: draft for review.** Align exposes the same start,
+  center and end placement as DropdownMenu. End lets the application keep
+  a list at a right-edge trigger inside the surface. This is a manual
+  choice: the surface does not know the trigger's and viewport's pixel
+  geometry, so it does not automatically flip an overflowing list. The
+  spike's popup has caller-supplied side and alignment; hotty-a2ui instead
+  puts the list on a separate surface. Its book combines the click's trigger
+  area with pane and window rectangles, clamps horizontal placement and
+  flips above when there is more room. Automatic placement via that approach
+  remains a known gap for a future design, as agreed for B3. A forced-open
+  right-edge story stays inside the surface in live Blitz and Chromium;
+  their comparison differs by 0.19% of pixels.
 - **DropdownMenu checkbox and radio items: draft for review.** The spike's
   MenuCheck and MenuRadio supply the indicator markup; dropdown-menu.js
   supplies toggling and radio grouping. The draft extends the shared
@@ -1087,7 +1099,7 @@ scrollbar classes and Avatar's image for the looks pass.
   rendered group, or the menu when ungrouped, as the script does. The
   reviewer should decide this shared item shape and callbacks versus
   separate checkbox and radio item types. Its initial story render differs
-  by 0.25% of pixels between Blitz and Chromium; a Chromium differential
+  by 0.10% of pixels between live Blitz and Chromium; a Chromium differential
   exercises both roles.
 - **Toast actions: draft for review.** Action and Cancel point to a shared
   ToastAction containing a label and Go callback; either closes the toast

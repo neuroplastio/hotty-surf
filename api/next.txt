@@ -358,6 +358,7 @@ pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Group string
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct
+pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Align string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, CloseOnSelect bool
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Disabled bool

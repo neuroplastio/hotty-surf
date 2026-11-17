@@ -277,3 +277,9 @@ func TestSelectMultipleCloseOnSelect(t *testing.T) {
 	}
 	want(t, r, "#sizes-trigger", "aria-expanded", "false")
 }
+
+func TestSelectAlignEnd(t *testing.T) {
+	var st ui.SelectState
+	r := start(t, ui.Select(&st, ui.SelectProps{ID: "edge", Items: sizes, Placeholder: "Pick", Align: "end"}))
+	r.One("#edge-popover[data-align=end]")
+}
