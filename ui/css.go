@@ -36,9 +36,10 @@ type NativeSelectProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the select element: its id and
-	// handlers, through surf.On, and any other. A surf.Input handler hears
-	// the user's choice, its option's Value. An attribute the component
-	// writes itself (its class, data-slot, or a field's) is a fault here.
+	// handlers, through surf.On, and any other but those the component
+	// writes itself (class, data-slot, data-size, disabled or
+	// aria-invalid), which are a fault here. A surf.Input handler hears
+	// the user's choice, its option's Value.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -54,8 +55,8 @@ func NativeSelect(p NativeSelectProps) templ.Component {
 // FieldSeparatorProps are a FieldSeparator's attributes.
 type FieldSeparatorProps struct {
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class or data-slot) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string

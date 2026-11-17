@@ -820,3 +820,16 @@ other opted-in Roomy cases expose the same boundary mismatch as their
 backgrounds change. This is a fractional-scale host rendering gap, not
 an inversion of the selected or active roles. The 15 new failures are
 recorded in the fidelity baseline; the threshold is unchanged.
+
+## The kit's looks to prove (L2, 2026-11-17)
+
+L2's looks pass renders every story in `hotty render` and in headless
+Chromium from the same HTML, then compares them. Each item below comes
+out either proven or as a gap of its own above. None has been checked
+yet.
+
+- `input/date` and `input/time` (B1, kit rule K10): SPEC §10.2 gives date
+  and time inputs keys, so they ship, but nobody has looked at how Blitz
+  draws them.
+- Dialog's and the Toaster's styling from kit.css (L1's L2 items): now in
+  the kit build, not yet drawn by Blitz.

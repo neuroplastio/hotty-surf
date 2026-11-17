@@ -145,7 +145,7 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 - `ui.SwitchProps.Size`: (a) Basecoat's switch sizes, data-size: Medium or Small (the shared Size).
 - `ui.SwitchProps.Disabled`: (a) as CheckboxProps.Disabled.
 - `ui.SwitchProps.Invalid`: (a) as CheckboxProps.Invalid.
-- `ui.Input`: Basecoat's text input (`.input`), any of the 13 types its CSS draws.
+- `ui.Input`: Basecoat's text input (`.input`), any of the 13 types its CSS draws but file, which SPEC §6.4 makes no control.
 - `ui.InputProps`: an input's attributes.
 - `ui.InputProps.Type`: (a) Basecoat's CSS lists the types it draws; of them, "" or text, email, password, number, tel, url, search, date, datetime-local, month, week and time (file is no control in SPEC §6.4, so it is cut, K10); a check box or radio is its own component, so any other type is a fault. A string with its values in the doc, not a type of its own, by Q2's rule (only data-variant and data-size are shared enums).
 - `ui.InputProps.Value`: (b) the field's text, always written, so the app keeps it in step and can clear it (a filter's reset). An input whose markup has no value is the host's (L1), which a typed component would make the zero value's meaning and so lose ""; an app wanting the host's own field writes a plain `<input>`.

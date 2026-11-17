@@ -12,8 +12,9 @@
 //     Basecoat's default. Every Props has Class, for Tailwind classes added
 //     to the component's outermost element.
 //   - A component made from CSS alone is one element, and its Props has
-//     Attrs for any attribute of it: its handlers, through surf.On, as on
-//     any element. A component made from a Jinja macro has ID, which names
+//     Attrs for any attribute of it that it doesn't write itself (one it
+//     writes is a fault): its handlers, through surf.On, as on any
+//     element. A component made from a Jinja macro has ID, which names
 //     its inner elements, and reports its own events through On…
 //     callbacks.
 //   - The app's data stays the app's: the value a component shows comes in

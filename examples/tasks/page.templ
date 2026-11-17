@@ -108,15 +108,17 @@ templ toolbar(a *App) {
 				@facetFilter(a, "priority", "Priority", priorities)
 			}
 			if a.filtered() {
-				<button data-slot="button" type="button" data-variant="ghost" data-size="sm" class="btn" { surf.On(ctx, "reset", surf.Click(a.ResetFilters))... }>
+				@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.Small, Attrs: surf.On(ctx, "reset", surf.Click(a.ResetFilters))}) {
 					Reset
 					@ui.Icon("x", "")
-				</button>
+				}
 			}
 		</div>
 		<div class="flex items-center gap-2">
 			@viewOptions(a)
-			<button data-slot="button" type="button" data-size="sm" class="btn">Add Task</button>
+			@ui.Button(ui.ButtonProps{Size: ui.Small}) {
+				Add Task
+			}
 		</div>
 	</div>
 }

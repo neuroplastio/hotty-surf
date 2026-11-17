@@ -31,7 +31,7 @@ func nativeSelect(p NativeSelectProps) templ.Component {
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
 		checkSize(ctx, "NativeSelect", p.Size, nativeSelectSizes)
-		checkAttrs(ctx, "NativeSelect", p.Attrs, "class", "data-slot", "data-size", "disabled", "aria-invalid")
+		checkAttrs(ctx, "NativeSelect", p.Attrs, "class", "data-slot", "data-size=Size", "disabled=Disabled", "aria-invalid=Invalid")
 		checkChoice(ctx, p)
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer

@@ -214,7 +214,7 @@ var table = []Comp{
 	},
 	{
 		Name: "InputGroup", File: "input-group", Tag: "div", Slot: "input-group", Class: "input-group", Group: true,
-		Doc: `is Basecoat's input group: one control with addons beside it, InputGroupAddons, in its children. The group draws the control's border, so an Input, a Textarea or a NativeSelect in it writes no class of its own, as Basecoat's markup has it:
+		Doc: `is Basecoat's input group: one control with addons beside it, InputGroupAddons, in its children. The group draws the control's border, so an Input, a Textarea or a NativeSelect directly in it writes no class of its own, as Basecoat's markup has it:
 
 	@ui.InputGroup(ui.InputGroupProps{}) {
 		@ui.Input(ui.InputProps{Type: "search", Value: a.q, Placeholder: "Search",

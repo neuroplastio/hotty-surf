@@ -54,22 +54,26 @@ func checkIcon(ctx context.Context, name string) string {
 }
 
 // checkAttrs faults an attribute in attrs that the component writes
-// itself: templ would write both, and the first wins (kit rule K3).
+// itself: templ would write both, and the first wins (kit rule K3). Each
+// of written is an attribute's name, or name=Field for one a field of the
+// Props writes.
 func checkAttrs(ctx context.Context, comp string, attrs templ.Attributes, written ...string) string {
 	if len(attrs) == 0 {
 		return ""
 	}
-	for _, n := range written {
-		if _, ok := attrs[n]; ok {
-			what := "a field of its Props"
-			switch n {
-			case "class":
-				what = "Class"
-			case "data-slot":
-				what = "nothing: the component's own"
-			}
-			rt.Fault(ctx, fmt.Sprintf("ui.%s: Attrs has %s, which the component writes itself (use %s)", comp, n, what))
+	for _, w := range written {
+		n, field, _ := strings.Cut(w, "=")
+		if _, ok := attrs[n]; !ok {
+			continue
 		}
+		hint := "it is the component's own"
+		switch {
+		case n == "class":
+			hint = "use Class"
+		case field != "":
+			hint = "use " + field
+		}
+		rt.Fault(ctx, fmt.Sprintf("ui.%s: Attrs has %s, which the component writes itself (%s)", comp, n, hint))
 	}
 	return ""
 }

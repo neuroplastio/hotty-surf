@@ -49,7 +49,7 @@ func init() {
 		View: form(textareaDefault, formState{}), Keys: []string{"tab", "h", "i"}, Want: "message: hi"})
 	add(Story{ID: "label/default", Doc: "A label for an input beside it (For)",
 		View: form(labelDefault, formState{})})
-	add(Story{ID: "label/disabled", Doc: "A label dimmed with its disabled control",
+	add(Story{ID: "label/disabled", Doc: "A label dimmed in a disabled Field (FieldProps.Disabled)",
 		View: form(labelDisabled, formState{})})
 	add(Story{ID: "field/default", Doc: "A field: a label, an input and a description",
 		View: form(fieldDefault, formState{})})
@@ -210,11 +210,13 @@ templ labelDefault(s *formState) {
 }
 
 templ labelDisabled(s *formState) {
-	<div class="flex flex-col gap-2 p-4 max-w-sm">
-		@ui.Label(ui.LabelProps{For: "username"}) {
-			Username
+	<div class="p-4 max-w-sm">
+		@ui.Field(ui.FieldProps{Disabled: true}) {
+			@ui.Label(ui.LabelProps{For: "username"}) {
+				Username
+			}
+			@ui.Input(ui.InputProps{Value: "ada", Disabled: true, Attrs: surf.On(ctx, "username")})
 		}
-		@ui.Input(ui.InputProps{Value: "ada", Disabled: true, Attrs: surf.On(ctx, "username")})
 	</div>
 }
 

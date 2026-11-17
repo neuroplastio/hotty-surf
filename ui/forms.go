@@ -29,7 +29,12 @@ func optionGroups(items []SelectItem) []optionGroup {
 
 // checkChoice faults a Value that is none of the items': the select would
 // show no choice of the app's, and the host's would stand (kit rule K6).
+// A select with no items yet (its options load later) holds nothing for
+// the host to keep, so Value "" is right for it.
 func checkChoice(ctx context.Context, p NativeSelectProps) string {
+	if len(p.Items) == 0 && p.Value == "" {
+		return ""
+	}
 	if !slices.ContainsFunc(p.Items, func(it SelectItem) bool { return it.Value == p.Value }) {
 		rt.Fault(ctx, fmt.Sprintf("ui.NativeSelect: Value %q is no item's (a select with no choice has an item whose Value is \"\")", p.Value))
 	}

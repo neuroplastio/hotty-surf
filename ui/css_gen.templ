@@ -6,7 +6,7 @@ package ui
 templ cssButton(p ButtonProps) {
 	{{ checkVariant(ctx, "Button", p.Variant, buttonVariants) }}
 	{{ checkSize(ctx, "Button", p.Size, buttonSizes) }}
-	{{ checkAttrs(ctx, "Button", p.Attrs, "class", "data-slot", "disabled", "data-variant", "data-size") }}
+	{{ checkAttrs(ctx, "Button", p.Attrs, "class", "data-slot", "disabled=Disabled", "data-variant=Variant", "data-size") }}
 	<button
 		data-slot="button"
 		if _, ok := p.Attrs["type"]; !ok {
@@ -29,7 +29,7 @@ templ cssButton(p ButtonProps) {
 // cssBadge is Badge's markup (Basecoat's badge.css).
 templ cssBadge(p BadgeProps) {
 	{{ checkVariant(ctx, "Badge", p.Variant, badgeVariants) }}
-	{{ checkAttrs(ctx, "Badge", p.Attrs, "class", "data-slot", "data-variant") }}
+	{{ checkAttrs(ctx, "Badge", p.Attrs, "class", "data-slot", "data-variant=Variant") }}
 	<span
 		data-slot="badge"
 		if p.Variant != "" {
@@ -56,7 +56,7 @@ templ cssCard(p CardProps) {
 
 // cssCheckbox is Checkbox's markup (Basecoat's checkbox.css).
 templ cssCheckbox(p CheckboxProps) {
-	{{ checkAttrs(ctx, "Checkbox", p.Attrs, "class", "data-slot", "type", "checked", "disabled", "aria-invalid") }}
+	{{ checkAttrs(ctx, "Checkbox", p.Attrs, "class", "data-slot", "type", "checked=Checked", "disabled=Disabled", "aria-invalid=Invalid") }}
 	<input
 		data-slot="checkbox"
 		type="checkbox"
@@ -72,7 +72,7 @@ templ cssCheckbox(p CheckboxProps) {
 
 // cssRadio is Radio's markup (Basecoat's radio.css).
 templ cssRadio(p RadioProps) {
-	{{ checkAttrs(ctx, "Radio", p.Attrs, "class", "data-slot", "type", "name", "checked", "disabled", "aria-invalid") }}
+	{{ checkAttrs(ctx, "Radio", p.Attrs, "class", "data-slot", "type", "name=Name", "checked=Checked", "disabled=Disabled", "aria-invalid=Invalid") }}
 	<input
 		data-slot="radio"
 		type="radio"
@@ -92,7 +92,7 @@ templ cssRadio(p RadioProps) {
 // cssSwitch is Switch's markup (Basecoat's switch.css).
 templ cssSwitch(p SwitchProps) {
 	{{ checkSize(ctx, "Switch", p.Size, switchSizes) }}
-	{{ checkAttrs(ctx, "Switch", p.Attrs, "class", "data-slot", "type", "role", "checked", "data-size", "disabled", "aria-invalid") }}
+	{{ checkAttrs(ctx, "Switch", p.Attrs, "class", "data-slot", "type", "role", "checked=Checked", "data-size=Size", "disabled=Disabled", "aria-invalid=Invalid") }}
 	<input
 		data-slot="switch"
 		type="checkbox"
@@ -113,7 +113,7 @@ templ cssSwitch(p SwitchProps) {
 // cssInput is Input's markup (Basecoat's input.css).
 templ cssInput(p InputProps) {
 	{{ checkEnum(ctx, "Input", "Type", p.Type, inputTypes) }}
-	{{ checkAttrs(ctx, "Input", p.Attrs, "class", "data-slot", "type", "value", "placeholder", "disabled", "aria-invalid") }}
+	{{ checkAttrs(ctx, "Input", p.Attrs, "class", "data-slot", "type=Type", "value=Value", "placeholder=Placeholder", "disabled=Disabled", "aria-invalid=Invalid") }}
 	<input
 		data-slot="input"
 		if p.Type != "" {
@@ -134,7 +134,7 @@ templ cssInput(p InputProps) {
 
 // cssTextarea is Textarea's markup (Basecoat's textarea.css).
 templ cssTextarea(p TextareaProps) {
-	{{ checkAttrs(ctx, "Textarea", p.Attrs, "class", "data-slot", "placeholder", "disabled", "aria-invalid") }}
+	{{ checkAttrs(ctx, "Textarea", p.Attrs, "class", "data-slot", "placeholder=Placeholder", "disabled=Disabled", "aria-invalid=Invalid") }}
 	<textarea
 		data-slot="textarea"
 		if p.Placeholder != "" {
@@ -151,7 +151,7 @@ templ cssTextarea(p TextareaProps) {
 
 // cssLabel is Label's markup (Basecoat's label.css).
 templ cssLabel(p LabelProps) {
-	{{ checkAttrs(ctx, "Label", p.Attrs, "class", "data-slot", "for") }}
+	{{ checkAttrs(ctx, "Label", p.Attrs, "class", "data-slot", "for=For") }}
 	<label
 		data-slot="label"
 		if p.For != "" {
@@ -167,7 +167,7 @@ templ cssLabel(p LabelProps) {
 // cssField is Field's markup (Basecoat's field.css).
 templ cssField(p FieldProps) {
 	{{ checkEnum(ctx, "Field", "Orientation", p.Orientation, fieldOrientations) }}
-	{{ checkAttrs(ctx, "Field", p.Attrs, "class", "data-slot", "data-orientation", "data-invalid", "data-disabled") }}
+	{{ checkAttrs(ctx, "Field", p.Attrs, "class", "data-slot", "data-orientation=Orientation", "data-invalid=Invalid", "data-disabled=Disabled") }}
 	<div
 		data-slot="field"
 		if p.Orientation != "" {
@@ -213,7 +213,7 @@ templ cssInputGroup(p InputGroupProps) {
 // cssInputGroupAddon is InputGroupAddon's markup (Basecoat's input-group.css).
 templ cssInputGroupAddon(p InputGroupAddonProps) {
 	{{ checkEnum(ctx, "InputGroupAddon", "Align", p.Align, addonAligns) }}
-	{{ checkAttrs(ctx, "InputGroupAddon", p.Attrs, "class", "data-slot", "data-align") }}
+	{{ checkAttrs(ctx, "InputGroupAddon", p.Attrs, "class", "data-slot", "data-align=Align") }}
 	<span
 		data-slot="input-group-addon"
 		data-align={ or(p.Align, "inline-start") }

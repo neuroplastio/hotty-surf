@@ -32,7 +32,7 @@ func cssButton(p ButtonProps) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		checkVariant(ctx, "Button", p.Variant, buttonVariants)
 		checkSize(ctx, "Button", p.Size, buttonSizes)
-		checkAttrs(ctx, "Button", p.Attrs, "class", "data-slot", "disabled", "data-variant", "data-size")
+		checkAttrs(ctx, "Button", p.Attrs, "class", "data-slot", "disabled=Disabled", "data-variant=Variant", "data-size")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -163,7 +163,7 @@ func cssBadge(p BadgeProps) templ.Component {
 		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
 		ctx = templ.ClearChildren(ctx)
 		checkVariant(ctx, "Badge", p.Variant, badgeVariants)
-		checkAttrs(ctx, "Badge", p.Attrs, "class", "data-slot", "data-variant")
+		checkAttrs(ctx, "Badge", p.Attrs, "class", "data-slot", "data-variant=Variant")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -337,7 +337,7 @@ func cssCheckbox(p CheckboxProps) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		checkAttrs(ctx, "Checkbox", p.Attrs, "class", "data-slot", "type", "checked", "disabled", "aria-invalid")
+		checkAttrs(ctx, "Checkbox", p.Attrs, "class", "data-slot", "type", "checked=Checked", "disabled=Disabled", "aria-invalid=Invalid")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -426,7 +426,7 @@ func cssRadio(p RadioProps) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		checkAttrs(ctx, "Radio", p.Attrs, "class", "data-slot", "type", "name", "checked", "disabled", "aria-invalid")
+		checkAttrs(ctx, "Radio", p.Attrs, "class", "data-slot", "type", "name=Name", "checked=Checked", "disabled=Disabled", "aria-invalid=Invalid")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -535,7 +535,7 @@ func cssSwitch(p SwitchProps) templ.Component {
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
 		checkSize(ctx, "Switch", p.Size, switchSizes)
-		checkAttrs(ctx, "Switch", p.Attrs, "class", "data-slot", "type", "role", "checked", "data-size", "disabled", "aria-invalid")
+		checkAttrs(ctx, "Switch", p.Attrs, "class", "data-slot", "type", "role", "checked=Checked", "data-size=Size", "disabled=Disabled", "aria-invalid=Invalid")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -644,7 +644,7 @@ func cssInput(p InputProps) templ.Component {
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
 		checkEnum(ctx, "Input", "Type", p.Type, inputTypes)
-		checkAttrs(ctx, "Input", p.Attrs, "class", "data-slot", "type", "value", "placeholder", "disabled", "aria-invalid")
+		checkAttrs(ctx, "Input", p.Attrs, "class", "data-slot", "type=Type", "value=Value", "placeholder=Placeholder", "disabled=Disabled", "aria-invalid=Invalid")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -782,7 +782,7 @@ func cssTextarea(p TextareaProps) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		checkAttrs(ctx, "Textarea", p.Attrs, "class", "data-slot", "placeholder", "disabled", "aria-invalid")
+		checkAttrs(ctx, "Textarea", p.Attrs, "class", "data-slot", "placeholder=Placeholder", "disabled=Disabled", "aria-invalid=Invalid")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -898,7 +898,7 @@ func cssLabel(p LabelProps) templ.Component {
 		ctx = templ.InitializeContext(ctx)
 		templ_7745c5c3_Var35 := templ.GetChildren(ctx)
 		ctx = templ.ClearChildren(ctx)
-		checkAttrs(ctx, "Label", p.Attrs, "class", "data-slot", "for")
+		checkAttrs(ctx, "Label", p.Attrs, "class", "data-slot", "for=For")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -998,7 +998,7 @@ func cssField(p FieldProps) templ.Component {
 		templ_7745c5c3_Var39 := templ.GetChildren(ctx)
 		ctx = templ.ClearChildren(ctx)
 		checkEnum(ctx, "Field", "Orientation", p.Orientation, fieldOrientations)
-		checkAttrs(ctx, "Field", p.Attrs, "class", "data-slot", "data-orientation", "data-invalid", "data-disabled")
+		checkAttrs(ctx, "Field", p.Attrs, "class", "data-slot", "data-orientation=Orientation", "data-invalid=Invalid", "data-disabled=Disabled")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()
@@ -1262,7 +1262,7 @@ func cssInputGroupAddon(p InputGroupAddonProps) templ.Component {
 		templ_7745c5c3_Var49 := templ.GetChildren(ctx)
 		ctx = templ.ClearChildren(ctx)
 		checkEnum(ctx, "InputGroupAddon", "Align", p.Align, addonAligns)
-		checkAttrs(ctx, "InputGroupAddon", p.Attrs, "class", "data-slot", "data-align")
+		checkAttrs(ctx, "InputGroupAddon", p.Attrs, "class", "data-slot", "data-align=Align")
 		{
 			templ_7745c5c3_ElementWriter := templ_7745c5c3_Buffer
 			templ_7745c5c3_Buffer := templ.GetBuffer()

@@ -64,7 +64,7 @@ func genGo() []byte {
 		}
 		attrsDoc := c.AttrsDoc
 		if attrsDoc == "" {
-			attrsDoc = fmt.Sprintf("Attrs are more attributes for the %s element: its id and handlers, through surf.On, and any other. An attribute the component writes itself (its class, data-slot, or a field's) is a fault here.", c.Tag)
+			attrsDoc = fmt.Sprintf("Attrs are more attributes for the %s element: its id and handlers, through surf.On, and any other but those the component writes itself (%s), which are a fault here.", c.Tag, orList(writtenNames(c)))
 		}
 		comment(&b, "\t", attrsDoc)
 		b.WriteString("\tAttrs templ.Attributes\n")
@@ -155,10 +155,9 @@ func attr(b *bytes.Buffer, c Comp, a Attr) {
 	}
 }
 
-// written is the Go list of the attributes the component writes itself,
-// which its Attrs may not repeat (Button's type, which Attrs replaces,
-// aside).
-func written(c Comp) string {
+// writtenNames is the attributes the component writes itself, which its
+// Attrs may not repeat (Button's type, which Attrs replaces, aside).
+func writtenNames(c Comp) []string {
 	names := []string{"class"}
 	if c.Slot != "" {
 		names = append(names, "data-slot")
@@ -168,11 +167,30 @@ func written(c Comp) string {
 			names = append(names, a.Name)
 		}
 	}
+	return names
+}
+
+// written is writtenNames as checkAttrs takes them: name=Field for one a
+// field of the Props writes.
+func written(c Comp) string {
 	var q []string
-	for _, n := range names {
-		q = append(q, fmt.Sprintf("%q", n))
+	for _, a := range writtenNames(c) {
+		for _, at := range c.Attrs {
+			if at.Name == a && at.Field != "" {
+				a += "=" + at.Field
+			}
+		}
+		q = append(q, fmt.Sprintf("%q", a))
 	}
 	return strings.Join(q, ", ")
+}
+
+// orList is names as a doc lists them: "a, b or c".
+func orList(names []string) string {
+	if len(names) < 2 {
+		return strings.Join(names, "")
+	}
+	return strings.Join(names[:len(names)-1], ", ") + " or " + names[len(names)-1]
 }
 
 // article is "an" before a name that starts with a vowel, else "a".

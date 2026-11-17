@@ -107,3 +107,32 @@ func TestFieldSeparatorWord(t *testing.T) {
 		}
 	}
 }
+
+// A NativeSelect with no items yet (its options load later) holds nothing
+// for the host to keep: Value "" is no fault.
+func TestNativeSelectEmpty(t *testing.T) {
+	f := &faults{T: t}
+	surftest.Start(f, surf.New("t", ui.NativeSelect(ui.NativeSelectProps{}), ui.Stylesheet()))
+	if len(f.got) > 0 {
+		t.Errorf("an empty select faults: %q", f.got)
+	}
+}
+
+// A fault for an attribute the component writes names the way out: the
+// field that writes it, or none for a constant.
+func TestAttrsFaultHints(t *testing.T) {
+	f := &faults{T: t}
+	surftest.Start(f, surf.New("t", templ.Join(
+		ui.Switch(ui.SwitchProps{Attrs: templ.Attributes{"role": "checkbox"}}),
+		ui.Input(ui.InputProps{Attrs: templ.Attributes{"placeholder": "x"}}),
+	), ui.Stylesheet()))
+	all := strings.Join(f.got, "\n")
+	for _, w := range []string{
+		"ui.Switch: Attrs has role, which the component writes itself (it is the component's own)",
+		"ui.Input: Attrs has placeholder, which the component writes itself (use Placeholder)",
+	} {
+		if !strings.Contains(all, w) {
+			t.Errorf("no fault %q in %q", w, all)
+		}
+	}
+}

@@ -7,7 +7,7 @@ import "strings"
 
 templ nativeSelect(p NativeSelectProps) {
 	{{ checkSize(ctx, "NativeSelect", p.Size, nativeSelectSizes) }}
-	{{ checkAttrs(ctx, "NativeSelect", p.Attrs, "class", "data-slot", "data-size", "disabled", "aria-invalid") }}
+	{{ checkAttrs(ctx, "NativeSelect", p.Attrs, "class", "data-slot", "data-size=Size", "disabled=Disabled", "aria-invalid=Invalid") }}
 	{{ checkChoice(ctx, p) }}
 	<select
 		data-slot="native-select"

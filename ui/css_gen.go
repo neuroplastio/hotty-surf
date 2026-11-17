@@ -36,8 +36,8 @@ type BadgeProps struct {
 	// Variant is Primary, Secondary, Outline, Ghost, Destructive or Link.
 	Variant Variant
 	// Attrs are more attributes for the span element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot or data-variant), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -51,8 +51,8 @@ func Badge(p BadgeProps) templ.Component {
 // CardProps are a Card's attributes.
 type CardProps struct {
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -75,8 +75,9 @@ type CheckboxProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot, type, checked, disabled or aria-invalid), which
+	// are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -108,8 +109,9 @@ type RadioProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot, type, name, checked, disabled or aria-invalid),
+	// which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -136,8 +138,9 @@ type SwitchProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot, type, role, checked, data-size, disabled or
+	// aria-invalid), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -169,8 +172,9 @@ type InputProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot, type, value, placeholder, disabled or
+	// aria-invalid), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -196,8 +200,9 @@ type TextareaProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the textarea element: its id and
-	// handlers, through surf.On, and any other. An attribute the component
-	// writes itself (its class, data-slot, or a field's) is a fault here.
+	// handlers, through surf.On, and any other but those the component
+	// writes itself (class, data-slot, placeholder, disabled or
+	// aria-invalid), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -217,8 +222,8 @@ type LabelProps struct {
 	// id the control's surf.On gave it.
 	For string
 	// Attrs are more attributes for the label element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot or for), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -244,8 +249,9 @@ type FieldProps struct {
 	// its own Disabled.
 	Disabled bool
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot, data-orientation, data-invalid or data-disabled),
+	// which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -271,8 +277,8 @@ func Field(p FieldProps) templ.Component {
 // FieldSetProps are a FieldSet's attributes.
 type FieldSetProps struct {
 	// Attrs are more attributes for the fieldset element: its id and
-	// handlers, through surf.On, and any other. An attribute the component
-	// writes itself (its class, data-slot, or a field's) is a fault here.
+	// handlers, through surf.On, and any other but those the component
+	// writes itself (class or data-slot), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -289,8 +295,8 @@ func FieldSet(p FieldSetProps) templ.Component {
 // InputGroupProps are an InputGroup's attributes.
 type InputGroupProps struct {
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -298,8 +304,8 @@ type InputGroupProps struct {
 
 // InputGroup is Basecoat's input group: one control with addons beside it,
 // InputGroupAddons, in its children. The group draws the control's border,
-// so an Input, a Textarea or a NativeSelect in it writes no class of its
-// own, as Basecoat's markup has it:
+// so an Input, a Textarea or a NativeSelect directly in it writes no class
+// of its own, as Basecoat's markup has it:
 //
 //	@ui.InputGroup(ui.InputGroupProps{}) {
 //		@ui.Input(ui.InputProps{Type: "search", Value: a.q, Placeholder: "Search",
@@ -319,8 +325,8 @@ type InputGroupAddonProps struct {
 	// (above or below it, the group's width). surftest fails any other.
 	Align string
 	// Attrs are more attributes for the span element: its id and handlers,
-	// through surf.On, and any other. An attribute the component writes
-	// itself (its class, data-slot, or a field's) is a fault here.
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot or data-align), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
