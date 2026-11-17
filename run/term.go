@@ -121,11 +121,11 @@ func host(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-chan 
 				if k == "" {
 					continue
 				}
-				taken, err := s.Key(k)
+				quit, err := key(s, k)
 				if err != nil {
 					return err
 				}
-				if !taken && quits(k) {
+				if quit {
 					return nil
 				}
 			}
