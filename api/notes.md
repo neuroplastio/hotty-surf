@@ -344,10 +344,37 @@ colours, editing hosts, and relayout of only what changed.
   so the program doesn't resend its document.
 - **Focus(false)** sends blur and makes Key take nothing until
   Focus(true), which gives the keyboard back to the element that had it
-  and sends focus.
+  and sends focus, or until a click on an element that takes focus,
+  which gives the Screen the keyboard back as a click on a host's surface
+  does (SPEC §10.1). A program's a=blur in between holds: Focus(true)
+  then focuses nothing.
 - **No clipboard:** copy, cut and paste keys go to the program, which
   pastes with Paste.
 - **Headings are bold, and `grid` lays out as a flex column.**
+- **inner keeps what matters of a morph** (review 14): the elements it
+  remakes with an old one's id and tag take its field and its focus. A
+  full SPEC §6.2 morph, and append's morph of an existing id, are L3's.
+- **A changed default sets an unfocused control** (review 15): a value,
+  checked, a select's selected option or a textarea's text that a delta
+  changes sets the control unless it has the keyboard; its rev stays.
+- **In run, a refused delta resends the document** and any other refusal
+  changes nothing (review 18), as run's host path does with error
+  replies.
+- **A readonly field** takes the keys that would edit it and does
+  nothing with them; it still moves, selects, and submits on Enter (an
+  edit it isn't). Copy stays the program's, as there is no clipboard. A
+  disabled or hidden field loses the keyboard at the delta that makes it
+  so, with no blur: the surface keeps the keyboard with nothing focused,
+  as a browser's page does.
+- **Only buttons, links, summaries and button inputs take enter and
+  space** (SPEC §10.2); an element that only reports clicks
+  (`data-on~=click`) leaves them to the program.
+- **Wide characters:** one in a box narrower than itself draws as `…`;
+  one half overwritten leaves a space; an input scrolls by whole
+  characters. 20,000 random documents now draw every line `cols` wide.
+  Left for L3: what a terminal makes of a cluster displaywidth measures
+  otherwise (emoji sequences, ambiguous widths), which no test here
+  sees.
 
 ### The 2 ms floor
 

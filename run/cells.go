@@ -3,6 +3,7 @@
 package run
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
@@ -16,6 +17,18 @@ type cellsHost struct {
 	s   *surf.Surface
 	scr *cells.Screen
 	err error // the first error an event the Screen sent led to
+	// stale is a delta the Screen refused: it gets the document again.
+	stale bool
+}
+
+// Write is the surface's writer. The Screen's refusal is a host's error
+// reply, not the app's error: a refused delta sends the document again
+// (as inHost's show), and the rest change nothing.
+func (c *cellsHost) Write(p []byte) (int, error) {
+	if _, err := c.scr.Write(p); err != nil && bytes.HasPrefix(p, []byte("\x1b]7279;a=delta")) {
+		c.stale = true
+	}
+	return len(p), nil
 }
 
 func newCellsHost(s *surf.Surface, cols, rows int) *cellsHost {
@@ -30,7 +43,8 @@ func newCellsHost(s *surf.Surface, cols, rows int) *cellsHost {
 
 // start sends the surface's first document to the Screen.
 func (c *cellsHost) start() error {
-	c.s.Attach(c.scr, hotty.Caps{})
+	c.s.Attach(c, hotty.Caps{})
+	c.stale = false
 	doc, err := c.s.Document()
 	if err != nil {
 		return err
@@ -59,9 +73,9 @@ func (c *cellsHost) frame() string {
 	b.WriteString(ansi.HideCursor)
 	for i, l := range c.scr.Lines() {
 		b.WriteString(ansi.CursorPosition(1, i+1))
+		b.WriteString(ansi.EraseLineRight) // before: after a full line it erases the last cell
 		b.WriteString(l)
 		b.WriteString(ansi.ResetStyle)
-		b.WriteString(ansi.EraseLineRight)
 	}
 	if col, row, ok := c.scr.Cursor(); ok {
 		b.WriteString(ansi.CursorPosition(col+1, row+1))

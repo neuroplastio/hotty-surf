@@ -42,6 +42,14 @@ func (cv *canvas) put(x, y int, ch string, w int, lk look, own *html.Node) {
 		return
 	}
 	r := cv.row(y)
+	// Half a wide character left behind is a space: the row stays as
+	// wide as the canvas.
+	if r[x].s == "" && x > 0 {
+		r[x-1].s = " "
+	}
+	if x+w < cv.w && r[x+w].s == "" {
+		r[x+w].s = " "
+	}
 	r[x] = cell{s: ch, look: lk, own: own}
 	for i := 1; i < w; i++ {
 		r[x+i] = cell{look: lk, own: own}

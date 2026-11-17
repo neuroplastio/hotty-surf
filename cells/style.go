@@ -250,8 +250,8 @@ func step(c, prefix string) (float64, bool) {
 
 // cols and rows are a spacing step in cells: 4px a step, 8px a column,
 // 16px a row.
-func cols(v float64) int { return int(v/2 + 0.5) }
-func rows(v float64) int { return int(v / 4) }
+func cols(v float64) int { return max(int(v/2+0.5), 0) }
+func rows(v float64) int { return max(int(v/4), 0) }
 
 // length is a CSS length in px: px, rem and em (16px), ch (a column).
 func length(s string) (float64, bool) {
@@ -381,7 +381,7 @@ func pxCols(s string) int {
 	if !ok {
 		return 0
 	}
-	return int(v/8 + 0.5)
+	return max(int(v/8+0.5), 0)
 }
 
 func pxRows(s string) int {
@@ -389,5 +389,5 @@ func pxRows(s string) int {
 	if !ok {
 		return 0
 	}
-	return int(v / 16)
+	return max(int(v/16), 0)
 }

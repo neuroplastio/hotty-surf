@@ -559,6 +559,11 @@ func (l *layout) inline(nodes []*html.Node, stop *html.Node, x, y, w int, in inh
 				if cx > 0 && cx+ch.w > w {
 					newline()
 				}
+				if ch.w > w {
+					// A wide character in a box one cell wide: it would
+					// run into the next box.
+					ch = char{"…", 1}
+				}
 				l.paint([]char{ch}, x+cx, y+cy, p.look, p.own, stop)
 				cx += ch.w
 				lineUsed = true
@@ -661,7 +666,7 @@ func textPieces(ps []piece, s string, in inh, own *html.Node) []piece {
 				ps = append(ps, space())
 			}
 			s = s[size:]
-		case unicode.IsSpace(r) && r != ' ':
+		case unicode.IsSpace(r) && r != '\u00a0':
 			if in.pre {
 				ps = append(ps, space())
 			} else if len(ps) == 0 || ps[len(ps)-1].kind != pSpace {
@@ -669,7 +674,7 @@ func textPieces(ps []piece, s string, in inh, own *html.Node) []piece {
 			}
 			s = s[size:]
 		default:
-			end := strings.IndexFunc(s, func(r rune) bool { return unicode.IsSpace(r) && r != ' ' })
+			end := strings.IndexFunc(s, func(r rune) bool { return unicode.IsSpace(r) && r != '\u00a0' })
 			if end < 0 {
 				end = len(s)
 			}
@@ -851,10 +856,20 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 	} else {
 		f.off = 0
 	}
-	skip, cx := 0, x
+	// The first column shown is a character's first: an offset inside a
+	// wide one moves past it.
+	skip := 0
 	for _, ch := range cs {
-		if skip < f.off {
-			skip += ch.w
+		if skip >= f.off {
+			break
+		}
+		skip += ch.w
+	}
+	f.off = skip
+	cx := x
+	for _, ch := range cs {
+		if skip > 0 {
+			skip -= ch.w
 			continue
 		}
 		if cx+ch.w > x+w {
