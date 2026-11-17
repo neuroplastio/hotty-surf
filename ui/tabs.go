@@ -89,6 +89,14 @@ func (v *tabsView) choose(i int) {
 // Tab reaches (its tabindex is 0), hears the keys. Only that one: with
 // nothing focused a key reaches every outermost Key handler (surf.Key),
 // and each tab moving from itself would answer at once.
+func (v *tabsView) handlers(i int) []surf.Handler {
+	hs := []surf.Handler{surf.Click(func() { v.choose(i) })}
+	if i == v.sel {
+		hs = append(hs, surf.Key(v.key(i)))
+	}
+	return hs
+}
+
 // keys are what tab i's Key handler takes, declared on it (K32): only the
 // selected tab hears them.
 func (v *tabsView) keys(i int) string {
@@ -96,14 +104,6 @@ func (v *tabsView) keys(i int) string {
 		return "arrow_left=program arrow_right=program home=program end=program"
 	}
 	return ""
-}
-
-func (v *tabsView) handlers(i int) []surf.Handler {
-	hs := []surf.Handler{surf.Click(func() { v.choose(i) })}
-	if i == v.sel {
-		hs = append(hs, surf.Key(v.key(i)))
-	}
-	return hs
 }
 
 // key is handleKeydown on the tablist (horizontal): the keys move from the
