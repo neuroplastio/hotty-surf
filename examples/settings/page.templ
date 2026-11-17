@@ -98,7 +98,7 @@ templ Page(a *App) {
 				}
 			</div>
 		</form>
-		@ui.Toaster(&a.toasts)
+		@ui.Toaster(&a.toasts, ui.ToasterProps{})
 	</main>
 }
 

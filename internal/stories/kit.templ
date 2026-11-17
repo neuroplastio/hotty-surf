@@ -3,6 +3,7 @@ package stories
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -106,6 +107,8 @@ func init() {
 		View: kit(toastCategories, nil), Keys: []string{"tab", "tab", "enter"}, Want: "Couldn't save"})
 	add(Story{ID: "toast/action", Doc: "A toast with an undo action",
 		View: kit(toastAction, nil), Keys: []string{"tab", "enter", "tab", "enter"}, Want: "action: undone"})
+	add(Story{ID: "toast/owned", Doc: "A toast the app owns: focused by its keys, its countdown bar still, a corner x",
+		View: kit(toastOwned, showOwnedToast), Keys: []string{"tab", "enter"}, Want: "ran: opened"})
 }
 
 templ count(s *kitState) {
@@ -434,7 +437,7 @@ templ toastDefault(s *kitState) {
 		}))}) {
 			Show a toast
 		}
-		@ui.Toaster(&s.toasts)
+		@ui.Toaster(&s.toasts, ui.ToasterProps{})
 	</div>
 }
 
@@ -444,7 +447,7 @@ templ toastAction(s *kitState) {
 			s.toasts.Show(ui.Toast{Title:"Event deleted",Duration:-1,Actions:[]ui.ToastAction{{Label:"Undo",OnSelect:func(){s.ran="undone"}}}})
 		}))}) { Delete }
 		<p>action: { s.ran }</p>
-		@ui.Toaster(&s.toasts)
+		@ui.Toaster(&s.toasts, ui.ToasterProps{})
 	</div>
 }
 
@@ -470,6 +473,29 @@ templ toastCategories(s *kitState) {
 		}))}) {
 			Warning
 		}
-		@ui.Toaster(&s.toasts)
+		@ui.Toaster(&s.toasts, ui.ToasterProps{})
+	</div>
+}
+
+// showOwnedToast shows toastOwned's toast from the start: focused, as the
+// app's keys left it, so its bar stands still and its first button is
+// ringed in a still render.
+func showOwnedToast(s *kitState) {
+	s.toasts.Show(ui.Toast{
+		ID: "build", Title: "Build finished", Description: "hotty-surf, 2 warnings",
+		Duration: -1, Focused: true, Countdown: time.Now().Add(8 * time.Second),
+		Actions: []ui.ToastAction{
+			{Label: "Open", OnSelect: func() { s.ran = "opened" }},
+			{Label: "Later", Variant: ui.Outline, OnSelect: func() { s.ran = "later" }},
+		},
+		OnClick: func() { s.ran = "log" },
+		OnClose: func() { s.ran = "closed"; s.toasts.Remove("build") },
+	})
+}
+
+templ toastOwned(s *kitState) {
+	<div class="p-4">
+		<p>ran: { s.ran }</p>
+		@ui.Toaster(&s.toasts, ui.ToasterProps{})
 	</div>
 }

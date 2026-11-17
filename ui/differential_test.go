@@ -530,7 +530,7 @@ func toastSubject(t *testing.T, args map[string]any) subject {
 		st.Show(ts)
 	}
 	return subject{
-		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Toaster(&st).Render(ctx, w) }),
+		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Toaster(&st, ui.ToasterProps{}).Render(ctx, w) }),
 		events: func() []map[string]any { return nil },
 	}
 }

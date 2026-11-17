@@ -346,7 +346,7 @@ func TestRenderToast(t *testing.T) {
 	st.Show(ui.Toast{Title: "Saved", Description: "All of it."})
 	runRender(t, "toast", []renderCase{{
 		name:  "default",
-		ui:    ui.Toaster(&st),
+		ui:    ui.Toaster(&st, ui.ToasterProps{}),
 		macro: "toaster",
 		// toast.js marks the toaster and each toast it started; ui
 		// names each toast for its handlers.

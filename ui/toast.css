@@ -1,6 +1,19 @@
-.toaster .toast[data-bar]{position:relative}
+.toaster .toast:is([data-bar],[data-close]){position:relative}
+/* The countdown bar: the host runs it down, in steps, from what is left
+   of it (cut off each end evenly) to nothing; a focused toast's stands
+   still. It runs under reduced motion too, as a light progress animation
+   (the maintainer, 2026-11-16): add no reduced-motion rule that stops it. */
 .toaster .toast>.toast-bar{position:absolute;top:0;left:calc(12px + (100% - 24px) * var(--toast-bar-cut));right:calc(12px + (100% - 24px) * var(--toast-bar-cut));height:3px;border-radius:0 0 2px 2px;background:var(--color-primary);pointer-events:none;transform-origin:center;animation:toast-bar var(--toast-bar-life) steps(var(--toast-bar-steps)) forwards}
 .toaster .toast>.toast-bar.still{animation:none}
 @keyframes toast-bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+/* A focused toast's first button: Basecoat's .btn:focus-visible, mirrored;
+   a theme change to one is made to the other. */
 .toaster .toast[data-focused] footer>.btn:first-child{border-color:var(--color-ring);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-ring) 50%,transparent)}
-.toaster .toast[data-focused] footer>.btn[data-variant=destructive]:first-child{border-color:var(--color-destructive);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-destructive) 20%,transparent)}
+.toaster .toast[data-focused] footer>.btn[data-variant=destructive]:first-child{border-color:color-mix(in oklab,var(--color-destructive) 40%,transparent);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-destructive) 20%,transparent)}
+.toaster .toast[data-focused] footer>.btn[data-variant=destructive]:first-child:is(.dark *){box-shadow:0 0 0 3px color-mix(in oklab,var(--color-destructive) 40%,transparent)}
+/* A body that takes a click answers the pointer as a button does. */
+.toaster .toast .toast-content[data-on~=click]{cursor:pointer}
+.toaster .toast .toast-content[data-on~=click]:hover{background:var(--color-accent)}
+/* OnClose's x, in the toast's corner, its content kept clear of it. */
+.toaster .toast>.toast-close{position:absolute;top:calc(var(--spacing)*1);right:calc(var(--spacing)*1)}
+.toaster .toast[data-close]>.toast-content{padding-inline-end:calc(var(--spacing)*10)}
