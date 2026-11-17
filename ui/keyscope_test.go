@@ -44,20 +44,19 @@ func TestKeyScopeShared(t *testing.T) {
 					case "select", "compound":
 						key = "arrow_down"
 					case "text":
-						key = "b"
+						// Not a letter: a field keeps its printable keys
+						// (K27), so the decline path is shown on backspace.
+						key = "backspace"
 					case "mod":
 						key = "mod+s"
 					}
-					inner := ui.KeyScope([]string{key}, func(k string) bool {
+					inner := ui.KeyScope([]ui.KeyBinding{{Key: key, Run: func() bool {
 						count++
-						if kind == "mod" && k != "mod+s" {
-							t.Errorf("mod key %q", k)
-						}
 						return kind == "button-take" || kind == "mod"
-					})
+					}}})
 					component := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return inner.Render(templ.WithChildren(ctx, child), w) })
 					if kind == "nested" || kind == "nested-decline" {
-						outer := ui.KeyScope([]string{key}, func(string) bool { count += 10; return kind == "nested" })
+						outer := ui.KeyScope([]ui.KeyBinding{{Key: key, Run: func() bool { count += 10; return kind == "nested" }}})
 						old := component
 						component = templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return outer.Render(templ.WithChildren(ctx, old), w) })
 					}
@@ -105,10 +104,11 @@ func TestKeyScopeShared(t *testing.T) {
 						t.Errorf("select value %q", value)
 					}
 				case "text":
-					key("home")
+					key("end")
+					key("backspace")
 					key("b")
-					if value != "ba" {
-						t.Errorf("text value %q", value)
+					if value != "b" {
+						t.Errorf("text value %q, want the declined backspace's edit, then b", value)
 					}
 				case "compound":
 					key("arrow_down")
@@ -141,8 +141,11 @@ func TestKeyScopeShared(t *testing.T) {
 						t.Errorf("unmentioned space: scope=%d clicks=%d", count, clicks)
 					}
 				}
-				if (kind == "checkbox" || kind == "select" || kind == "text") && changes != 1 {
+				if (kind == "checkbox" || kind == "select") && changes != 1 {
 					t.Errorf("change callbacks %d, want one", changes)
+				}
+				if kind == "text" && changes != 2 {
+					t.Errorf("change callbacks %d, want two: the backspace and the b", changes)
 				}
 			})
 		}
@@ -163,7 +166,7 @@ func TestKeyScopeDialogEscape(t *testing.T) {
 							return with(ui.Dialog(ui.DialogProps{ID: "dialog", Open: open, OnClose: func() { open = false }}),
 								inside).Render(ctx, w)
 						})
-						return ui.KeyScope([]string{"escape"}, func(string) bool { calls++; return take }).Render(templ.WithChildren(ctx, body), w)
+						return ui.KeyScope([]ui.KeyBinding{{Key: "escape", Run: func() bool { calls++; return take }}}).Render(templ.WithChildren(ctx, body), w)
 					})
 					return page(button("open", "Open", func() { open = true }), scoped).Render(ctx, w)
 				})
@@ -213,7 +216,7 @@ func TestKeyScopeMultipleControlsAndPlainHTML(t *testing.T) {
 					return templ.Join(one, two, button("plain", "Plain", func() { plain++ })).Render(ctx, w)
 				})
 				scope := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-					return ui.KeyScope([]string{"enter"}, func(string) bool { taken++; return true }).Render(templ.WithChildren(ctx, children), w)
+					return ui.KeyScope([]ui.KeyBinding{{Key: "enter", Run: func() bool { taken++; return true }}}).Render(templ.WithChildren(ctx, children), w)
 				})
 				return templ.Join(templ.Raw(`<p id="outside" tabindex="0">Outside</p>`), scope).Render(ctx, w)
 			})
@@ -264,19 +267,23 @@ func TestKeyScopeCommandTextFallback(t *testing.T) {
 		children := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Command(&st, ui.CommandProps{ID: "cmd", Items: []ui.MenuItem{{Label: "Alpha"}, {Label: "Beta"}}}).Render(ctx, w)
 		})
-		return ui.KeyScope([]string{"b"}, func(string) bool { calls++; return false }).Render(templ.WithChildren(ctx, children), w)
+		return ui.KeyScope([]ui.KeyBinding{{Key: "backspace", Run: func() bool { calls++; return false }}}).Render(templ.WithChildren(ctx, children), w)
 	})
 	r := surftest.Start(t, surf.New("command", view, ui.Stylesheet()))
 	r.Click("#cmd-input")
 	r.Key("b")
+	if got := attr(r.One("#cmd-items-1"), "aria-hidden"); got != "true" {
+		t.Errorf("after b, Alpha hidden=%q, want true", got)
+	}
+	r.Key("backspace")
 	if calls != 1 {
 		t.Fatalf("scope calls %d", calls)
 	}
-	if got := attr(r.One("#cmd-items-1"), "aria-hidden"); got != "true" {
-		t.Errorf("Alpha hidden=%q, want true", got)
+	if got := r.Value("#cmd-input"); got != "" {
+		t.Errorf("input value=%q, want the declined backspace's edit", got)
 	}
-	if got := r.Value("#cmd-input"); got != "b" {
-		t.Errorf("input value=%q, want b", got)
+	if got := attr(r.One("#cmd-items-1"), "aria-hidden"); got == "true" {
+		t.Errorf("after backspace, Alpha still hidden: the fallback's edit didn't filter")
 	}
 }
 
@@ -285,12 +292,13 @@ func TestKeyScopeDeclineWithoutValueCallback(t *testing.T) {
 		child := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Input(ui.InputProps{Value: "a", Attrs: templ.Attributes{"id": "field"}}).Render(ctx, w)
 		})
-		return ui.KeyScope([]string{"b"}, func(string) bool { return false }).Render(templ.WithChildren(ctx, child), w)
+		return ui.KeyScope([]ui.KeyBinding{{Key: "backspace", Run: func() bool { return false }}}).Render(templ.WithChildren(ctx, child), w)
 	})
 	r := surftest.Start(t, surf.New("scope-text", view, ui.Stylesheet()))
 	r.Click("#field")
-	r.Key("b")
-	if got := r.Value("#field"); got != "ab" {
-		t.Fatalf("field value %q, want ab", got)
+	r.Key("end")
+	r.Key("backspace")
+	if got := r.Value("#field"); got != "" {
+		t.Fatalf("field value %q, want the declined backspace's edit", got)
 	}
 }
