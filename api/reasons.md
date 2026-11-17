@@ -347,6 +347,21 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.TooltipProps.Side`, `.Align`, `.Arrow`: Basecoat's placement and arrow
   attributes (K2(a)).
 - `ui.TooltipProps.Class`: as every Props.
+- `ui.Slider`, `ui.SliderProps`: a single-thumb slider with Go-owned keys,
+  stepping and pointer drag.
+- `ui.RangeSlider`, `ui.RangeSliderProps`: a two-thumb slider, each thumb
+  separately focusable and constrained by the other.
+- `ui.SliderProps.ID`, `ui.RangeSliderProps.ID`: name their parts (K14).
+- `ui.SliderProps.Label`, `ui.RangeSliderProps.Label`: name the thumbs.
+- `ui.SliderProps.Min`, `.Max`, `.Step`, `ui.RangeSliderProps.Min`, `.Max`,
+  `.Step`: numeric bounds and step (K2(a)).
+- `ui.SliderProps.Value`, `ui.RangeSliderProps.Start`, `.End`: controlled
+  values (K2(b)).
+- `ui.SliderProps.Disabled`, `ui.RangeSliderProps.Disabled`: disable keys
+  and pointer interaction (K2(a)).
+- `ui.SliderProps.OnChange`, `ui.RangeSliderProps.OnChange`: callbacks
+  reporting values to the application.
+- `ui.SliderProps.Class`, `ui.RangeSliderProps.Class`: as every Props.
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

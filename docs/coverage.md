@@ -92,8 +92,8 @@ Of 39 components:
 - **markup:** 9 jinja, 29 css, 1 hand.
 - **behaviour:** 11 scripts translated (`accordion.js`, `combobox.js`, `command.js`, `drawer.js`, `dropdown-menu.js`, `popover.js`, `range.js`, `select.js`, `sidebar.js`, `tabs.js`, `toast.js`); 2 components by hand (chart, dialog); 26 with none.
 - **browser:** 18 components rely on a browser feature.
-- **status:** 23 done, 12 port, 3 new, 1 waits.
-- **tests:** render 9, spec 28, differential 11, keys-cells 21.
+- **status:** 23 done, 13 port, 3 new, 0 waits.
+- **tests:** render 9, spec 29, differential 11, keys-cells 22.
 
 ## The components
 
@@ -127,7 +127,7 @@ Of 39 components:
 | popover | jinja | `popover.js` | - | `ui.Popover`, `ui.PopoverProps`, `ui.PopoverState` | `popover/default`, `popover/sides`, `popover/with-command` | `render`, `differential`, `keys-cells` | port | aria-hidden, not the popover attribute; data-side, data-align: no shared enum; replaces the spike's hand Popover |
 | progress | css | - | - | `ui.Progress`, `ui.ProgressProps` | `progress/default`, `progress/values` | `spec` | done | a span's width in a div, not `<progress>` (which Blitz lacks) |
 | radio | css | - | `<input type=radio>` | `ui.Radio`, `ui.RadioProps` | `radio/default`, `radio/disabled` | `spec`, `keys-cells` | done | the host checks it and sends change (SPEC §9) |
-| range | css | `range.js` | `<input type=range>` | - | - | - | waits | waits for SPEC (range keys and change): §10.2 gives a range no keys and §9 no change; Blitz draws no range (css-subset); proposal in api/notes.md (K10) |
+| range | css | `range.js` | `<input type=range>` | `ui.Slider`, `ui.SliderProps`, `ui.RangeSlider`, `ui.RangeSliderProps` | `range/default`, `range/two-thumbs` | `spec`, `keys-cells` | port | hotty-a2ui stepping and drag adapted to a kit-owned track and thumbs; no native range behavior or spec change |
 | scrollbar | css | - | `::-webkit-scrollbar` | - | `scrollbar/default`, `scrollbar/small` | `spec` | done | a class, not a component: Class: "scrollbar" or "scrollbar-sm" on the element that scrolls (kit rule K16); whether Blitz draws ::-webkit-scrollbar is the looks pass's |
 | select | jinja | `select.js` | - | `ui.Select`, `ui.SelectProps`, `ui.SelectState`, `ui.SelectItem` | `select/default`, `select/multiple`, `select/grouped` | `render`, `differential`, `keys-cells` | port | the macro's markup in templ, single only; select.js in Go: the keys, the pointer, a click outside, the trigger taking the keyboard back; Value "" is none where select.js shows the first option; 1.1.0 has no search box or typeahead |
 | sidebar | jinja | `sidebar.js` | `<details>`, `inert` | `ui.Sidebar`, `ui.SidebarProps`, `ui.SidebarState`, `ui.SidebarItem` | `sidebar/default`, `sidebar/submenu`, `sidebar/right`, `sidebar/closed` | `render`, `differential`, `keys-cells` | port | markup generated; its breakpoint reads the window's width; inert unchecked in Blitz |

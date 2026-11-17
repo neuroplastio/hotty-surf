@@ -58,7 +58,7 @@ component values and applies the changes its callbacks report.
 | Popover | Its trigger opens or closes it; Escape closes it and returns focus to the trigger. Children have their own keys. |
 | Progress | None of its own. |
 | Radio | Space selects it; Enter submits its form when it belongs to one. |
-| Range / slider | Planned for B3: arrows step, Page Up and Page Down make a larger move, Home and End go to the ends; pointer drag also changes the value. The exact API and step rules go in the review pack. |
+| Range / slider | Arrows step, Page Up and Page Down move ten steps, and Home and End go to the ends. Pointer taps and drags also change values. Each range thumb is a Tab stop and cannot pass the other. |
 | Scrollbar | A class on a scrolling element; no component-owned keys. |
 | Select | Up, Down, Home or End opens the list; when open these move its highlight among enabled items, Enter chooses, and Escape closes. |
 | Sidebar | Planned; no new kit implementation yet. |

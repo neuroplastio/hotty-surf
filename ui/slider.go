@@ -1,0 +1,304 @@
+package ui
+
+import (
+	"context"
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+
+	"github.com/a-h/templ"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/rt"
+)
+
+// SliderProps are a Slider's attributes. Max must be greater than Min.
+type SliderProps struct {
+	// ID names its elements and is unique on the surface.
+	ID string
+	// Label is the accessible name of the thumb.
+	Label string
+	// Min and Max are the ends; Step is the increment (zero uses a twentieth
+	// of the range for keys and a hundredth for snapping).
+	Min, Max, Step float64
+	// Value is the current value, controlled by the app.
+	Value float64
+	// Disabled prevents interaction.
+	Disabled bool
+	// OnChange hears the new value.
+	OnChange func(float64)
+	// Class adds classes to the track.
+	Class string
+}
+
+// Slider is a single-thumb slider. Arrows move one step, Page Up and Page
+// Down ten, and Home and End go to the ends. A pointer can tap or drag.
+func Slider(p SliderProps) templ.Component {
+	return slider(sliderView{p: p, lo: p.Min, hi: p.Value})
+}
+
+// RangeSliderProps are a RangeSlider's attributes. Max must exceed Min.
+type RangeSliderProps struct {
+	// ID names its elements and is unique on the surface.
+	ID string
+	// Label names the range; its thumbs add "start" and "end".
+	Label string
+	// Min and Max are the ends; Step is as in SliderProps.
+	Min, Max, Step float64
+	// Start and End are the current values. Start cannot exceed End.
+	Start, End float64
+	// Disabled prevents interaction.
+	Disabled bool
+	// OnChange hears both new values.
+	OnChange func(start, end float64)
+	// Class adds classes to the track.
+	Class string
+}
+
+// RangeSlider is a two-thumb slider. Each thumb is a Tab stop; neither can
+// move past the other. The nearer thumb moves when the track is pressed.
+func RangeSlider(p RangeSliderProps) templ.Component {
+	return slider(sliderView{p: SliderProps{ID: p.ID, Label: p.Label, Min: p.Min, Max: p.Max, Step: p.Step, Disabled: p.Disabled, Class: p.Class}, lo: p.Start, hi: p.End, changeRange: p.OnChange, ranged: true})
+}
+
+type sliderMemo struct {
+	knob    int
+	focus   string
+	dragged bool
+}
+type sliderView struct {
+	p           SliderProps
+	lo, hi      float64
+	ranged      bool
+	changeRange func(float64, float64)
+	memo        *sliderMemo
+}
+
+func (v *sliderView) init(ctx context.Context) {
+	badBounds := v.p.Max <= v.p.Min || math.IsNaN(v.p.Max) || math.IsNaN(v.p.Min) || math.IsInf(v.p.Max, 0) || math.IsInf(v.p.Min, 0)
+	if v.p.ID == "" || v.p.Label == "" || badBounds || v.p.Step < 0 || math.IsNaN(v.p.Step) || math.IsInf(v.p.Step, 0) {
+		rt.Fault(ctx, "ui.Slider: ID and Label are required, Max must exceed Min, and Step cannot be negative")
+	}
+	if badBounds {
+		v.p.Min, v.p.Max = 0, 100
+	}
+	if v.p.Step < 0 || math.IsNaN(v.p.Step) || math.IsInf(v.p.Step, 0) {
+		v.p.Step = 0
+	}
+	v.lo = math.Max(v.p.Min, math.Min(v.p.Max, v.lo))
+	v.hi = math.Max(v.lo, math.Min(v.p.Max, v.hi))
+	if f := rt.From(ctx); f != nil {
+		k := "ui.slider:" + v.p.ID
+		v.memo, _ = f.Memo[k].(*sliderMemo)
+		if v.memo == nil {
+			v.memo = &sliderMemo{}
+			f.Memo[k] = v.memo
+		}
+		if v.memo.focus != "" {
+			surf.Autofocus(ctx, v.memo.focus)
+			v.memo.focus = ""
+		}
+	}
+}
+func (v *sliderView) step() float64 {
+	if v.p.Step > 0 {
+		return v.p.Step
+	}
+	return (v.p.Max - v.p.Min) / 20
+}
+func (v *sliderView) snap(x float64) float64 {
+	q := v.p.Step
+	if q <= 0 {
+		q = (v.p.Max - v.p.Min) / 100
+	}
+	if q <= 0 || math.IsInf(q, 0) {
+		return x
+	}
+	x = math.Max(v.p.Min, math.Min(v.p.Max, x))
+	x = v.p.Min + math.Round((x-v.p.Min)/q)*q
+	decimals := func(n float64) int {
+		s := strconv.FormatFloat(math.Abs(n), 'f', -1, 64)
+		if i := strings.IndexByte(s, '.'); i >= 0 {
+			return len(s) - i - 1
+		}
+		return 0
+	}
+	p := math.Pow(10, float64(min(max(decimals(q), decimals(v.p.Min)), 12)))
+	return math.Max(v.p.Min, math.Min(v.p.Max, math.Round(x*p)/p))
+}
+func (v *sliderView) count() int {
+	return int(math.Min(math.Max(math.Round((v.p.Max-v.p.Min)/v.step()), 1), 40))
+}
+func (v *sliderView) at(i int) float64 {
+	return v.p.Min + float64(min(max(i, 0), v.count()))/float64(v.count())*(v.p.Max-v.p.Min)
+}
+func (v *sliderView) set(knob int, x float64) {
+	if v.p.Disabled {
+		return
+	}
+	x = v.snap(x)
+	if !v.ranged {
+		if v.p.OnChange != nil && x != v.hi {
+			v.p.OnChange(x)
+		}
+		return
+	}
+	lo, hi := v.lo, v.hi
+	if knob == 0 {
+		lo = math.Min(x, hi)
+	} else {
+		hi = math.Max(x, lo)
+	}
+	if v.changeRange != nil && (lo != v.lo || hi != v.hi) {
+		v.changeRange(lo, hi)
+	}
+}
+func (v *sliderView) key(knob int, k string) bool {
+	if v.p.Disabled {
+		return false
+	}
+	x := v.hi
+	if v.ranged && knob == 0 {
+		x = v.lo
+	}
+	switch k {
+	case "arrow_left", "arrow_down":
+		x -= v.step()
+	case "arrow_right", "arrow_up":
+		x += v.step()
+	case "page_down":
+		x -= 10 * v.step()
+	case "page_up":
+		x += 10 * v.step()
+	case "home":
+		x = v.p.Min
+	case "end":
+		x = v.p.Max
+	default:
+		return false
+	}
+	v.set(knob, x)
+	return true
+}
+func (v *sliderView) choose(x float64) int {
+	if !v.ranged {
+		return 1
+	}
+	a, b := math.Abs(x-v.lo), math.Abs(x-v.hi)
+	if a < b || (a == b && (v.lo < v.hi || x < v.lo)) {
+		return 0
+	}
+	if a == b && x == v.lo {
+		return -1
+	}
+	return 1
+}
+func (v *sliderView) press(x float64) {
+	k := v.choose(x)
+	if k < 0 {
+		k = 1
+		if v.hi >= v.p.Max {
+			k = 0
+		}
+	}
+	if v.memo != nil {
+		v.memo.knob = v.choose(x)
+		v.memo.focus = v.thumbID(k)
+	}
+	if v.choose(x) >= 0 {
+		v.set(k, x)
+	}
+}
+func (v *sliderView) drag(e hotty.Event) {
+	if v.memo == nil || v.p.Disabled {
+		return
+	}
+	if e.Drag == nil || !e.Drag.HasX {
+		return
+	}
+	x := v.at(e.Drag.X)
+	if e.Kind == hotty.EventDragStart {
+		v.memo.dragged = false
+		v.press(x)
+		return
+	}
+	k := v.memo.knob
+	if k < 0 {
+		if x < v.lo {
+			k = 0
+		} else if x > v.hi {
+			k = 1
+		} else {
+			return
+		}
+		v.memo.knob = k
+		v.memo.focus = v.thumbID(k)
+	}
+	v.set(k, x)
+	if e.Kind == hotty.EventDragEnd {
+		v.memo.dragged = e.Target == v.p.ID || strings.HasPrefix(e.Target, v.p.ID+"-notch-") || e.Target == v.thumbID(0) || e.Target == v.thumbID(1)
+	}
+}
+func (v *sliderView) thumbID(k int) string {
+	if !v.ranged {
+		return v.p.ID + "-thumb"
+	}
+	if k == 0 {
+		return v.p.ID + "-start"
+	}
+	return v.p.ID + "-end"
+}
+func (v *sliderView) track(ctx context.Context) templ.Attributes {
+	a := surf.On(ctx, v.p.ID)
+	if !v.p.Disabled {
+		a["data-on"] = "drag"
+		a["data-steps"] = strconv.Itoa(v.count())
+		if f := rt.From(ctx); f != nil {
+			f.On[v.p.ID].Drag = v.drag
+		}
+	}
+	return a
+}
+func (v *sliderView) notch(ctx context.Context, i int) templ.Attributes {
+	if v.p.Disabled {
+		return nil
+	}
+	return surf.On(ctx, fmt.Sprintf("%s-notch-%d", v.p.ID, i), surf.Click(func() {
+		if v.memo != nil && v.memo.dragged {
+			v.memo.dragged = false
+			return
+		}
+		v.press(v.at(i))
+	}))
+}
+func (v *sliderView) thumb(ctx context.Context, k int) templ.Attributes {
+	if v.p.Disabled {
+		return templ.Attributes{"id": v.thumbID(k)}
+	}
+	return scopeWithKeys(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) })), "arrow_left=program arrow_right=program arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program")
+}
+func (v *sliderView) percent(x float64) float64 {
+	if v.p.Max <= v.p.Min {
+		return 0
+	}
+	return math.Max(0, math.Min(100, 100*(x-v.p.Min)/(v.p.Max-v.p.Min)))
+}
+func sliderPct(x float64) templ.SafeCSS {
+	return templ.SafeCSS(strconv.FormatFloat(x, 'f', 3, 64) + "%")
+}
+func sliderNum(x float64) string { return strconv.FormatFloat(x, 'f', -1, 64) }
+
+func (v *sliderView) endLabel() string {
+	if v.ranged {
+		return v.p.Label + ", end"
+	}
+	return v.p.Label
+}
+
+func sliderStyle(left, width float64) templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf("left:%.3f%%;width:%.3f%%", left, width))
+}
+func sliderLeft(left float64) templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf("left:%.3f%%", left))
+}

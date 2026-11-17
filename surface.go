@@ -68,6 +68,7 @@ type Surface struct {
 	hoverIn      []string
 	hoverAt      string // the element under the pointer, as the host last said
 	pressed      bool   // the last event was a press on the surface (see event)
+	dragTarget   string // the element that began the active drag
 	modalPressed bool   // the last press was inside the active modal's scope
 	modalFocus   string // first or last modal control to focus after an event
 	asked        string // the element the last frame's Autofocus asked for

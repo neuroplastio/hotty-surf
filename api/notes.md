@@ -911,17 +911,9 @@ rules K1–K14.
   in the line.
 - **NativeSelect takes SelectItem** (K12), Select's item, with Group as an
   optgroup, and the shared Size (vega's `data-size=sm`).
-- **Range waits for SPEC** (K10). SPEC §10.2 gives a range no keys and §9
-  no change, Blitz draws no range, and cells has no row for one, so no
-  host can draw or move it. The proposal for hotty's spec, passed to
-  the maintainer: a focused range takes arrow_left and arrow_down (a
-  step down), arrow_right and arrow_up (a step up), home and end (its
-  ends), page_up and page_down (a larger step), unmodified or with
-  shift; a move by key or pointer is heard at once, as a select's pick
-  is (`input`, then `change` with its value); Blitz draws the track and
-  thumb, cells a bar. When it returns, Min and Max both 0 mean HTML's 0
-  to 100 and are otherwise written as given, and its handler stays
-  surf.Input, parsed with strconv.ParseFloat.
+- **Range (K10, superseded).** The earlier native-range spec proposal is
+  withdrawn. The B3 draft uses a kit-owned slider and the existing key and
+  drag protocol; its behavior and API are described in the B3 section.
 - **For cells (L3):** cells reads classes, not the stylesheet, so an
   `.input-group` stacks its addons, its bare control is 20 cells wide,
   and a horizontal Field stacks. cells must take `.input-group` as a row
@@ -1061,12 +1053,24 @@ scrollbar classes and Avatar's image for the looks pass.
   generated content via attr(), which still needs a Blitz hover looks check.
   The wrapper changes the DOM around its child; exposing an attribute helper
   instead is an alternative for the reviewer.
+- **Slider and RangeSlider: draft for review.** These adapt hotty-a2ui's
+  stepped values, nearest-thumb selection, notches, drag steps, and cells
+  track. Their buttons carry role=slider and the relevant ARIA bounds; the
+  native range input is not needed. Keys and pointer updates run in the
+  same Go component on both renditions, and KeyScope can override its
+  keys. Page Up/Down moves ten steps: this addition was written here because
+  the earlier port had no Page key behavior. The draft requires explicit
+  Min, Max and Label, and exposes one- and two-thumb components separately;
+  the reviewer should decide those shapes and the Page increment. Each
+  track has at most 40 drag steps, following hotty-a2ui. Chromium and Blitz
+  renders of the two stories differ in 0.30% and 0.49% of pixels, mainly
+  text and control edges.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup
   interaction already ported. For the slider, hotty-a2ui supplies the
-  stepped-value, drag and cells behavior to adapt; it is not implemented
-  here yet. Each remaining component's pack entry will distinguish ported
+  stepped-value, drag and cells behavior adapted above. Each remaining
+  component's pack entry will distinguish ported
   code from behavior that had to be written here.
 - **Popover** (10 names). Side and Align are strings. Its trigger
   toggles it, and Escape closes it and gives the trigger the keyboard.

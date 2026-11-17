@@ -43,8 +43,11 @@ const (
 // doesn't. A surface with no CSS of its own (a dev tool's error surface, a
 // host's dialog) uses it as it is.
 func Stylesheet() string {
-	return kitCSS
+	return kitCSS + sliderCSS
 }
+
+//go:embed slider.css
+var sliderCSS string
 
 // kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind
 // utilities, as the spike's kit built them (kit.css).

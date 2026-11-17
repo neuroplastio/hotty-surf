@@ -218,7 +218,7 @@ func (s *Surface) event(e hotty.Event) error {
 	}
 	if modal != "" && s.modalApplies(modal, e.Target) && !inside {
 		switch e.Kind {
-		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress:
+		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress, hotty.EventDragStart:
 			return nil
 		case hotty.EventFocus:
 			s.modalFocus = "first"
@@ -226,6 +226,26 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 	}
 	switch e.Kind {
+	case hotty.EventDragStart:
+		s.dragTarget = ""
+		if h := on[e.Target]; h != nil && h.Drag != nil {
+			s.dragTarget = e.Target
+			h.Drag(e)
+			ran = true
+		}
+	case hotty.EventDrag, hotty.EventDragEnd:
+		target := s.dragTarget
+		if target != "" && modal != "" && s.modalApplies(modal, target) && !contains(s.chain(target), modal) {
+			s.dragTarget = ""
+			return nil
+		}
+		if e.Kind == hotty.EventDragEnd {
+			s.dragTarget = ""
+		}
+		if h := on[target]; target != "" && h != nil && h.Drag != nil {
+			h.Drag(e)
+			ran = true
+		}
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
 			h.Click()

@@ -1,6 +1,7 @@
 package stories
 
 import (
+	"strconv"
 	"strings"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -20,6 +21,7 @@ type overlayState struct {
 	value string
 	values []string
 	drawer ui.DrawerState
+	low, high float64
 }
 
 type bookPopoverProps struct {
@@ -110,6 +112,22 @@ func init() {
 		View: func() templ.Component { return tooltipStory(false) }})
 	add(Story{ID: "tooltip/sides", Doc: "Tooltips on four sides",
 		View: func() templ.Component { return tooltipStory(true) }})
+	add(Story{ID: "range/default", Doc: "A slider with a single thumb",
+		View: func() templ.Component { return sliderStory(&overlayState{high:20}, false) }, Keys: []string{"tab", "arrow_right"}, Want: "value: 25"})
+	add(Story{ID: "range/two-thumbs", Doc: "A range with independently adjustable ends",
+		View: func() templ.Component { return sliderStory(&overlayState{low:20, high:70}, true) }, Keys: []string{"tab", "arrow_right", "tab", "arrow_left"}, Want: "range: 25–65"})
+}
+
+templ sliderStory(s *overlayState, ranged bool) {
+	<div class="flex flex-col gap-3 p-4">
+		if ranged {
+			@ui.RangeSlider(ui.RangeSliderProps{ID:"price", Label:"Price", Min:0, Max:100, Step:5, Start:s.low, End:s.high, OnChange:func(a,b float64){s.low,s.high=a,b}})
+			<p>range: { strconv.FormatFloat(s.low,'f',-1,64) }–{ strconv.FormatFloat(s.high,'f',-1,64) }</p>
+		} else {
+			@ui.Slider(ui.SliderProps{ID:"volume", Label:"Volume", Min:0, Max:100, Step:5, Value:s.high, OnChange:func(v float64){s.high=v}})
+			<p>value: { strconv.FormatFloat(s.high,'f',-1,64) }</p>
+		}
+	</div>
 }
 
 templ tooltipStory(sides bool) {

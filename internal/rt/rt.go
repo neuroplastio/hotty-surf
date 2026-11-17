@@ -21,6 +21,7 @@ type Handlers struct {
 	Outside func()
 	Hover   func(bool)
 	Submit  func()
+	Drag    func(hotty.Event)
 }
 
 // A Frame is one render's registrations.
