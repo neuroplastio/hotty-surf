@@ -164,6 +164,14 @@ the Screen. A drag ends short (a dragend with no target) on
 before its Release. Escape doesn't end a drag. `At` names the innermost
 element with an id of the app's.
 
+## Tab
+
+Tab and Shift+Tab go through the focusable elements in document order,
+as a browser does: one with no cells (an empty `<span tabindex="0">`, a
+palette's stops beside its query) is a stop too; one that is `hidden`, or
+that is in a `display:none` element or in a closed `<details>`' body, is
+not. Past the last, or before the first, nothing is focused.
+
 ## The gate
 
 `TestEveryStoryByKeyboard` holds every story of the kit to this: Tab goes
