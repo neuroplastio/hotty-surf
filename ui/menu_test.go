@@ -236,7 +236,7 @@ func TestDropdownMenuAskExpires(t *testing.T) {
 // render: a shortcut's Open highlights its first item.
 func TestMenuMadeOnce(t *testing.T) {
 	var st ui.DropdownMenuState
-	menu := ui.DropdownMenu(&st, ui.DropdownMenuProps{ID: "m", Items: []ui.MenuItem{{Label: "One"}, {Label: "Two"}}})
+	menu := ui.DropdownMenu(&st, ui.DropdownMenuProps{ID: "m", Trigger: templ.Raw("Menu"), Items: []ui.MenuItem{{Label: "One"}, {Label: "Two"}}})
 	s := surf.New("t", menu, ui.Stylesheet())
 	r := surftest.Start(t, s)
 	st.Open()
