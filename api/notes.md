@@ -2603,3 +2603,45 @@ elements its layout drew, so an empty `<span tabindex="0">` (plx's
 invisible stops) is skipped, and Tab from the query blurs. A browser
 and the hosts tab to it. plx draws its cells palette itself, so it
 doesn't block plx now; it goes to cells' owner.
+
+## L5: OwnKeys (plx's G-keys-decl, the Own half)
+
+v0.6.3's `Surface.Keys` listed, with each key, whether the focused
+element took it itself (`KeyUse.Own`). plx routes by it: a key the
+element owns goes to the surface ahead of plx's keymap. v0.7 has the
+two other halves: `Chars` (characters) and `ui.Bindings` (KeyScope
+bindings). The pack adds the third:
+
+- `Surface.OwnKeys() []string`: the focused element's own keys other
+  than characters, as hotty names them, sorted. They come from:
+  - the native control (SPEC §10.2's table). A text field's keys are
+    its keymap: `hotty.Resolve` over the platform and the data-keys
+    from the root down, which is what a host and cells.Screen read. A
+    move is listed with shift too. A key the keymap gives the program,
+    a prefix or a scroll is left out. A select, a date or time field,
+    and a button, link, summary, check box or radio button take the
+    keys SPEC lists, each with shift.
+  - a kit control's own declaration: the `k=program` entries on the
+    focused element itself (List rows, Combobox, Select's trigger,
+    Slider, menu items). Under a KeyScope, the kit keeps its own in
+    `data-hotty-default-keys`, and the scope's bindings stay out.
+- Never Tab or Shift+Tab, never characters (space only counts as one in
+  a text field), never a KeyScope's binding, never an app's `surf.Key`
+  handler's keys (it declares none). An app that wants a key first binds
+  it in a KeyScope.
+- One method serves a host and cells. cells.Screen resolves the same
+  keymap, so no Screen method is needed (as with Chars).
+
+Questions for the review:
+
+1. A declaration on an ancestor isn't read. NavList puts its keys on its
+   container, so a focused element inside has them only through the
+   host's data-keys. Should OwnKeys read `=program` entries up the chain
+   until a KeyScope, or is the element alone right? plx's wrappers
+   (`data-keys="k=program"` on a pane) are plx's own keys, not the
+   element's, which argues for the element alone.
+2. A readonly text field lists its edits (backspace) too, as the host
+   keeps them for it. Leave it, or drop the edits?
+3. `[]string`, or a set type (`func(key string) bool`) for routing? The
+   slice is what a palette or a help line shows; plx can build its own
+   set from it.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -335,4 +336,28 @@ func keysScope(keys []string, fn func(string) bool) templ.Component {
 		bs[i] = ui.KeyBinding{Key: k, Run: func() bool { return fn(k) }}
 	}
 	return ui.KeyScope(bs)
+}
+
+// A focused row's own keys are the list's (its arrows, Home and End) and
+// a button's (space, Enter); a KeyScope's binding round the list is not
+// one of them (ui.Bindings lists it).
+func TestListOwnKeys(t *testing.T) {
+	for _, scoped := range []bool{false, true} {
+		a := &listApp{rows: []string{"a", "b"}}
+		if scoped {
+			a.scopeKey, a.scope = []string{"ctrl+s"}, func(string) bool { return true }
+		}
+		s := surf.New("list", a.view(), ui.Stylesheet())
+		r := surftest.Start(t, s)
+		focus(r, a, "a")
+		got := s.OwnKeys()
+		for _, k := range []string{"arrow_up", "arrow_down", "home", "end", "enter", "space"} {
+			if !slices.Contains(got, k) {
+				t.Errorf("scoped %v: %v lacks %s", scoped, got, k)
+			}
+		}
+		if slices.Contains(got, "ctrl+s") {
+			t.Errorf("scoped %v: %v has the scope's ctrl+s", scoped, got)
+		}
+	}
 }

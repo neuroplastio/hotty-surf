@@ -708,3 +708,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surf.Clicks`: plx's palette selects a row on a click and runs it on a double click. The host and cells.Screen both send the click's count (SPEC §9, count), but surf.Click's func takes nothing, so the count never reaches the app. A variant of Click, not a new event: kit wrappers that wrap an element's Click (ListItem) keep working.
 - `surftest.Rig.DoubleClick`: every gesture surf hears has its Rig verb (Drag, DragStep, Secondary), and plx's palette test (select on one click, run on two) is the first caller of a double click. Added at the review (p-796).
 - `surf.Refocus`: plx's palette query must have the keyboard back in the frame where Tab left it for a stop, whose Focus handler gives Tab to plx. Autofocus asked on every frame is edge-triggered, so asking again moves nothing, and Surface.Focus gives the keyboard to the stop, which had it last. Only the render can say "this element, again, now".
+
+## L5: the focused element's own keys (plx's G-keys-decl, the Own half)
+
+- `Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.

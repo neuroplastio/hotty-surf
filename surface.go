@@ -206,6 +206,30 @@ func (s *Surface) Chars() Chars {
 	return charsOf(s.byID[s.focused])
 }
 
+// OwnKeys are the keys the focused element takes itself, ahead of the
+// program's bindings, other than characters (Chars says those; space is
+// one only in a text field, which types it), as hotty names them, sorted.
+// They are for a program that decides where a key goes before the
+// surface hears it (a multiplexer, or cells), to offer these to the
+// surface first:
+//   - a native control's (SPEC §10.2): a text field's keymap as the host
+//     and cells.Screen resolve it (the platform's default, then each
+//     data-keys from the root down), with shift on each move, leaving out
+//     a key it gives the program, a prefix or a scroll; a select's, a date
+//     or time field's; a button's, a link's, a check box's space and Enter;
+//   - a kit control's own, those it gives the program on itself for its
+//     Key handler to take (a list's arrows, a combobox's Enter).
+//
+// Tab and Shift+Tab are never in it (the host's), nor a KeyScope's
+// bindings (ui.Bindings lists them), nor an app's Key handler's keys,
+// which declare none: an app that wants a key ahead of the program's
+// bindings binds it in a KeyScope. A disabled element and nothing
+// focused have none. It reads the last document the surface sent and its
+// focus, as Chars does, and runs on the driver's goroutine.
+func (s *Surface) OwnKeys() []string {
+	return ownKeys(s.byID[s.focused], s.platform)
+}
+
 // Chars is what a focused element does with a key that types a character.
 type Chars uint8
 
