@@ -277,6 +277,24 @@ func TestRenderTabs(t *testing.T) {
 	}})
 }
 
+func TestRenderPopover(t *testing.T) {
+	var st ui.PopoverState
+	runRender(t, "popover", []renderCase{{
+		name: "default",
+		ui: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Popover(&st, ui.PopoverProps{ID: "p", Trigger: templ.Raw("Open"), Side: "top", Align: "end"}).
+				Render(templ.WithChildren(ctx, templ.Raw("<p>Hi</p>")), w)
+		}),
+		macro:  "popover",
+		caller: "<p>Hi</p>",
+		// popover.js marks the popovers it started.
+		drop: []string{"div#p@data-popover-initialized"},
+		args: map[string]any{"id": "p", "trigger": "Open",
+			"trigger_attrs": map[string]any{"class": "btn", "data-variant": "outline"},
+			"popover_attrs": map[string]any{"data-side": "top", "data-align": "end"}},
+	}})
+}
+
 func TestRenderToast(t *testing.T) {
 	var st ui.ToasterState
 	st.Show(ui.Toast{Title: "Saved", Description: "All of it."})
@@ -293,7 +311,7 @@ func TestRenderToast(t *testing.T) {
 }
 
 func init() {
-	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast"} {
+	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast", "popover"} {
 		renderTests[c] = true
 	}
 }

@@ -1,0 +1,55 @@
+package stories
+
+import (
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// The stories of B3's overlays: Popover. Their data is made up.
+
+type overlayState struct {
+	pop   ui.PopoverState
+	sides [4]ui.PopoverState
+	width string
+}
+
+func init() {
+	show := func(f func(*overlayState) templ.Component) func() templ.Component {
+		return func() templ.Component { return f(&overlayState{width: "100%"}) }
+	}
+	add(Story{ID: "popover/default", Doc: "A popover with a small form; Enter on its trigger opens it",
+		View: show(popoverDefault), Keys: []string{"tab", "enter"}, Want: "Dimensions"})
+	add(Story{ID: "popover/sides", Doc: "A popover for each side, the top one open (one popup is open at a time)",
+		View: func() templ.Component {
+			s := &overlayState{}
+			s.sides[0].Open()
+			return popoverSides(s)
+		}})
+}
+
+templ popoverDefault(s *overlayState) {
+	<div class="p-4">
+		@ui.Popover(&s.pop, ui.PopoverProps{ID: "dimensions", Trigger: templ.Raw("Open popover"), Class: "w-80"}) {
+			<header>
+				<h4>Dimensions</h4>
+				<p>Set the dimensions for the layer.</p>
+			</header>
+			@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+				@ui.Label(ui.LabelProps{For: "width"}) {
+					Width
+				}
+				@ui.Input(ui.InputProps{Value: s.width, Attrs: surf.On(ctx, "width", surf.Input(func(v string) { s.width = v }))})
+			}
+		}
+	</div>
+}
+
+templ popoverSides(s *overlayState) {
+	<div class="p-4 grid gap-4" style="padding: 6rem 10rem;">
+		for i, side := range []string{"top", "bottom", "left", "right"} {
+			@ui.Popover(&s.sides[i], ui.PopoverProps{ID: "side-" + side, Side: side, Trigger: templ.Raw(side)}) {
+				<p>Opens to the { side }.</p>
+			}
+		}
+	</div>
+}

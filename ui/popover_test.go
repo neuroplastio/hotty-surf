@@ -1,0 +1,78 @@
+package ui_test
+
+import (
+	"testing"
+
+	"github.com/a-h/templ"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// popoverOpen is whether the popover id shows its content.
+func popoverOpen(r *surftest.Rig, id string) bool {
+	return attr(r.One("#"+id+"-popover"), "aria-hidden") == "false"
+}
+
+// popover.js: the trigger toggles it, Escape closes it and gives the
+// trigger the keyboard, a click outside closes it.
+func TestPopoverKeysAndClicks(t *testing.T) {
+	var st ui.PopoverState
+	s := surf.New("t", templ.Join(
+		templ.Raw(`<p id="outside" tabindex="0">Outside</p>`),
+		ui.Popover(&st, ui.PopoverProps{ID: "p", Trigger: templ.Raw("Open")}),
+	), ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#p-trigger")
+	if !popoverOpen(r, "p") {
+		t.Fatal("the trigger's click didn't open it")
+	}
+	r.Key("escape")
+	if popoverOpen(r, "p") {
+		t.Fatal("Escape didn't close it")
+	}
+	if f := rt.Peek.Focused(s); f != "p-trigger" {
+		t.Errorf("after Escape the keyboard is on %q, want the trigger", f)
+	}
+	r.Click("#p-trigger")
+	r.Click("#outside")
+	if popoverOpen(r, "p") {
+		t.Fatal("a click outside didn't close it")
+	}
+	st.Open()
+	r.Update()
+	if !popoverOpen(r, "p") {
+		t.Fatal("Open didn't open it")
+	}
+	st.Close()
+	r.Update()
+	if popoverOpen(r, "p") {
+		t.Fatal("Close didn't close it")
+	}
+}
+
+// One popup is open at a time: opening a menu by the keyboard closes an
+// open popover, as basecoat:popover does.
+func TestOnePopupOpen(t *testing.T) {
+	var pst ui.PopoverState
+	var mst ui.DropdownMenuState
+	s := surf.New("t", templ.Join(
+		ui.Popover(&pst, ui.PopoverProps{ID: "p", Trigger: templ.Raw("Open")}),
+		ui.DropdownMenu(&mst, ui.DropdownMenuProps{ID: "m", Trigger: templ.Raw("Menu"), Items: []ui.MenuItem{{Label: "One"}}}),
+	), ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#p-trigger")
+	if !popoverOpen(r, "p") {
+		t.Fatal("the popover didn't open")
+	}
+	r.Key("tab") // the menu's trigger
+	r.Key("enter")
+	if attr(r.One("#m-trigger"), "aria-expanded") != "true" {
+		t.Fatalf("Enter on the menu's trigger didn't open it: %s", r.HTML())
+	}
+	if popoverOpen(r, "p") {
+		t.Error("the popover stayed open when the menu opened")
+	}
+}

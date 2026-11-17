@@ -66,7 +66,19 @@ type selectView struct {
 	enabled []int       // the options not disabled, as indexes into opts (its options)
 	chosen  int         // the option whose value is Value, into opts; -1 for none
 	n       uint64      // the frame rendering it (rt.Frame.N), its handlers'
+	popups  *popup      // the surface's open popup
 }
+
+// join reads the frame: its number, and the surface's popups.
+func (v *selectView) join(ctx context.Context) string {
+	v.n = frameN(ctx)
+	v.popups = popups(ctx)
+	v.popups.track(v.st, v.st.open, v.shut)
+	return ""
+}
+
+// shut closes it for another popup's opening.
+func (v *selectView) shut() { v.st.open, v.st.active = false, -1 }
 
 // A listEntry is a child of a select's listbox or a menu's menu, as the
 // macros render their items: an option, a group of them under a heading,
@@ -198,6 +210,7 @@ func (v *selectView) value() string {
 func (v *selectView) open() {
 	v.st.open = true
 	v.st.active = v.pos(v.chosen)
+	v.popups.opened(v.st, v.shut)
 }
 
 // close is closePopover: focus says whether the trigger takes the keyboard.
@@ -209,6 +222,7 @@ func (v *selectView) close(focus bool) {
 		v.ask()
 	}
 	v.st.open, v.st.active = false, -1
+	v.popups.closed(v.st)
 }
 
 // toggle is the trigger's click.
