@@ -48,16 +48,16 @@ func TestKeyScopeShared(t *testing.T) {
 					case "mod":
 						key = "mod+s"
 					}
-					inner := ui.KeyScope([]string{key}, func(k string) bool {
+					inner := ui.KeyScope([]ui.KeyBinding{{Key: key}}, func(b ui.KeyBinding) bool {
 						count++
-						if kind == "mod" && k != "mod+s" {
-							t.Errorf("mod key %q", k)
+						if kind == "mod" && b.Key != "mod+s" {
+							t.Errorf("mod key %q", b.Key)
 						}
 						return kind == "button-take" || kind == "mod"
 					})
 					component := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return inner.Render(templ.WithChildren(ctx, child), w) })
 					if kind == "nested" || kind == "nested-decline" {
-						outer := ui.KeyScope([]string{key}, func(string) bool { count += 10; return kind == "nested" })
+						outer := ui.KeyScope([]ui.KeyBinding{{Key: key}}, func(ui.KeyBinding) bool { count += 10; return kind == "nested" })
 						old := component
 						component = templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return outer.Render(templ.WithChildren(ctx, old), w) })
 					}
@@ -163,7 +163,7 @@ func TestKeyScopeDialogEscape(t *testing.T) {
 							return with(ui.Dialog(ui.DialogProps{ID: "dialog", Open: open, OnClose: func() { open = false }}),
 								inside).Render(ctx, w)
 						})
-						return ui.KeyScope([]string{"escape"}, func(string) bool { calls++; return take }).Render(templ.WithChildren(ctx, body), w)
+						return ui.KeyScope([]ui.KeyBinding{{Key: "escape"}}, func(ui.KeyBinding) bool { calls++; return take }).Render(templ.WithChildren(ctx, body), w)
 					})
 					return page(button("open", "Open", func() { open = true }), scoped).Render(ctx, w)
 				})
@@ -213,7 +213,7 @@ func TestKeyScopeMultipleControlsAndPlainHTML(t *testing.T) {
 					return templ.Join(one, two, button("plain", "Plain", func() { plain++ })).Render(ctx, w)
 				})
 				scope := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-					return ui.KeyScope([]string{"enter"}, func(string) bool { taken++; return true }).Render(templ.WithChildren(ctx, children), w)
+					return ui.KeyScope([]ui.KeyBinding{{Key: "enter"}}, func(ui.KeyBinding) bool { taken++; return true }).Render(templ.WithChildren(ctx, children), w)
 				})
 				return templ.Join(templ.Raw(`<p id="outside" tabindex="0">Outside</p>`), scope).Render(ctx, w)
 			})
@@ -264,7 +264,7 @@ func TestKeyScopeCommandTextFallback(t *testing.T) {
 		children := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Command(&st, ui.CommandProps{ID: "cmd", Items: []ui.MenuItem{{Label: "Alpha"}, {Label: "Beta"}}}).Render(ctx, w)
 		})
-		return ui.KeyScope([]string{"b"}, func(string) bool { calls++; return false }).Render(templ.WithChildren(ctx, children), w)
+		return ui.KeyScope([]ui.KeyBinding{{Key: "b"}}, func(ui.KeyBinding) bool { calls++; return false }).Render(templ.WithChildren(ctx, children), w)
 	})
 	r := surftest.Start(t, surf.New("command", view, ui.Stylesheet()))
 	r.Click("#cmd-input")
@@ -285,7 +285,7 @@ func TestKeyScopeDeclineWithoutValueCallback(t *testing.T) {
 		child := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Input(ui.InputProps{Value: "a", Attrs: templ.Attributes{"id": "field"}}).Render(ctx, w)
 		})
-		return ui.KeyScope([]string{"b"}, func(string) bool { return false }).Render(templ.WithChildren(ctx, child), w)
+		return ui.KeyScope([]ui.KeyBinding{{Key: "b"}}, func(ui.KeyBinding) bool { return false }).Render(templ.WithChildren(ctx, child), w)
 	})
 	r := surftest.Start(t, surf.New("scope-text", view, ui.Stylesheet()))
 	r.Click("#field")

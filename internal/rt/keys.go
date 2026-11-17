@@ -12,12 +12,12 @@ import (
 // names for this frame's platform, of its enabled keyed bindings; Parent is
 // the enclosing override. Handle is offered a canonical key of Keys.
 type KeyScope struct {
-	Keys      map[string]bool
-	Handle    func(string) bool
+	Keys   map[string]bool
+	Handle func(string) bool
 	// Bindings are the scope's, as ui.KeyScope was given them (its valid
 	// ones), and Pick runs the one at an index of them.
-	Bindings []Binding
-	Pick     func(int) bool
+	Bindings  []Binding
+	Pick      func(int) bool
 	Parent    *KeyScope
 	Default   func(KeyDefault) KeyResult
 	Canonical func(hotty.Platform, string) (string, bool)

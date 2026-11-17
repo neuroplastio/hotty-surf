@@ -112,6 +112,7 @@ pkg neuroplast.io/hotty-surf/ui, func AlertDialog(AlertDialogProps) templ.Compon
 pkg neuroplast.io/hotty-surf/ui, func Avatar(AvatarProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func AvatarGroup(AvatarGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Badge(BadgeProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Bindings(*surf.Surface) []KeyBinding
 pkg neuroplast.io/hotty-surf/ui, func Breadcrumb(BreadcrumbProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Button(ButtonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Card(CardProps) templ.Component
@@ -138,9 +139,11 @@ pkg neuroplast.io/hotty-surf/ui, func InputGroupAddon(InputGroupAddonProps) temp
 pkg neuroplast.io/hotty-surf/ui, func Item(ItemProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func KeyScope([]string, func(string) bool) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func KeyScope([]KeyBinding, func(KeyBinding) bool) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Menu(*surf.Surface, string) *hotty.MenuTree
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Pick(*surf.Surface, string) bool
 pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Progress(ProgressProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Radio(RadioProps) templ.Component
@@ -332,6 +335,11 @@ pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Muted bool
 pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Variant Variant
+pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct
+pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Disabled bool
+pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Key string
+pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Label string
+pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Name string
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Class string

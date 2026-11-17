@@ -2,8 +2,10 @@ package ui_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/a-h/templ"
 	"io"
+	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
@@ -41,18 +43,48 @@ func Example() {
 
 // In templ, a scope around a control can take a key before its default:
 //
-//	@ui.KeyScope([]string{"arrow_down"}, a.MoveLog) {
+//	@ui.KeyScope([]ui.KeyBinding{
+//	    {Key: "arrow_down", Label: "Next log line", Name: "log.next"},
+//	}, a.MoveLog) {
 //	    @ui.Select(&a.sizeMenu, ui.SelectProps{Items: sizes,
 //	        Value: a.size, OnChange: a.setSize})
 //	}
 func ExampleKeyScope() {
-	moveLog := func(key string) bool { return key == "arrow_down" }
+	moveLog := func(b ui.KeyBinding) bool { return b.Name == "log.next" }
 	var state ui.SelectState
 	child := ui.Select(&state, ui.SelectProps{Items: []ui.SelectItem{{Value: "a", Label: "A"}}, Placeholder: "Choose"})
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return ui.KeyScope([]string{"arrow_down"}, moveLog).Render(templ.WithChildren(ctx, child), w)
+		return ui.KeyScope([]ui.KeyBinding{{Key: "arrow_down", Label: "Next log line", Name: "log.next"}}, moveLog).Render(templ.WithChildren(ctx, child), w)
 	})
 	_ = surf.New("scoped", view, ui.Stylesheet())
+}
+
+// A palette lists what the surface offers now, by label, and runs the
+// one the user picks; a program with a hotty host that takes menus sends
+// the same list as its menu (SPEC §10.7).
+func ExampleBindings() {
+	s := surf.New("files", templ.Raw(`<p>Files</p>`), ui.Stylesheet())
+	s.Do(func() {
+		for _, b := range ui.Bindings(s) {
+			fmt.Println(b.Key, b.Label, b.Disabled)
+		}
+	})
+}
+
+func ExampleMenu() {
+	s := surf.New("files", templ.Raw(`<p>Files</p>`), ui.Stylesheet())
+	var out io.Writer = io.Discard // the terminal
+	s.Do(func() {
+		io.WriteString(out, hotty.Menu(ui.Menu(s, "Files")))
+	})
+}
+
+// A host's menu sends the name of the item picked as a command event; the
+// program runs it.
+func ExamplePick() {
+	s := surf.New("files", templ.Raw(`<p>Files</p>`), ui.Stylesheet())
+	command := "save" // a command event's name
+	s.Do(func() { ui.Pick(s, command) })
 }
 
 func ExampleCombobox() {

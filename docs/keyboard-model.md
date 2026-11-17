@@ -115,29 +115,52 @@ been fixed:
 
 ## Scoped overrides
 
-The B3 review accepted `ui.KeyScope`: an application names the keys it
-wants and supplies a Go handler around one or more kit controls. A handler
-that takes a key prevents its default. If it declines, the next enclosing
-scope is tried, then the kit default. The closest scope goes first. Keys
-not named keep their existing defaults. The scope adds no HTML wrapper and
-never applies to plain HTML or controls on another surface. It is proposed
-for the B3 API pack and is not yet in the approved API lock.
+`ui.KeyScope` takes an application's bindings around one or more kit
+controls: each a key, a label, a name and whether it is disabled. Its Go
+handler gets the binding. A handler that takes a key prevents its default.
+If it declines, the next enclosing scope is tried, then the kit default.
+The closest scope goes first. Keys not named keep their existing defaults.
+The scope adds no HTML wrapper and never applies to plain HTML or controls
+on another surface.
 
 ```templ
-@ui.KeyScope([]string{"arrow_down"}, a.MoveLog) {
+@ui.KeyScope([]ui.KeyBinding{
+    {Key: "arrow_down", Label: "Next log line", Name: "log.next"},
+    {Key: "mod+s", Label: "Save", Name: "save", Disabled: !a.dirty},
+    {Label: "About", Name: "about"},
+}, a.Run) {
     @ui.Select(&a.choice, ui.SelectProps{
         Items: a.items, Value: a.value, OnChange: a.Choose,
     })
 }
 ```
 
-The names use `surf.Key` notation, including `mod`. Invalid and duplicate
-keys, Tab and Shift+Tab are faults; the latter two stay reserved for
-focus traversal. A scope around an open dialog can intercept Escape before
-the dialog default. The kit forwards only the named keys and runs their
-Go defaults after all applicable scopes decline. Unmentioned native keys
-continue through the native path. Native and kit controls use the same
-scope and handler order in cells and on a host.
+The keys use `surf.Key` notation, including `mod`. Invalid and duplicate
+keys, Tab and Shift+Tab, and a binding with neither key nor name are
+faults; Tab and Shift+Tab stay reserved for focus traversal. A disabled
+binding's key goes on as if the scope did not name it. A binding with no
+key is an action only a menu or a palette reaches. A scope around an open
+dialog can intercept Escape before the dialog default. The kit forwards
+only the named keys and runs their Go defaults after all applicable scopes
+decline. Unmentioned native keys continue through the native path. Native
+and kit controls use the same scope and handler order in cells and on a
+host.
+
+## Menus and palettes
+
+The labels serve the user's view of the keys too:
+
+- `ui.Bindings(s)` lists what a surface offers now, from its last render:
+  the scopes around the focused kit control first, nearest first, then
+  every other scope's. A binding keeps its key only while the key reaches
+  it; one a nearer scope's key shadows, or whose scope is not around the
+  focus, is listed without its key when it has a name (a pick still runs
+  it) and left out when it has none. An app's palette lists these.
+- `ui.Menu(s, label)` is the same list as hotty's menu (SPEC §10.7), for
+  `hotty.Menu`: a host that takes menus shows its which-key level and
+  lists the named items in its own palette.
+- `ui.Pick(s, name)` runs the binding a pick names, as a host's menu
+  sends it in a command event.
 
 A host's open native select list can retain every key until it closes;
 scopes cannot intercept those keys while that list is open. The kit's

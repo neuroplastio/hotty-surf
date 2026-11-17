@@ -1655,3 +1655,75 @@ plain int, since the `msg` tags are plx's wire and api-check doesn't see
 them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
 Left for plx: decode within its capped frame (msgp:limit doesn't cap
 strings), and drop any mirror of its own.
+
+## plx: key labels (a pack of its own)
+
+plx's move to v0.7 (its ask (c)) needs every scoped key labelled, with an
+enabled state, enumerable from Go as `{key, label, enabled}`, as its
+surfui `bind label=…` is today. Its which-key overlay and its command
+palette read it, the palette with the keyless actions too. In hotty 0.8 a
+host's which-key level and palette come from the program's menu (SPEC
+§10.7, `a=menu`), not from `data-key` attributes, which 0.2's host-side
+sequence engine read and 0.3 dropped. hotty-go has the menu as
+`hotty.MenuTree` and `hotty.Menu`, so the kit gives the tree and writes no
+escape sequence.
+
+Nothing to port: hotty-a2ui's `Shortcut{Key, Label}` and `KeyHints` have
+labels but no enabled state and no menu, and the spike has none. hotty-a2ui's
+hints merging keys by label is the app's to do from `Bindings`.
+
+### As drafted
+
+- `KeyScope(bindings []KeyBinding, fn func(KeyBinding) bool)`, where
+  `KeyBinding` is `{Key, Label, Name string; Disabled bool}`. A keyless
+  binding with a Name is an action only a pick reaches; one with neither
+  is a fault. A disabled binding's key goes on as if the scope did not
+  name it, its pick runs nothing, and the menu shows it disabled. fn gets
+  the binding as given, so it switches on Name or Key.
+- `Bindings(s *surf.Surface) []KeyBinding`: what s offers now, from its
+  last render. The scopes around the focused kit control first, nearest
+  first, then every other scope in render order. A key belongs to the
+  nearest enabled binding of it in that chain (else the nearest disabled
+  one); any other keyed binding is listed with Key empty when it has a
+  Name, and left out when it has none.
+- `Menu(s, label) *hotty.MenuTree`: Bindings as one flat level of hotty
+  menu items; nil when there are none, which `hotty.Menu` sends as no
+  menu.
+- `Pick(s, name) bool`: runs the binding a menu's pick or a palette names.
+- All three run on the driver's goroutine (a handler, or `Surface.Do`).
+- Behaviour, no names: run.App sends `hotty.Menu(ui.Menu(s, …))` where the
+  host has the `menu` feature, whenever it changes, and turns a command
+  event's name into `ui.Pick`. An app that places its surfaces itself
+  (plx) builds and sends its own menu, adding its key sequences. run is
+  the L4 builder's, so that part goes to them once this is decided.
+
+### The other shape, and the lean
+
+- **Lean (p-653's, taken in the draft): change KeyScope.** v0.7 is
+  untagged and the maintainer prefers the better architecture to keeping
+  a reviewed signature: one way to scope keys. Its cost: every caller
+  writes `[]ui.KeyBinding{{Key: "enter"}}` for what was `[]string{"enter"}`.
+- **Other: keep KeyScope, add a sibling** `ui.Keys([]KeyBinding, fn)`. No
+  break, but two ways to scope keys, one of which can't be listed.
+
+### Open for the reviewer
+
+1. **fn's argument.** The draft passes the KeyBinding. The alternative is
+   `func(string) bool` getting the Name, or the Key when there is no Name.
+   That's shorter, but a handler then can't tell a key from a pick.
+2. **A keyed binding the key doesn't reach.** The draft lists it without
+   its key when it has a name. The other choice lists it with its key,
+   marked as not reachable now, which needs a field that KeyBinding (an
+   input) would then carry as output.
+3. **Reach.** A scope handles keys only while one of its kit controls has
+   the keyboard, as reviewed for B3. plx's `bind` is surface-wide. Should a
+   scope also take its keys while the focus is anywhere inside it (plain
+   HTML), or while nothing in the surface is focused? The draft keeps
+   B3's reach, so Bindings lists only what a key really reaches.
+4. **One level.** Menu gives no groups (SPEC §10.7 allows eight levels).
+   Grouping by scope would need a label per scope, which KeyScope doesn't
+   take. An app that wants groups builds its tree from Bindings.
+5. **The name `Menu`.** It returns hotty's menu (SPEC §10.7), but in `ui`
+   it sits beside `MenuItem`, DropdownMenu's item, which it doesn't use.
+   `KeyMenu` or `HostMenu` would say it's the host's. The draft keeps
+   `Menu`, after hotty-go's `hotty.Menu`, which it feeds.
