@@ -2,6 +2,7 @@ package rt
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -190,4 +191,33 @@ func Focusable(n *html.Node) bool {
 		return hasAttr(n, "href")
 	}
 	return hasAttr(n, "contenteditable") && attr(n, "contenteditable") != "false"
+}
+
+// Types says whether n types the characters it is given: a text field
+// (an input of a text type, or of a type the host doesn't know, which is
+// text), a textarea, or an editing host (SPEC §10.2's text fields). A
+// KeyScope never takes a printable key from one (K27).
+func Types(n *html.Node) bool {
+	switch n.Data {
+	case "textarea":
+		return true
+	case "input":
+		switch strings.ToLower(attr(n, "type")) {
+		case "checkbox", "radio", "button", "submit", "reset", "image", "file", "hidden", "range", "color",
+			"date", "datetime-local", "month", "week", "time":
+			return false
+		}
+		return true
+	}
+	return hasAttr(n, "contenteditable") && attr(n, "contenteditable") != "false"
+}
+
+// Printable says whether key types a character in a text field: one
+// character or space, alone or with shift.
+func Printable(key string) bool {
+	name := strings.TrimPrefix(key, "shift+")
+	if name == "space" {
+		return true
+	}
+	return utf8.RuneCountInString(name) == 1
 }
