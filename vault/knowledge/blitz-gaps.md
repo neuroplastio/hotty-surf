@@ -853,3 +853,19 @@ Known before, seen again: `<select>` draws its own ▾ (native-select).
 **By SPEC, not a gap:** the `scrollbar` classes. A surface that asks for
 no scroll shows no scroll bars (SPEC §5), as Blitz does. Their look in a
 scrolling document is unchecked, as `hotty render` can't scroll.
+
+## Live repaint in hottyterm (L3's book trial, 2026-11-17)
+
+**Setup:** hottyterm 26.11.16-dev (hotty-blitz 0.8.6), `hotty-surf book`,
+keys from blackbox on a headless sway. These appear only live: a fresh
+render of the same document (`hotty-surf ctl shot`, hotty-blitz's
+`hotty`) draws the right thing, and the program sends what it should.
+
+| Gap | Where it shows in the kit | How bad |
+| --- | --- | --- |
+| 7. In a `position: fixed` subtree (an open Dialog), a field's typed value and the focus ring are repainted one event late. The document holds `value="Acme"` while the field is drawn empty; after Tab, the old field keeps its ring while the next control gets one too. Outside a fixed subtree (field/fieldset), typing shows at once. | Dialog's fields and buttons (dialog/default) | Functional: what's typed and where the keyboard is can't be seen |
+| 8. Moving the active item in an open DropdownMenu takes 250–420 ms to show. The program renders it in about 1 ms and sends 188 bytes (`aria-activedescendant` and the `active` class moving), less than a Select's 420-byte delta, which shows in about 25 ms. | DropdownMenu's arrows (dropdown-menu/default) | Slow |
+| 9. A focused element's `:focus` style can show late: the book's list stays unfocused-looking until a key changes the document. Likely the same restyle as gap 7. Not cut down yet. | The book's list; any `:focus` rule | Cosmetic |
+
+They're for hottyterm and hotty-blitz (repaint and restyle after a
+delta, and on focus), and each needs a repro cut down from the book.
