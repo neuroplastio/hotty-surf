@@ -176,6 +176,33 @@ func (r *Reloader) Document(ctx context.Context, key, surface string) (string, e
 	return r.document(ctx, key, surface)
 }
 
+// Instances is who is attached now: each process serving, by its instance
+// key, with its surfaces and the size each was last placed at. It is a
+// snapshot, sorted by key and each instance's surfaces by name, and a
+// program may call it from any goroutine: what `hotty-surf ctl shot`
+// names when it is given no key or surface, and the size it renders at. A
+// process that is handing over, or that left, is not in it; its next
+// build's is, once it has dialed in.
+func (r *Reloader) Instances() []Instance {
+	return r.instances()
+}
+
+// An Instance is a process serving, by its key (Instances).
+type Instance struct {
+	Key      string
+	Surfaces []Placed
+}
+
+// Placed is a surface of an instance, by its name, and the cells it was
+// last placed at: by package run where it shows the app (a terminal, a
+// page, cells), or by `hotty-surf run`. It is 0 by 0 before the surface
+// was placed, and for a surface its program places itself (a raw-mode
+// program, Bubble Tea's).
+type Placed struct {
+	Name       string
+	Cols, Rows int
+}
+
 // A Report is the outcome of a save.
 type Report struct {
 	Tier string        // "text", "css" or "go"

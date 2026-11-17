@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,6 +27,8 @@ type proc struct {
 	handedOver bool
 	left       bool
 	closed     chan struct{} // the wire closed
+	// areas is the process's last "areas": its surfaces and their sizes.
+	areas []Placed
 }
 
 // call sends the process a request and waits for its answer, or for wait
@@ -106,6 +110,18 @@ func (r *Reloader) serve(ctx context.Context, rw io.ReadWriteCloser) error {
 			p.left = true
 			p.mu.Unlock()
 			err = devwire.Skip(rd)
+		case h.Type == devwire.Notification && h.Method == "areas":
+			var a devwire.Areas
+			if err = devwire.Decode(rd, &a); err == nil {
+				areas := make([]Placed, len(a.Surfaces))
+				for i, s := range a.Surfaces {
+					areas[i] = Placed{Name: s.Name, Cols: s.Cols, Rows: s.Rows}
+				}
+				slices.SortFunc(areas, func(a, b Placed) int { return strings.Compare(a.Name, b.Name) })
+				p.mu.Lock()
+				p.areas = areas
+				p.mu.Unlock()
+			}
 		case h.Type == devwire.Notification && h.Method == "dropped":
 			var d devwire.Dropped
 			if err = devwire.Decode(rd, &d); err == nil {
@@ -130,6 +146,26 @@ func (r *Reloader) serve(ctx context.Context, rw io.ReadWriteCloser) error {
 	close(p.closed)
 	r.part(p)
 	return nil
+}
+
+// instances is Instances': the processes serving, and not handing over.
+func (r *Reloader) instances() []Instance {
+	r.mu.Lock()
+	ps := make([]*proc, 0, len(r.procs))
+	for _, p := range r.procs {
+		ps = append(ps, p)
+	}
+	r.mu.Unlock()
+	out := make([]Instance, 0, len(ps))
+	for _, p := range ps {
+		p.mu.Lock()
+		if !p.handing && !p.handedOver && !p.left {
+			out = append(out, Instance{Key: p.key, Surfaces: slices.Clone(p.areas)})
+		}
+		p.mu.Unlock()
+	}
+	slices.SortFunc(out, func(a, b Instance) int { return strings.Compare(a.Key, b.Key) })
+	return out
 }
 
 // join makes p the process of its key, and is what it takes over.

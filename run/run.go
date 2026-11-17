@@ -47,5 +47,17 @@ func App(ctx context.Context, s *surf.Surface) error {
 // started. It is nil in any other build.
 var dev func(ctx context.Context, s *surf.Surface) (served bool, err error)
 
+// placed hears the cells run placed s at, or draws it in, in a build with
+// the surfdev tag (live reload's Reloader.Instances); nil in any other
+// build.
+var placed func(s *surf.Surface, cols, rows int)
+
+// didPlace tells placed, if it is set.
+func didPlace(s *surf.Surface, cols, rows int) {
+	if placed != nil {
+		placed(s, cols, rows)
+	}
+}
+
 // quits says whether k, a key the surface didn't take, quits the app.
 func quits(k string) bool { return k == "ctrl+c" || k == "ctrl+q" }

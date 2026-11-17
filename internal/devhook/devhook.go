@@ -1,6 +1,7 @@
 // Package devhook is where, in a dev build (the surfdev tag), surf.New
-// hands each surface to package reload: a registry both import, so that
-// neither imports the other's insides. A release build never adds to it.
+// hands each surface to package reload, and package run says where it
+// placed one: a registry they import, so that none imports another's
+// insides. A release build never adds to it.
 package devhook
 
 import "sync"
@@ -9,6 +10,8 @@ var (
 	mu       sync.Mutex
 	surfaces []any
 	added    func(s any)
+	areas    = map[any][2]int{}
+	placed   func(s any, cols, rows int)
 )
 
 // Add registers a surface (a *surf.Surface), and tells the listener if
@@ -32,10 +35,40 @@ func Listen(f func(s any)) []any {
 	return append([]any(nil), surfaces...)
 }
 
-// Reset forgets every surface and the listener, for a test that serves
+// Placed records the cells a surface was placed at, and tells the listener
+// if one is set and the area changed.
+func Placed(s any, cols, rows int) {
+	mu.Lock()
+	was, ok := areas[s]
+	areas[s] = [2]int{cols, rows}
+	f := placed
+	mu.Unlock()
+	if f != nil && (!ok || was != [2]int{cols, rows}) {
+		f(s, cols, rows)
+	}
+}
+
+// ListenPlaced sets what hears each surface placed at another size from
+// now on.
+func ListenPlaced(f func(s any, cols, rows int)) {
+	mu.Lock()
+	defer mu.Unlock()
+	placed = f
+}
+
+// Area is the cells s was last placed at, 0 by 0 before it was.
+func Area(s any) (cols, rows int) {
+	mu.Lock()
+	defer mu.Unlock()
+	a := areas[s]
+	return a[0], a[1]
+}
+
+// Reset forgets every surface and the listeners, for a test that serves
 // more than once in one process.
 func Reset() {
 	mu.Lock()
 	defer mu.Unlock()
-	surfaces, added = nil, nil
+	surfaces, added, placed = nil, nil, nil
+	clear(areas)
 }

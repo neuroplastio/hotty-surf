@@ -1137,3 +1137,46 @@ hotty-surf book                (L3)
   the element is gone (`ENOTARGET`): a host that refuses every a=focus (a
   backdrop's `EINVAL`, a detached surface's `EDETACHED`) gets no new one,
   and the keyboard stays with the program until its next Focus.
+
+## L4: who is attached (a pack of its own)
+
+plx's `plugin dev ctl shot` relays a tool's surface it doesn't place, so it
+has neither the surface's name nor its size; `Reloader.Document`'s reason
+assumed the caller had both. plx asked for a snapshot of who is attached,
+with each surface's last size (p-653, 2026-11-17).
+
+- **`Reloader.Instances() []Instance`,** with `Instance{Key string;
+  Surfaces []Placed}` and `Placed{Name string; Cols, Rows int}`: the
+  processes serving, sorted by key, and each one's surfaces sorted by
+  name, with the cells each was last placed at. It is a copy, read under
+  the Reloader's lock: no process is asked, so it never blocks and may be
+  called from any goroutine.
+- **Where the sizes come from.** A process says what it has, on the reload
+  wire, after its welcome and whenever a surface is made or placed at
+  another size (an "areas" notification, internal). Package run says where
+  it placed the app, in a terminal, a page or cells, through an internal
+  registry in dev builds only; under `hotty-surf run`, which places the
+  app itself, the term wire tells the app (a "placed" notification). A
+  release build links none of it.
+- **What it doesn't know.** A program that places a surface itself (a
+  raw-mode program like examples/pane, surftea's Host) has 0 by 0: nothing
+  in hotty tells a surface its size, and surf writes no placement. If plx's
+  tools place their own surfaces, they need a way to say so: a
+  `reload.Placed(s, cols, rows)` or a `surf.(*Surface)` method. That is an
+  open question for this pack, not drafted, since it is more API for a
+  case nobody has asked for yet.
+- **The name.** `Placed`, not plx's `Surface`: a caller that imports both
+  reloader and surf would read `reloader.Surface` as the one it draws.
+- **Left out:** a handover in flight (its process answers nothing), and a
+  process that said it leaves. A key that crashed is in neither: it is in
+  Report.Failed until restart brings it back.
+
+The alternative, `Report.Attached []Instance`, was plx's other option. It
+would be true only as of the last save, while a tool opened or closed since
+then (a viewer's) changes who is attached; and a report is what Run's
+goroutine hands to report, not what a ctl asks for. Instances answers at
+the moment of the shot.
+
+`hotty-surf ctl shot` doesn't use it yet: its run knows the one surface it
+places. Taking the only surface when none is named is a follow-up once the
+names are approved.

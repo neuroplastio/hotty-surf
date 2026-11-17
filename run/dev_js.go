@@ -13,6 +13,7 @@ import (
 	"neuroplast.io/hotty-surf"
 
 	"neuroplast.io/hotty-surf/internal/devchild"
+	"neuroplast.io/hotty-surf/internal/devhook"
 )
 
 // Served by `hotty-surf serve`, the page sets globalThis.hottySurf.dev
@@ -27,7 +28,10 @@ import (
 // it would in any page: a new build takes over the old one's state and its
 // surface as the terminal still has it, so its first frame is a delta.
 
-func init() { dev = inPage }
+func init() {
+	dev = inPage
+	placed = func(s *surf.Surface, cols, rows int) { devhook.Placed(s, cols, rows) }
+}
 
 // inPage serves s through `hotty-surf serve`, if the page is its.
 func inPage(ctx context.Context, s *surf.Surface) (bool, error) {

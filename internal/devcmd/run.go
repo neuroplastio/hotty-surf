@@ -329,17 +329,20 @@ func (h *host) size() (cols, rows int) {
 }
 
 func (h *host) placeApp() {
-	if h.c != nil {
-		return // the Screen covers the terminal
-	}
 	h.mu.Lock()
-	name := h.surface
+	name, a := h.surface, h.app
 	h.mu.Unlock()
 	if name == "" {
 		return
 	}
 	z := h.t.Size()
-	h.t.Send(hotty.Place(name, hotty.Placement{Cols: z.Cols, Rows: z.Rows, Press: hotty.On, Hover: hotty.On}))
+	if h.c == nil { // else the Screen covers the terminal
+		h.t.Send(hotty.Place(name, hotty.Placement{Cols: z.Cols, Rows: z.Rows, Press: hotty.On, Hover: hotty.On}))
+	}
+	if a != nil {
+		// The app hears its size, for the reloader's Instances.
+		a.term.Notify("placed", &devwire.Area{Name: name, Cols: z.Cols, Rows: z.Rows}) // an error: the app is gone
+	}
 }
 
 // showDev sends dev's document.

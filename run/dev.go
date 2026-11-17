@@ -17,6 +17,7 @@ import (
 	"neuroplast.io/hotty-surf"
 
 	"neuroplast.io/hotty-surf/internal/devchild"
+	"neuroplast.io/hotty-surf/internal/devhook"
 	"neuroplast.io/hotty-surf/internal/devwire"
 	"neuroplast.io/hotty-surf/internal/input"
 	"neuroplast.io/hotty-surf/internal/rt"
@@ -32,7 +33,10 @@ import (
 // run` to place ("show").
 const runEnv = "HOTTY_SURF_RUN"
 
-func init() { dev = underRun }
+func init() {
+	dev = underRun
+	placed = func(s *surf.Surface, cols, rows int) { devhook.Placed(s, cols, rows) }
+}
 
 // underRun serves s through `hotty-surf run`, if this process is one it
 // started.
@@ -184,6 +188,17 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 					devwire.PutInput(m.in)
 					return
 				}
+			case h.Type == devwire.Notification && h.Method == "placed":
+				// Where hotty-surf run placed the surface, for the
+				// reloader's Instances.
+				var a devwire.Area
+				if devwire.Decode(tr, &a) != nil {
+					return
+				}
+				if a.Name == name {
+					devhook.Placed(s, a.Cols, a.Rows)
+				}
+				continue
 			default:
 				if devwire.Skip(tr) != nil {
 					return

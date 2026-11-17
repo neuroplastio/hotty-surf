@@ -85,6 +85,9 @@ func app(ctx context.Context, s *surf.Surface) error {
 	s.Attach(out, caps)
 	place := func(cols, rows int) error {
 		_, err := out.Write([]byte(hotty.PlaceAt(name, 0, 0, hotty.Placement{Cols: cols, Rows: rows, Press: hotty.On, Hover: hotty.On})))
+		if err == nil {
+			didPlace(s, cols, rows)
+		}
 		return err
 	}
 	show := func() error {

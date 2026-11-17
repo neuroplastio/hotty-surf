@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -317,4 +318,37 @@ func TestReloadBeforeRun(t *testing.T) {
 	if err := <-ran; err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestInstances: each process's last "areas" is its surfaces, by name, in
+// a snapshot sorted by key; a process that left is not in it.
+func TestInstances(t *testing.T) {
+	r := New(".", func(context.Context, string) error { return nil }, nil)
+	none := func(*fake, devwire.Head) {}
+	b := dial(t, r, "tool:b", none)
+	a := dial(t, r, "tool:a", none)
+	b.conn.Notify("areas", &devwire.Areas{Surfaces: []devwire.Area{{Name: "main", Cols: 80, Rows: 24}}})
+	a.conn.Notify("areas", &devwire.Areas{Surfaces: []devwire.Area{{Name: "main"}}})
+	a.conn.Notify("areas", &devwire.Areas{Surfaces: []devwire.Area{{Name: "z", Cols: 1, Rows: 2}, {Name: "main", Cols: 40, Rows: 10}}})
+	want := []Instance{
+		{Key: "tool:a", Surfaces: []Placed{{"main", 40, 10}, {"z", 1, 2}}},
+		{Key: "tool:b", Surfaces: []Placed{{"main", 80, 24}}},
+	}
+	eventually := func(what string, want []Instance) {
+		t.Helper()
+		deadline := time.Now().Add(5 * time.Second)
+		for {
+			got := r.Instances()
+			if reflect.DeepEqual(got, want) {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("%s: %+v, want %+v", what, got, want)
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}
+	eventually("both", want)
+	a.conn.Notify("leave", &devwire.Empty{})
+	eventually("after a left", want[1:])
 }
