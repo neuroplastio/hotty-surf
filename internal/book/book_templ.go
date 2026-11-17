@@ -232,6 +232,8 @@ func sidebar(a *App) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		themeAttrs := surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme))
+		themeAttrs["title"] = "Theme (t)"
 		templ_7745c5c3_Var7 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -257,7 +259,7 @@ func sidebar(a *App) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: themeAttrs}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -309,7 +311,7 @@ func header(a *App) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(a.model.Sel.Group)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 75, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 77, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -322,7 +324,7 @@ func header(a *App) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(a.model.Sel.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 76, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 78, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -333,14 +335,14 @@ func header(a *App) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if a.model.Sel.Doc != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"text-sm text-muted-foreground\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"book-doc text-muted-foreground\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(a.model.Sel.Doc)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 78, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 80, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -351,6 +353,8 @@ func header(a *App) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
+		resetAttrs := noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory)))
+		resetAttrs["title"] = "Props back as the story has them; events cleared"
 		templ_7745c5c3_Var12 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -369,7 +373,7 @@ func header(a *App) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory)))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: resetAttrs}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -414,7 +418,7 @@ func preview(a *App) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templruntime.NewAttributeExpression(bstr(!a.Cells)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 88, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 92, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 			if templ_7745c5c3_Err != nil {
@@ -453,7 +457,7 @@ func preview(a *App) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.NewAttributeExpression(bstr(a.Cells)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 89, Col: 79}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 93, Col: 79}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
@@ -664,7 +668,7 @@ func cellsPreview(a *App) templ.Component {
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(sg.text)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 112, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 116, Col: 40}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
@@ -724,7 +728,7 @@ func cellsPreview(a *App) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(e)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 119, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 123, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -768,7 +772,7 @@ func sources(s *storybook.Story) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(src.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 127, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 131, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -781,7 +785,7 @@ func sources(s *storybook.Story) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(src.Path)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 128, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 132, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -794,7 +798,7 @@ func sources(s *storybook.Story) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(src.Line))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 128, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book.templ`, Line: 132, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {

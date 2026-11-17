@@ -14,8 +14,9 @@
   background: var(--sidebar);
   color: var(--sidebar-foreground);
 }
-.book-brand, .book-header {
-  padding: 0.75rem;
+.book-brand { padding: 0.75rem 0.75rem 0.5rem; }
+.book-header {
+  padding: 0.5rem 1rem;
   border-bottom: var(--hotty-px) solid var(--border);
 }
 .book-filter, .book-hints {
@@ -57,7 +58,7 @@
   min-width: 0;
   height: 100%;
 }
-.book-crumb {
+.book-crumb, .book-doc {
   font-size: 0.75rem;
 }
 .book-reset {

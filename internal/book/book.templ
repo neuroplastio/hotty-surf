@@ -54,7 +54,9 @@ templ sidebar(a *App) {
 		<div class="book-brand flex items-center gap-2">
 			<span class="font-semibold">hotty storybook</span>
 			<span class="text-sm text-muted-foreground">{ strconv.Itoa(len(a.model.Stories)) }</span>
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme))}) {
+			{{ themeAttrs := surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme)) }}
+			{{ themeAttrs["title"] = "Theme (t)" }}
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: themeAttrs}) {
 				if a.model.Dark {
 					Light
 				} else {
@@ -75,9 +77,11 @@ templ header(a *App) {
 		<span class="book-crumb text-muted-foreground">{ a.model.Sel.Group }</span>
 		<span class="font-semibold">{ a.model.Sel.Name }</span>
 		if a.model.Sel.Doc != "" {
-			<span class="text-sm text-muted-foreground">{ a.model.Sel.Doc }</span>
+			<span class="book-doc text-muted-foreground">{ a.model.Sel.Doc }</span>
 		}
-		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory)))}) { Reset }
+		{{ resetAttrs := noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory))) }}
+		{{ resetAttrs["title"] = "Props back as the story has them; events cleared" }}
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: resetAttrs}) { Reset }
 	</div>
 }
 
