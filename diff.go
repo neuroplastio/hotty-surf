@@ -40,11 +40,21 @@ func (d *differ) el(o, n *html.Node) {
 }
 
 func (d *differ) attrs(id string, o, n *html.Node) {
-	field := isField(n)
-	// An option's selected is its select's value, which a=field sets.
-	opt := n.Data == "option" && inSelect(n)
+	// A field's value or state is a=field's, not an attribute's: a check
+	// box's or radio's checked (its value is an attribute like any other,
+	// what it submits), another field's value. An option's selected is its
+	// select's value.
+	var live string
+	switch {
+	case isCheck(n):
+		live = "checked"
+	case isField(n):
+		live = "value"
+	case n.Data == "option" && inSelect(n):
+		live = "selected"
+	}
 	for _, a := range n.Attr {
-		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") || opt && a.Key == "selected" {
+		if a.Key == "id" || a.Key == live {
 			continue
 		}
 		if v, ok := get(o, a.Key); !ok || v != a.Val {
@@ -52,7 +62,7 @@ func (d *differ) attrs(id string, o, n *html.Node) {
 		}
 	}
 	for _, a := range o.Attr {
-		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") || opt && a.Key == "selected" {
+		if a.Key == "id" || a.Key == live {
 			continue
 		}
 		if _, ok := get(n, a.Key); !ok {

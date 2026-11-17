@@ -1,0 +1,591 @@
+{
+ "combobox.html.jinja": {
+  "source_lines": 148,
+  "mechanical": 50,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "combobox",
+    "component": "Combobox",
+    "caller": "children",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "selected",
+      "any"
+     ],
+     [
+      "name",
+      "string"
+     ],
+     [
+      "multiple",
+      "bool"
+     ],
+     [
+      "placeholder",
+      "string"
+     ],
+     [
+      "closeOnSelect",
+      "bool"
+     ],
+     [
+      "clear",
+      "bool"
+     ],
+     [
+      "autoHighlight",
+      "bool"
+     ],
+     [
+      "format",
+      "string"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "inputAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "popoverAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "listboxAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "hiddenInputAttrs",
+      "templ.Attributes"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 194
+ },
+ "command.html.jinja": {
+  "source_lines": 211,
+  "mechanical": 68,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "command",
+    "component": "Command",
+    "caller": "children",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "placeholder",
+      "string"
+     ],
+     [
+      "emptyText",
+      "string"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "inputAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "menuAttrs",
+      "templ.Attributes"
+     ]
+    ]
+   },
+   {
+    "macro": "command_dialog",
+    "component": "CommandDialog",
+    "caller": "children",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "placeholder",
+      "string"
+     ],
+     [
+      "emptyText",
+      "string"
+     ],
+     [
+      "dialogAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "inputAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "menuAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "open",
+      "bool"
+     ]
+    ]
+   },
+   {
+    "macro": "render_command_items",
+    "component": "RenderCommandItems",
+    "caller": "none",
+    "params": [
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "parentIdPrefix",
+      "string"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 215
+ },
+ "dialog.html.jinja": {
+  "source_lines": 98,
+  "mechanical": 34,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "dialog",
+    "component": "Dialog",
+    "caller": "param",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "trigger",
+      "string"
+     ],
+     [
+      "title",
+      "string"
+     ],
+     [
+      "description",
+      "string"
+     ],
+     [
+      "footer",
+      "string"
+     ],
+     [
+      "dialogAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "triggerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "headerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "bodyAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "footerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "open",
+      "bool"
+     ],
+     [
+      "closeButton",
+      "bool"
+     ],
+     [
+      "closeOnOverlayClick",
+      "bool"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 105
+ },
+ "dropdown-menu.html.jinja": {
+  "source_lines": 131,
+  "mechanical": 45,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "dropdown_menu",
+    "component": "DropdownMenu",
+    "caller": "children",
+    "params": [
+     [
+      "trigger",
+      "string"
+     ],
+     [
+      "id",
+      "string"
+     ],
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "triggerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "popoverAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "menuAttrs",
+      "templ.Attributes"
+     ]
+    ]
+   },
+   {
+    "macro": "render_dropdown_items",
+    "component": "RenderDropdownItems",
+    "caller": "none",
+    "params": [
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "parentIdPrefix",
+      "string"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 110
+ },
+ "popover.html.jinja": {
+  "source_lines": 52,
+  "mechanical": 14,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "popover",
+    "component": "Popover",
+    "caller": "children",
+    "params": [
+     [
+      "trigger",
+      "string"
+     ],
+     [
+      "id",
+      "string"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "triggerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "popoverAttrs",
+      "templ.Attributes"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 34
+ },
+ "select.html.jinja": {
+  "source_lines": 192,
+  "mechanical": 78,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "select",
+    "component": "Select",
+    "caller": "children",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "selected",
+      "any"
+     ],
+     [
+      "name",
+      "string"
+     ],
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "multiple",
+      "bool"
+     ],
+     [
+      "placeholder",
+      "string"
+     ],
+     [
+      "closeOnSelect",
+      "bool"
+     ],
+     [
+      "format",
+      "string"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "triggerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "popoverAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "listboxAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "inputAttrs",
+      "templ.Attributes"
+     ]
+    ]
+   },
+   {
+    "macro": "render_select_items",
+    "component": "RenderSelectItems",
+    "caller": "none",
+    "params": [
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "selectedArray",
+      "any"
+     ],
+     [
+      "parentIdPrefix",
+      "string"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 191
+ },
+ "sidebar.html.jinja": {
+  "source_lines": 150,
+  "mechanical": 52,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "sidebar",
+    "component": "Sidebar",
+    "caller": "children",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "label",
+      "string"
+     ],
+     [
+      "open",
+      "bool"
+     ],
+     [
+      "side",
+      "string"
+     ],
+     [
+      "header",
+      "string"
+     ],
+     [
+      "footer",
+      "string"
+     ],
+     [
+      "menu",
+      "[]any"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "headerAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "contentAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "footerAttrs",
+      "templ.Attributes"
+     ]
+    ]
+   },
+   {
+    "macro": "render_sidebar_content",
+    "component": "RenderSidebarContent",
+    "caller": "none",
+    "params": [
+     [
+      "items",
+      "[]any"
+     ],
+     [
+      "parentIdPrefix",
+      "string"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 144
+ },
+ "tabs.html.jinja": {
+  "source_lines": 83,
+  "mechanical": 31,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "tabs",
+    "component": "Tabs",
+    "caller": "none",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "tabsets",
+      "[]any"
+     ],
+     [
+      "mainAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "tablistAttrs",
+      "templ.Attributes"
+     ],
+     [
+      "defaultTabIndex",
+      "int"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 60
+ },
+ "toast.html.jinja": {
+  "source_lines": 140,
+  "mechanical": 39,
+  "todos": [],
+  "macros": [
+   {
+    "macro": "toaster",
+    "component": "Toaster",
+    "caller": "children",
+    "params": [
+     [
+      "id",
+      "string"
+     ],
+     [
+      "toasts",
+      "[]any"
+     ],
+     [
+      "attrs",
+      "templ.Attributes"
+     ]
+    ]
+   },
+   {
+    "macro": "toast",
+    "component": "Toast",
+    "caller": "none",
+    "params": [
+     [
+      "category",
+      "string"
+     ],
+     [
+      "title",
+      "string"
+     ],
+     [
+      "description",
+      "string"
+     ],
+     [
+      "action",
+      "any"
+     ],
+     [
+      "cancel",
+      "any"
+     ],
+     [
+      "duration",
+      "any"
+     ],
+     [
+      "icon",
+      "string"
+     ],
+     [
+      "attrs",
+      "templ.Attributes"
+     ]
+    ]
+   }
+  ],
+  "templ_lines": 188
+ }
+}

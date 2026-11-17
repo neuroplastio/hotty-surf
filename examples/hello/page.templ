@@ -11,12 +11,11 @@ templ Page(a *App) {
 	<main class="flex flex-col gap-4 p-4" { surf.On(ctx, "page", surf.Key(a.Shortcut))... }>
 		<h1 class="text-lg font-semibold">{ a.Greeting }, { a.who() }!</h1>
 		<div class="flex gap-2">
-			<input
-				class="input"
-				placeholder="Your name"
-				value={ a.Name }
-				{ surf.On(ctx, "name", surf.Input(a.SetName))... }
-			/>
+			@ui.Input(ui.InputProps{
+				Value:       a.Name,
+				Placeholder: "Your name",
+				Attrs:       surf.On(ctx, "name", surf.Input(a.SetName)),
+			})
 			@ui.Select(&a.greetingMenu, ui.SelectProps{
 				ID:       "greeting",
 				Items:    greetings,

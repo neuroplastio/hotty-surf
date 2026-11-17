@@ -6,15 +6,22 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/a-h/templ"
+
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // The values each component takes, as Basecoat's CSS has them: a value
 // outside them is a fault, which fails a surftest test (package doc).
 var (
-	buttonVariants = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
-	badgeVariants  = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
-	sizes          = []Size{Medium, XSmall, Small, Large}
+	buttonVariants    = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
+	badgeVariants     = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
+	buttonSizes       = []Size{Medium, XSmall, Small, Large}
+	switchSizes       = []Size{Medium, Small}
+	nativeSelectSizes = []Size{Medium, Small}
+	inputTypes        = []string{"", "text", "email", "password", "number", "tel", "url", "search", "date", "datetime-local", "month", "week", "time"}
+	fieldOrientations = []string{"", "vertical", "horizontal", "responsive"}
+	addonAligns       = []string{"", "inline-start", "inline-end", "block-start", "block-end"}
 )
 
 func checkVariant(ctx context.Context, comp string, v Variant, ok []Variant) string {
@@ -24,9 +31,17 @@ func checkVariant(ctx context.Context, comp string, v Variant, ok []Variant) str
 	return ""
 }
 
-func checkSize(ctx context.Context, comp string, s Size) string {
-	if !slices.Contains(sizes, s) {
-		rt.Fault(ctx, fmt.Sprintf("ui.%s: no size %q (it takes %s)", comp, s, list(sizes)))
+func checkSize(ctx context.Context, comp string, s Size, ok []Size) string {
+	if !slices.Contains(ok, s) {
+		rt.Fault(ctx, fmt.Sprintf("ui.%s: no size %q (it takes %s)", comp, s, list(ok)))
+	}
+	return ""
+}
+
+// checkEnum faults a string field's value that isn't one of ok.
+func checkEnum(ctx context.Context, comp, field, v string, ok []string) string {
+	if !slices.Contains(ok, v) {
+		rt.Fault(ctx, fmt.Sprintf("ui.%s: no %s %q (it takes %s)", comp, field, v, list(ok)))
 	}
 	return ""
 }
@@ -34,6 +49,31 @@ func checkSize(ctx context.Context, comp string, s Size) string {
 func checkIcon(ctx context.Context, name string) string {
 	if _, ok := icons[name]; !ok {
 		rt.Fault(ctx, fmt.Sprintf("ui.Icon: no icon %q (the kit has %s)", name, strings.Join(iconNames(), ", ")))
+	}
+	return ""
+}
+
+// checkAttrs faults an attribute in attrs that the component writes
+// itself: templ would write both, and the first wins (kit rule K3). Each
+// of written is an attribute's name, or name=Field for one a field of the
+// Props writes.
+func checkAttrs(ctx context.Context, comp string, attrs templ.Attributes, written ...string) string {
+	if len(attrs) == 0 {
+		return ""
+	}
+	for _, w := range written {
+		n, field, _ := strings.Cut(w, "=")
+		if _, ok := attrs[n]; !ok {
+			continue
+		}
+		hint := "it is the component's own"
+		switch {
+		case n == "class":
+			hint = "use Class"
+		case field != "":
+			hint = "use " + field
+		}
+		rt.Fault(ctx, fmt.Sprintf("ui.%s: Attrs has %s, which the component writes itself (%s)", comp, n, hint))
 	}
 	return ""
 }

@@ -19,17 +19,17 @@ the surface in step with them.
 
 ## A first app
 
-The view, in templ. An element gets its handlers from `surf.On`:
+The view, in templ. An element, or a kit component's Attrs, gets its
+handlers from `surf.On`:
 
 ```templ
 templ Page(a *App) {
 	<main class="flex flex-col gap-4 p-4">
 		<h1 class="text-lg font-semibold">{ a.Greeting }, { a.who() }!</h1>
-		<input
-			class="input"
-			value={ a.Name }
-			{ surf.On(ctx, "name", surf.Input(a.SetName))... }
-		/>
+		@ui.Input(ui.InputProps{
+			Value: a.Name,
+			Attrs: surf.On(ctx, "name", surf.Input(a.SetName)),
+		})
 		@ui.Button(ui.ButtonProps{
 			Attrs: surf.On(ctx, "wave", surf.Click(a.Wave)),
 		}) {

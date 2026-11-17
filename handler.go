@@ -105,7 +105,8 @@ func Click(fn func()) Handler {
 	return handler(kindClick, fn, fn == nil)
 }
 
-// Input calls fn with all a text field holds after each edit.
+// Input calls fn with all a text field holds after each edit, and with the
+// value of a select's chosen option.
 func Input(fn func(value string)) Handler {
 	return handler(kindInput, fn, fn == nil)
 }

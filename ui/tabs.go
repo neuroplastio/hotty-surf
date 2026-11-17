@@ -33,7 +33,7 @@ type Tab struct {
 // keys tabs.js's, translated to Go (← → between the tabs, Home, End). The
 // children are the shown tab's panel.
 func Tabs(p TabsProps) templ.Component {
-	return tabs(newTabsView(p))
+	return scoped(tabs(newTabsView(p)), false)
 }
 
 // tabsView is one render of a Tabs.

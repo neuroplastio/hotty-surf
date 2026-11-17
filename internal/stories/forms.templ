@@ -1,0 +1,367 @@
+package stories
+
+import (
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// B1's stories: the form components.
+
+type formState struct {
+	on     bool
+	text   string
+	choice string
+}
+
+func (s *formState) set(b bool)     { s.on = b }
+func (s *formState) typed(v string) { s.text = v }
+func (s *formState) chose(v string) { s.choice = v }
+
+func init() {
+	form := func(f func(*formState) templ.Component, init formState) func() templ.Component {
+		return func() templ.Component { s := init; return f(&s) }
+	}
+	add(Story{ID: "checkbox/default", Doc: "A check box with its label",
+		View: form(checkboxDefault, formState{}), Keys: []string{"tab", "space"}, Want: "accepted: on"})
+	add(Story{ID: "checkbox/disabled", Doc: "A check box that can't change",
+		View: form(checkboxDisabled, formState{on: true}), Keys: []string{"tab", "space"}, Want: "accepted: on"})
+	add(Story{ID: "radio/default", Doc: "A group of three radios",
+		View: form(radioDefault, formState{choice: "comfortable"}), Keys: []string{"tab", "tab", "tab", "space"}, Want: "density: compact"})
+	add(Story{ID: "radio/disabled", Doc: "A group with one radio disabled",
+		View: form(radioDisabled, formState{choice: "comfortable"}), Keys: []string{"tab", "tab", "tab", "space"}, Want: "density: comfortable"})
+	add(Story{ID: "switch/default", Doc: "A switch with its label",
+		View: form(switchDefault, formState{}), Keys: []string{"tab", "space"}, Want: "airplane mode: on"})
+	add(Story{ID: "switch/small", Doc: "A small switch (Size Small)",
+		View: form(switchSmall, formState{on: true}), Keys: []string{"tab", "space"}, Want: "notifications: off"})
+	add(Story{ID: "switch/disabled", Doc: "A switch that can't change",
+		View: form(switchDisabled, formState{}), Keys: []string{"tab", "space"}, Want: "airplane mode: off"})
+	add(Story{ID: "input/default", Doc: "A text input with a placeholder",
+		View: form(inputDefault, formState{}), Keys: []string{"tab", "a", "d", "a"}, Want: "name: ada"})
+	add(Story{ID: "input/date", Doc: "A date input (Type date), its value the app's",
+		View: form(inputDate, formState{text: "2026-11-17"}), Keys: []string{"tab"}, Want: "date: 2026-11-17"})
+	add(Story{ID: "input/time", Doc: "A time input (Type time), its value the app's",
+		View: form(inputTime, formState{text: "09:30"}), Keys: []string{"tab"}, Want: "time: 09:30"})
+	add(Story{ID: "input/invalid", Doc: "An input failing its check (Invalid), in a Field with its error",
+		View: form(inputInvalid, formState{text: "ada@"}), Keys: []string{"tab", "x"}, Want: "email: ada@x"})
+	add(Story{ID: "input/disabled", Doc: "An input that can't be edited",
+		View: form(inputDisabled, formState{text: "ada"}), Keys: []string{"tab", "x"}, Want: "name: ada"})
+	add(Story{ID: "textarea/default", Doc: "A textarea with a placeholder",
+		View: form(textareaDefault, formState{}), Keys: []string{"tab", "h", "i"}, Want: "message: hi"})
+	add(Story{ID: "label/default", Doc: "A label for an input beside it (For)",
+		View: form(labelDefault, formState{})})
+	add(Story{ID: "label/disabled", Doc: "A label dimmed in a disabled Field (FieldProps.Disabled)",
+		View: form(labelDisabled, formState{})})
+	add(Story{ID: "field/default", Doc: "A field: a label, an input and a description",
+		View: form(fieldDefault, formState{})})
+	add(Story{ID: "field/horizontal", Doc: "A horizontal field: a switch beside its label and description",
+		View: form(fieldHorizontal, formState{})})
+	add(Story{ID: "field/fieldset", Doc: "A fieldset of two fields under a legend",
+		View: form(fieldFieldset, formState{})})
+	add(Story{ID: "field/checkbox-group", Doc: "A fieldset of check boxes, each a horizontal field",
+		View: form(fieldCheckboxGroup, formState{})})
+	add(Story{ID: "field/separator", Doc: "Two fields with a separator between them",
+		View: form(fieldSeparator, formState{})})
+	add(Story{ID: "input-group/inline", Doc: "An input with an icon before it and a key after it",
+		View: form(inputGroupInline, formState{}), Keys: []string{"tab", "g", "o"}, Want: "search: go"})
+	add(Story{ID: "input-group/block", Doc: "An input with a label above it (block-start)",
+		View: form(inputGroupBlock, formState{}), Keys: []string{"tab", "4", "2"}, Want: "amount: 42"})
+	add(Story{ID: "input-group/textarea", Doc: "A textarea with a footer of buttons (block-end)",
+		View: form(inputGroupTextarea, formState{}), Keys: []string{"tab", "o", "k"}, Want: "comment: ok"})
+	add(Story{ID: "native-select/default", Doc: "A native select with an option group",
+		View: form(nativeSelectDefault, formState{choice: "apple"}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: banana"})
+	add(Story{ID: "native-select/small", Doc: "A small native select (Size Small) with no choice yet: its first item's Value is \"\"",
+		View: form(nativeSelectSmall, formState{}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: apple"})
+	add(Story{ID: "native-select/disabled", Doc: "A native select that can't change",
+		View: form(nativeSelectDisabled, formState{choice: "apple"}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: apple"})
+}
+
+templ status(label, value string) {
+	<p class="text-sm text-muted-foreground">{ label }: { value }</p>
+}
+
+templ checkboxDefault(s *formState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Label(ui.LabelProps{}) {
+			@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Attrs: surf.On(ctx, "terms", surf.Check(s.set))})
+			Accept terms and conditions
+		}
+		@status("accepted", onoff(s.on))
+	</div>
+}
+
+templ checkboxDisabled(s *formState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Label(ui.LabelProps{}) {
+			@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Disabled: true, Attrs: surf.On(ctx, "terms", surf.Check(s.set))})
+			Accept terms and conditions
+		}
+		@status("accepted", onoff(s.on))
+	</div>
+}
+
+templ radios(s *formState, disabled string) {
+	<div role="radiogroup" class="flex flex-col gap-3 p-4">
+		for _, d := range []string{"default", "comfortable", "compact"} {
+			@ui.Label(ui.LabelProps{}) {
+				@ui.Radio(ui.RadioProps{Name: "density", Checked: s.choice == d, Disabled: d == disabled,
+					Attrs: surf.On(ctx, "density-"+d, surf.Check(func(on bool) {
+						if on {
+							s.chose(d)
+						}
+					}))})
+				{ d }
+			}
+		}
+		@status("density", s.choice)
+	</div>
+}
+
+templ radioDefault(s *formState) {
+	@radios(s, "")
+}
+
+templ radioDisabled(s *formState) {
+	@radios(s, "compact")
+}
+
+templ switchDefault(s *formState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Label(ui.LabelProps{}) {
+			@ui.Switch(ui.SwitchProps{Checked: s.on, Attrs: surf.On(ctx, "airplane", surf.Check(s.set))})
+			Airplane mode
+		}
+		@status("airplane mode", onoff(s.on))
+	</div>
+}
+
+templ switchSmall(s *formState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Label(ui.LabelProps{}) {
+			@ui.Switch(ui.SwitchProps{Checked: s.on, Size: ui.Small, Attrs: surf.On(ctx, "notify", surf.Check(s.set))})
+			Notifications
+		}
+		@status("notifications", onoff(s.on))
+	</div>
+}
+
+templ switchDisabled(s *formState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Label(ui.LabelProps{}) {
+			@ui.Switch(ui.SwitchProps{Checked: s.on, Disabled: true, Attrs: surf.On(ctx, "airplane", surf.Check(s.set))})
+			Airplane mode
+		}
+		@status("airplane mode", onoff(s.on))
+	</div>
+}
+
+templ inputDefault(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Value: s.text, Placeholder: "Name", Attrs: surf.On(ctx, "name", surf.Input(s.typed))})
+		@status("name", s.text)
+	</div>
+}
+
+templ inputDate(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Type: "date", Value: s.text, Attrs: surf.On(ctx, "date", surf.Input(s.typed))})
+		@status("date", s.text)
+	</div>
+}
+
+templ inputTime(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Type: "time", Value: s.text, Attrs: surf.On(ctx, "time", surf.Input(s.typed))})
+		@status("time", s.text)
+	</div>
+}
+
+templ inputInvalid(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Field(ui.FieldProps{Invalid: true}) {
+			<label for="email">Email</label>
+			@ui.Input(ui.InputProps{Type: "email", Value: s.text, Invalid: true, Attrs: surf.On(ctx, "email", surf.Input(s.typed))})
+			<p role="alert">Enter a whole address, with a domain.</p>
+		}
+		@status("email", s.text)
+	</div>
+}
+
+templ inputDisabled(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Value: s.text, Disabled: true, Attrs: surf.On(ctx, "name", surf.Input(s.typed))})
+		@status("name", s.text)
+	</div>
+}
+
+templ textareaDefault(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Textarea(ui.TextareaProps{Value: s.text, Placeholder: "Type your message here.", Attrs: surf.On(ctx, "message", surf.Input(s.typed))})
+		@status("message", s.text)
+	</div>
+}
+
+templ labelDefault(s *formState) {
+	<div class="flex flex-col gap-2 p-4 max-w-sm">
+		@ui.Label(ui.LabelProps{For: "username"}) {
+			Username
+		}
+		@ui.Input(ui.InputProps{Value: s.text, Attrs: surf.On(ctx, "username", surf.Input(s.typed))})
+	</div>
+}
+
+templ labelDisabled(s *formState) {
+	<div class="p-4 max-w-sm">
+		@ui.Field(ui.FieldProps{Disabled: true}) {
+			@ui.Label(ui.LabelProps{For: "username"}) {
+				Username
+			}
+			@ui.Input(ui.InputProps{Value: "ada", Disabled: true, Attrs: surf.On(ctx, "username")})
+		}
+	</div>
+}
+
+templ fieldDefault(s *formState) {
+	<div class="p-4 max-w-sm">
+		@ui.Field(ui.FieldProps{}) {
+			<label for="username">Username</label>
+			@ui.Input(ui.InputProps{Value: s.text, Placeholder: "ada", Attrs: surf.On(ctx, "username", surf.Input(s.typed))})
+			<p>Your public name, shown on your profile.</p>
+		}
+	</div>
+}
+
+templ fieldHorizontal(s *formState) {
+	<div class="p-4 max-w-md">
+		@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+			<section>
+				<label for="marketing">Marketing emails</label>
+				<p>News about products and features.</p>
+			</section>
+			@ui.Switch(ui.SwitchProps{Checked: s.on, Attrs: surf.On(ctx, "marketing", surf.Check(s.set))})
+		}
+	</div>
+}
+
+templ fieldFieldset(s *formState) {
+	<div class="p-4 max-w-md">
+		@ui.FieldSet(ui.FieldSetProps{}) {
+			<legend>Address</legend>
+			<p>Where we send your order.</p>
+			@ui.Field(ui.FieldProps{}) {
+				<label for="street">Street</label>
+				@ui.Input(ui.InputProps{Value: s.text, Attrs: surf.On(ctx, "street", surf.Input(s.typed))})
+			}
+			@ui.Field(ui.FieldProps{}) {
+				<label for="city">City</label>
+				@ui.Input(ui.InputProps{Value: s.choice, Attrs: surf.On(ctx, "city", surf.Input(s.chose))})
+			}
+		}
+	</div>
+}
+
+templ fieldCheckboxGroup(s *formState) {
+	<div class="p-4 max-w-md">
+		@ui.FieldSet(ui.FieldSetProps{}) {
+			<legend data-variant="label">Show these items on the desktop</legend>
+			<div role="group" data-slot="checkbox-group">
+				@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+					@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Attrs: surf.On(ctx, "disks", surf.Check(s.set))})
+					<label for="disks">Hard disks</label>
+				}
+				@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+					@ui.Checkbox(ui.CheckboxProps{Attrs: surf.On(ctx, "servers")})
+					<label for="servers">Connected servers</label>
+				}
+			</div>
+		}
+	</div>
+}
+
+templ fieldSeparator(s *formState) {
+	<div class="flex flex-col gap-4 p-4 max-w-sm">
+		@ui.Field(ui.FieldProps{}) {
+			<label for="email">Email</label>
+			@ui.Input(ui.InputProps{Type: "email", Value: s.text, Attrs: surf.On(ctx, "email", surf.Input(s.typed))})
+		}
+		@ui.FieldSeparator(ui.FieldSeparatorProps{}) {
+			Or
+		}
+		@ui.Field(ui.FieldProps{}) {
+			<label for="phone">Phone</label>
+			@ui.Input(ui.InputProps{Type: "tel", Value: s.choice, Attrs: surf.On(ctx, "phone", surf.Input(s.chose))})
+		}
+	</div>
+}
+
+templ inputGroupInline(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.InputGroup(ui.InputGroupProps{}) {
+			@ui.Input(ui.InputProps{Type: "search", Value: s.text, Placeholder: "Search", Attrs: surf.On(ctx, "q", surf.Input(s.typed))})
+			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-start"}) {
+				@ui.Icon("search", "")
+			}
+			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-end"}) {
+				@ui.Kbd("mod+k")
+			}
+		}
+		@status("search", s.text)
+	</div>
+}
+
+templ inputGroupBlock(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.InputGroup(ui.InputGroupProps{}) {
+			@ui.Input(ui.InputProps{Type: "number", Value: s.text, Placeholder: "0", Attrs: surf.On(ctx, "amount", surf.Input(s.typed))})
+			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "block-start"}) {
+				Amount
+			}
+		}
+		@status("amount", s.text)
+	</div>
+}
+
+templ inputGroupTextarea(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.InputGroup(ui.InputGroupProps{}) {
+			@ui.Textarea(ui.TextareaProps{Value: s.text, Placeholder: "Add a comment", Attrs: surf.On(ctx, "comment", surf.Input(s.typed))})
+			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "block-end"}) {
+				@ui.Button(ui.ButtonProps{Size: ui.Small, Attrs: surf.On(ctx, "post", surf.Click(func() { s.text = "" }))}) {
+					Post
+				}
+			}
+		}
+		@status("comment", s.text)
+	</div>
+}
+
+var fruits = []ui.SelectItem{
+	{Value: "apple", Label: "Apple", Group: "Fruits"},
+	{Value: "banana", Label: "Banana", Group: "Fruits"},
+	{Value: "blueberry", Label: "Blueberry", Group: "Fruits"},
+	{Value: "carrot", Label: "Carrot", Group: "Vegetables"},
+	{Value: "leek", Label: "Leek", Group: "Vegetables", Disabled: true},
+}
+
+templ nativeSelectDefault(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.NativeSelect(ui.NativeSelectProps{Items: fruits, Value: s.choice, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
+		@status("fruit", s.choice)
+	</div>
+}
+
+var fruitsOrNone = append([]ui.SelectItem{{Label: "Choose…"}}, fruits...)
+
+templ nativeSelectSmall(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.NativeSelect(ui.NativeSelectProps{Items: fruitsOrNone, Value: s.choice, Size: ui.Small, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
+		@status("fruit", s.choice)
+	</div>
+}
+
+templ nativeSelectDisabled(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.NativeSelect(ui.NativeSelectProps{Items: fruits, Value: s.choice, Disabled: true, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
+		@status("fruit", s.choice)
+	</div>
+}
+

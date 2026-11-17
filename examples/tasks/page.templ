@@ -100,7 +100,7 @@ templ userNav(a *App) {
 templ toolbar(a *App) {
 	<div class="flex items-center justify-between">
 		<div class="flex flex-1 items-center gap-2">
-			<input data-slot="input" type="text" placeholder="Filter tasks..." class="input h-8 w-[150px] lg:w-[250px]" value={ a.filter } { surf.On(ctx, "filter", surf.Input(a.SetFilter))... }/>
+			@ui.Input(ui.InputProps{Value: a.filter, Placeholder: "Filter tasks...", Class: "h-8 w-[150px] lg:w-[250px]", Attrs: surf.On(ctx, "filter", surf.Input(a.SetFilter))})
 			if !a.hidden["status"] {
 				@facetFilter(a, "status", "Status", statuses)
 			}
@@ -108,15 +108,17 @@ templ toolbar(a *App) {
 				@facetFilter(a, "priority", "Priority", priorities)
 			}
 			if a.filtered() {
-				<button data-slot="button" type="button" data-variant="ghost" data-size="sm" class="btn" { surf.On(ctx, "reset", surf.Click(a.ResetFilters))... }>
+				@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.Small, Attrs: surf.On(ctx, "reset", surf.Click(a.ResetFilters))}) {
 					Reset
 					@ui.Icon("x", "")
-				</button>
+				}
 			}
 		</div>
 		<div class="flex items-center gap-2">
 			@viewOptions(a)
-			<button data-slot="button" type="button" data-size="sm" class="btn">Add Task</button>
+			@ui.Button(ui.ButtonProps{Size: ui.Small}) {
+				Add Task
+			}
 		</div>
 	</div>
 }
@@ -204,11 +206,11 @@ templ viewOptions(a *App) {
 }
 
 templ header(a *App) {
-	{{ all, some := a.pageSelected() }}
+	{{ all, _ := a.pageSelected() }}
 	<thead data-slot="table-header">
 		<tr data-slot="table-row">
 			<th data-slot="table-head" colspan="1">
-				@spikeui.Checkbox("select-all", all, some && !all, "Select all", a.SelectPage)
+				@ui.Checkbox(ui.CheckboxProps{Checked: all, Attrs: labelled(surf.On(ctx, "select-all", surf.Check(a.SelectPage)), "Select all")})
 			</th>
 			<th data-slot="table-head" colspan="1"><div>Task</div></th>
 			for _, c := range []struct{ id, title string }{{"title", "Title"}, {"status", "Status"}, {"priority", "Priority"}} {
@@ -276,7 +278,7 @@ templ row(a *App, k, i int) {
 	{{ r := "r" + strconv.Itoa(k) }}
 	<tr data-slot="table-row" data-state={ selState(a.selected[i]) }>
 		<td data-slot="table-cell">
-			@spikeui.Checkbox(r+"-sel", a.selected[i], false, "Select row", func(on bool) { a.Select(i, on) })
+			@ui.Checkbox(ui.CheckboxProps{Checked: a.selected[i], Attrs: labelled(surf.On(ctx, r+"-sel", surf.Check(func(on bool) { a.Select(i, on) })), "Select row")})
 		</td>
 		<td data-slot="table-cell"><div class="w-[80px]">{ t.ID }</div></td>
 		if !a.hidden["title"] {

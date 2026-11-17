@@ -817,3 +817,110 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   ids surf.On sees; Dialog has its own fault.
 - **nav imports spikeui as `spikeui`**, as tasks does, so `ui.` in it is
   only the kit.
+
+## L2 notes
+
+L2 gives every Basecoat component its typed API, stories and tests, in
+four batch packs: B1 forms, B2 display, B3 overlays, B4 disclosure and
+navigation.
+
+### How the markup is made
+
+- **The nine Jinja components' markup is templ written by hand,** as L1
+  wrote Select, DropdownMenu, Dialog, Tabs and Toaster, to render what
+  the macro renders for the Props. What is generated is the oracle: the
+  spike's translator (Jinja to templ, kept in internal/) turns
+  Basecoat's macros into untyped templ, and each component's render
+  test compares ui's markup with the translated macro's for the same
+  arguments. A Basecoat bump regenerates the oracle, and the render
+  tests that fail name the components to change. Generating ui's markup
+  itself would bring back the macros' dynamic semantics (`jor`,
+  `jget`) under closed, typed Props. This is how NEIO-15's "markup from
+  Basecoat's Jinja macros, by a translator" is met (p-653, 2026-11-17).
+- **The CSS-only components that are one element are generated** from
+  a table (internal/uigen: their tag, class, data-slot, fields and the
+  attributes each writes), with their Props, doc and markup. ui's
+  `go generate` runs it. Button, Badge and Card moved into it unchanged.
+  The ones with parts of their own (a native select's options, a
+  range's fill, a separator's label) are written by hand beside them.
+- **Basecoat's sources are in the repository** (internal/basecoat: its
+  component CSS, the vega theme, the macros and the scripts, MIT), and
+  ui/style/build.mjs builds kit.css from all of them. kit.css was the
+  spike's selection, without .dialog, .toast or .toaster; whole, it is
+  226 KB where it was 117 KB. Every document with `ui.Stylesheet()`
+  carries it; an app's own build (L4) can leave out what it doesn't
+  use.
+
+### Batch B1: forms
+
+Reviewed by the blind API reviewer (2026-11-17): approved with changes,
+85 names to 78, applied as given. The rules it set for B2–B4 are kit
+rules K1–K14.
+
+- **A control's value is a Props field, always written** (K6).
+  InputProps.Value, TextareaProps.Value and NativeSelectProps.Value are
+  what the surface sets on the host (a=field) when they differ from what
+  the host last reported, and Checked is the same for the check box,
+  radio and switch. The change comes back through a handler in Attrs
+  (surf.Input, surf.Check), as for any element, so a CSS-only component
+  keeps no On… callbacks. L1 made an input with no value attribute the
+  host's. A typed Input can't say "no value" apart from "", so it
+  always writes one; an app that wants the host's own field writes a
+  plain `<input>`. A NativeSelect always chooses one of its Items, and
+  "no choice" is an item whose Value is "": a Value no item has is a
+  fault, since leaving the choice out would make the select the host's
+  and an app's reset would send nothing.
+- **Attrs never repeats what the component writes** (K3). templ writes
+  both copies and the parser keeps the first, so the copy in Attrs would
+  be silently ignored; the generator writes one lookup per attribute
+  the component writes, and Button's `type` is the one Attrs replaces.
+- **Input's Type** is "" or "text" and the types Basecoat's input.css
+  draws that SPEC makes a control: `file` is cut (SPEC §6.4: no field,
+  no change). Field's Orientation and an addon's Align are strings with
+  their values in the doc, by Q2's rule, and the default's name is taken
+  too (K4): Orientation "vertical", Align "inline-start", which an
+  addon's "" writes, since an addon without data-align is drawn
+  cramped where it was written.
+- **Invalid is aria-invalid** on the controls, which Basecoat draws in the
+  destructive colour, and data-invalid on a Field, which colours its own
+  text.
+- **No Mixed, no Radio Value.** No host draws a mixed check box (Basecoat
+  has no look for it, and a native box's mixed state is an IDL
+  attribute markup can't write), and a radio's handler is a
+  `func(bool)` that closes over the value it stands for; `value` only
+  matters to a form's submit, which surf doesn't hear. Each comes back
+  additively, with a look or a submit handler. Attrs carries either
+  attribute meanwhile.
+- **Field and FieldSet hold plain elements,** as Card does: Basecoat
+  styles a field's parts by tag (`> label`, `> p`, `[role=alert]`,
+  `> section`), so parts as components would only rename them (K8).
+- **An InputGroup's control is a ui component, bare** (K9). The group
+  draws its border, and `.input`'s own rules outrank the group's
+  resets, so the group marks the ctx its children render in, and an
+  Input, Textarea or NativeSelect under the mark leaves its class out.
+  Every ui component that holds children clears the mark (the generated
+  ones through `scoped`, Tabs, Dialog's body and a menu's trigger), so
+  only the group's own control is bare. The mark is set around the
+  component, not in it, because templ clears the children at a
+  component's top.
+- **FieldSeparator takes Props and children** (K7): its word is content,
+  in a span, and a bare separator writes no span, which would cut a gap
+  in the line.
+- **NativeSelect takes SelectItem** (K12), Select's item, with Group as an
+  optgroup, and the shared Size (vega's `data-size=sm`).
+- **Range waits for SPEC** (K10). SPEC §10.2 gives a range no keys and §9
+  no change, Blitz draws no range, and cells has no row for one, so no
+  host can draw or move it. The proposal for hotty's spec, passed to
+  the maintainer: a focused range takes arrow_left and arrow_down (a
+  step down), arrow_right and arrow_up (a step up), home and end (its
+  ends), page_up and page_down (a larger step), unmodified or with
+  shift; a move by key or pointer is heard at once, as a select's pick
+  is (`input`, then `change` with its value); Blitz draws the track and
+  thumb, cells a bar. When it returns, Min and Max both 0 mean HTML's 0
+  to 100 and are otherwise written as given, and its handler stays
+  surf.Input, parsed with strconv.ParseFloat.
+- **For cells (L3):** cells reads classes, not the stylesheet, so an
+  `.input-group` stacks its addons, its bare control is 20 cells wide,
+  and a horizontal Field stacks. cells must take `.input-group` as a row
+  whose control grows, ordered by data-align, and a horizontal Field as
+  a row. A Switch draws as a check box.

@@ -44,9 +44,13 @@ Edit the tsv, then run the script; don't edit this page.
 - **component**: Basecoat's file name, `dist/components/<name>.css`.
 - **markup**, how the HTML is made:
   - `jinja`: Basecoat ships a Jinja macro for it
-    (`templates/jinja/*.html.jinja`), translated to typed templ;
+    (`templates/jinja/*.html.jinja`). Typed templ, written to render what
+    the macro renders; the macro, translated to templ by machine, is the
+    oracle its render test compares it with, regenerated on a Basecoat
+    bump;
   - `css`: Basecoat has CSS only; the typed wrapper is generated from a
-    table of its classes and variants, read out of Basecoat's CSS;
+    table of its classes and attributes (internal/uigen), or written by
+    hand beside them when it has parts of its own;
   - `hand`: written by hand, because translation can't make it (the
     notes say why).
 - **behaviour**: the script of Basecoat's `dist/js` translated to Go, `-`
@@ -60,16 +64,19 @@ Edit the tsv, then run the script; don't edit this page.
 - **stories**: `<component>/<story>`, kebab case; the spike's storybook
   names where it has the story.
 - **tests**, each a kind of test the component needs:
-  - `render`: the generated markup equals Basecoat's Jinja render;
-  - `spec`: every class and attribute value the wrapper writes is one
-    Basecoat's CSS defines;
+  - `render`: the markup equals the Jinja macro's, translated, for the
+    same arguments;
+  - `spec`: every class and styled attribute value its stories write is
+    one the kit's stylesheet (Basecoat's CSS, built) defines;
   - `differential`: the Go behaviour against Basecoat's script in
     Chromium, step by step;
   - `keys-cells`: the stories can be used by keyboard alone in the cells
     rendition.
-- **status**: `done`, the spike has a working, tested equivalent; `port`,
-  code exists to move (generated markup, a hand-written kit component, a
-  story); `new`, nothing yet.
+- **status**: `done`, its names approved and every story and test it
+  lists there, which the coverage test (ui/coverage_test.go) holds it
+  to; `port`, code exists to finish or move (markup, a behaviour, a
+  story); `new`, nothing yet; `waits`, nothing until a decision outside
+  the kit (a SPEC change), named in its notes.
 - **notes**: why a hand port, a Blitz gap, a hotty limit, variants that
   don't fit the shared enums.
 
@@ -149,7 +156,7 @@ EOF
 		print "- **browser:** " plural(browser, "component relies", "components rely") \
 			" on a browser feature."
 		print "- **status:** " (status["done"] + 0) " done, " (status["port"] + 0) \
-			" port, " (status["new"] + 0) " new."
+			" port, " (status["new"] + 0) " new, " (status["waits"] + 0) " waits."
 		print "- **tests:** render " (tests["render"] + 0) ", spec " (tests["spec"] + 0) \
 			", differential " (tests["differential"] + 0) ", keys-cells " \
 			(tests["keys-cells"] + 0) "."

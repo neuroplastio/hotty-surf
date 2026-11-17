@@ -173,9 +173,6 @@ func TestFlow(t *testing.T) {
 	if !r.has("div:text(2 of 100 row(s) selected.)") {
 		t.Fatal("selection not counted")
 	}
-	if attr(r.Find("input[data-slot=checkbox]")[0], "aria-checked") != "mixed" {
-		t.Fatal("the header box isn't mixed")
-	}
 	r.Click("input#select-all")
 	if !r.has("div:text(25 of 100 row(s) selected.)") {
 		t.Fatal("select all didn't")

@@ -1,0 +1,362 @@
+package stories
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// The stories of the components L1 made: Button, Badge, Card, Kbd, Select,
+// DropdownMenu, Dialog, Tabs and Toaster.
+
+type kitState struct {
+	clicks int
+	value  string
+	ran    string
+	open   bool
+	sel    ui.SelectState
+	menu   ui.DropdownMenuState
+	toasts ui.ToasterState
+}
+
+func (s *kitState) click()           { s.clicks++ }
+func (s *kitState) choose(v string)  { s.value = v }
+func (s *kitState) run(v string) func() { return func() { s.ran = v } }
+
+func init() {
+	kit := func(f func(*kitState) templ.Component, init func(*kitState)) func() templ.Component {
+		return func() templ.Component {
+			s := &kitState{}
+			if init != nil {
+				init(s)
+			}
+			return f(s)
+		}
+	}
+	add(Story{ID: "button/default", Doc: "A primary button",
+		View: kit(buttonDefault, nil), Keys: []string{"tab", "enter", "space"}, Want: "clicks: 2"})
+	add(Story{ID: "button/destructive", Doc: "A destructive button",
+		View: kit(buttonDestructive, nil), Keys: []string{"tab", "enter"}, Want: "clicks: 1"})
+	add(Story{ID: "button/ghost-with-icon", Doc: "A ghost button with an icon, and an icon-only one",
+		View: kit(buttonGhostWithIcon, nil), Keys: []string{"tab", "tab", "enter"}, Want: "clicks: 1"})
+	add(Story{ID: "button/disabled", Doc: "A disabled button, which Tab passes over",
+		View: kit(buttonDisabled, nil), Keys: []string{"tab", "enter"}, Want: "clicks: 0"})
+	add(Story{ID: "button/every-variant-and-size", Doc: "Each variant, and each size with and without IconOnly",
+		View: kit(buttonEvery, nil), Keys: []string{"tab", "enter"}, Want: "clicks: 1"})
+	add(Story{ID: "badge/default", Doc: "A badge", View: kit(badgeDefault, nil)})
+	add(Story{ID: "badge/every-variant", Doc: "A badge of each variant", View: kit(badgeEvery, nil)})
+	add(Story{ID: "card/default", Doc: "A card with a header, a section and a footer", View: kit(cardDefault, nil)})
+	add(Story{ID: "kbd/default", Doc: "Shortcuts as the host's platform writes them", View: kit(kbdDefault, nil)})
+	add(Story{ID: "select/default", Doc: "A select with a placeholder",
+		View: kit(selectDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
+	add(Story{ID: "select/grouped", Doc: "A select with groups and a disabled option",
+		View: kit(selectGrouped, func(s *kitState) { s.value = "apple" }), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "fruit: banana"})
+	add(Story{ID: "dropdown-menu/default", Doc: "A menu with an icon, a shortcut, a disabled item and a group",
+		View: kit(menuDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "ran: profile"})
+	add(Story{ID: "dropdown-menu/end-aligned", Doc: "A menu aligned to its trigger's end",
+		View: kit(menuEndAligned, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "ran: profile"})
+	add(Story{ID: "dialog/default", Doc: "A dialog its button opens, with a field and a footer",
+		View: kit(dialogDefault, nil), Keys: []string{"tab", "enter", "escape"}, Want: "open: off"})
+	add(Story{ID: "dialog/open", Doc: "A dialog open from the start",
+		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "tab", "enter"}, Want: "open: off"})
+	add(Story{ID: "tabs/default", Doc: "Three tabs, the shown one's panel below",
+		View: kit(tabsDefault, func(s *kitState) { s.value = "account" }), Keys: []string{"tab", "arrow_right"}, Want: "tab: password"})
+	add(Story{ID: "tabs/many", Doc: "More tabs than fit, one disabled",
+		View: kit(tabsMany, func(s *kitState) { s.value = "t1" }), Keys: []string{"tab", "end"}, Want: "tab: t8"})
+	add(Story{ID: "toast/default", Doc: "A button that shows a toast",
+		View: kit(toastDefault, nil), Keys: []string{"tab", "enter"}, Want: "Event created"})
+	add(Story{ID: "toast/categories", Doc: "A button for each category of toast",
+		View: kit(toastCategories, nil), Keys: []string{"tab", "tab", "enter"}, Want: "Couldn't save"})
+}
+
+templ count(s *kitState) {
+	<p class="text-sm text-muted-foreground">clicks: { strconv.Itoa(s.clicks) }</p>
+}
+
+templ buttonDefault(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div>
+			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(s.click))}) {
+				Save
+			}
+		</div>
+		@count(s)
+	</div>
+}
+
+templ buttonDestructive(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div>
+			@ui.Button(ui.ButtonProps{Variant: ui.Destructive, Attrs: surf.On(ctx, "delete", surf.Click(s.click))}) {
+				Delete
+			}
+		</div>
+		@count(s)
+	</div>
+}
+
+templ buttonGhostWithIcon(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div class="flex flex-row gap-2">
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Attrs: surf.On(ctx, "new", surf.Click(s.click))}) {
+				@ui.Icon("plus", "")
+				New
+			}
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: surf.On(ctx, "settings", surf.Click(s.click), ) }) {
+				@ui.Icon("settings-2", "")
+			}
+		</div>
+		@count(s)
+	</div>
+}
+
+templ buttonDisabled(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div>
+			@ui.Button(ui.ButtonProps{Disabled: true, Attrs: surf.On(ctx, "save", surf.Click(s.click))}) {
+				Save
+			}
+		</div>
+		@count(s)
+	</div>
+}
+
+var (
+	allVariants = []ui.Variant{ui.Primary, ui.Secondary, ui.Outline, ui.Ghost, ui.Destructive, ui.Link}
+	allSizes    = []ui.Size{ui.XSmall, ui.Small, ui.Medium, ui.Large}
+)
+
+func variantName(v ui.Variant) string {
+	if v == ui.Primary {
+		return "primary"
+	}
+	return string(v)
+}
+
+func sizeName(z ui.Size) string {
+	if z == ui.Medium {
+		return "medium"
+	}
+	return string(z)
+}
+
+templ buttonEvery(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div class="flex flex-row flex-wrap gap-2">
+			for _, v := range allVariants {
+				@ui.Button(ui.ButtonProps{Variant: v, Attrs: surf.On(ctx, "v-"+variantName(v), surf.Click(s.click))}) {
+					{ variantName(v) }
+				}
+			}
+		</div>
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			for _, z := range allSizes {
+				@ui.Button(ui.ButtonProps{Size: z, Variant: ui.Outline, Attrs: surf.On(ctx, "s-"+sizeName(z), surf.Click(s.click))}) {
+					{ sizeName(z) }
+				}
+				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click))}) {
+					@ui.Icon("plus", "")
+				}
+			}
+		</div>
+		@count(s)
+	</div>
+}
+
+templ badgeDefault(s *kitState) {
+	<div class="p-4">
+		@ui.Badge(ui.BadgeProps{}) {
+			Badge
+		}
+	</div>
+}
+
+templ badgeEvery(s *kitState) {
+	<div class="flex flex-row flex-wrap gap-2 p-4">
+		for _, v := range allVariants {
+			@ui.Badge(ui.BadgeProps{Variant: v}) {
+				{ variantName(v) }
+			}
+		}
+	</div>
+}
+
+templ cardDefault(s *kitState) {
+	<div class="p-4 max-w-sm">
+		@ui.Card(ui.CardProps{}) {
+			<header>
+				<h2>Create project</h2>
+				<p>Deploy your new project in one click.</p>
+			</header>
+			<section>
+				@ui.Input(ui.InputProps{Value: s.value, Placeholder: "Name of your project", Attrs: surf.On(ctx, "name", surf.Input(s.choose))})
+			</section>
+			<footer class="flex flex-row justify-between">
+				@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "cancel", surf.Click(s.click))}) {
+					Cancel
+				}
+				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "deploy", surf.Click(s.click))}) {
+					Deploy
+				}
+			</footer>
+		}
+	</div>
+}
+
+templ kbdDefault(s *kitState) {
+	<div class="flex flex-row gap-2 p-4">
+		@ui.Kbd("mod+k")
+		@ui.Kbd("mod+shift+p")
+		@ui.Kbd("escape")
+	</div>
+}
+
+var sizeItems = []ui.SelectItem{
+	{Value: "s", Label: "Small"},
+	{Value: "m", Label: "Medium"},
+	{Value: "l", Label: "Large"},
+}
+
+var fruitItems = []ui.SelectItem{
+	{Value: "apple", Label: "Apple", Group: "Fruits"},
+	{Value: "banana", Label: "Banana", Group: "Fruits"},
+	{Value: "carrot", Label: "Carrot", Group: "Vegetables"},
+	{Value: "leek", Label: "Leek", Group: "Vegetables", Disabled: true},
+}
+
+templ selectDefault(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Select(&s.sel, ui.SelectProps{ID: "size", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", OnChange: s.choose})
+		<p class="text-sm text-muted-foreground">size: { s.value }</p>
+	</div>
+}
+
+templ selectGrouped(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Select(&s.sel, ui.SelectProps{ID: "fruit", Items: fruitItems, Value: s.value, OnChange: s.choose})
+		<p class="text-sm text-muted-foreground">fruit: { s.value }</p>
+	</div>
+}
+
+func (s *kitState) menuItems() []ui.MenuItem {
+	return []ui.MenuItem{
+		{Label: "Profile", Icon: "settings-2", Keys: "mod+p", OnSelect: s.run("profile")},
+		{Label: "Billing", Disabled: true, OnSelect: s.run("billing")},
+		{Label: "Team", OnSelect: s.run("team")},
+		{Label: "Delete", Group: "Danger", Variant: ui.Destructive, OnSelect: s.run("delete")},
+	}
+}
+
+templ menuDefault(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.DropdownMenu(&s.menu, ui.DropdownMenuProps{ID: "account", Trigger: templ.Raw("Account"), Items: s.menuItems()})
+		<p class="text-sm text-muted-foreground">ran: { s.ran }</p>
+	</div>
+}
+
+templ menuEndAligned(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div class="flex flex-row justify-between">
+			<span></span>
+			@ui.DropdownMenu(&s.menu, ui.DropdownMenuProps{ID: "account", Trigger: templ.Raw("Account"), Items: s.menuItems(), Align: "end"})
+		</div>
+		<p class="text-sm text-muted-foreground">ran: { s.ran }</p>
+	</div>
+}
+
+templ dialogBody(s *kitState) {
+	@ui.Dialog(ui.DialogProps{ID: "rename", Open: s.open, Title: "Rename", Description: "Give the project a new name.", OnClose: func() { s.open = false }}) {
+		<section>
+			@ui.Input(ui.InputProps{Value: s.value, Attrs: surf.On(ctx, "name", surf.Input(s.choose))})
+		</section>
+		<footer>
+			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(func() { s.open = false }))}) {
+				Save
+			}
+		</footer>
+	}
+	<p class="text-sm text-muted-foreground">open: { onoff(s.open) }</p>
+}
+
+templ dialogDefault(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		<div>
+			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "open", surf.Click(func() { s.open = true }))}) {
+				Rename
+			}
+		</div>
+		@dialogBody(s)
+	</div>
+}
+
+templ dialogOpen(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@dialogBody(s)
+	</div>
+}
+
+templ tabsDefault(s *kitState) {
+	<div class="flex flex-col gap-3 p-4 max-w-md">
+		@ui.Tabs(ui.TabsProps{ID: "settings", Value: s.value, OnChange: s.choose,
+			Tabs: []ui.Tab{{Value: "account", Label: "Account"}, {Value: "password", Label: "Password"}, {Value: "team", Label: "Team"}}}) {
+			<p>The { s.value } settings.</p>
+		}
+		<p class="text-sm text-muted-foreground">tab: { s.value }</p>
+	</div>
+}
+
+func manyTabs() []ui.Tab {
+	var ts []ui.Tab
+	for i := 1; i <= 8; i++ {
+		n := strconv.Itoa(i)
+		ts = append(ts, ui.Tab{Value: "t" + n, Label: "Tab " + n, Disabled: i == 4})
+	}
+	return ts
+}
+
+templ tabsMany(s *kitState) {
+	<div class="flex flex-col gap-3 p-4 max-w-md">
+		@ui.Tabs(ui.TabsProps{ID: "many", Value: s.value, OnChange: s.choose, Tabs: manyTabs()}) {
+			<p>Panel { s.value }.</p>
+		}
+		<p class="text-sm text-muted-foreground">tab: { s.value }</p>
+	</div>
+}
+
+templ toastDefault(s *kitState) {
+	<div class="p-4">
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "show", surf.Click(func() {
+			s.toasts.Show(ui.Toast{Title: "Event created", Description: "Sunday, at nine."})
+		}))}) {
+			Show a toast
+		}
+		@ui.Toaster(&s.toasts)
+	</div>
+}
+
+templ toastCategories(s *kitState) {
+	<div class="flex flex-row gap-2 p-4">
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "success", surf.Click(func() {
+			s.toasts.Show(ui.Toast{Title: "Saved", Category: "success"})
+		}))}) {
+			Success
+		}
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "error", surf.Click(func() {
+			s.toasts.Show(ui.Toast{Title: "Couldn't save", Category: "error"})
+		}))}) {
+			Error
+		}
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "info", surf.Click(func() {
+			s.toasts.Show(ui.Toast{Title: "A new version", Category: "info"})
+		}))}) {
+			Info
+		}
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "warning", surf.Click(func() {
+			s.toasts.Show(ui.Toast{Title: "Disk nearly full", Category: "warning"})
+		}))}) {
+			Warning
+		}
+		@ui.Toaster(&s.toasts)
+	</div>
+}

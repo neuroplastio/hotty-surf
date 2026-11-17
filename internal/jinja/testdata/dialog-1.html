@@ -1,0 +1,67 @@
+
+
+
+
+
+
+
+
+<button
+  type="button"
+  onclick="document.getElementById('d1').showModal()"
+  
+    class="btn"
+  
+>
+  Open
+</button>
+
+<dialog
+  id="d1"
+  class="dialog w-full"
+  aria-labelledby="d1-title"
+  aria-describedby="d1-description"
+  
+  onpointerdown="this.dataset.backdropPress = event.target === this" onclick="if (event.target === this && this.dataset.backdropPress === 'true') this.close()"
+  
+    
+  
+    data-x="1"
+  
+>
+  <div>
+    
+      <header
+        
+          class="h"
+        
+      >
+        <h2 id="d1-title">T</h2>
+        <p id="d1-description">D <i>it</i></p>
+      </header>
+    
+    
+      <section
+        
+          class="b"
+        
+      >
+        <p>Body</p>
+      </section>
+    
+    
+      <footer
+        
+          class="f"
+        
+      >
+        <button>OK</button>
+      </footer>
+    
+    
+      <button type="button" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Close dialog" onclick="this.closest('dialog').close()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    
+  </div>
+</dialog>
