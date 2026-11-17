@@ -66,5 +66,7 @@ neuroplast.io/hotty-go/hottyterm v0.8.0 h1:UBqRc7ZM9/i4RcNAZbVMPO50Rx7Xt2mxxtVlJ
 neuroplast.io/hotty-go/hottyterm v0.8.0/go.mod h1:fj2y82yeBLpTTXhat+jjeuiz5PdBiUgO+hzEl92eVNQ=
 neuroplast.io/hotty-go/hottytest v0.8.0 h1:V0hbmoNWwueBH0URWqhTExYkOOtR/jFAik5Ra/k32Ug=
 neuroplast.io/hotty-go/hottytest v0.8.0/go.mod h1:RuUEUEas68sDCkWylUuP577CCaID7BEMr/+SqV2UzOU=
+neuroplast.io/hotty-go/hottytest v0.8.1 h1:vqv/SJDkB9xfFTyy1QeribRM/7FLzaDDeXz0Y3QheyU=
+neuroplast.io/hotty-go/hottytest v0.8.1/go.mod h1:RuUEUEas68sDCkWylUuP577CCaID7BEMr/+SqV2UzOU=
 neuroplast.io/myelin/myelinkey v0.2.0 h1:RE+jhCWkbMoqIWxga2QaDODUU9RxD9nzxCmxTsFHQWI=
 neuroplast.io/myelin/myelinkey v0.2.0/go.mod h1:PWXpdoPkJBOoZUsngEvtMu8n+qTfiDxVXuhWY5lxGD4=

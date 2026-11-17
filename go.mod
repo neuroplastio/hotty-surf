@@ -17,7 +17,7 @@ require (
 	neuroplast.io/hotty-go v0.8.0
 	neuroplast.io/hotty-go/hottyedit v0.8.0
 	neuroplast.io/hotty-go/hottyterm v0.8.0
-	neuroplast.io/hotty-go/hottytest v0.8.0
+	neuroplast.io/hotty-go/hottytest v0.8.1
 	neuroplast.io/myelin/myelinkey v0.2.0
 )
 
