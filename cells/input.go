@@ -665,6 +665,28 @@ func (c *Screen) selectKey(el *html.Node, key, name string) bool {
 	return taken
 }
 
+// drawn says whether the layout drew n, or would at no size: a focusable
+// element with no cells (an empty span with tabindex) is a Tab stop, as
+// in a browser, unless it or an element round it draws nothing
+// (display:none, hidden, a closed details' body).
+func (l *layout) drawn(n *html.Node) bool {
+	for m := n; m != nil; m = m.Parent {
+		if _, ok := l.boxes[m]; ok {
+			return true
+		}
+		if m.Type != html.ElementNode {
+			continue
+		}
+		if styleOf(m).display == dNone {
+			return false
+		}
+		if p := m.Parent; p != nil && p.DataAtom == atom.Details && !has(p, "open") && m.DataAtom != atom.Summary {
+			return false
+		}
+	}
+	return false
+}
+
 // tab moves focus to the next or the previous element Tab goes to. Past
 // the last, or before the first, nothing is focused (blur); the Screen
 // keeps the keyboard, so the next Tab starts again.
@@ -676,8 +698,7 @@ func (c *Screen) tab(back bool) bool {
 		if n == c.focused {
 			at = len(order)
 		}
-		_, shown := l.boxes[n]
-		if (shown || has(n, "data-hotty-modal-guard")) && tabbable(n) {
+		if (l.drawn(n) || has(n, "data-hotty-modal-guard")) && tabbable(n) {
 			order = append(order, n)
 		}
 	})

@@ -117,7 +117,7 @@ The Screen never resolves a colour value.
 | `kbd`, `.kbd` | | `muted` |
 | `[role=progressbar]` | `primary` | |
 | a `.tabs` tab list (not `line`) | | `muted` |
-| the selected band: `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `selected`: no variable; the kit's `accent` (`sidebar-accent` for the nav item), named apart for a program's own selection; with the keyboard, also Reverse |
+| the selected band: `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `selected`: no variable; the kit's `accent` (`sidebar-accent` for the nav item), named apart for a program's own selection; with the keyboard, also Reverse. If the kit gives the list's selection a variable of its own, the role becomes that variable's name, and "selected" stays only while plx keys on it |
 | a selected tab: of a tab list, of the line variant | `foreground` | `background` (`input/30` under `.dark`); none |
 
 ## Controls
@@ -164,6 +164,14 @@ the Screen. A drag ends short (a dragend with no target) on
 `Focus(false)`, a new document, the dragged element leaving, or a Press
 before its Release. Escape doesn't end a drag. `At` names the innermost
 element with an id of the app's.
+
+## Tab
+
+Tab and Shift+Tab go through the focusable elements in document order,
+as a browser does: one with no cells (an empty `<span tabindex="0">`, a
+palette's stops beside its query) is a stop too; one that is `hidden`, or
+that is in a `display:none` element or in a closed `<details>`' body, is
+not. Past the last, or before the first, nothing is focused.
 
 ## The gate
 
