@@ -49,7 +49,7 @@ func (b *box) kit(n *html.Node) {
 		b.gapX = max(b.gapX, 1)
 		b.wrap = true
 	}
-	if filtered(n) {
+	if filtered(n) || barLabels(n) {
 		b.display = dNone
 		return
 	}
@@ -271,6 +271,48 @@ func (l *layout) chart(n *html.Node, x, y, w int, in inh) (h, used int, ok bool)
 	if len(bars) == 0 && len(lines) == 0 {
 		return 0, 0, false
 	}
+	if labels := chartLabels(n); len(bars) > 0 && len(labels) > 0 && len(bars)%len(labels) == 0 && rects(n) {
+		// A bar chart: its bars are each series' in turn, one a label.
+		// Drawn a label to a group of rows, a series to a row, each series
+		// in its own shade (seriesMark), as its legend draws it.
+		nl, top, lw, vw := len(labels), 0.0, 0, 0
+		for _, l := range labels {
+			lw = max(lw, widthOf(charsOf(l)))
+		}
+		for _, m := range bars {
+			top = math.Max(top, m.vs[0])
+			vw = max(vw, len(strconv.FormatFloat(m.vs[0], 'f', -1, 64)))
+		}
+		bw := max(min(w-lw-1-vw-1, barW), 1)
+		for i, label := range labels {
+			for si := range len(bars) / nl {
+				m := bars[si*nl+i]
+				cx := x
+				if si == 0 {
+					for _, ch := range charsOf(label) {
+						l.put(cx, y+h, ch.s, in.look|lDim, n)
+						cx += ch.w
+					}
+				}
+				cx = x + lw + 1
+				cells := 0
+				if top > 0 {
+					cells = int(math.Round(m.vs[0] / top * float64(bw)))
+				}
+				for range cells {
+					l.put(cx, y+h, seriesMark(si), in.look, m.n)
+					cx++
+				}
+				for _, r := range " " + strconv.FormatFloat(m.vs[0], 'f', -1, 64) {
+					l.put(cx, y+h, string(r), in.look|lDim, n)
+					cx++
+				}
+				used = max(used, cx-x)
+				h++
+			}
+		}
+		return h, used, true
+	}
 	if len(bars) > 0 {
 		top, lw := 0.0, 0
 		for _, m := range bars {
@@ -325,6 +367,94 @@ func (l *layout) chart(n *html.Node, x, y, w int, in inh) (h, used int, ok bool)
 		}
 	}
 	return h, used, true
+}
+
+// seriesMark is how a bar chart's series si draws, its bars and its
+// legend's swatch: shades, since cells has no colours of its own.
+func seriesMark(si int) string {
+	return [...]string{"█", "▒", "▓", "░"}[si%4]
+}
+
+// rects says whether a chart draws bars (rect), not slices.
+func rects(chart *html.Node) bool {
+	found := false
+	walk(chart, func(k *html.Node) {
+		if k.Type == html.ElementNode && k.Data == "rect" && has(k, "data-value") {
+			found = true
+		}
+	})
+	return found
+}
+
+// chartLabels are a chart's categories: the row of labels the kit writes
+// under its plot (aria-hidden, a span a label), nil for none.
+func chartLabels(chart *html.Node) []string {
+	row := labelRow(chart)
+	if row == nil {
+		return nil
+	}
+	var out []string
+	for k := row.FirstChild; k != nil; k = k.NextSibling {
+		if k.Type == html.ElementNode {
+			out = append(out, strings.TrimSpace(textOf(k)))
+		}
+	}
+	return out
+}
+
+// labelRow is the row of labels under the chart's plot, nil for none.
+func labelRow(chart *html.Node) *html.Node {
+	if chart.Parent == nil || attr(chart.Parent, "data-slot") != "chart" {
+		return nil
+	}
+	for k := chart.NextSibling; k != nil; k = k.NextSibling {
+		if k.Type == html.ElementNode && attr(k, "aria-hidden") == "true" && tokens(k, "class", "text-xs") {
+			return k
+		}
+	}
+	return nil
+}
+
+// barLabels says whether n is a bar chart's row of labels, which cells
+// draws beside the bars instead (chart).
+func barLabels(n *html.Node) bool {
+	if n.Type != html.ElementNode || attr(n, "aria-hidden") != "true" || n.Parent == nil || attr(n.Parent, "data-slot") != "chart" {
+		return false
+	}
+	for k := n.Parent.FirstChild; k != nil; k = k.NextSibling {
+		if k.Type == html.ElementNode && tokens(k, "class", "chart") {
+			return labelRow(k) == n && rects(k)
+		}
+	}
+	return false
+}
+
+// legendMark is the swatch of a chart's legend item: its series' shade in
+// a bar chart, ■ otherwise.
+func legendMark(indicator *html.Node) string {
+	item := indicator.Parent
+	if item == nil || item.Parent == nil || !tokens(item.Parent, "class", "chart-legend") {
+		return "■"
+	}
+	fig := item.Parent.Parent
+	var plot *html.Node
+	if fig != nil {
+		for k := fig.FirstChild; k != nil; k = k.NextSibling {
+			if k.Type == html.ElementNode && tokens(k, "class", "chart") {
+				plot = k
+			}
+		}
+	}
+	if plot == nil || !rects(plot) {
+		return "■"
+	}
+	si := 0
+	for k := item.Parent.FirstChild; k != nil && k != item; k = k.NextSibling {
+		if k.Type == html.ElementNode {
+			si++
+		}
+	}
+	return seriesMark(si)
 }
 
 // num is s as a number, or def.

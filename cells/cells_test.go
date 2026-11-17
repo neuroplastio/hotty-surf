@@ -515,3 +515,18 @@ func TestStaleFieldChangesNothing(t *testing.T) {
 		t.Fatal("a text field was checked")
 	}
 }
+
+// The chosen tab stands out among tabs drawn alike: bold and underlined.
+func TestChosenTab(t *testing.T) {
+	v := view(func(ctx context.Context, w io.Writer, on on) {
+		io.WriteString(w, `<div role="tablist"><button role="tab" aria-selected="false">All</button><button role="tab" aria-selected="true">Active</button></div>`)
+	})
+	r := start(t, 40, 3, v)
+	l := r.lineOf("Active")
+	if !strings.Contains(l, "\x1b[0;1;4m Active ") {
+		t.Errorf("the chosen tab isn't bold and underlined: %q", l)
+	}
+	if strings.Contains(l, "1;4m All") {
+		t.Errorf("a tab not chosen looks chosen: %q", l)
+	}
+}
