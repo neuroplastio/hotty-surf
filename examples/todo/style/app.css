@@ -1,0 +1,2 @@
+/* The app's own CSS, after the kit's (css.go). */
+.done { color: var(--muted-foreground); text-decoration: line-through; }
