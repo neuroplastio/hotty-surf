@@ -65,4 +65,3 @@ func TestCellsDrawn(t *testing.T) {
 		t.Fatalf("resized: %q", got)
 	}
 }
-

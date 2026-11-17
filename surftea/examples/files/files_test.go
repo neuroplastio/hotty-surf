@@ -166,7 +166,6 @@ func TestOnAHost(t *testing.T) {
 	}
 }
 
-
 // In a terminal that is no host, the surface is drawn in cells beside the
 // list, and the same moves work: Tab into its first field, typing in it
 // with the caret shown, a click on its button, Tab out of it.
