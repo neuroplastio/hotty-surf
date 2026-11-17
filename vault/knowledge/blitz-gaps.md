@@ -823,22 +823,33 @@ recorded in the fidelity baseline; the threshold is unchanged.
 
 ## The kit's looks to prove (L2, 2026-11-17)
 
-L2's looks pass renders every story in `hotty render` and in headless
-Chromium from the same HTML, then compares them. Each item below comes
-out either proven or as a gap of its own above. None has been checked
-yet.
+L2's looks pass (`internal/looks`) renders every story in `hotty render`
+and in headless Chromium from the same HTML, with the host's stylesheet
+under it and hotty-blitz's own fonts, then compares the two. It ran on
+B1's and B2's stories, Dialog's and the Toaster's, in the dark and the
+light theme, with hotty-blitz 0.8.5 (2a491b5). Its repros are cut down
+with `-files`.
 
-- `input/date` and `input/time` (B1, kit rule K10): SPEC §10.2 gives date
-  and time inputs keys, so they ship, but nobody has looked at how Blitz
-  draws them.
-- Dialog's and the Toaster's styling from kit.css (L1's L2 items): now in
-  the kit build, not yet drawn by Blitz.
-- B2's display components:
-  - Chart's SVG plot, filled from the document's `var(--chart-N)`. That
-    is what 0042 fixed (above); its strokes are drawn wide enough that the
-    missing `vector-effect` doesn't make a hairline.
-  - Skeleton's `animate-pulse`. css-subset.md lists animations as not
-    drawn, so the look to prove is a still muted block.
-  - Scrollbar's `::-webkit-scrollbar` and `scrollbar-color`. Its coverage
-    row has them as unchecked.
-  - An Avatar's `<img>` over its initials.
+**Proven** (no difference but the text's place, above): Chart's plot,
+filled from the document's `var(--chart-N)` (0042), its strokes drawn
+wide enough to need no `vector-effect`; Dialog's and the Toaster's
+styling; Alert, Card, Avatar (its initials; its `<img>` is untried),
+Empty, Item, Progress, Skeleton (drawn still, since animations aren't
+drawn), Label, Textarea, a text Input and InputGroup.
+
+**Gaps**, each sent as a repro for hotty-blitz (looks gaps 1 to 6):
+
+| Gap | Where it shows in the kit | How bad |
+| --- | --- | --- |
+| 1. A fieldset's rendered `<legend>` is laid out as a flex item: the fieldset's `gap` follows it, and it stretches | FieldSet: the description sits about 24 CSS px low (field/fieldset, field/checkbox-group) | Cosmetic, in every FieldSet |
+| 2. A `<caption>` isn't drawn, nor given room, top or bottom | Table's caption (table/default) | Content lost |
+| 3. Auto table layout shares a fixed width's spare space about evenly, not by the columns' max-content widths | Every Table (`w-full`) | Cosmetic |
+| 4. A block that is a flex item, holding a baseline-aligned inline-flex box, is about the strut's descent too tall | A Button in its own `div` in a flex column (dialog/default) | Cosmetic |
+| 5. date, time, datetime-local, month and week inputs draw no value and collapse to their padding | Input of those types (input/date, input/time) | Functional: the value can't be read. B1's O1 |
+| 6. `appearance: none` on a check box is ignored (Blitz's own box and tick draw over the author's), and its `::before` isn't drawn | Switch (it reads as a check box), Checkbox's checked look, likely Radio | Functional for Switch |
+
+Known before, seen again: `<select>` draws its own ▾ (native-select).
+
+**By SPEC, not a gap:** the `scrollbar` classes. A surface that asks for
+no scroll shows no scroll bars (SPEC §5), as Blitz does. Their look in a
+scrolling document is unchecked, as `hotty render` can't scroll.

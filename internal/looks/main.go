@@ -48,6 +48,7 @@ func main() {
 	cols := flag.Int("cols", 80, "the surface's width in cells")
 	levels := flag.Int("levels", 8, "how far a channel may be off before a pixel differs")
 	only := flag.String("story", "", "only the story of this id")
+	bars := flag.Bool("scrollbars", false, "let Chromium draw scroll bars (hidden by default: a story's page never scrolls, and a box's bar is what -scrollbars is for)")
 	files := flag.Bool("files", false, "the arguments are HTML files to compare as they are, not components")
 	rows := flag.String("rows", "auto", "the surface's height in cells, or auto: as many as it takes (a story whose overlay is fixed takes no rows of its own, so it needs a number)")
 	flag.Parse()
@@ -66,7 +67,7 @@ func main() {
 		die(fmt.Errorf("hotty css: %w", err))
 	}
 	l := looker{hotty: *hotty, fonts: *fonts, chromium: *chromium, out: *out, host: string(host),
-		scale: *scale, cols: *cols, rows: *rows, cell: cell, levels: uint32(*levels)}
+		scale: *scale, cols: *cols, rows: *rows, cell: cell, levels: uint32(*levels), bars: *bars}
 	if *files {
 		// Documents as they are (a repro, or a story's cut down), each
 		// compared as a story is.
@@ -99,6 +100,7 @@ type looker struct {
 	cols                              int
 	rows, cell                        string
 	levels                            uint32
+	bars                              bool
 }
 
 // look draws doc in both engines, compares the two and prints the line.
@@ -119,11 +121,15 @@ func (l looker) look(id, doc string) {
 	}
 	c := base + ".chromium.png"
 	w, h := bi.Bounds().Dx(), bi.Bounds().Dy()
-	cmd := exec.Command(l.chromium, "--headless", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
+	args := []string{"--headless", "--disable-gpu", "--no-first-run",
 		"--allow-file-access-from-files", "--virtual-time-budget=3000", "--font-render-hinting=none", "--force-color-profile=srgb",
 		fmt.Sprintf("--force-device-scale-factor=%v", l.scale),
 		fmt.Sprintf("--window-size=%d,%d", int(float64(w)/l.scale), int(float64(h)/l.scale)),
-		"--screenshot="+c, "file://"+page)
+		"--screenshot=" + c, "file://" + page}
+	if !l.bars {
+		args = append(args, "--hide-scrollbars")
+	}
+	cmd := exec.Command(l.chromium, args...)
 	cmd.Env = append(os.Environ(), "XDG_CONFIG_HOME="+filepath.Join(l.out, ".chromium"))
 	if o, err := cmd.CombinedOutput(); err != nil {
 		die(fmt.Errorf("%s: chromium: %v\n%s", id, err, o))
