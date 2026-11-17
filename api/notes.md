@@ -1014,15 +1014,19 @@ scrollbar classes and Avatar's image for the looks pass.
   both single and multiple selection. The single case follows Select:
   `Items`, `Value`, `Placeholder`, `Disabled` and `OnChange`, selecting
   by item value rather than label. Labels can repeat or change. The
-  multiple case uses `Values []string` and `OnChange func([]string)`.
+  multiple case uses `Values []string` and `OnValuesChange func([]string)`.
   Two possible shapes are one component with a mode and separate single
   and multiple value fields and callbacks, or separate Props and component
   names for the two modes. The reviewer should decide the shape. Selection
   labels come from the items, not from a second object-valued selection.
+  The lean is one Combobox with both modes, as in the draft: the interaction
+  is shared and Basecoat has one combobox.
   The current draft reuses SelectItem and searches labels. combobox.js can
   also search `data-keywords`; SelectItem has no such field. Adding
   Keywords to SelectItem or introducing ComboboxItem are alternatives for
-  the reviewer, as is leaving that script option out.
+  the reviewer, as is leaving that script option out. The lean is Keywords
+  on SelectItem, following MenuItem and K12; Select and NativeSelect would
+  ignore it.
 - **Combobox implementation in progress.** Its markup follows the generated
   macro and its selection, filtering, keyboard and pointer behavior follows
   combobox.js; there was no behavior port in the spike. Four stories cover
@@ -1033,9 +1037,18 @@ scrollbar classes and Avatar's image for the looks pass.
   The four initial stories were rendered with hotty-blitz 0.8.7 and
   Chromium from the same documents; the image comparison reported
   0.07–0.13% differing pixels, concentrated on text and control edges.
+- **Drawer: draft for review.** Drawer reuses the Dialog modal behavior and
+  translates drawer.js's closing state and reopening cancellation; neither
+  the spike nor hotty-a2ui supplies this component. Its state holds it open
+  for the 500 ms transition and the script's 50 ms allowance. Escape and
+  backdrop call OnClose immediately to ask the application to set Open
+  false; the script's native close event instead arrives after the
+  transition. Should OnClose report the request or the completed close?
+  The lean is the request, consistent with Dialog's controlled Open prop.
+  Four side stories, cells keys and a Chromium Escape differential cover it.
 - **Port sources for the remaining work.** The spike has generated
-  Combobox markup but no combobox.js behavior port; that behavior still
-  needs translating. The spike's popup code is the source for the popup
+  Combobox markup but no combobox.js behavior port; the draft above
+  translates it. The spike's popup code is the source for the popup
   interaction already ported. For the slider, hotty-a2ui supplies the
   stepped-value, drag and cells behavior to adapt; it is not implemented
   here yet. Each remaining component's pack entry will distinguish ported

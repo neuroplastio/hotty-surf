@@ -51,7 +51,7 @@ func prepareModal(root *html.Node, id string) {
 	guard := func(side string) *html.Node {
 		return &html.Node{Type: html.ElementNode, Data: "span", DataAtom: atom.Span,
 			Attr: []html.Attribute{{Key: modalGuard, Val: side}, {Key: "tabindex", Val: "0"},
-				{Key: "aria-hidden", Val: "true"}, {Key: "style", Val: "position:absolute;width:0;height:0;overflow:hidden"}}}
+				{Key: "aria-hidden", Val: "true"}, {Key: "style", Val: "position:absolute;width:0;height:0;overflow:hidden;border:0;padding:0;opacity:0;pointer-events:none"}}}
 	}
 	modal.InsertBefore(guard("start"), modal.FirstChild)
 	modal.AppendChild(guard("end"))
@@ -132,10 +132,14 @@ func (s *Surface) modalTarget(id string, last bool) string {
 		return ""
 	}
 	var found string
+	var guard string
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
 		if n.Type != html.ElementNode || hides(n) {
 			return
+		}
+		if hasAttr(n, modalGuard) && guard == "" {
+			guard = attr(n, "id")
 		}
 		if !hasAttr(n, modalGuard) && focusable(n) && drawn(n, root) {
 			if found == "" || last {
@@ -147,5 +151,8 @@ func (s *Surface) modalTarget(id string, last bool) string {
 		}
 	}
 	walk(root)
+	if found == "" {
+		return guard
+	}
 	return found
 }

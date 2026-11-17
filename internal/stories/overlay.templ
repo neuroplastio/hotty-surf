@@ -19,6 +19,7 @@ type overlayState struct {
 	box ui.ComboboxState
 	value string
 	values []string
+	drawer ui.DrawerState
 }
 
 type bookPopoverProps struct {
@@ -98,6 +99,25 @@ func init() {
 	add(Story{ID: "combobox/grouped", Doc: "Find a fruit in a group",
 		View: show(func(s *overlayState) templ.Component { return comboboxStory(s, false, false) }),
 		Keys: []string{"tab", "c", "h", "arrow_down", "enter"}, Want: "fruit: c"})
+	for _, side := range []string{"bottom", "top", "left", "right"} {
+		add(Story{ID: "drawer/"+side, Doc: "A modal drawer at the "+side,
+			View: show(func(s *overlayState) templ.Component { return drawerStory(s, side) }),
+			Keys: []string{"tab", "enter", "escape"}, Want: "drawer: off"})
+	}
+}
+
+templ drawerStory(s *overlayState, side string) {
+	<div class="p-4">
+		@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "open-drawer", surf.Click(func() { s.open=true }))}) { Open drawer }
+		@ui.Drawer(&s.drawer, ui.DrawerProps{ID:"drawer", Side:side, Open:s.open, OnClose:func(){s.open=false}}) {
+			<header><h2>Drawer</h2><p>Content for this side.</p></header>
+			<section><p>Choose an action.</p></section>
+			<footer>
+				@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"close-drawer",surf.Click(func(){s.open=false}))}) { Done }
+			</footer>
+		}
+		<p>drawer: { onoff(s.open) }</p>
+	</div>
 }
 
 templ bookCombobox(p *bookComboboxProps) {

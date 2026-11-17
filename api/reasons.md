@@ -327,6 +327,13 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   app-owned single or multiple selection (K1).
 - `ui.ComboboxProps.Class`: as every Props.
 - `ui.ComboboxState`: the component's search, popup and highlight (K2(b)).
+- `ui.Drawer`, `ui.DrawerProps`, `ui.DrawerState`: Basecoat's modal drawer
+  and its transition state, shared across host and cells.
+- `ui.DrawerProps.ID`: names the dialog and its content (K14).
+- `ui.DrawerProps.Open`: the controlled open state (K2(b)).
+- `ui.DrawerProps.Side`: the drawer's side (K2(a)).
+- `ui.DrawerProps.OnClose`: asks the application to close the drawer.
+- `ui.DrawerProps.Class`: as every Props.
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

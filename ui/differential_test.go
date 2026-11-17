@@ -47,6 +47,26 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"popover":       popoverSubject,
 	"command":       commandSubject,
 	"combobox":      comboboxSubject,
+	"drawer":        drawerSubject,
+}
+
+func drawerSubject(_ *testing.T, args map[string]any) subject {
+	var st ui.DrawerState
+	p := ui.DrawerProps{}
+	p.ID, _ = args["id"].(string)
+	p.Side, _ = args["side"].(string)
+	p.OnClose = func() { p.Open = false }
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "drawer-open", surf.Click(func() { p.Open = true }))})
+			if err := open.Render(templ.WithChildren(ctx, templ.Raw("Open")), w); err != nil {
+				return err
+			}
+			inside := templ.Raw(`<button id="drawer-inside" type="button">Inside</button>`)
+			return ui.Drawer(&st, p).Render(templ.WithChildren(ctx, inside), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
 }
 
 func comboboxSubject(_ *testing.T, args map[string]any) subject {

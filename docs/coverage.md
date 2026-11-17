@@ -92,7 +92,7 @@ Of 39 components:
 - **markup:** 9 jinja, 29 css, 1 hand.
 - **behaviour:** 11 scripts translated (`accordion.js`, `combobox.js`, `command.js`, `drawer.js`, `dropdown-menu.js`, `popover.js`, `range.js`, `select.js`, `sidebar.js`, `tabs.js`, `toast.js`); 2 components by hand (chart, dialog); 26 with none.
 - **browser:** 18 components rely on a browser feature.
-- **status:** 23 done, 10 port, 5 new, 1 waits.
+- **status:** 23 done, 11 port, 4 new, 1 waits.
 - **tests:** render 9, spec 28, differential 11, keys-cells 21.
 
 ## The components
@@ -113,7 +113,7 @@ Of 39 components:
 | combobox | jinja | `combobox.js` | - | `ui.Combobox`, `ui.ComboboxProps`, `ui.ComboboxState` | `combobox/default`, `combobox/multiple`, `combobox/clear`, `combobox/grouped` | `render`, `differential`, `keys-cells` | port | combobox.js behavior in Go; SelectItem values and labels reused (K12); single and multiple API shapes and keyword matching are in the B3 pack |
 | command | jinja | `command.js` | `<dialog>` | `ui.Command`, `ui.CommandProps`, `ui.CommandState`, `ui.CommandDialog`, `ui.CommandDialogProps` | `command/default`, `command/empty`, `command/dialog` | `render`, `differential`, `keys-cells` | port | CommandDialog is a `<dialog>`, as dialog's; its items are MenuItem (kit rule K12), with Keywords added; replaces the spike's hand CommandBox |
 | dialog | jinja | hand | `<dialog>`, `showModal` | `ui.Dialog`, `ui.DialogProps` | `dialog/default`, `dialog/open`, `dialog/no-close-button` | `render`, `differential`, `keys-cells` | port | the macro markup; Escape, the close button and a backdrop press call OnClose; runtime focus guards and pointer-inert background keep interaction in the open modal (B3 in progress); no top layer or ::backdrop in Blitz; kit.css has no .dialog rules; .alert-dialog has no macro |
-| drawer | css | `drawer.js` | `<dialog>`, `showModal` | `ui.Drawer`, `ui.DrawerProps`, `ui.DrawerState` | `drawer/bottom`, `drawer/top`, `drawer/left`, `drawer/right` | `spec`, `differential`, `keys-cells` | new | no macro; opened as dialog is; its close waits for the transition (Blitz runs them from 0.6.1) |
+| drawer | css | `drawer.js` | `<dialog>`, `showModal` | `ui.Drawer`, `ui.DrawerProps`, `ui.DrawerState` | `drawer/bottom`, `drawer/top`, `drawer/left`, `drawer/right` | `spec`, `differential`, `keys-cells` | port | no macro; Dialog modal behavior and drawer.js close transition in Go |
 | dropdown-menu | jinja | `dropdown-menu.js` | - | `ui.DropdownMenu`, `ui.DropdownMenuProps`, `ui.DropdownMenuState`, `ui.MenuItem` | `dropdown-menu/default`, `dropdown-menu/end-aligned`, `dropdown-menu/checkbox-radio` | `render`, `differential`, `keys-cells` | port | the macro's markup in templ; dropdown-menu.js's keys, pointer and click outside in Go; Open() is a shortcut's; the macro has no checkbox or radio items (the CSS has), nor MenuItem; no typeahead in 1.1.0; a click on a heading or a disabled item keeps it open (a blur after a press is no click outside) |
 | empty | css | - | - | `ui.Empty`, `ui.EmptyProps` | `empty/default`, `empty/with-icon` | `spec` | done | - |
 | field | css | - | - | `ui.Field`, `ui.FieldProps`, `ui.FieldSet`, `ui.FieldSetProps`, `ui.FieldSeparator`, `ui.FieldSeparatorProps` | `field/default`, `field/horizontal`, `field/fieldset`, `field/checkbox-group`, `field/separator` | `spec` | done | orientation horizontal, responsive; data-variant label, legend are not ui.Variant |

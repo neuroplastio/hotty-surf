@@ -113,6 +113,7 @@ pkg neuroplast.io/hotty-surf/ui, func Combobox(*ComboboxState, ComboboxProps) te
 pkg neuroplast.io/hotty-surf/ui, func Command(*CommandState, CommandProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func CommandDialog(*CommandState, CommandDialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Drawer(*DrawerState, DrawerProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func DropdownMenu(*DropdownMenuState, DropdownMenuProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Empty(EmptyProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Field(FieldProps) templ.Component
@@ -231,6 +232,13 @@ pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, ID string
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, OnClose func()
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Open bool
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Title string
+pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct
+pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, OnClose func()
+pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, Open bool
+pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, Side string
+pkg neuroplast.io/hotty-surf/ui, type DrawerState struct
 pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct
 pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, Align string
 pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, Class string

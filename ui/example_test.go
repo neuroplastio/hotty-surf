@@ -57,3 +57,11 @@ func ExampleCombobox() {
 		OnChange:    func(v string) { value = v },
 	})
 }
+
+func ExampleDrawer() {
+	var state ui.DrawerState
+	open := true
+	_ = ui.Drawer(&state, ui.DrawerProps{
+		Open: open, Side: "left", OnClose: func() { open = false },
+	})
+}
