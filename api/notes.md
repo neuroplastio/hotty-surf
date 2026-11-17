@@ -817,3 +817,91 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   ids surf.On sees; Dialog has its own fault.
 - **nav imports spikeui as `spikeui`**, as tasks does, so `ui.` in it is
   only the kit.
+
+## L4: the build tools and embedding (the pack)
+
+L4's pack: the names L4 adds, the docs it changes, and the command's
+shape. Nothing else in the lock moves.
+
+### The names
+
+- **`reloader.(*Reloader).Document(ctx, key) (string, error)`:** L0's
+  deferral for `plx plugin dev ctl shot`. The process of key answers over
+  its reload wire (a `doc` request beside render, restyle and handover)
+  with the document of its surface that rendered last, read on the
+  surface's driver through Do as a handover reads it, and directly when
+  the driver hasn't answered in 300 ms. 3 s at most. `hotty-surf ctl shot`
+  moves onto it, so the term wire's `doc` goes.
+- **`surftea.(*Host).Focused() bool`:** the keyboard moves without the
+  program: a click into the surface, Tab past its last element, a click
+  elsewhere. The Host hears those (focus and blur events, or the Screen's
+  in cells); the program needs them to draw its own pane's focus and to
+  know its keys are its own again.
+- **`surftea.(*Host).Cursor() (col, row int, ok bool)`:** the verifier's
+  L1 note: a field edited in cells needs the terminal's caret, and only
+  the program's `tea.View` sets it. From the rectangle's top left, as
+  `cells.Screen.Cursor`.
+
+### The docs that change
+
+- **surftea's Update doesn't take ReadyMsg or RelayoutMsg.** L0's doc said
+  it takes them; with two Hosts the first would swallow ReadyMsg and the
+  second would never attach. It reads ReadyMsg and gives it back.
+  RelayoutMsg is the program's alone (its Layout answers it).
+- **surftea's Cells is blank where the terminal is a host,** not "": a
+  View that joins the program's pane and the Host's rectangle
+  (`lipgloss.JoinHorizontal`) is then the same in both, and the Session's
+  rule that the View under a surface isn't empty holds.
+- **surftea's Place scrolls both ways,** as run.App does; a program that
+  wants otherwise sets the entry's Scroll.
+- **surftea's Focus gives the keyboard to the element that had it last,**
+  else the first that takes focus, and tells the surface where it is (the
+  host sends no focus event for focus the program gives, SPEC §10.1).
+
+### The command
+
+```
+hotty-surf new [-t app|tea|tool] <dir>
+hotty-surf run [dir]
+hotty-surf ctl reload | shot [-html] [out.png]
+hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
+hotty-surf build --wasm [-o dir] [dir]
+hotty-surf serve [-addr localhost:7279] [dir]
+hotty-surf lint [dir]
+hotty-surf book                (L3)
+```
+
+- **new's templates.** `app` (the default, today's): a whole app on
+  run.App. `tea`: a Bubble Tea program with a list of its own and a
+  surface in a pane (surftea), tab between them. `tool`: a plx-style tool:
+  a surface with no terminal of its own, driven by a host program over a
+  writer (`surf.Surface` and `cells` only), with its main a raw-mode host
+  for trying it alone. Each passes `hotty-surf lint` and `go test` as
+  written.
+- **shot, headless.** It builds the app with surfdev, starts it on the
+  term wire as `hotty-surf run` does, but with no terminal: an in-process
+  host at `-size` (100×30 by default) answers it, so it needs none. It
+  takes the document once the app has been quiet 200 ms (its timers and
+  loads settle), renders it with hotty-blitz's `hotty render`, or writes
+  it with `-html`, and stops the app. The spike's headless shot, ported.
+- **build --wasm** writes a directory any static server serves:
+  `index.html`, `app.wasm` built by TinyGo (`-no-debug`), TinyGo's
+  `wasm_exec.js`, and the terminal (xterm.js, its fit addon and
+  xterm-addon-hotty). The page sizes the terminal to the window and runs
+  the app in it. `--wasm` is the only kind for now; a native build is `go
+  build`'s.
+- **serve** is the page with live reload: it builds the app with Go and
+  surfdev, serves it, and runs the reloader (package reloader) with each
+  page's app as an instance (`page:<n>`), its reload wire over a
+  WebSocket. A Go save loads the new build into the same terminal, which
+  still has the document, so the first frame is a delta and the state is
+  kept. A css save restyles in place. A text save is a Go save here: the
+  browser has no disk for templ's dev-mode strings. A failed build shows
+  over the page, as `hotty-surf run` shows it over the terminal.
+
+### Where it stays as it was
+
+- **run.App's cells fallback is L1's** (run/cells.go); L4 adds no name
+  to it.
+- **No new cells name.** A raw-mode program hosts a surface with
+  `surf.Surface`, `cells.New` and hottyterm alone (examples/pane).

@@ -201,3 +201,8 @@ func (r *Reloader) live() []*proc {
 	}
 	return out
 }
+
+// document is Document's.
+func (r *Reloader) document(ctx context.Context, key string) (string, error) {
+	panic("L4")
+}

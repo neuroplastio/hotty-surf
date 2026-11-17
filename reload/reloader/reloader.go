@@ -161,6 +161,18 @@ func (r *Reloader) Reload(ctx context.Context) (Report, error) {
 	return r.reload(ctx)
 }
 
+// Document is the whole document an instance shows now, its stylesheet and
+// its view, as the host it draws on has it: what `hotty-surf ctl shot` and
+// `plx plugin dev ctl shot` render. The process of key answers it over its
+// reload wire. Of a process's surfaces, it is the one that rendered last.
+//
+// It fails when no process of key is serving, when its surfaces have sent
+// no document yet, and when the process doesn't answer before ctx is done
+// or within 3 s (it is busy in a handler, or handing over).
+func (r *Reloader) Document(ctx context.Context, key string) (string, error) {
+	return r.document(ctx, key)
+}
+
 // A Report is the outcome of a save.
 type Report struct {
 	Tier string        // "text", "css" or "go"

@@ -193,6 +193,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `reload/reloader.Report.Build`: what kept a save from the app: the compiler's output, or why start failed.
 - `reload/reloader.Report.Failed`: per-process failures by key: restart's error, a key that didn't come back, a process that exited before handover.
 - `reload/reloader.Report.Lint`: the save's lint findings.
+- `reload/reloader.Reloader.Document`: an instance's document as its host has it now, asked of its process over the reload wire: `plx plugin dev ctl shot` renders a tool that plx relays, where hotty-surf run's term wire doesn't reach (L0's deferral, A1). It takes the key, as Serve's processes name themselves.
 - `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
 
 ## surftea (a module of its own)
@@ -204,4 +205,6 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surftea.Host.Focus`: the program moves its focus onto the surface (Tab between panes); without it, P1's focus is one-way.
 - `surftea.Host.Blur`: the program moves its focus off the surface: a field commits, Outside handlers hear it.
 - `surftea.Host.Place`: the program's layout puts the surface at a rectangle; the entry goes into the Session's Layout with the program's others, with Press and Hover on, which Outside and Hover need.
-- `surftea.Host.Cells`: the surface in cells, for a terminal that is no host, as the program's View composes it.
+- `surftea.Host.Cells`: the surface's rectangle as the program's View composes it: in cells for a terminal that is no host, blank for one that is, so one View joins it the same way in both.
+- `surftea.Host.Focused`: where the keyboard is: the user gives it to the surface with a click and takes it back with Tab past the last element or a click elsewhere, which the Host hears and the program doesn't. A program draws its own pane's focus, and routes its keys, from it.
+- `surftea.Host.Cursor`: a field edited in cells needs the terminal's caret, which only the program's tea.View sets (cells.Screen.Cursor's counterpart, the verifier's L1 note).
