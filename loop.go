@@ -150,7 +150,7 @@ func (s *Surface) send() error {
 		}
 		delete(s.pendingNative, id)
 	}
-	if f.Focus != "" && (f.Focus != s.asked || s.askDue) {
+	if f.Focus != "" && (f.Focus != s.asked || s.askDue || f.Refocus && f.Focus != s.focused) {
 		cmds = append(cmds, hotty.Focus(s.name, f.Focus))
 		// The host sends no focus for focus the program gives (SPEC
 		// §10.1): the surface knows it from here.
@@ -243,7 +243,9 @@ func (s *Surface) event(e hotty.Event) error {
 	switch e.Kind {
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
+			s.frame.Count = e.Count
 			h.Click()
+			s.frame.Count = 0
 			ran = true
 		}
 	case hotty.EventInput:

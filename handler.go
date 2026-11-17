@@ -28,7 +28,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	var on []string
 	for _, h := range hs {
 		switch h.kind {
-		case kindClick:
+		case kindClick, kindClicks:
 			on = append(on, "click")
 		case kindInput:
 			on = append(on, "input")
@@ -54,10 +54,20 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		return a
 	}
 	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
+	clicks := 0
 	for _, h := range hs {
 		switch h.kind {
-		case kindClick:
-			e.Click = h.fn.(func())
+		case kindClick, kindClicks:
+			if clicks++; clicks > 1 {
+				f.Faults = append(f.Faults, "surf.On: the id "+id+" has two click handlers (Click and Clicks): give it one")
+				continue
+			}
+			if h.kind == kindClick {
+				e.Click = h.fn.(func())
+				break
+			}
+			fn := h.fn.(func(int))
+			e.Click = func() { fn(max(f.Count, 1)) }
 		case kindInput:
 			e.Input = h.fn.(func(string))
 		case kindCheck:
@@ -85,8 +95,9 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	return a
 }
 
-// A Handler is one of an element's handlers, for [On]. Click, Input, Check,
-// Key, Focus, Outside, Hover, Submit, Drag, Drop and Secondary make them.
+// A Handler is one of an element's handlers, for [On]. Click, Clicks,
+// Input, Check, Key, Focus, Outside, Hover, Submit, Drag, Drop and
+// Secondary make them.
 type Handler struct {
 	kind kind
 	fn   any // the func the kind takes; nil is no handler
@@ -107,6 +118,7 @@ const (
 	kindDrag
 	kindDrop
 	kindSecondary
+	kindClicks
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -122,6 +134,34 @@ func handler(k kind, fn any, absent bool) Handler {
 // space while it has the keyboard.
 func Click(fn func()) Handler {
 	return handler(kindClick, fn, fn == nil)
+}
+
+// Clicks is Click with the click's count: fn hears 1 for a click, 2 for the
+// second click of a double click, 3 for a triple click's third (SPEC §9,
+// count), as the host or a cells.Screen counts them, and 1 for Enter or
+// space. A double click is a click then a click with count 2, so fn hears
+// both: a row that selects on a click and opens on a double click does
+// each in turn. An element takes Click or Clicks, not both: two are a
+// fault.
+func Clicks(fn func(count int)) Handler {
+	return handler(kindClicks, fn, fn == nil)
+}
+
+// Refocus asks for the keyboard to go to the element id in this frame, as
+// Autofocus does, but whether or not the frame before asked for it: what
+// a view uses to take the keyboard back after the user moved it, as a
+// palette's query does when Tab leaves it for a stop of its own. A render
+// that asks for the element that already has the keyboard sends nothing.
+// Ask only in the render that should move it: asked on every render, it
+// would keep the user from ever leaving id. id "" is a fault.
+func Refocus(ctx context.Context, id string) {
+	if id == "" {
+		rt.Fault(ctx, `surf.Refocus: id "" (ask for an element; nothing focused is not the program's to ask for)`)
+		return
+	}
+	if f := rt.From(ctx); f != nil {
+		f.Focus, f.Refocus = id, true
+	}
 }
 
 // Input calls fn with all a text field holds after each edit, and with the

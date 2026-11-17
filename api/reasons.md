@@ -689,3 +689,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surf.CharsPick`: a native select picks the next option by the character (the kit's keydefault, a host's select).
 - `surf.CharsText`: a text field types it (SPEC §10.2).
 - `surf.Surface.Blur`: the mirror of Focus. plx lends the host's keyboard to its own menu, palette and prompt; a=blur alone leaves the surface's focused set (the host doesn't echo a program's blur), so a later Focus sends nothing and Key handlers hear keys as if the field were focused. Only the surface can take the move as the host's blur (Focus(false), Outside) and keep the element for Focus.
+
+## L5: a click's count and taking the keyboard back (plx's G-click-count, G-focus-now)
+
+- `surf.Clicks`: plx's palette selects a row on a click and runs it on a double click. The host and cells.Screen both send the click's count (SPEC §9, count), but surf.Click's func takes nothing, so the count never reaches the app. A variant of Click, not a new event: kit wrappers that wrap an element's Click (ListItem) keep working.
+- `surf.Refocus`: plx's palette query must have the keyboard back in the frame where Tab left it for a stop, whose Focus handler gives Tab to plx. Autofocus asked on every frame is edge-triggered, so asking again moves nothing, and Surface.Focus gives the keyboard to the stop, which had it last. Only the render can say "this element, again, now".
