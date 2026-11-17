@@ -569,3 +569,12 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
 - `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
+- `ui.Toast.ID`: plx owns its toasts' lives (G-toast): it changes a toast shown (progress, a new title) and takes it off by name, so a toast needs a name the app gives it.
+- `ui.ToasterState.Remove`: G-toast: the app takes a toast off when its own clock or event says so, not only by Duration or a click.
+- `ui.Toast.Actions`: G-toast: plx's toasts carry more than one action. Basecoat's macro has one action and one cancel; a list in order covers both, the cancel being an Outline action.
+- `ui.ToastAction.Variant`: K2(a): picks the button's data-variant: the default action, or Outline for Basecoat's cancel, as the macro draws them.
+- `ui.Toast.OnPress`: K2 exception: G-toast: a press on a toast's body is an action of the app's (plx opens what the toast is about).
+- `ui.Toast.Focused`: G-toast: plx keeps the keyboard and moves through its toasts with its own keys; the toast draws the one it is on (its first button ringed, its bar and timer still) without taking the host's keyboard.
+- `ui.Toast.Left`: G-toast: the countdown bar shows how long is left of the app's own clock; the host runs it down, so no render runs it.
+- `ui.Toast.Total`: G-toast: the bar's full length, against which Left is drawn; zero draws no bar.
+- `ui.ToasterState.OnLeave`: G-toast: plx hears the pointer leaving its toasts as "away" (a focus by the pointer ends). The toaster's own Hover is on the toaster's element, so the app can't add one there.

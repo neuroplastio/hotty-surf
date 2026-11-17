@@ -1,0 +1,6 @@
+.toaster .toast[data-bar]{position:relative}
+.toaster .toast>.toast-bar{position:absolute;top:0;left:calc(12px + (100% - 24px) * var(--toast-bar-cut));right:calc(12px + (100% - 24px) * var(--toast-bar-cut));height:3px;border-radius:0 0 2px 2px;background:var(--color-primary);pointer-events:none;transform-origin:center;animation:toast-bar var(--toast-bar-life) steps(var(--toast-bar-steps)) forwards}
+.toaster .toast>.toast-bar.still{animation:none}
+@keyframes toast-bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.toaster .toast[data-focused] footer>.btn:first-child{border-color:var(--color-ring);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-ring) 50%,transparent)}
+.toaster .toast[data-focused] footer>.btn[data-variant=destructive]:first-child{border-color:var(--color-destructive);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-destructive) 20%,transparent)}

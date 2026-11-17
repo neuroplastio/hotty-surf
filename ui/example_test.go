@@ -6,6 +6,7 @@ import (
 	"io"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"time"
 )
 
 // An app keeps its data and each component's state; a view passes both in.
@@ -100,8 +101,27 @@ func ExampleRangeSlider() {
 	})
 }
 
+// An app that owns its toasts' lives: an ID to change and remove one,
+// a bar it runs, and the focus its own keys move.
+func ExampleToasterState_Remove() {
+	var st ui.ToasterState
+	st.Show(ui.Toast{
+		ID: "build", Title: "Building", Duration: -1,
+		Left: 8 * time.Second, Total: 8 * time.Second,
+		OnPress: func() { /* open the build's log */ },
+	})
+	// The app's keys reach the toast: it stands still, its first
+	// button ringed, at what was left of its bar.
+	st.Show(ui.Toast{
+		ID: "build", Title: "Building", Duration: -1, Focused: true,
+		Left: 5 * time.Second, Total: 8 * time.Second,
+	})
+	st.Remove("build")
+}
+
 func ExampleToastAction() {
-	_ = ui.Toast{Title: "Deleted", Action: &ui.ToastAction{
-		Label: "Undo", OnSelect: func() {},
+	_ = ui.Toast{Title: "Deleted", Actions: []ui.ToastAction{
+		{Label: "Undo", OnSelect: func() {}},
+		{Label: "Keep", Variant: ui.Outline},
 	}}
 }

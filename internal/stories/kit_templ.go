@@ -1909,7 +1909,7 @@ func toastAction(s *kitState) templ.Component {
 			return nil
 		})
 		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "show-action", surf.Click(func() {
-			s.toasts.Show(ui.Toast{Title: "Event deleted", Duration: -1, Action: &ui.ToastAction{Label: "Undo", OnSelect: func() { s.ran = "undone" }}})
+			s.toasts.Show(ui.Toast{Title: "Event deleted", Duration: -1, Actions: []ui.ToastAction{{Label: "Undo", OnSelect: func() { s.ran = "undone" }}}})
 		}))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var74), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

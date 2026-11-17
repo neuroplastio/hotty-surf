@@ -1722,3 +1722,62 @@ above; Secondary's doc says at and area are zero when the host doesn't say
 them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
+
+## plx: toasts an app owns (G-toast, a pack of its own)
+
+plx's toasts (slice 1's G-toast, which blocks) were plx's own markup,
+because `ui.Toaster` couldn't be driven by the app. This makes it
+drivable, and keeps Basecoat's markup and behaviour for an app that
+doesn't drive it. The asks came from plx's port, read from its code by the
+coordinator (p-653): the app owns lifetimes and the keyboard, and the kit
+draws.
+
+- **`Toast.ID` and `ToasterState.Remove(id)`.** Show with the ID of a
+  toast shown changes it in place: its element (`toast-N`), its place in
+  the stack and, unless Duration changes, its timer stay. Remove closes it
+  as Dismiss does, with its leaving transition, running no OnSelect. A
+  going toast's ID is free: Show adds a new one. "" is as before.
+- **`Toast.Actions []ToastAction`, replacing Action and Cancel.** In
+  order, ids `toast-N-actions-I` (from 1). `ToastAction.Variant` is the
+  look; Outline is Basecoat's cancel (`data-toast-cancel`), any other is
+  its action (`data-toast-action`). A lasting toast without an Outline
+  action keeps the macro's Dismiss (`toast-N-dismiss`). The macro's one
+  action and one cancel are a list of two, so the differential cases are
+  unchanged but for the button ids.
+- **`Toast.OnPress`.** A press on the toast's body (its content, outside
+  its buttons) runs it. The toast stays. A button's press is its own: the
+  surface runs the target's Click only.
+- **`Toast.Focused`.** plx keeps the host's keyboard and walks its toasts
+  with its own keys. Focused draws the one it is on: `data-focused`, the
+  first button with Basecoat's own button focus look, the bar still, and
+  the kit's timer paused (as under the pointer). The toast never takes
+  the host's focus; the app runs the button's OnSelect itself from its
+  key.
+- **`Toast.Left`, `Toast.Total`: the countdown bar.** A 3px bar along the
+  top edge, inset from the corners, shrinking from both ends to the
+  middle. Left of Total is drawn by cutting (Total−Left)/2Total off each
+  end. The host runs it down over Left with a CSS animation, in steps of a
+  tenth of a second, so no render runs it. Focused stops it (animation
+  none) where Left puts it. Its id carries a run number, which grows when
+  Left or Total change or a focus ends, so the host starts a new run: the
+  app re-Shows the toast with what is left after a focus. The bar is a
+  picture: the toast goes by Duration, or when the app removes it.
+- **`ToasterState.OnLeave`.** The pointer leaving the toaster, after the
+  timers resume. plx hears it as "away". It is a field, not a handler on
+  the toaster, since the toaster's element is the kit's.
+
+Open, for review:
+1. **The bar's CSS isn't on the proven list.** `transform: scaleX` and an
+   animation with `steps()` are "known not to draw" in css-subset.md but
+   for the pulse. plx ships the same technique in hottyterm today, so it
+   draws there; it needs a row in css-subset.md with a host check (live,
+   as the pulse's was), not a new gate case. Until then it is the one
+   exception in this pack.
+2. **The focused ring** is Basecoat's `.btn:focus-visible` (a 3px outer
+   box-shadow). The outer ring isn't proven either (the Switch's outer
+   focus ring was dropped from the look). The proven alternative is the
+   kit's 1px inset focus-line.
+3. **Cells.** The bar and the focused look are a host's. In cells a toast
+   draws as before, without the bar; plx draws its cells toasts itself.
+4. **Action and Cancel go.** v0.7 is untagged. The examples, the story and
+   the tests moved to Actions.
