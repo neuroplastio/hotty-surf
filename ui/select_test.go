@@ -209,7 +209,7 @@ func TestSelectAskExpires(t *testing.T) {
 		}))
 		io.WriteString(w, `<main id="`+a["id"].(string)+`">`)
 		if shown {
-			if err := ui.Select(&st, ui.SelectProps{ID: "s", Items: sizes,
+			if err := ui.Select(&st, ui.SelectProps{ID: "s", Items: sizes, Placeholder: "Size",
 				OnChange: func(string) { shown = false }}).Render(ctx, w); err != nil {
 				return err
 			}

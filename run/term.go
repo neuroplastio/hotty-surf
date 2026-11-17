@@ -63,7 +63,11 @@ func host(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-chan 
 	s.Attach(commands{t}, t.Caps())
 	place := func() error {
 		z := t.Size()
-		return t.Send(hotty.Place(name, hotty.Placement{Cols: z.Cols, Rows: z.Rows, Press: hotty.On, Hover: hotty.On}))
+		if err := t.Send(hotty.Place(name, hotty.Placement{Cols: z.Cols, Rows: z.Rows, Press: hotty.On, Hover: hotty.On})); err != nil {
+			return err
+		}
+		didPlace(s, z.Cols, z.Rows)
+		return nil
 	}
 	show := func() error {
 		doc, err := s.Document()
@@ -133,6 +137,7 @@ func host(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-chan 
 // is no hotty host.
 func inCells(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-chan os.Signal) error {
 	c := newCellsHost(s, t.Size().Cols, t.Size().Rows)
+	didPlace(s, t.Size().Cols, t.Size().Rows)
 	if err := t.Send(ansi.SetModeMouseButtonEvent, ansi.SetModeMouseExtSgr, ansi.SetModeBracketedPaste); err != nil {
 		return err
 	}
@@ -156,6 +161,7 @@ func inCells(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-ch
 		case <-winch:
 			z := t.Size()
 			c.scr.Resize(z.Cols, z.Rows)
+			didPlace(s, z.Cols, z.Rows)
 		case ev, ok := <-events:
 			if !ok {
 				return nil

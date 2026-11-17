@@ -17,7 +17,7 @@ func Example() {
 
 	r := surftest.Start(t, surf.New("tasks", page, ui.Stylesheet()), surftest.Size(120, 40))
 	r.Type("input[name=title]", "Write the docs")
-	r.Key("enter")
+	r.Key("enter") // the field's form submits: its surf.Submit adds the task
 	if len(r.Find("li:text(Write the docs)")) != 1 {
 		t.Fatal("the task wasn't added")
 	}

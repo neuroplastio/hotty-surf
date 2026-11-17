@@ -79,7 +79,7 @@ canary:   ## mods/ applied to each upstream's latest, and its tests (gov P-7; we
 TINYGO ?= $(CAP) mise x -- tinygo
 # A release wasm links no reload: the reload wire, its child and the
 # reloader stay behind surfdev, and the page's WebSocket with them.
-NO_RELOAD = internal/devwire internal/devchild reload/reloader
+NO_RELOAD = internal/devwire internal/devchild internal/devhook reload/reloader
 tinygo:   ## the examples build for js/wasm under TinyGo, and link no reload
 	@mkdir -p bin
 	@for e in tasks nav hello; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done

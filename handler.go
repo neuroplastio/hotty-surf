@@ -63,6 +63,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Outside = h.fn.(func())
 		case kindHover:
 			e.Hover = h.fn.(func(bool))
+		case kindSubmit:
+			e.Submit = h.fn.(func())
 		}
 	}
 	f.On[id] = e
@@ -71,7 +73,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 }
 
 // A Handler is one of an element's handlers, for [On]. Click, Input, Check,
-// Key, Focus, Outside and Hover make them.
+// Key, Focus, Outside, Hover and Submit make them.
 type Handler struct {
 	kind kind
 	fn   any // the func the kind takes; nil is no handler
@@ -88,6 +90,7 @@ const (
 	kindFocus
 	kindOutside
 	kindHover
+	kindSubmit
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -123,6 +126,10 @@ func Check(fn func(checked bool)) Handler {
 // before the page does. Shortcuts for the whole page go on its outermost
 // element.
 //
+// A text field keeps the keys it edits with, Enter among them: Enter
+// commits the field and submits its form, which the form's [Submit] hears,
+// so no Key handler hears it.
+//
 // fn sees hotty's names ("enter", "arrow_down", "shift+tab"), with one
 // change: a key whose modifier is the host's mod (SPEC §10.4: ctrl, or super
 // on macOS) arrives as "mod+…". So an app matches "mod+s", and is the same
@@ -141,6 +148,20 @@ func Key(fn func(key string) bool) Handler {
 // heard true.
 func Focus(fn func(in bool)) Handler {
 	return handler(kindFocus, fn, fn == nil)
+}
+
+// Submit calls fn when the user submits the element, a form: Enter in one
+// of its text fields, after that field's commit (its Input, when the value
+// changed), or a click of its submit button (a button with no type or
+// type="submit"; ui.Button is a submit button with
+// Attrs: templ.Attributes{"type": "submit"}). It is how an app acts on
+// Enter in a field: a field outside a form only commits on Enter, and no
+// Key handler hears it. A submit button's own Click runs first, so the
+// action goes on the form alone, and Enter and the button do the same. The
+// form's values are the app's already, through its fields' Input and
+// Check, so fn takes none. On an element that isn't a form it is a fault.
+func Submit(fn func()) Handler {
+	return handler(kindSubmit, fn, fn == nil)
 }
 
 // Outside calls fn when the user clicks anywhere on the surface outside the

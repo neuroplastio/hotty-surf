@@ -8,11 +8,14 @@ import (
 	"io"
 
 	"github.com/tinylib/msgp/msgp"
+	"neuroplast.io/hotty-surf"
 )
 
 // Outside a dev build, nothing of the dev wire is linked.
 
 func keep(func(*msgp.Writer) error, func(*msgp.Reader) error) {}
+
+func placed(*surf.Surface, int, int) {}
 
 func serve(context.Context, io.ReadWriter, string) error {
 	return errors.New("reload: not a dev build (build with the surfdev tag)")

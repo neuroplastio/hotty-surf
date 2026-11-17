@@ -3,7 +3,6 @@ package devcmd
 import (
 	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -41,7 +40,7 @@ func Build(ctx context.Context, args []string, out, errOut io.Writer) int {
 		fmt.Fprintln(errOut, "hotty-surf build:", err)
 		return 1
 	}
-	fmt.Fprintf(out, "tinygo %s\n", version)
+	fmt.Fprintf(out, "building the page with TinyGo %s (a minute or so)\n", version)
 	if version != provenTinyGo {
 		fmt.Fprintf(errOut, "hotty-surf build: warning: the release build is proven with TinyGo %s, not %s\n", provenTinyGo, version)
 	}
@@ -78,12 +77,13 @@ func findTinyGo(ctx context.Context) (bin, version string, err error) {
 	bin = os.Getenv("HOTTY_SURF_TINYGO")
 	if bin == "" {
 		if bin, err = exec.LookPath("tinygo"); err != nil {
-			return "", "", errors.New("no tinygo on PATH or in HOTTY_SURF_TINYGO (https://tinygo.org)")
+			return "", "", fmt.Errorf("the page is built with TinyGo %s: put tinygo on PATH, or its path in $HOTTY_SURF_TINYGO (https://tinygo.org/getting-started/install/)", provenTinyGo)
 		}
 	}
 	b, err := exec.CommandContext(ctx, bin, "version").Output()
 	if err != nil {
-		return "", "", fmt.Errorf("%s version: %w", bin, err)
+		// A version manager's shim with no version set fails here.
+		return "", "", fmt.Errorf("the page is built with TinyGo %s, and %s doesn't run (%v): put a TinyGo %[1]s on PATH, or its path in $HOTTY_SURF_TINYGO", provenTinyGo, bin, err)
 	}
 	// "tinygo version 0.43.0 linux/amd64 (using go version …)"
 	f := strings.Fields(string(b))

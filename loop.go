@@ -45,6 +45,8 @@ func (s *Surface) document() (string, error) {
 	s.keep(t)
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
+	s.submits(f)
+	s.unlabelled(t.root)
 	s.remember(t.root)
 	s.asked = f.Focus
 	if f.Focus != "" {
@@ -98,8 +100,10 @@ func (s *Surface) send() error {
 		}
 		d.el(s.prev, t.root)
 		s.keep(t)
+		s.unlabelled(t.root)
 	}
 	s.frame = f
+	s.submits(f)
 	var cmds []string
 	if len(d.ops) > 0 {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))
@@ -197,6 +201,11 @@ func (s *Surface) event(e hotty.Event) error {
 				h.Input(e.Value)
 				ran = true
 			}
+		}
+	case hotty.EventSubmit:
+		if h := on[e.Target]; h != nil && h.Submit != nil {
+			h.Submit()
+			ran = true
 		}
 	case hotty.EventPress:
 		ran = s.outside(e.Target)

@@ -1,5 +1,10 @@
 package main
 
+import (
+	"strconv"
+	"strings"
+)
+
 //go:generate msgp -marshal=false -tests=false
 //msgp:newtime
 //msgp:limit arrays:1048576 maps:4096
@@ -8,7 +13,8 @@ package main
 // State is what the app keeps across a live reload (hotty-surf run): a
 // field left out of it starts again at each Go reload.
 type State struct {
-	Count int `msg:"count"`
+	Count int    `msg:"count"`
+	By    string `msg:"by"` // the step field's text, as typed
 }
 
 // App is the app's state and its handlers. The view (page.templ) reads it.
@@ -21,5 +27,16 @@ func NewApp() *App { return &App{} }
 func (a *App) Save() *State     { return &a.State }
 func (a *App) Restore(s *State) { a.State = *s }
 
-func (a *App) Add()   { a.Count++ }
+func (a *App) SetBy(v string) { a.By = v }
+
+// Add adds the step the field says, 1 when it says none: the form's
+// Submit, so Enter in the field adds as the button does.
+func (a *App) Add() {
+	n, err := strconv.Atoi(strings.TrimSpace(a.By))
+	if err != nil {
+		n = 1
+	}
+	a.Count += n
+}
+
 func (a *App) Reset() { a.Count = 0 }

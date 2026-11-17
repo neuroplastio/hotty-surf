@@ -153,7 +153,24 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 		cw = max(cw-mw, 1)
 		used += mw
 	}
-	var ch, cu int
+	var ch, cu, lead, ew int
+	if s, ok := empty(n); ok {
+		// The kit's ::before: a line of its own before the rest.
+		cs := charsOf(s)
+		if widthOf(cs) > cw {
+			cs = clip(cs, cw)
+		}
+		l.paint(cs, cx, cy, in.look|lDim, n, n)
+		ew = widthOf(cs)
+		cy++
+		lead = 1
+	}
+	if fh, fu, ok := l.figure(n, cx, cy, cw, in); ok {
+		h = st.padT + fh + st.padB
+		used += st.padL + fu + st.padR
+		l.done(n, rect{x, y, w, h})
+		return h, used
+	}
 	switch st.display {
 	case dFlex:
 		if st.column {
@@ -182,8 +199,8 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 			ch, cu = l.children(n, cx, cy, cw, in, false, 0)
 		}
 	}
-	h = st.padT + ch + st.padB
-	used += st.padL + cu + st.padR
+	h = st.padT + lead + ch + st.padB
+	used += st.padL + max(cu, ew) + st.padR
 	if h == 0 && marker(n) != "" {
 		h = 1
 	}
@@ -249,7 +266,7 @@ func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int
 			run = nil
 		}
 	}
-	for k := n.FirstChild; k != nil; k = k.NextSibling {
+	for _, k := range kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			run = append(run, k)
@@ -305,7 +322,7 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		grow bool
 	}
 	var items []item
-	for k := n.FirstChild; k != nil; k = k.NextSibling {
+	for _, k := range kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			if !in.pre && strings.TrimSpace(k.Data) == "" {
@@ -320,7 +337,7 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 			if ks.display == dNone {
 				continue
 			}
-			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k)})
+			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k) || kitGrows(k)})
 		}
 	}
 	if len(items) == 0 {
@@ -343,6 +360,27 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 			h = max(h, hh)
 		}
 		return h, used
+	}
+	if st.wrap && used > w && len(items) > 1 {
+		// flex-wrap: as many items a line as fit, each as wide as its
+		// content.
+		cx, lineH := 0, 0
+		for _, it := range items {
+			iw := min(it.w, w)
+			if cx > 0 && cx+iw > w {
+				h += lineH + st.gapY
+				cx, lineH = 0, 0
+			}
+			var hh int
+			if it.n.Type == html.TextNode {
+				hh, _ = l.inline([]*html.Node{it.n}, n, x+cx, y+h, iw, in, false)
+			} else {
+				hh, _ = l.node(it.n, x+cx, y+h, iw, in)
+			}
+			lineH = max(lineH, hh)
+			cx += iw + st.gapX
+		}
+		return h + lineH, w
 	}
 	avail := max(w-gaps, len(items))
 	lead, between := 0, make([]int, len(items))
@@ -629,6 +667,10 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	}
 	if n.DataAtom == atom.Br {
 		return append(ps, piece{kind: pBreak, own: n})
+	}
+	if tokens(n, "class", "chart-legend-indicator") && n.FirstChild == nil {
+		// The kit's swatch, drawn by its stylesheet.
+		return append(ps, piece{kind: pWord, chars: charsOf("■"), w: 1, look: l.lookOf(n, in.look, st), own: n})
 	}
 	if st.display == dAtom {
 		p := l.atom(n, st, in)

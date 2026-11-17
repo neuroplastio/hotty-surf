@@ -11,6 +11,7 @@ import (
 	"neuroplast.io/hotty-go/hottyterm"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/reload"
 )
 
 // listW is the list's width in cells; the surface has the rest.
@@ -121,9 +122,12 @@ func (p *program) run(ctx context.Context) error {
 }
 
 // layout is the program's: the list on the left, the surface on the rest.
+// The program places the surface itself, so it tells live reload the size
+// (nothing outside a dev build).
 func (p *program) layout() {
 	z := p.t.Size()
 	p.at = rect{X: listW, Y: 0, W: max(z.Cols-listW, 1), H: max(z.Rows, 1)}
+	reload.Placed(p.s, p.at.W, p.at.H)
 }
 
 // show sends a host the surface's document and places it.

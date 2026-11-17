@@ -15,7 +15,7 @@
 //   - "text": only the text, classes or static markup of .templ files
 //     changed. templ's strings are written and every process renders again
 //     (≈ 32 ms, no compiler, the same processes).
-//   - "css": only the app's stylesheet changed. It is built again and every
+//   - "css": only the app's stylesheet (style/app.css) changed. Every
 //     process restyles.
 //   - "go": any Go changed. The app is built once, with the surfdev tag,
 //     while the old processes keep drawing. Then each hands its state and
@@ -23,7 +23,10 @@
 //     dials in with its key and takes its own over (≈ 0.3 s warm). A build
 //     that fails leaves the old processes running.
 //
-// Every save is linted (package lint).
+// A save regenerates the code it made stale: templ's Go, and the codec of a
+// file with a //go:generate msgp directive (msgp's generator at the version
+// this module requires, with that directive's flags). Every save is linted
+// (package lint).
 package reloader
 
 import (
@@ -174,6 +177,28 @@ func (r *Reloader) Reload(ctx context.Context) (Report, error) {
 // a handler, or the process is handing over).
 func (r *Reloader) Document(ctx context.Context, key, surface string) (string, error) {
 	return r.document(ctx, key, surface)
+}
+
+// Instances is who is attached now: each process serving, by its instance
+// key, with its surfaces sorted by name and the cells each was last placed
+// at. A key lists every surface its process made, a controller's views
+// included, whoever drives them; a process with no surface is there with
+// none. It is a copy, read with no call to a process, so it never blocks
+// and a program may call it from any goroutine: what a ctl shot that isn't
+// given a key or a surface names, and the size it renders at. A process
+// that is handing over, or that left, is not in it; its next build's is,
+// once it has dialed in.
+func (r *Reloader) Instances() map[string][]Placed {
+	return r.instances()
+}
+
+// Placed is a surface of a process, by its name, and the cells its program
+// last said it placed it at (reload.Placed). It is 0 by 0 when the program
+// hasn't said, or has said the surface isn't on screen: a caller renders
+// such a surface at a size of its own, or not at all.
+type Placed struct {
+	Name       string
+	Cols, Rows int
 }
 
 // A Report is the outcome of a save.

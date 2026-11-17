@@ -45,6 +45,7 @@ import (
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/reload"
 )
 
 // A Host is a surf.Surface in a Bubble Tea program. Its methods run on the
@@ -258,10 +259,12 @@ func (h *Host) document() string {
 // shows once the Session is ready and comes back after a RelayoutMsg. A
 // program that sets the entry's Scroll sets it the same each time: a change
 // sends the document again. In cells, a change of r's size lays the surface
-// out again, and the Screen scrolls as it does whatever Scroll says.
+// out again, and the Screen scrolls as it does whatever Scroll says. It
+// tells live reload the size (reload.Placed).
 func (h *Host) Place(r hottytea.Rect) hottytea.Surface {
 	resized := r.W != h.rect.W || r.H != h.rect.H
 	h.rect = r
+	reload.Placed(h.s, r.W, r.H)
 	if h.sess.Mode == hottytea.Text && r.W > 0 && r.H > 0 {
 		if h.scr == nil {
 			h.ready()

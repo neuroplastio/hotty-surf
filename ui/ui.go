@@ -36,9 +36,12 @@ const (
 )
 
 // Stylesheet is the kit's stylesheet: Basecoat's theme and components and
-// the Tailwind utilities the kit's own markup uses. An app's build adds the
-// classes the app uses to it; a surface that has no build of its own (a dev
-// tool's error surface, a host's dialog) uses it as it is.
+// the Tailwind utilities the kit's own markup uses, not all of Tailwind's.
+// A class an app uses that no stylesheet defines does nothing, so an app
+// defines its other classes in its own CSS, after this one (style/app.css
+// in an app hotty-surf new made), and lint's class rule names those it
+// doesn't. A surface with no CSS of its own (a dev tool's error surface, a
+// host's dialog) uses it as it is.
 func Stylesheet() string {
 	return kitCSS
 }
@@ -49,10 +52,15 @@ func Stylesheet() string {
 //go:embed kit.css
 var kitCSS string
 
-// Icon is the icon named name, one of the kit's Lucide icons (a subset
-// until L2 ships the set) that shadcn and Basecoat draw with ("plus",
-// "chevron-down"), as an inline SVG. In a button or a badge the kit sizes
-// it; class is for the app's own (one its stylesheet has), or "".
+// Icon is the icon named name, one of the kit's Lucide icons, as an
+// inline SVG. The kit has a subset of Lucide, the icons its own components
+// and examples draw with: arrow-down, arrow-right, arrow-up, bell, check,
+// chevron-down, chevron-left, chevron-right, chevrons-left,
+// chevrons-right, chevrons-up-down, circle, circle-alert,
+// circle-check-big, circle-help, circle-off, circle-plus, ellipsis,
+// eye-off, folder, hand, inbox, plus, search, settings-2, timer, user and
+// x. Another name is a fault. In a button or a badge the kit sizes it;
+// class is for the app's own (one its stylesheet has), or "".
 func Icon(name, class string) templ.Component {
 	return icon(name, class)
 }

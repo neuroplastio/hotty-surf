@@ -10,6 +10,7 @@ pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
+pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Do(func())
 pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
@@ -40,6 +41,7 @@ pkg neuroplast.io/hotty-surf/lint, type Finding struct, Line int
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Rule string
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Text string
 pkg neuroplast.io/hotty-surf/reload, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](func() P, func(P))
+pkg neuroplast.io/hotty-surf/reload, func Placed(*surf.Surface, int, int)
 pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, io.ReadWriter, string) error
 pkg neuroplast.io/hotty-surf/reload/reloader, func Env(...string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) error, func(Report), ...Option) *Reloader
@@ -47,10 +49,15 @@ pkg neuroplast.io/hotty-surf/reload/reloader, func Output(string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func Tags(...string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func View(*Report) templ.Component
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Document(context.Context, string, string) (string, error)
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Instances() map[string][]Placed
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Reload(context.Context) (Report, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
 pkg neuroplast.io/hotty-surf/reload/reloader, type Option struct
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Cols int
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Name string
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Rows int
 pkg neuroplast.io/hotty-surf/reload/reloader, type Reloader struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Build string
@@ -72,6 +79,7 @@ pkg neuroplast.io/hotty-surf/surftea, type Host struct
 pkg neuroplast.io/hotty-surf/surftest, func Lint(testing.TB, string)
 pkg neuroplast.io/hotty-surf/surftest, func Size(int, int) Option
 pkg neuroplast.io/hotty-surf/surftest, func Start(testing.TB, *surf.Surface, ...Option) *Rig
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Checked(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Click(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Find(string) []*html.Node
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) HTML() string
@@ -79,6 +87,7 @@ pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Key(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) One(string) *html.Node
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Type(string, string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Update()
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Value(string) string
 pkg neuroplast.io/hotty-surf/surftest, type Option struct
 pkg neuroplast.io/hotty-surf/surftest, type Rig struct
 pkg neuroplast.io/hotty-surf/ui, const Destructive Variant = "destructive"

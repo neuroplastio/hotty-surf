@@ -17,7 +17,9 @@ type DropdownMenuProps struct {
 	// ID names its elements; "" is "dropdown-menu". Two on one surface
 	// need IDs of their own.
 	ID string
-	// Trigger is what opens the menu: Basecoat's button, holding it.
+	// Trigger is what opens the menu: Basecoat's button, holding it. An
+	// icon alone takes text beside it for who can't see it:
+	// <span class="sr-only">More</span>.
 	Trigger templ.Component
 	Items   []MenuItem
 	// Align is the menu's side along its trigger: "start" (the default),

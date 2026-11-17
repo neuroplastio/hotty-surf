@@ -29,6 +29,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Focus`: the keyboard coming onto an element or leaving it: what roving focus (tabs, a list) and a field's commit on blur need.
 - `surf.Outside`: a click outside an element, or the surface losing the keyboard (a click on the program's cells or on another surface gives only a blur): how Basecoat's popover, dropdown menu, select and combobox close; the spike had no way to hear it.
 - `surf.Hover`: the pointer onto an element and off it (SPEC §9.4): Basecoat's menus move their highlighted item with the pointer, which CSS's :hover can't do.
+- `surf.Submit`: a form submitted (SPEC §9 `submit`): Enter in a text field, or its submit button. A text field keeps Enter, which the host turns into a commit and a submit, so without it no app could act on Enter in a field: the L4 trial's todo, "type and press Enter", had no way to.
 - `surf.Autofocus`: moving the keyboard after a frame (a dialog opens, a menu closes back to its trigger); edge-triggered, so a view can ask on every render.
 
 ## ui (Basecoat's components; the pattern on one component of each kind)
@@ -340,6 +341,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surftest.Rig.Find`: what the user would see: the elements matching a selector. The spike's Has is len(Find) > 0, and its ClickID, ClickNth, Press and Check are cut.
 - `surftest.Rig.One`: the one element matching, failing the test otherwise: the common assertion.
 - `surftest.Rig.HTML`: the host's document, for a golden file or a failure message.
+- `surftest.Rig.Value`: a field's value as the user sees it, which the host's document doesn't show (a value attribute is where the field starts): the L4 trial couldn't test its draft.
+- `surftest.Rig.Checked`: a check box's or a radio button's state as the user sees it, as Value; the L4 trial tested its todo's done state through a label's class instead.
 - `surftest.Lint`: every app keeps a lint test (TestLint), as the scaffold writes it.
 
 ## lint
@@ -356,6 +359,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 
 - `reload.Keep`: the program names the state that survives a Go reload, msgp-encoded (P-3): the spike's native.State. It is the process's, not a surface's, since a plx controller keeps state and has no surface. ui's …State values aren't kept, and the doc says so.
 - `reload.Serve`: the program's side of the dev wire, on a reader and writer its host gives it, not a terminal's fds (plx's ask A1), and its instance key, which pairs the old process with the new. Called inline, it returns once the old state is set, so the program's goroutines never race the handover; surfaces register themselves at surf.New in a dev build, a late one included. run.App serves as "app".
+- `reload.Placed`: a surface's size is known only to whoever places it, and plx's tools place theirs (a main surface and overlays) through their SDK. It is the process's half of Instances' sizes, a no-op outside a dev build as Keep is, so surf.Surface's API stays as it is. run.App and surftea's Host call it themselves.
 
 ## reload/reloader (the dev parent)
 
@@ -374,7 +378,12 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `reload/reloader.Report.Build`: what kept a save from the app: the compiler's output, or why start failed.
 - `reload/reloader.Report.Failed`: per-process failures by key: restart's error, a key that didn't come back, a process that exited before handover.
 - `reload/reloader.Report.Lint`: the save's lint findings.
-- `reload/reloader.Reloader.Document`: the document of a surface of an instance, as the surface last sent it to its host, asked of its process over the reload wire: `plx plugin dev ctl shot` renders a tool that plx relays, where hotty-surf run's term wire doesn't reach (L0's deferral, A1). It takes the key, as Serve's processes name themselves, and the surface's name, which the caller has because it places the surface. A process can have more than one surface (a dialog opened later, two surftea Hosts), and the one that rendered last changes with a toast's timer.
+- `reload/reloader.Reloader.Document`: the document of a surface of an instance, as the surface last sent it to its host, asked of its process over the reload wire: `plx plugin dev ctl shot` renders a tool that plx relays, where hotty-surf run's term wire doesn't reach (L0's deferral, A1). It takes the key, as Serve's processes name themselves, and the surface's name, which the caller has from placing it, or from Instances. A process can have more than one surface (a dialog opened later, two surftea Hosts), and the one that rendered last changes with a toast's timer.
+- `reload/reloader.Reloader.Instances`: who is attached now, for a ctl shot that isn't given a key or a surface: plx's `plugin dev ctl shot` relays tools it doesn't place, so it has neither name nor size from anywhere else, and `hotty-surf ctl shot` can take the one surface there is. It is a snapshot, each key's surfaces sorted by name, read under the Reloader's lock with no call to a process: each process says what it has on its own (an "areas" notification), when a surface is made or placed at another size. A process handing over or gone is left out, as a shot of it would fail. A map by instance key, as Report.Failed is.
+- `reload/reloader.Placed`: a surface of a process and the cells its program last said it placed it at (reload.Placed), so a shot renders at the size the user sees; 0 by 0 when it hasn't said, or said it isn't on screen. Not `Surface`, which would read as surf.Surface in a caller that imports both; the same word as reload.Placed, which says it.
+- `reload/reloader.Placed.Name`: the surface's name, as Document takes it.
+- `reload/reloader.Placed.Cols`: the columns it was last placed at: the word hotty.Placement and cells use.
+- `reload/reloader.Placed.Rows`: the rows it was last placed at.
 - `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
 
 ## surftea (a module of its own)

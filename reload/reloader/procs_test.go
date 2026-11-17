@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -317,4 +318,41 @@ func TestReloadBeforeRun(t *testing.T) {
 	if err := <-ran; err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestInstances: each process's last "areas" is its surfaces, by name: one
+// key may list several, each at its own size (a controller's views); a
+// process with none is there with none, and one that left is not there.
+func TestInstances(t *testing.T) {
+	r := New(".", func(context.Context, string) error { return nil }, nil)
+	none := func(*fake, devwire.Head) {}
+	b := dial(t, r, "tool:b", none)
+	a := dial(t, r, "tool:a", none)
+	dial(t, r, "ctl:c", none).conn.Notify("areas", &devwire.Areas{})
+	b.conn.Notify("areas", &devwire.Areas{Surfaces: []devwire.Area{{Name: "main", Cols: 80, Rows: 24}}})
+	a.conn.Notify("areas", &devwire.Areas{Surfaces: []devwire.Area{{Name: "main"}}})
+	a.conn.Notify("areas", &devwire.Areas{Surfaces: []devwire.Area{{Name: "z", Cols: 1, Rows: 2}, {Name: "main", Cols: 40, Rows: 10}}})
+	want := map[string][]Placed{
+		"tool:a": {{"main", 40, 10}, {"z", 1, 2}},
+		"tool:b": {{"main", 80, 24}},
+		"ctl:c":  {},
+	}
+	eventually := func(what string, want map[string][]Placed) {
+		t.Helper()
+		deadline := time.Now().Add(5 * time.Second)
+		for {
+			got := r.Instances()
+			if reflect.DeepEqual(got, want) {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("%s: %+v, want %+v", what, got, want)
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}
+	eventually("both", want)
+	a.conn.Notify("leave", &devwire.Empty{})
+	delete(want, "tool:a")
+	eventually("after a left", want)
 }

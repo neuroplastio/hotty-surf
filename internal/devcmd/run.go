@@ -322,24 +322,21 @@ func (h *host) send(in *devwire.Input) {
 	devwire.PutInput(in)
 }
 
-// size is the app's size: the terminal's.
-func (h *host) size() (cols, rows int) {
-	z := h.t.Size()
-	return z.Cols, z.Rows
-}
-
 func (h *host) placeApp() {
-	if h.c != nil {
-		return // the Screen covers the terminal
-	}
 	h.mu.Lock()
-	name := h.surface
+	name, a := h.surface, h.app
 	h.mu.Unlock()
 	if name == "" {
 		return
 	}
 	z := h.t.Size()
-	h.t.Send(hotty.Place(name, hotty.Placement{Cols: z.Cols, Rows: z.Rows, Press: hotty.On, Hover: hotty.On}))
+	if h.c == nil { // else the Screen covers the terminal
+		h.t.Send(hotty.Place(name, hotty.Placement{Cols: z.Cols, Rows: z.Rows, Press: hotty.On, Hover: hotty.On}))
+	}
+	if a != nil {
+		// The app hears its size, for the reloader's Instances.
+		a.term.Notify("placed", &devwire.Area{Name: name, Cols: z.Cols, Rows: z.Rows}) // an error: the app is gone
+	}
 }
 
 // showDev sends dev's document.
@@ -561,18 +558,19 @@ func (h *host) stop() {
 	}
 }
 
-// shot is the app's document as its surface last sent it, for ctl shot, at the
-// terminal's size.
-func (h *host) shot(ctx context.Context) (devwire.Doc, error) {
+// shot is the app's document as its surface last sent it, for ctl shot, at
+// the size run placed it at (shotOf).
+func (h *host) shot(ctx context.Context, key, surface string) (devwire.Doc, error) {
 	if !h.running() {
+		h.mu.Lock()
+		started := h.app != nil
+		h.mu.Unlock()
+		if !started {
+			return devwire.Doc{}, errors.New("no app is running yet: its first build is under way, or failed (ctl reload says which)")
+		}
 		return devwire.Doc{}, errors.New("no app is running")
 	}
-	html, err := h.r.Document(ctx, "app", h.appName())
-	if err != nil {
-		return devwire.Doc{}, err
-	}
-	cols, rows := h.size()
-	return devwire.Doc{HTML: html, Cols: cols, Rows: rows}, nil
+	return shotOf(ctx, h.r, key, surface)
 }
 
 // socketPair is two connected unix sockets: the app's end as a file to

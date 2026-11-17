@@ -72,3 +72,59 @@ func ExampleSurface_Do() {
 	}()
 	_ = items
 }
+
+// todo keeps a draft and the tasks added from it.
+type todo struct {
+	draft string
+	tasks []string
+}
+
+func (a *todo) Add() {
+	a.tasks = append(a.tasks, a.draft)
+	a.draft = "" // the differ clears the field (a=field)
+}
+
+// view is the form, written by hand as ExampleSubmit's .templ would be
+// generated.
+func (a *todo) view() templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		io.WriteString(w, "<form")
+		for _, kv := range surf.On(ctx, "add", surf.Submit(a.Add)).Items() {
+			fmt.Fprintf(w, " %s=%q", kv.Key, fmt.Sprint(kv.Value))
+		}
+		io.WriteString(w, ">")
+		title := surf.On(ctx, "title", surf.Input(func(v string) { a.draft = v }))
+		title["name"] = "title"
+		if err := ui.Input(ui.InputProps{Value: a.draft, Attrs: title}).Render(ctx, w); err != nil {
+			return err
+		}
+		add := ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}})
+		if err := add.Render(templ.WithChildren(ctx, templ.Raw("Add")), w); err != nil {
+			return err
+		}
+		_, err := io.WriteString(w, "</form>")
+		return err
+	})
+}
+
+// A form's Submit is where Enter in its field goes, and its submit
+// button's click: the field's Input has kept the draft already, so Add
+// reads it from the state. The button has a type and no handler, so it
+// needs no surf.On. In a .templ the view is
+//
+//	<form { surf.On(ctx, "add", surf.Submit(a.Add))... }>
+//		@ui.Input(ui.InputProps{Value: a.draft, Attrs: …})
+//		@ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
+//			Add
+//		}
+//	</form>
+//
+// and a test of it (surftest) types, presses Enter, and reads the field:
+//
+//	r.Type("input[name=title]", "Buy milk")
+//	r.Key("enter")
+//	r.Value("input[name=title]") // "", and the task is in the list
+func ExampleSubmit() {
+	a := &todo{}
+	_ = surf.New("todo", a.view(), ui.Stylesheet())
+}

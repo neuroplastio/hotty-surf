@@ -1244,3 +1244,198 @@ hotty-surf book                (L3)
   the element is gone (`ENOTARGET`): a host that refuses every a=focus (a
   backdrop's `EINVAL`, a detached surface's `EDETACHED`) gets no new one,
   and the keyboard stays with the program until its next Focus.
+
+## L4: who is attached (a pack of its own)
+
+plx's `plugin dev ctl shot` relays a tool's surface it doesn't place, so it
+has neither the surface's name nor its size; `Reloader.Document`'s reason
+assumed the caller had both. plx asked for a snapshot of who is attached,
+with each surface's last size (p-653, 2026-11-17).
+
+### As drafted (c5125aa)
+
+`Reloader.Instances() []Instance`, with `Instance{Key; Surfaces []Placed}`
+and `Placed{Name; Cols, Rows}`, 8 names: the sizes reported by run and
+`hotty-surf run` only, so a surface its program places itself (pane,
+surftea's Host, plx's surfdk) was 0 by 0, and whether plx needed a way to
+say so was left open. `Report.Attached` was the alternative not taken: a
+report is true as of a save, and a shot asks about now.
+
+### As reviewed (p-767, 2026-11-17): six names
+
+plx answered that its SDK places every surface itself (a tool's main
+surface on every Resize, and overlays: a list, a context menu). The review
+approved with changes, applied as written:
+
+- **`reload.Placed(s *surf.Surface, cols, rows int)`,** the process's half:
+  a program says where it placed a surface, and 0, 0 when it hides or
+  drops it. Package reload, beside Keep and Serve, a no-op outside a dev
+  build (off.go), so surf.Surface's release API is unchanged. run.App and
+  surftea's Host report through it, and examples/pane, which places its
+  surface itself, calls it: one way for every driver.
+- **`Instances() map[string][]Placed`,** keyed by instance key as
+  Report.Failed is; `Instance` and its fields are cut. Each key lists every
+  surface its process made, a controller's views included (plx checked it:
+  a daemon-tool's views live in the controller), sorted by name; a process
+  with no surface is there with none.
+- **`Placed`'s doc** says where its size comes from, and that 0 by 0 is also
+  "not on screen": a caller renders it at a size of its own, or not at all.
+- **Document's reason:** the caller has the surface's name from placing
+  it, or from Instances.
+- **`ExampleReloader_Instances`** shoots each surface whose size is known.
+- **`hotty-surf ctl shot`** takes `-key` and `-surface`, either optional:
+  it shoots the only surface on screen that matches, at its last size, and
+  refuses with the list (key, name, size) when there are several or none.
+  run and serve answer it alike (Instances), so serve's own record of the
+  pages' sizes (`dev/page`) is gone: each page's app says its size on its
+  own wire, as any process does.
+
+### What is still open
+
+- **A dropped surface stays listed** for the life of its process: a
+  dev build holds every surface it made (devhook's registry and the
+  reload wire's child), so none is collected. A program that says
+  `reload.Placed(s, 0, 0)` when it hides or drops an overlay keeps it
+  out of a shot. One that makes a surface per opening (a menu) gains
+  one entry each time, and should reuse its overlay surfaces until
+  L0's open `Surface.Close` lands.
+- **Overlays have a size but no position,** so a shot of a tool and its open
+  menu together isn't possible yet. X and Y on Placed would be an addition,
+  not a break, once a shot needs them.
+- **Rows the host chose** (a placement with Rows 0) are what the program
+  says: one that reads the place reply's Rows says those.
+
+## L4: what the trial needed (a pack of its own)
+
+The L4 trial (a fresh agent with the README and `help` only, building a
+todo app, 2026-11-17) found two things no app could do.
+
+- **Enter in a text field.** The host keeps Enter in a field: it commits
+  the field (`change`) and submits the field's form (`submit`, SPEC §9),
+  and no key reaches the program. surf dropped `submit`, so nothing could
+  act on it. **`surf.Submit(fn func())`** on a form hears it, and a submit
+  button's click; fn takes no fields, since a form's values are the app's
+  already, through its fields' Input and Check (surf's fields are
+  controlled). The alternative, `func(fields [][2]string)`, would give an
+  app a second copy of its own state; it is an addition later if an
+  uncontrolled form needs it. `surf.Key`'s doc says Enter in a field is
+  Submit's. cells submits as the SPEC says already.
+- **`surftest.Rig.Key` said "the surface took it"** for Enter in a field
+  while no handler ran. It is true that the surface took it (the field
+  used it, and the program never sees it), so the result stays and its doc
+  says what true means: the host's element or a Key handler took it, and a
+  test reads what a handler did in the document. surftest's own doc and
+  example, which pressed Enter as if it added a task, now say the form's
+  Submit does.
+- **A field's value and a check box's state** are the host's, which its
+  document doesn't show: a value or checked attribute is only where the
+  field starts. **`Rig.Value(sel) string`** and **`Rig.Checked(sel)
+  bool`** read them, and fail the test on an element that isn't such a
+  field.
+
+### As reviewed (p-767, 2026-11-17): all three, docs and examples changed
+
+The reviewer approved the three names and kept Rig.Key's meaning. Applied
+exactly:
+- **Submit's doc** is the review's, with its four points: a field outside a
+  form only commits on Enter; a submit button's own Click runs first, so the
+  action goes on the form alone; which buttons submit (none or
+  type="submit"; ui.Button with `Attrs: templ.Attributes{"type":
+  "submit"}`); and on an element that isn't a form it is a fault. **The
+  fault** is surf's: a render that puts a Submit on an element that isn't a
+  `<form>` records it, and surftest fails the test naming the element, as it
+  fails a duplicate `On`.
+- **surf.Key's sentence** is the review's: Enter commits the field and
+  submits its form, which the form's Submit hears.
+- **Value's doc** says a select's is its picked option's value.
+  **surftest's package doc** says a field's value and a box's state are the
+  host's, and a selector with `[checked` or `[value` that matches nothing
+  fails with that hint.
+- **Rig.Key's result is named** `taken`, as Surface.Key's and
+  cells.Screen.Key's are. The API file lists no result names, so the lock
+  doesn't move.
+- **`ExampleSubmit`**: a form with `surf.Submit(a.Add)`, a field with Input,
+  and a ui.Button of type submit with no `surf.On`. Its doc shows the
+  .templ and the test's lines; TestExampleSubmit drives it (Enter and the
+  button both add, and the field reads "" after).
+- **examples/hello and the scaffold** put their field and their button in a
+  form whose Submit acts. hello's name field and Wave button: Enter in the
+  name waves, and TestWave presses it. The scaffold had no field, so it
+  gains a step field ("Count: N", Add adds the step, 1 when it says none),
+  and its TestApp types a step and presses Enter. That puts the idiom in
+  the app `hotty-surf new` writes.
+- **The risk lean, a lint rule:** `button-type`, a raw `<button>` in a raw
+  `<form>` that doesn't say its type. The kit's buttons say theirs.
+
+### Also from the trial
+
+None of these is a name, but each changes what an app's author sees:
+- **lint's class rule:** a class that neither ui.Stylesheet, the app's
+  .css, nor a `<style>` in a .templ defines is a finding, for every app.
+  The reloader's `style/build.sh` hook (L0's, above), which nothing used
+  or documented, is gone, and with it the rule's switch. An app's own CSS
+  build is an open question on the board. A watcher writing
+  `style/app.css` works today.
+- **msgp's codecs are regenerated on a save,** by msgp's generator as a
+  library. That adds `golang.org/x/tools` to the module graph, for the
+  reloader only: an app's own build doesn't link it.
+- **`hotty-surf new` from a checkout** writes a go.mod that replaces
+  hotty-surf with that checkout, until v0.7 is published.
+- **The tools and their versions** (Go, templ, msgp, TinyGo, hotty) are in
+  the README, `help` and `new`'s output, and build's and shot's errors
+  name the one missing.
+
+## L4: the second trial (no names)
+
+A second fresh agent took the five tasks in 12 minutes. What it hit, and
+what changed, with no exported name:
+1. **A stale build failure stuck** after a broken Go expression in a
+   .templ was put back: the revert matched the running build's .templ,
+   so it took the text tier and left the broken Go on disk. While the
+   last build failed, a .templ save takes the go tier
+   (TestRevertAfterAFailedBuild).
+2. **templ's and msgp's install lines** are in the README and help.
+3. **The classes are the kit's,** not Tailwind's: the docs say so, and
+   `hotty-surf classes` lists them from ui.Stylesheet (internal/cssclass
+   reads a stylesheet's selectors, for it and for lint).
+4. **lint's class rule reads templ's class expressions:** templ.KV's key,
+   templ.Classes, a class={ … } and a component's Class field.
+5. **A button with no text and no label** is a surf fault at render time
+   (surftest fails on it), and lint's button-label rule names the static
+   cases: a raw <button> of icons, a ui.Button with IconOnly and no
+   Attrs.
+6. **An attribute beside surf.On** is shown in the README.
+7. **ui.Icon's doc lists the icons,** held to the set by a test, and
+   surftest says a fault once rather than at every render.
+
+Not ours: ui.Checkbox drawn as Blitz's native box is hotty-blitz's gap 6.
+
+### As verified (p-769, 2026-11-17)
+
+- **F1:** the class rule reads a string as classes only inside its own
+  `class={ … }` or `templ.Classes( … )`, which `classesAt` walks to its
+  close: a `title={ "Hello world" }` after one is no longer classes.
+- **F2:** the render fault follows HTML's name for a button. An image's
+  alt is text, and a `<label for>` it or a `<label>` around it names it.
+  Its message offers text (beside an icon, a `<span class="sr-only">`),
+  an aria-label or a `<label for>`, and says a ui.Select with nothing
+  chosen takes a Placeholder. SelectProps.Value's and
+  DropdownMenuProps.Trigger's docs say the same.
+- **L1–L3:** `classes -h` says what it lists. The list leaves out the
+  kit's own `kit-*` classes, which lint still accepts. The fault names
+  where to find a button with no id of its own: the nearest app id ("in
+  #todo-list"), else its first class.
+
+### What the second trial left
+
+- **Open:** Autofocus's templ form (`{{ surf.Autofocus(ctx, id) }}`) in its
+  doc, and the scaffold's field autofocused.
+- **Open:** One's failure listing the nearest candidates' texts.
+- **Open:** `help` saying that under serve a text save is a Go reload (the
+  page runs Go's wasm, which reads no strings file).
+- **Open:** the served page's `<title>`, which is "hotty-surf", not the
+  app's.
+- **Open:** cells draws no gap between a check box and its label.
+- **Open:** `shot -h` saying it draws the starting state.
+- **Not ours:** `hotty version`, which is hotty-blitz's; ui.Checkbox drawn
+  as Blitz's native box, hotty-blitz's gap 6.

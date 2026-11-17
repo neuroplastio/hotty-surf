@@ -30,8 +30,8 @@ func TestIconNames(t *testing.T) {
 // is a button that submits nothing.
 func TestButtonType(t *testing.T) {
 	r := start(t, page(
-		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit", "id": "b"}}),
-		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"id": "c"}}),
+		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit", "id": "b", "aria-label": "b"}}),
+		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"id": "c", "aria-label": "c"}}),
 	))
 	if got := attr(r.One("#b"), "type"); got != "submit" {
 		t.Errorf("Attrs{type: submit}: the button's type is %q", got)

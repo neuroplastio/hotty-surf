@@ -50,6 +50,7 @@ type box struct {
 	between bool // justify-between
 	end     bool // justify-end
 	center  bool // justify-center
+	wrap    bool // flex-wrap: a row's items go on to more lines
 	look    look // what the element adds to its text's look
 	list    string
 }
@@ -117,6 +118,7 @@ func styleOf(n *html.Node) box {
 	if b.display != dNone {
 		b.inline(attr(n, "style"))
 	}
+	b.kit(n)
 	if n.DataAtom == atom.Select && b.display != dNone {
 		b.display = dAtom
 	}
@@ -174,6 +176,8 @@ func (b *box) class(c string) {
 		if b.display != dNone && b.display != dAtom {
 			b.display, b.column = dFlex, true
 		}
+	case "flex-wrap":
+		b.wrap = true
 	case "flex-col", "flex-col-reverse":
 		b.column = true
 	case "flex-row", "flex-row-reverse":

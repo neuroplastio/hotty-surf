@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -85,13 +86,30 @@ func New(dir string, out io.Writer) error {
 		return err
 	}
 	made = append(made, "page_templ.go")
-	next := "go mod tidy"
+	// Which hotty-surf the app builds on: the version this command was
+	// built from, or, from a checkout (no version until one is published),
+	// that checkout. go mod tidy follows a replace, where it ignores a
+	// go.work.
+	v, src := moduleVersion(), checkout()
+	next, note := "go mod tidy", ""
+	switch {
+	case v != "" && inModule:
+		next = "go get neuroplast.io/hotty-surf@" + v + " && go mod tidy"
+	case v != "":
+	case src != "" && inModule:
+		next = "go mod edit -require=neuroplast.io/hotty-surf@v0.0.0 -replace=neuroplast.io/hotty-surf=" + src + " && go mod tidy"
+		note = "  (hotty-surf from the checkout this command was built from, " + src + "; once\n   its version is published, require that instead of the replace)\n"
+	case src != "":
+		note = "  (go.mod replaces hotty-surf with the checkout this command was built from,\n   " + src + "; once its version is published, require that instead)\n"
+	default:
+		return fmt.Errorf("this hotty-surf is no published version and its checkout isn't at hand: install it with go install from a hotty-surf checkout, or as neuroplast.io/hotty-surf/cmd/hotty-surf@<version>")
+	}
 	if !inModule {
 		mod := "module " + name + "\n\ngo 1.26.0\n"
-		if v := moduleVersion(); v != "" {
+		if v != "" {
 			mod += "\nrequire neuroplast.io/hotty-surf " + v + "\n"
 		} else {
-			next = "go get neuroplast.io/hotty-surf && go mod tidy"
+			mod += "\nrequire neuroplast.io/hotty-surf v0.0.0\n\nreplace neuroplast.io/hotty-surf => " + src + "\n"
 		}
 		if err := os.WriteFile(filepath.Join(abs, "go.mod"), []byte(mod), 0o644); err != nil {
 			return err
@@ -101,16 +119,20 @@ func New(dir string, out io.Writer) error {
 	slices.Sort(made)
 	fmt.Fprintf(out, `made %s: %s
   cd %[1]s && %[3]s       its requirements
-  go test .                 its tests, the lint among them
+%[4]s  go test .                 its tests, the lint among them
   hotty-surf run .          the app in this terminal, reloading as you save
   hotty-surf ctl reload     from another shell: wait for a save to show
   hotty-surf shot .         the app headless, as shot.png
   hotty-surf serve .        the app in a browser, reloading as you save
   hotty-surf build -wasm .  the app as a page, in dist
+Its tools: templ and msgp generate its Go from page.templ and State (run
+does both as you save; go test and go build read what they wrote), hotty
+renders a shot, and TinyGo builds the page. hotty-surf help says which
+versions, and where to get them.
 To show its surface in a program of your own, see hotty-surf's examples:
   examples/pane             a raw-mode program (surf, cells, hottyterm)
   surftea/examples/files    a Bubble Tea program (surftea)
-`, dir, strings.Join(made, " "), next)
+`, dir, strings.Join(made, " "), next, note)
 	return nil
 }
 
@@ -125,6 +147,22 @@ func moduleVersion() string {
 		return bi.Main.Version
 	}
 	return ""
+}
+
+// checkout is the hotty-surf checkout this command was built from, when
+// its sources are still where they were built (a build without -trimpath),
+// and "" otherwise.
+func checkout() string {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok || !filepath.IsAbs(file) {
+		return ""
+	}
+	root := filepath.Dir(filepath.Dir(filepath.Dir(file)))
+	b, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	if err != nil || !slices.Contains(strings.Split(string(b), "\n"), "module neuroplast.io/hotty-surf") {
+		return ""
+	}
+	return root
 }
 
 // Lint is `hotty-surf lint [dir]`: a line a finding of lint.Dir, as

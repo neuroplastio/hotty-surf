@@ -6,9 +6,10 @@
 //	                                       (in cells where it is no hotty host)
 //	hotty-surf ctl reload                  the running run or serve reloads now,
 //	                                       and prints the report (1: a failed build or process)
-//	hotty-surf ctl shot [-html] [-o out.png]
-//	                                       the app as its terminal has it, rendered
-//	                                       by hotty-blitz's hotty, or as HTML
+//	hotty-surf ctl shot [-html] [-o out.png] [-key key] [-surface name]
+//	                                       a surface as its terminal has it, rendered
+//	                                       by hotty-blitz's hotty, or as HTML: the only
+//	                                       one on screen, or the one named
 //	hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
 //	                                       the app headless: built, run with no
 //	                                       terminal, its document rendered once quiet
@@ -20,6 +21,8 @@
 //	                                       the browser as its files are saved
 //	hotty-surf lint [dir]                  the kit's rules (package lint): a line a
 //	                                       finding (1: there is one)
+//	hotty-surf classes                     the classes the kit's stylesheet defines, one a
+//	                                       line: what a class attribute can use
 //	hotty-surf help                        this table
 //	hotty-surf version                     the command's version and the hotty spec
 //	                                       it speaks
@@ -28,6 +31,15 @@
 // socket in $XDG_RUNTIME_DIR/hotty-surf ($HOTTY_SURF_SOCK to choose
 // another). shot and ctl shot find hotty in $HOTTY_SURF_HOTTY or on PATH,
 // and build finds TinyGo in $HOTTY_SURF_TINYGO or on PATH.
+//
+// The tools an app needs: Go 1.26; templ 0.3.1118 and msgp 1.6.5, which
+// run and serve run themselves as you save (go test and go build read
+// what they generated last); TinyGo 0.43.0 for build -wasm; and
+// hotty-blitz's hotty 0.8 for shot and ctl shot
+// (github.com/neuroplastio/hotty-blitz). templ and msgp install with go
+// install (github.com/a-h/templ/cmd/templ@v0.3.1118,
+// github.com/tinylib/msgp@v1.6.5), TinyGo from tinygo.org, and hotty is
+// built from a hotty-blitz checkout.
 package main
 
 import (
@@ -53,9 +65,10 @@ const help = `hotty-surf: hotty-surf's dev tool
                                          (in cells where it is no hotty host)
   hotty-surf ctl reload                  the running run or serve reloads now,
                                          and prints the report (1: a failed build or process)
-  hotty-surf ctl shot [-html] [-o out.png]
-                                         the app as its terminal has it, rendered
-                                         by hotty-blitz's hotty, or as HTML
+  hotty-surf ctl shot [-html] [-o out.png] [-key key] [-surface name]
+                                         a surface as its terminal has it, rendered
+                                         by hotty-blitz's hotty, or as HTML: the only
+                                         one on screen, or the one named
   hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
                                          the app headless: built, run with no
                                          terminal, its document rendered once quiet
@@ -67,6 +80,8 @@ const help = `hotty-surf: hotty-surf's dev tool
                                          the browser as its files are saved
   hotty-surf lint [dir]                  the kit's rules (package lint): a line a
                                          finding (1: there is one)
+  hotty-surf classes                     the classes the kit's stylesheet defines, one a
+                                         line: what a class attribute can use
   hotty-surf help                        this table
   hotty-surf version                     the command's version and the hotty spec
                                          it speaks
@@ -75,6 +90,16 @@ Every command takes -h. run or serve and ctl meet at a unix socket in
 $XDG_RUNTIME_DIR/hotty-surf ($HOTTY_SURF_SOCK to choose another). shot and
 ctl shot find hotty in $HOTTY_SURF_HOTTY or on PATH, and build finds TinyGo
 in $HOTTY_SURF_TINYGO or on PATH.
+
+The tools an app needs: Go 1.26; templ 0.3.1118 and msgp 1.6.5, which run
+and serve run themselves as you save (go test and go build read what they
+generated last); TinyGo 0.43.0 for build -wasm; and hotty-blitz's hotty 0.8
+for shot and ctl shot (github.com/neuroplastio/hotty-blitz).
+To install them:
+  go install github.com/a-h/templ/cmd/templ@v0.3.1118
+  go install github.com/tinylib/msgp@v1.6.5
+  TinyGo: https://tinygo.org/getting-started/install/
+  hotty: build it from a hotty-blitz checkout, as its README says
 `
 
 const usage = `usage:
@@ -85,6 +110,7 @@ const usage = `usage:
   hotty-surf build -wasm [-o dist] [dir]
   hotty-surf serve [-addr localhost:7279] [dir]
   hotty-surf lint [dir]
+  hotty-surf classes
   hotty-surf help | version
 `
 
@@ -129,6 +155,16 @@ func cmd(ctx context.Context, args []string, out, errOut io.Writer) int {
 		return devcmd.Build(ctx, args[1:], out, errOut)
 	case "serve":
 		return devcmd.Serve(ctx, args[1:], out, errOut)
+	case "classes":
+		fs := devcmd.Flags("classes", "classes\n\nThe classes the kit's stylesheet defines, one a line: what a class\nattribute can use. Any other goes in the app's style/app.css.")
+		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
+			return code
+		}
+		if fs.NArg() != 0 {
+			fs.Usage()
+			return 2
+		}
+		return devcmd.Classes(out)
 	case "lint":
 		fs := devcmd.Flags("lint", "lint [dir]")
 		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
