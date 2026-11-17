@@ -44,7 +44,7 @@ templ control(id string, c Control, set func(name, value string)) {
 templ EventLog(p EventLogProps) {
 	{{ id, entries, onClear, empty := p.ID, p.Entries, p.OnClear, p.Empty }}
 	if len(entries) == 0 {
-		<p class="text-muted-foreground text-sm italic">{ empty }</p>
+		<p class="kit-event-log-empty text-muted-foreground text-sm italic">{ empty }</p>
 	} else {
 		<div class="kit-event-log-header mb-2 flex items-center">
 			<span class="text-muted-foreground text-xs">{ plural(len(entries), "event", "events") }, the newest first</span>

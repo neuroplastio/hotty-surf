@@ -6,3 +6,5 @@
 .kit-event-log-header button { margin-left: auto; }
 .kit-controls label { font-family: var(--font-mono); font-size: 0.75rem; }
 .kit-controls input[type="text"], .kit-controls select { width: 100%; height: 2rem; font-size: 0.875rem; }
+
+.kit-event-log-empty { font-style: italic; }
