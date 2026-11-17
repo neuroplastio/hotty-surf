@@ -103,8 +103,9 @@ func (v *menuView) panelAttrs(ctx context.Context) templ.Attributes {
 func (v *menuView) panelCheck(ctx context.Context) string {
 	for _, it := range v.p.Items {
 		checkVariant(ctx, "MenuItem", it.Variant, menuItemVariants)
-		checkEnum(ctx, "MenuItem", "Role", it.Role, []string{"", "menuitem", "menuitemcheckbox", "menuitemradio"})
+		checkEnum(ctx, "MenuItem", "Role", it.Role, menuItemRoles)
 	}
+	checkMenuRows(ctx, v.p.Items)
 	return ""
 }
 

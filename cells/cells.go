@@ -151,7 +151,8 @@ func (c *Screen) Key(key string) (taken bool) {
 }
 
 // Paste puts text into the focused field, as a bracketed paste reaches a
-// host; taken is false when no field has the keyboard.
+// host; taken is false when no field has the keyboard. Lines changes with
+// it: the program draws the Screen again.
 func (c *Screen) Paste(text string) (taken bool) {
 	n := c.focused
 	if c.body == nil || !c.active || !isTextField(n) || disabled(n) {

@@ -606,7 +606,7 @@ func (c *Screen) fieldKeymap(el *html.Node) *hotty.Keymap {
 
 // fieldKey gives a key to a text field, which does what its keymap says.
 // The Screen has no clipboard: copy, cut and paste are the program's (it
-// pastes with Paste).
+// pastes with Paste, and copies and cuts with Selection and Cut).
 //
 // A readonly field takes the keys that would edit it, and does nothing
 // with them; it moves its caret and selects. A disabled one takes nothing.

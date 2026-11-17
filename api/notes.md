@@ -2191,6 +2191,119 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
 - G-menu-rows (MenuItem slots for all three menus) is next after the
   toast pack (p-653's queue).
 
+## L6: a field's selection in cells, for plx's copy and cut (a pack of its own)
+
+In cells, plx copies a field's selection to the terminal's clipboard
+(v0.6: `cr.Copy` callback → `Host.SetCopy`). v0.7's Screen has no
+clipboard and leaves the copy, cut and paste keys to the program, but
+exposes no field selection, so plx's copy and cut do nothing in cells
+(`l4c-gaps.md`, G-cells-copy; it blocks slice 2, where copying in cells
+is a tool feature).
+
+### The shape: the program asks, on its own key
+
+- `Selection() string`: the focused text field's selected text, "" for
+  none (no field, nothing selected, a password).
+- `Cut() string`: the same, deleted from the field as the user's edit
+  (rev, input where it listens, change on commit). "" and no edit in a
+  readonly or disabled field, or a password.
+- The keys stay as they are: the Screen doesn't take copy or cut
+  (`fieldKey`), so the program hears them and calls these. Paste is
+  already `Paste(text)`. One direction each way: the program owns the
+  clipboard.
+- Implemented and tested in the branch (grapheme-correct, readonly,
+  password).
+
+### Open questions, as drafted
+
+1. **Methods, or a copy callback on New** (v0.6's `Copy func(string)`).
+   **Lean: methods.** New's signature is approved, and a callback needs
+   a second option. With methods, the program, which already decides what
+   its copy key means (a pane's own selection vs the field's), asks only
+   when it's the field's.
+2. **Cut as its own method, or `Selection()` plus a `Delete()`.**
+   **Lean: Cut.** It's one act. A separate Delete is a second name and a
+   window where the two disagree.
+3. **A password's selection.** **Lean: "".** Browsers refuse to copy from
+   `type=password`, and a host does the same.
+
+### As reviewed (p-796, 2026-11-17): both names, two doc changes, applied
+
+Both names were approved as named, and the three questions went with the
+leans: methods, Cut as its own method, and "" for a password. The docs say
+"text field or textarea", and Cut and Paste each say that Lines changes
+with them, so the program draws the Screen again.
+
+### As verified (p-653's spot check, 2026-11-17): approved
+
+## plx: menu rows of the app's own (G-menu-rows, a pack of its own)
+
+plx won't build stand-in rows, so this blocks its copy's removal
+(p-653). Its rows (a host's colour dot, a switch, an aside, a note, a
+name being typed, the current workspace, an MDI icon, a bare rule) are
+three slots on MenuItem and a rule, for DropdownMenu, ContextMenu and
+Menu at once, as K29 asks:
+
+- **Leading** replaces the icon (Icon is ignored when it is set), drawn
+  first in the row.
+- **Content** replaces the label's text. The item then has
+  `aria-label` = Label, so its name stays its words.
+- **Trailing** replaces the shortcut (Keys is ignored), wrapped in
+  Basecoat's `<span data-shortcut>`, which puts it at the row's end as a
+  shortcut is.
+- **Separator** makes the item an `<hr role="separator">`, its other
+  fields ignored. It keeps its place in Items (an index in a Menu's
+  Highlight still counts it), is never highlighted, and no key or press
+  reaches it.
+
+The slots are the app's markup. The press and keys stay the row's: a click
+anywhere on it runs the item. Command ignores the slots, as it ignores Role.
+TestMenuRows covers all three menus, ExampleMenuItem_slots shows plx's
+rows.
+
+Open, for review:
+1. **A switch in Leading is an `<input>`.** A host toggles it on a click
+   before the row's click runs, so plx's OnSelect should set the state it
+   draws from, not read the input. A non-interactive switch look (a
+   `Switch` with no input, or `aria-hidden` and `pointer-events: none` on
+   one in a row) is the alternative; it adds a name, so not here.
+2. **Separator as an item vs a field on the next item.** An item keeps
+   the slices plx builds (its `Sep` rows) one to one, and a Menu's
+   Highlight index lines up with plx's own. The cost is a MenuItem whose
+   other fields mean nothing.
+3. **Content's text in cells** is whatever the markup draws. plx's caret
+   (`span.cur`) is plx's CSS.
+
+### As reviewed (p-796, review-rows.md): applied
+
+- Leading, Content and Trailing kept, for all three menus.
+  - A slot set with the field it replaces (Leading with Icon, Trailing
+    with Keys) is a fault.
+  - A control in a slot is a fault (K31: slots are pictures): an input,
+    button, select, textarea, `a[href]`, `[tabindex]` or a `data-on`
+    handler. Each slot is rendered once, scanned with x/net/html's
+    tokenizer, then written (`menuSlot`).
+  - Leading sits in the icon's box: `<span data-leading>`, a 16 px
+    square, centred.
+- **Separator bool cut.** A rule is `Role: "separator"`, with the
+  review's Role doc. surftest faults on a separator first or last, next
+  to another, or at a group change.
+- Q1: no live control in a slot. The pack's Switch row is now
+  TestMenuRowFaults' first case, and the example's Wrap row is a
+  `menuitemcheckbox` with Content for its aside.
+- **p-653's addition:** on a checkable row, Leading is drawn in place of
+  the kit's check or radio indicator, not beside it. plx draws its
+  switch's look there as an aria-hidden picture, and `aria-checked` still
+  says the state. This is drawing only, with no live control. Whether
+  the kit itself should draw a checkbox item as a switch stays the
+  maintainer's call (review Q1). TestMenuRows checks that one indicator
+  is drawn and that Follow keeps aria-checked.
+- Heading maps to Group; no new name.
+- The example's dot is an escaping component (`templ.SanitizeCSS`,
+  `templ.EscapeString`), and the example says templ.Raw is for constant
+  markup only.
+- K31 is the reviewer's.
+
 ## L5: Focused, Chars and Blur (plx's G-keys-decl and G-lend)
 
 plx's integration list (l4c) has two gaps in the root package:
