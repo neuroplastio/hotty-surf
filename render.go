@@ -259,7 +259,25 @@ const cssID = "hotty-css"
 // documentOf is the whole document: the stylesheet, then the tree.
 func (s *Surface) documentOf(root *html.Node) (string, error) {
 	var b strings.Builder
-	if s.css != "" {
+	for _, sh := range s.sheets {
+		var n *html.Node
+		if limit, _ := s.overLimit(sh); limit != "" {
+			// No room for it as a resource: the document carries it.
+			if strings.Contains(strings.ToLower(sh.CSS), "</style") {
+				return "", fmt.Errorf("surf: the sheet %q holds </style, which would end it early", sh.ID)
+			}
+			n = &html.Node{Type: html.ElementNode, Data: "style", DataAtom: atom.Style}
+			n.AppendChild(&html.Node{Type: html.TextNode, Data: sh.CSS})
+		} else {
+			n = &html.Node{Type: html.ElementNode, Data: "link", DataAtom: atom.Link, Attr: []html.Attribute{{Key: "rel", Val: "stylesheet"}, {Key: "href", Val: "cid:" + sh.ID}}}
+		}
+		if err := html.Render(&b, n); err != nil {
+			return "", err
+		}
+	}
+	// With sheets linked, the surface's own sheet is there even empty, for
+	// a dev reload to restyle.
+	if s.css != "" || len(s.sheets) > 0 {
 		if strings.Contains(strings.ToLower(s.css), "</style") {
 			return "", fmt.Errorf("surf: the stylesheet holds </style, which would end it early")
 		}

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"neuroplast.io/hotty-go"
-	"neuroplast.io/hotty-surf"
 )
 
 // TestStream writes what the surface sends for a click, the arrows and
@@ -21,7 +20,7 @@ func TestStream(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	s := surf.New(surface, Page(NewApp(Mock())), CSS)
+	s := newSurface(surface, Page(NewApp(Mock())))
 	s.Attach(f, hotty.Caps{})
 	must := func(err error) {
 		if err != nil {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"testing"
 
-	surf "neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/devwire"
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/surftest"
@@ -19,7 +18,7 @@ func TestHandover(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := NewApp(tasks)
-	s := surf.New("tasks", Page(a), CSS)
+	s := newSurface("tasks", Page(a))
 	surftest.Start(t, s)
 	var snap bytes.Buffer
 	w := devwire.NewWriter(&snap)

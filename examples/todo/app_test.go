@@ -3,14 +3,13 @@ package main
 import (
 	"testing"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
 // TestTasks adds a task, ticks it off, looks at the done ones and clears
 // them, as a user would, checking the count at each step.
 func TestTasks(t *testing.T) {
-	r := surftest.Start(t, surf.New("todo", Page(NewApp()), CSS))
+	r := surftest.Start(t, newSurface("todo", Page(NewApp())))
 	r.One("#left:text(4 tasks left)")
 
 	r.Type("#draft", "Buy milk")

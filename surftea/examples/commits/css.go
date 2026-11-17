@@ -1,13 +1,11 @@
 package main
 
-import (
-	_ "embed"
-
-	"neuroplast.io/hotty-surf/ui"
-)
+import _ "embed"
 
 //go:embed style/app.css
 var appCSS string
 
-// CSS is the kit's stylesheet, then the app's own, style/app.css.
-var CSS = ui.Stylesheet() + "\n" + appCSS
+// CSS is the app's own stylesheet, style/app.css. The kit's is linked, not
+// carried (main's s.Link(ui.Sheet())): sent once rather than in every
+// document.
+var CSS = appCSS

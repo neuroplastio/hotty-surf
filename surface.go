@@ -67,16 +67,19 @@ type Surface struct {
 	lastFocus    string
 	focusIn      []string
 	hoverIn      []string
-	hoverAt      string // the element under the pointer, as the host last said
-	pressed      bool   // the last event was a primary press on the surface (see event)
-	drag         string // the element a drag under way began on, "" for none
-	lifted       bool   // that drag has moved: the element has the class dragging
-	modalPressed bool   // the last press was inside the active modal's scope
-	modalFocus   string // first or last modal control to focus after an event
-	asked        string // the element the last frame's Autofocus asked for
-	askDue       bool   // a Document's Autofocus, sent at the next Update
-	cssDue       bool   // the stylesheet changed (a dev reload): sent at the next Update
-	blurAsked    bool   // Blur ran the blur: the host's blur that follows is its echo
+	hoverAt      string          // the element under the pointer, as the host last said
+	pressed      bool            // the last event was a primary press on the surface (see event)
+	drag         string          // the element a drag under way began on, "" for none
+	lifted       bool            // that drag has moved: the element has the class dragging
+	modalPressed bool            // the last press was inside the active modal's scope
+	modalFocus   string          // first or last modal control to focus after an event
+	asked        string          // the element the last frame's Autofocus asked for
+	askDue       bool            // a Document's Autofocus, sent at the next Update
+	cssDue       bool            // the stylesheet changed (a dev reload): sent at the next Update
+	sheets       []Sheet         // the stylesheets documents link (Link)
+	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
+	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
+	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
 	sending      bool
 	deferred     []hotty.Event
 
@@ -124,10 +127,45 @@ func (s *Surface) Name() string {
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
+	s.sheetSent, s.limits = nil, caps.Limits
+}
+
+// Sheet is a stylesheet that documents link as a resource (SPEC §7.1)
+// rather than carry: sent once on a connection, it styles every document
+// sent there after, and every surface that links it. A kit's sheet is
+// ui.Sheet().
+type Sheet struct {
+	// ID names the resource: documents link cid:<ID>. Give the sheet a
+	// new ID whenever its CSS changes (a content hash, as ui.Sheet's is),
+	// so a host that kept an older sheet never styles a document with it.
+	ID string
+	// CSS is the sheet. Empty, the program sends the resource itself
+	// (hotty.Res(ID, "text/css", …)), before the first document that links
+	// it: a program with one connection for many surfaces sends it once
+	// for all of them.
+	CSS string
+}
+
+// Link makes the surface's documents link sheets, in order, ahead of its
+// own stylesheet (New's css): each as <link rel="stylesheet"
+// href="cid:ID">. A sheet with CSS is sent on the writer Attach gave, as
+// a=res, once per Attach: before the next document Document returns, so a
+// program that sends that document on the same writer has the sheet
+// there first; after the host drops its resources, Attach again. When the
+// host's caps leave no room for it (limits.resources, limits.message), the
+// surface writes the CSS into the document as New's css, and records a
+// fault. A sheet without CSS is the
+// program's to send. Each Link replaces the sheets an earlier one gave;
+// Link() with none links none. Link before the first Document; a later
+// Link takes effect at the next Document.
+func (s *Surface) Link(sheets ...Sheet) {
+	s.sheets = append([]Sheet(nil), sheets...)
 }
 
 // Document renders the view and returns the whole document, its stylesheet
-// and its body, for the program to send as the surface's document. The
+// and its body, for the program to send as the surface's document. When
+// the surface links a sheet with CSS it hasn't sent since Attach, Document
+// first writes it (a=res) to Attach's writer. The
 // deltas that follow are written against it, so the program sends every
 // Document it takes. It takes one again whenever the host may not hold the
 // document as it was sent: it lost it, or it refused a delta (an error reply

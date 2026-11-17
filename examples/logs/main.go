@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/reload"
 	"neuroplast.io/hotty-surf/run"
 )
@@ -18,7 +17,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	a := NewApp()
-	s := surf.New("logs", Page(a), CSS)
+	s := newSurface("logs", Page(a))
 	reload.Keep(a.Save, a.Restore)
 	go Feed(ctx, s, a, NewService(time.Now().UnixNano()))
 	if err := run.App(ctx, s); err != nil {

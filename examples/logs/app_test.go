@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -22,7 +21,7 @@ func feed(a *App, r *surftest.Rig, lines ...Line) {
 
 func TestWatch(t *testing.T) {
 	a := NewApp()
-	r := surftest.Start(t, surf.New("logs", Page(a), CSS))
+	r := surftest.Start(t, newSurface("logs", Page(a)))
 	r.One("h3:text(No lines)")
 
 	feed(a, r,
@@ -78,7 +77,7 @@ func TestWatch(t *testing.T) {
 
 func TestFollow(t *testing.T) {
 	a := NewApp()
-	r := surftest.Start(t, surf.New("logs", Page(a), CSS))
+	r := surftest.Start(t, newSurface("logs", Page(a)))
 	feed(a, r, Line{Level: 1, Text: "one"}, Line{Level: 1, Text: "two"}, Line{Level: 1, Text: "three"})
 
 	// Scrolled up, the view keeps its bottom line as more come in.

@@ -16,6 +16,7 @@ import (
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftea"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 // listW is the list's width; the surface has the rest.
@@ -33,6 +34,7 @@ func newModel() *model {
 	a := NewApp()
 	sess := hottytea.New()
 	s := surf.New("files", Details(a), CSS)
+	s.Link(ui.Sheet())
 	return &model{a: a, sess: sess, s: s, files: surftea.New(s, sess)}
 }
 

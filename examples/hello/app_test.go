@@ -3,13 +3,12 @@ package main
 import (
 	"testing"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
 func TestWave(t *testing.T) {
 	a := NewApp()
-	r := surftest.Start(t, surf.New("hello", Page(a), CSS))
+	r := surftest.Start(t, newSurface("hello", Page(a)))
 	r.Type("#name", "Ada")
 	r.Click("button:text(Wave)")
 	r.One("p:text(Waved 1 times.)")

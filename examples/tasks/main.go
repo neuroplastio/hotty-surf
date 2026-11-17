@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"os"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/reload"
 	"neuroplast.io/hotty-surf/run"
 )
@@ -39,7 +38,7 @@ func main() {
 		reload.Keep(a.devState, a.setDevState)
 		view = Page(a)
 	}
-	if err := run.App(context.Background(), surf.New(surface, view, CSS)); err != nil {
+	if err := run.App(context.Background(), newSurface(surface, view)); err != nil {
 		fmt.Fprintln(os.Stderr, "tasks:", err)
 		os.Exit(1)
 	}
