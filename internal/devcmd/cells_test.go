@@ -126,3 +126,27 @@ func TestRunInCells(t *testing.T) {
 		t.Error("a hotty command reached a terminal that is no host")
 	}
 }
+
+// TestShotHeadless: hotty-surf shot builds the app, runs it with no
+// terminal and writes its document once it is quiet; a bad size fails.
+func TestShotHeadless(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds an app")
+	}
+	dir := copyApp(t)
+	page := filepath.Join(t.TempDir(), "shot.html")
+	var o, e bytes.Buffer
+	if code := Shot(context.Background(), []string{"-size", "60x10", "-html", "-o", page, dir}, &o, &e); code != 0 {
+		t.Fatalf("shot: %d %q", code, e.String())
+	}
+	doc, err := os.ReadFile(page)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(doc), "Count 0") || !strings.Contains(string(doc), `id="hotty-css"`) {
+		t.Fatalf("the document: %.300s", doc)
+	}
+	if code := Shot(context.Background(), []string{"-size", "60", dir}, &o, &e); code != 2 {
+		t.Fatalf("a bad size: %d", code)
+	}
+}

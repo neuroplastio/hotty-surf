@@ -220,10 +220,7 @@ func shot(ask func(string, msgp.Decodable) error, args []string, out, errOut io.
 	if len(args) > 0 && args[0] == "-html" {
 		html, args = true, args[1:]
 	}
-	path := "shot.png"
-	if html {
-		path = "shot.html"
-	}
+	path := ""
 	if len(args) > 0 {
 		path = args[0]
 	}
@@ -232,12 +229,25 @@ func shot(ask func(string, msgp.Decodable) error, args []string, out, errOut io.
 		fmt.Fprintln(errOut, "hotty-surf ctl shot:", err)
 		return 1
 	}
+	return writeShot("hotty-surf ctl shot", doc, html, path, out, errOut)
+}
+
+// writeShot writes doc as a PNG that hotty-blitz's hotty renders at the
+// doc's size, or as HTML, at path (shot.png or shot.html when ""), and
+// prints the path. It returns the exit code.
+func writeShot(who string, doc devwire.Doc, html bool, path string, out, errOut io.Writer) int {
+	if path == "" {
+		path = "shot.png"
+		if html {
+			path = "shot.html"
+		}
+	}
 	page := path
 	if !html {
 		page = strings.TrimSuffix(path, filepath.Ext(path)) + ".html"
 	}
 	if err := os.WriteFile(page, []byte(doc.HTML), 0o644); err != nil {
-		fmt.Fprintln(errOut, "hotty-surf ctl shot:", err)
+		fmt.Fprintln(errOut, who+":", err)
 		return 1
 	}
 	if html {
@@ -248,13 +258,13 @@ func shot(ask func(string, msgp.Decodable) error, args []string, out, errOut io.
 	if bin == "" {
 		var err error
 		if bin, err = exec.LookPath("hotty"); err != nil {
-			fmt.Fprintf(errOut, "hotty-surf ctl shot: no hotty to render with (hotty-blitz's hotty, on PATH or in $HOTTY_SURF_HOTTY); the document is %s\n", page)
+			fmt.Fprintf(errOut, "%s: no hotty to render with (hotty-blitz's hotty, on PATH or in $HOTTY_SURF_HOTTY); the document is %s\n", who, page)
 			return 1
 		}
 	}
 	cmd := exec.Command(bin, "render", page, "-o", path, "--cols", strconv.Itoa(max(doc.Cols, 1)), "--rows", strconv.Itoa(max(doc.Rows, 1)))
 	if b, err := cmd.CombinedOutput(); err != nil {
-		fmt.Fprintf(errOut, "hotty-surf ctl shot: %s render: %v\n%s", bin, err, b)
+		fmt.Fprintf(errOut, "%s: %s render: %v\n%s", who, bin, err, b)
 		return 1
 	}
 	os.Remove(page)

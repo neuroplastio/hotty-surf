@@ -7,6 +7,9 @@
 //	                                       and prints the report (1: a failed build or process)
 //	hotty-surf ctl shot [-html] [out.png]  the app as the terminal has it, rendered
 //	                                       by hotty-blitz's hotty, or as HTML
+//	hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
+//	                                       the app headless: built, run with no
+//	                                       terminal, its document rendered once quiet
 //	hotty-surf lint [dir]                  the kit's rules (package lint): a line a
 //	                                       finding (1: there is one)
 //	hotty-surf new <dir>                   a new app: page, state, styles, a test
@@ -29,6 +32,7 @@ import (
 const usage = `usage:
   hotty-surf run [dir]
   hotty-surf ctl reload | shot [-html] [out.png]
+  hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
   hotty-surf lint [dir]
   hotty-surf new <dir>
 `
@@ -60,6 +64,8 @@ func cmd(ctx context.Context, args []string) int {
 		return 0
 	case "ctl":
 		return devcmd.Ctl(ctx, devcmd.SockPath(), args[1:], os.Stdout, os.Stderr)
+	case "shot":
+		return devcmd.Shot(ctx, args[1:], os.Stdout, os.Stderr)
 	case "lint":
 		return devcmd.Lint(dir(), os.Stdout, os.Stderr)
 	case "new":
