@@ -1809,3 +1809,42 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
 - K29 (menus: three ways in, one panel) is the reviewer's.
 - G-menu-rows (MenuItem slots for all three menus) is next after the
   toast pack (p-653's queue).
+
+
+## plx: menu rows of the app's own (G-menu-rows, a pack of its own)
+
+plx won't build stand-in rows, so this blocks its copy's removal
+(p-653). Its rows (a host's colour dot, a switch, an aside, a note, a
+name being typed, the current workspace, an MDI icon, a bare rule) are
+three slots on MenuItem and a rule, for DropdownMenu, ContextMenu and
+Menu at once, as K29 asks:
+
+- **Leading** replaces the icon (Icon is ignored when it is set), drawn
+  first in the row.
+- **Content** replaces the label's text. The item then has
+  `aria-label` = Label, so its name stays its words.
+- **Trailing** replaces the shortcut (Keys is ignored), wrapped in
+  Basecoat's `<span data-shortcut>`, which puts it at the row's end as a
+  shortcut is.
+- **Separator** makes the item an `<hr role="separator">`, its other
+  fields ignored. It keeps its place in Items (an index in a Menu's
+  Highlight still counts it), is never highlighted, and no key or press
+  reaches it.
+
+The slots are the app's markup. The press and keys stay the row's: a click
+anywhere on it runs the item. Command ignores the slots, as it ignores Role.
+TestMenuRows covers all three menus, ExampleMenuItem_slots shows plx's
+rows.
+
+Open, for review:
+1. **A switch in Leading is an `<input>`.** A host toggles it on a click
+   before the row's click runs, so plx's OnSelect should set the state it
+   draws from, not read the input. A non-interactive switch look (a
+   `Switch` with no input, or `aria-hidden` and `pointer-events: none` on
+   one in a row) is the alternative; it adds a name, so not here.
+2. **Separator as an item vs a field on the next item.** An item keeps
+   the slices plx builds (its `Sep` rows) one to one, and a Menu's
+   Highlight index lines up with plx's own. The cost is a MenuItem whose
+   other fields mean nothing.
+3. **Content's text in cells** is whatever the markup draws. plx's caret
+   (`span.cur`) is plx's CSS.

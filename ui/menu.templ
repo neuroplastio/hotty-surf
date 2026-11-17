@@ -58,45 +58,64 @@ templ dropdownMenu(v *menuView) {
 	</div>
 }
 
-// menuItem is render_dropdown_items' item: its icon, label and shortcut.
-// Its click stays live while the menu is closed, as a Select's option's.
+// menuItem is render_dropdown_items' item: its icon, label and shortcut,
+// or the app's Leading, Content and Trailing in their places; a Separator
+// item is a rule. Its click stays live while the menu is closed, as a
+// Select's option's.
 templ menuItem(v *menuView, o int) {
 	{{ it, id := v.item(o), v.opts[o].id }}
-	<div
-		role={ or(it.Role,"menuitem") }
-		if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
-			aria-checked={ bstr(it.Checked) }
-		}
-		if it.Disabled {
-			aria-disabled="true"
-		}
-		if it.Variant != Primary {
-			data-variant={ string(it.Variant) }
-		}
-		if o == v.activeOpt() {
-			class="active"
-		}
-		if it.Disabled {
-			id={ id }
-		} else {
-			{ surf.On(ctx, id, surf.Click(func() { v.choose(o) }), surf.Hover(v.hover(o)))... }
-		}
-	>
-		if it.Icon != "" {
-			@icon(it.Icon, "")
-		}
-		{ it.Label }
-		if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
-			<span data-indicator>
-				if it.Role == "menuitemcheckbox" {
-					@icon("check", "size-4")
-				} else {
-					@icon("circle", "size-2 fill-current")
-				}
-			</span>
-		}
-		if it.Keys != "" {
-			@kbd(it.Keys)
-		}
-	</div>
+	if it.Separator {
+		<hr role="separator" id={ id }/>
+	} else {
+		<div
+			role={ or(it.Role,"menuitem") }
+			if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
+				aria-checked={ bstr(it.Checked) }
+			}
+			if it.Disabled {
+				aria-disabled="true"
+			}
+			if it.Content != nil {
+				aria-label={ it.Label }
+			}
+			if it.Variant != Primary {
+				data-variant={ string(it.Variant) }
+			}
+			if o == v.activeOpt() {
+				class="active"
+			}
+			if it.Disabled {
+				id={ id }
+			} else {
+				{ surf.On(ctx, id, surf.Click(func() { v.choose(o) }), surf.Hover(v.hover(o)))... }
+			}
+		>
+			if it.Leading != nil {
+				@plain(it.Leading)
+			} else if it.Icon != "" {
+				@icon(it.Icon, "")
+			}
+			if it.Content != nil {
+				@plain(it.Content)
+			} else {
+				{ it.Label }
+			}
+			if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
+				<span data-indicator>
+					if it.Role == "menuitemcheckbox" {
+						@icon("check", "size-4")
+					} else {
+						@icon("circle", "size-2 fill-current")
+					}
+				</span>
+			}
+			if it.Trailing != nil {
+				<span data-shortcut>
+					@plain(it.Trailing)
+				</span>
+			} else if it.Keys != "" {
+				@kbd(it.Keys)
+			}
+		</div>
+	}
 }

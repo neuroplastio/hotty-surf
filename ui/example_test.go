@@ -148,3 +148,20 @@ func ExampleMenu() {
 	})
 	_ = surf.New("pane-menu", view, ui.Stylesheet())
 }
+
+// Rows of the app's own: a host's colour in the icon's place, its tabs in
+// the keys' place, a rule, and a choice drawn as a switch with an aside.
+func ExampleMenuItem_slots() {
+	wrap := true
+	_ = []ui.MenuItem{
+		{Label: "build-01",
+			Leading:  templ.Raw(`<span class="dot" style="color:#3a7">●</span>`),
+			Trailing: templ.Raw(`<span>3 tabs</span>`),
+			OnSelect: func() {}},
+		{Separator: true},
+		{Label: "Wrap",
+			Leading:  ui.Switch(ui.SwitchProps{Checked: wrap}),
+			Content:  templ.Raw(`<span>Wrap <small>long lines</small></span>`),
+			OnSelect: func() { wrap = !wrap }},
+	}
+}

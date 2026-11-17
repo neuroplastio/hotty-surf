@@ -57,6 +57,19 @@ type MenuItem struct {
 	OnCheckedChange func(bool)
 	// OnSelect runs when the user chooses the item; the menu closes.
 	OnSelect func()
+	// Leading is drawn in the icon's place, in place of Icon: a colour
+	// dot, a Switch showing a choice's state, an icon of the app's own.
+	// Trailing is drawn in the shortcut's place, in place of Keys: a note,
+	// a count. Content is drawn in the label's place: the label with an
+	// aside after it, a name being typed with its caret. Label still names
+	// the item (its aria-label, then) and is what a pick reports. They are
+	// the app's markup: nothing in them takes a press or a key, which are
+	// the item's. Command ignores them.
+	Leading, Content, Trailing templ.Component
+	// Separator makes the item a rule between the items around it, and
+	// nothing else: its other fields are ignored, and it is never
+	// highlighted. Group changes draw their own.
+	Separator bool
 }
 
 // DropdownMenuState is what a DropdownMenu remembers between renders:
@@ -138,7 +151,8 @@ func newMenuView(st *DropdownMenuState, p DropdownMenuProps) *menuView {
 		func(i int) string { return p.Items[i].Group },
 		func(i int, id string) listOpt {
 			v.items = append(v.items, i)
-			return listOpt{id: id, label: p.Items[i].Label, disabled: p.Items[i].Disabled}
+			it := p.Items[i]
+			return listOpt{id: id, label: it.Label, disabled: it.Disabled || it.Separator}
 		})
 	for i, o := range v.opts {
 		if !o.disabled {
@@ -234,7 +248,7 @@ func (v *menuView) outside() { v.close(false) }
 // gives the trigger the keyboard.
 func (v *menuView) choose(o int) {
 	it := v.item(o)
-	if it.Disabled {
+	if it.Disabled || it.Separator {
 		return
 	}
 	if v.ctl != nil {
