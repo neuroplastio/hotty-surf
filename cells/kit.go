@@ -231,7 +231,7 @@ func (l *layout) slider(n *html.Node, x, y, w int, in inh) int {
 		switch {
 		case attr(k, "role") == "slider":
 			thumbs = append(thumbs, k)
-		case tokens(k, "class", "hotty-slider-notch"):
+		case has(k, "data-hotty-slider-notch"):
 			notches = append(notches, k)
 		}
 	}

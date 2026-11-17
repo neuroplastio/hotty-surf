@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"slices"
-	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -46,12 +45,12 @@ func (s *Surface) document() (string, error) {
 	}
 	s.keep(t, f)
 	if modal := activeModal(f); modal != "" {
-		if s.modalScope(modal) != s.prev {
-			if f.Focus != "" && s.modalApplies(modal, f.Focus) {
+		if s.modalScope(f, modal) != s.prev {
+			if f.Focus != "" && s.modalApplies(f, modal, f.Focus) {
 				f.Focus = ""
 			}
 		} else if f.Focus == "" || !contains(s.chain(f.Focus), modal) {
-			f.Focus = s.modalTarget(modal, false)
+			f.Focus = s.modalTarget(f, modal, false)
 		}
 	}
 	s.hoverIn = s.chain(s.hoverAt)
@@ -116,12 +115,12 @@ func (s *Surface) send() error {
 	modal := activeModal(f)
 	if modal != "" {
 		opening := activeModal(s.frame) != modal
-		inScope := s.modalApplies(modal, s.focused)
-		if opening && !inScope && f.Focus != "" && s.modalApplies(modal, f.Focus) {
+		inScope := s.modalApplies(f, modal, s.focused)
+		if opening && !inScope && f.Focus != "" && s.modalApplies(f, modal, f.Focus) {
 			f.Focus = ""
-		} else if (inScope || s.modalFocus != "" || f.Focus != "" && s.modalApplies(modal, f.Focus)) &&
+		} else if (inScope || s.modalFocus != "" || f.Focus != "" && s.modalApplies(f, modal, f.Focus)) &&
 			(s.modalFocus != "" || f.Focus != "" && !contains(s.chain(f.Focus), modal) || opening && f.Focus == "") {
-			if id := s.modalTarget(modal, s.modalFocus == "last"); id != "" {
+			if id := s.modalTarget(f, modal, s.modalFocus == "last"); id != "" {
 				f.Focus = id
 				s.askDue = true
 			}
@@ -214,9 +213,9 @@ func (s *Surface) event(e hotty.Event) error {
 	modal := activeModal(s.frame)
 	inside := modal == "" || contains(s.chain(e.Target), modal)
 	if e.Kind == hotty.EventPress {
-		s.modalPressed = modal != "" && s.modalApplies(modal, e.Target)
+		s.modalPressed = modal != "" && s.modalApplies(s.frame, modal, e.Target)
 	}
-	if modal != "" && s.modalApplies(modal, e.Target) && !inside {
+	if modal != "" && s.modalApplies(s.frame, modal, e.Target) && !inside {
 		switch e.Kind {
 		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress, hotty.EventDragStart:
 			return nil
@@ -235,7 +234,7 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 	case hotty.EventDrag, hotty.EventDragEnd:
 		target := s.dragTarget
-		if target != "" && modal != "" && s.modalApplies(modal, target) && !contains(s.chain(target), modal) {
+		if target != "" && modal != "" && s.modalApplies(s.frame, modal, target) && !contains(s.chain(target), modal) {
 			s.dragTarget = ""
 			return nil
 		}
@@ -399,10 +398,10 @@ func (s *Surface) outside(id string) bool {
 	ran := false
 	for _, x := range s.frame.Order {
 		h := s.frame.On[x]
-		if modal := activeModal(s.frame); modal != "" && id != "" && !s.modalApplies(modal, id) && s.modalApplies(modal, x) {
+		if modal := activeModal(s.frame); modal != "" && id != "" && !s.modalApplies(s.frame, modal, id) && s.modalApplies(s.frame, modal, x) {
 			continue
 		}
-		if modal := activeModal(s.frame); modal != "" && (s.modalApplies(modal, s.focused) || s.modalApplies(modal, id)) && !contains(s.chain(x), modal) {
+		if modal := activeModal(s.frame); modal != "" && (s.modalApplies(s.frame, modal, s.focused) || s.modalApplies(s.frame, modal, id)) && !contains(s.chain(x), modal) {
 			continue
 		}
 		if h.Outside != nil && !contains(in, x) {
@@ -420,29 +419,35 @@ func (s *Surface) key(k string) (bool, error) {
 	if s.frame == nil {
 		return false, errNoDocument
 	}
-	physical, _ := s.platform.ReadKey(k)
+	physical := k
+	if len(s.frame.KeyScopes) > 0 && s.frame.KeyScopes[0].Canonical != nil {
+		physical, _ = s.frame.KeyScopes[0].Canonical(s.platform, k)
+	}
 	k = modName(s.platform, k)
 	intercepted := false
 	var fallback func(rt.KeyDefault) rt.KeyResult
-	if n := s.byID[s.focused]; n != nil && !hasAttr(n, "disabled") {
-		if index, err := strconv.Atoi(attr(n, "data-hotty-keyscope")); err == nil && index > 0 && index <= len(s.frame.KeyScopes) {
-			for scope := s.frame.KeyScopes[index-1]; scope != nil; scope = scope.Parent {
-				if scope.Keys[physical] {
-					intercepted = true
-					fallback = scope.Default
-					if scope.Handle(k) {
-						return true, s.send()
-					}
-				}
+	var native func(*rt.KeyEnvironment, string, func(rt.KeyDefault) rt.KeyResult) bool
+	if n := s.byID[s.focused]; len(s.frame.KeyScopes) > 0 && n != nil && !hasAttr(n, "disabled") {
+		if dispatch := s.frame.KeyScopes[0].Dispatch; dispatch != nil {
+			var taken bool
+			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, attr(n, "data-hotty-keyscope"), physical, k)
+			if taken {
+				return true, s.send()
 			}
 		}
 	}
-	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && s.nativeKeyDefault(physical, fallback) {
+	var env rt.KeyEnvironment
+	if intercepted {
+		env = rt.KeyEnvironment{Node: s.byID[s.focused], Focused: s.focused, On: s.frame.On, Platform: s.platform,
+			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
+			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
+	}
+	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && native != nil && native(&env, physical, fallback) {
 		return true, s.send()
 	}
 	ids := s.chain(s.focused)
 	modal := activeModal(s.frame)
-	if modal != "" && s.modalApplies(modal, s.focused) {
+	if modal != "" && s.modalApplies(s.frame, modal, s.focused) {
 		if at := slices.Index(ids, modal); at >= 0 {
 			ids = ids[:at+1]
 		} else {
@@ -461,7 +466,7 @@ func (s *Surface) key(k string) (bool, error) {
 				}
 			}
 		}
-		if s.nativeKeyDefault(physical, fallback) {
+		if native != nil && native(&env, physical, fallback) {
 			return true, s.send()
 		}
 	}
@@ -476,7 +481,7 @@ func (s *Surface) key(k string) (bool, error) {
 			}
 		}
 	}
-	if modal != "" && !s.modalApplies(modal, s.focused) && !slices.Contains(ids, modal) {
+	if modal != "" && !s.modalApplies(s.frame, modal, s.focused) && !slices.Contains(ids, modal) {
 		if h := s.frame.On[modal]; h != nil {
 			for _, fn := range h.Key {
 				if fn(k) {

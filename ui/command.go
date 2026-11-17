@@ -85,7 +85,8 @@ type CommandDialogProps struct {
 // CommandDialog is Basecoat's command dialog: a Command in a modal
 // dialog, the command palette that a shortcut opens. The keyboard goes to
 // its search field when it opens and back where it was when it closes, as
-// a Dialog's does. Choosing an item closes it.
+// a Dialog's does. Choosing an item calls its OnSelect first, then OnClose
+// requests closing; the app closes it by setting Open false.
 func CommandDialog(st *CommandState, p CommandDialogProps) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		id := or(p.ID, "command-dialog")

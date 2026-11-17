@@ -25,6 +25,9 @@ type SelectProps struct {
 	// is a fault: a Select with nothing chosen takes a Placeholder.
 	// Value and OnChange are used in single mode; Values and OnValuesChange
 	// are used in multiple mode. The other pair is ignored.
+	// A single choice closes the list; multiple choices keep it open unless
+	// CloseOnSelect is set. An absent selected value or a repeated value in
+	// Values is a fault and is omitted outside tests.
 	Value string
 	// Multiple selects more than one value, reported through OnValuesChange.
 	Multiple bool
@@ -49,9 +52,9 @@ type SelectProps struct {
 
 // A SelectItem is an option of a Select, NativeSelect or Combobox.
 // Consecutive items with the same Group are shown under its label, the
-// groups apart. Values uniquely identify items; a duplicate value is a
-// fault, but labels may repeat. A selected value absent from Items, or
-// repeated in Values, is a fault and is omitted outside tests.
+// groups apart. Values uniquely identify items in Select and Combobox;
+// those components fault on duplicate item values. Labels may repeat.
+// NativeSelect does not check for duplicate option values.
 type SelectItem struct {
 	Value, Label string
 	Group        string

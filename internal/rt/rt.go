@@ -7,6 +7,7 @@ package rt
 import (
 	"context"
 
+	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 )
 
@@ -59,9 +60,20 @@ type Frame struct {
 	// Dialog), outermost first. The last is the active modal; the runtime
 	// confines interaction and focus to it.
 	Modal []string
+	// ModalOps is installed by a modal component, so applications without
+	// one do not link its tree preparation and focus confinement code.
+	ModalOps *ModalOps
 	// KeyScopes are this frame's lexical kit overrides, indexed by the
 	// private marker on each focused kit control (one-based).
 	KeyScopes []*KeyScope
+}
+
+// ModalOps performs the tree and focus work of an active modal.
+type ModalOps struct {
+	Prepare func(*html.Node, string)
+	Scope   func(*html.Node, map[string]*html.Node, string) *html.Node
+	Applies func(*html.Node, map[string]*html.Node, string, string) bool
+	Target  func(map[string]*html.Node, string, bool) string
 }
 
 type key struct{}

@@ -996,19 +996,23 @@ scrollbar classes and Avatar's image for the looks pass.
   nesting, modifiers, native controls, Command, Select and dialog Escape.
   The known editing limitations are in
   `docs/keyboard-model.md`.
-  - **TinyGo size:** the same hello-derived package, built from the same
-    source with `-no-debug` for wasm and a build tag switching the scope,
+  - **TinyGo size at `017f7f4`:** the same hello-derived package, built from
+    the same source with `-no-debug` for wasm and a build tag switching the scope,
     was 2,252,823 bytes raw / 728,707 gzip without KeyScope, and 2,341,413
     raw / 749,785 gzip with it: +88,590 raw / +21,078 gzip when used.
     The editing fallback is referenced by the scope instance, so it is
     not linked just because a surface exists.
   - **Total hello wasm delta:** TinyGo `-no-debug -target wasm` builds of
     the same hello example were 2,218,914 bytes raw / 714,937 gzip at the
-    pre-B3 merge `897c796`, and 2,273,254 raw / 732,806 gzip with the
-    reviewed B3 changes: +54,340 raw / +17,869 gzip. The example uses
-    Select and Toaster, so this measures the shipped app and its linked ui,
-    not every component in isolation. Select uses the existing small JSON
-    string writer rather than linking the general encoding/json package.
+    pre-B3 merge `897c796`, and 2,253,334 raw / 726,329 gzip after the
+    verification fixes: +34,420 raw / +11,392 gzip. The reviewed B3 build
+    was 2,273,254 raw / 732,806 gzip, so the fixes save 19,920 raw / 6,477
+    gzip. Scoped key dispatch and native fallback, modal tree preparation,
+    and slider styles are linked when those features are used. Small generic
+    dispatch hooks remain; the example also uses Select and Toaster, which
+    gained B3 behavior, and shared runtime code changed. The remaining delta
+    is not an isolated measurement of any one feature. Select uses the
+    existing small JSON string writer rather than general encoding/json.
 - **Combobox selection: reviewed (K22–K23).** One component supports
   single Value/OnChange and multiple Values/OnValuesChange; the latter
   follows selection order. SelectItem.Keywords supplies additional search

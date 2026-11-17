@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -142,13 +143,21 @@ func TestComboboxKeywordsAndInputAttrs(t *testing.T) {
 func TestComboboxInputAttrsCollision(t *testing.T) {
 	f := &faults{T: t}
 	var st ui.ComboboxState
-	attrs := templ.Attributes{"id": "wrong", "data-keys": "home=field", "aria-label": "Choose"}
-	r := surftest.Start(f, surf.New("combobox", ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", InputAttrs: attrs}), ui.Stylesheet()))
+	attrs := templ.Attributes{"ID": "wrong", "DATA-KEYS": "home=field", "ArIa-Expanded": "wrong", "DATA-Hotty-KeyScope": "999", "aria-label": "Choose"}
+	child := ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", InputAttrs: attrs})
+	view := with(ui.KeyScope([]string{"arrow_down"}, func(string) bool { return false }), child)
+	r := surftest.Start(f, surf.New("combobox", view, ui.Stylesheet()))
 	r.One(`#fruit-input[aria-label="Choose"]`)
-	if len(f.got) < 2 {
+	if got := attr(r.One("#fruit-input"), "data-keys"); !strings.Contains(got, "arrow_down=program") || strings.Contains(got, "home=field") {
+		t.Fatalf("key bindings %q", got)
+	}
+	if got := attr(r.One("#fruit-input"), "data-hotty-keyscope"); got == "" || got == "999" {
+		t.Fatalf("scope marker %q", got)
+	}
+	if len(f.got) < 4 {
 		t.Fatalf("expected collisions, got %v", f.got)
 	}
-	if attrs["id"] != "wrong" || attrs["data-keys"] != "home=field" {
+	if attrs["ID"] != "wrong" || attrs["DATA-KEYS"] != "home=field" || attrs["DATA-Hotty-KeyScope"] != "999" {
 		t.Fatalf("mutated attrs: %v", attrs)
 	}
 }
@@ -172,5 +181,23 @@ func TestComboboxKeepsDisabledSelectionAndOwnsCallbackSlices(t *testing.T) {
 	r.Key("enter")
 	if !slices.Equal(values, []string{"d", "a", "b"}) || len(reports) < 2 || !slices.Equal(reports[0], []string{"d", "a"}) {
 		t.Fatalf("selection %v reports %v", values, reports)
+	}
+}
+
+func TestComboboxKeepsUnknownAndRepeatedValues(t *testing.T) {
+	var st ui.ComboboxState
+	values := []string{"ghost", "ghost"}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", Items: comboboxItems, Multiple: true, Values: values, OnValuesChange: func(v []string) { values = v }}).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("combobox", view, ui.Stylesheet()))
+	r.One("#fruit-chip-0")
+	r.One("#fruit-chip-1")
+	want(t, r, "input[type=hidden]", "value", `["ghost","ghost"]`)
+	r.Click("#fruit-input")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"ghost", "ghost", "a"}) {
+		t.Fatalf("values: %v", values)
 	}
 }

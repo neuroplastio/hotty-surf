@@ -32,6 +32,8 @@ import (
 // nil fn adds no override. Invalid names, duplicate names, and tab or
 // shift+tab are faults; those entries are ignored. Tab and Shift+Tab are
 // reserved for the host's focus traversal, including within a modal.
+// An active modal confines focus and background controls do not receive
+// keys; a scope enclosing it applies to its focused kit control.
 //
 // fn runs on the surface driver's goroutine, as other handlers do. Its
 // children are rendered without adding an HTML wrapper. A KeyScope only
@@ -50,7 +52,8 @@ func KeyScope(keys []string, fn func(string) bool) templ.Component {
 		if f := rt.From(ctx); f != nil {
 			p = f.Platform
 		}
-		scope := &rt.KeyScope{Keys: map[string]bool{}, Handle: fn, Parent: rt.KeyScopeFrom(ctx), Default: keyScopeDefault}
+		scope := &rt.KeyScope{Keys: map[string]bool{}, Handle: fn, Parent: rt.KeyScopeFrom(ctx), Default: keyScopeDefault,
+			Canonical: scopeCanonical, Attach: attachScope, Native: rt.NativeKeyDefault, Dispatch: rt.DispatchKeyScope}
 		for _, key := range keys {
 			k, ok := p.ReadKey(key)
 			if !ok || k == "tab" || k == "shift+tab" || scope.Keys[k] {
@@ -62,6 +65,8 @@ func KeyScope(keys []string, fn func(string) bool) templ.Component {
 		return children.Render(rt.WithKeyScope(templ.ClearChildren(ctx), scope), w)
 	})
 }
+
+func scopeCanonical(p hotty.Platform, key string) (string, bool) { return p.ReadKey(key) }
 
 func kitOn(ctx context.Context, id string, handlers ...surf.Handler) templ.Attributes {
 	f := rt.From(ctx)
@@ -78,7 +83,20 @@ func kitOn(ctx context.Context, id string, handlers ...surf.Handler) templ.Attri
 // scopeAttrs forwards the named keys of a kit control and records their
 // lexical scopes in the frame. It copies attrs: those supplied by the app
 // must never be modified. The marker is read by the surface runtime.
+func applyScope(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
+	if scope := rt.KeyScopeFrom(ctx); scope != nil && scope.Attach != nil {
+		return scope.Attach(ctx, attrs, kind)
+	}
+	return attrs
+}
+
 func scopeAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
+	return applyScope(ctx, attrs, "")
+}
+
+// attachScope is referenced by KeyScope itself, so unscoped controls do not
+// link the map, sorting and attribute construction used for interception.
+func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
 	scope, f := rt.KeyScopeFrom(ctx), rt.From(ctx)
 	if scope == nil || f == nil {
 		return attrs
@@ -114,43 +132,35 @@ func scopeAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
 	}
 	out["data-keys"] = strings.Join(bindings, " ")
 	out["data-hotty-keyscope"] = strconv.Itoa(len(f.KeyScopes))
+	if kind != "" {
+		out["data-hotty-keykind"] = kind
+	}
+	if kind == "text" || kind == "compound-text" {
+		on, _ := out["data-on"].(string)
+		parts := strings.Fields(on)
+		for _, name := range []string{"input", "caret"} {
+			found := false
+			for _, part := range parts {
+				if part == name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				parts = append(parts, name)
+			}
+		}
+		out["data-on"] = strings.Join(parts, " ")
+	}
 	return out
 }
 
 func scopeTextAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
-	if rt.KeyScopeFrom(ctx) == nil || rt.From(ctx) == nil {
-		return attrs
-	}
-	out := scopeNativeAttrs(ctx, attrs, "text")
-	if _, ok := out["data-hotty-keyscope"]; !ok {
-		return out
-	}
-	on, _ := out["data-on"].(string)
-	parts := strings.Fields(on)
-	for _, name := range []string{"input", "caret"} {
-		found := false
-		for _, part := range parts {
-			if part == name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			parts = append(parts, name)
-		}
-	}
-	out["data-on"] = strings.Join(parts, " ")
-	return out
+	return applyScope(ctx, attrs, "text")
 }
 
 func scopeNativeAttrs(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
-	out := scopeAttrs(ctx, attrs)
-	if rt.KeyScopeFrom(ctx) != nil && rt.From(ctx) != nil && out != nil {
-		if _, ok := out["data-hotty-keyscope"]; ok {
-			out["data-hotty-keykind"] = kind
-		}
-	}
-	return out
+	return applyScope(ctx, attrs, kind)
 }
 
 func scopeWithKeys(ctx context.Context, attrs templ.Attributes, keys string) templ.Attributes {
@@ -174,9 +184,5 @@ func scopeCommandAttrs(ctx context.Context, attrs templ.Attributes, keys string)
 		out["data-keys"] = keys
 		attrs = out
 	}
-	out := scopeTextAttrs(ctx, attrs)
-	if _, ok := out["data-hotty-keyscope"]; ok {
-		out["data-hotty-keykind"] = "compound-text"
-	}
-	return out
+	return applyScope(ctx, attrs, "compound-text")
 }

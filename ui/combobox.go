@@ -24,7 +24,8 @@ type ComboboxProps struct {
 	Value string
 	// Values are selected item values in multiple mode, in selection order;
 	// nil or empty means none. The callback receives a fresh slice in that
-	// order, unlike Select's item order.
+	// order, unlike Select's item order. Unknown or repeated values are kept
+	// as supplied, rendered as chips and carried into callbacks.
 	Values []string
 	// Multiple permits more than one selected item.
 	Multiple bool
@@ -139,15 +140,16 @@ func (v *comboboxView) inputAttrs(ctx context.Context) templ.Attributes {
 	checkAttrs(ctx, "Combobox", v.p.InputAttrs, owned...)
 	a := make(templ.Attributes, len(v.p.InputAttrs)+4)
 	for k, value := range v.p.InputAttrs {
-		if strings.HasPrefix(strings.ToLower(k), "on") {
+		key := strings.ToLower(k)
+		if strings.HasPrefix(key, "on") {
 			rt.Fault(ctx, fmt.Sprintf("ui.Combobox: InputAttrs cannot install handler %q", k))
 			continue
 		}
-		if strings.HasPrefix(k, "data-hotty-") {
+		if strings.HasPrefix(key, "data-hotty-") {
 			rt.Fault(ctx, fmt.Sprintf("ui.Combobox: InputAttrs cannot replace internal attribute %q", k))
 			continue
 		}
-		if !slices.Contains(owned, k) {
+		if !slices.Contains(owned, key) {
 			a[k] = value
 		}
 	}

@@ -2,13 +2,14 @@ package ui
 
 templ slider(v sliderView) {
  {{ v.init(ctx) }}
- <div class={ join("hotty-slider",v.p.Class) } data-hotty-slider="" { v.track(ctx)... }>
-  <span class="hotty-slider-rail"></span>
-  <span class="hotty-slider-fill" style={ sliderStyle(v.percent(v.lo),v.percent(v.hi)-v.percent(v.lo)) }></span>
+ <div data-hotty-slider="" if v.p.Class != "" { class={ v.p.Class } } { v.track(ctx)... }>
+  @templ.Raw("<style>"+sliderCSS+"</style>")
+  <span data-hotty-slider-rail></span>
+  <span data-hotty-slider-fill style={ sliderStyle(v.percent(v.lo),v.percent(v.hi)-v.percent(v.lo)) }></span>
   for i := 0; i <= v.count(); i++ {
    {{ lo := max(0.0,(float64(i)-0.5)/float64(v.count()))*100 }}
    {{ hi := min(1.0,(float64(i)+0.5)/float64(v.count()))*100 }}
-   <span class="hotty-slider-notch" style={ sliderStyle(lo,hi-lo) } { v.notch(ctx,i)... }></span>
+   <span data-hotty-slider-notch style={ sliderStyle(lo,hi-lo) } { v.notch(ctx,i)... }></span>
   }
   if v.ranged {
    @sliderThumb(&v,0,v.lo,v.p.Min,v.hi)
@@ -18,7 +19,7 @@ templ slider(v sliderView) {
 }
 
 templ sliderThumb(v *sliderView, k int, value, low, high float64) {
- <button type="button" class="hotty-slider-thumb" role="slider"
+ <button type="button" data-hotty-slider-thumb role="slider"
   aria-valuemin={ sliderNum(low) }
   aria-valuemax={ sliderNum(high) }
   aria-valuenow={ sliderNum(value) }

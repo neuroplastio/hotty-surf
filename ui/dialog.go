@@ -134,6 +134,7 @@ func newDialogView(ctx context.Context, p DialogProps) *dialogView {
 	}
 	d.f = f
 	f.Modal = append(f.Modal, d.id)
+	f.ModalOps = &rt.ModalOps{Prepare: rt.PrepareModal, Scope: rt.ModalScope, Applies: rt.ModalApplies, Target: rt.ModalTarget}
 	m := ds.open[d.id]
 	if m == nil || m.openAt != f.N-1 {
 		d.opening = true

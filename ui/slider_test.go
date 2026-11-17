@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -139,14 +140,20 @@ func TestModalBlocksBackgroundSliderDrag(t *testing.T) {
 
 func TestSliderInvalidNumbersAndAttrs(t *testing.T) {
 	f := &faults{T: t}
-	attrs := templ.Attributes{"aria-label": "Value", "id": "wrong", "data-keys": "home=field"}
+	attrs := templ.Attributes{"aria-label": "Value", "ID": "wrong", "DATA-KEYS": "home=field", "ARIA-VALUENOW": "bad", "Data-Hotty-KeyScope": "999"}
 	slider := ui.Slider(ui.SliderProps{ID: "number", Min: 0, Max: 10, Value: math.NaN(), Attrs: attrs})
-	r := surftest.Start(f, surf.New("slider", slider, ui.Stylesheet()))
+	r := surftest.Start(f, surf.New("slider", with(ui.KeyScope([]string{"home"}, func(string) bool { return false }), slider), ui.Stylesheet()))
 	r.One(`#number-thumb[aria-valuenow="0"][aria-label="Value"]`)
-	if len(f.got) < 3 {
+	if got := attr(r.One("#number-thumb"), "data-keys"); !strings.Contains(got, "home=program") || strings.Contains(got, "home=field") {
+		t.Fatalf("key bindings %q", got)
+	}
+	if got := attr(r.One("#number-thumb"), "data-hotty-keyscope"); got == "" || got == "999" {
+		t.Fatalf("scope marker %q", got)
+	}
+	if len(f.got) < 4 {
 		t.Fatalf("expected value and attribute faults: %v", f.got)
 	}
-	if attrs["id"] != "wrong" || attrs["data-keys"] != "home=field" {
+	if attrs["ID"] != "wrong" || attrs["DATA-KEYS"] != "home=field" || attrs["Data-Hotty-KeyScope"] != "999" {
 		t.Fatalf("mutated attrs: %v", attrs)
 	}
 	f2 := &faults{T: t}
@@ -168,5 +175,47 @@ func TestRangeSliderClampsInvalidValuesWithoutCallback(t *testing.T) {
 	r.One(`#range-end[aria-valuenow="8"]`)
 	if len(f.got) == 0 || called {
 		t.Fatalf("faults=%v called=%v", f.got, called)
+	}
+}
+
+func TestDisabledRangeThumbsRejectCaseInsensitiveAttrs(t *testing.T) {
+	f := &faults{T: t}
+	start := templ.Attributes{"aria-label": "Start", "ID": "wrong-start", "DATA-KEYS": "enter=field", "ArIa-ValueNow": "bad"}
+	end := templ.Attributes{"aria-label": "End", "Id": "wrong-end", "DATA-HOTTY-KEYSCOPE": "999"}
+	p := ui.RangeSliderProps{ID: "range", Min: 0, Max: 10, Start: 2, End: 8, Disabled: true, StartAttrs: start, EndAttrs: end}
+	r := surftest.Start(f, surf.New("range", ui.RangeSlider(p), ui.Stylesheet()))
+	r.One(`#range-start[disabled][aria-valuenow="2"]`)
+	r.One(`#range-end[disabled][aria-valuenow="8"]`)
+	if len(f.got) < 4 {
+		t.Fatalf("expected owned-attribute faults: %v", f.got)
+	}
+	if start["ID"] != "wrong-start" || end["Id"] != "wrong-end" {
+		t.Fatalf("mutated attrs: %v %v", start, end)
+	}
+}
+
+func TestSliderStylesheetOnlyWhileRendered(t *testing.T) {
+	if strings.Contains(ui.Stylesheet(), "data-hotty-slider") {
+		t.Fatal("base stylesheet contains slider styles")
+	}
+	shown := false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		var child templ.Component = templ.Raw("")
+		if shown {
+			child = ui.Slider(ui.SliderProps{ID: "slider", Min: 0, Max: 10, Value: 5, Attrs: templ.Attributes{"aria-label": "Value"}})
+		}
+		return page(button("toggle", "Toggle", func() { shown = !shown }), child).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("slider", view, ui.Stylesheet()))
+	if len(r.Find("style")) != 0 {
+		t.Fatalf("styles before slider: %d", len(r.Find("style")))
+	}
+	r.Click("#toggle")
+	if len(r.Find("style")) != 1 || !strings.Contains(r.HTML(), "[data-hotty-slider-thumb]") {
+		t.Fatal("slider stylesheet was not inserted")
+	}
+	r.Click("#toggle")
+	if len(r.Find("style")) != 0 {
+		t.Fatalf("styles after slider removed: %d", len(r.Find("style")))
 	}
 }

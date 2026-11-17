@@ -112,7 +112,9 @@ func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 	} else if parseCheck {
 		checkParse(t.root, src)
 	}
-	prepareModal(t.root, activeModal(f))
+	if f.ModalOps != nil {
+		f.ModalOps.Prepare(t.root, activeModal(f))
+	}
 	t.byID["root"] = t.root
 	s.number(t.root, "root", t, false)
 	return t, nil

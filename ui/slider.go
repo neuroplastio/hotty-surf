@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"math"
 	"slices"
@@ -13,6 +14,9 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/rt"
 )
+
+//go:embed slider.css
+var sliderCSS string
 
 // SliderProps are a Slider's attributes. Bounds must be finite with Max
 // greater than Min, Step must be finite and nonnegative, and Value must be
@@ -28,8 +32,9 @@ type SliderProps struct {
 	// aria-valuenow, disabled, style, data-on and data-keys are owned by the
 	// component; repeating them is a fault. Attrs cannot install handlers.
 	Attrs templ.Attributes
-	// Min and Max are the ends; Step is the increment (zero uses a twentieth
-	// of the range for keys and a hundredth for snapping). Page keys move
+	// Min and Max are the ends; a positive Step is both the key increment
+	// and snap interval (zero uses a twentieth of the range for keys and a
+	// hundredth for snapping). Page keys move
 	// ten key increments, clamped to the bounds.
 	Min, Max, Step float64
 	// Value is the current value, controlled by the app.
@@ -325,15 +330,16 @@ func (v *sliderView) thumb(ctx context.Context, k int) templ.Attributes {
 		on = scopeWithKeys(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) })), "arrow_left=program arrow_right=program arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program")
 	}
 	for key, value := range attrs {
-		if strings.HasPrefix(strings.ToLower(key), "on") {
+		lower := strings.ToLower(key)
+		if strings.HasPrefix(lower, "on") {
 			rt.Fault(ctx, fmt.Sprintf("ui.Slider: thumb Attrs cannot install handler %q", key))
 			continue
 		}
-		if strings.HasPrefix(key, "data-hotty-") {
+		if strings.HasPrefix(lower, "data-hotty-") {
 			rt.Fault(ctx, fmt.Sprintf("ui.Slider: thumb Attrs cannot replace internal attribute %q", key))
 			continue
 		}
-		if !slices.Contains(owned, key) {
+		if !slices.Contains(owned, lower) {
 			on[key] = value
 		}
 	}
