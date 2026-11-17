@@ -40,7 +40,15 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   component and variant, every story usable by keyboard in cells.
 - [ ] **L4, the build tools:** `hotty-surf build --wasm` and `serve`,
   `shot`'s headless run, the embedding proven in Bubble Tea (surftea)
-  and in plx.
+  and in plx. Merged into v07 through c2d0349
+  (`vault/journal/2026-11-17-v07-l4.md`):
+  - [x] `build -wasm` (TinyGo), `serve` (Go's wasm, reloading in the
+    browser), `shot` (headless), `ctl shot` naming a surface;
+  - [x] the embedding in a raw-mode program (examples/pane) and in
+    Bubble Tea (surftea), proven in hottyterm;
+  - [x] the reloader's Instances and reload.Placed, which plx asked for;
+  - [x] two fresh-agent trials, and what they tripped on fixed;
+  - [ ] in plx: plx's own proof, on v07's reloader.
 - [ ] **L5, the example apps:** settings, a file browser, a log viewer,
   a dashboard, a command palette, the embed demo; each in hottyterm, the
   browser and cells, tested and linted, its authoring time recorded.
@@ -57,8 +65,9 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   `Rig.Focused()` would be an API change.
 - mods/templ's canary is weekly in CI (`make canary`); a red run goes
   here.
-- `ctl shot` renders through hotty-blitz's `hotty render`; the spike's
-  headless shot (build, run, render, exit) is L4's.
+- ~~`ctl shot` renders through hotty-blitz's `hotty render`; the spike's
+  headless shot (build, run, render, exit) is L4's.~~ Done in L4:
+  `hotty-surf shot`.
 - **Open question: an app's own CSS build** (a hook the reloader runs,
   or a `hotty-surf build` step). L4 removed the reloader's `style/build.sh`
   hook, which nothing used or documented. An app that wants its own
@@ -66,7 +75,9 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   `style/app.css` (`tailwindcss --watch -o style/app.css`): the reloader
   takes that write as a css save, and lint's class rule reads app.css.
   Tasks' and nav's app.css are edited by hand.
-- `hotty-surf run` needs a hotty host; it has no cells fallback yet.
+- ~~`hotty-surf run` needs a hotty host; it has no cells fallback yet.~~
+  Done: run draws in cells where the terminal is no hotty host (the L4
+  trials used it in tmux).
 - A process that dies before its hello makes a reload wait its 10 s.
 - kit.css has no `.dialog`, `.toaster` or `.toast` rules (the spike's
   build left out what its pages didn't use): Dialog and Toaster draw
@@ -87,6 +98,12 @@ v0.6's board follows below as the record; main keeps v0.6.3.
 - hotty-go's test host moves a focused select when an option's
   `selected` changes (it checks the option for focus, not the select),
   which SPEC §6.2 doesn't allow: a hotty-go fix.
+- From L4's second trial, open (api/notes.md, "What the second trial
+  left"): Autofocus's templ form in its doc and the scaffold's field
+  autofocused; One's failure listing the nearest texts; help saying a
+  text save under serve is a Go reload; the served page's `<title>`;
+  cells' gap between a check box and its label; `shot -h` saying it
+  draws the starting state.
 - The blind review's "What L2–L4 should know" (in its report) is the
   next legs' list: two components asking for the keyboard in one frame,
   a ToasterState on one surface only, the rest of §6.2's morph in cells,
