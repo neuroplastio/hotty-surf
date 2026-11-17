@@ -507,9 +507,7 @@ func TestHandoverExitedDriverIsDropped(t *testing.T) {
 // its cancelled Keep when the handler eventually returns.
 func TestHandoverBusyPastDeadline(t *testing.T) {
 	fresh()
-	oldWait := busyWait
-	busyWait = 100 * time.Millisecond
-	t.Cleanup(func() { busyWait = oldWait; Keep(nil, nil) })
+	t.Cleanup(func() { Keep(nil, nil) })
 	getRan := make(chan struct{}, 1)
 	Keep(func(w *msgp.Writer) error { getRan <- struct{}{}; return w.WriteInt(1) }, nil)
 	entered, release, driven := make(chan struct{}), make(chan struct{}), make(chan struct{})
@@ -530,7 +528,7 @@ func TestHandoverBusyPastDeadline(t *testing.T) {
 	err := c.handover(&hd)
 	close(release)
 	<-driven
-	if err == nil || !strings.Contains(err.Error(), "busy handler; kept the running version") {
+	if err == nil || !strings.Contains(err.Error(), "reload waited 4s for a busy handler; kept the running version") {
 		t.Fatalf("busy handover: %v", err)
 	}
 	select {
