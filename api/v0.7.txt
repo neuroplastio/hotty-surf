@@ -25,6 +25,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Event(hotty.Event) error
 pkg neuroplast.io/hotty-surf, method (*Surface) Focus() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
+pkg neuroplast.io/hotty-surf, method (*Surface) Link(...Sheet)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
@@ -35,6 +36,9 @@ pkg neuroplast.io/hotty-surf, type DragEvent struct, Over string
 pkg neuroplast.io/hotty-surf, type DragEvent struct, Start bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, embedded hotty.Drag
 pkg neuroplast.io/hotty-surf, type Handler struct
+pkg neuroplast.io/hotty-surf, type Sheet struct
+pkg neuroplast.io/hotty-surf, type Sheet struct, CSS string
+pkg neuroplast.io/hotty-surf, type Sheet struct, ID string
 pkg neuroplast.io/hotty-surf, type Surface struct
 pkg neuroplast.io/hotty-surf/cells, const Bold Attr = 1
 pkg neuroplast.io/hotty-surf/cells, const Dim Attr = 2
@@ -195,6 +199,7 @@ pkg neuroplast.io/hotty-surf/ui, func Progress(ProgressProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Radio(RadioProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func RangeSlider(RangeSliderProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Sheet() surf.Sheet
 pkg neuroplast.io/hotty-surf/ui, func Skeleton(SkeletonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Slider(SliderProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Stylesheet() string
