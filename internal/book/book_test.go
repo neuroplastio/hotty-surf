@@ -105,6 +105,20 @@ func TestBookInspection(t *testing.T) {
 	}
 }
 
+func TestStoryHTMLIsComponentOnly(t *testing.T) {
+	a := New()
+	a.show("alert/default")
+	got := a.storyHTML()
+	if strings.Contains(got, "<style") || strings.Contains(got, `id="root"`) {
+		t.Fatalf("HTML includes surface document: %s", got)
+	}
+	if !strings.Contains(got, "Heads up!") ||
+		!strings.Contains(got, `<svg class="lucide`) ||
+		!strings.Contains(got, " …></svg>") || strings.Contains(got, "<path") {
+		t.Fatalf("HTML did not format and shorten the component: %s", got)
+	}
+}
+
 func TestRenditionsShareStoryState(t *testing.T) {
 	a := New()
 	a.show("button/default")

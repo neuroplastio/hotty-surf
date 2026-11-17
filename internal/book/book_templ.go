@@ -167,7 +167,7 @@ func View(a *App) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel overflow-auto max-h-[40vh]", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -871,7 +871,7 @@ func htmlTab(a *App) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<p class=\"text-muted-foreground text-sm\">The component's current HTML, formatted for reading.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<p class=\"text-muted-foreground mb-2 text-xs\">The component's HTML as it renders it, formatted; an icon's svg is shortened to its class. The runtime adds an id to each element that has none before it goes to the host.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

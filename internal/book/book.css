@@ -91,10 +91,17 @@
   flex: 0 0 45%;
   min-height: 0;
   height: 45%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   border-top: var(--hotty-px) solid var(--border);
 }
+.book-tabs-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 .book-main > .tabs > nav {
+  flex: 0 0 auto;
   background: transparent;
   border-bottom: var(--hotty-px) solid var(--border);
 }
@@ -171,3 +178,6 @@
     height: auto;
   }
 }
+.book-controls { margin-bottom: 0.75rem; }
+
+.book-alert { max-width: 32rem; }

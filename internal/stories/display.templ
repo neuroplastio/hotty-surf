@@ -17,9 +17,12 @@ type displayState struct {
 	page string
 }
 
-type bookAlertProps struct {
+// Alert is the editable state of an alert story.
+type Alert struct {
+	Variant string `enum:"default,destructive"`
 	Title string
-	Description string
+	Text string
+	Icon bool
 }
 
 func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
@@ -40,10 +43,13 @@ func init() {
 		return func() templ.Component { return f(&displayState{page: "Breadcrumb"}) }
 	}
 	add(Story{ID: "alert/default", Doc: "An alert with an icon, a title and a description", View: show(alertDefault), Props: func() (any, templ.Component) {
-		p := &bookAlertProps{Title: "Your changes are saved", Description: "They show on every device within a minute."}
+		p := &Alert{Variant: "default", Title: "Heads up!", Text: "You can add components to your app.", Icon: true}
 		return p, bookAlert(p)
 	}})
-	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive)})
+	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive), Props: func() (any, templ.Component) {
+		p := &Alert{Variant: "destructive", Title: "Unable to process your payment.", Text: "Check your card and try again.", Icon: true}
+		return p, bookAlert(p)
+	}})
 	add(Story{ID: "avatar/default", Doc: "An avatar's initials, as it shows without its image", View: show(avatarDefault)})
 	add(Story{ID: "avatar/sizes", Doc: "An avatar of each size", View: show(avatarSizes)})
 	add(Story{ID: "avatar/badge", Doc: "An avatar with a status dot", View: show(avatarBadge)})
@@ -82,14 +88,21 @@ templ alertDefault(s *displayState) {
 	</div>
 }
 
-templ bookAlert(p *bookAlertProps) {
-	<div class="p-4 max-w-md">
-		@ui.Alert(ui.AlertProps{}) {
-			@ui.Icon("circle-check-big", "")
-			<h2>{ p.Title }</h2>
-			<section><p>{ p.Description }</p></section>
+templ bookAlert(p *Alert) {
+	@ui.Alert(ui.AlertProps{Variant: alertVariant(p.Variant), Class: "book-alert"}) {
+		if p.Icon {
+			@ui.Icon("circle-help", "")
 		}
-	</div>
+		<h2>{ p.Title }</h2>
+		<section><p>{ p.Text }</p></section>
+	}
+}
+
+func alertVariant(v string) ui.Variant {
+	if v == "destructive" {
+		return ui.Destructive
+	}
+	return ui.Primary
 }
 
 templ alertDestructive(s *displayState) {

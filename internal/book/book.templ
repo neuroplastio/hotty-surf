@@ -19,7 +19,7 @@ templ View(a *App) {
 			if a.cur != nil {
 				@header(a)
 				@preview(a)
-				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
+				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel overflow-auto max-h-[40vh]", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
 					<div class="book-panel" tabindex="-1" { surf.On(ctx, "book-panel", surf.Focus(func(bool) {}))... }>
 						switch a.model.Tab {
 							case storybook.TabSource:
@@ -143,6 +143,6 @@ templ props(a *App) {
 }
 
 templ htmlTab(a *App) {
-	<p class="text-muted-foreground text-sm">The component's current HTML, formatted for reading.</p>
+	<p class="text-muted-foreground mb-2 text-xs">The component's HTML as it renders it, formatted; an icon's svg is shortened to its class. The runtime adds an id to each element that has none before it goes to the host.</p>
 	@code.View(a.storyHTML(), "html", 1)
 }

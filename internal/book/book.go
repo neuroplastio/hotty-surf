@@ -434,18 +434,14 @@ func (a *App) entries() []ui.LogEntry {
 }
 
 func (a *App) storyHTML() string {
-	if a.cur == nil {
+	if a.model.Sel == nil {
 		return ""
 	}
-	a.cur.start()
-	if a.cur.err != nil {
-		return a.cur.err.Error()
+	var b strings.Builder
+	if err := a.model.Sel.HTML(nil).Render(context.Background(), &b); err != nil {
+		return "<!-- " + err.Error() + " -->"
 	}
-	doc, err := rt.Peek.Document(a.cur.pane)
-	if err != nil {
-		return err.Error()
-	}
-	return prettyHTML(doc)
+	return prettyHTML(b.String())
 }
 
 // PaneKey is a key the host passed the program while the pane has the
