@@ -63,7 +63,6 @@ type loop struct {
 	state  string // the Reloader's own directory
 	bin    string // where builds go
 	appCSS string // the app's stylesheet, style/app.css, "" for none
-	cssCmd string // style/build.sh, which writes it, "" for none
 	tags   string
 	env    []string
 
@@ -96,9 +95,6 @@ type loop struct {
 
 	building, again bool
 	built           chan buildResult
-	cssBusy         bool
-	cssAgain        bool
-	cssDone         chan error
 	cssLater        bool // the stylesheet changed during a build
 
 	findings []lint.Finding
@@ -141,9 +137,9 @@ func (r *Reloader) run(ctx context.Context) error {
 	l := &loop{r: r, ctx: ctx, dir: dir, changes: make(chan string, 256),
 		mtimes: map[string]time.Time{}, pending: map[string]bool{}, imports: map[string]string{},
 		live: map[string]generator.GeneratorOutput{}, gen: map[string]generator.GeneratorOutput{},
-		built: make(chan buildResult, 1), cssDone: make(chan error, 1),
-		tags: strings.Join(append([]string{"surfdev"}, r.tags...), ","),
-		env:  append(os.Environ(), r.env...)}
+		built: make(chan buildResult, 1),
+		tags:  strings.Join(append([]string{"surfdev"}, r.tags...), ","),
+		env:   append(os.Environ(), r.env...)}
 	name, module, err := l.goList("-e", "-f", "{{.Name}}\n{{if .Module}}{{.Module.Dir}}{{end}}", ".")
 	if err != nil {
 		return fmt.Errorf("reloader: %s: %w", dir, err)
@@ -186,9 +182,6 @@ func (r *Reloader) run(ctx context.Context) error {
 	}
 	if f := filepath.Join(dir, "style", "app.css"); exists(f) {
 		l.appCSS = f
-	}
-	if f := filepath.Join(dir, "style", "build.sh"); exists(f) {
-		l.cssCmd = f
 	}
 
 	r.mu.Lock()
@@ -239,18 +232,6 @@ func (l *loop) loop() error {
 			l.apply()
 		case res := <-l.built:
 			l.onBuilt(res)
-		case err := <-l.cssDone:
-			l.cssBusy = false
-			if l.cssAgain {
-				l.runCSS()
-			} else if err == nil {
-				// What it wrote is the next save, whether or not the
-				// watcher has said so yet.
-				l.scan()
-				if len(l.pending) > 0 {
-					l.apply()
-				}
-			}
 		case <-l.r.wake:
 			l.crashed()
 		case w := <-l.r.reqs:
@@ -273,7 +254,7 @@ func (l *loop) loop() error {
 }
 
 func (l *loop) idle() bool {
-	return !l.building && !l.cssBusy && len(l.pending) == 0
+	return !l.building && len(l.pending) == 0
 }
 
 // reload is Reload: Run's loop answers once what the files on disk set off
@@ -390,14 +371,6 @@ func source(path string) bool {
 
 func (l *loop) styleDir() string { return filepath.Join(l.dir, "style") }
 
-// styleInput says whether path is one style/build.sh reads to write the
-// stylesheet: any file of style/ but the two.
-func (l *loop) styleInput(path string) bool {
-	n := filepath.Base(path)
-	return l.cssCmd != "" && filepath.Dir(path) == l.styleDir() && path != l.appCSS && path != l.cssCmd &&
-		!strings.HasPrefix(n, ".") && !strings.HasSuffix(n, "~")
-}
-
 func (l *loop) watchDirs() []string {
 	l.dirsMu.Lock()
 	dirs := append([]string(nil), l.dirs...)
@@ -409,7 +382,7 @@ func (l *loop) watchDirs() []string {
 }
 
 func (l *loop) watched(path string) bool {
-	if path == l.appCSS && path != "" || l.styleInput(path) {
+	if path == l.appCSS && path != "" {
 		return true
 	}
 	if !source(path) {
@@ -560,6 +533,11 @@ func (l *loop) prepare() string {
 				errs = append(errs, err.Error())
 			}
 		} else if strings.HasSuffix(f, ".go") {
+			if msgpStale(f) {
+				if err := l.genMsgp(f); err != nil {
+					errs = append(errs, err.Error())
+				}
+			}
 			l.importsChanged(f, nil)
 		}
 	}
@@ -644,11 +622,10 @@ func (l *loop) apply() {
 	paths := slices.Sorted(maps.Keys(l.pending))
 	l.pending = map[string]bool{}
 	var (
-		errs                  []string
-		build, css, cssInputs bool
-		sources               bool
-		text                  = map[string]generator.GeneratorOutput{}
-		later                 []func()
+		errs       []string
+		build, css bool
+		text       = map[string]generator.GeneratorOutput{}
+		later      []func()
 	)
 	changed := false
 	for _, f := range paths {
@@ -660,7 +637,7 @@ func (l *loop) apply() {
 				delete(l.live, f)
 				delete(l.gen, f)
 				delete(l.imports, f)
-				changed, sources = true, true
+				changed = true
 				build = build || source(f)
 				l.stale.Store(true)
 			}
@@ -679,10 +656,7 @@ func (l *loop) apply() {
 		switch {
 		case f == l.appCSS:
 			css = true
-		case l.styleInput(f):
-			cssInputs = true
 		case strings.HasSuffix(f, ".templ"):
-			sources = true
 			out, raw, err := templgen.Gen(f)
 			if err != nil {
 				errs = append(errs, err.Error())
@@ -710,8 +684,11 @@ func (l *loop) apply() {
 				text[f] = out
 			}
 		default:
-			sources = true
 			build = true
+			if err := l.genMsgp(f); err != nil {
+				errs = append(errs, err.Error())
+				continue
+			}
 			if l.importsChanged(f, nil) {
 				l.stale.Store(true)
 			}
@@ -729,9 +706,6 @@ func (l *loop) apply() {
 		return
 	}
 	l.lint()
-	if l.cssCmd != "" && (sources || cssInputs) {
-		l.runCSS()
-	}
 	tier := tierText
 	if build {
 		tier = tierGo
@@ -841,25 +815,6 @@ func (l *loop) restyle(failed map[string]string) bool {
 	}
 	l.shownCSS = st.New
 	return true
-}
-
-// runCSS runs style/build.sh, which writes the stylesheet from the classes
-// the sources use; what it writes is a save of its own.
-func (l *loop) runCSS() {
-	if l.cssBusy {
-		l.cssAgain = true
-		return
-	}
-	l.cssBusy, l.cssAgain = true, false
-	go func() {
-		cmd := exec.CommandContext(l.ctx, "sh", l.cssCmd)
-		cmd.Dir, cmd.Env = l.dir, l.env
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			err = fmt.Errorf("%s: %w: %s", l.cssCmd, err, out)
-		}
-		l.cssDone <- err
-	}()
 }
 
 // emit reports a save: with the lint's findings, and the build's error

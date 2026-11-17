@@ -15,6 +15,7 @@ pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
+pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Do(func())
 pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
@@ -83,6 +84,7 @@ pkg neuroplast.io/hotty-surf/surftea, type Host struct
 pkg neuroplast.io/hotty-surf/surftest, func Lint(testing.TB, string)
 pkg neuroplast.io/hotty-surf/surftest, func Size(int, int) Option
 pkg neuroplast.io/hotty-surf/surftest, func Start(testing.TB, *surf.Surface, ...Option) *Rig
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Checked(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Click(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Find(string) []*html.Node
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) HTML() string
@@ -90,6 +92,7 @@ pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Key(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) One(string) *html.Node
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Type(string, string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Update()
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Value(string) string
 pkg neuroplast.io/hotty-surf/surftest, type Option struct
 pkg neuroplast.io/hotty-surf/surftest, type Rig struct
 pkg neuroplast.io/hotty-surf/ui, const Destructive Variant = "destructive"

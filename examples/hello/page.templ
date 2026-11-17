@@ -10,23 +10,25 @@ import (
 templ Page(a *App) {
 	<main class="flex flex-col gap-4 p-4" { surf.On(ctx, "page", surf.Key(a.Shortcut))... }>
 		<h1 class="text-lg font-semibold">{ a.Greeting }, { a.who() }!</h1>
-		<div class="flex gap-2">
-			@ui.Input(ui.InputProps{
-				Value:       a.Name,
-				Placeholder: "Your name",
-				Attrs:       surf.On(ctx, "name", surf.Input(a.SetName)),
-			})
-			@ui.Select(&a.greetingMenu, ui.SelectProps{
-				ID:       "greeting",
-				Items:    greetings,
-				Value:    a.Greeting,
-				OnChange: a.SetGreeting,
-			})
-		</div>
-		@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "wave", surf.Click(a.Wave))}) {
-			@ui.Icon("hand", "")
-			Wave
-		}
+		<form class="flex flex-col gap-4" { surf.On(ctx, "greet", surf.Submit(a.Wave))... }>
+			<div class="flex gap-2">
+				@ui.Input(ui.InputProps{
+					Value:       a.Name,
+					Placeholder: "Your name",
+					Attrs:       surf.On(ctx, "name", surf.Input(a.SetName)),
+				})
+				@ui.Select(&a.greetingMenu, ui.SelectProps{
+					ID:       "greeting",
+					Items:    greetings,
+					Value:    a.Greeting,
+					OnChange: a.SetGreeting,
+				})
+			</div>
+			@ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
+				@ui.Icon("hand", "")
+				Wave
+			}
+		</form>
 		<p class="text-sm text-muted-foreground">
 			Waved { strconv.Itoa(a.Waves) } times.
 		</p>

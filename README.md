@@ -20,22 +20,28 @@ the surface in step with them.
 ## A first app
 
 The view, in templ. An element, or a kit component's Attrs, gets its
-handlers from `surf.On`:
+handlers from `surf.On`. Enter in the field and a click of the button both
+submit the form, whose Submit waves:
 
 ```templ
 templ Page(a *App) {
 	<main class="flex flex-col gap-4 p-4">
 		<h1 class="text-lg font-semibold">{ a.Greeting }, { a.who() }!</h1>
-		@ui.Input(ui.InputProps{
-			Value: a.Name,
-			Attrs: surf.On(ctx, "name", surf.Input(a.SetName)),
-		})
-		@ui.Button(ui.ButtonProps{
-			Attrs: surf.On(ctx, "wave", surf.Click(a.Wave)),
-		}) {
-			@ui.Icon("hand", "")
-			Wave
-		}
+		<form
+			class="flex flex-col gap-4"
+			{ surf.On(ctx, "greet", surf.Submit(a.Wave))... }
+		>
+			@ui.Input(ui.InputProps{
+				Value: a.Name,
+				Attrs: surf.On(ctx, "name", surf.Input(a.SetName)),
+			})
+			@ui.Button(ui.ButtonProps{
+				Attrs: templ.Attributes{"type": "submit"},
+			}) {
+				@ui.Icon("hand", "")
+				Wave
+			}
+		</form>
 	</main>
 }
 ```
@@ -59,8 +65,9 @@ The whole app is [`examples/hello`](examples/hello).
 
 ## The dev tool
 
-`hotty-surf` (`go install neuroplast.io/hotty-surf/cmd/hotty-surf@latest`)
-makes, runs and ships an app whose main is `run.App`:
+`hotty-surf` (from a checkout, `go install ./cmd/hotty-surf`, until
+v0.7 is published: see *What it needs*) makes, runs and ships an app whose
+main is `run.App`:
 
 ```sh
 hotty-surf new hello      # a new app that builds, tests and lints clean
@@ -74,6 +81,25 @@ hotty-surf build -wasm hello   # a static page: TinyGo's wasm in xterm.js
 
 `run` draws the app in character cells where the terminal is no hotty
 host. `hotty-surf help` lists every command, and each takes `-h`.
+
+### What it needs
+
+| Tool | Version | For |
+| --- | --- | --- |
+| Go | 1.26 | everything |
+| [templ](https://templ.guide) | 0.3.1118 | a view's Go from its `.templ` (`templ generate`) |
+| [msgp](https://github.com/tinylib/msgp) | 1.6.5 | the kept state's codec (`go generate`) |
+| [TinyGo](https://tinygo.org) | 0.43.0 | `build -wasm` (`$HOTTY_SURF_TINYGO` or PATH) |
+| hotty-blitz's `hotty` | 0.8 | `shot` and `ctl shot` render with it (`$HOTTY_SURF_HOTTY` or PATH); build it from [hotty-blitz](https://github.com/neuroplastio/hotty-blitz) |
+
+`run` and `serve` generate templ's and msgp's code themselves as you save;
+`go test` and `go build` read what was generated last, so after an edit
+made without them, run `templ generate` and `go generate`.
+
+v0.7 isn't published yet: `go get neuroplast.io/hotty-surf` gets v0.6.3,
+an older API. Until it is, install `hotty-surf` from a checkout
+(`go install ./cmd/hotty-surf`); `hotty-surf new` then writes an app whose
+go.mod replaces hotty-surf with that checkout.
 
 A program that owns its terminal shows a surface in part of its screen
 with `surftea` (Bubble Tea,

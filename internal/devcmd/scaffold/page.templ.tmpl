@@ -12,14 +12,20 @@ import (
 templ Page(a *App) {
 	<main class="flex flex-col gap-4 p-4">
 		<h1 class="text-lg font-semibold">APPNAME</h1>
-		<p class="text-sm text-muted-foreground">Clicked { strconv.Itoa(a.Count) } times.</p>
-		<div class="flex gap-2">
-			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "add", surf.Click(a.Add))}) {
-				Add one
+		<p class="text-sm text-muted-foreground">Count: { strconv.Itoa(a.Count) }</p>
+		// A form's Submit hears Enter in its field and its submit button.
+		<form class="flex gap-2" { surf.On(ctx, "add", surf.Submit(a.Add))... }>
+			@ui.Input(ui.InputProps{
+				Value:       a.By,
+				Placeholder: "1",
+				Attrs:       surf.On(ctx, "by", surf.Input(a.SetBy)),
+			})
+			@ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
+				Add
 			}
 			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "reset", surf.Click(a.Reset))}) {
 				Reset
 			}
-		</div>
+		</form>
 	</main>
 }

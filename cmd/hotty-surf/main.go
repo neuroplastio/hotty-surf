@@ -29,6 +29,12 @@
 // socket in $XDG_RUNTIME_DIR/hotty-surf ($HOTTY_SURF_SOCK to choose
 // another). shot and ctl shot find hotty in $HOTTY_SURF_HOTTY or on PATH,
 // and build finds TinyGo in $HOTTY_SURF_TINYGO or on PATH.
+//
+// The tools an app needs: Go 1.26; templ 0.3.1118 and msgp 1.6.5, which
+// run and serve run themselves as you save (go test and go build read
+// what they generated last); TinyGo 0.43.0 for build -wasm; and
+// hotty-blitz's hotty 0.8 for shot and ctl shot
+// (github.com/neuroplastio/hotty-blitz).
 package main
 
 import (
@@ -77,6 +83,11 @@ Every command takes -h. run or serve and ctl meet at a unix socket in
 $XDG_RUNTIME_DIR/hotty-surf ($HOTTY_SURF_SOCK to choose another). shot and
 ctl shot find hotty in $HOTTY_SURF_HOTTY or on PATH, and build finds TinyGo
 in $HOTTY_SURF_TINYGO or on PATH.
+
+The tools an app needs: Go 1.26; templ 0.3.1118 and msgp 1.6.5, which run
+and serve run themselves as you save (go test and go build read what they
+generated last); TinyGo 0.43.0 for build -wasm; and hotty-blitz's hotty 0.8
+for shot and ctl shot (github.com/neuroplastio/hotty-blitz).
 `
 
 const usage = `usage:

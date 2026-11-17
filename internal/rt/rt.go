@@ -19,6 +19,7 @@ type Handlers struct {
 	Focus   func(bool)
 	Outside func()
 	Hover   func(bool)
+	Submit  func()
 }
 
 // A Frame is one render's registrations.

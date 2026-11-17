@@ -59,8 +59,13 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   here.
 - `ctl shot` renders through hotty-blitz's `hotty render`; the spike's
   headless shot (build, run, render, exit) is L4's.
-- Tasks' and nav's `style/app.css` have no build.sh until `hotty-surf
-  build` exists (L4): they are edited by hand.
+- **Open question: an app's own CSS build** (a hook the reloader runs,
+  or a `hotty-surf build` step). L4 removed the reloader's `style/build.sh`
+  hook, which nothing used or documented. An app that wants its own
+  Tailwind build runs a watcher beside the reloader that writes
+  `style/app.css` (`tailwindcss --watch -o style/app.css`): the reloader
+  takes that write as a css save, and lint's class rule reads app.css.
+  Tasks' and nav's app.css are edited by hand.
 - `hotty-surf run` needs a hotty host; it has no cells fallback yet.
 - A process that dies before its hello makes a reload wait its 10 s.
 - kit.css has no `.dialog`, `.toaster` or `.toast` rules (the spike's

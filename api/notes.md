@@ -1262,3 +1262,83 @@ approved with changes, applied as written:
   not a break, once a shot needs them.
 - **Rows the host chose** (a placement with Rows 0) are what the program
   says: one that reads the place reply's Rows says those.
+
+## L4: what the trial needed (a pack of its own)
+
+The L4 trial (a fresh agent with the README and `help` only, building a
+todo app, 2026-11-17) found two things no app could do.
+
+- **Enter in a text field.** The host keeps Enter in a field: it commits
+  the field (`change`) and submits the field's form (`submit`, SPEC §9),
+  and no key reaches the program. surf dropped `submit`, so nothing could
+  act on it. **`surf.Submit(fn func())`** on a form hears it, and a submit
+  button's click; fn takes no fields, since a form's values are the app's
+  already, through its fields' Input and Check (surf's fields are
+  controlled). The alternative, `func(fields [][2]string)`, would give an
+  app a second copy of its own state; it is an addition later if an
+  uncontrolled form needs it. `surf.Key`'s doc says Enter in a field is
+  Submit's. cells submits as the SPEC says already.
+- **`surftest.Rig.Key` said "the surface took it"** for Enter in a field
+  while no handler ran. It is true that the surface took it (the field
+  used it, and the program never sees it), so the result stays and its doc
+  says what true means: the host's element or a Key handler took it, and a
+  test reads what a handler did in the document. surftest's own doc and
+  example, which pressed Enter as if it added a task, now say the form's
+  Submit does.
+- **A field's value and a check box's state** are the host's, which its
+  document doesn't show: a value or checked attribute is only where the
+  field starts. **`Rig.Value(sel) string`** and **`Rig.Checked(sel)
+  bool`** read them, and fail the test on an element that isn't such a
+  field.
+
+### As reviewed (p-767, 2026-11-17): all three, docs and examples changed
+
+The reviewer approved the three names and kept Rig.Key's meaning. Applied
+exactly:
+- **Submit's doc** is the review's, with its four points: a field outside a
+  form only commits on Enter; a submit button's own Click runs first, so the
+  action goes on the form alone; which buttons submit (none or
+  type="submit"; ui.Button with `Attrs: templ.Attributes{"type":
+  "submit"}`); and on an element that isn't a form it is a fault. **The
+  fault** is surf's: a render that puts a Submit on an element that isn't a
+  `<form>` records it, and surftest fails the test naming the element, as it
+  fails a duplicate `On`.
+- **surf.Key's sentence** is the review's: Enter commits the field and
+  submits its form, which the form's Submit hears.
+- **Value's doc** says a select's is its picked option's value.
+  **surftest's package doc** says a field's value and a box's state are the
+  host's, and a selector with `[checked` or `[value` that matches nothing
+  fails with that hint.
+- **Rig.Key's result is named** `taken`, as Surface.Key's and
+  cells.Screen.Key's are. The API file lists no result names, so the lock
+  doesn't move.
+- **`ExampleSubmit`**: a form with `surf.Submit(a.Add)`, a field with Input,
+  and a ui.Button of type submit with no `surf.On`. Its doc shows the
+  .templ and the test's lines; TestExampleSubmit drives it (Enter and the
+  button both add, and the field reads "" after).
+- **examples/hello and the scaffold** put their field and their button in a
+  form whose Submit acts. hello's name field and Wave button: Enter in the
+  name waves, and TestWave presses it. The scaffold had no field, so it
+  gains a step field ("Count: N", Add adds the step, 1 when it says none),
+  and its TestApp types a step and presses Enter. That puts the idiom in
+  the app `hotty-surf new` writes.
+- **The risk lean, a lint rule:** `button-type`, a raw `<button>` in a raw
+  `<form>` that doesn't say its type. The kit's buttons say theirs.
+
+### Also from the trial
+
+None of these is a name, but each changes what an app's author sees:
+- **lint's class rule:** a class that neither ui.Stylesheet, the app's
+  .css, nor a `<style>` in a .templ defines is a finding, for every app.
+  The reloader's `style/build.sh` hook (L0's, above), which nothing used
+  or documented, is gone, and with it the rule's switch. An app's own CSS
+  build is an open question on the board. A watcher writing
+  `style/app.css` works today.
+- **msgp's codecs are regenerated on a save,** by msgp's generator as a
+  library. That adds `golang.org/x/tools` to the module graph, for the
+  reloader only: an app's own build doesn't link it.
+- **`hotty-surf new` from a checkout** writes a go.mod that replaces
+  hotty-surf with that checkout, until v0.7 is published.
+- **The tools and their versions** (Go, templ, msgp, TinyGo, hotty) are in
+  the README, `help` and `new`'s output, and build's and shot's errors
+  name the one missing.
