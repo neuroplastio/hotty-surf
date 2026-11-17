@@ -126,8 +126,11 @@ func nativeKind(n *html.Node) (kind string, multiline bool) {
 	return "", false
 }
 
-// keymapsOf are the data-keys values from the root down to n (SPEC §10.2),
-// as the host and cells.Screen read them.
+// keymapsOf are the data-keys values from the root down to n (SPEC §10.2)
+// as written, as a host reads them: a KeyScope's bindings are the
+// program's. It is not rt.NativeKeyDefault's walk, which reads a scope's
+// data-hotty-default-keys so that a field's own key stays the field's
+// when the scope's binding declines; keep the two apart.
 func keymapsOf(n *html.Node) []string {
 	var vs []string
 	for e := n; e != nil; e = e.Parent {

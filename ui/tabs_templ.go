@@ -208,7 +208,7 @@ func tabs(v *tabsView) templ.Component {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", scopeAttrs(ctx, kitOn(ctx, v.tabID(i), v.handlers(i)...)))
+				templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", scopeWithKeys(ctx, kitOn(ctx, v.tabID(i), v.handlers(i)...), v.keys(i)))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

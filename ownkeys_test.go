@@ -153,3 +153,10 @@ func TestOwnKeysPlatform(t *testing.T) {
 		t.Fatalf("super: %v", k)
 	}
 }
+
+// Before Attach there is no platform to read a keymap with: none.
+func TestOwnKeysBeforeAttach(t *testing.T) {
+	if k := ownKeysSurface().OwnKeys(); k != nil {
+		t.Fatalf("before Attach: %v", k)
+	}
+}

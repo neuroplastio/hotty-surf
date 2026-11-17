@@ -361,3 +361,27 @@ func TestListOwnKeys(t *testing.T) {
 		}
 	}
 }
+
+// A text field under a KeyScope that binds ctrl+a: the host gives ctrl+a
+// to the program (the scope's data-keys as written), so OwnKeys leaves it
+// out and Bindings lists it, though the field's keymap has it.
+func TestOwnKeysFieldUnderScope(t *testing.T) {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		field := ui.Input(ui.InputProps{Attrs: surf.On(ctx, "q", surf.Input(func(string) {}))})
+		return keysScope([]string{"ctrl+a"}, func(string) bool { return true }).Render(templ.WithChildren(ctx, field), w)
+	})
+	s := surf.New("t", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#q")
+	own := s.OwnKeys()
+	if slices.Contains(own, "ctrl+a") || !slices.Contains(own, "ctrl+c") {
+		t.Fatalf("OwnKeys %v: want ctrl+c and not ctrl+a", own)
+	}
+	bound := false
+	for _, b := range ui.Bindings(s) {
+		bound = bound || b.Key == "ctrl+a"
+	}
+	if !bound {
+		t.Fatalf("Bindings %v lack ctrl+a", ui.Bindings(s))
+	}
+}

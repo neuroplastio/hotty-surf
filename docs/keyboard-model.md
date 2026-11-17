@@ -172,6 +172,21 @@ around an open dialog can intercept Escape before the dialog default.
 Native and kit controls use the same scope and handler order in cells and
 on a host.
 
+## Routing
+
+A program that decides where a key goes before the surface hears it (a
+multiplexer, or cells) offers the key to the surface first when
+`Surface.Chars` says the focused element types it, when
+`Surface.OwnKeys` lists it, or when `ui.Bindings` binds it; otherwise
+the key is its own. The surface then takes it or not (`Surface.Key`'s
+taken), and a key it doesn't take goes back to the program's keymap.
+
+The three don't overlap: characters are Chars', the focused element's
+other keys OwnKeys', and the scopes' bindings Bindings'. Tab and
+Shift+Tab are the host's, in none of them. OwnKeys reads the focused
+element alone, so a kit control declares its keys on the element that
+takes focus (K32).
+
 ## Menus and palettes
 
 The labels serve the user's view of the keys too:

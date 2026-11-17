@@ -201,7 +201,9 @@ func (s *Surface) Focused() string {
 // native elements only: the kit's Select and DropdownMenu don't pick by
 // characters in v0.7, so an open one is CharsBound, as a native select
 // multiple is; a field composing (IME) takes every key, which it doesn't
-// say. It runs on the driver's goroutine, as Event does.
+// say. How a program routes a key with it is the keyboard model's
+// (docs/keyboard-model.md, Routing). It runs on the driver's goroutine,
+// as Event does.
 func (s *Surface) Chars() Chars {
 	return charsOf(s.byID[s.focused])
 }
@@ -209,24 +211,30 @@ func (s *Surface) Chars() Chars {
 // OwnKeys are the keys the focused element takes itself, ahead of the
 // program's bindings, other than characters (Chars says those; space is
 // one only in a text field, which types it), as hotty names them, sorted.
-// They are for a program that decides where a key goes before the
-// surface hears it (a multiplexer, or cells), to offer these to the
-// surface first:
-//   - a native control's (SPEC §10.2): a text field's keymap as the host
-//     and cells.Screen resolve it (the platform's default, then each
-//     data-keys from the root down), with shift on each move, leaving out
-//     a key it gives the program, a prefix or a scroll; a select's, a date
-//     or time field's; a button's, a link's, a check box's space and Enter;
-//   - a kit control's own, those it gives the program on itself for its
-//     Key handler to take (a list's arrows, a combobox's Enter).
+// They are a native control's (SPEC §10.2) and a kit control's own:
+//   - a text field's keymap as the host resolves it: the platform's
+//     default, then the data-keys from the root down as written, so a
+//     KeyScope's bindings are the program's. A move is listed with shift
+//     too; a key the keymap gives the program, a prefix or a scroll is
+//     not listed.
+//   - a select's, a date or time field's, and a button's, link's, check
+//     box's or radio button's keys, as SPEC lists them, each with shift.
+//   - a kit control's own: those it gives the program on the focused
+//     element itself (a list's arrows, a combobox's Enter), for its Key
+//     handler to take.
 //
-// Tab and Shift+Tab are never in it (the host's), nor a KeyScope's
-// bindings (ui.Bindings lists them), nor an app's Key handler's keys,
+// Tab and Shift+Tab are never in it, nor an app's Key handler's keys,
 // which declare none: an app that wants a key ahead of the program's
-// bindings binds it in a KeyScope. A disabled element and nothing
-// focused have none. It reads the last document the surface sent and its
-// focus, as Chars does, and runs on the driver's goroutine.
+// bindings binds it in a KeyScope. A disabled element, nothing focused
+// and a surface not attached (no platform yet) have none. How a program
+// routes a key with OwnKeys, Chars and ui.Bindings is the keyboard
+// model's (docs/keyboard-model.md, Routing). It reads the last document
+// the surface sent and its focus, as Chars does, and runs on the
+// driver's goroutine.
 func (s *Surface) OwnKeys() []string {
+	if s.out == nil {
+		return nil
+	}
 	return ownKeys(s.byID[s.focused], s.platform)
 }
 

@@ -2645,3 +2645,38 @@ Questions for the review:
 3. `[]string`, or a set type (`func(key string) bool`) for routing? The
    slice is what a palette or a help line shows; plx can build its own
    set from it.
+
+Reviewed (p-796, ~/.cache/hotty-surf-l5/review-ownkeys.md): OwnKeys was
+approved. The questions were settled as: the element alone (NavList
+declares on its rows and its filter, not its container); keep a readonly
+field's edits; keep `[]string`. The review added kit rule K32: a kit
+control declares its keys on the element that takes focus. Applied:
+
+- The routing rule is written once, in docs/keyboard-model.md, under
+  "Routing". OwnKeys', Chars' and ui.Bindings' docs point at it.
+  - The review's text named `Overlays`. v0.7 has no such name; an open
+    kit overlay's keys are declared on the element that keeps focus
+    (K32), so OwnKeys lists them. The rule is written without it.
+- OwnKeys' doc says "as the host resolves it": the data-keys as
+  written, so a KeyScope's bindings are the program's.
+  - TestOwnKeysFieldUnderScope pins it: a field under a scope binding
+    ctrl+a leaves ctrl+a out of OwnKeys, and Bindings lists it.
+  - keymapsOf and rt.NativeKeyDefault's walk each name the other, so
+    nobody merges them.
+- Before Attach (no platform), OwnKeys is nil (TestOwnKeysBeforeAttach).
+- The readonly edits are locked in TestReadonlyKeepsCharsVector, beside
+  Chars' case.
+- TestOwnKeysKit has a case per kit control that takes keys: List row,
+  NavList row and filter, Combobox, Select trigger, Slider thumb,
+  DropdownMenu open and closed, Tabs, Command input. It found two K32
+  breaks in the kit, both fixed here:
+  - Tabs declared nothing; its selected tab took arrow_left, arrow_right,
+    Home and End undeclared. The tab now declares them (tabs.go keys,
+    tabs.templ).
+  - DropdownMenu's handler is on its root, but the keyboard stays on the
+    trigger, which declared only Enter and Space while open. The trigger
+    now declares what the handler takes: arrow_down and arrow_up while
+    closed, and the arrows, Home, End, Enter, Space and Escape while
+    open.
+  - A menu item never takes focus (aria-activedescendant on the trigger),
+    so there is no item case.
