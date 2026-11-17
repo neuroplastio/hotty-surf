@@ -18,6 +18,8 @@ does for a few of its components. This is the subset (v0.7, L1 and L3).
   `justify-center`). Too little room is taken from the widest item, or
   with `flex-wrap` the items go on to more lines. A
   column (`flex-col`, and `grid`, taken as a column) stacks its items.
+  `flex-col-reverse`, `flex-row-reverse` and the inline
+  `flex-direction` lay them the other way.
 - **Gap and padding**: `gap-*`, `gap-x-*`, `gap-y-*`, `p-*`, `px-*`,
   `py-*`, `pt-*`, `pb-*`, `pl-*`, `pr-*`, and the inline `gap` and
   `padding`. Tailwind's step is 4px; a column is taken as 8px and a row as
