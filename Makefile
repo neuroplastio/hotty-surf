@@ -30,7 +30,7 @@ CAP       ?=
 # internal/apitool the API lock's tools.
 SUBMODULES := surftea internal/apitool
 
-.PHONY: check fmt tidy gen vet lint test tinygo api api-check api-frozen api-approve pack coverage print-cap clean
+.PHONY: check fmt tidy gen vet lint test canary tinygo api api-check api-frozen api-approve pack coverage print-cap clean
 
 check: fmt tidy gen vet lint test tinygo api-check coverage   ## the gate
 
@@ -57,17 +57,22 @@ gen:    ## fails when a generated file (templ's, msgp's) is not what its source 
 vet:
 	$(GO) vet ./...
 	$(GO) vet -tags surfdev ./...
+	GO="$(GO)" sh scripts/templmod-check.sh vet
 	@for m in $(SUBMODULES); do $(GO) -C $$m vet ./... || exit 1; done
 
 lint:   ## staticcheck, pinned; from the module cache when it has it
 	GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) ./...
 	GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) -tags surfdev ./...
+	GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org GO="$(GO)" STATICCHECK=$(STATICCHECK) sh scripts/templmod-check.sh lint
 	@for m in $(SUBMODULES); do (cd $$m && GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) ./...) || exit 1; done
 
 test:   ## the tests, with the race detector
 	$(GO) test -race ./...
 	$(GO) test -race -tags surfdev ./internal/devchild/...
 	@for m in $(SUBMODULES); do $(GO) -C $$m test -race ./... || exit 1; done
+
+canary:   ## mods/ applied to each upstream's latest, and its tests (gov P-7; weekly in CI)
+	GO="$(GO)" sh scripts/canary.sh
 
 # The examples' release wasm, as TinyGo builds it (gov NEIO-15).
 # scripts/wasm-stream.sh holds its stream to Go's, with node.

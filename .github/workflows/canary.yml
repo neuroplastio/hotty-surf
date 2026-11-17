@@ -1,0 +1,26 @@
+# Canary: the sets under mods/ applied to their upstreams' latest, and
+# their tests, every week (gov P-7). A red run is the set's owner's work,
+# tracked on the vault's board.
+#
+# GitHub's runners only, and only while the repository is public (gov
+# NEIO-2), as CI.
+name: Canary
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: canary
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - run: make CAP= canary

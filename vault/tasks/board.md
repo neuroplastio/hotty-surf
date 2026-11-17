@@ -49,6 +49,14 @@ v0.6's board follows below as the record; main keeps v0.6.3.
 
 ### Found in L1, for later legs
 
+- L2: Keep's get takes a driver busy past 3 s for dropped, and runs get
+  off the driver (fix 24, by design). L2's longer handlers should stay
+  under it, or the wait should grow.
+- A later pack: surftest can't say where the keyboard is. A test can't
+  tell "on X" from "nothing focused" when X holds the outermost Key;
+  `Rig.Focused()` would be an API change.
+- mods/templ's canary is weekly in CI (`make canary`); a red run goes
+  here.
 - `ctl shot` renders through hotty-blitz's `hotty render`; the spike's
   headless shot (build, run, render, exit) is L4's.
 - Tasks' and nav's `style/app.css` have no build.sh until `hotty-surf

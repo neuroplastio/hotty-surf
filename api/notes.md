@@ -665,6 +665,21 @@ What took the floor from about 2 ms to under 1:
   -count=20` (git's exit 128 on a test's temporary module). TestRun's
   waits are two minutes, since a loaded machine takes its first build
   past 30 s.
+- **mods/templ in the gate and the canary.**
+  - `make vet` and `make lint` check internal/devchild's surftemplmod file
+    against the patched templ. scripts/templmod-check.sh builds the
+    reloader's go.work for this repository (internal/templmod/work) and
+    runs vet and staticcheck with `-tags surfdev,surftemplmod` under it.
+    Plain vet and lint can't compile the file.
+  - `make canary` (scripts/canary.sh) applies mods/templ to templ's
+    default branch and runs its runtime tests. CI runs it weekly
+    (.github/workflows/canary.yml, gov P-7). It applies with `git apply`
+    rather than `git am`, which would need a committer identity in the
+    throwaway clone; the patch is the same. It was green at templ
+    9a0eb3c (2026-11-12). A red canary goes on the board.
+- **Keep's get waits 3 s for a busy driver** (fix 24) and then takes it for
+  dropped and runs get off the driver. A handler busy longer than that
+  is by design, and a seam for L2's longer handlers.
 
 ### ui's behaviour components
 

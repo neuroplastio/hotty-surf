@@ -75,7 +75,8 @@ goes to the renderer's buffer.
   attribute asks for nothing. A textarea's children are its value and
   aren't diffed. A select (not `multiple`) is a field too: its value is
   the option its markup chooses, and its options' `selected` isn't
-  diffed. A field that enters the document again starts at rev 0, as on
+  diffed; one whose markup chooses none asks for nothing, as an input
+  without a value doesn't. A field that enters the document again starts at rev 0, as on
   the host, unless the host morphs it (an `inner` of its parent, the same
   id under the same parent), where it keeps its rev.
 

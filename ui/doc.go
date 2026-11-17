@@ -6,7 +6,7 @@
 // Every component follows one pattern:
 //
 //   - A component is a function returning a templ.Component, named as
-//     Basecoat names it: Button, DropdownMenu, NativeSelect. Content goes in
+//     Basecoat names it: Button, DropdownMenu, Select. Content goes in
 //     templ's children block: @ui.Button(ui.ButtonProps{…}) { Save }.
 //   - Its attributes are one struct, <Name>Props, whose zero value is
 //     Basecoat's default. Every Props has Class, for Tailwind classes added
