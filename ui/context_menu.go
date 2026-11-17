@@ -55,11 +55,19 @@ type ContextMenuState struct {
 // Escape gives it back to the element that had it, and a press outside the
 // menu closes it.
 //
-// The area is a block, wrapped in an element of the kit's; a menu per row
-// is a ContextMenu per row. A host sends the key that opens a menu as it
-// does every key the focused element doesn't use, and a host with no
-// secondary press sends none, so the keys always open it. In cells the menu
-// is drawn after the area, as a DropdownMenu's is after its button.
+// The area is a block (a card, a pane, a whole list or table),
+// wrapped in an element of the kit's, and the menu's items act on it.
+// A menu per row of a list or table is not this component's: the app
+// puts surf.Secondary on its rows, keeps which row and where, and
+// draws a ui.Menu at that cell itself.
+//
+// A host sends the key that opens a menu as it does every key the focused
+// element doesn't use, and a host with no secondary press sends none, so
+// the keys always open it. A key opens it under the area, not under the
+// focused element: a focus event carries no area (a proposal for hotty's
+// SPEC). It doesn't flip at the surface's edges: a host placing popovers
+// within the surface is the same proposal's. In cells the menu is drawn
+// after the area, as a DropdownMenu's is after its button.
 //
 // It is the surface's one open popup, as a DropdownMenu is: one opening
 // closes the other.

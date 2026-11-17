@@ -1787,3 +1787,25 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
    (hottytest types f1–f12 and context_menu as xterm does, and
    hotty.DecodeKeys reads them). This branch pins that commit until
    hottytest v0.8.2 is tagged, and the key tests type through the Rig.
+
+### As reviewed (p-796, review-ctx.md): applied
+
+- ContextMenu, ContextMenuProps{ID, Items, Class} and the opaque
+  ContextMenuState kept as approved (Q4: no Open).
+- Q1: the area paragraph replaced: the area is a block; a menu per row is
+  surf.Secondary on the rows plus a ui.Menu the app draws.
+- Q2, Q3: the doc names both host limits (a key opens it under the area;
+  no flip). The SPEC proposal is deferred (p-653), not made now.
+- Q5: the hotty-go pseudo-version stays on the branch; hottytest v0.8.2
+  is tagged in the release batch before v0.7.0 (p-653, P-5).
+- **Added `ui.Menu(MenuProps{ID, Items, Highlight, OnHighlight, Class})`**
+  with the review's texts: the `[role=menu]` panel alone, shown, its
+  highlight the app's (K25). It renders through DropdownMenu's view and
+  items (`menuView.ctl`), takes no part in the surface's one open popup,
+  and a choice closes nothing. A highlight out of range or on a disabled
+  item is none. Its panel sits in the flow (`position: static`), so a
+  surface whose view it is draws it at its top left. TestMenuControlled,
+  ExampleMenu.
+- K29 (menus: three ways in, one panel) is the reviewer's.
+- G-menu-rows (MenuItem slots for all three menus) is next after the
+  toast pack (p-653's queue).

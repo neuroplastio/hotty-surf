@@ -153,6 +153,7 @@ pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func KeyScope([]string, func(string) bool) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Menu(MenuProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Progress(ProgressProps) templ.Component
@@ -371,6 +372,12 @@ pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnCheckedChange func(bool
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Role string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Highlight int
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Items []MenuItem
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, OnHighlight func(int)
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Class string

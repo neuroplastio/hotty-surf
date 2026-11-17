@@ -105,7 +105,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.DropdownMenuProps`: a menu's attributes.
 - `ui.ContextMenu`: plx's ask (b): a menu of actions on an area, opened at the pointer by a secondary press (surf.Secondary) or under the area by shift+f10 and the Menu key, with no trigger. hotty-surf v0.6.3's context menu's behaviour, ported onto DropdownMenu's code; neither hotty-a2ui nor the spike has one. Not a DropdownMenu option: it has no button, its children are the area, and it opens at a cell.
 - `ui.ContextMenuProps`: a context menu's attributes.
-- `ui.ContextMenuProps.ID`: names its elements, as DropdownMenuProps.ID; one per row.
+- `ui.ContextMenuProps.ID`: names its elements, as DropdownMenuProps.ID; one per area.
 - `ui.ContextMenuProps.Items`: MenuItem, as DropdownMenu's: the same items, groups, roles and OnSelect.
 - `ui.ContextMenuProps.Class`: as every Props, on the area's wrapper.
 - `ui.ContextMenuState`: open, where, the item highlighted, and the element to give the keyboard back to (K2 (b)); no methods: only the user opens it.
@@ -575,3 +575,10 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
 - `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
+- `ui.Menu`: plx's overlay menu (G-menu-pointer): a menu the app places and whose highlight it holds; the panel DropdownMenu and ContextMenu already draw, as a controlled component.
+- `ui.MenuProps`: a Menu's attributes, as every Props (K1: a behavioural component, ID and Class, no Attrs).
+- `ui.MenuProps.ID`: K2(d): its items' IDs need a prefix to stay distinct.
+- `ui.MenuProps.Items`: K12: the same MenuItem as DropdownMenu and ContextMenu.
+- `ui.MenuProps.Highlight`: K25: the app holds the highlight, as a List's selection; plx holds an index already.
+- `ui.MenuProps.OnHighlight`: K25: the component asks for a change of highlight, from the pointer and the keys.
+- `ui.MenuProps.Class`: as every Props, on the menu's wrapper.

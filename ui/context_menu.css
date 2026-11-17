@@ -3,3 +3,6 @@
 .dropdown-menu.context-menu { display: block; position: relative; }
 .dropdown-menu.context-menu > [data-popover] { min-width: calc(var(--spacing) * 32); }
 .dropdown-menu.context-menu > [data-popover][data-at] { margin-top: 0; }
+/* Menu: the panel shown as it is, in the flow, where the app put it. */
+.dropdown-menu.menu-panel { display: block; }
+.dropdown-menu.menu-panel > [data-popover] { position: static; margin-top: 0; }

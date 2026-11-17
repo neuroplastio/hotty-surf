@@ -131,3 +131,20 @@ func ExampleToastAction() {
 		Label: "Undo", OnSelect: func() {},
 	}}
 }
+
+// A menu the app places itself (a surface of its own at the pointer): the
+// surface's whole view is a Menu, its highlight the app's.
+func ExampleMenu() {
+	hi := -1
+	items := []ui.MenuItem{
+		{Label: "Split right", Keys: "mod+d", OnSelect: func() {}},
+		{Label: "Close", Variant: ui.Destructive, OnSelect: func() {}},
+	}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Menu(ui.MenuProps{
+			ID: "pane-menu", Items: items, Highlight: hi,
+			OnHighlight: func(i int) { hi = i },
+		}).Render(ctx, w)
+	})
+	_ = surf.New("pane-menu", view, ui.Stylesheet())
+}
