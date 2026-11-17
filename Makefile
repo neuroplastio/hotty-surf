@@ -30,7 +30,7 @@ CAP       ?=
 # internal/apitool the API lock's tools.
 SUBMODULES := surftea internal/apitool
 
-.PHONY: check fmt tidy gen vet lint test canary tinygo api api-check api-frozen api-approve pack coverage print-cap clean
+.PHONY: check fmt tidy gen vet lint test canary tinygo api api-check api-frozen api-approve pack coverage oracle kit print-cap clean
 
 check: fmt tidy gen vet lint test tinygo api-check coverage   ## the gate
 
@@ -133,6 +133,19 @@ coverage:
 	sh scripts/coverage-md.sh "$$t" || exit 1; \
 	if ! diff -q docs/coverage.md "$$t" >/dev/null; then \
 	  echo "docs/coverage.md is not what ui/coverage.tsv makes: sh scripts/coverage-md.sh"; exit 1; fi
+
+# The oracle of ui's render tests: Basecoat's Jinja macros translated to templ
+# (internal/jinja), and jinja2's own render of its cases. Needs python3 with
+# jinja2; run it on a Basecoat bump, then make test.
+oracle:
+	cd internal/jinja && $(CAP) python3 -I gen/jinja2templ.py ../basecoat/jinja . && \
+	  $(CAP) mise x -- templ fmt . >/dev/null && $(CAP) mise x -- templ generate -path . >/dev/null && \
+	  $(CAP) python3 -I gen/jinja2templ.py --testdata ../basecoat/jinja .
+
+# The kit's stylesheet, ui/kit.css: Basecoat's CSS (internal/basecoat) and the
+# Tailwind utilities, built by ui/style (node, npm install there first).
+kit:
+	cd ui/style && $(CAP) node build.mjs
 
 print-cap:   ## the CAP the steps run under, for a script that builds outside make
 	@echo '$(CAP)'
