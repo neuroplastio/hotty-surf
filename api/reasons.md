@@ -103,6 +103,12 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.Tab.Disabled`: a tab that can't be chosen.
 - `ui.DropdownMenu`: Basecoat's dropdown menu: Jinja markup with dropdown-menu.js translated; replaces the spike's hand-written Popup, Menu, MenuItem, MenuCheck, MenuRadio, MenuSub, MenuDanger, MenuSeparator, MenuLabel and Trigger.
 - `ui.DropdownMenuProps`: a menu's attributes.
+- `ui.ContextMenu`: plx's ask (b): a menu of actions on an area, opened at the pointer by a secondary press (surf.Secondary) or under the area by shift+f10 and the Menu key, with no trigger. hotty-surf v0.6.3's context menu's behaviour, ported onto DropdownMenu's code; neither hotty-a2ui nor the spike has one. Not a DropdownMenu option: it has no button, its children are the area, and it opens at a cell.
+- `ui.ContextMenuProps`: a context menu's attributes.
+- `ui.ContextMenuProps.ID`: names its elements, as DropdownMenuProps.ID; one per area.
+- `ui.ContextMenuProps.Items`: MenuItem, as DropdownMenu's: the same items, groups, roles and OnSelect.
+- `ui.ContextMenuProps.Class`: as every Props, on the area's wrapper.
+- `ui.ContextMenuState`: open, where, the item highlighted, and the element to give the keyboard back to (K2 (b)); no methods: only the user opens it.
 - `ui.DropdownMenuProps.ID`: names the menu's elements.
 - `ui.DropdownMenuProps.Trigger`: what the trigger button holds, a component, since it is often an icon and a label.
 - `ui.DropdownMenuProps.Items`: the items, the app's data.
@@ -455,6 +461,20 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `cells.Screen.Focus`: without a host, the pane's focus is the program's; leaving the pane commits a field and blurs the surface.
 - `cells.Screen.Lines`: what the program draws: rows of styled text, which Bubble Tea and a raw program both compose.
 - `cells.Screen.Cursor`: where the program puts the terminal's cursor for a field being typed in.
+- `cells.Screen.Cells`: plx paints a surface in cells in its own theme, into its own grid, mixing fills into the terminal's ground and keeping muted ink legible on them: it needs each cell's colours as the theme's names, which Lines' SGR can't carry. v0.6's cells gave it runs in roles; Lines alone left plx's two cells hosts with no colour at all (G-cells-colour).
+- `cells.Cell`: one cell of Cells: its text, its colours as roles and its attributes, which plx's grid takes cell by cell.
+- `cells.Cell.Text`: the cell's grapheme cluster; "" marks a wide character's second cell, as a terminal grid has it.
+- `cells.Cell.Fg`: the role of the cell's text.
+- `cells.Cell.Bg`: the role of the cell's fill: a primary button, a selected row, a card.
+- `cells.Cell.Attr`: bold, italic, underline and the focused element's reverse, which colour doesn't replace.
+- `cells.Role`: a theme colour named as the kit's CSS variable, so a program maps it as it already writes those variables (plx's kitVarRoles), and its own var() names pass through. A string, not an enum, so a program's own variables and the opacity Basecoat's tinted fills use need no new names.
+- `cells.Attr`: a cell's text attributes as a set.
+- `cells.Bold`: an attribute.
+- `cells.Dim`: an attribute: a disabled control, a placeholder.
+- `cells.Italic`: an attribute.
+- `cells.Underline`: an attribute: a link, a text field's cells.
+- `cells.Reverse`: the element that has the keyboard, as Lines draws it.
+- `cells.Strike`: an attribute: `s`, `del`, `line-through`, which plx's v0.6 cells drew.
 
 ## surftest
 
@@ -640,6 +660,14 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.ItemDetailProps`: K7: the detail line takes Props like the other CSS-only parts.
 - `ui.ItemDetailProps.Attrs`: K1: the caller may add span attributes except class.
 - `ui.ItemDetailProps.Class`: K1: the caller may add detail classes.
+- `ui.Menu`: plx's overlay menu (G-menu-pointer): a menu the app places and whose highlight it holds; the panel DropdownMenu and ContextMenu already draw, as a controlled component.
+- `ui.MenuProps`: a Menu's attributes, as every Props (K1: a behavioural component, ID and Class, no Attrs).
+- `ui.MenuProps.ID`: K2(d): its items' IDs need a prefix to stay distinct.
+- `ui.MenuProps.Items`: K12: the same MenuItem as DropdownMenu and ContextMenu.
+- `ui.MenuProps.Highlight`: K25: the app holds the highlight, as a List's selection; plx holds an index already.
+- `ui.MenuProps.OnHighlight`: K25: the component asks for a change of highlight, from the pointer and the keys.
+- `ui.MenuProps.Class`: as every Props, on the menu's wrapper.
+
 
 ## L5: what has the keyboard, and lending it (plx's G-keys-decl, G-lend)
 
