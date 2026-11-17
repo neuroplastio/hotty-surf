@@ -105,7 +105,9 @@ func (c *Screen) settle() {
 			}
 		}
 	}
-	if c.focused != nil && !c.attached(c.focused) {
+	if c.focused != nil && (!c.attached(c.focused) || !focusable(c.focused) || hidden(c.focused)) {
+		// An element that stops taking focus loses it, as a browser's
+		// does; the surface keeps the keyboard with nothing focused.
 		c.focused = nil
 	}
 	if c.remembered != nil && !c.attached(c.remembered) {
@@ -223,6 +225,12 @@ func (c *Screen) adopt(t *html.Node, old map[string]*html.Node) {
 			c.remembered = n
 		}
 	})
+}
+
+// hidden says whether n or an element it is in draws nothing
+// (display:none, hidden, …).
+func hidden(n *html.Node) bool {
+	return closest(n, func(m *html.Node) bool { return styleOf(m).display == dNone }) != nil
 }
 
 // fragment parses HTML as the children of ctx, so that rows and items

@@ -139,3 +139,135 @@ func TestClickInALongInput(t *testing.T) {
 		t.Fatalf("the field scrolled away: %q", r.text())
 	}
 }
+
+// A command split across Writes, as a pipe's reads split one, is applied
+// once it is whole.
+func TestSplitWrite(t *testing.T) {
+	c := cells.New(20, 2, nil)
+	cmd := hotty.Doc("t", `<p>hello</p>`)
+	half := len(cmd) / 2
+	if _, err := c.Write([]byte(cmd[:half])); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Write([]byte(cmd[half:])); err != nil {
+		t.Fatal(err)
+	}
+	if l := sgrRE.ReplaceAllString(c.Lines()[0], ""); !strings.Contains(l, "hello") {
+		t.Fatalf("a split command was lost: %q", l)
+	}
+}
+
+// The program's a=blur while the Screen hasn't the keyboard holds:
+// Focus(true) gives it to no element.
+func TestBlurWhileInactive(t *testing.T) {
+	var evs []string
+	c := cells.New(20, 2, func(e hotty.Event) { evs = append(evs, e.Kind+" "+e.Target) })
+	c.Write([]byte(hotty.Doc("t", `<input id="q">`)))
+	c.Key("tab")
+	c.Focus(false)
+	c.Write([]byte(hotty.Blur("t")))
+	evs = nil
+	c.Focus(true)
+	if _, _, ok := c.Cursor(); ok || len(evs) != 0 {
+		t.Fatalf("the program blurred the field, and Focus(true) focused it again: %v", evs)
+	}
+}
+
+// A readonly field moves its caret, and takes the keys that would edit it
+// without editing.
+func TestReadonly(t *testing.T) {
+	var evs []string
+	c := cells.New(20, 2, func(e hotty.Event) { evs = append(evs, e.Kind+" "+e.Value) })
+	c.Write([]byte(hotty.Doc("t", `<input id="q" readonly value="fixed" data-on="input">`)))
+	c.Key("tab")
+	for _, k := range []string{"x", "backspace", "home", "delete"} {
+		if !c.Key(k) {
+			t.Errorf("%s went to the program", k)
+		}
+	}
+	if !c.Paste("y") {
+		t.Error("a paste went to the program")
+	}
+	if col, _, _ := c.Cursor(); col != 0 {
+		t.Errorf("home didn't move the caret: col %d", col)
+	}
+	if len(evs) != 1 || evs[0] != "focus " {
+		t.Fatalf("a readonly field was edited: %v", evs)
+	}
+	if l := sgrRE.ReplaceAllString(c.Lines()[0], ""); !strings.HasPrefix(l, "fixed ") {
+		t.Fatalf("drawn %q", l)
+	}
+}
+
+// A field disabled, or hidden, while it has the keyboard loses it.
+func TestDisabledWhileFocused(t *testing.T) {
+	for _, op := range []hotty.Op{hotty.OpAttr("q", "disabled", ""), hotty.OpAttr("q", "class", "hidden")} {
+		var evs []string
+		c := cells.New(20, 2, func(e hotty.Event) { evs = append(evs, e.Kind+" "+e.Value) })
+		c.Write([]byte(hotty.Doc("t", `<input id="q" data-on="input">`)))
+		c.Key("tab")
+		c.Write([]byte(hotty.Delta("t", []hotty.Op{op})))
+		if c.Key("x") || c.Paste("y") {
+			t.Errorf("%s %s: the field took typing: %v", op.Op, op.Key, evs)
+		}
+		if _, _, ok := c.Cursor(); ok {
+			t.Errorf("%s %s: the field still has a caret", op.Op, op.Key)
+		}
+	}
+}
+
+// A character on a select picks the next option it starts (SPEC §10.2).
+func TestSelectCharacter(t *testing.T) {
+	var evs []string
+	c := cells.New(30, 2, func(e hotty.Event) { evs = append(evs, e.Kind+" "+e.Value) })
+	c.Write([]byte(hotty.Doc("t", `<select id="s"><option value="a">Apple</option><option value="b">Banana</option>`+
+		`<option value="c" disabled>Berry</option><option value="d">blue</option></select>`)))
+	c.Key("tab")
+	for _, k := range []string{"b", "shift+b", "b"} {
+		if !c.Key(k) {
+			t.Fatalf("%s went to the program", k)
+		}
+	}
+	if got := strings.Join(evs, ","); got != "focus ,change b,change d,change b" {
+		t.Fatalf("events %v", got)
+	}
+	if c.Key("z") != true || c.Key("ctrl+b") {
+		t.Fatal("z (no option) isn't the select's, or ctrl+b is")
+	}
+}
+
+// Enter and space on an element that only reports clicks (data-on~=click)
+// are the program's keys (SPEC §10.2).
+func TestEnterOnAClickDiv(t *testing.T) {
+	var evs []string
+	c := cells.New(30, 2, func(e hotty.Event) { evs = append(evs, e.Kind+" "+e.Target) })
+	c.Write([]byte(hotty.Doc("t", `<div id="row" tabindex="0" data-on="click">row</div>`)))
+	c.Key("tab")
+	evs = nil
+	if c.Key("enter") || c.Key("space") || len(evs) != 0 {
+		t.Fatalf("enter or space on a div was taken as a click: %v", evs)
+	}
+}
+
+// a=del without s deletes every surface (SPEC §5.4).
+func TestDelAll(t *testing.T) {
+	c := cells.New(20, 1, nil)
+	c.Write([]byte(hotty.Doc("t", `<p>still here</p>`)))
+	c.Write([]byte(hotty.DelAll()))
+	if l := sgrRE.ReplaceAllString(c.Lines()[0], ""); strings.Contains(l, "still") {
+		t.Fatalf("a=del left the document: %q", l)
+	}
+}
+
+// After Focus(false), a click on a field gives the Screen the keyboard
+// back, as a click on a host's surface does (SPEC §10.1).
+func TestClickAfterFocusFalse(t *testing.T) {
+	var evs []string
+	c := cells.New(20, 2, func(e hotty.Event) { evs = append(evs, e.Kind+" "+e.Target) })
+	c.Write([]byte(hotty.Doc("t", `<input id="q">`)))
+	c.Focus(false)
+	c.Click(1, 0)
+	if !c.Key("x") || strings.Join(evs, ",") != "blur ,press q,focus q" {
+		t.Fatalf("events %v", evs)
+	}
+}

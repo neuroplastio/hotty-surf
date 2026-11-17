@@ -27,7 +27,9 @@ import (
 	"neuroplast.io/hotty-go"
 )
 
-// A Screen is one surface drawn in a rectangle of cells.
+// A Screen is one surface drawn in a rectangle of cells. It is not safe
+// for concurrent use: the program calls it from one goroutine, the
+// driver's, and a tee that writes to it from another goroutine races it.
 type Screen struct {
 	_ struct{}
 
@@ -59,11 +61,16 @@ type Screen struct {
 	// The events an act sends, sent once it is done (flush).
 	queue    []hotty.Event
 	flushing bool
+
+	// What Write was given, read as one stream: a command may come in
+	// more than one Write.
+	sc  hotty.Scanner
+	dec hotty.Decoder
 }
 
 // New makes a Screen cols wide and rows high. events hears each event the
 // Screen sends the surface, on the goroutine of the call that caused it
-// (Write, Key, Paste, Click, Wheel, Focus); it calls events once it has
+// (Write, Key, Paste, Click, Focus); it calls events once it has
 // applied the act, so the callback may write to the Screen (the surface's
 // delta) before it returns, and a call from inside Write is one
 // surf.Surface.Event takes; the program hands it to the
@@ -79,19 +86,18 @@ func New(cols, rows int, events func(hotty.Event)) *Screen {
 	}
 }
 
-// Write takes hotty commands, as a surface writes them to a terminal, one
-// whole command per Write: the document, its placement, and the deltas
-// after. A command the Screen can't apply is an error, as a host's refusal
-// is: the program sends the surface's document again.
+// Write takes hotty commands, as a surface writes them to a terminal: the
+// document, its placement, and the deltas after. It takes them however the
+// writes split them, as a terminal does: a command may come in more than
+// one Write, or several in one, and it applies each once it has all of it.
+// A command the Screen can't apply is an error, as a host's refusal is:
+// the program sends the surface's document again.
 func (c *Screen) Write(p []byte) (int, error) {
-	var sc hotty.Scanner
-	var dec hotty.Decoder
-	segs := append(sc.Feed(p), sc.Flush()...)
-	for _, sg := range segs {
+	for _, sg := range c.sc.Feed(p) {
 		if sg.Kind != hotty.SegmentOSC {
 			continue
 		}
-		m, r := dec.Feed(string(sg.Data))
+		m, r := c.dec.Feed(string(sg.Data))
 		var err error
 		switch r {
 		case hotty.Complete:
@@ -130,8 +136,11 @@ func (c *Screen) Key(key string) (taken bool) {
 // host; taken is false when no field has the keyboard.
 func (c *Screen) Paste(text string) (taken bool) {
 	n := c.focused
-	if c.body == nil || !c.active || !isTextField(n) {
+	if c.body == nil || !c.active || !isTextField(n) || disabled(n) {
 		return false
+	}
+	if has(n, "readonly") {
+		return true
 	}
 	f := c.field(n)
 	if f.ed.Paste(text) {
@@ -230,6 +239,11 @@ func (c *Screen) apply(m hotty.Message) error {
 	if a == "doc" {
 		return c.load(s, string(m.Payload))
 	}
+	if a == "del" && s == "" && hotty.Get(m.Control, "id") == "" {
+		// Every surface (SPEC §5.4).
+		c.del()
+		return nil
+	}
 	if s != c.name && c.body != nil {
 		return nil // another surface's
 	}
@@ -247,9 +261,7 @@ func (c *Screen) apply(m hotty.Message) error {
 		}
 		return nil
 	case "del":
-		c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
-		c.fields = map[*html.Node]*field{}
-		c.changed()
+		c.del()
 		return nil
 	case "delta", "field", "focus", "blur":
 	default:
@@ -292,7 +304,17 @@ func (c *Screen) apply(m hotty.Message) error {
 		}
 		c.focusTo(n, false)
 	case "blur":
+		// The program's blur holds while the Screen hasn't the keyboard
+		// too: Focus(true) gives it to nothing.
 		c.blur()
+		c.remembered = nil
 	}
 	return nil
+}
+
+// del forgets the surface's document, as a=del deletes the surface.
+func (c *Screen) del() {
+	c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
+	c.fields = map[*html.Node]*field{}
+	c.changed()
 }

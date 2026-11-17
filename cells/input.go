@@ -170,6 +170,22 @@ func tabbable(n *html.Node) bool {
 	return err != nil || v >= 0
 }
 
+// activatable is an element space and enter click (SPEC §10.2): a
+// button, a link, a summary, an input that is a button. An element that
+// only reports clicks (data-on~=click) takes no keys.
+func activatable(n *html.Node) bool {
+	switch n.DataAtom {
+	case atom.Button, atom.A, atom.Summary:
+		return true
+	case atom.Input:
+		switch strings.ToLower(attr(n, "type")) {
+		case "button", "submit", "reset", "image":
+			return true
+		}
+	}
+	return false
+}
+
 // clickable is an element that reports a click (SPEC §9).
 func clickable(n *html.Node) bool {
 	switch n.DataAtom {
@@ -541,10 +557,10 @@ func (c *Screen) key(key string) bool {
 				return true
 			}
 		case el.DataAtom == atom.Select:
-			if c.selectKey(el, name) {
+			if c.selectKey(el, key, name) {
 				return true
 			}
-		case clickable(el):
+		case activatable(el):
 			if name == "space" || name == "enter" {
 				c.activate(el)
 				return true
@@ -565,9 +581,25 @@ func (c *Screen) fieldKeymap(el *html.Node) *hotty.Keymap {
 // fieldKey gives a key to a text field, which does what its keymap says.
 // The Screen has no clipboard: copy, cut and paste are the program's (it
 // pastes with Paste).
+//
+// A readonly field takes the keys that would edit it, and does nothing
+// with them; it moves its caret and selects. A disabled one takes nothing.
 func (c *Screen) fieldKey(el *html.Node, key string) bool {
+	if disabled(el) {
+		return false
+	}
 	f := c.field(el)
-	a, changed := f.ed.Key(c.fieldKeymap(el), key)
+	km := c.fieldKeymap(el)
+	if has(el, "readonly") {
+		switch a := km.Lookup(key); {
+		case a == "":
+			return false
+		case a.Moves() || a == hotty.SelectAll || a == hotty.Copy || a == hotty.Submit:
+		default:
+			return true
+		}
+	}
+	a, changed := f.ed.Key(km, key)
 	switch {
 	case a == "":
 		return false
@@ -585,8 +617,10 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 	return true
 }
 
-// selectKey picks a select's option with the arrows, home and end.
-func (c *Screen) selectKey(el *html.Node, name string) bool {
+// selectKey picks a select's option with the arrows, home and end, and
+// with a character: the next option whose label starts with it, ignoring
+// case, going round to the first (SPEC §10.2 Selects).
+func (c *Screen) selectKey(el *html.Node, key, name string) bool {
 	opts := options(el)
 	cur := c.field(el).ed.Value
 	i := slices.IndexFunc(opts, func(o option) bool { return o.value == cur })
@@ -610,7 +644,20 @@ func (c *Screen) selectKey(el *html.Node, name string) bool {
 		p = from(len(opts)-1, -1)
 	case "space", "enter":
 	default:
-		return false
+		text, ok := hotty.KeyText(key)
+		if !ok || len(graphemesOf(text)) != 1 {
+			return false
+		}
+		for k := 1; k <= len(opts); k++ {
+			j := (i + k + len(opts)) % len(opts)
+			if i < 0 {
+				j = k - 1
+			}
+			if !opts[j].disabled && strings.HasPrefix(strings.ToLower(opts[j].label), strings.ToLower(text)) {
+				p = j
+				break
+			}
+		}
 	}
 	if p >= 0 && p != i {
 		c.pick(el, opts[p].value)
