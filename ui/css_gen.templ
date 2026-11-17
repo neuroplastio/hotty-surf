@@ -44,9 +44,13 @@ templ cssBadge(p BadgeProps) {
 
 // cssCard is Card's markup (Basecoat's card.css).
 templ cssCard(p CardProps) {
-	{{ checkAttrs(ctx, "Card", p.Attrs, "class", "data-slot") }}
+	{{ checkSize(ctx, "Card", p.Size, cardSizes) }}
+	{{ checkAttrs(ctx, "Card", p.Attrs, "class", "data-slot", "data-size=Size") }}
 	<div
 		data-slot="card"
+		if p.Size != "" {
+			data-size={ string(p.Size) }
+		}
 		class={ join("card", p.Class) }
 		{ p.Attrs... }
 	>
@@ -224,4 +228,106 @@ templ cssInputGroupAddon(p InputGroupAddonProps) {
 	>
 		{ children... }
 	</span>
+}
+
+// cssAlert is Alert's markup (Basecoat's alert.css).
+templ cssAlert(p AlertProps) {
+	{{ checkVariant(ctx, "Alert", p.Variant, alertVariants) }}
+	{{ checkAttrs(ctx, "Alert", p.Attrs, "class", "data-slot", "role", "data-variant=Variant") }}
+	<div
+		data-slot="alert"
+		role="alert"
+		if p.Variant != "" {
+			data-variant={ string(p.Variant) }
+		}
+		class={ join("alert", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// cssAvatar is Avatar's markup (Basecoat's avatar.css).
+templ cssAvatar(p AvatarProps) {
+	{{ checkSize(ctx, "Avatar", p.Size, avatarSizes) }}
+	{{ checkAttrs(ctx, "Avatar", p.Attrs, "class", "data-slot", "data-size=Size") }}
+	<span
+		data-slot="avatar"
+		if p.Size != "" {
+			data-size={ string(p.Size) }
+		}
+		class={ join("avatar", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</span>
+}
+
+// cssAvatarGroup is AvatarGroup's markup (Basecoat's avatar.css).
+templ cssAvatarGroup(p AvatarGroupProps) {
+	{{ checkAttrs(ctx, "AvatarGroup", p.Attrs, "class", "data-slot") }}
+	<div
+		data-slot="avatar-group"
+		class={ join("avatar-group", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// cssEmpty is Empty's markup (Basecoat's empty.css).
+templ cssEmpty(p EmptyProps) {
+	{{ checkAttrs(ctx, "Empty", p.Attrs, "class", "data-slot") }}
+	<div
+		data-slot="empty"
+		class={ join("empty", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// cssItem is Item's markup (Basecoat's item.css).
+templ cssItem(p ItemProps) {
+	{{ checkVariant(ctx, "Item", p.Variant, itemVariants) }}
+	{{ checkSize(ctx, "Item", p.Size, itemSizes) }}
+	{{ checkItem(ctx, p) }}
+	{{ checkAttrs(ctx, "Item", p.Attrs, "class", "data-slot", "data-variant", "data-size=Size") }}
+	<div
+		data-slot="item"
+		if s := itemVariant(p); s != "" {
+			data-variant={ s }
+		}
+		if p.Size != "" {
+			data-size={ string(p.Size) }
+		}
+		class={ join("item", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// cssItemGroup is ItemGroup's markup (Basecoat's item.css).
+templ cssItemGroup(p ItemGroupProps) {
+	{{ checkAttrs(ctx, "ItemGroup", p.Attrs, "class", "data-slot") }}
+	<div
+		data-slot="item-group"
+		class={ join("item-group", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// cssSkeleton is Skeleton's markup (Basecoat's skeleton.css).
+templ cssSkeleton(p SkeletonProps) {
+	{{ checkAttrs(ctx, "Skeleton", p.Attrs, "class", "data-slot") }}
+	<div
+		data-slot="skeleton"
+		class={ join("skeleton", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
 }

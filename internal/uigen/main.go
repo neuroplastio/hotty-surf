@@ -128,6 +128,8 @@ func check(c Comp, ck Check) string {
 		return fmt.Sprintf("checkVariant(ctx, %q, p.%s, %s)", c.Name, ck.Field, ck.List)
 	case "size":
 		return fmt.Sprintf("checkSize(ctx, %q, p.%s, %s)", c.Name, ck.Field, ck.List)
+	case "call":
+		return ck.List
 	default:
 		return fmt.Sprintf("checkEnum(ctx, %q, %q, p.%s, %s)", c.Name, ck.Field, ck.Field, ck.List)
 	}
