@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"golang.org/x/net/html"
 
@@ -55,18 +54,103 @@ func TestListByKeyboard(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
 	first := a.ID
-	r.Key("tab") // onto the list
 	r.Key("arrow_down")
 	if a.ID == first || a.ID != a.all[1].ID {
 		t.Fatalf("arrow_down showed %q, want %q", a.ID, a.all[1].ID)
 	}
 	r.Key("end")
-	if a.ID != a.all[len(a.all)-1].ID {
+	visible := a.model.Visible()
+	if a.ID != visible[len(visible)-1].ID() {
 		t.Fatalf("end showed %q", a.ID)
 	}
 	pane := r.One("section#book-cells")
 	if c := attrOf(pane.Attr, "class"); !strings.Contains(" "+c+" ", " hidden ") {
 		t.Fatalf("the pane isn't hidden from cells: class %q", c)
+	}
+}
+
+func TestFilterFromLaunch(t *testing.T) {
+	a := New()
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Key("/")
+	for _, k := range strings.Split("input-group/block", "") {
+		r.Key(k)
+	}
+	if a.ID != "input-group/block" {
+		t.Fatalf("filter opened %q", a.ID)
+	}
+}
+
+func TestBookInspection(t *testing.T) {
+	a := New()
+	a.show("button/default")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#save")
+	if events := a.model.Events(a.model.Sel); len(events) == 0 || !strings.Contains(events[0].Text, "save") {
+		t.Fatalf("click event not recorded: %v", events)
+	}
+	a.clearEvents()
+	if events := a.model.Events(a.model.Sel); len(events) != 0 {
+		t.Fatalf("clear left events: %v", events)
+	}
+	a.setProp("Label")("Apply")
+	r.Update()
+	if !strings.Contains(r.HTML(), "Apply") {
+		t.Fatal("changing the Label control did not update the preview")
+	}
+	if src := a.model.Sel.Sources(); len(src) < 2 || !strings.Contains(src[1].Code, "bookButton") {
+		t.Fatalf("missing story source: %+v", src)
+	}
+	if html := a.storyHTML(); !strings.Contains(html, "Apply") {
+		t.Fatalf("HTML tab has no current label: %s", html)
+	}
+}
+
+func TestBookRestore(t *testing.T) {
+	a := New()
+	a.show("badge/default")
+	a.model.SetFilter("badge")
+	a.model.SetTab("props")
+	a.model.ToggleTheme()
+	a.setProp("Label")("Ready")
+	state := *a.Save()
+	b := New()
+	b.Restore(&state)
+	if b.ID != "badge/default" || b.model.Filter != "badge" || b.model.Tab != "props" || b.model.Dark {
+		t.Fatalf("restored book: story %q, filter %q, tab %q, dark %v", b.ID, b.model.Filter, b.model.Tab, b.model.Dark)
+	}
+	if got := b.model.Sel.Controls(); len(got) != 1 || got[0].Value != "Ready" {
+		t.Fatalf("restored controls: %+v", got)
+	}
+}
+
+func TestBookSourceIncludesComponents(t *testing.T) {
+	a := New()
+	a.show("alert/default")
+	var names []string
+	for _, src := range a.model.Sel.Sources() {
+		names = append(names, src.Title)
+	}
+	joined := strings.Join(names, ", ")
+	if !strings.Contains(joined, "ui.Alert") || !strings.Contains(joined, "ui.Icon") {
+		t.Fatalf("component sources missing: %s", joined)
+	}
+}
+
+func TestBookBaseStoryBeforeVariants(t *testing.T) {
+	a := New()
+	visible := a.model.Visible()
+	base, variant := -1, -1
+	for i, st := range visible {
+		switch st.ID() {
+		case "avatar/default":
+			base = i
+		case "avatar/badge":
+			variant = i
+		}
+	}
+	if base < 0 || variant <= base {
+		t.Fatalf("avatar base index %d, variant index %d", base, variant)
 	}
 }
 
@@ -144,43 +228,6 @@ func TestNoControlsNoTab(t *testing.T) {
 	r.Update()
 	if n := r.One("#book-pane"); attrOf(n.Attr, "tabindex") != "0" {
 		t.Error("the pane of a story with controls takes no Tab")
-	}
-}
-
-// Type-to-find: letters jump to the first story that starts with them; the
-// same letter again goes to the next; a pause starts anew.
-func TestTypeToFind(t *testing.T) {
-	a := New()
-	at := time.Unix(0, 0)
-	a.now = func() time.Time { return at }
-	press := func(ks ...string) {
-		for _, k := range ks {
-			a.ListKey(k)
-			at = at.Add(100 * time.Millisecond)
-		}
-	}
-	press("d", "i", "a")
-	if a.ID != "dialog/default" {
-		t.Fatalf("dia: %q", a.ID)
-	}
-	press("l", "o", "g", "/", "o")
-	if a.ID != "dialog/open" {
-		t.Fatalf("dialog/o: %q", a.ID)
-	}
-	at = at.Add(2 * time.Second)
-	press("t")
-	first := a.ID
-	if !strings.HasPrefix(first, "t") {
-		t.Fatalf("t after a pause: %q", first)
-	}
-	press("t")
-	if a.ID == first || !strings.HasPrefix(a.ID, "t") {
-		t.Fatalf("t again: %q after %q", a.ID, first)
-	}
-	at = at.Add(2 * time.Second)
-	press("v", "a", "r", "i", "a", "n", "t")
-	if !strings.Contains(a.ID, "variant") {
-		t.Fatalf("variant (in the middle of an ID): %q", a.ID)
 	}
 }
 

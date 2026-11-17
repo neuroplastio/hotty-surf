@@ -28,11 +28,12 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"fmt"
+	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
-	"time"
-	"unicode/utf8"
 
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
@@ -40,6 +41,8 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	bookcode "neuroplast.io/hotty-surf/internal/book/highlight"
+	storybook "neuroplast.io/hotty-surf/internal/book/model"
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/reload"
@@ -51,7 +54,7 @@ import (
 var bookCSS string
 
 // CSS is the book's stylesheet: the kit's, and the book's own.
-var CSS = ui.Stylesheet() + bookCSS
+var CSS = ui.Stylesheet() + bookCSS + bookcode.CSS
 
 // The cells pane's size. A story is at most 28rem wide (max-w-md), which
 // cells takes as 56 columns.
@@ -64,37 +67,33 @@ const (
 
 // State is what the book keeps across a live reload.
 type State struct {
-	ID string `msg:"id"` // the story shown
+	ID   string             `msg:"id"` // the story shown
+	Book storybook.DevState `msg:"book"`
 }
 
 // App is the book.
 type App struct {
 	State
-	all []stories.Story
-	cur *shown
+	all   []stories.Story
+	cur   *shown
+	model *storybook.Book
 
 	// The pane's keyboard. inPane is set while the pane has it, and on the
 	// way between it and the elements round it; refocus asks the next
 	// render to give it back to the pane, and toList to give it to the
 	// list (Tab past the pane's last control).
-	inPane  bool
-	refocus bool
-	toList  bool
-
-	// Type-to-find in the list: what was typed, and when last.
-	find   string
-	findAt time.Time
-	now    func() time.Time
+	inPane     bool
+	refocus    bool
+	toList     bool
+	startFocus bool
+	wantFocus  string
+	modalOpen  bool
 }
 
 // own are the book's elements that take the keyboard: while one has it, a
 // story's ask for the keyboard (a dialog that opens as the list lands on
 // its story, a menu opened from the pane) doesn't take it (keep).
-var own = map[string]bool{"book-list": true, "book-pane": true, "book-pane-before": true, "book-pane-after": true}
-
-// findAfter is how long type-to-find waits for the next letter before a
-// letter starts a new search.
-const findAfter = time.Second
+var own = map[string]bool{"book-list": true, "book-filter": true, "book-pane": true, "book-pane-before": true, "book-pane-after": true}
 
 // shown is the story on show: its view, which the preview and the pane
 // both draw, and the pane's surface on its Screen.
@@ -115,7 +114,30 @@ type shown struct {
 
 // New is a book of every story, showing the first.
 func New() *App {
-	a := &App{all: stories.All(), now: time.Now}
+	a := &App{all: stories.All(), startFocus: true}
+	var ss []*storybook.Story
+	for _, st := range a.all {
+		ss = append(ss, storybook.Wrap(st.ID, st.Doc, st.View, st.Props))
+	}
+	slices.SortStableFunc(ss, func(x, y *storybook.Story) int {
+		if c := strings.Compare(x.Group, y.Group); c != 0 {
+			return c
+		}
+		xbase, _, xv := strings.Cut(x.Name, " / ")
+		ybase, _, yv := strings.Cut(y.Name, " / ")
+		if c := strings.Compare(xbase, ybase); c != 0 {
+			return c
+		}
+		if xv != yv {
+			if xv {
+				return 1
+			}
+			return -1
+		}
+		return strings.Compare(x.Name, y.Name)
+	})
+	a.model = storybook.New(ss)
+	a.model.SetRegion(storybook.RegionList)
 	if len(a.all) > 0 {
 		a.show(a.all[0].ID)
 	}
@@ -130,9 +152,13 @@ func Main(ctx context.Context) error {
 	return run.App(ctx, s)
 }
 
-func (a *App) Save() *State { return &a.State }
+func (a *App) Save() *State {
+	a.State.Book = *a.model.Save()
+	return &a.State
+}
 
 func (a *App) Restore(s *State) {
+	a.model.Load(&s.Book)
 	if s.ID != "" {
 		a.show(s.ID)
 	}
@@ -140,8 +166,12 @@ func (a *App) Restore(s *State) {
 
 // index is the place of the story shown in the list, -1 for none.
 func (a *App) index() int {
+	return a.storyIndex(a.ID)
+}
+
+func (a *App) storyIndex(id string) int {
 	for i, st := range a.all {
-		if st.ID == a.ID {
+		if st.ID == id {
 			return i
 		}
 	}
@@ -156,8 +186,56 @@ func (a *App) show(id string) {
 			continue
 		}
 		a.ID = id
-		a.cur, a.inPane, a.refocus, a.toList = &shown{st: st, view: st.View()}, false, false, false
+		story := a.model.Find(id)
+		a.model.Select(story)
+		view := story.HTML(a.model.Env(story))
+		wrapped := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			f := rt.From(ctx)
+			start := 0
+			if f != nil {
+				start = len(f.Order)
+			}
+			if err := view.Render(ctx, w); err != nil {
+				return err
+			}
+			if f != nil {
+				ids := append([]string(nil), f.Order[start:]...)
+				f.After = append(f.After, func() { a.observeHandlers(f, story, ids) })
+			}
+			return nil
+		})
+		a.cur, a.inPane, a.refocus, a.toList = &shown{st: st, view: wrapped}, false, false, false
 		return
+	}
+}
+
+// observeHandlers keeps the story's own handlers intact while recording
+// the events they receive, on both its host and its cells surface.
+func (a *App) observeHandlers(f *rt.Frame, story *storybook.Story, ids []string) {
+	for _, id := range ids {
+		h := f.On[id]
+		if h == nil || strings.HasPrefix(id, "book-") {
+			continue
+		}
+		log := func(kind, value string) { a.model.Log(story, kind, id+value) }
+		if fn := h.Click; fn != nil {
+			h.Click = func() { log("click", ""); fn() }
+		}
+		if fn := h.Input; fn != nil {
+			h.Input = func(v string) { log("input", fmt.Sprintf(" = %q", v)); fn(v) }
+		}
+		if fn := h.Check; fn != nil {
+			h.Check = func(v bool) { log("check", fmt.Sprintf(" = %t", v)); fn(v) }
+		}
+		if fn := h.Submit; fn != nil {
+			h.Submit = func() { log("submit", ""); fn() }
+		}
+		for i, fn := range h.Key {
+			h.Key[i] = func(k string) bool {
+				log("key", fmt.Sprintf(" = %q", k))
+				return fn(k)
+			}
+		}
 	}
 }
 
@@ -214,17 +292,25 @@ func (sh *shown) pump() {
 	sh.err = err
 }
 
-// ListKey moves through the list with the arrows, Home, End and the
-// pages, and to the first story that has what is typed (type-to-find).
+// ListKey moves through the list and handles the book shortcuts.
 func (a *App) ListKey(k string) bool {
-	i, n := a.index(), len(a.all)
+	if k == "escape" && a.modalOpen {
+		return false
+	}
+	if k == "/" || k == "enter" || k == "escape" || k == "t" || k == "n" || k == "N" || k == "shift+n" {
+		return a.bookKey(k)
+	}
+	visible := a.model.Visible()
+	i, n := 0, len(visible)
+	for j, st := range visible {
+		if st.ID() == a.ID {
+			i = j
+			break
+		}
+	}
 	if n == 0 {
 		return false
 	}
-	if utf8.RuneCountInString(k) == 1 && k != " " {
-		return a.typed(k)
-	}
-	a.find = ""
 	switch k {
 	case "arrow_down":
 		i++
@@ -242,44 +328,8 @@ func (a *App) ListKey(k string) bool {
 		return false
 	}
 	i = max(0, min(n-1, i))
-	if a.all[i].ID != a.ID {
-		a.show(a.all[i].ID)
-	}
-	return true
-}
-
-// typed is a letter typed in the list: it adds to what is being found,
-// or starts anew after findAfter, and shows the first story whose ID
-// starts with it, or else has it; from the one shown when the same letter
-// is typed again (cycling through, as a listbox does).
-func (a *App) typed(k string) bool {
-	now := a.now()
-	if now.Sub(a.findAt) > findAfter {
-		a.find = ""
-	}
-	a.findAt = now
-	k = strings.ToLower(k)
-	from := a.index()
-	if a.find == k {
-		// The same letter again: the next story that starts with it.
-		from++
-	} else {
-		a.find += k
-	}
-	n := len(a.all)
-	for _, match := range []func(string) bool{
-		func(id string) bool { return strings.HasPrefix(id, a.find) },
-		func(id string) bool { return strings.Contains(id, a.find) },
-	} {
-		for j := range n {
-			st := a.all[(max(from, 0)+j)%n]
-			if match(strings.ToLower(st.ID)) {
-				if st.ID != a.ID {
-					a.show(st.ID)
-				}
-				return true
-			}
-		}
+	if visible[i].ID() != a.ID {
+		a.show(visible[i].ID())
 	}
 	return true
 }
@@ -292,13 +342,158 @@ func (a *App) ListFocus(bool) {}
 // Pick shows the story id: a click in the list.
 func (a *App) Pick(id string) func() { return func() { a.show(id) } }
 
+func (a *App) filter(v string) {
+	a.model.SetFilter(v)
+	if a.model.Sel != nil && a.model.Sel.ID() != a.ID {
+		a.show(a.model.Sel.ID())
+	}
+}
+
+func (a *App) storyLabel(id string) string {
+	if st := a.model.Find(id); st != nil {
+		return st.Name
+	}
+	return id
+}
+
+func (a *App) groupHeading(i, from int) string {
+	visible := a.model.Visible()
+	if i < 0 || i >= len(visible) {
+		return ""
+	}
+	if i == from || i == 0 || visible[i-1].Group != visible[i].Group {
+		return visible[i].Group
+	}
+	return ""
+}
+
+func (a *App) startingList(ctx context.Context) bool {
+	if f := rt.From(ctx); f != nil && f.Focused != "" {
+		a.startFocus = false
+	}
+	return a.startFocus
+}
+
+func (a *App) bookKey(k string) bool {
+	if k == "escape" && a.modalOpen {
+		return false
+	}
+	if !a.model.Key(k) {
+		return false
+	}
+	if a.model.Sel != nil && a.model.Sel.ID() != a.ID {
+		a.show(a.model.Sel.ID())
+	}
+	switch a.model.Wanted() {
+	case storybook.RegionList:
+		a.wantFocus = "book-list"
+	case storybook.RegionFilter:
+		a.wantFocus = "book-filter"
+	case storybook.RegionPreview:
+		a.wantFocus = "book-preview"
+	case storybook.RegionTabs:
+		i := 1
+		for n, tab := range storybook.Tabs {
+			if tab == a.model.Tab {
+				i = n + 1
+			}
+		}
+		a.wantFocus = "book-tabs-tab-" + itoa(i)
+	case storybook.RegionPanel:
+		a.wantFocus = "book-panel"
+	}
+	return true
+}
+
+func (a *App) focusRequest(ctx context.Context) string {
+	f := rt.From(ctx)
+	if f == nil {
+		return ""
+	}
+	if a.wantFocus != "" && f.Focused == a.wantFocus {
+		a.wantFocus = ""
+	}
+	if a.wantFocus != "" {
+		return a.wantFocus
+	}
+	switch {
+	case f.Focused == "book-list":
+		a.model.SetRegion(storybook.RegionList)
+	case f.Focused == "book-filter":
+		a.model.SetRegion(storybook.RegionFilter)
+	case strings.HasPrefix(f.Focused, "book-tabs-tab-"):
+		a.model.SetRegion(storybook.RegionTabs)
+	case f.Focused == "book-panel" || strings.HasPrefix(f.Focused, "book-control-"):
+		a.model.SetRegion(storybook.RegionPanel)
+	case f.Focused != "":
+		a.model.SetRegion(storybook.RegionPreview)
+	}
+	return ""
+}
+
+func (a *App) resetStory() {
+	if a.model.Sel != nil {
+		a.model.Reset(a.model.Sel)
+		a.show(a.ID)
+	}
+}
+
+func (a *App) clearEvents() {
+	if a.model.Sel != nil {
+		a.model.ClearEvents(a.model.Sel)
+	}
+}
+
+func noTab(attrs templ.Attributes) templ.Attributes {
+	attrs["tabindex"] = "-1"
+	return attrs
+}
+
+func (a *App) setProp(path string) func(string) {
+	return func(value string) { a.model.Set(a.model.Sel, path, value) }
+}
+
+func (a *App) setBool(path string) func(bool) {
+	return func(value bool) { a.model.Set(a.model.Sel, path, strconv.FormatBool(value)) }
+}
+
+func (a *App) storyHTML() string {
+	if a.cur == nil {
+		return ""
+	}
+	a.cur.start()
+	if a.cur.err != nil {
+		return a.cur.err.Error()
+	}
+	doc, err := rt.Peek.Document(a.cur.pane)
+	if err != nil {
+		return err.Error()
+	}
+	return prettyHTML(doc)
+}
+
 // window is the stories the list shows: listRows of them round the one
 // shown, and how many are above and below it.
 func (a *App) window() (from int, sts []stories.Story, below int) {
-	i := max(a.index(), 0)
-	from = max(0, min(i-listRows/2, len(a.all)-listRows))
-	to := min(len(a.all), from+listRows)
-	return from, a.all[from:to], len(a.all) - to
+	visible := a.model.Visible()
+	for _, v := range visible {
+		for _, st := range a.all {
+			if st.ID == v.ID() {
+				sts = append(sts, st)
+				break
+			}
+		}
+	}
+	i := 0
+	for n, st := range sts {
+		if st.ID == a.ID {
+			i = n
+			break
+		}
+	}
+	from = max(0, min(i-listRows/2, len(sts)-listRows))
+	to := min(len(sts), from+listRows)
+	return from, sts[from:to], len(sts) - to
 }
 
 // PaneKey is a key the host passed the program while the pane has the
@@ -392,27 +587,24 @@ func (a *App) Edge(back bool) func(bool) {
 	}
 }
 
-// inert says whether the cells pane takes no Tab in this render: while
-// a story's modal dialog is open (rt.Frame.Modal, which the story's view
-// fills before the pane renders) and the keyboard isn't in the pane,
-// so that Tab doesn't take the keyboard out of the dialog into the pane.
-// hotty 0.8 lets Tab leave a dialog for what is behind it; the book
-// doesn't add the pane to that.
+// inert keeps the cells pane out of the keyboard sequence while a story's
+// modal dialog is open outside it.
 func (a *App) inert(ctx context.Context) bool {
 	f := rt.From(ctx)
+	a.modalOpen = f != nil && len(f.Modal) > 0
 	return f != nil && len(f.Modal) > 0 && !(own[f.Focused] && f.Focused != "book-list")
 }
 
 // keep has the last word on what the render asks for the keyboard: a
 // story's ask doesn't take it from the book's own elements (own). It runs
 // after every other hook (rt.Frame.After), a dialog's included.
-func keep(ctx context.Context) {
+func (a *App) keep(ctx context.Context) {
 	f := rt.From(ctx)
 	if f == nil {
 		return
 	}
 	last := func() {
-		if own[f.Focused] && f.Focus != "" && !own[f.Focus] {
+		if own[f.Focused] && f.Focus != "" && !own[f.Focus] && f.Focus != a.wantFocus {
 			f.Focus = ""
 		}
 	}
