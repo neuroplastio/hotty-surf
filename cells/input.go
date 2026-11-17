@@ -351,8 +351,30 @@ func (c *Screen) edited(n *html.Node, f *field) {
 	f.rev++
 	c.lay = nil
 	if id := attr(n, "id"); id != "" && tokens(n, "data-on", "input") {
-		c.emit(hotty.Event{Kind: hotty.EventInput, Target: id, Value: f.ed.Value, Rev: f.rev})
+		e := hotty.Event{Kind: hotty.EventInput, Target: id, Value: f.ed.Value, Rev: f.rev}
+		if tokens(n, "data-on", "caret") {
+			sel := fieldSelection(f)
+			e.Sel = &sel
+		}
+		c.emit(e)
 	}
+}
+
+// fieldSelection converts the editor's grapheme positions to the byte
+// offsets carried by hotty field events.
+func fieldSelection(f *field) [2]int {
+	anchor, _ := f.ed.Anchor()
+	bytesAt := func(index int) int {
+		off := 0
+		for i, g := range graphemesOf(f.ed.Value) {
+			if i >= index {
+				break
+			}
+			off += len(g)
+		}
+		return off
+	}
+	return [2]int{bytesAt(anchor), bytesAt(f.ed.Caret)}
 }
 
 // group is a radio button's group: the radios of its name in its form.
@@ -600,6 +622,7 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 			return true
 		}
 	}
+	before := fieldSelection(f)
 	a, changed := f.ed.Key(km, key)
 	switch {
 	case a == "":
@@ -613,6 +636,11 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 		return false
 	case changed:
 		c.edited(el, f)
+	}
+	if !changed && tokens(el, "data-on", "caret") {
+		if sel := fieldSelection(f); sel != before && attr(el, "id") != "" {
+			c.emit(hotty.Event{Kind: hotty.EventCaret, Target: attr(el, "id"), Rev: f.rev, Sel: &sel})
+		}
 	}
 	c.lay = nil
 	return true

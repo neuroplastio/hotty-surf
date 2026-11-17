@@ -74,6 +74,13 @@ type selectView struct {
 	popups  *popup      // the surface's open popup
 }
 
+func (v *selectView) triggerKeys() string {
+	if v.st.open {
+		return "enter=program"
+	}
+	return ""
+}
+
 // join reads the frame: its number, and the surface's popups.
 func (v *selectView) join(ctx context.Context) string {
 	v.n = frameN(ctx)

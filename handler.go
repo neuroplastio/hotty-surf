@@ -126,7 +126,12 @@ func Check(fn func(checked bool)) Handler {
 // before the page does. Shortcuts for the whole page go on its outermost
 // element.
 //
-// A text field keeps the keys it edits with, Enter among them: Enter
+// A ui.KeyScope naming a key is offered it before the focused kit
+// control's default and ordinary Key handlers. A declined key then goes
+// to the kit default before it reaches enclosing Key handlers.
+//
+// Without a scoped override, a text field keeps the keys it edits with,
+// Enter among them: Enter
 // commits the field and submits its form, which the form's [Submit] hears,
 // so no Key handler hears it.
 //

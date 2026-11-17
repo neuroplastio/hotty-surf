@@ -35,3 +35,14 @@ func Example() {
 	})
 	_ = surf.New("sizes", view, ui.Stylesheet())
 }
+
+// In templ, a scope around a control can take a key before its default:
+//
+//	@ui.KeyScope([]string{"arrow_down"}, a.MoveLog) {
+//	    @ui.Select(&a.sizeMenu, ui.SelectProps{Items: sizes,
+//	        Value: a.size, OnChange: a.setSize})
+//	}
+func ExampleKeyScope() {
+	moveLog := func(key string) bool { return key == "arrow_down" }
+	_ = ui.KeyScope([]string{"arrow_down"}, moveLog)
+}

@@ -25,11 +25,8 @@ templ selectBox(v *selectView) {
 			if i := v.activeOpt(); i >= 0 {
 				aria-activedescendant={ v.opts[i].id }
 			}
-			if v.st.open {
-				data-keys="enter=program"
-			}
 			disabled?={ v.p.Disabled }
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key))... }
+			{ scopeWithKeys(ctx, kitOn(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key)), v.triggerKeys())... }
 		>
 			{{ label, muted := v.label() }}
 			<span

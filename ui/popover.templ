@@ -15,7 +15,7 @@ templ popover(v *popoverView) {
 			aria-controls={ v.id + "-popover" }
 			class="btn"
 			data-variant="outline"
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle))... }
+			{ scopeAttrs(ctx, surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle)))... }
 		>
 			if v.p.Trigger != nil {
 				@plain(v.p.Trigger)

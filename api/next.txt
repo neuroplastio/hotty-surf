@@ -124,6 +124,7 @@ pkg neuroplast.io/hotty-surf/ui, func InputGroupAddon(InputGroupAddonProps) temp
 pkg neuroplast.io/hotty-surf/ui, func Item(ItemProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func KeyScope([]string, func(string) bool) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component

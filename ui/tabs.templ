@@ -4,8 +4,6 @@ package ui
 // written in templ as the macro renders it for the Props, with the shown
 // tab's panel only: the children.
 
-import "neuroplast.io/hotty-surf"
-
 templ tabs(v *tabsView) {
 	<div class={ join("tabs", v.p.Class) } id={ v.id } data-tabs-initialized="true">
 		<nav role="tablist" aria-orientation="horizontal">
@@ -17,7 +15,7 @@ templ tabs(v *tabsView) {
 					aria-selected={ bstr(i == v.sel) }
 					tabindex={ v.tabindex(i) }
 					disabled?={ t.Disabled }
-					{ surf.On(ctx, v.tabID(i), v.handlers(i)...)... }
+					{ scopeAttrs(ctx, kitOn(ctx, v.tabID(i), v.handlers(i)...))... }
 				>{ t.Label }</button>
 			}
 		</nav>

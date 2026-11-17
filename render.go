@@ -12,6 +12,7 @@ import (
 	"github.com/tinylib/msgp/msgp"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/rt"
 )
@@ -66,6 +67,8 @@ func (s *Surface) reset() {
 	s.ids = map[string]string{}
 	s.byID = map[string]*html.Node{}
 	s.vals, s.checked, s.revs = map[string]string{}, map[string]bool{}, map[string]int{}
+	s.sels, s.pendingSel = map[string][2]int{}, map[string][2]int{}
+	s.pendingNative = map[string]hotty.FieldChange{}
 }
 
 var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
@@ -335,6 +338,9 @@ func (s *Surface) fresh(n *html.Node, kept bool) {
 		id := attr(n, "id")
 		if o := s.byID[id]; !kept || o == nil || o.Data != n.Data || o.Parent == nil || n.Parent == nil || attr(o.Parent, "id") != attr(n.Parent, "id") {
 			delete(s.revs, id)
+			delete(s.sels, id)
+			delete(s.pendingSel, id)
+			delete(s.pendingNative, id)
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

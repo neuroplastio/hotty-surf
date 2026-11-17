@@ -147,7 +147,7 @@ func (v *popoverView) refocus() bool {
 // rootAttrs are the root's: Escape, and while open the click outside.
 func (v *popoverView) rootAttrs(ctx context.Context) templ.Attributes {
 	if !v.st.open {
-		return surf.On(ctx, v.id, surf.Key(v.key))
+		return kitOn(ctx, v.id, surf.Key(v.key))
 	}
-	return surf.On(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
+	return kitOn(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
 }

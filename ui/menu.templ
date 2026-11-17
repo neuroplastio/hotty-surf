@@ -18,12 +18,9 @@ templ dropdownMenu(v *menuView) {
 			if o := v.activeOpt(); o >= 0 {
 				aria-activedescendant={ v.opts[o].id }
 			}
-			if v.st.open {
-				data-keys="enter=program space=program"
-			}
 			class="btn"
 			data-variant="outline"
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle))... }
+			{ scopeWithKeys(ctx, surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle)), v.triggerKeys())... }
 		>
 			if v.p.Trigger != nil {
 				@plain(v.p.Trigger)

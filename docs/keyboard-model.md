@@ -14,9 +14,8 @@ choose its own behavior; a terminal or the cells rendition carries the
 input and renders the result. The same component should behave alike in
 both. The table below describes the current implementation, including
 native controls whose HTML defaults are reproduced in cells. The reviewed
-KeyScope API will allow an application to override defaults; its
-implementation is in progress. An entry marked planned is not an
-implemented API.
+KeyScope API allows an application to override defaults. An entry marked
+planned is not an implemented API.
 
 Tab and Shift+Tab move among controls in document order. An open modal
 keeps Tab within its controls and makes the rest of its surface inert.
@@ -91,8 +90,8 @@ been fixed:
   defaults are appropriate. Shared key vectors now exercise these controls
   against both the hottytest host and cells, including disabled controls;
   the two href-less link vectors await the hottytest fix. The vectors are
-  representative, not a claim of exhaustive parity. KeyScope override
-  vectors remain to be written.
+  representative, not a claim of exhaustive parity. Separate KeyScope
+  vectors cover representative overrides on both renditions.
 - NativeSelect has a concrete presentation difference: cells navigates its
   options with keys but does not show an open option list. The coverage
   page also records a Blitz drawing difference for its chevron.
@@ -113,15 +112,15 @@ been fixed:
   no component-owned keyboard default. Their interactive children retain
   their own behavior. Chart and Progress have no keyboard navigation.
 
-## Scoped overrides (B3 implementation in progress)
+## Scoped overrides
 
 The B3 review accepted `ui.KeyScope`: an application names the keys it
 wants and supplies a Go handler around one or more kit controls. A handler
 that takes a key prevents its default. If it declines, the next enclosing
 scope is tried, then the kit default. The closest scope goes first. Keys
 not named keep their existing defaults. The scope adds no HTML wrapper and
-never applies to plain HTML or controls on another surface. The approved
-shape is being implemented; it is not yet in the locked API.
+never applies to plain HTML or controls on another surface. It is proposed
+for the B3 API pack and is not yet in the approved API lock.
 
 ```templ
 @ui.KeyScope([]string{"arrow_down"}, a.MoveLog) {

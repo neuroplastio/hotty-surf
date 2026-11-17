@@ -236,6 +236,13 @@ func (v *menuView) choose(o int) {
 func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
 // key is handleKeydown, on the menu's root.
+func (v *menuView) triggerKeys() string {
+	if v.st.open {
+		return "enter=program space=program"
+	}
+	return ""
+}
+
 func (v *menuView) key(k string) bool {
 	if k == "escape" {
 		if !v.st.open {
@@ -316,7 +323,7 @@ func (v *menuView) refocus() bool {
 // rootAttrs are the root's: its keys, and while open the click outside.
 func (v *menuView) rootAttrs(ctx context.Context) templ.Attributes {
 	if !v.st.open {
-		return surf.On(ctx, v.id, surf.Key(v.key))
+		return kitOn(ctx, v.id, surf.Key(v.key))
 	}
-	return surf.On(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
+	return kitOn(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
 }

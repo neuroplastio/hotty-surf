@@ -995,13 +995,14 @@ scrollbar classes and Avatar's image for the looks pass.
 
 ### Batch B3: overlays (in progress)
 
-- **KeyScope: reviewed, not implemented.** The B3 keyboard review accepts
+- **KeyScope: reviewed for B3.** The B3 keyboard review accepts
   `ui.KeyScope(keys []string, fn func(string) bool) templ.Component` for
   scoped, named-key overrides. The nearest scope is offered a named key
   first; a decline proceeds through enclosing scopes to the kit default.
   Tab and Shift+Tab are reserved, and an open native select list may keep
-  keys. The implementation and its representative host/cells vectors
-  remain to be added. The known editing limitations are in
+  keys. Representative host/cells vectors cover taking and declining keys,
+  nesting, modifiers, native controls, Command, Select and dialog Escape.
+  The known editing limitations are in
   `docs/keyboard-model.md`.
 - **Combobox selection: open for review.** Basecoat's combobox supports
   both single and multiple selection. The single case follows Select:

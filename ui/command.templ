@@ -8,7 +8,7 @@ import "neuroplast.io/hotty-surf"
 
 templ command(v *commandView) {
 	{{ v.check(ctx) }}
-	<div class={ join("command", v.p.Class) } aria-label="Command menu" data-command-initialized="true" { surf.On(ctx, v.id, surf.Key(v.key))... }>
+	<div class={ join("command", v.p.Class) } aria-label="Command menu" data-command-initialized="true" { kitOn(ctx, v.id, surf.Key(v.key))... }>
 		@commandBody(v)
 	</div>
 }
@@ -17,7 +17,7 @@ templ command(v *commandView) {
 // rendered first so the dialog knows its field.
 templ commandDialog(v *commandView, d *dialogView, class string, body string) {
 	{{ v.check(ctx) }}
-	<dialog class={ join("command-dialog", class) } aria-label="Command menu" open { surf.On(ctx, v.id, surf.Key(v.key))... }>
+	<dialog class={ join("command-dialog", class) } aria-label="Command menu" open { kitOn(ctx, v.id, surf.Key(v.key))... }>
 		<div class="command" data-command-initialized="true" { surf.On(ctx, v.id+"-content", surf.Focus(d.focus), surf.Outside(d.outside))... }>
 			@templ.Raw(body)
 		</div>
@@ -42,8 +42,7 @@ templ commandBody(v *commandView) {
 				aria-activedescendant={ v.opts[o].id }
 			}
 			value={ v.st.query }
-			data-keys={ v.fieldKeys() }
-			{ surf.On(ctx, v.id+"-input", surf.Input(v.input))... }
+			{ scopeCommandAttrs(ctx, surf.On(ctx, v.id+"-input", surf.Input(v.input)), v.fieldKeys())... }
 		/>
 	</header>
 	<div role="menu" id={ v.id + "-menu" } aria-orientation="vertical" data-empty={ v.empty() } class="">

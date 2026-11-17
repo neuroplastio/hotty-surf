@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -134,6 +135,18 @@ func (s *Surface) send() error {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))
 	}
 	cmds = append(cmds, d.fields...)
+	for id, change := range s.pendingNative {
+		if s.byID[id] != nil {
+			cmds = append(cmds, hotty.SetField(s.name, id, change))
+			if change.Value != nil {
+				s.vals[id] = *change.Value
+			}
+			if change.Checked != nil {
+				s.checked[id] = *change.Checked
+			}
+		}
+		delete(s.pendingNative, id)
+	}
 	if f.Focus != "" && (f.Focus != s.asked || s.askDue) {
 		cmds = append(cmds, hotty.Focus(s.name, f.Focus))
 		// The host sends no focus for focus the program gives (SPEC
@@ -220,6 +233,9 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 	case hotty.EventInput:
 		s.vals[e.Target], s.revs[e.Target] = e.Value, e.Rev
+		if e.Sel != nil {
+			s.sels[e.Target] = *e.Sel
+		}
 		if h := on[e.Target]; h != nil && h.Input != nil {
 			h.Input(e.Value)
 			ran = true
@@ -240,6 +256,11 @@ func (s *Surface) event(e hotty.Event) error {
 				h.Input(e.Value)
 				ran = true
 			}
+		}
+	case hotty.EventCaret:
+		s.revs[e.Target] = e.Rev
+		if e.Sel != nil {
+			s.sels[e.Target] = *e.Sel
 		}
 	case hotty.EventSubmit:
 		if h := on[e.Target]; h != nil && h.Submit != nil {
@@ -379,7 +400,24 @@ func (s *Surface) key(k string) (bool, error) {
 	if s.frame == nil {
 		return false, errNoDocument
 	}
+	physical, _ := s.platform.ReadKey(k)
 	k = modName(s.platform, k)
+	intercepted := false
+	if n := s.byID[s.focused]; n != nil && !hasAttr(n, "disabled") {
+		if index, err := strconv.Atoi(attr(n, "data-hotty-keyscope")); err == nil && index > 0 && index <= len(s.frame.KeyScopes) {
+			for scope := s.frame.KeyScopes[index-1]; scope != nil; scope = scope.Parent {
+				if scope.Keys[physical] {
+					intercepted = true
+					if scope.Handle(k) {
+						return true, s.send()
+					}
+				}
+			}
+		}
+	}
+	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && s.nativeKeyDefault(physical) {
+		return true, s.send()
+	}
 	ids := s.chain(s.focused)
 	modal := activeModal(s.frame)
 	if modal != "" && s.modalApplies(modal, s.focused) {
@@ -391,9 +429,23 @@ func (s *Surface) key(k string) (bool, error) {
 	} else if len(ids) == 0 {
 		ids = s.tops()
 	}
+	if intercepted {
+		for _, id := range ids {
+			if h := s.frame.On[id]; h != nil && h.KitKey {
+				for _, fn := range h.Key {
+					if fn(k) {
+						return true, s.send()
+					}
+				}
+			}
+		}
+		if s.nativeKeyDefault(physical) {
+			return true, s.send()
+		}
+	}
 	for _, id := range ids {
 		h := s.frame.On[id]
-		if h == nil {
+		if h == nil || intercepted && h.KitKey {
 			continue
 		}
 		for _, fn := range h.Key {
@@ -410,6 +462,9 @@ func (s *Surface) key(k string) (bool, error) {
 				}
 			}
 		}
+	}
+	if intercepted {
+		return false, s.send()
 	}
 	return false, nil
 }

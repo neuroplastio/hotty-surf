@@ -110,7 +110,7 @@ func dialog(p DialogProps, children templ.Component) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "dialog", surf.On(ctx, d.id, surf.Key(d.key)))
+				templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "dialog", kitOn(ctx, d.id, surf.Key(d.key)))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -240,7 +240,7 @@ func dialog(p DialogProps, children templ.Component) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", surf.On(ctx, d.id+"-close", surf.Click(d.dismiss)))
+				templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", scopeAttrs(ctx, surf.On(ctx, d.id+"-close", surf.Click(d.dismiss))))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

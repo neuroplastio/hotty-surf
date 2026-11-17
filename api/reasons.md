@@ -304,6 +304,11 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.CommandDialogProps.Items`, `.Placeholder`, `.Empty`: as CommandProps'.
 - `ui.CommandDialogProps.OnClose`: as DialogProps.OnClose, and a choice closes it too (command.js's handleMenuClick).
 - `ui.CommandDialogProps.Class`: as every Props.
+- `ui.KeyScope`: a lexical Go handler for named keys, shared by native and
+  compound kit controls; nearest scope first, then the kit default on a
+  decline. Tab remains focus traversal. It adds no wrapper or per-component
+  Props fields; its open native-select and editing limitations are in the
+  keyboard model.
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

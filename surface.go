@@ -50,9 +50,12 @@ type Surface struct {
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).
-	vals    map[string]string
-	checked map[string]bool
-	revs    map[string]int
+	vals          map[string]string
+	checked       map[string]bool
+	revs          map[string]int
+	sels          map[string][2]int
+	pendingSel    map[string][2]int
+	pendingNative map[string]hotty.FieldChange
 
 	// Where the keyboard and the pointer are, as the host said: the
 	// element and the ids of it and its ancestors, which Focus and Hover
@@ -165,6 +168,9 @@ func (s *Surface) Focus() (focused bool, err error) {
 // handlers of the focused element and its ancestors are asked, innermost
 // first, with the key as [Key] says; taken says whether one took it. A key
 // no handler takes is the program's.
+// A ui.KeyScope naming a key runs before a focused kit control's default
+// and ordinary Key handlers; a decline tries enclosing scopes, then the
+// default.
 func (s *Surface) Key(key string) (taken bool, err error) {
 	return s.key(key)
 }

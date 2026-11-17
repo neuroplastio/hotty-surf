@@ -17,6 +17,12 @@ type overlayState struct {
 	open  bool
 }
 
+type bookPopoverProps struct {
+	Trigger string
+	Width string
+	pop ui.PopoverState
+}
+
 // commands are the stories' command list: a few loose, two groups.
 func (s *overlayState) commands() []ui.MenuItem {
 	run := func(v string) func() { return func() { s.ran = v } }
@@ -35,7 +41,10 @@ func init() {
 		return func() templ.Component { return f(&overlayState{width: "100%"}) }
 	}
 	add(Story{ID: "popover/default", Doc: "A popover with a small form; Enter on its trigger opens it",
-		View: show(popoverDefault), Keys: []string{"tab", "enter"}, Want: "Dimensions"})
+		View: show(popoverDefault), Props: func() (any, templ.Component) {
+			p := &bookPopoverProps{Trigger: "Open popover", Width: "100%"}
+			return p, bookPopover(p)
+		}, Keys: []string{"tab", "enter"}, Want: "Dimensions"})
 	add(Story{ID: "popover/sides", Doc: "A popover for each side, the top one open; Enter on the bottom one's trigger opens it and closes the top one (one popup is open at a time)",
 		View: func() templ.Component {
 			s := &overlayState{}
@@ -58,6 +67,18 @@ func init() {
 		}, Keys: []string{"tab", "enter"}, Want: "ran: ."})
 	add(Story{ID: "command/dialog", Doc: "A command palette its button opens; choosing an item closes it",
 		View: show(commandDialog), Keys: []string{"tab", "enter", "end", "enter"}, Want: "ran: Inbox"})
+}
+
+templ bookPopover(p *bookPopoverProps) {
+	<div class="p-4">
+		@ui.Popover(&p.pop, ui.PopoverProps{ID: "dimensions", Trigger: templ.Raw(templ.EscapeString(p.Trigger)), Class: "w-80"}) {
+			<header><h4>Dimensions</h4><p>Set the dimensions for the layer.</p></header>
+			@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
+				@ui.Label(ui.LabelProps{For: "width"}) { Width }
+				@ui.Input(ui.InputProps{Value: p.Width, Attrs: surf.On(ctx, "width", surf.Input(func(v string) { p.Width = v }))})
+			}
+		}
+	</div>
 }
 
 templ popoverDefault(s *overlayState) {

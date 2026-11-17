@@ -16,6 +16,7 @@ type Handlers struct {
 	Input   func(string)
 	Check   func(bool)
 	Key     []func(string) bool
+	KitKey  bool // Key is a kit component default, rather than an app handler
 	Focus   func(bool)
 	Outside func()
 	Hover   func(bool)
@@ -57,6 +58,9 @@ type Frame struct {
 	// Dialog), outermost first. The last is the active modal; the runtime
 	// confines interaction and focus to it.
 	Modal []string
+	// KeyScopes are this frame's lexical kit overrides, indexed by the
+	// private marker on each focused kit control (one-based).
+	KeyScopes []*KeyScope
 }
 
 type key struct{}
