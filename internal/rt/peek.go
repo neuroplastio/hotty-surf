@@ -17,6 +17,10 @@ var Peek struct {
 	// Tree is the tree the host was last sent, under its #root; nil before
 	// the first Document.
 	Tree func(s any) *html.Node
+	// Focused is the id of the element the surface holds to have the
+	// keyboard, "" for none: ui's differential tests compare it with a
+	// browser's document.activeElement.
+	Focused func(s any) string
 	// Faults are the faults of the renders since the last call, which it
 	// forgets.
 	Faults func(s any) []string

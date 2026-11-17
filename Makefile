@@ -30,7 +30,7 @@ CAP       ?=
 # internal/apitool the API lock's tools.
 SUBMODULES := surftea internal/apitool
 
-.PHONY: check fmt tidy gen vet lint test canary tinygo browser api api-check api-frozen api-approve pack coverage oracle kit print-cap clean
+.PHONY: check fmt tidy gen vet lint test canary tinygo browser api api-check api-frozen api-approve pack coverage oracle kit differential print-cap clean
 
 check: fmt tidy gen vet lint test tinygo api-check coverage   ## the gate
 
@@ -79,7 +79,7 @@ canary:   ## mods/ applied to each upstream's latest, and its tests (gov P-7; we
 TINYGO ?= $(CAP) mise x -- tinygo
 # A release wasm links no reload: the reload wire, its child and the
 # reloader stay behind surfdev, and the page's WebSocket with them.
-NO_RELOAD = internal/devwire internal/devchild reload/reloader
+NO_RELOAD = internal/devwire internal/devchild internal/devhook reload/reloader
 tinygo:   ## the examples build for js/wasm under TinyGo, and link no reload
 	@mkdir -p bin
 	@for e in tasks nav hello; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done
@@ -168,6 +168,13 @@ browser: scripts/browser/node_modules   ## build -wasm and serve, proven in Chro
 
 scripts/browser/node_modules: scripts/browser/package.json scripts/browser/package-lock.json
 	cd scripts/browser && $(CAP) $(NPM) ci --no-audit --no-fund && touch node_modules
+
+# The browser half of ui's differential tests: Basecoat's own scripts
+# driven in a headless Chromium, recorded in ui/testdata/differential.
+# Needs chromium and node; run it on a Basecoat bump or a new case, then
+# make test.
+differential:
+	$(CAP) sh scripts/differential.sh
 
 print-cap:   ## the CAP the steps run under, for a script that builds outside make
 	@echo '$(CAP)'
