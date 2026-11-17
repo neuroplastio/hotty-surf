@@ -146,6 +146,10 @@ func TestNew(t *testing.T) {
 	if err := New(filepath.Join(mod, "Bad_Name"), &out); err == nil {
 		t.Fatal("new took a name that is no surface's")
 	}
+	// A surface's name is 64 characters at most (SPEC).
+	if err := New(filepath.Join(mod, "a"+strings.Repeat("b", 64)), &out); err == nil {
+		t.Fatal("new took a name of 65 characters")
+	}
 	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
 		t.Fatal("an app inside a module got a go.mod")
 	}

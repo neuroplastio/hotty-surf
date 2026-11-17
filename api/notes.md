@@ -444,17 +444,30 @@ What took the floor from about 2 ms to under 1:
   (`devwire.Report`, `devwire.Finding`), so neither API type gains a
   codec. Pooled Readers allow a depth of 5 (the envelope, the term
   wire's hello, its `hotty.Caps`, `Caps.Edit`, an edit's keys) and 64
-  MiB a string or bin; the generated code limits arrays and maps to
-  65,536.
+  MiB a string; the generated code limits arrays and maps to 65,536.
+  msgp's `arrays:` limit caps every `[]byte` too, so each bin field (a
+  state, a snapshot, a command, an input) carries its own
+  `limit=67108864`: before, Tasks' 80 KB snapshot never crossed.
+- **The messages of every frame and input are pooled** (`devwire.GetOut`,
+  `GetInput`): run's dev hook sends each command through one and puts
+  it back; an input goes back once the driver handled it. run's reader
+  keeps one Out for its loop (Send copies it). The handover's buffers
+  are one a process, and aren't.
 - **The child is `internal/devchild`.** reload's surfdev side calls it;
   run's dev hook calls it directly, to wait (up to 1 s) for the goodbye
   before the process exits. A program that calls `reload.Serve` itself
   can exit before its goodbye goes out, which reads as a crash: the API
   has no way to wait for it.
-- **A panic is no goodbye.** run's dev hook tells the reloader it
-  leaves only when App returns, not from a defer while panicking. A
+- **A panic or an error is no goodbye.** run's dev hook tells the
+  reloader it leaves only when its loop returns nil, not from a defer
+  while panicking, nor when the view failed: the wire then closes with
+  no goodbye and the crash is reported with the app's last output. A
   program whose own defer ends `reload.Serve`'s ctx says goodbye as it
   panics, and its crash isn't reported.
+- **A process that said goodbye and lives on is asked nothing:** the
+  reloader leaves it out, and the child answers any request with "the
+  process is leaving", so a handover never runs Keep's get in it or
+  ends it.
 - **`hotty-surf run` and the app: `HOTTY_SURF_RUN=3,4`** names two
   inherited socket pairs, the reload wire and a term wire (msgpack-RPC:
   `hello` {caps}, `input` {msg or key}, `out` {data}, `show` {surface},
@@ -464,13 +477,19 @@ What took the floor from about 2 ms to under 1:
   app sends its own documents and run places the surface it names.
   A third field names the instance (`HOTTY_SURF_RUN=3,4,tool:a`); without
   it the app is the instance `app`, the only one `hotty-surf run` starts.
+  run.App's and reload.Serve's docs say so (the review's C5 left the
+  choice between that and keeping the field to tests): a starter that
+  runs one build as several instances, as plx does, needs it, and a
+  test-only field would be a hook the docs don't show.
 - **Several keys at once** (TestReloadKeys, as plx runs a controller and
   its tools from one build): each text and css save reaches every key,
   one Go build hands every key over and calls restart once, and each key
   comes back with its own Keep state and snapshot, so its first frame is
   a delta. One key's crash is a report failing that key alone; the
   others reload as before, and the next build starts it again from
-  nothing. The reloader needed no change for it.
+  nothing. The test needed no change to the reloader; the review then
+  found that two keys that don't come back hung its loop, which one
+  deadline for all of them fixes.
 - **templ's dev mode is on from the start or not at all:** templ reads
   `TEMPL_DEV_MODE` at init, so whoever starts the process sets it
   (`hotty-surf run` does; plx's restart must, for the text tier). The
@@ -485,27 +504,37 @@ What took the floor from about 2 ms to under 1:
   `rt.Peek.Rendered` (when its last render ended, readable from any
   goroutine). The child waits until 101 ms after the latest render of
   any of its surfaces, templ's recheck, and then renders each one.
+- **The 101 ms wait stays for now.** templ v0.3.1118 has no hook to drop
+  its check time: the StringLoader that keeps it is behind an unexported
+  `sync.OnceValue`, and only that instance's `Now` is replaceable. A
+  one-line mod would have to reach every app's build, so through a
+  replaced or vendored templ (or a build overlay): that changes what
+  apps build against, and waits for the maintainer.
 - **Work on a surface goes through its Do,** and the child knows it was
   sent from a second Do queued inside the first, which runs at the next
   Update. A surface that never rendered isn't waited for; one that
   doesn't answer in 300 ms (dropped) is given up.
 - **The handover takes each snapshot on the surface's driver,** then
   detaches the surface (`Attach(nil, …)`) so nothing more goes out of
-  the old build; only a surface whose driver doesn't answer in 300 ms
-  is read directly. The verifier's note had all of them read directly,
-  but that races a surface still driven (the race detector says so), and
-  a frame sent after the snapshot would leave the host ahead of it.
-  Keep's get runs first: a frame drawn between the two is newer than
-  get's state, and the new build's delta takes the host back to it.
+  the old build. Keep's get runs on the first live surface's driver, in
+  the same Do and ahead of its snapshot, so get doesn't race the
+  handlers that write the state and no frame comes between the two. A
+  driver that hasn't answered in 300 ms is waited for up to 4 s if it
+  rendered in the last 3 s (busy: reading it would race its render),
+  and read directly otherwise (dropped); whichever takes a snapshot
+  first claims it. A first surface still busy at 4 s fails the
+  handover with that reason; another one starts again in the new build.
 - **A handed-over surface carries its stylesheet,** and the new build's
   surface is restyled when its own differs, so a Go save that changed
   the CSS shows it in the first delta.
 - **The css tier is the spike's:** a save of `style/app.css` sends the
   old and the new text to every process, which replaces the old in each
-  surface's stylesheet that holds it, and keeps the edit for surfaces
-  made later and processes that dial in later (the hello's answer). An
-  empty app.css, or one no surface holds, makes it a Go reload. Text and
-  css in one save report as "css"; both are applied.
+  surface's stylesheet that holds it, where it is last (the app's comes
+  after the kit's, `ui.Stylesheet() + "\n" + appCSS`), and keeps the
+  edit for surfaces made later and processes that dial in later (the
+  hello's answer). An empty or whitespace-only app.css, or one no
+  surface holds, makes it a Go reload. Text and css in one save report
+  as "css"; both are applied.
 - **`style/build.sh`, when an app has one,** runs after a save of a
   .templ, a .go or another file of `style/`; what it writes to app.css
   is a css save of its own, which Reload waits for. **Tasks and nav get
@@ -518,10 +547,32 @@ What took the floor from about 2 ms to under 1:
 - **A crash outside a save is a report of its own:** Failed, the last
   save's tier, no Took; run adds the app's last 16 KB of output. After a
   Go reload the Reloader watches 50 ms more, so a process that crashes
-  on its first frame is in that save's report.
-- **The waits:** 5 s to hand over and exit, 10 s to dial in again, 3 s
-  to render or restyle. The Reloader starts no process, so one that
-  crashes before its hello holds Reload for the 10 s.
+  on its first frame is in that save's report. A handover that failed
+  keeps its own reason (Keep's get's error, a Handed that didn't
+  decode), not "exited before handover", and a process that closes its
+  wire before its answer is read is no crash.
+- **A state that no longer decodes is dropped,** not fatal: the new
+  build starts without it and says so ("dropped" on the reload wire),
+  and the report has why under its key. Failed is the only place a
+  report has for it (Report is API), so it shows the panel and makes
+  ctl reload exit 1, though the app runs. The state is read to a depth
+  of 64, so a removed field however deep is skipped; the Reader goes
+  back to the pool at the wire's 5.
+- **The state an app keeps has a `//msgp:limit`,** Tasks' (`arrays:1048576
+  maps:4096`): hello's, the scaffold's and the reloader's test app's.
+- **The waits:** 5 s to hand over and exit, 10 s to dial in again (one
+  deadline for every key, so two keys that don't come back don't hang
+  the loop), 3 s to render or restyle. The Reloader starts no process,
+  so one that crashes before its hello holds Reload for the 10 s.
+- **Reload before Run** waits for Run to start and for its first build
+  (`ctl reload` as `hotty-surf run` starts); one after Run returned
+  fails at once. A Reloader never Run holds Reload until its ctx ends.
+- **go list runs only when the packages may have changed:** a directory
+  made or removed, go.mod or go.work written (their directories are
+  watched), or a Go file's imports changed (read with go/parser's
+  ImportsOnly). The brief named the first two; an import is the third
+  way a package of the module that isn't followed yet comes in. Save
+  to `go build` starting went from 28 ms to 0.2 ms.
 - **restart's error** goes under each key the Reloader knows, and in
   Build when it knows none yet (the first build).
 - **A file is applied once per change of its time,** so the watcher's
@@ -546,6 +597,18 @@ What took the floor from about 2 ms to under 1:
 - **run needs a hotty host;** in another terminal it says so (the app in
   cells is `go run`'s). The app quits on ctrl+c or ctrl+q it doesn't
   take, telling run first; while no app runs, run quits on them.
+- **run's input:** what the terminal sends during a handover goes to
+  the next process, up to 256 inputs; an app that exited gets none, so
+  the clicks on a crashed app's last frame aren't replayed into the next
+  build. What the app sends that doesn't decode closes its term wire
+  and is reported. run waits for the Reloader's Run before it returns,
+  so its directory, with every build, goes with it.
+- **new's name** is a surface's: `[a-z][a-z0-9-]`, 64 characters at
+  most.
+- **The gate checks the surfdev build:** vet and staticcheck with
+  `-tags surfdev`, and devchild's tests, which build only with it.
+  devchild's tests serve more than once in one process, so
+  `devhook.Reset` forgets the surfaces an earlier test made.
 - **The generator is the templ this module links** (`internal/templgen`,
   shared by the reloader and new): an app on another templ version gets
   _templ.go files with this version's header.

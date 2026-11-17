@@ -52,16 +52,21 @@ gen:    ## fails when a generated file (templ's, msgp's) is not what its source 
 	out="$$(sha256sum --quiet -c "$$t" 2>/dev/null | sed 's/: FAILED$$//')"; \
 	if [ -n "$$out" ]; then echo "generating changed:"; echo "$$out"; exit 1; fi
 
+# The surfdev build (live reload's: register_dev.go, reload/dev.go,
+# run/dev.go, internal/devchild) is vetted, linted and tested too.
 vet:
 	$(GO) vet ./...
+	$(GO) vet -tags surfdev ./...
 	@for m in $(SUBMODULES); do $(GO) -C $$m vet ./... || exit 1; done
 
 lint:   ## staticcheck, pinned; from the module cache when it has it
 	GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) ./...
+	GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) -tags surfdev ./...
 	@for m in $(SUBMODULES); do (cd $$m && GOPROXY=file://$(HOME)/go/pkg/mod/cache/download,https://proxy.golang.org $(GO) run $(STATICCHECK) ./...) || exit 1; done
 
 test:   ## the tests, with the race detector
 	$(GO) test -race ./...
+	$(GO) test -race -tags surfdev ./internal/devchild/...
 	@for m in $(SUBMODULES); do $(GO) -C $$m test -race ./... || exit 1; done
 
 # The examples' release wasm, as TinyGo builds it (gov NEIO-15).

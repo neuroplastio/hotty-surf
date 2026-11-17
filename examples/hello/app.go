@@ -2,6 +2,7 @@ package main
 
 //go:generate msgp -marshal=false -tests=false
 //msgp:newtime
+//msgp:limit arrays:1048576 maps:4096
 //msgp:ignore App
 
 import (

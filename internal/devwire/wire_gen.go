@@ -122,6 +122,67 @@ func (z *Doc) Msgsize() (s int) {
 }
 
 // DecodeMsg implements msgp.Decodable
+func (z *Dropped) DecodeMsg(dc *msgp.Reader) (err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, err = dc.ReadMapHeader()
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z5817a858limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, err = dc.ReadMapKeyPtr()
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "text":
+			z.Text, err = dc.ReadString()
+			if err != nil {
+				err = msgp.WrapError(err, "Text")
+				return
+			}
+		default:
+			err = dc.Skip()
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	return
+}
+
+// EncodeMsg implements msgp.Encodable
+func (z Dropped) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 1
+	// write "text"
+	err = en.Append(0x81, 0xa4, 0x74, 0x65, 0x78, 0x74)
+	if err != nil {
+		return
+	}
+	err = en.WriteString(z.Text)
+	if err != nil {
+		err = msgp.WrapError(err, "Text")
+		return
+	}
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z Dropped) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Text)
+	return
+}
+
+// DecodeMsg implements msgp.Decodable
 func (z *Empty) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
@@ -319,7 +380,7 @@ func (z *Handed) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "state":
-			z.State, err = dc.ReadBytesLimit(z.State, z5817a858limitArrays)
+			z.State, err = dc.ReadBytesLimit(z.State, 67108864)
 			if err == nil && z.State == nil {
 				z.State = []byte{}
 			}
@@ -375,7 +436,7 @@ func (z *Handed) DecodeMsg(dc *msgp.Reader) (err error) {
 							return
 						}
 					case "data":
-						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, z5817a858limitArrays)
+						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, 67108864)
 						if err == nil && z.Surfaces[za0001].Data == nil {
 							z.Surfaces[za0001].Data = []byte{}
 						}
@@ -587,7 +648,7 @@ func (z *Input) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "msg":
-			z.Msg, err = dc.ReadBytesLimit(z.Msg, z5817a858limitArrays)
+			z.Msg, err = dc.ReadBytesLimit(z.Msg, 67108864)
 			if err == nil && z.Msg == nil {
 				z.Msg = []byte{}
 			}
@@ -667,7 +728,7 @@ func (z *Out) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "data":
-			z.Data, err = dc.ReadBytesLimit(z.Data, z5817a858limitArrays)
+			z.Data, err = dc.ReadBytesLimit(z.Data, 67108864)
 			if err == nil && z.Data == nil {
 				z.Data = []byte{}
 			}
@@ -1062,7 +1123,7 @@ func (z *Snap) DecodeMsg(dc *msgp.Reader) (err error) {
 				return
 			}
 		case "data":
-			z.Data, err = dc.ReadBytesLimit(z.Data, z5817a858limitArrays)
+			z.Data, err = dc.ReadBytesLimit(z.Data, 67108864)
 			if err == nil && z.Data == nil {
 				z.Data = []byte{}
 			}
@@ -1284,7 +1345,7 @@ func (z *Welcome) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "state":
-			z.State, err = dc.ReadBytesLimit(z.State, z5817a858limitArrays)
+			z.State, err = dc.ReadBytesLimit(z.State, 67108864)
 			if err == nil && z.State == nil {
 				z.State = []byte{}
 			}
@@ -1340,7 +1401,7 @@ func (z *Welcome) DecodeMsg(dc *msgp.Reader) (err error) {
 							return
 						}
 					case "data":
-						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, z5817a858limitArrays)
+						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, 67108864)
 						if err == nil && z.Surfaces[za0001].Data == nil {
 							z.Surfaces[za0001].Data = []byte{}
 						}

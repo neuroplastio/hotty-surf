@@ -29,14 +29,17 @@ import (
 // Keep carries the program's state across a reload: get gives it as a
 // msgp-encodable value when a new build takes over, and the new build's set
 // gets the decoded copy before Serve returns. What isn't kept starts again
-// as the program's main makes it. An edit that reaches only a .templ file's
-// text and classes keeps everything, kept or not. A program calls it once,
-// before Serve; one with no state to keep doesn't call it.
+// as the program's main makes it, and so does the whole state when it no
+// longer decodes (a save changed a kept field's type): the new build
+// starts without it, and the reloader's report says so. An edit that
+// reaches only a .templ file's text and classes keeps everything, kept or
+// not. A program calls it once, before Serve; one with no state to keep
+// doesn't call it.
 //
-// get runs once, on Serve's goroutine, when a new build is ready: it is
-// the program's last word in this process. A program whose other
-// goroutines change the state stops them, or reads the state through a
-// surface's Do, before get returns. Once the reloader has the state, the
+// get runs once, when a new build is ready: it is the program's last word
+// in this process. get runs on the first surface's driver, as its
+// handlers do; a program with other goroutines stops them or reads the
+// state through a surface's Do. Once the reloader has the state, the
 // process exits, and nothing after get runs.
 //
 // Only the program's own value is kept: what ui's components remember in
@@ -63,7 +66,8 @@ func Keep[T any, P interface {
 // Serve connects the program to its reloader on rw, as the instance key: a
 // name the program's host gives it that stays the same across builds, so
 // that the reloader pairs the old process with the new one (run.App's is
-// "app"; plx's are "controller" and "tool:<viewer>"). It is called inline,
+// the one its starter names, "app" under hotty-surf run; plx's are
+// "controller" and "tool:<viewer>"). It is called inline,
 // after Keep and before the program's surfaces first render.
 //
 // In a process that a reload started, Serve takes over from the build
