@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/html/atom"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottyedit"
+	"neuroplast.io/hotty-surf/internal/keydefault"
 )
 
 // What the user does, as a host has it done (SPEC §9, §10): focus, keys,
@@ -386,8 +387,8 @@ func (c *Screen) check(n *html.Node, on bool) {
 // says so (SPEC §9).
 func (c *Screen) toggle(n *html.Node) {
 	f := c.field(n)
-	on := !f.checked
-	if !on && strings.EqualFold(attr(n, "type"), "radio") {
+	on, changed := keydefault.Check(f.checked, strings.EqualFold(attr(n, "type"), "radio"))
+	if !changed {
 		return
 	}
 	c.check(n, on)
@@ -622,47 +623,15 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 // case, going round to the first (SPEC §10.2 Selects).
 func (c *Screen) selectKey(el *html.Node, key, name string) bool {
 	opts := options(el)
-	cur := c.field(el).ed.Value
-	i := slices.IndexFunc(opts, func(o option) bool { return o.value == cur })
-	from := func(j, step int) int {
-		for ; j >= 0 && j < len(opts); j += step {
-			if !opts[j].disabled {
-				return j
-			}
-		}
-		return -1
+	choices := make([]keydefault.Option, len(opts))
+	for i, o := range opts {
+		choices[i] = keydefault.Option{Value: o.value, Label: o.label, Disabled: o.disabled}
 	}
-	p := -1
-	switch name {
-	case "arrow_down":
-		p = from(i+1, 1)
-	case "arrow_up":
-		p = from(i-1, -1)
-	case "home", "page_up":
-		p = from(0, 1)
-	case "end", "page_down":
-		p = from(len(opts)-1, -1)
-	case "space", "enter":
-	default:
-		text, ok := hotty.KeyText(key)
-		if !ok || len(graphemesOf(text)) != 1 {
-			return false
-		}
-		for k := 1; k <= len(opts); k++ {
-			j := (i + k + len(opts)) % len(opts)
-			if i < 0 {
-				j = k - 1
-			}
-			if !opts[j].disabled && strings.HasPrefix(strings.ToLower(opts[j].label), strings.ToLower(text)) {
-				p = j
-				break
-			}
-		}
+	value, changed, taken := keydefault.Select(choices, c.field(el).ed.Value, key, name)
+	if changed {
+		c.pick(el, value)
 	}
-	if p >= 0 && p != i {
-		c.pick(el, opts[p].value)
-	}
-	return true
+	return taken
 }
 
 // tab moves focus to the next or the previous element Tab goes to. Past
