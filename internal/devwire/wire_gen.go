@@ -319,7 +319,7 @@ func (z *Handed) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "state":
-			z.State, err = dc.ReadBytesLimit(z.State, z5817a858limitArrays)
+			z.State, err = dc.ReadBytesLimit(z.State, 67108864)
 			if err == nil && z.State == nil {
 				z.State = []byte{}
 			}
@@ -375,7 +375,7 @@ func (z *Handed) DecodeMsg(dc *msgp.Reader) (err error) {
 							return
 						}
 					case "data":
-						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, z5817a858limitArrays)
+						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, 67108864)
 						if err == nil && z.Surfaces[za0001].Data == nil {
 							z.Surfaces[za0001].Data = []byte{}
 						}
@@ -587,7 +587,7 @@ func (z *Input) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "msg":
-			z.Msg, err = dc.ReadBytesLimit(z.Msg, z5817a858limitArrays)
+			z.Msg, err = dc.ReadBytesLimit(z.Msg, 67108864)
 			if err == nil && z.Msg == nil {
 				z.Msg = []byte{}
 			}
@@ -667,7 +667,7 @@ func (z *Out) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "data":
-			z.Data, err = dc.ReadBytesLimit(z.Data, z5817a858limitArrays)
+			z.Data, err = dc.ReadBytesLimit(z.Data, 67108864)
 			if err == nil && z.Data == nil {
 				z.Data = []byte{}
 			}
@@ -1062,7 +1062,7 @@ func (z *Snap) DecodeMsg(dc *msgp.Reader) (err error) {
 				return
 			}
 		case "data":
-			z.Data, err = dc.ReadBytesLimit(z.Data, z5817a858limitArrays)
+			z.Data, err = dc.ReadBytesLimit(z.Data, 67108864)
 			if err == nil && z.Data == nil {
 				z.Data = []byte{}
 			}
@@ -1284,7 +1284,7 @@ func (z *Welcome) DecodeMsg(dc *msgp.Reader) (err error) {
 		}
 		switch msgp.UnsafeString(field) {
 		case "state":
-			z.State, err = dc.ReadBytesLimit(z.State, z5817a858limitArrays)
+			z.State, err = dc.ReadBytesLimit(z.State, 67108864)
 			if err == nil && z.State == nil {
 				z.State = []byte{}
 			}
@@ -1340,7 +1340,7 @@ func (z *Welcome) DecodeMsg(dc *msgp.Reader) (err error) {
 							return
 						}
 					case "data":
-						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, z5817a858limitArrays)
+						z.Surfaces[za0001].Data, err = dc.ReadBytesLimit(z.Surfaces[za0001].Data, 67108864)
 						if err == nil && z.Surfaces[za0001].Data == nil {
 							z.Surfaces[za0001].Data = []byte{}
 						}

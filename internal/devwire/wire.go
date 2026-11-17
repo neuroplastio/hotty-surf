@@ -15,6 +15,9 @@ package devwire
 //msgp:newtime
 //msgp:limit arrays:65536 maps:65536
 
+// The limit's arrays also caps every []byte, so each bin field carries its
+// own: 64 MiB, maxBytes (rpc.go), as for a string.
+
 import "neuroplast.io/hotty-go"
 
 // The reload wire: a process and its reloader.
@@ -32,7 +35,7 @@ type Hello struct {
 type Welcome struct {
 	// State is what Keep's get encoded in the process before, nil in a
 	// fresh start.
-	State []byte `msg:"state"`
+	State []byte `msg:"state,limit=67108864"`
 	// Surfaces are the surfaces the process before handed over.
 	Surfaces []Snap `msg:"surfaces"`
 	// TemplRoot and WatchRoot are where templ's dev mode reads the
@@ -49,7 +52,7 @@ type Welcome struct {
 type Snap struct {
 	Name string `msg:"name"`
 	CSS  string `msg:"css"`
-	Data []byte `msg:"data"`
+	Data []byte `msg:"data,limit=67108864"`
 }
 
 // Style is an edit of the app's stylesheet: the request "restyle", and an
@@ -67,7 +70,7 @@ type Restyled struct {
 // Handed answers "handover": the process's state and its surfaces. The
 // process exits once it has sent it.
 type Handed struct {
-	State    []byte `msg:"state"`
+	State    []byte `msg:"state,limit=67108864"`
 	Surfaces []Snap `msg:"surfaces"`
 }
 
@@ -87,13 +90,13 @@ type TermHello struct {
 // Input is what the terminal sent the app ("input"): one hotty message as
 // hotty encodes it (Msg), or one key, as hotty names keys (Key).
 type Input struct {
-	Msg []byte `msg:"msg"`
+	Msg []byte `msg:"msg,limit=67108864"`
 	Key string `msg:"key"`
 }
 
 // Out is one hotty command the app sends the terminal ("out").
 type Out struct {
-	Data []byte `msg:"data"`
+	Data []byte `msg:"data,limit=67108864"`
 }
 
 // Show names the app's surface, once its document is out ("show"):
