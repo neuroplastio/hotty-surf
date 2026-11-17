@@ -155,10 +155,10 @@ between `MenuItem.Keys` and the handler that binds it.
 
 ### Notes for L1 (the verifier's)
 
-- **The handover reads documents directly.** In a dev build the reload
-  registry holds surfaces the program may have dropped, which nobody
-  drives: the Go tier's handover takes each surface's last-sent document
-  as it is, rather than asking the surface through Do and waiting.
+- **The handover reads a dropped surface only after its driver exits.** A
+  framework-owned driver's completion signal proves it has stopped; a last
+  render time does not. The later handover decision below supersedes the
+  earlier direct-read rule.
 - **Dialog keeps no State, yet promises focus goes back where it was
   when it closes.** Either the surface remembers it per id (Dialog's doc
   says so in L2's batch) or `Dialog(st, p)` comes as a MINOR break, as
@@ -560,16 +560,17 @@ What took the floor from about 2 ms to under 1:
   sent from a second Do queued inside the first, which runs at the next
   Update. A surface that never rendered isn't waited for; one that
   doesn't answer in 300 ms (dropped) is given up.
-- **The handover takes each snapshot on the surface's driver,** then
-  detaches the surface (`Attach(nil, …)`) so nothing more goes out of
-  the old build. Keep's get runs on the first live surface's driver, in
-  the same Do and ahead of its snapshot, so get doesn't race the
-  handlers that write the state and no frame comes between the two. A
-  driver that hasn't answered in 300 ms is waited for up to 4 s if it
-  rendered in the last 3 s (busy: reading it would race its render),
-  and read directly otherwise (dropped); whichever takes a snapshot
-  first claims it. A first surface still busy at 4 s fails the
-  handover with that reason; another one starts again in the new build.
+- **The handover takes each live snapshot on the surface's driver,** then
+  detaches the surface (`Attach(nil, …)`) so nothing more goes out of the old
+  build. Keep's get runs on the first live driver's goroutine, ahead of its
+  snapshot. A framework-owned driver signals when its loop returns; a known
+  exited driver is handed over as dropped from its last snapshot immediately.
+  If a driver is still alive and cannot start its queued work within 4 s,
+  the handover fails with a busy-handler message and keeps the running build;
+  cancelled work cannot run Keep later. A custom driver without a completion
+  signal is treated as possibly busy: its exit is unknown, so an unanswered
+  handover fails rather than reading its state off-driver. No public driver
+  lifecycle API is added here.
 - **A handed-over surface carries its stylesheet,** and the new build's
   surface is restyled when its own differs, so a Go save that changed
   the CSS shows it in the first delta.
@@ -1001,8 +1002,8 @@ shape. Nothing else in the lock moves.
   deferral for `plx plugin dev ctl shot`. The process of key answers over
   its reload wire (a `doc` request beside render, restyle and handover)
   with the document of the surface it names, read on the
-  surface's driver through Do, never directly (a handover reads a
-  dropped surface directly only because the process exits after it). 3 s
+  surface's driver through Do, never directly (a handover may read a
+  surface directly only after its driver signals it has exited). 3 s
   at most. `ctl shot` takes its size from the terminal hotty-surf run
   owns, as it does today. `hotty-surf ctl shot`
   moves onto it, so the term wire's `doc` goes.
