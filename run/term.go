@@ -188,6 +188,11 @@ func inCells(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-ch
 		if err := c.err; err != nil {
 			return err
 		}
+		if c.stale {
+			if err := c.start(); err != nil {
+				return err
+			}
+		}
 		if err := draw(); err != nil {
 			return err
 		}
