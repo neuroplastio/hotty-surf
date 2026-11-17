@@ -116,6 +116,8 @@ func Serve(ctx context.Context, rw io.ReadWriter, key string) (done <-chan struc
 			r := devwire.NewReader(bytes.NewReader(w.State))
 			r.SetMaxRecursionDepth(stateDepth)
 			err := s(r)
+			// A Reader keeps its limits in the pool.
+			r.SetMaxRecursionDepth(devwire.MaxDepth)
 			devwire.PutReader(r)
 			if err != nil {
 				// A save changed a kept field's type: the build starts
