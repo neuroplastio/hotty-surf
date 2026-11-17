@@ -45,9 +45,9 @@ func ExampleScreen_Press() {
 	c.Press(4, 2, 0, 0)              // a row's drag handle: dragstart
 	c.Move(4, 7, 0)                  // over another row: drag
 	c.Release(4, 7, 0)               // dragend, and that row's Drop
-	c.Press(4, 3, 2, 0)              // a secondary press: surf.Secondary
+	c.Press(4, 3, 0, 2)              // a secondary press: surf.Secondary
 	c.Move(10, 5, 0)                 // no button down: a hover
-	c.Press(4, 3, 0, hotty.ModShift) // a shift-click …
+	c.Press(4, 3, hotty.ModShift, 0) // a shift-click …
 	c.Release(4, 3, hotty.ModShift)
 
 	// A carry that began outside the surface: which row, and which half.

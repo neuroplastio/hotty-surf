@@ -9,6 +9,8 @@ import (
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
+
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // attached is a surface of view on a writer that drops everything, with
@@ -46,7 +48,7 @@ func TestFaultsAreCapped(t *testing.T) {
 // An element's own id that is the runtime's (root, hotty-css, or a
 // generated one) is a fault; any other is the app's.
 func TestRuntimeIDsAreFaults(t *testing.T) {
-	for id, fault := range map[string]bool{"root": true, "hotty-css": true, idPrefix + "1z": true, "rooted": false, idPrefix + "X": false, "e1": false} {
+	for id, fault := range map[string]bool{"root": true, "hotty-css": true, rt.IDPrefix + "1z": true, "rooted": false, rt.IDPrefix + "X": false, "e1": false} {
 		s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			fmt.Fprintf(w, `<div id=%q>x</div>`, id)
 			return nil
