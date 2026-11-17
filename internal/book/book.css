@@ -181,3 +181,9 @@
 .book-controls { margin-bottom: 0.75rem; }
 
 .book-preview .max-w-lg { max-width: 32rem; }
+.book-separator { flex-shrink: 0; background: var(--border); }
+.book-separator[data-orientation="horizontal"] { height: var(--hotty-px); width: 100%; }
+.book-separator[data-orientation="vertical"] { width: var(--hotty-px); height: 100%; }
+.book-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: 0.75rem; }
+.book-icon-grid > div { border: var(--hotty-px) solid var(--border); border-radius: var(--radius-md); padding: 0.5rem; }
+.book-icon-grid .size-5 { width: 1.25rem; height: 1.25rem; }

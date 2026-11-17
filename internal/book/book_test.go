@@ -363,7 +363,7 @@ func TestBookEventLogDemoClears(t *testing.T) {
 
 func TestBookDemonstrationsHaveSource(t *testing.T) {
 	a := New()
-	for _, id := range []string{"code/go", "nav-list/default", "controls/default", "event-log/default"} {
+	for _, id := range []string{"code/go", "nav-list/default", "controls/default", "event-log/default", "icons/default", "separator/default"} {
 		a.show(id)
 		if src := a.model.Sel.Sources(); len(src) < 2 || !strings.HasPrefix(src[1].Title, "render:") {
 			t.Errorf("%s source: %+v", id, src)
