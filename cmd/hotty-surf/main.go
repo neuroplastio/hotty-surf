@@ -163,7 +163,7 @@ func cmd(ctx context.Context, args []string, out, errOut io.Writer) int {
 	case "serve":
 		return devcmd.Serve(ctx, args[1:], out, errOut)
 	case "book":
-		fs := devcmd.Flags("book", "book\n\nThe kit's storybook in this terminal: the stories in a list, the one\nchosen drawn by the host and beside it in cells, as a terminal that is\nno hotty host draws it; in cells alone on such a terminal. Tab moves\nthrough the list, the story and the cells pane, the arrows through the\nlist; a story's open dialog has the keyboard until Esc closes it; ctrl+q\nquits. From a checkout it reloads as the stories are saved.")
+		fs := devcmd.Flags("book", "book\n\nThe kit's storybook in this terminal: the stories in a list, the one\nchosen drawn by the host and beside it in cells, as a terminal that is\nno hotty host draws it; in cells alone on such a terminal. Tab moves\nthrough the list, the story and the cells pane; in the list the arrows,\nHome, End and the pages move, and typing finds a story by its name. A\nstory's dialog that opens as the list reaches it leaves the keyboard on\nthe list; Esc closes it. While a dialog in the story has the keyboard,\nTab doesn't go on into the cells pane. ctrl+q quits. From a checkout it\nreloads as the stories are saved; its first start builds the book.")
 		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
 			return code
 		}

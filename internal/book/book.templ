@@ -16,7 +16,10 @@ templ View(a *App) {
 				role="listbox"
 				aria-label="Stories"
 				tabindex="0"
-				{ surf.On(ctx, "book-list", surf.Key(a.ListKey))... }
+				if i := a.index(); i >= 0 {
+					aria-activedescendant={ optionID(i) }
+				}
+				{ surf.On(ctx, "book-list", surf.Key(a.ListKey), surf.Focus(a.ListFocus))... }
 			>
 				for i, st := range sts {
 					<li
@@ -51,22 +54,36 @@ templ View(a *App) {
 						@a.cur.view
 					</section>
 					<section id="book-cells" class="book-cells hidden flex-col gap-2" aria-label="the story in cells">
-						<p class="text-sm text-muted-foreground">in cells</p>
-						<span tabindex="0" { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }></span>
+						{{ ls := a.lines() }}
+						{{ tab := a.cur.controls && !a.inert(ctx) }}
+						<span
+							class="book-edge text-sm text-muted-foreground"
+							if tab {
+								tabindex="0"
+							}
+							{ surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }
+						>in cells</span>
 						<div
 							class="book-pane"
-							tabindex="0"
+							if tab {
+								tabindex="0"
+							}
 							{ surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }
 						>
-							for _, l := range a.lines() {
-								<div>
+							for _, l := range ls {
+								<div class="book-line">
 									for _, sg := range l {
 										<span class={ sg.class }>{ sg.text }</span>
 									}
 								</div>
 							}
 						</div>
-						<span tabindex="0" { surf.On(ctx, "book-pane-after", surf.Focus(a.Edge(false)))... }></span>
+						<span
+							if tab {
+								tabindex="0"
+							}
+							{ surf.On(ctx, "book-pane-after", surf.Focus(a.Edge(false)))... }
+						></span>
 						if e := a.paneErr(); e != "" {
 							<p class="text-sm text-destructive">{ e }</p>
 						}
@@ -77,8 +94,9 @@ templ View(a *App) {
 				{{ surf.Autofocus(ctx, "book-pane") }}
 			}
 		}
-		if a.takeOnList() {
+		if a.takeToList() {
 			{{ surf.Autofocus(ctx, "book-list") }}
 		}
+		{{ keep(ctx) }}
 	</div>
 }
