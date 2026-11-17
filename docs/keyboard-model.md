@@ -45,6 +45,8 @@ component values and applies the changes its callbacks report.
 | Command dialog | Command's keys; Escape closes the dialog and choosing an item also closes it. |
 | Dialog | Escape closes; Tab and Shift+Tab cycle its controls. On close, focus returns to the opener where available. |
 | Drawer | As Dialog: focus stays inside, Tab wraps, and Escape requests a close. The closing transition retains the modal until it finishes. |
+| Context menu | Shift+F10 or the Menu key on an element in its area opens it under the area, its first enabled item highlighted; a secondary press opens it at the pointer with none. Open, it has the keyboard and a Dropdown menu's keys; Escape, the opening keys or a choice close it and give the keyboard back. |
+| Menu | The panel alone, the app's highlight: Down, Up, Home and End ask for another enabled item (OnHighlight); Enter and Space run the highlighted one. Nothing closes it: the app takes it away. |
 | Dropdown menu | Enter or Space opens the trigger; Down opens at the first enabled item and Up at the last. In the open menu, Up and Down move, Home and End go to the ends, Enter or Space chooses, and Escape closes. Choosing a checkbox toggles it; choosing a radio selects it within its group. |
 | Empty | None of its own. |
 | Field, field set and field separator | None of their own; their controls have their own keys. |

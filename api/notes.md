@@ -2026,6 +2026,93 @@ inside muted text). Lines now has its own view of a look (`lineLook`, with
 probe document generated with 69dcd99's code. The size delta is stated
 above.
 
+## plx: the context menu (a pack of its own)
+
+plx's ask (b): a menu opened at the pointer by a right click, or by the
+keyboard's menu keys at the focused element, not from a trigger. Neither
+hotty-a2ui (its KIT-28 is unbuilt) nor the spike has one. hotty-surf
+v0.6.3 had one (surfrun's context menu, 2026-11-06's journal), and this
+ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
+
+### As drafted
+
+- `ContextMenu(st *ContextMenuState, p ContextMenuProps)`. Its children
+  are the area; `ContextMenuProps{ID, Items []MenuItem, Class}`.
+  `ContextMenuState` is opaque, with no methods, since only the user opens
+  it.
+- **Opening.** A secondary press in the area opens it at the pointer's
+  cell, with no item highlighted (v0.6). shift+f10 or context_menu on an
+  element in the area opens it under the area, with the first item
+  highlighted (v0.6). They reach the area's surf.Key, as SPEC §10.2 gives
+  them to the program.
+- **Where.** The menu is a DropdownMenu's popover inside the area's
+  wrapper (`position: relative`), at
+  `top: calc(var(--hotty-cell-h) * (r - area.r))` and
+  `left: calc(var(--hotty-cell-w) * (c - area.c))`. That's the press's
+  cell less the area's (SPEC §9: both count from the surface), using only
+  proven CSS: `position: absolute` with top/left, `calc()`, and the
+  host's `var()`s. With no area (surftest's host lays nothing out) it
+  opens under the area, as a key does.
+- **Open.** The menu (`role=menu`, `tabindex=0`) takes the keyboard and
+  has a DropdownMenu's keys. Escape, a choice, or the opening keys again
+  close it and give the keyboard back to the element that had it (v0.6). A
+  press outside closes it (Outside runs before Secondary, so a second
+  right click moves it). It is the surface's one open popup, as a
+  DropdownMenu is.
+- **Cells.** The menu is drawn after the area in the flow, as a
+  DropdownMenu's is after its button. v0.6 drew it over the screen at the
+  cell. That needs the cells renderer to overlay a popover, which isn't
+  this leg's (cells is L3's).
+
+### Open for the reviewer
+
+1. **A wrapper.** The area is wrapped in a `div` (the dropdown-menu block)
+   that holds the menu and takes the press and the keys. A row of a table
+   can't be wrapped in a div. The other choice is an attrs helper the app
+   spreads on its own element, plus a menu component rendered beside it:
+   two calls where there is one now.
+2. **A key-opened menu goes under the area,** not under the focused
+   element. A `focus` event carries no area (SPEC §9's table), so the
+   program can't know where the element is. Exact for a ContextMenu per
+   row; for a large area it is the area's bottom edge. The fix is a SPEC
+   proposal (an area on `focus`, as on `press`), which is the
+   maintainer's call. Not worked around.
+3. **No flip at the edges.** v0.6 flipped the menu left and up near the
+   surface's edges. The kit doesn't know the surface's size in cells
+   during a render, so a menu near the right or bottom edge is cut off by
+   the surface. Same remedy class as 2: the host could place it. Noted,
+   not worked around.
+4. **No Open method.** DropdownMenuState has Open (a shortcut opens it).
+   A context menu opened by the app would have no cell to open at; an app
+   wanting a menu from a button uses DropdownMenu.
+5. **The test host.** hottytest 0.8.1 typed neither shift+f10 nor
+   context_menu. Reported with a repro and fixed in hotty-go e31f778
+   (hottytest types f1–f12 and context_menu as xterm does, and
+   hotty.DecodeKeys reads them). This branch pins that commit until
+   hottytest v0.8.2 is tagged, and the key tests type through the Rig.
+
+### As reviewed (p-796, review-ctx.md): applied
+
+- ContextMenu, ContextMenuProps{ID, Items, Class} and the opaque
+  ContextMenuState kept as approved (Q4: no Open).
+- Q1: the area paragraph replaced: the area is a block; a menu per row is
+  surf.Secondary on the rows plus a ui.Menu the app draws.
+- Q2, Q3: the doc names both host limits (a key opens it under the area;
+  no flip). The SPEC proposal is deferred (p-653), not made now.
+- Q5: the hotty-go pseudo-version stays on the branch; hottytest v0.8.2
+  is tagged in the release batch before v0.7.0 (p-653, P-5).
+- **Added `ui.Menu(MenuProps{ID, Items, Highlight, OnHighlight, Class})`**
+  with the review's texts: the `[role=menu]` panel alone, shown, its
+  highlight the app's (K25). It renders through DropdownMenu's view and
+  items (`menuView.ctl`), takes no part in the surface's one open popup,
+  and a choice closes nothing. A highlight out of range or on a disabled
+  item is none. Its panel sits in the flow (`position: static`), so a
+  surface whose view it is draws it at its top left. TestMenuControlled,
+  ExampleMenu.
+- K29 (menus: three ways in, one panel) is the reviewer's.
+- G-menu-rows (MenuItem slots for all three menus) is next after the
+  toast pack (p-653's queue).
+
 ## plx: toasts an app owns (G-toast, a pack of its own)
 
 plx's toasts (slice 1's G-toast, which blocks) were plx's own markup,

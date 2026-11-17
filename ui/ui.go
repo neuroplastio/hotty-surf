@@ -43,7 +43,7 @@ const (
 // doesn't. A surface with no CSS of its own (a dev tool's error surface, a
 // host's dialog) uses it as it is.
 func Stylesheet() string {
-	return kitCSS + navCSS + controlsCSS + sliderCSS + toastCSS
+	return kitCSS + navCSS + controlsCSS + sliderCSS + contextMenuCSS + toastCSS
 }
 
 // kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind

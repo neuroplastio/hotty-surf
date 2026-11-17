@@ -114,6 +114,32 @@ func ExamplePick() {
 	_ = saved
 }
 
+// A pane's context menu: a right click in the pane opens it at the
+// pointer, shift+f10 or the Menu key on an element in it under the pane.
+// In templ:
+//
+//	@ui.ContextMenu(&pane.menu, ui.ContextMenuProps{ID: "files-menu",
+//	    Items: []ui.MenuItem{{Label: "New file", OnSelect: pane.create}}}) {
+//	    @ui.Card(ui.CardProps{}) {
+//	        @files(pane)
+//	    }
+//	}
+func ExampleContextMenu() {
+	var state ui.ContextMenuState
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		pane := templ.Raw(`<p>Files</p>`)
+		menu := ui.ContextMenu(&state, ui.ContextMenuProps{
+			ID: "files-menu",
+			Items: []ui.MenuItem{
+				{Label: "New file", OnSelect: func() {}},
+				{Label: "Refresh", OnSelect: func() {}},
+			},
+		})
+		return menu.Render(templ.WithChildren(ctx, pane), w)
+	})
+	_ = surf.New("pane", view, ui.Stylesheet())
+}
+
 func ExampleCombobox() {
 	var state ui.ComboboxState
 	value := ""
@@ -183,4 +209,21 @@ func ExampleToastAction() {
 		{Label: "Undo", OnSelect: func() {}},
 		{Label: "Keep", Variant: ui.Outline},
 	}}
+}
+
+// A menu the app places itself (a surface of its own at the pointer): the
+// surface's whole view is a Menu, its highlight the app's.
+func ExampleMenu() {
+	hi := -1
+	items := []ui.MenuItem{
+		{Label: "Split right", Keys: "mod+d", OnSelect: func() {}},
+		{Label: "Close", Variant: ui.Destructive, OnSelect: func() {}},
+	}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Menu(ui.MenuProps{
+			ID: "pane-menu", Items: items, Highlight: hi,
+			OnHighlight: func(i int) { hi = i },
+		}).Render(ctx, w)
+	})
+	_ = surf.New("pane-menu", view, ui.Stylesheet())
 }
