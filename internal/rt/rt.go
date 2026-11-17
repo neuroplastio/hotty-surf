@@ -66,6 +66,10 @@ type Frame struct {
 	// KeyScopes are this frame's lexical kit overrides, indexed by the
 	// private marker on each focused kit control (one-based).
 	KeyScopes []*KeyScope
+	// Scopes are every KeyScope the render made, in the order of the
+	// render, whether or not a kit control is in it: what ui.Bindings
+	// lists and ui.Pick runs.
+	Scopes []*KeyScope
 }
 
 // ModalOps performs the tree and focus work of an active modal.

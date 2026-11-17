@@ -21,6 +21,9 @@ var Peek struct {
 	// keyboard, "" for none: ui's differential tests compare it with a
 	// browser's document.activeElement.
 	Focused func(s any) string
+	// Frame is the last frame rendered, nil before the first. It runs on
+	// the surface's driver goroutine.
+	Frame func(s any) *Frame
 	// Faults are the faults of the renders since the last call, which it
 	// forgets.
 	Faults func(s any) []string

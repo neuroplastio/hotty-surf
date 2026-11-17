@@ -36,6 +36,7 @@ type renderer struct {
 func init() {
 	rt.Peek.Tree = func(s any) *html.Node { return s.(*Surface).prev }
 	rt.Peek.Focused = func(s any) string { return s.(*Surface).focused }
+	rt.Peek.Frame = func(s any) *rt.Frame { return s.(*Surface).frame }
 	rt.Peek.Faults = func(s any) []string {
 		x := s.(*Surface)
 		f := x.faults

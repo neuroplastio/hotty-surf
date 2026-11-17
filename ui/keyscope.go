@@ -14,12 +14,34 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
+// KeyBinding is one action a [KeyScope] offers: a key the scope takes, an
+// action a menu or a palette lists, or both.
+type KeyBinding struct {
+	// Key is the key that reaches it, in surf.Key's notation, mod
+	// included ("mod+s", "arrow_down"); empty for an action no key
+	// reaches, which only a pick runs ([Pick]).
+	Key string
+	// Label is what it does, as a host's menu and an app's palette show
+	// it: "Save". Empty leaves it out of the menu's labels.
+	Label string
+	// Name is the command a pick sends and [Pick] takes ("save"); empty
+	// for an action only its key reaches. Names are unique on a surface;
+	// the first in [Bindings]' order wins.
+	Name string
+	// Disabled is set while it does nothing: its key goes on as if the
+	// scope did not name it, a pick does nothing, and the menu shows it
+	// disabled.
+	Disabled bool
+}
+
 // KeyScope applies an application keyboard override to the kit controls
-// in its children. keys names the keys the override wants; fn is offered
-// only those keys while one of those controls has the keyboard. A true
-// result takes the key. A false result tries the next enclosing KeyScope
-// that names it, then the focused control's kit default. Keys no scope
-// names keep their native or kit defaults.
+// in its children, and names the actions it offers. bindings are its keys
+// and actions; fn is offered a binding when its key is pressed while one
+// of those controls has the keyboard, or when it is picked ([Pick]). A
+// true result takes the key. A false result tries the next enclosing
+// KeyScope that names it, then the focused control's kit default. Keys no
+// scope names keep their native or kit defaults. fn gets the binding as
+// given, so it can switch on Name or Key.
 //
 // Scopes nest: the scope nearest the focused control is asked first.
 // A scope may contain several controls, including a component's internal
@@ -27,40 +49,73 @@ import (
 // never affect another surface. Plain HTML elements are not kit controls;
 // use surf.On and surf.Key for their program-side handlers.
 //
-// Names use surf.Key's notation, including mod ("arrow_down", "mod+s").
-// keys are exact key names, not patterns or action names. An empty list or
-// nil fn adds no override. Invalid names, duplicate names, and tab or
-// shift+tab are faults; those entries are ignored. Tab and Shift+Tab are
-// reserved for the host's focus traversal, including within a modal.
-// An active modal confines focus and background controls do not receive
-// keys; a scope enclosing it applies to its focused kit control.
+// Keys use surf.Key's notation, including mod ("arrow_down", "mod+s").
+// They are exact key names, not patterns or action names. A binding with
+// neither Key nor Name, an invalid key, a key the scope already binds, and
+// tab or shift+tab are faults; those bindings are ignored. Tab and
+// Shift+Tab are reserved for the host's focus traversal, including within
+// a modal. An active modal confines focus and background controls do not
+// receive keys; a scope enclosing it applies to its focused kit control.
+//
+// The bindings of every scope rendered are what [Bindings] lists and
+// [Menu] gives a host, whether or not a kit control is in the scope.
+// No bindings or a nil fn adds no override.
 //
 // fn runs on the surface driver's goroutine, as other handlers do. Its
 // children are rendered without adding an HTML wrapper. A KeyScope only
 // handles keys while one of its kit controls has focus. A host's open
 // native select list can keep keys until it closes (SPEC §10.2).
-func KeyScope(keys []string, fn func(string) bool) templ.Component {
+func KeyScope(bindings []KeyBinding, fn func(KeyBinding) bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		children := templ.GetChildren(ctx)
-		if children == nil {
-			return nil
-		}
-		if len(keys) == 0 || fn == nil {
+		if len(bindings) == 0 || fn == nil {
+			if children == nil {
+				return nil
+			}
 			return children.Render(templ.ClearChildren(ctx), w)
 		}
 		p := hotty.Platform{}
-		if f := rt.From(ctx); f != nil {
+		f := rt.From(ctx)
+		if f != nil {
 			p = f.Platform
 		}
-		scope := &rt.KeyScope{Keys: map[string]bool{}, Handle: fn, Parent: rt.KeyScopeFrom(ctx), Default: keyScopeDefault,
+		scope := &rt.KeyScope{Keys: map[string]bool{}, Parent: rt.KeyScopeFrom(ctx), Default: keyScopeDefault,
 			Canonical: scopeCanonical, Attach: attachScope, Native: rt.NativeKeyDefault, Dispatch: rt.DispatchKeyScope}
-		for _, key := range keys {
-			k, ok := p.ReadKey(key)
-			if !ok || k == "tab" || k == "shift+tab" || scope.Keys[k] {
-				rt.Fault(ctx, fmt.Sprintf("ui.KeyScope: invalid or duplicate key %q", key))
+		given := make([]KeyBinding, 0, len(bindings))
+		byKey := map[string]int{}
+		for _, b := range bindings {
+			var k string
+			if b.Key != "" {
+				var ok bool
+				k, ok = p.ReadKey(b.Key)
+				_, dup := byKey[k]
+				if !ok || k == "tab" || k == "shift+tab" || dup {
+					rt.Fault(ctx, fmt.Sprintf("ui.KeyScope: invalid or duplicate key %q", b.Key))
+					continue
+				}
+			} else if b.Name == "" {
+				rt.Fault(ctx, fmt.Sprintf("ui.KeyScope: binding %q has neither Key nor Name", b.Label))
 				continue
 			}
-			scope.Keys[k] = true
+			if k != "" {
+				byKey[k] = len(given)
+				if !b.Disabled {
+					scope.Keys[k] = true
+				}
+			}
+			given = append(given, b)
+			scope.Bindings = append(scope.Bindings, rt.Binding{Key: b.Key, Physical: k, Label: b.Label, Name: b.Name, Disabled: b.Disabled})
+		}
+		scope.Handle = func(k string) bool {
+			i, ok := byKey[k]
+			return ok && fn(given[i])
+		}
+		scope.Pick = func(i int) bool { return fn(given[i]) }
+		if f != nil {
+			f.Scopes = append(f.Scopes, scope)
+		}
+		if children == nil {
+			return nil
 		}
 		return children.Render(rt.WithKeyScope(templ.ClearChildren(ctx), scope), w)
 	})
