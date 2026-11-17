@@ -257,6 +257,12 @@ func (h *host) send(in *devwire.Input) {
 	devwire.PutInput(in)
 }
 
+// size is the app's size: the terminal's.
+func (h *host) size() (cols, rows int) {
+	z := h.t.Size()
+	return z.Cols, z.Rows
+}
+
 func (h *host) placeApp() {
 	h.mu.Lock()
 	name := h.surface
@@ -469,28 +475,18 @@ func (h *host) stop() {
 	}
 }
 
-// shot is the app's document as the host has it, for ctl shot.
+// shot is the app's document as the host has it, for ctl shot, at the
+// terminal's size.
 func (h *host) shot(ctx context.Context) (devwire.Doc, error) {
-	h.mu.Lock()
-	a := h.app
-	h.mu.Unlock()
-	if a == nil {
+	if !h.running() {
 		return devwire.Doc{}, errors.New("no app is running")
 	}
-	var doc devwire.Doc
-	select {
-	case err := <-a.term.Call(&a.calls, "doc", &devwire.Empty{}, &doc):
-		if err != nil {
-			return doc, err
-		}
-	case <-ctx.Done():
-		return doc, ctx.Err()
-	case <-time.After(5 * time.Second):
-		return doc, errors.New("the app didn't answer")
+	html, err := h.r.Document(ctx, "app")
+	if err != nil {
+		return devwire.Doc{}, err
 	}
-	z := h.t.Size()
-	doc.Cols, doc.Rows = z.Cols, z.Rows
-	return doc, nil
+	cols, rows := h.size()
+	return devwire.Doc{HTML: html, Cols: cols, Rows: rows}, nil
 }
 
 // socketPair is two connected unix sockets: the app's end as a file to

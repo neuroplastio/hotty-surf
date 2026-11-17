@@ -83,12 +83,10 @@ func (t termOut) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// termMsg is what the term wire brought: an input (pooled: the driver
-// puts it back once handled), or a request for the surface's document.
+// termMsg is what the term wire brought: an input, pooled (the driver puts
+// it back once handled).
 type termMsg struct {
-	in    *devwire.Input
-	docID uint32
-	isDoc bool
+	in *devwire.Input
 }
 
 func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter, key string) error {
@@ -186,11 +184,6 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 					devwire.PutInput(m.in)
 					return
 				}
-			case h.Type == devwire.Request && h.Method == "doc":
-				if devwire.Skip(tr) != nil {
-					return
-				}
-				m.docID, m.isDoc = h.ID, true
 			default:
 				if devwire.Skip(tr) != nil {
 					return
@@ -231,25 +224,13 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 			if !ok {
 				return nil // hotty-surf run is gone
 			}
-			switch {
-			case m.isDoc:
-				doc, err := rt.Peek.Document(s)
-				errText := ""
-				if err != nil {
-					errText = err.Error()
-				}
-				if err := term.Respond(m.docID, errText, &devwire.Doc{Surface: name, HTML: doc}); err != nil {
-					return err
-				}
-			default:
-				quit, err := handle(s, &in, handlers, m.in)
-				devwire.PutInput(m.in)
-				if err != nil {
-					return err
-				}
-				if quit {
-					return term.Notify("bye", &devwire.Empty{})
-				}
+			quit, err := handle(s, &in, handlers, m.in)
+			devwire.PutInput(m.in)
+			if err != nil {
+				return err
+			}
+			if quit {
+				return term.Notify("bye", &devwire.Empty{})
 			}
 		}
 	}

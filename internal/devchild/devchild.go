@@ -301,6 +301,18 @@ func (c *child) serve() {
 			if c.conn.Respond(h.ID, errText, &devwire.Restyled{Surfaces: n}) != nil {
 				return
 			}
+		case "doc":
+			if devwire.Skip(c.r) != nil {
+				return
+			}
+			doc, err := c.document()
+			errText := ""
+			if err != nil {
+				errText = err.Error()
+			}
+			if c.conn.Respond(h.ID, errText, &doc) != nil {
+				return
+			}
 		case "handover":
 			if devwire.Skip(c.r) != nil {
 				return
@@ -339,6 +351,62 @@ func (c *child) live() []*surf.Surface {
 		}
 	}
 	return out
+}
+
+// docWait is how long a doc request waits for a busy driver: within the
+// reloader's 3 s.
+var docWait = 2500 * time.Millisecond
+
+// document is the document of the surface that rendered last, as its host
+// has it (reloader.Document). It is read on the surface's driver, or
+// directly when the driver hasn't answered in answerWait and hasn't
+// rendered in goneAfter (the program dropped it, so nothing else reads
+// it). A driver busy rendering is waited for up to docWait.
+func (c *child) document() (devwire.Doc, error) {
+	var s *surf.Surface
+	var last time.Time
+	for _, x := range c.live() {
+		if t := rt.Peek.Rendered(x); t.After(last) {
+			s, last = x, t
+		}
+	}
+	if s == nil {
+		return devwire.Doc{}, errors.New("reload: no surface has rendered")
+	}
+	type read struct {
+		html string
+		err  error
+	}
+	var claimed atomic.Bool
+	got := make(chan read, 1)
+	take := func() {
+		if claimed.CompareAndSwap(false, true) {
+			html, err := rt.Peek.Document(s)
+			got <- read{html, err}
+		}
+	}
+	s.Do(take)
+	short := time.NewTicker(answerWait)
+	defer short.Stop()
+	long := time.NewTimer(docWait)
+	defer long.Stop()
+	for {
+		select {
+		case r := <-got:
+			if r.err == nil && r.html == "" {
+				r.err = errors.New("reload: the surface has sent no document")
+			}
+			return devwire.Doc{Surface: s.Name(), HTML: r.html}, r.err
+		case <-short.C:
+			if time.Since(rt.Peek.Rendered(s)) > goneAfter {
+				take()
+			}
+		case <-long.C:
+			if !claimed.Load() {
+				return devwire.Doc{}, fmt.Errorf("reload: surface %s is busy", s.Name())
+			}
+		}
+	}
 }
 
 // each runs fn on every surface's driver goroutine, and waits until each

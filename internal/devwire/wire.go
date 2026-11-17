@@ -85,8 +85,8 @@ type Dropped struct {
 }
 
 // Empty is the params or result of a message that carries nothing:
-// "render", "handover" and "leave" on the reload wire, "bye" and "doc" on
-// the term wire, "reload" and "shot" on the ctl wire.
+// "render", "handover", "leave" and "doc" on the reload wire, "bye" on the
+// term wire, "reload" and "shot" on the ctl wire.
 type Empty struct{}
 
 // The term wire: `hotty-surf run` and the app it runs.
@@ -115,8 +115,9 @@ type Show struct {
 	Surface string `msg:"surface"`
 }
 
-// Doc answers "doc" (the term wire) and "shot" (the ctl wire): a surface's
-// document as the host has it, and on the ctl wire the terminal's size.
+// Doc answers "doc" (the reload wire) and "shot" (the ctl wire): a
+// surface's document as the host has it, and on the ctl wire the size it
+// is drawn at.
 type Doc struct {
 	Surface string `msg:"surface"`
 	HTML    string `msg:"html"`

@@ -202,7 +202,32 @@ func (r *Reloader) live() []*proc {
 	return out
 }
 
-// document is Document's.
+// docWait is how long Document waits for a process's answer.
+const docWait = 3 * time.Second
+
+// document is Document's: a doc request to the process of key.
 func (r *Reloader) document(ctx context.Context, key string) (string, error) {
-	panic("L4")
+	r.mu.Lock()
+	p := r.procs[key]
+	r.mu.Unlock()
+	if p == nil {
+		return "", fmt.Errorf("reloader: no process %q is serving", key)
+	}
+	var doc devwire.Doc
+	done := p.conn.Call(&p.calls, "doc", &devwire.Empty{}, &doc)
+	t := time.NewTimer(docWait)
+	defer t.Stop()
+	select {
+	case err := <-done:
+		if err != nil {
+			return "", err
+		}
+		return doc.HTML, nil
+	case <-p.closed:
+		return "", fmt.Errorf("reloader: process %q closed its wire", key)
+	case <-t.C:
+		return "", fmt.Errorf("reloader: process %q didn't answer in %v", key, docWait)
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
 }
