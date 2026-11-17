@@ -9,16 +9,28 @@ import (
 )
 
 // KeyScope is one lexical keyboard override. Keys are canonical physical
-// names for this frame's platform; Parent is the enclosing override.
+// names for this frame's platform, of its enabled keyed bindings; Parent is
+// the enclosing override. Handle is offered a canonical key of Keys.
 type KeyScope struct {
-	Keys      map[string]bool
-	Handle    func(string) bool
+	Keys   map[string]bool
+	Handle func(string) bool
+	// Bindings are the scope's, as ui.KeyScope was given them (its valid
+	// ones), and Pick runs the one at an index of them.
+	Bindings  []Binding
+	Pick      func(int) bool
 	Parent    *KeyScope
 	Default   func(KeyDefault) KeyResult
 	Canonical func(hotty.Platform, string) (string, bool)
 	Attach    func(context.Context, templ.Attributes, string) templ.Attributes
 	Native    func(*KeyEnvironment, string, func(KeyDefault) KeyResult) bool
 	Dispatch  func([]*KeyScope, string, string, string) (bool, bool, func(KeyDefault) KeyResult, func(*KeyEnvironment, string, func(KeyDefault) KeyResult) bool)
+}
+
+// Binding is one of a scope's bindings: Key as the app wrote it, and
+// Physical its canonical name for the frame's platform ("" for none).
+type Binding struct {
+	Key, Physical, Label, Name string
+	Disabled                   bool
 }
 
 // KeyEnvironment exposes only the frame and field state a scoped native

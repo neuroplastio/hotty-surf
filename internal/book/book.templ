@@ -19,7 +19,7 @@ templ View(a *App) {
 			if a.cur != nil {
 				@header(a)
 				@preview(a)
-				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
+				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel overflow-auto max-h-[40vh]", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
 					<div class="book-panel" tabindex="-1" { surf.On(ctx, "book-panel", surf.Focus(func(bool) {}))... }>
 						switch a.model.Tab {
 							case storybook.TabSource:
@@ -54,7 +54,9 @@ templ sidebar(a *App) {
 		<div class="book-brand flex items-center gap-2">
 			<span class="font-semibold">hotty storybook</span>
 			<span class="text-sm text-muted-foreground">{ strconv.Itoa(len(a.model.Stories)) }</span>
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme))}) {
+			{{ themeAttrs := surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme)) }}
+			{{ themeAttrs["title"] = "Theme (t)" }}
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: themeAttrs}) {
 				if a.model.Dark {
 					Light
 				} else {
@@ -75,13 +77,16 @@ templ header(a *App) {
 		<span class="book-crumb text-muted-foreground">{ a.model.Sel.Group }</span>
 		<span class="font-semibold">{ a.model.Sel.Name }</span>
 		if a.model.Sel.Doc != "" {
-			<span class="text-sm text-muted-foreground">{ a.model.Sel.Doc }</span>
+			<span class="book-doc text-muted-foreground">{ a.model.Sel.Doc }</span>
 		}
-		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory)))}) { Reset }
+		{{ resetAttrs := noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory))) }}
+		{{ resetAttrs["title"] = "Props back as the story has them; events cleared" }}
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: resetAttrs}) { Reset }
 	</div>
 }
 
 templ preview(a *App) {
+	{{ a.model.Observe(a.model.Sel) }}
 	<div class="book-preview-area flex flex-col">
 		<nav class="book-renditions" role="tablist" aria-label="Rendition">
 			<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(!a.Cells) } { surf.On(ctx, "book-render-hotty", surf.Click(func() { a.setRendition(false) }), surf.Key(a.renditionKey))... }>hotty</button>
@@ -121,10 +126,10 @@ templ cellsPreview(a *App) {
 }
 
 templ sources(s *storybook.Story) {
-	for _, src := range s.Sources() {
-		<div class="book-source-label text-sm text-muted-foreground">
+	for i, src := range s.Sources() {
+		<div class={ "book-source-label", templ.KV("book-source-next", i > 0) }>
 			<span class="font-semibold">{ src.Title }</span>
-			<span>{ src.Path }:{ strconv.Itoa(src.Line) }</span>
+			<span class="text-muted-foreground">{ src.Path }:{ strconv.Itoa(src.Line) }</span>
 		</div>
 		@code.View(src.Code, src.Lang, src.Line)
 	}
@@ -143,6 +148,6 @@ templ props(a *App) {
 }
 
 templ htmlTab(a *App) {
-	<p class="text-muted-foreground text-sm">The component's current HTML, formatted for reading.</p>
+	<p class="text-muted-foreground mb-2 text-xs">The component's HTML as it renders it, formatted; an icon's svg is shortened to its class. The runtime adds an id to each element that has none before it goes to the host.</p>
 	@code.View(a.storyHTML(), "html", 1)
 }

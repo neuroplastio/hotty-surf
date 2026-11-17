@@ -2,6 +2,7 @@ package stories
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -17,9 +18,18 @@ type displayState struct {
 	page string
 }
 
-type bookAlertProps struct {
+// Alert is the editable state of an alert story.
+type Alert struct {
+	Variant string `enum:"default,destructive"`
 	Title string
-	Description string
+	Text string
+	Icon bool
+}
+
+// Table is the editable state of a sortable invoice table story.
+type Table struct {
+	Caption bool
+	Sort string `enum:"invoice,status,amount"`
 }
 
 func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
@@ -40,10 +50,13 @@ func init() {
 		return func() templ.Component { return f(&displayState{page: "Breadcrumb"}) }
 	}
 	add(Story{ID: "alert/default", Doc: "An alert with an icon, a title and a description", View: show(alertDefault), Props: func() (any, templ.Component) {
-		p := &bookAlertProps{Title: "Your changes are saved", Description: "They show on every device within a minute."}
+		p := &Alert{Variant: "default", Title: "Heads up!", Text: "You can add components to your app.", Icon: true}
 		return p, bookAlert(p)
 	}})
-	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive)})
+	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive), Props: func() (any, templ.Component) {
+		p := &Alert{Variant: "destructive", Title: "Unable to process your payment.", Text: "Check your card and try again.", Icon: true}
+		return p, bookAlert(p)
+	}})
 	add(Story{ID: "avatar/default", Doc: "An avatar's initials, as it shows without its image", View: show(avatarDefault)})
 	add(Story{ID: "avatar/sizes", Doc: "An avatar of each size", View: show(avatarSizes)})
 	add(Story{ID: "avatar/badge", Doc: "An avatar with a status dot", View: show(avatarBadge)})
@@ -70,7 +83,10 @@ func init() {
 	add(Story{ID: "scrollbar/default", Doc: "A plain box of twenty lines that scrolls, with Basecoat's scrollbar class", View: show(scrollbarDefault)})
 	add(Story{ID: "scrollbar/small", Doc: "A Textarea of twenty lines with the scrollbar-sm class", View: show(scrollbarSmall)})
 	add(Story{ID: "skeleton/default", Doc: "A skeleton of a round picture and two lines", View: show(skeletonDefault)})
-	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault)})
+	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault), Props: func() (any, templ.Component) {
+		p := &Table{Caption: true, Sort: "invoice"}
+		return p, bookTable(p)
+	}})
 }
 
 templ alertDefault(s *displayState) {
@@ -85,14 +101,21 @@ templ alertDefault(s *displayState) {
 	</div>
 }
 
-templ bookAlert(p *bookAlertProps) {
-	<div class="p-4 max-w-md">
-		@ui.Alert(ui.AlertProps{}) {
-			@ui.Icon("circle-check-big", "")
-			<h2>{ p.Title }</h2>
-			<section><p>{ p.Description }</p></section>
+templ bookAlert(p *Alert) {
+	@ui.Alert(ui.AlertProps{Variant: alertVariant(p.Variant), Class: "max-w-lg"}) {
+		if p.Icon {
+			@ui.Icon("circle-help", "")
 		}
-	</div>
+		<h2>{ p.Title }</h2>
+		<section>{ p.Text }</section>
+	}
+}
+
+func alertVariant(v string) ui.Variant {
+	if v == "destructive" {
+		return ui.Destructive
+	}
+	return ui.Primary
 }
 
 templ alertDestructive(s *displayState) {
@@ -451,4 +474,50 @@ templ tableDefault(s *displayState) {
 			</tfoot>
 		}
 	</div>
+}
+
+var bookInvoices = []invoice{
+	{"INV001", "Paid", "Credit card", "$250.00"},
+	{"INV002", "Pending", "PayPal", "$150.00"},
+	{"INV003", "Unpaid", "Bank transfer", "$350.00"},
+	{"INV004", "Paid", "Credit card", "$450.00"},
+	{"INV005", "Paid", "PayPal", "$550.00"},
+}
+
+func sortedInvoices(by string) []invoice {
+	out := slices.Clone(bookInvoices)
+	slices.SortStableFunc(out, func(a, b invoice) int {
+		switch by {
+		case "status": return strings.Compare(a.status, b.status)
+		case "amount": return strings.Compare(a.amount, b.amount)
+		default: return strings.Compare(a.id, b.id)
+		}
+	})
+	return out
+}
+
+templ bookTable(p *Table) {
+	@ui.Table(ui.TableProps{}) {
+		if p.Caption {
+			<caption>A list of your recent invoices.</caption>
+		}
+		<thead><tr>
+			for _, col := range []string{"invoice", "status", "amount"} {
+				<th>
+					@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Attrs: surf.On(ctx, "th-"+col, surf.Click(func() { p.Sort = col }))}) {
+						{ col }
+						if p.Sort == col {
+							@ui.Icon("arrow-down", "size-3.5")
+						}
+					}
+				</th>
+			}
+			<th>Method</th>
+		</tr></thead>
+		<tbody>
+			for _, row := range sortedInvoices(p.Sort) {
+				<tr><td>{ row.id }</td><td>{ row.status }</td><td>{ row.amount }</td><td>{ row.method }</td></tr>
+			}
+		</tbody>
+	}
 }

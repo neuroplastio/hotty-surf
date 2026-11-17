@@ -79,3 +79,14 @@ func onoff(b bool) string {
 	}
 	return "off"
 }
+
+// BookAll includes inspector component demonstrations alongside the kit's
+// coverage stories. They are book examples rather than Basecoat coverage.
+// They come in the order they were added, which keeps a component's
+// variants in the order its file lists them, as the spike's book did
+// (default, destructive, ghost with icon, …); the book sorts the rest.
+func BookAll() []Story {
+	return append(slices.Clone(all), bookStories...)
+}
+
+var bookStories []Story

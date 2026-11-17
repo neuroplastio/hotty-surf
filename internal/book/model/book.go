@@ -79,7 +79,7 @@ func (b *Book) Visible() []*Story {
 	}
 	var out []*Story
 	for _, s := range b.Stories {
-		if fuzzy(strings.ToLower(s.Group+" "+s.Name), f) || fuzzy(strings.ToLower(s.id), f) {
+		if fuzzy(strings.ToLower(s.Group+" "+s.Name), f) {
 			out = append(out, s)
 		}
 	}

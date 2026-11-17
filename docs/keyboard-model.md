@@ -45,6 +45,8 @@ component values and applies the changes its callbacks report.
 | Command dialog | Command's keys; Escape closes the dialog and choosing an item also closes it. |
 | Dialog | Escape closes; Tab and Shift+Tab cycle its controls. On close, focus returns to the opener where available. |
 | Drawer | As Dialog: focus stays inside, Tab wraps, and Escape requests a close. The closing transition retains the modal until it finishes. |
+| Context menu | Shift+F10 or the Menu key on an element in its area opens it under the area, its first enabled item highlighted; a secondary press opens it at the pointer with none. Open, it has the keyboard and a Dropdown menu's keys; Escape, the opening keys or a choice close it and give the keyboard back. |
+| Menu | The panel alone, the app's highlight: Down, Up, Home and End ask for another enabled item (OnHighlight); Enter and Space run the highlighted one. Nothing closes it: the app takes it away. |
 | Dropdown menu | Enter or Space opens the trigger; Down opens at the first enabled item and Up at the last. In the open menu, Up and Down move, Home and End go to the ends, Enter or Space chooses, and Escape closes. Choosing a checkbox toggles it; choosing a radio selects it within its group. |
 | Empty | None of its own. |
 | Field, field set and field separator | None of their own; their controls have their own keys. |
@@ -115,29 +117,79 @@ been fixed:
 
 ## Scoped overrides
 
-The B3 review accepted `ui.KeyScope`: an application names the keys it
-wants and supplies a Go handler around one or more kit controls. A handler
-that takes a key prevents its default. If it declines, the next enclosing
-scope is tried, then the kit default. The closest scope goes first. Keys
-not named keep their existing defaults. The scope adds no HTML wrapper and
-never applies to plain HTML or controls on another surface. It is proposed
-for the B3 API pack and is not yet in the approved API lock.
+`ui.KeyScope` gives the keys and actions of its children to bindings:
+each a key, a label, a name, whether it is disabled, and the `Run` that
+does it, as a menu item carries its `OnSelect`. A binding that takes a key
+prevents its default. If it declines, the next enclosing scope is tried,
+then the kit default. The scope nearest the keyboard goes first. Keys not
+named keep their existing defaults. The scope adds no HTML wrapper and
+never applies to controls on another surface.
 
 ```templ
-@ui.KeyScope([]string{"arrow_down"}, a.MoveLog) {
+@ui.KeyScope([]ui.KeyBinding{
+    {Key: "arrow_down", Label: "Next log line", Name: "log.next",
+        Run: a.nextLine},
+    {Key: "mod+s", Label: "Save", Name: "save", Run: a.save,
+        Disabled: !a.dirty},
+    {Label: "About", Name: "about", Run: a.about},
+}) {
     @ui.Select(&a.choice, ui.SelectProps{
         Items: a.items, Value: a.value, OnChange: a.Choose,
     })
 }
 ```
 
-The names use `surf.Key` notation, including `mod`. Invalid and duplicate
-keys, Tab and Shift+Tab are faults; the latter two stay reserved for
-focus traversal. A scope around an open dialog can intercept Escape before
-the dialog default. The kit forwards only the named keys and runs their
-Go defaults after all applicable scopes decline. Unmentioned native keys
-continue through the native path. Native and kit controls use the same
-scope and handler order in cells and on a host.
+**Where a scope reaches.** The keyboard is inside a scope while it is on:
+- one of the scope's kit controls;
+- an element whose `surf.On` was called inside the scope;
+- or an element inside one of those.
+
+A scope inside no other scope also has the keyboard while nothing on the
+surface has it. For every focus the order is the same: the scopes around
+it, nearest first, then a kit control's default, then the `surf.Key`
+handlers of the focused element and its ancestors, then the program.
+- On a kit control, a scope takes its named keys from the control's
+  native editing (the kit forwards them).
+- An element that types (a kit Input, Textarea or Combobox's input, a
+  plain text input, textarea or editing host) keeps its printable keys,
+  with or without Shift: no scope takes one from it, so a scope may bind a
+  bare letter and fields still type it.
+- On a plain element, a scope hears only the keys the element doesn't use
+  itself, as `surf.Key` does. A scope's `enter` doesn't take Enter from a
+  plain button, and its `j` doesn't take a letter from a plain field.
+- Static HTML with no `surf.On` on it or above it inside the scope isn't
+  reached.
+
+The keys use `surf.Key` notation, including `mod`. These are faults:
+- invalid and duplicate keys;
+- Tab and Shift+Tab, which stay reserved for focus traversal;
+- a binding with neither key nor name;
+- a binding with no `Run`.
+
+A disabled binding's key goes on as if the scope did not name it. A
+binding with no key is an action only a menu or a palette reaches. A scope
+around an open dialog can intercept Escape before the dialog default.
+Native and kit controls use the same scope and handler order in cells and
+on a host.
+
+## Menus and palettes
+
+The labels serve the user's view of the keys too:
+
+- `ui.Bindings(s)` lists what a surface offers now, from its last render,
+  in render order, so a palette and a which-key level don't reorder as the
+  focus moves. A Name is one action: listed once, and run as the binding
+  of that name nearest the keyboard. A binding keeps its key only while
+  the key reaches it. One a nearer scope's key shadows, or whose scope the
+  keyboard is outside, is listed without its key when it has a name (a
+  pick still runs it), and left out when it has none. An app's palette
+  lists these.
+- `ui.HostMenu(s, label)` is the same list as hotty's menu (SPEC §10.7),
+  for `hotty.Menu`. A host that takes menus shows its which-key level from
+  it and lists the named items in its own palette. Keys come and go with
+  the focus, so the menu is sent again when it changes.
+- `ui.Pick(s, name)` runs the action a pick names, as a host's menu sends
+  it in a command event.
 
 A host's open native select list can retain every key until it closes;
 scopes cannot intercept those keys while that list is open. The kit's
