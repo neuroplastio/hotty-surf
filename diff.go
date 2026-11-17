@@ -12,12 +12,62 @@ import (
 // element has an id (number), so each op names its target: an attribute
 // set or removed, a text replaced, an element removed, inserted before a
 // sibling or appended. Where a parent's children changed in a way those
-// can't say (a move, text among elements), its children go whole as inner.
+// can't say (a move among them, text among elements), its children go
+// whole as inner. An element moved to another parent is taken out first
+// (moves) and inserted as new.
 type differ struct {
 	s      *Surface
 	ops    []hotty.Op
 	fields []string
 	b      strings.Builder
+	moved  map[string]bool // taken out first (moves): their old parent doesn't remove them
+}
+
+// moves takes out, first, each element the render moved to another
+// parent, so that the delta never puts an id in the document while it is
+// still elsewhere (the walk visits the new parent first when it comes
+// earlier, or sends its children whole). Its new parent then inserts it
+// as new. One op an element, outermost first: an element inside one taken
+// out goes with it.
+func (d *differ) moves(o, n *html.Node) {
+	parents := func(root *html.Node) map[string]string {
+		m := map[string]string{}
+		var walk func(p *html.Node, pid string)
+		walk = func(p *html.Node, pid string) {
+			for c := p.FirstChild; c != nil; c = c.NextSibling {
+				if c.Type != html.ElementNode {
+					continue
+				}
+				id := attr(c, "id")
+				if id != "" {
+					m[id] = pid
+				}
+				walk(c, id)
+			}
+		}
+		walk(root, attr(root, "id"))
+		return m
+	}
+	now := parents(n)
+	var walk func(p *html.Node, pid string)
+	walk = func(p *html.Node, pid string) {
+		for c := p.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type != html.ElementNode {
+				continue
+			}
+			id := attr(c, "id")
+			if q, ok := now[id]; ok && id != "" && q != pid {
+				if d.moved == nil {
+					d.moved = map[string]bool{}
+				}
+				d.moved[id] = true
+				d.ops = append(d.ops, hotty.OpRemove(id))
+				continue // what it holds goes with it
+			}
+			walk(c, id)
+		}
+	}
+	walk(o, attr(o, "id"))
 }
 
 // el compares two elements with the same id.
@@ -190,8 +240,8 @@ func (d *differ) children(id string, o, n *html.Node) {
 		return
 	}
 	for _, c := range oc {
-		if !inNew[attr(c, "id")] {
-			d.ops = append(d.ops, hotty.OpRemove(attr(c, "id")))
+		if cid := attr(c, "id"); !inNew[cid] && !d.moved[cid] {
+			d.ops = append(d.ops, hotty.OpRemove(cid))
 		}
 	}
 	for i, c := range nc {

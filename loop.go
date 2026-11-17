@@ -113,6 +113,7 @@ func (s *Surface) send() error {
 		if err != nil {
 			return err
 		}
+		d.moves(s.prev, t.root)
 		d.el(s.prev, t.root)
 		s.keep(t, f)
 		s.unlabelled(t.root)
