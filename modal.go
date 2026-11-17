@@ -10,6 +10,7 @@ import (
 )
 
 const modalGuard = "data-hotty-modal-guard"
+const modalRoot = "data-hotty-modal-root"
 
 func activeModal(f *rt.Frame) string {
 	if f == nil || len(f.Modal) == 0 {
@@ -40,6 +41,13 @@ func prepareModal(root *html.Node, id string) {
 	if modal == nil {
 		return
 	}
+	scope := root
+	for p := modal.Parent; p != nil && p != root; p = p.Parent {
+		if hasAttr(p, modalRoot) {
+			scope = p
+			break
+		}
+	}
 	guard := func(side string) *html.Node {
 		return &html.Node{Type: html.ElementNode, Data: "span", DataAtom: atom.Span,
 			Attr: []html.Attribute{{Key: modalGuard, Val: side}, {Key: "tabindex", Val: "0"},
@@ -50,6 +58,9 @@ func prepareModal(root *html.Node, id string) {
 	ancestors := map[*html.Node]bool{}
 	for n := modal.Parent; n != nil; n = n.Parent {
 		ancestors[n] = true
+		if n == scope {
+			break
+		}
 	}
 	var restrict func(*html.Node)
 	restrict = func(n *html.Node) {
@@ -69,7 +80,39 @@ func prepareModal(root *html.Node, id string) {
 			restrict(c)
 		}
 	}
-	restrict(root)
+	restrict(scope)
+}
+
+// modalScope is the nearest marked ancestor of a modal, or the whole
+// surface. A scoped preview need not take focus from the surrounding app.
+func (s *Surface) modalScope(id string) *html.Node {
+	n := s.byID[id]
+	if n != nil {
+		n = n.Parent
+	}
+	for ; n != nil && n != s.prev; n = n.Parent {
+		if hasAttr(n, modalRoot) {
+			return n
+		}
+	}
+	return s.prev
+}
+
+func within(n, root *html.Node) bool {
+	if n == nil || root == nil {
+		return false
+	}
+	for ; n != nil; n = n.Parent {
+		if n == root {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Surface) modalApplies(modal, id string) bool {
+	scope := s.modalScope(modal)
+	return scope != nil && (scope == s.prev || within(s.byID[id], scope))
 }
 
 func setModalAttr(n *html.Node, key, value string) {

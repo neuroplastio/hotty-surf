@@ -769,7 +769,9 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
 - **Dialog modality (B3, in progress):** the runtime marks background
   controls out of the tab order and makes the background pointer-inert.
   Focus guards at the modal's ends wrap Tab, and a press on its text
-  restores focus inside. A surface has no browser chrome; Chromium visits
+  restores focus inside. The storybook marks its preview as the modal's
+  scope, leaving the book's own controls outside it. A surface has no
+  browser chrome; Chromium visits
   it once on Tab past the last control, while the surface wraps directly.
   The application-level keyboard override is still a B3 review question.
 - **Tabs:** the shown tab's panel only (the children), with the roving

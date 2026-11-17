@@ -19,8 +19,9 @@ implementation is in progress. An entry marked planned is not an
 implemented API.
 
 Tab and Shift+Tab move among controls in document order. An open modal
-keeps Tab within its controls and makes the rest of its surface inert. Its
-focus guards and background restrictions are being implemented for B3.
+keeps Tab within its controls and makes the rest of its surface inert.
+The storybook confines a preview's modal to that preview, so the book's
+own controls remain usable.
 Escape closes a dialog when it has an `OnClose` callback. An app keeps
 component values and applies the changes its callbacks report.
 

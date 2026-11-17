@@ -150,6 +150,12 @@ func kids(n *html.Node) []*html.Node {
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
 		ks = append(ks, k)
 	}
+	if n.Type == html.ElementNode {
+		if st := styleOf(n); st.reverse && st.display == dFlex {
+			// flex-col-reverse, flex-row-reverse: the items the other way.
+			slices.Reverse(ks)
+		}
+	}
 	if n.Type == html.ElementNode && tokens(n, "class", "popover") {
 		// A popover above its trigger or before it comes first.
 		before := func(k *html.Node) bool {

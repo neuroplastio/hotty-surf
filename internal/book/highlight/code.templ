@@ -1,0 +1,24 @@
+package code
+
+import "strconv"
+
+// View is src highlighted as lang ("go", "templ", "html", "css",
+// "javascript"; any other is plain text), one line a row, numbered from
+// first (0: no numbers). A long line wraps where the pane is narrow, and
+// its number stays at its first row.
+templ View(src, lang string, first int) {
+	<div class="book-code">
+		for i, line := range Highlight(src, lang) {
+			<div class="book-code-line">
+				if first > 0 {
+					<span class="book-code-number">{ strconv.Itoa(first + i) }</span>
+				}
+				<span class="book-code-text">
+					for _, t := range line {
+						<span class={ TokenClass(t.Kind) }>{ t.Text }</span>
+					}
+				</span>
+			</div>
+		}
+	</div>
+}

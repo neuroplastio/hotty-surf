@@ -44,6 +44,15 @@ func (s *Surface) document() (string, error) {
 		return "", err
 	}
 	s.keep(t, f)
+	if modal := activeModal(f); modal != "" {
+		if s.modalScope(modal) != s.prev {
+			if f.Focus != "" && s.modalApplies(modal, f.Focus) {
+				f.Focus = ""
+			}
+		} else if f.Focus == "" || !contains(s.chain(f.Focus), modal) {
+			f.Focus = s.modalTarget(modal, false)
+		}
+	}
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
 	s.submits(f)
@@ -103,10 +112,18 @@ func (s *Surface) send() error {
 		s.keep(t, f)
 		s.unlabelled(t.root)
 	}
-	if s.modalFocus != "" && activeModal(f) != "" {
-		if id := s.modalTarget(activeModal(f), s.modalFocus == "last"); id != "" {
-			f.Focus = id
-			s.askDue = true
+	modal := activeModal(f)
+	if modal != "" {
+		opening := activeModal(s.frame) != modal
+		inScope := s.modalApplies(modal, s.focused)
+		if opening && !inScope && f.Focus != "" && s.modalApplies(modal, f.Focus) {
+			f.Focus = ""
+		} else if (inScope || s.modalFocus != "" || f.Focus != "" && s.modalApplies(modal, f.Focus)) &&
+			(s.modalFocus != "" || f.Focus != "" && !contains(s.chain(f.Focus), modal) || opening && f.Focus == "") {
+			if id := s.modalTarget(modal, s.modalFocus == "last"); id != "" {
+				f.Focus = id
+				s.askDue = true
+			}
 		}
 	}
 	s.modalFocus = ""
@@ -179,11 +196,14 @@ func (s *Surface) event(e hotty.Event) error {
 	// terminal (SPEC §10.1), so a blur comes right after it. The press
 	// already told the Outside handlers where the click was; the blur is
 	// that click's, not a click off the surface.
-	afterPress := s.pressed
+	afterPress, scopedPress := s.pressed, s.modalPressed
 	s.pressed = e.Kind == hotty.EventPress
 	modal := activeModal(s.frame)
 	inside := modal == "" || contains(s.chain(e.Target), modal)
-	if modal != "" && !inside {
+	if e.Kind == hotty.EventPress {
+		s.modalPressed = modal != "" && s.modalApplies(modal, e.Target)
+	}
+	if modal != "" && s.modalApplies(modal, e.Target) && !inside {
 		switch e.Kind {
 		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress:
 			return nil
@@ -244,7 +264,7 @@ func (s *Surface) event(e hotty.Event) error {
 		ran = true
 	case hotty.EventBlur:
 		s.focus("")
-		if modal != "" && afterPress {
+		if modal != "" && afterPress && scopedPress {
 			s.modalFocus = "first"
 		}
 		if !afterPress {
@@ -338,7 +358,10 @@ func (s *Surface) outside(id string) bool {
 	ran := false
 	for _, x := range s.frame.Order {
 		h := s.frame.On[x]
-		if modal := activeModal(s.frame); modal != "" && !contains(s.chain(x), modal) {
+		if modal := activeModal(s.frame); modal != "" && id != "" && !s.modalApplies(modal, id) && s.modalApplies(modal, x) {
+			continue
+		}
+		if modal := activeModal(s.frame); modal != "" && (s.modalApplies(modal, s.focused) || s.modalApplies(modal, id)) && !contains(s.chain(x), modal) {
 			continue
 		}
 		if h.Outside != nil && !contains(in, x) {
@@ -358,7 +381,8 @@ func (s *Surface) key(k string) (bool, error) {
 	}
 	k = modName(s.platform, k)
 	ids := s.chain(s.focused)
-	if modal := activeModal(s.frame); modal != "" {
+	modal := activeModal(s.frame)
+	if modal != "" && s.modalApplies(modal, s.focused) {
 		if at := slices.Index(ids, modal); at >= 0 {
 			ids = ids[:at+1]
 		} else {
@@ -375,6 +399,15 @@ func (s *Surface) key(k string) (bool, error) {
 		for _, fn := range h.Key {
 			if fn(k) {
 				return true, s.send()
+			}
+		}
+	}
+	if modal != "" && !s.modalApplies(modal, s.focused) && !slices.Contains(ids, modal) {
+		if h := s.frame.On[modal]; h != nil {
+			for _, fn := range h.Key {
+				if fn(k) {
+					return true, s.send()
+				}
 			}
 		}
 	}

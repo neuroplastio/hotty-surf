@@ -109,13 +109,16 @@ pointer.
 An event that arrives while the surface is writing (a `cells.Screen`
 answers inside its Write) is deferred until the write is done.
 
-An open kit modal registers its id in the frame. The runtime adds a
-focus guard at each end, removes background controls from the Tab order,
-and makes the background pointer-inert. Focus on a guard moves to the
-opposite end, and a press on modal text that blurs focus restores it
-inside. Cells draws the background faint and observes the same guards.
-Only the active modal and its descendants hear keys while it is open.
-The original markup and attributes return when it closes.
+An open kit modal registers its id in the frame. Its scope is the whole
+surface, or its nearest ancestor with the private `data-hotty-modal-root`
+marker (the storybook's preview). The runtime adds a focus guard at each
+end, removes background controls in that scope from the Tab order, and
+makes them pointer-inert. Focus on a guard moves to the opposite end, and
+a press on modal text that blurs focus restores it inside. Cells draws the
+background faint and observes the same guards. A dialog initially open in a
+scoped preview takes focus only when the user enters that preview. Outside
+the scope the surrounding app stays usable. The original markup and
+attributes return when the modal closes.
 
 ## Drivers
 

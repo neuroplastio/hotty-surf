@@ -17,6 +17,11 @@ type displayState struct {
 	page string
 }
 
+type bookAlertProps struct {
+	Title string
+	Description string
+}
+
 func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
 
 // named is the aria-label that names a chart (kit rule K18).
@@ -34,7 +39,10 @@ func init() {
 	show := func(f func(*displayState) templ.Component) func() templ.Component {
 		return func() templ.Component { return f(&displayState{page: "Breadcrumb"}) }
 	}
-	add(Story{ID: "alert/default", Doc: "An alert with an icon, a title and a description", View: show(alertDefault)})
+	add(Story{ID: "alert/default", Doc: "An alert with an icon, a title and a description", View: show(alertDefault), Props: func() (any, templ.Component) {
+		p := &bookAlertProps{Title: "Your changes are saved", Description: "They show on every device within a minute."}
+		return p, bookAlert(p)
+	}})
 	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive)})
 	add(Story{ID: "avatar/default", Doc: "An avatar's initials, as it shows without its image", View: show(avatarDefault)})
 	add(Story{ID: "avatar/sizes", Doc: "An avatar of each size", View: show(avatarSizes)})
@@ -73,6 +81,16 @@ templ alertDefault(s *displayState) {
 			<section>
 				<p>They show on every device within a minute.</p>
 			</section>
+		}
+	</div>
+}
+
+templ bookAlert(p *bookAlertProps) {
+	<div class="p-4 max-w-md">
+		@ui.Alert(ui.AlertProps{}) {
+			@ui.Icon("circle-check-big", "")
+			<h2>{ p.Title }</h2>
+			<section><p>{ p.Description }</p></section>
 		}
 	</div>
 }

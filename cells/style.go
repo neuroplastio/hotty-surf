@@ -38,6 +38,7 @@ const (
 type box struct {
 	display display
 	column  bool // a flex column (flex-col); a grid is one too
+	reverse bool // flex-col-reverse, flex-row-reverse: its items the other way
 	gapX    int  // between a flex row's items, in cells
 	gapY    int  // between a column's items, in rows
 	padT    int
@@ -182,9 +183,9 @@ func (b *box) class(c string) {
 	case "flex-wrap":
 		b.wrap = true
 	case "flex-col", "flex-col-reverse":
-		b.column = true
+		b.column, b.reverse = true, strings.HasSuffix(c, "-reverse")
 	case "flex-row", "flex-row-reverse":
-		b.column = false
+		b.column, b.reverse = false, strings.HasSuffix(c, "-reverse")
 	case "flex-1", "grow", "flex-grow", "flex-auto":
 		b.grow = true
 	case "w-full":
@@ -319,7 +320,7 @@ func (b *box) inline(style string) {
 				b.display = dNone
 			}
 		case "flex-direction":
-			b.column = strings.HasPrefix(v, "column")
+			b.column, b.reverse = strings.HasPrefix(v, "column"), strings.HasSuffix(v, "-reverse")
 		case "flex", "flex-grow":
 			if f := strings.Fields(v); len(f) > 0 && f[0] != "0" && f[0] != "none" {
 				b.grow = true
