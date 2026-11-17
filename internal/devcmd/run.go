@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -53,7 +54,11 @@ func Run(ctx context.Context, dir, sock string) error {
 	defer os.Remove(sock)
 	defer ln.Close()
 	// The terminal's own modes are x/ansi's sequences, not hotty's.
-	if err := t.Send(ansi.SetModeAltScreenSaveCursor, ansi.HideCursor, ansi.EraseEntireScreen); err != nil {
+	// The first build of a large app takes a while (the book's, from
+	// cold, half a minute): a line says what is happening until the app
+	// draws over it.
+	if err := t.Send(ansi.SetModeAltScreenSaveCursor, ansi.HideCursor, ansi.EraseEntireScreen,
+		ansi.CursorHomePosition, "Building "+filepath.Base(dir)+"…"); err != nil {
 		return err
 	}
 	defer t.Send(ansi.ShowCursor, ansi.ResetModeAltScreenSaveCursor)

@@ -1,8 +1,10 @@
 package book
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/net/html"
 
@@ -105,5 +107,132 @@ func TestTabThroughThePane(t *testing.T) {
 	before(true) // Shift+Tab in the pane, from its first: leaves
 	if a.inPane {
 		t.Fatal("shift+tab from the first control stayed in the pane")
+	}
+}
+
+// Tab past the pane's last control goes on to the list, not to a blank
+// element after the pane.
+func TestTabPastThePaneGoesToTheList(t *testing.T) {
+	a := New()
+	a.show("field/checkbox-group")
+	before, after := a.Edge(true), a.Edge(false)
+	before(true)
+	a.takeRefocus()
+	a.PaneFocus(true)
+	after(true) // to the second box
+	a.takeRefocus()
+	after(true) // past it
+	if !a.takeToList() {
+		t.Fatal("tab past the pane's last control doesn't go to the list")
+	}
+}
+
+// A story with nothing to focus takes no Tab in the pane.
+func TestNoControlsNoTab(t *testing.T) {
+	a := New()
+	a.show("chart/bar")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	if a.cur.controls {
+		t.Fatal("chart/bar has controls")
+	}
+	for _, sel := range []string{"#book-pane-before", "#book-pane", "#book-pane-after"} {
+		if n := r.One(sel); attrOf(n.Attr, "tabindex") != "" {
+			t.Errorf("%s takes Tab in a story with nothing to focus", sel)
+		}
+	}
+	a.show("field/checkbox-group")
+	r.Update()
+	if n := r.One("#book-pane"); attrOf(n.Attr, "tabindex") != "0" {
+		t.Error("the pane of a story with controls takes no Tab")
+	}
+}
+
+// Type-to-find: letters jump to the first story that starts with them; the
+// same letter again goes to the next; a pause starts anew.
+func TestTypeToFind(t *testing.T) {
+	a := New()
+	at := time.Unix(0, 0)
+	a.now = func() time.Time { return at }
+	press := func(ks ...string) {
+		for _, k := range ks {
+			a.ListKey(k)
+			at = at.Add(100 * time.Millisecond)
+		}
+	}
+	press("d", "i", "a")
+	if a.ID != "dialog/default" {
+		t.Fatalf("dia: %q", a.ID)
+	}
+	press("l", "o", "g", "/", "o")
+	if a.ID != "dialog/open" {
+		t.Fatalf("dialog/o: %q", a.ID)
+	}
+	at = at.Add(2 * time.Second)
+	press("t")
+	first := a.ID
+	if !strings.HasPrefix(first, "t") {
+		t.Fatalf("t after a pause: %q", first)
+	}
+	press("t")
+	if a.ID == first || !strings.HasPrefix(a.ID, "t") {
+		t.Fatalf("t again: %q after %q", a.ID, first)
+	}
+	at = at.Add(2 * time.Second)
+	press("v", "a", "r", "i", "a", "n", "t")
+	if !strings.Contains(a.ID, "variant") {
+		t.Fatalf("variant (in the middle of an ID): %q", a.ID)
+	}
+}
+
+// The list keeps the keyboard as it lands on a story whose dialog opens
+// as it shows, and Escape there closes the dialog.
+func TestListKeepsTheKeyboard(t *testing.T) {
+	a := New()
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#book-list") // the list takes the keyboard
+	a.show("dialog/default")
+	r.Update()
+	if !r.Key("arrow_down") || a.ID != "dialog/open" {
+		t.Fatalf("arrow_down from dialog/default: on %s", a.ID)
+	}
+	if len(r.Find("dialog")) != 1 {
+		t.Fatal("dialog/open shows no dialog")
+	}
+	if !r.Key("arrow_down") || a.ID == "dialog/open" {
+		t.Fatalf("arrow_down on dialog/open went to its dialog: on %s", a.ID)
+	}
+	if !r.Key("arrow_up") || a.ID != "dialog/open" {
+		t.Fatalf("arrow_up: on %s", a.ID)
+	}
+	if !r.Key("escape") {
+		t.Fatal("escape on the list, with the story's dialog open: not taken")
+	}
+	if len(r.Find("dialog")) != 0 {
+		t.Fatal("escape didn't close the story's dialog")
+	}
+}
+
+// The pane's last line is there when it is an empty field: spaces with a
+// look are no blank line.
+func TestEmptyFieldLineKept(t *testing.T) {
+	a := New()
+	a.show("field/fieldset")
+	ls := a.lines()
+	last := ls[len(ls)-1]
+	if blank(last) || !strings.Contains(fmt.Sprint(last), "book-underline") {
+		t.Fatalf("the last line isn't City's empty field: %v", last)
+	}
+}
+
+// A key while the pane hasn't the keyboard isn't the pane's: Tab with
+// nothing focused is left for run, which gives the book the keyboard.
+func TestPaneKeysOnlyItsOwn(t *testing.T) {
+	a := New()
+	a.show("field/checkbox-group")
+	if a.PaneKey("tab") || a.PaneKey("space") {
+		t.Fatal("the pane took a key without the keyboard")
+	}
+	if strings.Contains(paneText(a), "[x]") {
+		t.Fatal("space reached the pane without the keyboard")
 	}
 }

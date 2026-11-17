@@ -44,6 +44,11 @@ type layout struct {
 	hasCaret  bool
 	measuring bool
 	memo      map[memoKey]int
+	// active is the element the focused one names its active one
+	// (aria-activedescendant), where it is shown; adDone says it was
+	// looked for.
+	active *html.Node
+	adDone bool
 }
 
 type memoKey struct {
@@ -110,13 +115,51 @@ func (l *layout) lookOf(n *html.Node, in look, st box) look {
 	if st.look&lBold == 0 && in&lBold != 0 && strings.Contains(" "+attr(n, "class")+" ", " font-normal ") {
 		lk &^= lBold
 	}
-	if n == l.c.focused && l.c.active {
-		lk |= lReverse
+	if l.c.active {
+		// The keyboard's: the focused element, or the item it names its
+		// active one (a menu's, a list's), drawn in its place.
+		ad := l.activeItem()
+		if n == ad || n == l.c.focused && ad == nil {
+			lk |= lReverse
+		}
 	}
-	if disabled(n) {
+	if disabled(n) || attr(n, "aria-disabled") == "true" {
 		lk |= lDim
 	}
+	if attr(n, "role") == "tab" && attr(n, "aria-selected") == "true" {
+		// The chosen tab, among tabs drawn alike.
+		lk |= lBold | lUnderline
+	}
+	if attr(n, "role") == "heading" && closest(n, func(a *html.Node) bool { return attr(a, "role") == "group" }) != nil {
+		// A group's label in a menu or a list: not one of its items.
+		lk |= lBold
+	}
 	return lk
+}
+
+// activeItem is the element the focused one names its active one
+// (aria-activedescendant), if it is shown; nil for none.
+func (l *layout) activeItem() *html.Node {
+	if l.adDone {
+		return l.active
+	}
+	l.adDone = true
+	f := l.c.focused
+	if f == nil {
+		return nil
+	}
+	id := attr(f, "aria-activedescendant")
+	if id == "" {
+		return nil
+	}
+	t := l.c.byID(id)
+	for a := t; a != nil && a.Type == html.ElementNode; a = a.Parent {
+		if styleOf(a).display == dNone {
+			return nil
+		}
+	}
+	l.active = t
+	return t
 }
 
 // node lays n out as a block at x, y, w wide, and says how high it is and
@@ -220,6 +263,21 @@ func (l *layout) done(n *html.Node, r rect) {
 // marker is a list item's marker, where its list has one (list-disc,
 // list-decimal: Tailwind's lists have none).
 func marker(n *html.Node) string {
+	switch attr(n, "role") {
+	case "option":
+		// A popup list's option: its chosen one checked (Basecoat's ✓).
+		if closest(n, func(a *html.Node) bool { return has(a, "data-popover") }) != nil {
+			if attr(n, "aria-selected") == "true" {
+				return "✓ "
+			}
+			return "  "
+		}
+	case "menuitemcheckbox", "menuitemradio":
+		if attr(n, "aria-checked") == "true" {
+			return "✓ "
+		}
+		return "  "
+	}
 	if n.DataAtom != atom.Li || n.Parent == nil {
 		return ""
 	}
@@ -484,9 +542,20 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 		h += ch
 		used = cu
 	}
+	// Each cell's first column, and how many it spans (colspan).
+	span := func(td *html.Node) int {
+		if v, err := strconv.Atoi(attr(td, "colspan")); err == nil && v > 1 {
+			return min(v, 1000)
+		}
+		return 1
+	}
 	ncols := 0
 	for _, r := range rows {
-		ncols = max(ncols, len(r.cells))
+		c := 0
+		for _, td := range r.cells {
+			c += span(td)
+		}
+		ncols = max(ncols, c)
 	}
 	if ncols == 0 {
 		return h, used
@@ -494,8 +563,29 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 	const gap = 2
 	colW := make([]int, ncols)
 	for _, r := range rows {
-		for j, td := range r.cells {
-			colW[j] = max(colW[j], l.measure(td, in))
+		c := 0
+		for _, td := range r.cells {
+			if span(td) == 1 {
+				colW[c] = max(colW[c], l.measure(td, in))
+			}
+			c += span(td)
+		}
+	}
+	// A spanning cell wider than its columns widens the last of them.
+	for _, r := range rows {
+		c := 0
+		for _, td := range r.cells {
+			if k := span(td); k > 1 {
+				end := min(c+k, ncols)
+				have := gap * (end - c - 1)
+				for j := c; j < end; j++ {
+					have += colW[j]
+				}
+				if need := l.measure(td, in); need > have {
+					colW[end-1] += need - have
+				}
+			}
+			c += span(td)
 		}
 	}
 	sum := 0
@@ -522,11 +612,21 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 		total += cw
 	}
 	for i, r := range rows {
-		cx, rh := x, 0
-		for j, td := range r.cells {
-			hh, _ := l.node(td, cx, y+h, colW[j], in)
+		cx, rh, c := x, 0, 0
+		rin := in
+		if attr(r.tr, "data-state") == "selected" || attr(r.tr, "aria-selected") == "true" {
+			rin.look |= lBold
+		}
+		for _, td := range r.cells {
+			end := min(c+span(td), ncols)
+			cw := gap * (end - c - 1)
+			for j := c; j < end; j++ {
+				cw += colW[j]
+			}
+			hh, _ := l.node(td, cx, y+h, cw, rin)
 			rh = max(rh, hh)
-			cx += colW[j] + gap
+			cx += cw + gap
+			c = end
 		}
 		l.done(r.tr, rect{x, y + h, total, rh})
 		h += rh
@@ -670,7 +770,7 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	}
 	if tokens(n, "class", "chart-legend-indicator") && n.FirstChild == nil {
 		// The kit's swatch, drawn by its stylesheet.
-		return append(ps, piece{kind: pWord, chars: charsOf("■"), w: 1, look: l.lookOf(n, in.look, st), own: n})
+		return append(ps, piece{kind: pWord, chars: charsOf(legendMark(n)), w: 1, look: l.lookOf(n, in.look, st), own: n})
 	}
 	if st.display == dAtom {
 		p := l.atom(n, st, in)
@@ -754,10 +854,7 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 			label = attr(n, "value")
 		}
 		if label == "" {
-			label = attr(n, "aria-label")
-		}
-		if label == "" {
-			label = attr(n, "title")
+			label = iconLabel(n)
 		}
 		if label == "" {
 			label = "·"
@@ -765,6 +862,12 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		switch attr(n, "role") {
 		case "menuitem", "menuitemcheckbox", "menuitemradio", "option", "tab":
 			return text(" " + label + " ")
+		}
+		switch attr(n, "aria-haspopup") {
+		case "", "false":
+		default:
+			// It opens a menu or a list: the kit's chevron.
+			return text("[ " + label + " ▾ ]")
 		}
 		return text("[ " + label + " ]")
 	case n.DataAtom == atom.Input && typ == "checkbox":
@@ -943,4 +1046,38 @@ func clip(cs []char, w int) []char {
 		n += c.w
 	}
 	return append(out, char{"…", 1})
+}
+
+// glyphs are the icons a terminal has a character for that reads the same.
+var glyphs = map[string]string{
+	"x": "×", "plus": "+", "check": "✓", "ellipsis": "…", "search": "⌕",
+	"arrow-down": "↓", "arrow-up": "↑", "arrow-right": "→",
+	"chevron-down": "▾", "chevron-left": "‹", "chevron-right": "›",
+	"chevrons-left": "«", "chevrons-right": "»", "chevrons-up-down": "↕",
+}
+
+// iconLabel is the label of a control with no text, an icon's button: the
+// icon's glyph if a terminal has one, else the first word of its
+// aria-label or title (a row's [ Delete ], not [ Delete Water the plants ]
+// on a line of its own); "" for none.
+func iconLabel(n *html.Node) string {
+	var icon string
+	walk(n, func(c *html.Node) {
+		if icon == "" && c.Data == "svg" {
+			for _, cl := range strings.Fields(attr(c, "class")) {
+				if g, ok := glyphs[strings.TrimPrefix(cl, "lucide-")]; ok && cl != "lucide" {
+					icon = g
+				}
+			}
+		}
+	})
+	if icon != "" {
+		return icon
+	}
+	for _, k := range []string{"aria-label", "title"} {
+		if f := strings.Fields(attr(n, k)); len(f) > 0 {
+			return f[0]
+		}
+	}
+	return ""
 }

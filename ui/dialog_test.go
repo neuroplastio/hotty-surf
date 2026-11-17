@@ -311,3 +311,22 @@ func TestDialogIDThatChangesOnClose(t *testing.T) {
 		t.Errorf("second open for the same row: Escape isn't the dialog's (closes %d)", closes)
 	}
 }
+
+// TestDialogEscapeFromOutside: hotty 0.8 can't keep the keyboard in a
+// modal dialog, so Tab can take it out; Escape still closes the dialog.
+func TestDialogEscapeFromOutside(t *testing.T) {
+	a := &dialogApp{}
+	r := start(t, a.view())
+	r.Click("#open")
+	// From the dialog's first field back to the button behind it.
+	r.Key("shift+tab")
+	if !a.open {
+		t.Fatal("shift+tab closed the dialog")
+	}
+	if !r.Key("escape") {
+		t.Fatal("escape with the keyboard outside the open dialog: not taken")
+	}
+	if a.open || a.closes != 1 {
+		t.Fatalf("open %v after %d closes", a.open, a.closes)
+	}
+}
