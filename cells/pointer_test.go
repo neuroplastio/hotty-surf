@@ -258,6 +258,16 @@ func TestPressAfterLostRelease(t *testing.T) {
 // Click on a drag handle is a press and its release: the drag it starts
 // ends with it, and a move after is no drag.
 func TestClickOnDragHandle(t *testing.T) {
+	// A Click off the Screen ends its press too: a hover after it is taken.
+	{
+		c, _ := pointerScreen(t, `<p id="x">text</p>`)
+		if c.Click(40, 0) {
+			t.Error("a click off the Screen taken")
+		}
+		if !c.Move(1, 0, 0) {
+			t.Error("a move over the Screen after an untaken Click isn't taken")
+		}
+	}
 	c, got := pointerScreen(t, dragRows)
 	c.Click(1, 0)
 	wantEvents(t, got, "press a", "dragstart a c=1,0 y=1", "dragend a c=1,0 y=1 ty=1")
