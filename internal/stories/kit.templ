@@ -150,7 +150,7 @@ func init() {
 	}, Props: func() (any, templ.Component) {
 		p := &Tabs{Tab: "password", Line: true}
 		return p, bookTabs(p)
-	}, Keys: []string{"tab", "arrow_right"}, Want: "The team panel."})
+	}, Keys: []string{"tab", "arrow_right"}, Want: "Invite your team and pick what they can see."})
 	add(Story{ID: "tabs/many", Doc: "More tabs than fit, one disabled",
 		View: kit(tabsMany, func(s *kitState) { s.value = "t1" }), Keys: []string{"tab", "end"}, Want: "tab: t8"})
 	add(Story{ID: "toast/default", Doc: "A button that shows a toast",
