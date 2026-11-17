@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
@@ -281,6 +282,24 @@ func ExampleRefocus() {
 	s.Event(hotty.Event{Surface: "palette", Kind: hotty.EventFocus, Target: "stop"})
 	fmt.Println(s.Focused())
 	// Output: query
+}
+
+// A multiplexer routes a key: to the surface first when the focused
+// element takes it itself, else to its own bindings, then to the surface.
+func ExampleSurface_OwnKeys() {
+	s := surf.New("pane", templ.Raw(`<select id="sort"><option>name</option><option>date</option></select>`), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		return
+	}
+	s.Event(hotty.Event{Surface: "pane", Kind: hotty.EventFocus, Target: "sort"})
+	own := s.OwnKeys()
+	for _, key := range []string{"arrow_down", "ctrl+s"} {
+		fmt.Println(key, slices.Contains(own, key))
+	}
+	// Output:
+	// arrow_down true
+	// ctrl+s false
 }
 
 // A driver that hands the keyboard to whatever holds an open menu writes

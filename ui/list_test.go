@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -335,4 +336,52 @@ func keysScope(keys []string, fn func(string) bool) templ.Component {
 		bs[i] = ui.KeyBinding{Key: k, Run: func() bool { return fn(k) }}
 	}
 	return ui.KeyScope(bs)
+}
+
+// A focused row's own keys are the list's (its arrows, Home and End) and
+// a button's (space, Enter); a KeyScope's binding round the list is not
+// one of them (ui.Bindings lists it).
+func TestListOwnKeys(t *testing.T) {
+	for _, scoped := range []bool{false, true} {
+		a := &listApp{rows: []string{"a", "b"}}
+		if scoped {
+			a.scopeKey, a.scope = []string{"ctrl+s"}, func(string) bool { return true }
+		}
+		s := surf.New("list", a.view(), ui.Stylesheet())
+		r := surftest.Start(t, s)
+		focus(r, a, "a")
+		got := s.OwnKeys()
+		for _, k := range []string{"arrow_up", "arrow_down", "home", "end", "enter", "space"} {
+			if !slices.Contains(got, k) {
+				t.Errorf("scoped %v: %v lacks %s", scoped, got, k)
+			}
+		}
+		if slices.Contains(got, "ctrl+s") {
+			t.Errorf("scoped %v: %v has the scope's ctrl+s", scoped, got)
+		}
+	}
+}
+
+// A text field under a KeyScope that binds ctrl+a: the host gives ctrl+a
+// to the program (the scope's data-keys as written), so OwnKeys leaves it
+// out and Bindings lists it, though the field's keymap has it.
+func TestOwnKeysFieldUnderScope(t *testing.T) {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		field := ui.Input(ui.InputProps{Attrs: surf.On(ctx, "q", surf.Input(func(string) {}))})
+		return keysScope([]string{"ctrl+a"}, func(string) bool { return true }).Render(templ.WithChildren(ctx, field), w)
+	})
+	s := surf.New("t", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#q")
+	own := s.OwnKeys()
+	if slices.Contains(own, "ctrl+a") || !slices.Contains(own, "ctrl+c") {
+		t.Fatalf("OwnKeys %v: want ctrl+c and not ctrl+a", own)
+	}
+	bound := false
+	for _, b := range ui.Bindings(s) {
+		bound = bound || b.Key == "ctrl+a"
+	}
+	if !bound {
+		t.Fatalf("Bindings %v lack ctrl+a", ui.Bindings(s))
+	}
 }

@@ -18,7 +18,7 @@ templ tabs(v *tabsView) {
 					aria-selected={ bstr(i == v.sel) }
 					tabindex={ v.tabindex(i) }
 					disabled?={ t.Disabled }
-					{ scopeAttrs(ctx, kitOn(ctx, v.tabID(i), v.handlers(i)...))... }
+					{ scopeWithKeys(ctx, kitOn(ctx, v.tabID(i), v.handlers(i)...), v.keys(i))... }
 				>{ t.Label }</button>
 			}
 		</nav>

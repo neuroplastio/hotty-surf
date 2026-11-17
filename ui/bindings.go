@@ -20,7 +20,8 @@ import (
 //
 // It reads the surface's state: call it on the surface driver's goroutine
 // (in a handler or in [surf.Surface.Do]). It is nil before s first
-// renders.
+// renders. How a program routes a key with it, Chars and OwnKeys is the
+// keyboard model's (docs/keyboard-model.md, Routing).
 func Bindings(s *surf.Surface) []KeyBinding {
 	var out []KeyBinding
 	for _, o := range offered(s) {
