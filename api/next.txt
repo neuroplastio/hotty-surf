@@ -340,12 +340,13 @@ pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, End float64
+pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, EndAttrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Max float64
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Min float64
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, OnChange func(float64, float64)
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Start float64
+pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, StartAttrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Step float64
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Disabled bool
@@ -366,10 +367,10 @@ pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct
 pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct
+pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Max float64
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Min float64
 pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, OnChange func(float64)

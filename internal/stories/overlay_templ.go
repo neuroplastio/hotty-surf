@@ -151,7 +151,7 @@ func sliderStory(s *overlayState, ranged bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if ranged {
-			templ_7745c5c3_Err = ui.RangeSlider(ui.RangeSliderProps{ID: "price", Label: "Price", Min: 0, Max: 100, Step: 5, Start: s.low, End: s.high, OnChange: func(a, b float64) { s.low, s.high = a, b }}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ui.RangeSlider(ui.RangeSliderProps{ID: "price", StartAttrs: templ.Attributes{"aria-label": "Price, start"}, EndAttrs: templ.Attributes{"aria-label": "Price, end"}, Min: 0, Max: 100, Step: 5, Start: s.low, End: s.high, OnChange: func(a, b float64) { s.low, s.high = a, b }}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -186,7 +186,7 @@ func sliderStory(s *overlayState, ranged bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = ui.Slider(ui.SliderProps{ID: "volume", Label: "Volume", Min: 0, Max: 100, Step: 5, Value: s.high, OnChange: func(v float64) { s.high = v }}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ui.Slider(ui.SliderProps{ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5, Value: s.high, OnChange: func(v float64) { s.high = v }}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

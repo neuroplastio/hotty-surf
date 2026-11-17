@@ -1060,7 +1060,8 @@ scrollbar classes and Avatar's image for the looks pass.
   same Go component on both renditions, and KeyScope can override its
   keys. Page Up/Down moves ten steps: this addition was written here because
   the earlier port had no Page key behavior. The draft requires explicit
-  Min, Max and Label, and exposes one- and two-thumb components separately;
+  Min and Max, names its thumbs through Attrs (K18), and exposes one- and
+  two-thumb components separately;
   the reviewer should decide those shapes and the Page increment. Each
   track has at most 40 drag steps, following hotty-a2ui. Chromium and Blitz
   renders of the two stories differ in 0.30% and 0.49% of pixels, mainly

@@ -11,15 +11,14 @@ templ slider(v sliderView) {
    <span class="hotty-slider-notch" style={ sliderStyle(lo,hi-lo) } { v.notch(ctx,i)... }></span>
   }
   if v.ranged {
-   @sliderThumb(&v,0,v.lo,v.p.Min,v.hi,v.p.Label+", start")
+   @sliderThumb(&v,0,v.lo,v.p.Min,v.hi)
   }
-  @sliderThumb(&v,1,v.hi,v.lo,v.p.Max,v.endLabel())
+  @sliderThumb(&v,1,v.hi,v.lo,v.p.Max)
  </div>
 }
 
-templ sliderThumb(v *sliderView, k int, value, low, high float64, label string) {
+templ sliderThumb(v *sliderView, k int, value, low, high float64) {
  <button type="button" class="hotty-slider-thumb" role="slider"
-  aria-label={ label }
   aria-valuemin={ sliderNum(low) }
   aria-valuemax={ sliderNum(high) }
   aria-valuenow={ sliderNum(value) }

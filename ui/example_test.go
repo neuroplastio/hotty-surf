@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"github.com/a-h/templ"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
@@ -79,14 +80,14 @@ func ExampleTooltip() {
 
 func ExampleSlider() {
 	_ = ui.Slider(ui.SliderProps{
-		ID: "volume", Label: "Volume", Min: 0, Max: 100, Step: 5,
+		ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5,
 		Value: 20, OnChange: func(float64) {},
 	})
 }
 
 func ExampleRangeSlider() {
 	_ = ui.RangeSlider(ui.RangeSliderProps{
-		ID: "price", Label: "Price", Min: 0, Max: 100, Step: 5,
+		ID: "price", StartAttrs: templ.Attributes{"aria-label": "Price, start"}, EndAttrs: templ.Attributes{"aria-label": "Price, end"}, Min: 0, Max: 100, Step: 5,
 		Start: 20, End: 70, OnChange: func(float64, float64) {},
 	})
 }

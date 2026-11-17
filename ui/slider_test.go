@@ -16,7 +16,7 @@ import (
 func TestSliderKeysAndDrag(t *testing.T) {
 	value := 20.0
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return ui.Slider(ui.SliderProps{ID: "volume", Label: "Volume", Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }}).Render(ctx, w)
+		return ui.Slider(ui.SliderProps{ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }}).Render(ctx, w)
 	})
 	s := surf.New("slider", view, ui.Stylesheet())
 	r := surftest.Start(t, s)
@@ -61,7 +61,7 @@ func TestSliderKeysAndDrag(t *testing.T) {
 func TestRangeSliderKeysAndDrag(t *testing.T) {
 	lo, hi := 20.0, 70.0
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return ui.RangeSlider(ui.RangeSliderProps{ID: "range", Label: "Price", Min: 0, Max: 100, Step: 5, Start: lo, End: hi, OnChange: func(a, b float64) { lo, hi = a, b }}).Render(ctx, w)
+		return ui.RangeSlider(ui.RangeSliderProps{ID: "range", StartAttrs: templ.Attributes{"aria-label": "Price, start"}, EndAttrs: templ.Attributes{"aria-label": "Price, end"}, Min: 0, Max: 100, Step: 5, Start: lo, End: hi, OnChange: func(a, b float64) { lo, hi = a, b }}).Render(ctx, w)
 	})
 	s := surf.New("range", view, ui.Stylesheet())
 	r := surftest.Start(t, s)
@@ -97,7 +97,7 @@ func TestRangeSliderKeysAndDrag(t *testing.T) {
 func TestSliderKeyScopeAndDisabled(t *testing.T) {
 	value, intercepted := 20.0, false
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		p := ui.SliderProps{ID: "volume", Label: "Volume", Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }}
+		p := ui.SliderProps{ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }}
 		return with(ui.KeyScope([]string{"arrow_right"}, func(string) bool { intercepted = true; return true }), ui.Slider(p)).Render(ctx, w)
 	})
 	r := surftest.Start(t, surf.New("slider", view, ui.Stylesheet()))
@@ -110,7 +110,7 @@ func TestSliderKeyScopeAndDisabled(t *testing.T) {
 	if value != 15 {
 		t.Fatalf("unscoped key: %v", value)
 	}
-	disabled := ui.Slider(ui.SliderProps{ID: "off", Label: "Off", Min: 0, Max: 10, Value: 5, Disabled: true})
+	disabled := ui.Slider(ui.SliderProps{ID: "off", Attrs: templ.Attributes{"aria-label": "Off"}, Min: 0, Max: 10, Value: 5, Disabled: true})
 	d := surftest.Start(t, surf.New("disabled", disabled, ui.Stylesheet()))
 	d.One("#off-thumb[disabled]")
 	if len(d.Find("#off[data-on]")) != 0 {
@@ -121,7 +121,7 @@ func TestSliderKeyScopeAndDisabled(t *testing.T) {
 func TestModalBlocksBackgroundSliderDrag(t *testing.T) {
 	value := 20.0
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		slider := ui.Slider(ui.SliderProps{ID: "volume", Label: "Volume", Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }})
+		slider := ui.Slider(ui.SliderProps{ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5, Value: value, OnChange: func(v float64) { value = v }})
 		modal := with(ui.Dialog(ui.DialogProps{ID: "dialog", Open: true, Title: "Confirm"}), button("inside", "OK", func() {}))
 		return page(slider, modal).Render(ctx, w)
 	})

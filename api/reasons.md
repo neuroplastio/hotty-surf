@@ -352,7 +352,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.RangeSlider`, `ui.RangeSliderProps`: a two-thumb slider, each thumb
   separately focusable and constrained by the other.
 - `ui.SliderProps.ID`, `ui.RangeSliderProps.ID`: name their parts (K14).
-- `ui.SliderProps.Label`, `ui.RangeSliderProps.Label`: name the thumbs.
+- `ui.SliderProps.Attrs`, `ui.RangeSliderProps.StartAttrs`, `.EndAttrs`:
+  name the respective thumbs through ARIA attributes (K18).
 - `ui.SliderProps.Min`, `.Max`, `.Step`, `ui.RangeSliderProps.Min`, `.Max`,
   `.Step`: numeric bounds and step (K2(a)).
 - `ui.SliderProps.Value`, `ui.RangeSliderProps.Start`, `.End`: controlled

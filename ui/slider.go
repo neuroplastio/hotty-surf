@@ -17,8 +17,10 @@ import (
 type SliderProps struct {
 	// ID names its elements and is unique on the surface.
 	ID string
-	// Label is the accessible name of the thumb.
-	Label string
+	// Attrs names the thumb, for example with aria-label or
+	// aria-labelledby. ID, role, value attributes, style and handlers are
+	// owned by the component and cannot be supplied here.
+	Attrs templ.Attributes
 	// Min and Max are the ends; Step is the increment (zero uses a twentieth
 	// of the range for keys and a hundredth for snapping).
 	Min, Max, Step float64
@@ -42,8 +44,10 @@ func Slider(p SliderProps) templ.Component {
 type RangeSliderProps struct {
 	// ID names its elements and is unique on the surface.
 	ID string
-	// Label names the range; its thumbs add "start" and "end".
-	Label string
+	// StartAttrs and EndAttrs name the individual thumbs, for example
+	// with aria-label or aria-labelledby. The component owns their ID,
+	// role, value attributes, style and handlers.
+	StartAttrs, EndAttrs templ.Attributes
 	// Min and Max are the ends; Step is as in SliderProps.
 	Min, Max, Step float64
 	// Start and End are the current values. Start cannot exceed End.
@@ -59,7 +63,7 @@ type RangeSliderProps struct {
 // RangeSlider is a two-thumb slider. Each thumb is a Tab stop; neither can
 // move past the other. The nearer thumb moves when the track is pressed.
 func RangeSlider(p RangeSliderProps) templ.Component {
-	return slider(sliderView{p: SliderProps{ID: p.ID, Label: p.Label, Min: p.Min, Max: p.Max, Step: p.Step, Disabled: p.Disabled, Class: p.Class}, lo: p.Start, hi: p.End, changeRange: p.OnChange, ranged: true})
+	return slider(sliderView{p: SliderProps{ID: p.ID, Attrs: p.EndAttrs, Min: p.Min, Max: p.Max, Step: p.Step, Disabled: p.Disabled, Class: p.Class}, startAttrs: p.StartAttrs, lo: p.Start, hi: p.End, changeRange: p.OnChange, ranged: true})
 }
 
 type sliderMemo struct {
@@ -72,13 +76,14 @@ type sliderView struct {
 	lo, hi      float64
 	ranged      bool
 	changeRange func(float64, float64)
+	startAttrs  templ.Attributes
 	memo        *sliderMemo
 }
 
 func (v *sliderView) init(ctx context.Context) {
 	badBounds := v.p.Max <= v.p.Min || math.IsNaN(v.p.Max) || math.IsNaN(v.p.Min) || math.IsInf(v.p.Max, 0) || math.IsInf(v.p.Min, 0)
-	if v.p.ID == "" || v.p.Label == "" || badBounds || v.p.Step < 0 || math.IsNaN(v.p.Step) || math.IsInf(v.p.Step, 0) {
-		rt.Fault(ctx, "ui.Slider: ID and Label are required, Max must exceed Min, and Step cannot be negative")
+	if v.p.ID == "" || badBounds || v.p.Step < 0 || math.IsNaN(v.p.Step) || math.IsInf(v.p.Step, 0) {
+		rt.Fault(ctx, "ui.Slider: ID is required, Max must exceed Min, and Step cannot be negative")
 	}
 	if badBounds {
 		v.p.Min, v.p.Max = 0, 100
@@ -273,10 +278,21 @@ func (v *sliderView) notch(ctx context.Context, i int) templ.Attributes {
 	}))
 }
 func (v *sliderView) thumb(ctx context.Context, k int) templ.Attributes {
-	if v.p.Disabled {
-		return templ.Attributes{"id": v.thumbID(k)}
+	attrs := v.p.Attrs
+	if v.ranged && k == 0 {
+		attrs = v.startAttrs
 	}
-	return scopeWithKeys(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) })), "arrow_left=program arrow_right=program arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program")
+	checkAttrs(ctx, "Slider", attrs, "id", "class", "type", "role", "aria-valuemin", "aria-valuemax", "aria-valuenow", "disabled", "style", "data-on", "data-keys")
+	var on templ.Attributes
+	if v.p.Disabled {
+		on = templ.Attributes{"id": v.thumbID(k)}
+	} else {
+		on = scopeWithKeys(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) })), "arrow_left=program arrow_right=program arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program")
+	}
+	for key, value := range attrs {
+		on[key] = value
+	}
+	return on
 }
 func (v *sliderView) percent(x float64) float64 {
 	if v.p.Max <= v.p.Min {
@@ -284,17 +300,7 @@ func (v *sliderView) percent(x float64) float64 {
 	}
 	return math.Max(0, math.Min(100, 100*(x-v.p.Min)/(v.p.Max-v.p.Min)))
 }
-func sliderPct(x float64) templ.SafeCSS {
-	return templ.SafeCSS(strconv.FormatFloat(x, 'f', 3, 64) + "%")
-}
 func sliderNum(x float64) string { return strconv.FormatFloat(x, 'f', -1, 64) }
-
-func (v *sliderView) endLabel() string {
-	if v.ranged {
-		return v.p.Label + ", end"
-	}
-	return v.p.Label
-}
 
 func sliderStyle(left, width float64) templ.SafeCSS {
 	return templ.SafeCSS(fmt.Sprintf("left:%.3f%%;width:%.3f%%", left, width))
