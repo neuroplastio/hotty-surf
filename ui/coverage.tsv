@@ -1,13 +1,13 @@
 component	markup	behaviour	browser	api	stories	tests	status	notes
 accordion	css	accordion.js	<details>	ui.Accordion,ui.AccordionProps,ui.AccordionItem	accordion/default,accordion/multiple,accordion/disabled	spec,differential,keys-cells	new	the host toggles <details> and tells no one (SPEC §9): one-open needs a spec proposal (a toggle event)
 alert	css	-	-	ui.Alert,ui.AlertProps	alert/default,alert/destructive	spec	port	Default, Destructive; storybook css.go
-avatar	css	-	<img>	ui.Avatar,ui.AvatarProps,ui.AvatarGroup	avatar/default,avatar/sizes,avatar/badge,avatar/group	spec	new	sizes sm, lg; an image comes from cid: or data: only (SPEC §7)
+avatar	css	-	<img>	ui.Avatar,ui.AvatarProps,ui.AvatarGroup,ui.AvatarGroupProps	avatar/default,avatar/sizes,avatar/badge,avatar/group	spec	new	sizes sm, lg; an image comes from cid: or data: only (SPEC §7)
 badge	css	-	-	ui.Badge,ui.BadgeProps	badge/default,badge/every-variant	spec	done	Default (primary), Secondary, Outline, Destructive, Ghost, Link; the spike kit's Badge
 breadcrumb	css	-	-	ui.Breadcrumb,ui.BreadcrumbProps,ui.BreadcrumbItem	breadcrumb/default	spec	new	its links are hyperlinks, the terminal's (SPEC §9)
 button	css	-	-	ui.Button,ui.ButtonProps	button/default,button/destructive,button/ghost-with-icon,button/disabled,button/every-variant-and-size	spec,keys-cells	done	sizes: ui.Size (XSmall…Large) and IconOnly give all 8; storybook css.go
 button-group	css	-	-	ui.ButtonGroup,ui.ButtonGroupProps,ui.ButtonGroupSeparator	button-group/default,button-group/vertical,button-group/with-menu	spec,keys-cells	new	data-orientation vertical: no shared enum
 card	css	-	-	ui.Card,ui.CardProps	card/default,card/small	spec	port	size sm; header, section, footer are plain elements (ui/doc.go); storybook css.go
-chart	hand	hand	<canvas>, Chart.js	ui.Chart,ui.ChartProps,ui.ChartState,ui.ChartSeries	chart/bar,chart/line,chart/pie,chart/legend	spec,keys-cells	new	chart.js drives Chart.js on a canvas, and a surface runs no script: an SVG plot in Go; no differential; Blitz lacks vector-effect
+chart	hand	hand	<canvas>, Chart.js	ui.Chart,ui.ChartProps,ui.ChartSeries	chart/bar,chart/line,chart/pie,chart/legend	spec	new	chart.js drives Chart.js on a canvas, and a surface runs no script: an SVG plot in Go, still, without the tooltip (no ChartState); its strokes scale with the plot, as Blitz lacks vector-effect; no keys, no differential
 checkbox	css	-	<input type=checkbox>	ui.Checkbox,ui.CheckboxProps	checkbox/default,checkbox/disabled	spec,keys-cells	done	the host toggles it and sends change (SPEC §9); no mixed look in any host, so no Mixed (B1 review)
 collapsible	css	-	<details>	ui.Collapsible,ui.CollapsibleProps	collapsible/default,collapsible/open	spec,keys-cells	new	the host toggles it (SPEC §9); ::details-content and calc-size() unchecked in Blitz
 combobox	jinja	combobox.js	-	ui.Combobox,ui.ComboboxProps,ui.ComboboxState,ui.ComboboxItem	combobox/default,combobox/multiple,combobox/clear,combobox/grouped	render,differential,keys-cells	port	markup generated, behaviour not begun; selected's type open (RUNTIME.md); outside click needs selectjs's backdrop
@@ -20,7 +20,7 @@ field	css	-	-	ui.Field,ui.FieldProps,ui.FieldSet,ui.FieldSetProps,ui.FieldSepara
 form	css	-	-	-	-	-	done	an @import of nine controls' files, no class of its own: nothing to wrap
 input	css	-	<input>	ui.Input,ui.InputProps	input/default,input/date,input/time,input/invalid,input/disabled	spec,keys-cells	port	"" or text and 11 more types; file is no control (SPEC §6.4); date and time stories prove Blitz or list a gap; not done until the looks pass proves date and time or lists them (blitz-gaps.md)
 input-group	css	-	-	ui.InputGroup,ui.InputGroupProps,ui.InputGroupAddon,ui.InputGroupAddonProps	input-group/inline,input-group/block,input-group/textarea	spec,keys-cells	done	an addon's data-align: inline-start (also ""), inline-end, block-start, block-end; its Input, Textarea or NativeSelect is bare (K9)
-item	css	-	-	ui.Item,ui.ItemProps,ui.ItemGroup	item/default,item/variants,item/sizes,item/group	spec	new	variant muted and size xs are not in ui.Variant, ui.Size
+item	css	-	-	ui.Item,ui.ItemProps,ui.ItemGroup,ui.ItemGroupProps	item/default,item/variants,item/sizes,item/group	spec	new	variant muted and size xs are not in ui.Variant, ui.Size
 kbd	css	-	-	ui.Kbd	kbd/default	spec	done	Kbd(keys) takes no Props (ui/ui.go); storybook css.go
 label	css	-	-	ui.Label,ui.LabelProps	label/default,label/disabled	spec	done	dims in a disabled Field (in-data-[disabled=true])
 native-select	css	-	<select>	ui.NativeSelect,ui.NativeSelectProps,ui.SelectItem	native-select/default,native-select/small,native-select/disabled	spec,keys-cells	done	a host may show no list (SPEC §10.2), Blitz shows none: keys only; Blitz's ▾ is off (css-subset)

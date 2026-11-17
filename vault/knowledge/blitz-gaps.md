@@ -833,3 +833,12 @@ yet.
   draws them.
 - Dialog's and the Toaster's styling from kit.css (L1's L2 items): now in
   the kit build, not yet drawn by Blitz.
+- B2's display components:
+  - Chart's SVG plot, filled from the document's `var(--chart-N)`. That
+    is what 0042 fixed (above); its strokes are drawn wide enough that the
+    missing `vector-effect` doesn't make a hairline.
+  - Skeleton's `animate-pulse`. css-subset.md lists animations as not
+    drawn, so the look to prove is a still muted block.
+  - Scrollbar's `::-webkit-scrollbar` and `scrollbar-color`. Its coverage
+    row has them as unchecked.
+  - An Avatar's `<img>` over its initials.

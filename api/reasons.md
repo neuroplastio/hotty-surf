@@ -207,6 +207,79 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 - `ui.TextareaProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
 - `ui.TextareaProps.Class`: as ButtonProps.Class.
 
+### ui's display components (L2, batch B2)
+
+Each is one of Basecoat's components that shows something and takes no keys of its own. The one-element ones (Alert, Avatar, AvatarGroup, Empty, Item, ItemGroup, Skeleton) are generated from internal/uigen's table; Breadcrumb, Progress, Table, Scrollbar and Chart have parts of their own and are written by hand. Their parts that Basecoat styles by tag (an alert's `<h2>` and `<section>`, an avatar's `<img>` and `<span>`, an empty state's `<header>` and `<figure>`, an item's `<figure>`, `<section>` and `<aside>`, a table's rows and cells) are plain elements in the children (K8). Each field's reason names its K2 case, as in B1. Every Props has `Attrs` and `Class`, as ButtonProps: they have no lines of their own below, and an attribute the component writes is a fault in Attrs (K3).
+
+- `ui.CardProps.Size`: (a) vega's `.card[data-size=sm]`, tighter padding and gaps: Medium or Small (the shared Size). Additive to a locked type (carried from B1).
+- `ui.Alert`: Basecoat's alert (`.alert`, role=alert): a title and a description beside an icon.
+- `ui.AlertProps`: an alert's attributes.
+- `ui.AlertProps.Variant`: (a) vega's `.alert[data-variant=destructive]`: Primary (the default) or Destructive, the shared Variant (carried from B1).
+- `ui.Avatar`: Basecoat's avatar (`.avatar`): an image over initials, as plain parts (K8: `.avatar > img`, `> span`), so it has no Src or Alt of its own.
+- `ui.AvatarProps`: an avatar's attributes.
+- `ui.AvatarProps.Size`: (a) vega's `.avatar[data-size=sm|lg]`: Medium, Small or Large, the shared Size (carried from B1).
+- `ui.AvatarGroup`: Basecoat's avatar group (`.avatar-group`): avatars overlapping, and a plain `[data-count]` span for the rest.
+- `ui.AvatarGroupProps`: an avatar group's attributes (Attrs and Class), as FieldSetProps (K7).
+- `ui.Breadcrumb`: Basecoat's breadcrumb (`nav.breadcrumb`): a trail of steps with a separator between two. It takes Items rather than plain children because each separator is markup the app shouldn't write (an aria-hidden `<li>` with an icon), and the last step is marked the page (K8's exception).
+- `ui.BreadcrumbProps`: a breadcrumb's attributes.
+- `ui.BreadcrumbProps.Items`: (c) the trail it renders, root first.
+- `ui.BreadcrumbItem`: one step. A new item type (K12): MenuItem reports through OnSelect, which is K1's first kind, and SelectItem and Tab are values a component chooses between; a step is a CSS-only part whose handler goes through surf.On, as K1's second kind's do.
+- `ui.BreadcrumbItem.Label`: (c) the step's text.
+- `ui.BreadcrumbItem.Attrs`: the step's handlers through surf.On. A step with them is an `<a tabindex=0>` the keyboard reaches (SPEC §10.2 gives an `a` Enter and Space); a surface never navigates (SPEC §9), so there is no Href.
+- `ui.Empty`: Basecoat's empty state (`.empty`): what a view shows with nothing in it.
+- `ui.EmptyProps`: an empty state's attributes (Attrs and Class), as FieldSetProps (K7).
+- `ui.Item`: Basecoat's item (`.item`): a list's row with a picture, a title and a description, and its buttons.
+- `ui.ItemProps`: an item's attributes.
+- `ui.ItemProps.Variant`: (a) vega's `.item[data-variant=outline]`: Primary (the default) or Outline, the shared Variant.
+- `ui.ItemProps.Muted`: (a) vega's `.item[data-variant=muted]`. Only Item has muted, so it is Item's own field (K5, carried from B1), and Muted with Outline is a fault.
+- `ui.ItemProps.Size`: (a) vega's `.item[data-size=sm|xs]`: Medium, Small or XSmall, the shared Size (carried from B1).
+- `ui.ItemGroup`: Basecoat's item group (`.item-group`): items in a column, a plain `<hr>` between two.
+- `ui.ItemGroupProps`: an item group's attributes (Attrs and Class), as FieldSetProps (K7).
+- `ui.Progress`: Basecoat's progress bar (`.progress`, role=progressbar): a div and its fill, not the native `<progress>` that Blitz doesn't draw.
+- `ui.ProgressProps`: a progress bar's attributes.
+- `ui.ProgressProps.Value`: (b) the percentage it shows, the fill's width and aria-valuenow; a float, as shadcn's value is a number and a download's share isn't whole. A Value outside 0 to 100 is a fault.
+- `ui.Scrollbar`: Basecoat's scrollbar classes (`.scrollbar`, `.scrollbar-sm`) on a box of the app's, which draw its scroll bar thin in the theme's colours.
+- `ui.ScrollbarProps`: a scrolling box's attributes.
+- `ui.ScrollbarProps.Size`: (a) Basecoat's two classes: Medium (`.scrollbar`) or Small (`.scrollbar-sm`), the shared Size.
+- `ui.Skeleton`: Basecoat's skeleton (`.skeleton`): a muted block standing for something loading; its size is the app's, in Class.
+- `ui.SkeletonProps`: a skeleton's attributes (Attrs and Class), as FieldSetProps (K7).
+- `ui.Table`: Basecoat's table (`.table` in `.table-container`), its rows and cells plain (K8). Attrs and Class are the table's, as shadcn's Table takes them, since the container only scrolls.
+- `ui.TableProps`: a table's attributes (Attrs and Class).
+- `ui.Chart`: Basecoat's chart, as a still SVG plot. chart.js draws on a canvas with Chart.js, which a surface can't run (K10: no script), so this is a hand port that draws the same three kinds in Basecoat's colours, with no tooltip. It is K1's second kind: it draws from its Props and hears nothing.
+- `ui.ChartProps`: a chart's attributes.
+- `ui.ChartProps.Kind`: (c) which plot it draws: "" (bars, Basecoat's default type), line or pie; a string by Q2's rule. Chart.js's other types (doughnut, radar, polar area) are left for a later batch.
+- `ui.ChartProps.Label`: (d) the plot's aria-label: an SVG of shapes says nothing without it.
+- `ui.ChartProps.Labels`: (c) the categories: under the plot, and a pie's slices.
+- `ui.ChartProps.Series`: (c) the values it plots.
+- `ui.ChartProps.Legend`: (c) Basecoat's `.chart-legend`, written by chart.js when asked (its legend option).
+- `ui.ChartSeries`: a named series of values. A new item type (K12): no shared one has values.
+- `ui.ChartSeries.Label`: (c) the series' name, in the legend.
+- `ui.ChartSeries.Values`: (c) one value per label.
+- `ui.AlertProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.AlertProps.Class`: as ButtonProps.Class.
+- `ui.AvatarProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.AvatarProps.Class`: as ButtonProps.Class.
+- `ui.AvatarGroupProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.AvatarGroupProps.Class`: as ButtonProps.Class.
+- `ui.BreadcrumbProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.BreadcrumbProps.Class`: as ButtonProps.Class.
+- `ui.ChartProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.ChartProps.Class`: as ButtonProps.Class.
+- `ui.EmptyProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.EmptyProps.Class`: as ButtonProps.Class.
+- `ui.ItemProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.ItemProps.Class`: as ButtonProps.Class.
+- `ui.ItemGroupProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.ItemGroupProps.Class`: as ButtonProps.Class.
+- `ui.ProgressProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.ProgressProps.Class`: as ButtonProps.Class.
+- `ui.ScrollbarProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.ScrollbarProps.Class`: as ButtonProps.Class.
+- `ui.SkeletonProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.SkeletonProps.Class`: as ButtonProps.Class.
+- `ui.TableProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.TableProps.Class`: as ButtonProps.Class.
+
 ## ui/code
 
 - `ui/code.Block`: highlighted code in Basecoat's pre, in a package of its own so an app without code doesn't link Chroma (a large share of a wasm build). One function: the spike's View, Highlight and CSS fold into it, the token colours going into the kit's stylesheet.

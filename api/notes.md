@@ -924,3 +924,57 @@ rules K1–K14.
   and a horizontal Field stacks. cells must take `.input-group` as a row
   whose control grows, ordered by data-align, and a horizontal Field as
   a row. A Switch draws as a check box.
+
+### Batch B2: display
+
+B2 adds 68 names, all in ui: eleven components, CardProps.Size and
+Chart's series. Each follows kit-rules.md, and
+reasons.md gives each field's K2 case. These are open for the reviewer:
+
+- **Chart is a still SVG plot.** Basecoat's chart.js gives Chart.js a
+  canvas, and a surface runs no script, so ui.Chart draws bars, a line or
+  a pie in Go, in the theme's chart colours. It has no tooltip, so it has
+  no ChartState, which coverage had planned; coverage now drops it. A
+  hover tooltip could come later as a surf state, but SPEC's hover (§9.4)
+  reaches only an element, not a point on a plot.
+  - Kind is a string ("", line, pie), by Q2's rule.
+  - One Labels serves every series, as Chart.js's data.labels does.
+  - Its category labels and legend are HTML under the plot, not SVG text,
+    so they draw in the document's font and stay out of usvg.
+- **Breadcrumb takes Items, not plain children.** Its separators are
+  markup the app shouldn't write, and the last step must be marked the
+  page. A step with Attrs is an `<a role=link tabindex=0>`, a stop the
+  keyboard reaches and Enter clicks (SPEC §10.2). There is no Href,
+  because a surface never navigates (SPEC §9); an app that wants a
+  hyperlink writes `<a target=_blank>` itself. BreadcrumbItem is a new
+  item type, and reasons.md says why none of the shared ones fits (K12).
+- **Avatar has no Src.** Its image is a plain `<img>` in the children
+  (K8, Basecoat's `.avatar > img`), as its initials are.
+- **Sizes are the app's.** Skeleton and Scrollbar take their size, and a
+  scrolling box its overflow, in Class or Attrs. kit.css has only the
+  kit's own utilities, so an app whose build lacks `h-4` or `w-[250px]`
+  writes a style. The stories do that.
+- **An Item that is a link.** Basecoat gives `a.item` a hover. ui.Item is
+  a div, so a clickable row is an Item with surf.On and a tabindex in
+  Attrs. An `As` field, or a `Link bool` that writes `<a tabindex=0>`,
+  is the alternative. Lean: neither until an app asks.
+- **Progress' Value is a float64,** clamped for the fill and faulted
+  outside 0 to 100.
+- **Icons.** The kit's Lucide subset gains bell, circle-alert, folder,
+  inbox and user, for the stories and Alert's doc. They come from the
+  same lucide-react release (0.474.0).
+- **Size (K13).** B2 adds no package to ui's release build: math and
+  strconv already come in through fmt.
+- **Looks (K10).** Chart's plot, Skeleton's pulse, Scrollbar's bar and
+  Avatar's image are on blitz-gaps.md's list for the looks pass.
+
+### Carried to B3 (overlays)
+
+- **A blur, an open question for the reviewer** (p-653, 2026-11-17). surf
+  can't ask for the keyboard to leave an element: Autofocus asks for
+  one. toast.js blurs a closing toast's button, so a ui Toast keeps the
+  keyboard on its hidden Dismiss button until it leaves (toastLeave)
+  and the host drops it with the element; a popover closing from a
+  click inside it may want the same. The two shapes: Autofocus(ctx, "")
+  means nothing focused (a change of meaning for a locked name), or a
+  new surf.Blur(ctx). Nothing is added until the reviewer decides.
