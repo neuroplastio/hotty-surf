@@ -145,6 +145,7 @@ pkg neuroplast.io/hotty-surf/ui, func Checkbox(CheckboxProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Combobox(*ComboboxState, ComboboxProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Command(*CommandState, CommandProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func CommandDialog(*CommandState, CommandDialogProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func ContextMenu(*ContextMenuState, ContextMenuProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ControlID(string, string) string
 pkg neuroplast.io/hotty-surf/ui, func Controls(ControlsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
@@ -172,6 +173,7 @@ pkg neuroplast.io/hotty-surf/ui, func KeyScope([]KeyBinding) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func List(ListProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ListItem(ListItemProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Menu(MenuProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Pick(*surf.Surface, string) bool
 pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
@@ -291,6 +293,11 @@ pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, ID string
 pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Items []MenuItem
 pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Placeholder string
 pkg neuroplast.io/hotty-surf/ui, type CommandState struct
+pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct
+pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct, Items []MenuItem
+pkg neuroplast.io/hotty-surf/ui, type ContextMenuState struct
 pkg neuroplast.io/hotty-surf/ui, type Control struct
 pkg neuroplast.io/hotty-surf/ui, type Control struct, Kind string
 pkg neuroplast.io/hotty-surf/ui, type Control struct, Name string
@@ -418,6 +425,12 @@ pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnCheckedChange func(bool
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Role string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Highlight int
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Items []MenuItem
+pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, OnHighlight func(int)
 pkg neuroplast.io/hotty-surf/ui, type NamedShape struct
 pkg neuroplast.io/hotty-surf/ui, type NamedShape struct, Name string
 pkg neuroplast.io/hotty-surf/ui, type NamedShape struct, Shape Shape
