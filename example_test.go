@@ -192,3 +192,21 @@ func ExampleSecondary() {
 		menu.open, menu.at = true, at // the next render draws the menu at at
 	})
 }
+
+// A program with several surfaces on one connection sends the kit's sheet
+// once and links it from each; an app with one surface lets the surface
+// send it (ui.Sheet as it is).
+func ExampleSurface_Link() {
+	kit := ui.Sheet()
+	os.Stdout.WriteString(hotty.Res(kit.ID, "text/css", []byte(kit.CSS)))
+	for _, name := range []string{"left", "right"} {
+		s := surf.New(name, templ.Raw(`<p>hi</p>`), "")
+		s.Link(surf.Sheet{ID: kit.ID}) // no CSS: the program sent it
+		s.Attach(os.Stdout, hotty.Caps{})
+		doc, err := s.Document()
+		if err != nil {
+			return
+		}
+		os.Stdout.WriteString(hotty.Doc(name, doc))
+	}
+}

@@ -569,3 +569,11 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
 - `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
+
+## L5: the kit's sheet as a resource (plx's G-kit-sheet)
+
+- `surf.Sheet`: a stylesheet named for SPEC §7.1's a=res: an ID the documents link as cid:<ID>, and the CSS (empty when the program sends it). Every full send carried the kit's 229 KB (33 KB on the wire, compressed) in each document of each surface; over a pty or SSH, with many surfaces, that is most of what goes.
+- `surf.Sheet.ID`: what the document links; a content hash, so a host never styles with an older sheet of the same name.
+- `surf.Sheet.CSS`: the bytes the surface sends; empty, the program sends them once for all its surfaces (plx's surfhost already sends its theme this way).
+- `surf.Surface.Link`: only the surface knows when it hands out a document and on which writer, so only it can send the sheet once per Attach ahead of the first document that links it; New's css stays the app's own.
+- `ui.Sheet`: the kit's sheet with its hashed ID, so apps and hosts agree on the name without computing it.

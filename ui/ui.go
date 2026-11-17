@@ -1,9 +1,14 @@
 package ui
 
 import (
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
+	"sync"
 
 	"github.com/a-h/templ"
+
+	"neuroplast.io/hotty-surf"
 )
 
 // A Variant is how a component stands out: Basecoat's data-variant, which
@@ -45,6 +50,24 @@ const (
 func Stylesheet() string {
 	return kitCSS + navCSS + controlsCSS + sliderCSS
 }
+
+// Sheet is Stylesheet as a resource that documents link rather than carry
+// (surf.Surface.Link): sent once on a connection rather than in every
+// document of every surface. Its ID is "hotty-surf-kit-" and 8 hex digits
+// of the sheet's SHA-256, so a kit with other CSS has another ID. An app
+// links it, and New takes only its own CSS:
+//
+//	s := surf.New("hello", Page(a), appCSS)
+//	s.Link(ui.Sheet())
+func Sheet() surf.Sheet {
+	return kitSheet()
+}
+
+var kitSheet = sync.OnceValue(func() surf.Sheet {
+	css := Stylesheet()
+	sum := sha256.Sum256([]byte(css))
+	return surf.Sheet{ID: "hotty-surf-kit-" + hex.EncodeToString(sum[:4]), CSS: css}
+})
 
 // kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind
 // utilities, as the spike's kit built them (kit.css).

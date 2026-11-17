@@ -1722,3 +1722,54 @@ above; Secondary's doc says at and area are zero when the host doesn't say
 them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
+
+## L5: the kit's sheet as a resource (plx's G-kit-sheet)
+
+`ui.Stylesheet()` is 228,864 bytes, and an app carries it in every
+document (New's css), on every full send, for every surface. hotty's
+a=res (SPEC §7.1) stores it once per session; documents link it as
+`cid:<id>`.
+
+The pack: `surf.Sheet{ID, CSS}`, `Surface.Link(sheets ...Sheet)` and
+`ui.Sheet()`.
+
+- A linked sheet is a `<link rel="stylesheet" href="cid:ID">` ahead of
+  the surface's own `<style>` (New's css, which a dev reload restyles; it
+  is written even empty while a sheet is linked, for the reload to fill).
+- A sheet with CSS is sent by the surface: a=res on Attach's writer, once
+  per Attach, before the next document Document returns. That covers
+  run.App (term, wasm, dev, cells) with no change there.
+- A sheet without CSS is the program's to send: a host that owns one
+  connection for many surfaces (plx's surfhost) sends `hotty.Res` once
+  and links `surf.Sheet{ID: ui.Sheet().ID}` from each.
+- `ui.Sheet()`'s ID is `hotty-surf-kit-` and 8 hex digits of SHA-256 over
+  the sheet, computed once.
+- **Cells:** nothing to do. A cells.Screen reads Basecoat classes and
+  inline styles, never a stylesheet (SUBSET.md); it ignores a=res and
+  `<link>` as it ignores `<style>`.
+- hello and the `hotty-surf new` scaffold link the kit (`Surface(a)` in
+  css.go); the other examples and the book still carry it, which keeps
+  working.
+
+Measured on examples/hello (bytes written, hotty-go's encoding):
+
+| | once per connection | each full send |
+| --- | ---: | ---: |
+| kit embedded (v07) | 0 | 33,907 |
+| kit linked | 32,907 | 1,279 |
+
+1 surface, 3 full sends: 101,721 → 36,744. 10 surfaces, 3 full sends
+each: 1,017,210 → 71,277. TinyGo release wasm of hello (crypto/sha256
+is new): 2,258,207 → 2,264,552 raw, 724,217 → 725,272 gzip -9n.
+
+Questions for the review:
+
+1. Once per Attach per surface: two surfaces of one program on one writer
+   that both carry CSS each send it (the second replaces the first, and
+   the host redraws). A program with many surfaces links without CSS.
+   Enough, or a shared sender?
+2. a=res is sent NoReply. A host that refuses it (EQUOTA, limits.message)
+   shows the documents unstyled with no error; the embedded sheet would
+   have gone over limits.message as well. Ask for errors and surface them?
+3. Move the other examples and the book to Link in the apply, or leave
+   them as the embedded shape's examples?

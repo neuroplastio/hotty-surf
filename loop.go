@@ -24,6 +24,9 @@ func (s *Surface) wake() {
 
 // document renders the whole document, and takes it as what the host has.
 func (s *Surface) document() (string, error) {
+	if err := s.sendSheets(); err != nil {
+		return "", err
+	}
 	// A new document starts from nothing the host had: its fields hold
 	// what the markup gives them, and the keyboard and the pointer are
 	// heard of again.
@@ -643,6 +646,32 @@ func (s *Surface) takeFocus() (bool, error) {
 		return false, err
 	}
 	return true, s.event(hotty.Event{Kind: hotty.EventFocus, Surface: s.name, Target: id})
+}
+
+// sendSheets sends the linked sheets the writer doesn't have yet.
+func (s *Surface) sendSheets() error {
+	if s.out == nil {
+		return nil
+	}
+	var cmds []string
+	for _, sh := range s.sheets {
+		if sh.CSS == "" || s.sheetSent[sh.ID] {
+			continue
+		}
+		cmds = append(cmds, hotty.Res(sh.ID, "text/css", []byte(sh.CSS)))
+	}
+	if err := s.write(cmds); err != nil {
+		return err
+	}
+	for _, sh := range s.sheets {
+		if sh.CSS != "" {
+			if s.sheetSent == nil {
+				s.sheetSent = map[string]bool{}
+			}
+			s.sheetSent[sh.ID] = true
+		}
+	}
+	return nil
 }
 
 // firstFocusable is the id of the first element under n, in tree order,

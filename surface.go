@@ -75,6 +75,8 @@ type Surface struct {
 	asked        string // the element the last frame's Autofocus asked for
 	askDue       bool   // a Document's Autofocus, sent at the next Update
 	cssDue       bool   // the stylesheet changed (a dev reload): sent at the next Update
+	sheets       []Sheet         // the stylesheets documents link (Link)
+	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
 	sending      bool
 	deferred     []hotty.Event
 
@@ -122,6 +124,34 @@ func (s *Surface) Name() string {
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
+	s.sheetSent = nil
+}
+
+// Sheet is a stylesheet that documents link as a resource (SPEC §7.1)
+// rather than carry: sent once on a connection, it styles every document
+// sent there after, and every surface that links it. A kit's sheet is
+// ui.Sheet().
+type Sheet struct {
+	// ID names the resource: the document links cid:<ID>. It changes
+	// whenever CSS does (a content hash), so a host holding an older sheet
+	// under another ID is never asked to style with it.
+	ID string
+	// CSS is the sheet. Empty, the program sends the resource itself
+	// (hotty.Res(ID, "text/css", …)): a program with one connection for
+	// many surfaces sends it once for all of them.
+	CSS string
+}
+
+// Link makes the surface's documents link sheets, in order, ahead of its
+// own stylesheet (New's css): each as <link rel="stylesheet"
+// href="cid:ID">. A sheet with CSS is sent on the writer Attach gave, as
+// a=res, once per Attach: before the next document Document returns, so a
+// program that sends that document on the same writer has the sheet
+// there first. A sheet without CSS is the program's to send. Link before
+// the first Document; a later Link takes effect at the next Document,
+// whose links change.
+func (s *Surface) Link(sheets ...Sheet) {
+	s.sheets = append([]Sheet(nil), sheets...)
 }
 
 // Document renders the view and returns the whole document, its stylesheet
