@@ -70,10 +70,10 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 // under the pointer changed (SPEC §9.4), on a placement made with Hover,
 // as surf's driver makes it (surf.Surface.Attach); a cell outside the
 // Screen (a negative col or row, or one past its size) is the pointer
-// leaving it, a hover with Out. Lines changes after a Move only through
-// what the surface writes (a hover's look, the dragging class), so a
-// program redraws on Writes, and on the presses and releases it takes,
-// not on every motion.
+// leaving it, a hover with Out. Lines changes after a Move through what
+// the surface writes (a hover's look, the dragging class), and by itself
+// where a tooltip shows or goes; Dirty says when, so a program needn't
+// redraw on every motion.
 func (c *Screen) Move(col, row, mods int) (taken bool) {
 	switch {
 	case c.drag != nil:

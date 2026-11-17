@@ -724,3 +724,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surf.Sheet.CSS`: the bytes the surface sends; empty, the program sends them once for all its surfaces (plx's surfhost already sends its theme this way).
 - `surf.Surface.Link`: only the surface knows when it hands out a document and on which writer, so only it can send the sheet once per Attach ahead of the first document that links it; New's css stays the app's own.
 - `ui.Sheet`: the kit's sheet with its hashed ID, so apps and hosts agree on the name without computing it.
+
+## L6: the Screen's own redraw, for plx's tooltips
+
+- `cells.Screen.Dirty`: a tooltip (ui.Tooltip) shows and goes on a bare Move, with nothing written, and Move's approved doc told a program to redraw only on Writes and on the presses and releases it takes, so plx would draw a tip late and leave it behind (p-801's spot-check of the tooltip merge). The Screen says when what it draws changed; Move keeps its approved signature, and anything else local (a hover's own look, later) is covered too.
