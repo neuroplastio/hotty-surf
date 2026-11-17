@@ -1,0 +1,17 @@
+/* dashboard's own styles, after the kit's (ui.Stylesheet): hotty-surf run
+   restyles the app as this file is saved. */
+
+/* The second row: the revenue line and the table take three parts each,
+   the channel bars two. */
+.wide {
+  flex: 3;
+}
+
+.mid {
+  flex: 2;
+}
+
+/* A stock bar is short, beside how many are left. */
+.stock {
+  width: 4rem;
+}
