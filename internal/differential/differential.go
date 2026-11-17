@@ -58,8 +58,8 @@ type Spec struct {
 	// dialog's open): a root without it counts as no root, as ui writes
 	// none for a closed Dialog where the macro keeps a closed <dialog>.
 	Shown string `json:"shown,omitempty"`
-	Why   string   `json:"why,omitempty"`
-	Cases []Case   `json:"cases"`
+	Why   string `json:"why,omitempty"`
+	Cases []Case `json:"cases"`
 }
 
 // A Case is one sequence of steps on one render.
