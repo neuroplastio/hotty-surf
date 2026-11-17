@@ -13,8 +13,8 @@ import (
 // copy key and puts it on the terminal's clipboard, as it pastes with
 // Paste.
 
-// Selection is the text selected in the text field that has the
-// keyboard: what the program copies on its copy key. It is "" where
+// Selection is the text selected in the text field or textarea that has
+// the keyboard: what the program copies on its copy key. It is "" where
 // nothing is selected, no text field has the keyboard, or the field is a
 // password's, which a browser won't copy either.
 func (c *Screen) Selection() string {
@@ -33,7 +33,8 @@ func (c *Screen) Selection() string {
 // Cut is Selection, deleted from the field as the user's edit (its input
 // where it listens for one, its change when it commits): what the program
 // does on its cut key. It is "", and the field is as it was, in a field
-// that is readonly or disabled, or a password's.
+// that is readonly or disabled, or a password's. Lines changes with it:
+// the program draws the Screen again.
 func (c *Screen) Cut() string {
 	n := c.focused
 	text := c.Selection()
