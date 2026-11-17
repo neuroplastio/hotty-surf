@@ -496,7 +496,9 @@ func (s *Surface) key(k string) (bool, error) {
 	intercepted := false
 	var fallback func(rt.KeyDefault) rt.KeyResult
 	var native func(*rt.KeyEnvironment, string, func(rt.KeyDefault) rt.KeyResult) bool
-	if n := s.byID[s.focused]; len(s.frame.KeyScopes) > 0 && n != nil && !hasAttr(n, "disabled") {
+	// No scope takes a printable key from an element that types (K27).
+	typing := s.byID[s.focused] != nil && rt.Types(s.byID[s.focused]) && rt.Printable(physical)
+	if n := s.byID[s.focused]; !typing && len(s.frame.KeyScopes) > 0 && n != nil && !hasAttr(n, "disabled") {
 		if dispatch := s.frame.KeyScopes[0].Dispatch; dispatch != nil {
 			var taken bool
 			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, attr(n, "data-hotty-keyscope"), physical, k)
@@ -525,7 +527,7 @@ func (s *Surface) key(k string) (bool, error) {
 	} else if len(ids) == 0 {
 		ids = s.tops()
 	}
-	if !intercepted {
+	if !intercepted && !typing {
 		// A scope around a plain element, or the outermost scopes with
 		// nothing focused, hear the keys the host gave the program,
 		// before the elements' own Key handlers.
@@ -575,10 +577,6 @@ func (s *Surface) key(k string) (bool, error) {
 	return false, nil
 }
 
-// tops is the ids of the elements a key goes to while nothing is focused:
-// the outermost elements with Key handlers, in tree order, found through
-// any elements without one (a layout's wrappers around the page). They are
-// where a page's shortcuts are.
 // reached is the ui.KeyScopes a key is offered to now, in the order it is
 // offered: around a kit control, its marker's; around another element,
 // the scope its surf.On (or its nearest ancestor's with one) ran in; each
@@ -618,6 +616,10 @@ func (s *Surface) reached() []*rt.KeyScope {
 	return out
 }
 
+// tops is the ids of the elements a key goes to while nothing is focused:
+// the outermost elements with Key handlers, in tree order, found through
+// any elements without one (a layout's wrappers around the page). They are
+// where a page's shortcuts are.
 func (s *Surface) tops() []string {
 	var out []string
 	var walk func(*html.Node)

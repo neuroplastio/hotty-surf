@@ -1826,3 +1826,31 @@ amended):
 Still the L4 builder's (p-795): run.App resends `hotty.Menu(ui.HostMenu(…))`
 when it changes (after a render or a focus move, compared with what it
 last sent), and turns a command event's name into `ui.Pick`.
+
+### As verified (p-797, 2026-11-17): fixes applied
+
+FIX FIRST (`verify-keys-labels.md`), applied:
+- The keyboard model's known-gaps paragraph is restored after "Menus and
+  palettes", verbatim.
+- Bindings' doc says the listed bindings' Run is nil: call Pick.
+- `tops`' doc is back above `func tops`.
+
+And p-653's addition, since plx relies on it (the review's promise that a
+scope never steals letters from a field): **an element that types keeps
+its printable keys.** A kit Input, Textarea or Combobox/Command input, or
+a plain text input, textarea or editing host, keeps every printable key
+(one character or space, with or without shift). No scope takes one from
+it:
+- the kit forwards none of them from a text-kind control (attachScope);
+- the surface offers none to a scope while such an element has the
+  keyboard (`rt.Types`, `rt.Printable` in key());
+- Bindings lists such a binding without its key while the field has the
+  keyboard.
+
+A modified key (ctrl+s) still reaches the scope from a field. KeyScope's
+doc and the keyboard model say so. TestKeyScopeFieldKeepsLetters (host and
+cells) covers `x` and `shift+x` typed in a scoped kit Input, the field's
+data-keys forwarding only ctrl+s, and ctrl+s running the scope. B3's three
+text vectors bound a bare `b` to exercise the scope's editing fallback.
+They now bind `backspace`, which the field uses and the scope declines,
+so the fallback is still exercised.

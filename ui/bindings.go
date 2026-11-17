@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/rt"
@@ -14,8 +15,8 @@ import (
 // inside its scope, and no nearer scope's enabled binding takes the same
 // key. Any other keyed binding is listed with Key "" when it has a Name,
 // since a pick still runs it, and left out when it has none. Disabled
-// bindings are listed, Disabled. Call [Pick] to run one, not its Run,
-// so that Disabled and a Name's nearest binding hold.
+// bindings are listed, Disabled. Their Run is nil: call [Pick] to run
+// one, so that Disabled and a Name's nearest binding hold.
 //
 // It reads the surface's state: call it on the surface driver's goroutine
 // (in a handler or in [surf.Surface.Do]). It is nil before s first
@@ -85,13 +86,19 @@ func offered(s *surf.Surface) []offer {
 		return nil
 	}
 	reach := rt.Peek.Scopes(s) // nearest the keyboard first
+	// A field that types keeps its printable keys (K27): none reaches a
+	// binding while it has the keyboard.
+	typing := false
+	if n := byID(rt.Peek.Tree(s), rt.Peek.Focused(s)); n != nil {
+		typing = rt.Types(n)
+	}
 	// winner is each key's binding: the nearest enabled one, else the
 	// nearest disabled one. nearest is each name's.
 	winner, nearest := map[string]at{}, map[string]at{}
 	for _, enabled := range []bool{true, false} {
 		for _, sc := range reach {
 			for i, b := range sc.Bindings {
-				if b.Physical != "" && b.Disabled != enabled {
+				if b.Physical != "" && b.Disabled != enabled && !(typing && rt.Printable(b.Physical)) {
 					if _, ok := winner[b.Physical]; !ok {
 						winner[b.Physical] = at{sc, i}
 					}
@@ -131,4 +138,22 @@ func offered(s *surf.Surface) []offer {
 		}
 	}
 	return out
+}
+
+// byID is the element of root's tree whose id is id, nil for none.
+func byID(root *html.Node, id string) *html.Node {
+	if root == nil || id == "" {
+		return nil
+	}
+	for _, a := range root.Attr {
+		if a.Key == "id" && a.Val == id {
+			return root
+		}
+	}
+	for c := root.FirstChild; c != nil; c = c.NextSibling {
+		if n := byID(c, id); n != nil {
+			return n
+		}
+	}
+	return nil
 }

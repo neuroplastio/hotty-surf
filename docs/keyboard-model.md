@@ -148,6 +148,10 @@ it, nearest first, then a kit control's default, then the `surf.Key`
 handlers of the focused element and its ancestors, then the program.
 - On a kit control, a scope takes its named keys from the control's
   native editing (the kit forwards them).
+- An element that types (a kit Input, Textarea or Combobox's input, a
+  plain text input, textarea or editing host) keeps its printable keys,
+  with or without Shift: no scope takes one from it, so a scope may bind a
+  bare letter and fields still type it.
 - On a plain element, a scope hears only the keys the element doesn't use
   itself, as `surf.Key` does. A scope's `enter` doesn't take Enter from a
   plain button, and its `j` doesn't take a letter from a plain field.
@@ -184,3 +188,12 @@ The labels serve the user's view of the keys too:
   the focus, so the menu is sent again when it changes.
 - `ui.Pick(s, name)` runs the action a pick names, as a host's menu sends
   it in a command event.
+
+A host's open native select list can retain every key until it closes;
+scopes cannot intercept those keys while that list is open. The kit's
+Select draws its own list and does not have this limitation. Best-effort
+fallback for intercepted text editing has known gaps: composition and IME,
+undo history, clipboard, terminal edit commands, grapheme and selection
+edges, rapid or stale revisions, and date and time controls. Native form
+submission and complete native editing parity also need human review.
+These are not gates for B3, and no protocol change is requested.

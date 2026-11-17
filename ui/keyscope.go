@@ -53,8 +53,11 @@ type KeyBinding struct {
 // the keyboard is asked first, before the kit control's default and any
 // surf.Key handler. On a kit control, a scope takes its named keys from
 // the control's native editing; on a plain element, it hears only keys
-// the element doesn't use itself, as surf.Key does. A scope around one
-// component overrides that instance. Scopes never affect another surface.
+// the element doesn't use itself, as surf.Key does. An element that types
+// (a kit Input, Textarea or Combobox input, a plain text input, textarea
+// or editing host) keeps its printable keys, with or without shift: no
+// scope takes one from it. A scope around one component overrides that
+// instance. Scopes never affect another surface.
 //
 // Keys use surf.Key's notation, including mod ("arrow_down", "mod+s").
 // They are exact key names, not patterns or action names. A binding with
@@ -165,9 +168,14 @@ func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ
 		return attrs
 	}
 	keys := map[string]bool{}
+	// A control that types keeps its printable keys: no scope takes one
+	// from it (K27), so none is forwarded.
+	text := kind == "text" || kind == "compound-text"
 	for s := scope; s != nil; s = s.Parent {
 		for k := range s.Keys {
-			keys[k] = true
+			if !text || !rt.Printable(k) {
+				keys[k] = true
+			}
 		}
 	}
 	if len(keys) == 0 {

@@ -245,3 +245,75 @@ func TestKeyScopeReach(t *testing.T) {
 		}
 	}
 }
+
+// A field that types keeps its printable keys (K27): a scope binding a
+// bare letter, with or without shift, never takes it from a kit Input;
+// a modified key still reaches the scope. Host and cells.
+func TestKeyScopeFieldKeepsLetters(t *testing.T) {
+	for _, mode := range []string{"host", "cells"} {
+		t.Run(mode, func(t *testing.T) {
+			var ran []string
+			value := ""
+			run := func(name string) func() bool { return func() bool { ran = append(ran, name); return true } }
+			view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				field := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "field", surf.Input(func(v string) { value = v }))})
+				return with(ui.KeyScope([]ui.KeyBinding{
+					{Key: "x", Name: "x", Run: run("x")},
+					{Key: "shift+x", Name: "shift+x", Run: run("shift+x")},
+					{Key: "mod+s", Name: "save", Run: run("save")},
+				}), field).Render(ctx, w)
+			})
+			s := surf.New("field", view, ui.Stylesheet())
+			var key func(string)
+			var r *surftest.Rig
+			if mode == "host" {
+				r = surftest.Start(t, s)
+				r.Click("#field")
+				key = func(k string) { r.Key(k) }
+			} else {
+				c := cells.New(80, 24, func(e hotty.Event) {
+					if err := s.Event(e); err != nil {
+						t.Fatal(err)
+					}
+				})
+				s.Attach(c, hotty.Caps{})
+				doc, err := s.Document()
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err = c.Write([]byte(hotty.Doc("field", doc))); err != nil {
+					t.Fatal(err)
+				}
+				c.Key("tab")
+				key = func(k string) {
+					if !c.Key(k) {
+						if _, err := s.Key(k); err != nil {
+							t.Fatal(err)
+						}
+					}
+				}
+			}
+			if mode == "host" {
+				// The kit forwards no printable key from a field.
+				if got := attr(r.One("#field"), "data-keys"); got != "ctrl+s=program" {
+					t.Errorf("the field's data-keys %q, want only mod+s forwarded", got)
+				}
+			}
+			key("x")
+			key("shift+x")
+			if value != "xX" || len(ran) != 0 {
+				t.Fatalf("typed x, X: value %q, scope ran %v; want the field to have them", value, ran)
+			}
+			key("ctrl+s") // mod is ctrl on both test hosts
+			if want := []string{"save"}; !reflect.DeepEqual(ran, want) {
+				t.Fatalf("mod+s ran %v, want %v", ran, want)
+			}
+			// While the field has the keyboard, the letters reach no
+			// binding: listed by name, without their keys.
+			want := []ui.KeyBinding{{Name: "x"}, {Name: "shift+x"}, {Key: "mod+s", Name: "save"}}
+			if got := ui.Bindings(s); !reflect.DeepEqual(got, want) {
+				t.Fatalf("bindings %+v, want %+v", got, want)
+			}
+		})
+	}
+}
