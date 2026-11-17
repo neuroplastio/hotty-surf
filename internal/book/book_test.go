@@ -325,3 +325,16 @@ func TestCodeStoryPropsChangePreview(t *testing.T) {
 		t.Fatalf("code preview did not use the edited line number: %s", got)
 	}
 }
+
+func TestBookEventLogDemoClears(t *testing.T) {
+	a := New()
+	a.show("event-log/default")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	if !strings.Contains(r.HTML(), "Popup.Open") {
+		t.Fatal("event log demo did not show its entries")
+	}
+	r.Click("#demo-clear")
+	if strings.Contains(r.HTML(), "Popup.Open") || !strings.Contains(r.HTML(), "Nothing yet: add an event.") {
+		t.Fatal("event log demo did not clear")
+	}
+}
