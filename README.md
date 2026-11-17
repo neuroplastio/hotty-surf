@@ -63,6 +63,38 @@ func main() {
 
 The whole app is [`examples/hello`](examples/hello).
 
+**Classes** are the kit's: Basecoat's, and the Tailwind utilities the
+kit's own markup uses, not all of Tailwind's. `hotty-surf classes` lists
+them. Any other class goes in the app's own CSS (`style/app.css`), and
+`hotty-surf lint` names a class neither defines, since it would do
+nothing.
+
+**An attribute beside `surf.On`:** on an element, write it beside the
+spread. A component's `Attrs` is the map `surf.On` returns, so set it in
+Go:
+
+```templ
+<button { surf.On(ctx, "close", surf.Click(a.Close))... } aria-label="Close">
+	@ui.Icon("x", "")
+</button>
+@ui.Button(ui.ButtonProps{
+	IconOnly: true,
+	Attrs:    labelled(surf.On(ctx, "del", surf.Click(a.Delete)), "Delete"),
+}) {
+	@ui.Icon("x", "")
+}
+```
+
+```go
+func labelled(a templ.Attributes, label string) templ.Attributes {
+	a["aria-label"] = label
+	return a
+}
+```
+
+A button with only an icon needs that label: the cells fallback draws a
+button by its text or its label, and lint asks for one.
+
 ## The dev tool
 
 `hotty-surf` (from a checkout, `go install ./cmd/hotty-surf`, until
@@ -77,6 +109,8 @@ hotty-surf ctl shot       # the app as the terminal has it, as shot.png
 hotty-surf shot hello     # the app headless, with no terminal
 hotty-surf serve hello    # in a browser, reloading as you save
 hotty-surf build -wasm hello   # a static page: TinyGo's wasm in xterm.js
+hotty-surf lint hello     # the kit's rules, which run also checks on save
+hotty-surf classes        # the classes the kit's stylesheet defines
 ```
 
 `run` draws the app in character cells where the terminal is no hotty
@@ -91,6 +125,15 @@ host. `hotty-surf help` lists every command, and each takes `-h`.
 | [msgp](https://github.com/tinylib/msgp) | 1.6.5 | the kept state's codec (`go generate`) |
 | [TinyGo](https://tinygo.org) | 0.43.0 | `build -wasm` (`$HOTTY_SURF_TINYGO` or PATH) |
 | hotty-blitz's `hotty` | 0.8 | `shot` and `ctl shot` render with it (`$HOTTY_SURF_HOTTY` or PATH); build it from [hotty-blitz](https://github.com/neuroplastio/hotty-blitz) |
+
+templ and msgp install with Go; TinyGo from its
+[install page](https://tinygo.org/getting-started/install/); `hotty` is
+built from a hotty-blitz checkout, as its README says:
+
+```sh
+go install github.com/a-h/templ/cmd/templ@v0.3.1118
+go install github.com/tinylib/msgp@v1.6.5
+```
 
 `run` and `serve` generate templ's and msgp's code themselves as you save;
 `go test` and `go build` read what was generated last, so after an edit

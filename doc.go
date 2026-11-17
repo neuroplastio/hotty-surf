@@ -1,7 +1,9 @@
 // Package surf runs a hotty app written in Go: its state is a Go value, its
-// view is templ components (HTML with Basecoat's and Tailwind's classes),
-// and after every event the view is rendered again, compared with what the
-// host has, and the difference goes to the host as one delta.
+// view is templ components (HTML with the kit's classes: Basecoat's, and
+// the Tailwind utilities the kit uses, not all of Tailwind's, which
+// `hotty-surf classes` lists), and after every event the view is rendered
+// again, compared with what the host has, and the difference goes to the
+// host as one delta.
 //
 // A [Surface] is one view on one hotty surface. It owns no terminal: it
 // writes hotty commands to the writer it is attached to and takes the
