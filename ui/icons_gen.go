@@ -30,6 +30,8 @@ var icons = map[string]string{
 	"search":           `<circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>`,
 	"settings-2":       `<path d="M20 7h-9"></path><path d="M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle>`,
 	"timer":            `<line x1="10" x2="14" y1="2" y2="2"></line><line x1="12" x2="15" y1="14" y2="11"></line><circle cx="12" cy="14" r="8"></circle>`,
+	"trash":            `<path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>`,
+	"trash-2":          `<path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line>`,
 	"user":             `<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>`,
 	"x":                `<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>`,
 }
@@ -63,6 +65,8 @@ func iconNames() []string {
 		"search",
 		"settings-2",
 		"timer",
+		"trash",
+		"trash-2",
 		"user",
 		"x",
 	}

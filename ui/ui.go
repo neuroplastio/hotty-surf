@@ -58,8 +58,8 @@ var kitCSS string
 // chevron-down, chevron-left, chevron-right, chevrons-left,
 // chevrons-right, chevrons-up-down, circle, circle-alert,
 // circle-check-big, circle-help, circle-off, circle-plus, ellipsis,
-// eye-off, folder, hand, inbox, plus, search, settings-2, timer, user and
-// x. Another name is a fault. In a button or a badge the kit sizes it;
+// eye-off, folder, hand, inbox, plus, search, settings-2, timer, trash,
+// trash-2, user and x. Another name is a fault. In a button or a badge the kit sizes it;
 // class is for the app's own (one its stylesheet has), or "".
 func Icon(name, class string) templ.Component {
 	return icon(name, class)

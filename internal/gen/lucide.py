@@ -12,7 +12,7 @@ ICONS = """
 arrow-down arrow-right arrow-up bell check chevron-down chevron-left
 chevron-right chevrons-left chevrons-right chevrons-up-down circle
 circle-alert circle-check-big circle-help circle-off circle-plus ellipsis eye-off folder hand
-inbox plus search settings-2 timer user x
+inbox plus search settings-2 timer trash trash-2 user x
 """.split()
 
 src, out, names = sys.argv[1], sys.argv[2], ICONS + sys.argv[3:]
