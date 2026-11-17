@@ -828,7 +828,8 @@ and in headless Chromium from the same HTML, with the host's stylesheet
 under it and hotty-blitz's own fonts, then compares the two. It ran on
 B1's and B2's stories, Dialog's and the Toaster's, in the dark and the
 light theme, with hotty-blitz 0.8.5 (2a491b5). Its repros are cut down
-with `-files`.
+with `-files`. Table, Switch, Checkbox, Radio and Input ran again with
+hotty-blitz 0.8.6 and two commits of the looks fixes on top (b7f4f81).
 
 **Proven** (no difference but the text's place, above): Chart's plot,
 filled from the document's `var(--chart-N)` (0042), its strokes drawn
@@ -837,16 +838,17 @@ styling; Alert, Card, Avatar (its initials; its `<img>` is untried),
 Empty, Item, Progress, Skeleton (drawn still, since animations aren't
 drawn), Label, Textarea, a text Input and InputGroup.
 
-**Gaps**, each sent as a repro for hotty-blitz (looks gaps 1 to 6):
+**Gaps**, each sent as a repro for hotty-blitz (looks gaps 1 to 7):
 
 | Gap | Where it shows in the kit | How bad |
 | --- | --- | --- |
 | 1. A fieldset's rendered `<legend>` is laid out as a flex item: the fieldset's `gap` follows it, and it stretches | FieldSet: the description sits about 24 CSS px low (field/fieldset, field/checkbox-group) | Cosmetic, in every FieldSet |
 | 2. A `<caption>` isn't drawn, nor given room, top or bottom | Table's caption (table/default) | Content lost |
-| 3. Auto table layout shares a fixed width's spare space about evenly, not by the columns' max-content widths | Every Table (`w-full`) | Cosmetic |
+| 3. Auto table layout shares a fixed width's spare space about evenly, not by the columns' max-content widths | Every Table (`w-full`) | **Fixed in 0.8.6**: table/default's columns match Chromium's |
 | 4. A block that is a flex item, holding a baseline-aligned inline-flex box, is about the strut's descent too tall | A Button in its own `div` in a flex column (dialog/default) | Cosmetic |
-| 5. date, time, datetime-local, month and week inputs draw no value and collapse to their padding | Input of those types (input/date, input/time) | Functional: the value can't be read. B1's O1 |
-| 6. `appearance: none` on a check box is ignored (Blitz's own box and tick draw over the author's), and its `::before` isn't drawn | Switch (it reads as a check box), Checkbox's checked look, likely Radio | Functional for Switch |
+| 5. date, time, datetime-local, month and week inputs draw no value and collapse to their padding | Input of those types (input/date, input/time) | Functional: the value can't be read. B1's O1. **Fixed after 0.8.6** (d6b1299): input/date and input/time match within 1% |
+| 6. `appearance: none` on a check box is ignored (Blitz's own box and tick draw over the author's), and its `::before` isn't drawn | Switch (it reads as a check box), Checkbox's checked look, likely Radio | Functional for Switch. **Fixed after 0.8.6** (b7f4f81): switch, checkbox and radio match within 1% |
+| 7. A row's border under `border-collapse: collapse` isn't drawn, nor given its 1px, however it is written (shorthand, longhands, a `var()` style) | Table's rows (Basecoat's `tr` border). In table/default itself the rows are each about 1 CSS px *taller* than Chromium's, which the repro doesn't explain | Cosmetic |
 
 Known before, seen again: `<select>` draws its own ▾ (native-select).
 
