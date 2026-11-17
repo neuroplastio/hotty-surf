@@ -116,6 +116,9 @@ type menuView struct {
 	enabled []int     // the items not disabled, as indexes into opts (getItems)
 	n       uint64    // the frame rendering it (rt.Frame.N), its handlers'
 	popups  *popup    // the surface's open popup
+	// ctl is a Menu's props: the highlight is the app's, and a choice
+	// closes nothing.
+	ctl *MenuProps
 }
 
 // join reads the frame: its number, and the surface's popups.
@@ -234,6 +237,19 @@ func (v *menuView) choose(o int) {
 	if it.Disabled {
 		return
 	}
+	if v.ctl != nil {
+		v.run(o, it)
+		return
+	}
+	v.run(o, it)
+	v.close(true)
+	// As a Select's option: the click blurred the surface, and the blur
+	// closed the menu before the click came.
+	v.ask()
+}
+
+// run runs item o's callbacks: its check's, then OnSelect.
+func (v *menuView) run(o int, it MenuItem) {
 	switch it.Role {
 	case "menuitemcheckbox":
 		if it.OnCheckedChange != nil {
@@ -245,10 +261,6 @@ func (v *menuView) choose(o int) {
 	if it.OnSelect != nil {
 		it.OnSelect()
 	}
-	v.close(true)
-	// As a Select's option: the click blurred the surface, and the blur
-	// closed the menu before the click came.
-	v.ask()
 }
 
 // checkRadio follows dropdown-menu.js's nearest group, or the whole menu
@@ -349,6 +361,12 @@ func (v *menuView) key(k string) bool {
 // hover is handleMenuMousemove over item o.
 func (v *menuView) hover(o int) func(bool) {
 	return func(over bool) {
+		if v.ctl != nil {
+			if over && v.ctl.OnHighlight != nil && v.items[o] != v.ctl.Highlight {
+				v.ctl.OnHighlight(v.items[o])
+			}
+			return
+		}
 		if over && v.st.open {
 			v.st.active = v.pos(o)
 		}
