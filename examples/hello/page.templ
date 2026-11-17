@@ -32,6 +32,6 @@ templ Page(a *App) {
 		<p class="text-sm text-muted-foreground">
 			Waved { strconv.Itoa(a.Waves) } times.
 		</p>
-		@ui.Toaster(&a.toasts)
+		@ui.Toaster(&a.toasts, ui.ToasterProps{})
 	</main>
 }

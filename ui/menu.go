@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 
 	"github.com/a-h/templ"
+	"golang.org/x/net/html"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/rt"
@@ -46,7 +48,11 @@ type MenuItem struct {
 	Variant  Variant // Destructive, or Primary
 	Disabled bool
 	// Role is "" or "menuitem" for an action, "menuitemcheckbox" for a
-	// toggle, or "menuitemradio" for a choice. Command ignores it.
+	// toggle, "menuitemradio" for a choice, or "separator" for a rule
+	// between the items around it: a separator's other fields are
+	// ignored, it keeps its place in Items (a Menu's Highlight counts
+	// it) and is never highlighted. Group changes draw their own rule.
+	// Command ignores it.
 	Role string
 	// Checked and OnCheckedChange control a checkbox or radio item. Radio
 	// items in the same rendered group are exclusive; selecting one calls
@@ -57,6 +63,24 @@ type MenuItem struct {
 	OnCheckedChange func(bool)
 	// OnSelect runs when the user chooses the item; the menu closes.
 	OnSelect func()
+	// Leading is drawn in the icon's place, in place of Icon, and in its
+	// box (a 16 px square, centred), hidden from the row's name: a colour
+	// dot, an icon of the app's own. On a checkable row
+	// ("menuitemcheckbox", "menuitemradio") it is also drawn in place of
+	// the kit's check or radio indicator, not beside it: the app draws the
+	// row's state there (a switch's look), and aria-checked still says
+	// it. Trailing is drawn in the shortcut's place, in place of Keys: a
+	// note, a count. Content is drawn in the label's place: the label with
+	// an aside after it, a name being typed with its caret. Label still
+	// names the item (its aria-label, then) and is what a pick reports.
+	// A slot and the field it replaces are not both set.
+	//
+	// They are pictures (K31): nothing in them takes a press or a key,
+	// which are the item's, and a control in one is a fault (an input,
+	// button, select, textarea, link, tabindex or handler). A state the
+	// row shows is the item's: an on/off row is a "menuitemcheckbox" with
+	// Checked. Command ignores them.
+	Leading, Content, Trailing templ.Component
 }
 
 // DropdownMenuState is what a DropdownMenu remembers between renders:
@@ -125,7 +149,7 @@ type menuView struct {
 func (v *menuView) join(ctx context.Context) string {
 	v.n = frameN(ctx)
 	v.popups = popups(ctx)
-	v.popups.track(v.st, v.st.open, v.shut)
+	v.popups.track(ctx, v.st, v.id, v.st.open, v.shut)
 	return ""
 }
 
@@ -135,10 +159,18 @@ func (v *menuView) shut() { v.st.open, v.st.active = false, -1 }
 func newMenuView(st *DropdownMenuState, p DropdownMenuProps) *menuView {
 	v := &menuView{st: st, p: p, id: or(p.ID, "dropdown-menu")}
 	v.entries, v.opts = grouped(v.id+"-items", len(p.Items),
-		func(i int) string { return p.Items[i].Group },
+		// A separator is in the group of the item before it (its own Group
+		// is ignored), so a rule inside a group doesn't split it.
+		func(i int) string {
+			if p.Items[i].Role == "separator" && i > 0 {
+				return p.Items[i-1].Group
+			}
+			return p.Items[i].Group
+		},
 		func(i int, id string) listOpt {
 			v.items = append(v.items, i)
-			return listOpt{id: id, label: p.Items[i].Label, disabled: p.Items[i].Disabled}
+			it := p.Items[i]
+			return listOpt{id: id, label: it.Label, disabled: it.Disabled || it.Role == "separator"}
 		})
 	for i, o := range v.opts {
 		if !o.disabled {
@@ -169,8 +201,9 @@ func (v *menuView) check(ctx context.Context) string {
 	}
 	for _, it := range v.p.Items {
 		checkVariant(ctx, "MenuItem", it.Variant, menuItemVariants)
-		checkEnum(ctx, "MenuItem", "Role", it.Role, []string{"", "menuitem", "menuitemcheckbox", "menuitemradio"})
+		checkEnum(ctx, "MenuItem", "Role", it.Role, menuItemRoles)
 	}
+	checkMenuRows(ctx, v.p.Items)
 	return ""
 }
 
@@ -234,7 +267,7 @@ func (v *menuView) outside() { v.close(false) }
 // gives the trigger the keyboard.
 func (v *menuView) choose(o int) {
 	it := v.item(o)
-	if it.Disabled {
+	if it.Disabled || it.Role == "separator" {
 		return
 	}
 	if v.ctl != nil {
@@ -293,12 +326,14 @@ func (v *menuView) checkRadio(chosen int) {
 // frame after it.
 func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
-// key is handleKeydown, on the menu's root.
+// triggerKeys are the keys key takes, declared on the trigger, which
+// keeps the keyboard while the menu is open (K32: where the keyboard is,
+// though the handler is on the root).
 func (v *menuView) triggerKeys() string {
 	if v.st.open {
-		return "enter=program space=program"
+		return "arrow_down=program arrow_up=program home=program end=program enter=program space=program escape=program"
 	}
-	return ""
+	return "arrow_down=program arrow_up=program"
 }
 
 func (v *menuView) key(k string) bool {
@@ -390,4 +425,86 @@ func (v *menuView) rootAttrs(ctx context.Context) templ.Attributes {
 		return kitOn(ctx, v.id, surf.Key(v.key))
 	}
 	return kitOn(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
+}
+
+var menuItemRoles = []string{"", "menuitem", "menuitemcheckbox", "menuitemradio", "separator"}
+
+// checkMenuRows faults what a menu's rows don't take: a slot beside the
+// field it replaces, and a separator where no rule belongs (first, last,
+// next to another, or at a group change, which draws its own).
+func checkMenuRows(ctx context.Context, items []MenuItem) {
+	for i, it := range items {
+		if it.Leading != nil && it.Icon != "" {
+			rt.Fault(ctx, "ui.MenuItem: Leading and Icon both set (Leading is drawn in the icon's place)")
+		}
+		if it.Trailing != nil && it.Keys != "" {
+			rt.Fault(ctx, "ui.MenuItem: Trailing and Keys both set (Trailing is drawn in the shortcut's place)")
+		}
+		if it.Role != "separator" {
+			continue
+		}
+		switch {
+		case i == 0 || i == len(items)-1:
+			rt.Fault(ctx, "ui.MenuItem: a separator first or last in a menu")
+		case items[i-1].Role == "separator" || items[i+1].Role == "separator":
+			rt.Fault(ctx, "ui.MenuItem: two separators together")
+		case items[i-1].Group != items[i+1].Group:
+			rt.Fault(ctx, "ui.MenuItem: a separator at a group change, which draws its own rule")
+		}
+	}
+}
+
+// menuSlot draws an item's slot (K31): the app's markup, rendered out of
+// any InputGroup, a fault for each control in it, since the row is the
+// one target for the pointer and the keys.
+func menuSlot(name string, c templ.Component) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		var b strings.Builder
+		if err := plain(c).Render(ctx, &b); err != nil {
+			return err
+		}
+		if what := slotControl(b.String()); what != "" {
+			rt.Fault(ctx, fmt.Sprintf("ui.MenuItem: %s holds %s: a slot is a picture, the row takes the press and the keys (K31)", name, what))
+		}
+		_, err := io.WriteString(w, b.String())
+		return err
+	})
+}
+
+// slotControl is the first element in markup that takes a press or a
+// key, described; "" for none.
+func slotControl(markup string) string {
+	z := html.NewTokenizer(strings.NewReader(markup))
+	for {
+		switch z.Next() {
+		case html.ErrorToken:
+			return ""
+		case html.StartTagToken, html.SelfClosingTagToken:
+			name, more := z.TagName()
+			tag := string(name)
+			switch tag {
+			case "input":
+				return "an input"
+			case "button", "select", "textarea":
+				return "a " + tag
+			}
+			for more {
+				var k, v []byte
+				k, v, more = z.TagAttr()
+				switch key := string(k); {
+				case key == "tabindex":
+					return "a tabindex"
+				case key == "href" && tag == "a":
+					return "a link"
+				case key == "data-on" && len(v) > 0:
+					return "a handler"
+				}
+			}
+		}
+	}
+}
+
+// checkable is whether it is a checkbox or radio item.
+func checkable(it MenuItem) bool {
+	return it.Role == "menuitemcheckbox" || it.Role == "menuitemradio"
 }

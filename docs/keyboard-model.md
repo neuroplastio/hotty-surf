@@ -69,7 +69,7 @@ component values and applies the changes its callbacks report.
 | Table | None of its own; children have their own keys. |
 | Tabs | Left and Right move among enabled tabs, wrapping; Home and End choose the first and last. Focus follows the selected tab. |
 | Textarea | Text editing follows the field keymap and platform; Enter inserts a line break. |
-| Toast / toaster | Action, cancel and Dismiss use button activation; a leaving toast disables its buttons. There are no other toaster keys. |
+| Toast / toaster | Actions and Dismiss use button activation; a leaving toast disables its buttons. There are no other toaster keys. A toast never takes the keyboard by itself: an app that walks its toasts with its own keys sets Focused, which draws the first button ringed, and runs the action itself; that doesn't close the toast as a click does, and Remove does. |
 | Tooltip | No keys; Basecoat shows it on hover, not keyboard focus. Cells does not currently display it. |
 
 Select, DropdownMenu, Tabs, Popover, Command and Dialog have Go handlers.
@@ -171,6 +171,21 @@ binding with no key is an action only a menu or a palette reaches. A scope
 around an open dialog can intercept Escape before the dialog default.
 Native and kit controls use the same scope and handler order in cells and
 on a host.
+
+## Routing
+
+A program that decides where a key goes before the surface hears it (a
+multiplexer, or cells) offers the key to the surface first when the
+surface has an overlay open (Overlays), when Chars says the focused
+element types it, when OwnKeys lists it, or when ui.Bindings binds it;
+otherwise the key is its own. The surface then takes it or not (Key's
+taken), and an untaken key goes back to the program's keymap.
+
+The three don't overlap: characters are Chars', the focused element's
+other keys OwnKeys', and the scopes' bindings Bindings'. Tab and
+Shift+Tab are the host's, in none of them. OwnKeys reads the focused
+element alone, so a kit control declares its keys on the element that
+takes focus (K32).
 
 ## Menus and palettes
 

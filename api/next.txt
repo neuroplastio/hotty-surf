@@ -1,6 +1,10 @@
+pkg neuroplast.io/hotty-surf, const CharsBound Chars = 0
+pkg neuroplast.io/hotty-surf, const CharsPick Chars = 1
+pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
+pkg neuroplast.io/hotty-surf, func Clicks(func(int)) Handler
 pkg neuroplast.io/hotty-surf, func Drag(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Drop(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Focus(func(bool)) Handler
@@ -12,18 +16,25 @@ pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
+pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
+pkg neuroplast.io/hotty-surf, method (*Surface) Blur() (bool, error)
+pkg neuroplast.io/hotty-surf, method (*Surface) Chars() Chars
 pkg neuroplast.io/hotty-surf, method (*Surface) Do(func())
 pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Event(hotty.Event) error
 pkg neuroplast.io/hotty-surf, method (*Surface) Focus() (bool, error)
+pkg neuroplast.io/hotty-surf, method (*Surface) Focused() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Link(...Sheet)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
+pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
+pkg neuroplast.io/hotty-surf, method (*Surface) OwnKeys() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
+pkg neuroplast.io/hotty-surf, type Chars uint8
 pkg neuroplast.io/hotty-surf, type DragEvent struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct, End bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, ID string
@@ -42,14 +53,20 @@ pkg neuroplast.io/hotty-surf/cells, const Reverse Attr = 16
 pkg neuroplast.io/hotty-surf/cells, const Strike Attr = 32
 pkg neuroplast.io/hotty-surf/cells, const Underline Attr = 8
 pkg neuroplast.io/hotty-surf/cells, func New(int, int, func(hotty.Event)) *Screen
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) At(int, int) (string, hotty.Area)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cells() [][]Cell
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cursor() (int, int, bool)
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cut() string
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Focus(bool)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Key(string) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Lines() []string
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Move(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Paste(string) bool
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Press(int, int, int, int) bool
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Release(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Resize(int, int)
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Selection() string
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Write([]byte) (int, error)
 pkg neuroplast.io/hotty-surf/cells, type Attr uint8
@@ -115,6 +132,7 @@ pkg neuroplast.io/hotty-surf/surftest, func Size(int, int) Option
 pkg neuroplast.io/hotty-surf/surftest, func Start(testing.TB, *surf.Surface, ...Option) *Rig
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Checked(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Click(string)
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DoubleClick(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Drag(string, string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DragStep(string, string, int, int)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Find(string) []*html.Node
@@ -204,7 +222,7 @@ pkg neuroplast.io/hotty-surf/ui, func Symbols() []NamedShape
 pkg neuroplast.io/hotty-surf/ui, func Table(TableProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Textarea(TextareaProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState, ToasterProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Tooltip(TooltipProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*CommandState) Search(string)
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
@@ -217,6 +235,7 @@ pkg neuroplast.io/hotty-surf/ui, method (*NavList) Keys(string) bool
 pkg neuroplast.io/hotty-surf/ui, method (*NavList) List(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Open()
+pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Remove(string)
 pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Show(Toast)
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Class string
@@ -429,15 +448,18 @@ pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, KindClass string
 pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, Text string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Checked bool
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Content templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Group string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Icon string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keys string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keywords string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Label string
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Leading templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnCheckedChange func(bool)
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Role string
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Trailing templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type MenuProps struct
 pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Class string
@@ -570,15 +592,23 @@ pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Placeholder string
 pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Action *ToastAction
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Cancel *ToastAction
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Actions []ToastAction
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Category string
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Countdown time.Time
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Focused bool
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, OnClick func()
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, OnClose func()
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
 pkg neuroplast.io/hotty-surf/ui, type ToastAction struct
 pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, OnSelect func()
+pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Variant Variant
+pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct
+pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct, OnLeave func()
 pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Align string

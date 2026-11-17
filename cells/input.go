@@ -451,7 +451,10 @@ func (c *Screen) pick(n *html.Node, v string) {
 // activate is a click on an element that reports one, by the pointer or
 // the keyboard: a summary opens its details first, a submit button
 // submits its form after.
-func (c *Screen) activate(n *html.Node) {
+func (c *Screen) activate(n *html.Node) { c.activateBy(n, 1, 0) }
+
+// activateBy is activate with the click's count in its run and its mods.
+func (c *Screen) activateBy(n *html.Node, count, mods int) {
 	if n.DataAtom == atom.Summary && n.Parent != nil && n.Parent.DataAtom == atom.Details {
 		if has(n.Parent, "open") {
 			unset(n.Parent, "open")
@@ -460,7 +463,7 @@ func (c *Screen) activate(n *html.Node) {
 		}
 		c.lay = nil
 	}
-	e := hotty.Event{Kind: hotty.EventClick, Count: 1, Area: c.area(n)}
+	e := hotty.Event{Kind: hotty.EventClick, Count: count, Mods: mods, Area: c.area(n)}
 	if v, ok := get(n, "value"); ok {
 		e.Value = v
 	}
@@ -603,7 +606,7 @@ func (c *Screen) fieldKeymap(el *html.Node) *hotty.Keymap {
 
 // fieldKey gives a key to a text field, which does what its keymap says.
 // The Screen has no clipboard: copy, cut and paste are the program's (it
-// pastes with Paste).
+// pastes with Paste, and copies and cuts with Selection and Cut).
 //
 // A readonly field takes the keys that would edit it, and does nothing
 // with them; it moves its caret and selects. A disabled one takes nothing.
@@ -662,6 +665,28 @@ func (c *Screen) selectKey(el *html.Node, key, name string) bool {
 	return taken
 }
 
+// drawn says whether the layout drew n, or would at no size: a focusable
+// element with no cells (an empty span with tabindex) is a Tab stop, as
+// in a browser, unless it or an element round it draws nothing
+// (display:none, hidden, a closed details' body).
+func (l *layout) drawn(n *html.Node) bool {
+	for m := n; m != nil; m = m.Parent {
+		if _, ok := l.boxes[m]; ok {
+			return true
+		}
+		if m.Type != html.ElementNode {
+			continue
+		}
+		if styleOf(m).display == dNone {
+			return false
+		}
+		if p := m.Parent; p != nil && p.DataAtom == atom.Details && !has(p, "open") && m.DataAtom != atom.Summary {
+			return false
+		}
+	}
+	return false
+}
+
 // tab moves focus to the next or the previous element Tab goes to. Past
 // the last, or before the first, nothing is focused (blur); the Screen
 // keeps the keyboard, so the next Tab starts again.
@@ -673,8 +698,7 @@ func (c *Screen) tab(back bool) bool {
 		if n == c.focused {
 			at = len(order)
 		}
-		_, shown := l.boxes[n]
-		if (shown || has(n, "data-hotty-modal-guard")) && tabbable(n) {
+		if (l.drawn(n) || has(n, "data-hotty-modal-guard")) && tabbable(n) {
 			order = append(order, n)
 		}
 	})
@@ -777,29 +801,27 @@ func revealOffset(target, view rect, old, limit int, where string) int {
 // click is a press of the primary button at a cell, as a host has it
 // (SPEC §9, §10.1): press, then focus or blur, then the click or the
 // toggle.
-func (c *Screen) click(col, row int) bool {
+func (c *Screen) pressAt(col, row, mods int) bool {
+	c.down = nil
 	if c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
 		return false
 	}
-	l := c.layout()
-	y := row + c.scroll
-	var hit *html.Node
-	if y < len(l.cv.rows) {
-		hit = l.cv.rows[y][col].own
-	}
+	hit := c.hitAt(col, row)
 	// The runtime marks the background of an open modal as pointer-inert.
 	// It is still drawn, but must not focus or activate a control.
 	if closest(hit, func(n *html.Node) bool { return has(n, "data-hotty-modal-inert") }) != nil {
 		return true
 	}
 	if c.press {
-		e := hotty.Event{Kind: hotty.EventPress}
+		e := hotty.Event{Kind: hotty.EventPress, Mods: mods}
 		if t := withID(hit); t != nil && t != c.body {
 			e.Target = attr(t, "id")
 			e.Area = c.area(t)
 		}
 		c.emit(e)
 	}
+	// A press on a drag handle starts its drag first (SPEC §9.1).
+	c.startDrag(hit, col, row, mods)
 	target := hit
 	f := closest(hit, focusable)
 	if f == nil {
@@ -816,19 +838,40 @@ func (c *Screen) click(col, row int) bool {
 	if f != nil {
 		if isTextField(f) && target == hit {
 			// Against the cells clicked: focus scrolls an input to its caret.
-			c.caretAt(f, col, y)
+			c.caretAt(f, col, row+c.scroll)
 		}
 		c.active = true
 		c.focusTo(f, true)
 	} else {
 		c.blur()
 	}
+	c.down = &pressed{hit: hit, target: target}
+	c.lay = nil
+	return true
+}
+
+// releaseAt is a primary release's click: on what the press was on,
+// where the release is over it too.
+func (c *Screen) releaseAt(col, row, mods int) bool {
+	p := c.down
+	c.down = nil
+	if p == nil || c.body == nil {
+		return false
+	}
+	if p.hit != nil && !c.attached(p.hit) {
+		return false // the press drew the tree anew without it
+	}
+	over := c.hitAt(col, row)
+	if p.hit == nil || over == nil || !within(over, p.hit) && !within(p.hit, over) {
+		return false
+	}
+	target := p.target
 	switch {
 	case target != nil && isCheck(target) && !disabled(target):
 		c.toggle(target)
 	default:
 		if k := closest(target, clickable); k != nil && !disabled(k) {
-			c.activate(k)
+			c.activateBy(k, c.count(k), mods)
 		}
 	}
 	c.lay = nil

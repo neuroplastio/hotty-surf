@@ -41,6 +41,9 @@ const (
 	// lFaint is text-muted-foreground's Dim in Lines, kept under a colour
 	// of its own, which clears lMuted (Lines as before Cells).
 	lFaint
+	// lTip is a tooltip's text (drawTip): Lines draws it reversed, and
+	// Cells in the kit's tooltip colours.
+	lTip
 )
 
 // box is what the layout reads of an element.
@@ -65,6 +68,16 @@ type box struct {
 	list      string
 	scrollY   bool
 	maxHeight string
+	// The stand-ins (SUBSET.md): a width and a largest one, in cells (0
+	// for none); one line with … (truncate); not made narrower in a row
+	// (shrink-0); rows above and below (mt-*, mb-*); a height its column
+	// gives its items (h-screen, h-full, h-[…], height), as a string.
+	width, maxWidth int
+	truncate        bool
+	noShrink        bool
+	marginT         int
+	marginB         int
+	height          string
 }
 
 // skipped are the elements that draw nothing, whatever their style.
@@ -177,6 +190,14 @@ func (b *box) class(c string) {
 	if strings.HasPrefix(c, "max-h-[") && strings.HasSuffix(c, "]") {
 		b.maxHeight = strings.TrimSuffix(strings.TrimPrefix(c, "max-h-["), "]")
 	}
+	if strings.HasPrefix(c, "h-[") && strings.HasSuffix(c, "]") {
+		b.height = strings.TrimSuffix(strings.TrimPrefix(c, "h-["), "]")
+	}
+	if v, ok := widthClass(c, "max-w-"); ok {
+		b.maxWidth = v
+	} else if v, ok := widthClass(c, "w-"); ok {
+		b.width = v
+	}
 	switch c {
 	case "overflow-y-auto", "overflow-y-scroll", "overflow-auto", "overflow-scroll":
 		b.scrollY = true
@@ -208,6 +229,12 @@ func (b *box) class(c string) {
 		b.grow = true
 	case "w-full":
 		b.full = true
+	case "h-screen", "h-dvh", "h-svh", "h-lvh", "h-full":
+		b.height = c[2:]
+	case "truncate":
+		b.truncate = true
+	case "shrink-0", "flex-none":
+		b.noShrink = true
 	case "justify-between":
 		b.between = true
 	case "justify-end":
@@ -255,6 +282,12 @@ func (b *box) class(c string) {
 		b.padR = cols(v)
 	} else if v, ok := step(c, "p-"); ok {
 		b.padL, b.padR, b.padT, b.padB = cols(v), cols(v), rows(v), rows(v)
+	} else if v, ok := step(c, "mt-"); ok {
+		b.marginT = rows(v)
+	} else if v, ok := step(c, "mb-"); ok {
+		b.marginB = rows(v)
+	} else if v, ok := step(c, "my-"); ok {
+		b.marginT, b.marginB = rows(v), rows(v)
 	}
 }
 
@@ -318,6 +351,9 @@ func (b *box) inline(style string) {
 			b.scrollY = v == "auto" || v == "scroll"
 		case "max-height", "height":
 			b.maxHeight = v
+			if k == "height" {
+				b.height = v
+			}
 		case "display":
 			switch v {
 			case "none":
@@ -408,7 +444,17 @@ func (b *box) inline(style string) {
 		case "width":
 			if v == "100%" {
 				b.full = true
+			} else if n := pxCols(v); n > 0 {
+				b.width = n
 			}
+		case "max-width":
+			if n := pxCols(v); n > 0 {
+				b.maxWidth = n
+			}
+		case "margin-top":
+			b.marginT = pxRows(v)
+		case "margin-bottom":
+			b.marginB = pxRows(v)
 		}
 	}
 }
@@ -427,4 +473,32 @@ func pxRows(s string) int {
 		return 0
 	}
 	return max(int(v/16), 0)
+}
+
+// widthClass is the width in cells a width class with the prefix names:
+// w-40 (Tailwind's steps, 4px each), w-[26ch], w-[12rem], max-w-sm. ok is
+// false for one that names no width the Screen reads (w-full, w-1/2).
+func widthClass(c, prefix string) (int, bool) {
+	s, ok := strings.CutPrefix(c, prefix)
+	if !ok {
+		return 0, false
+	}
+	if prefix == "max-w-" {
+		// Tailwind's named widths, in rem.
+		if rem, ok := map[string]float64{"3xs": 16, "2xs": 18, "xs": 20, "sm": 24, "md": 28, "lg": 32, "xl": 36, "2xl": 42, "3xl": 48, "4xl": 56, "5xl": 64, "6xl": 72, "7xl": 80}[s]; ok {
+			return max(int(rem*16/8+0.5), 1), true
+		}
+	}
+	if v, ok := strings.CutPrefix(s, "["); ok {
+		px, ok := length(strings.TrimSuffix(v, "]"))
+		if !ok || px <= 0 {
+			return 0, false
+		}
+		return max(int(px/8+0.5), 1), true
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil || v <= 0 {
+		return 0, false
+	}
+	return max(cols(v), 1), true
 }

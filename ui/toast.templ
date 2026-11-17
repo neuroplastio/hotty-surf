@@ -4,11 +4,15 @@ package ui
 // 1.1.0, MIT; NOTICE.md), written in templ as they render a ToasterState's
 // toasts, with toast.js's aria-hidden on a toast that is going.
 
-import "neuroplast.io/hotty-surf"
+import (
+	"strconv"
 
-templ toaster(st *ToasterState) {
-	{{ st.start(ctx) }}
-	<div class="toaster" data-toaster-initialized="true" { surf.On(ctx, "toaster", surf.Hover(st.hover))... }>
+	"neuroplast.io/hotty-surf"
+)
+
+templ toaster(st *ToasterState, p ToasterProps) {
+	{{ st.start(ctx, p) }}
+	<div class={ join("toaster", p.Class) } data-toaster-initialized="true" { surf.On(ctx, "toaster", surf.Hover(st.hover))... }>
 		for _, t := range st.toasts {
 			@toast(st, t)
 		}
@@ -30,9 +34,27 @@ templ toast(st *ToasterState, t *shownToast) {
 		if d := t.duration(); d != "" {
 			data-duration={ d }
 		}
+		if t.Focused {
+			data-focused
+		}
+		if !t.Countdown.IsZero() {
+			data-bar
+		}
+		if t.OnClose != nil {
+			data-close
+		}
 		data-toast-initialized="true"
 	>
-		<div class="toast-content">
+		if !t.Countdown.IsZero() {
+			<div id={ t.barID() } class={ "toast-bar", templ.KV("still", t.Focused) } style={ t.barStyle() } aria-hidden="true"></div>
+		}
+		<div
+			class="toast-content"
+			if t.OnClick != nil {
+				tabindex="0"
+				{ surf.On(ctx, t.id()+"-body", surf.Click(func() { st.click(t) }), surf.Key(st.bodyKey(t)))... }
+			}
+		>
 			if svg, ok := toastIcons[t.category()]; ok {
 				@templ.Raw(svg)
 			}
@@ -44,16 +66,42 @@ templ toast(st *ToasterState, t *shownToast) {
 					<p>{ t.Description }</p>
 				}
 			</section>
-			if t.Action != nil || t.Cancel != nil || t.Duration < 0 {
+			if len(t.Actions) > 0 || t.dismiss() {
 				<footer>
-					if t.Action != nil {
-						<button type="button" class="btn" data-size="sm" data-toast-action disabled?={ t.hidden } { scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-action", surf.Click(func() { st.choose(t,t.Action) })), "button")... }>{ t.Action.Label }</button>
+					for i := range t.Actions {
+						@toastButton(st, t, i)
 					}
-					if t.Cancel != nil || t.Duration < 0 {
-						<button type="button" class="btn" data-variant="outline" data-size="sm" data-toast-cancel disabled?={ t.hidden } { scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-dismiss", surf.Click(func() { st.choose(t,t.Cancel) })), "button")... }>{ t.cancelLabel() }</button>
+					if t.dismiss() {
+						<button type="button" class="btn" data-variant="outline" data-size="sm" data-toast-cancel disabled?={ t.hidden } { scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-dismiss", surf.Click(func() { st.choose(t, nil) })), "button")... }>Dismiss</button>
 					}
 				</footer>
 			}
 		</div>
+		if t.OnClose != nil {
+			<button type="button" class="btn toast-close" data-variant="ghost" data-size="icon-sm" aria-label="Dismiss" disabled?={ t.hidden } { scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-close", surf.Click(func() { st.closeAsked(t) })), "button")... }>
+				@icon("x", "")
+			</button>
+		}
 	</div>
+}
+
+// toastButton is the macro's action button, or its cancel for an Outline
+// action.
+templ toastButton(st *ToasterState, t *shownToast, i int) {
+	{{ a := &t.Actions[i] }}
+	<button
+		type="button"
+		class="btn"
+		if a.Variant != Primary {
+			data-variant={ string(a.Variant) }
+		}
+		data-size="sm"
+		if a.Variant == Outline {
+			data-toast-cancel
+		} else {
+			data-toast-action
+		}
+		disabled?={ t.hidden }
+		{ scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-actions-"+strconv.Itoa(i+1), surf.Click(func() { st.choose(t, a) })), "button")... }
+	>{ a.Label }</button>
 }

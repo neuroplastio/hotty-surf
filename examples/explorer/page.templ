@@ -147,7 +147,7 @@ templ Page(a *App) {
 				}
 			</footer>
 		}
-		@ui.Toaster(&a.toasts)
+		@ui.Toaster(&a.toasts, ui.ToasterProps{})
 	</main>
 }
 

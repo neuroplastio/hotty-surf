@@ -186,8 +186,8 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			}
 		}
 		id := attr(c, "id")
-		if id != "" && runtimeID(id) {
-			s.fault(fmt.Sprintf("surf: an element's own id %q is the runtime's: root and hotty-css are the document's, and %s followed by base 36 is a generated id", id, idPrefix))
+		if id != "" && rt.RuntimeID(id) {
+			s.fault(fmt.Sprintf("surf: an element's own id %q is the runtime's: root and hotty-css are the document's, and %s followed by base 36 is a generated id", id, rt.IDPrefix))
 		}
 		if id == "" {
 			key := pid + "/" + c.Data + "#" + strconv.Itoa(n)
@@ -195,7 +195,7 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			id = s.ids[key]
 			if id == "" {
 				s.nextID++
-				id = idPrefix + strconv.FormatInt(int64(s.nextID), 36)
+				id = rt.IDPrefix + strconv.FormatInt(int64(s.nextID), 36)
 			}
 			t.ids[key] = id
 			c.Attr = withID(c.Attr, id)
@@ -384,27 +384,6 @@ func (s *Surface) fresh(n *html.Node, kept bool) {
 	}
 }
 
-// idPrefix starts every id the runtime gives an element, so it can't be
-// one an app writes: an app's id with it is a fault, as are root and
-// hotty-css, the document's own.
-const idPrefix = "_"
-
-// runtimeID says whether id is one the runtime owns.
-func runtimeID(id string) bool {
-	if id == "root" || id == "hotty-css" {
-		return true
-	}
-	if !strings.HasPrefix(id, idPrefix) || len(id) == len(idPrefix) {
-		return false
-	}
-	for _, c := range id[len(idPrefix):] {
-		if !('0' <= c && c <= '9' || 'a' <= c && c <= 'z') {
-			return false
-		}
-	}
-	return true
-}
-
 // submits faults a Submit on an element that isn't a form: it can never
 // run.
 func (s *Surface) submits(f *rt.Frame) {
@@ -438,7 +417,7 @@ func (s *Surface) unlabelled(root *html.Node) {
 	var walk func(n *html.Node, inLabel bool, near string)
 	walk = func(n *html.Node, inLabel bool, near string) {
 		if n.Type == html.ElementNode {
-			if id := attr(n, "id"); id != "" && !runtimeID(id) {
+			if id := attr(n, "id"); id != "" && !rt.RuntimeID(id) {
 				near = "#" + id
 			}
 			switch n.DataAtom {
@@ -447,7 +426,7 @@ func (s *Surface) unlabelled(root *html.Node) {
 			case atom.Button:
 				if !inLabel && !named[attr(n, "id")] && !hasLabel(n) && strings.TrimSpace(textOf(n)) == "" {
 					where := near
-					if id := attr(n, "id"); id == "" || runtimeID(id) {
+					if id := attr(n, "id"); id == "" || rt.RuntimeID(id) {
 						where = "in " + near
 						if near == "" {
 							where = "class " + strings.Fields(attr(n, "class") + " none")[0]

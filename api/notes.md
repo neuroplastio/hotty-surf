@@ -1688,7 +1688,8 @@ was lifted, k-lifted there), adapted to handlers.
   app that reorders by drag also gives the keyboard a way, as the docs
   say. A cells drag (mouse reporting's motion with the button down) and a
   right click mapped to Secondary are a later cells change, with names of
-  its own on cells.Screen if wanted.
+  its own on cells.Screen if wanted. (L6, below, gives it: Press, Move,
+  Release and At.)
 
 Open for the reviewer:
 1. Drop(nil) adds nothing, as every nil handler does, so a row that only
@@ -1723,6 +1724,83 @@ them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
 
+## L6: the pointer in cells, for plx (a pack of its own)
+
+plx draws its surfaces in cells where the terminal is no hotty host, and
+hands its cells host the terminal's mouse: press, held motion and
+release, each with mods, the right button, and motion with no button
+down. v0.7's `cells.Screen` took only `Click(col,row)` and `Wheel`, so
+nothing in cells could drag (surf.Drag/Drop, L5), right-click
+(surf.Secondary), double-click, shift-click or hover. plx also couldn't
+ask what is under a cell for a carry that began outside the surface
+(`l4c-gaps.md`, G-cells-hit). This includes the cells half of L5's drags
+and secondary press.
+
+### The names
+
+```go
+func (c *Screen) Press(col, row, mods, button int) (taken bool)
+func (c *Screen) Move(col, row, mods int) (taken bool)
+func (c *Screen) Release(col, row, mods int) (taken bool)
+func (c *Screen) At(col, row int) (id string, area hotty.Area)
+```
+
+- The Screen is the host for the pointer too. It sends the surface the
+  events a host sends for the same gesture (SPEC §9, §9.1, §9.4), so the
+  existing handlers (Click, Drag, Drop, Secondary, Hover) need no new
+  names. These are:
+  - a press, with its Button (0 or 2), At, Area and Mods;
+  - a click, with its Count and Mods;
+  - dragstart, drag and dragend, with Col, Row and the steps;
+  - a hover, with Out where the pointer leaves.
+
+  Ported from v0.6.3's `pkg/cells` (input.go's Press, Release and count;
+  drag.go's start, move and end, and its steps), adapted to v0.7's tree.
+- `button` is numbered as `hotty.Event.Button` is: 0 the primary, 2 the
+  secondary. One Press covers both. `mods` comes third in all three, so
+  `ModAlt` (2) can't be taken for the secondary button.
+- `taken` has one meaning in all three: the gesture is the surface's. That
+  is a press the surface took, the moves and release of that press, and a
+  move with no button down over the Screen's cells. While a press the
+  surface didn't take is down, its moves are the program's.
+- `Click(col, row)` stays: it is Press(col, row, 0, 0), then Release(col,
+  row, 0). A drag it starts on a handle ends with it.
+- `At` is the innermost element with an id of the app's (generated ids
+  skipped, by `rt.RuntimeID`, the rule surf faults an app's id with), and
+  its cells. The half plx asks for is `row < area.Row + area.H/2`.
+- A drag ends short (a dragend with no target and its last steps, no drop
+  and no click) on `Focus(false)`, a new document, a=del, the dragged
+  element leaving, or a Press before its Release. A press of any button
+  also drops a click whose release was lost. Escape doesn't end a drag,
+  as on a host.
+- `surf.Drag`'s doc no longer says cells has no pointer.
+
+### As reviewed (p-796, 2026-11-17): all four, with changes, applied
+
+The open questions were settled with the leans:
+1. At returns `(id, area)`: neither a half nor a `Hits()` list.
+2. Hover goes through Move with no button down, not a `Hover` method. A
+   move with a non-primary button down is a hover too.
+3. The double click's clock is internal: 500 ms on one element, by the
+   wall clock, tested through an internal hook.
+4. Escape during a drag does what it does without one, as on a host.
+
+The changes:
+- Press's order became `(col, row, mods, button)`.
+- At skips generated ids.
+- `taken` got one meaning.
+- The cut-short cases were added, in the docs and in behaviour.
+
+### As verified (p-801, 2026-11-17): three fixes, applied
+
+- Move's `taken` holds only with no button down, or for a press the surface
+  took (F1).
+- A press of any button resets the primary press waiting for its click
+  (F2).
+- Click is literally Press and Release (F3).
+
+Each has a test (`TestMoveOfUntakenPress`, `TestPressAfterLostRelease`,
+`TestClickOnDragHandle`). This pack's notes were folded in here (F4).
 ## plx: key labels (a pack of its own)
 
 plx's move to v0.7 (its ask (c)) needs every scoped key labelled, with an
@@ -2112,6 +2190,560 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
 - K29 (menus: three ways in, one panel) is the reviewer's.
 - G-menu-rows (MenuItem slots for all three menus) is next after the
   toast pack (p-653's queue).
+
+## L6: a field's selection in cells, for plx's copy and cut (a pack of its own)
+
+In cells, plx copies a field's selection to the terminal's clipboard
+(v0.6: `cr.Copy` callback → `Host.SetCopy`). v0.7's Screen has no
+clipboard and leaves the copy, cut and paste keys to the program, but
+exposes no field selection, so plx's copy and cut do nothing in cells
+(`l4c-gaps.md`, G-cells-copy; it blocks slice 2, where copying in cells
+is a tool feature).
+
+### The shape: the program asks, on its own key
+
+- `Selection() string`: the focused text field's selected text, "" for
+  none (no field, nothing selected, a password).
+- `Cut() string`: the same, deleted from the field as the user's edit
+  (rev, input where it listens, change on commit). "" and no edit in a
+  readonly or disabled field, or a password.
+- The keys stay as they are: the Screen doesn't take copy or cut
+  (`fieldKey`), so the program hears them and calls these. Paste is
+  already `Paste(text)`. One direction each way: the program owns the
+  clipboard.
+- Implemented and tested in the branch (grapheme-correct, readonly,
+  password).
+
+### Open questions, as drafted
+
+1. **Methods, or a copy callback on New** (v0.6's `Copy func(string)`).
+   **Lean: methods.** New's signature is approved, and a callback needs
+   a second option. With methods, the program, which already decides what
+   its copy key means (a pane's own selection vs the field's), asks only
+   when it's the field's.
+2. **Cut as its own method, or `Selection()` plus a `Delete()`.**
+   **Lean: Cut.** It's one act. A separate Delete is a second name and a
+   window where the two disagree.
+3. **A password's selection.** **Lean: "".** Browsers refuse to copy from
+   `type=password`, and a host does the same.
+
+### As reviewed (p-796, 2026-11-17): both names, two doc changes, applied
+
+Both names were approved as named, and the three questions went with the
+leans: methods, Cut as its own method, and "" for a password. The docs say
+"text field or textarea", and Cut and Paste each say that Lines changes
+with them, so the program draws the Screen again.
+
+### As verified (p-653's spot check, 2026-11-17): approved
+
+## plx: menu rows of the app's own (G-menu-rows, a pack of its own)
+
+plx won't build stand-in rows, so this blocks its copy's removal
+(p-653). Its rows (a host's colour dot, a switch, an aside, a note, a
+name being typed, the current workspace, an MDI icon, a bare rule) are
+three slots on MenuItem and a rule, for DropdownMenu, ContextMenu and
+Menu at once, as K29 asks:
+
+- **Leading** replaces the icon (Icon is ignored when it is set), drawn
+  first in the row.
+- **Content** replaces the label's text. The item then has
+  `aria-label` = Label, so its name stays its words.
+- **Trailing** replaces the shortcut (Keys is ignored), wrapped in
+  Basecoat's `<span data-shortcut>`, which puts it at the row's end as a
+  shortcut is.
+- **Separator** makes the item an `<hr role="separator">`, its other
+  fields ignored. It keeps its place in Items (an index in a Menu's
+  Highlight still counts it), is never highlighted, and no key or press
+  reaches it.
+
+The slots are the app's markup. The press and keys stay the row's: a click
+anywhere on it runs the item. Command ignores the slots, as it ignores Role.
+TestMenuRows covers all three menus, ExampleMenuItem_slots shows plx's
+rows.
+
+Open, for review:
+1. **A switch in Leading is an `<input>`.** A host toggles it on a click
+   before the row's click runs, so plx's OnSelect should set the state it
+   draws from, not read the input. A non-interactive switch look (a
+   `Switch` with no input, or `aria-hidden` and `pointer-events: none` on
+   one in a row) is the alternative; it adds a name, so not here.
+2. **Separator as an item vs a field on the next item.** An item keeps
+   the slices plx builds (its `Sep` rows) one to one, and a Menu's
+   Highlight index lines up with plx's own. The cost is a MenuItem whose
+   other fields mean nothing.
+3. **Content's text in cells** is whatever the markup draws. plx's caret
+   (`span.cur`) is plx's CSS.
+
+### As reviewed (p-796, review-rows.md): applied
+
+- Leading, Content and Trailing kept, for all three menus.
+  - A slot set with the field it replaces (Leading with Icon, Trailing
+    with Keys) is a fault.
+  - A control in a slot is a fault (K31: slots are pictures): an input,
+    button, select, textarea, `a[href]`, `[tabindex]` or a `data-on`
+    handler. Each slot is rendered once, scanned with x/net/html's
+    tokenizer, then written (`menuSlot`).
+  - Leading sits in the icon's box: `<span data-leading>`, a 16 px
+    square, centred.
+- **Separator bool cut.** A rule is `Role: "separator"`, with the
+  review's Role doc. surftest faults on a separator first or last, next
+  to another, or at a group change.
+- Q1: no live control in a slot. The pack's Switch row is now
+  TestMenuRowFaults' first case, and the example's Wrap row is a
+  `menuitemcheckbox` with Content for its aside.
+- **p-653's addition:** on a checkable row, Leading is drawn in place of
+  the kit's check or radio indicator, not beside it. plx draws its
+  switch's look there as an aria-hidden picture, and `aria-checked` still
+  says the state. This is drawing only, with no live control. Whether
+  the kit itself should draw a checkbox item as a switch stays the
+  maintainer's call (review Q1). TestMenuRows checks that one indicator
+  is drawn and that Follow keeps aria-checked.
+- Heading maps to Group; no new name.
+- The example's dot is an escaping component (`templ.SanitizeCSS`,
+  `templ.EscapeString`), and the example says templ.Raw is for constant
+  markup only.
+- K31 is the reviewer's.
+
+## L5: Focused, Chars and Blur (plx's G-keys-decl and G-lend)
+
+plx's integration list (l4c) has two gaps in the root package:
+
+- **G-keys-decl.** plx routes a key that types a character to its own
+  bindings only when the focused element wouldn't type or pick by it,
+  and needs to know which element is focused (an element autofocused
+  while plx held the keyboard gives it back). v0.6.3's surfrun had
+  `Keys() ([]KeyUse, Chars)`; v0.7 has neither.
+- **G-lend.** plx lends the host's keyboard to its own menus with a=blur.
+  The host doesn't report a program's blur, so the surface kept
+  `focused`, and a later `Focus()` sent nothing. (That premise was
+  wrong: SPEC §10.1 has the host send `blur` after a program's a=blur,
+  and plx confirms every host does; see the review below.)
+
+The pack: `Surface.Focused() string`, `Surface.Chars() Chars` with
+`CharsBound`, `CharsPick`, `CharsText`, and `Surface.Blur() (bool, error)`,
+the mirror of `Focus`. Blur sends a=blur and runs the blur itself, as the
+host's would: Focus handlers hear the loss, Outside runs for every element
+(a press still down doesn't spare its own), and the element stays the one
+Focus gives back.
+
+**Cells.** No Screen method: a cells.Screen feeds its focus to the surface
+as events, so `Surface.Focused` and `Chars` answer the same in cells. To
+lend the keyboard there, the program calls `cells.Screen.Focus(false)`,
+which the surface hears as the same blur (Blur's doc says so). The cells
+builder (p-800) is told.
+
+**What Chars says.** From the last document sent and the focused element:
+a text input or textarea types (CharsText); a native single select picks
+(CharsPick); anything else, a disabled element, or nothing focused is
+CharsBound. The kit's own Select and DropdownMenu don't pick by
+characters in v0.7, so an open one is CharsBound: printable keys reach the
+program, which is what their key handlers do with them now. Combobox and
+Command type into their inputs (CharsText).
+
+**Not in this pack.** The bound keys with their labels (v0.6.3's
+`[]KeyUse`) are `ui.Bindings` and KeyScope labels' (G-keyscope-labels,
+p-794's). Chars covers the other half.
+
+Questions for the review:
+
+1. `Focused() string` alone, or `(id, Chars)` as the gap row suggested? Two
+   methods keep each answer readable at its call site.
+2. A readonly text field is CharsText (the host keeps the key, which moves
+   nothing): right, or CharsBound?
+
+Reviewed (review-focus.md): approved as named, Q1 two methods, Q2
+readonly is CharsText. Applied:
+
+- **The echo.** Blur runs the blur itself first, so the surface knows at
+  once, then sends a=blur and sets a flag; the host's `blur` that follows
+  (SPEC §10.1) is swallowed as its echo: nothing runs twice. A focus
+  event, Focus() or an Autofocus taking effect clears the flag, so a host
+  that sent none never loses a later real blur. A cells.Screen echoes
+  while it is written to; the surface defers that event past the write
+  and swallows it the same way. Tests: TestBlurEcho (echo, no echo, Focus
+  in between) and TestBlurInCells, each failing without the swallow.
+- **Chars.** contenteditable (not "false") is CharsText; a readonly field
+  is CharsText, locked by TestReadonlyKeepsCharsVector on the test host
+  and in cells (the test host's readonly fix is hotty-go e1d9f68, pinned
+  as hottytest v0.8.2-0.20261117175548-e1d9f6887ae0).
+- **Docs.** Focused and Chars run on the driver's goroutine; Focused is
+  the surface's view; Chars names its limits (the kit's Select and
+  DropdownMenu, select multiple, composition).
+
+## L6: the selected band's own role in cells, for plx (a pack of its own)
+
+`Cells()` gives the selected band `accent-foreground` on `accent`, focused
+or not; the row with the keyboard adds `Reverse`. The band is:
+- a list's, a tree's or a grid's selected row (`aria-selected`, which is
+  K25's `ui.List`);
+- a nav list's current item;
+- a selected tab.
+
+But `accent` is also the fill of other things: a ghost or outline
+button's hover, a menu's highlighted item and the sidebar's accent. So
+plx can't tell its selection from them, and can't draw v0.6's band. v0.6
+painted a list's selection with its own role, `selected`
+(`--u-selected`, a quiet mix of the text into the ground), not with the
+accent.
+
+### The change (no Go name; a Role value and its doc)
+
+- **The band's fill becomes `"selected"`.** Its text stays
+  `accent-foreground`. `Lines` doesn't change: it draws no roles.
+- **`Role`'s doc gains a paragraph:**
+
+  > One role names no variable: "selected", the fill of the selected band
+  > (a list's or a tree's selected row, a nav list's current item, a
+  > selected tab), whether or not it has the keyboard. The kit fills it
+  > with "accent", which other fills use too, so a program that draws a
+  > selection of its own tells it apart by this name; one that has none
+  > paints it as "accent".
+
+- **SUBSET.md's colour table says the same.** The tests now expect
+  `selected`.
+
+### Open questions, as drafted
+
+1. **The name.** **Lean: `selected`**, v0.6.3's name for a list's
+   selection fill, which plx's palette already has a colour for (`mixes`,
+   9%). The alternative is a kit-style `selection`, but no Basecoat
+   variable has that name, and choosing one would look like a variable
+   that doesn't exist.
+2. **Text too (`selected-foreground`)?** **Lean: no.**
+   `accent-foreground` is the kit's ink on the band, and plx maps it to
+   its ink (`kitVarRoles`). A second invented name gains nothing until a
+   theme gives the band an ink of its own.
+3. **Focused and unfocused as two roles** (v0.6's `selected` and `active`, or
+   `tonal`)? **Lean: no.** The band with the keyboard is already told
+   apart by `Reverse` (K28, kit rule: cells names colours, the program
+   paints), so plx paints the focused band from `selected` plus
+   `Reverse`, as its `sel` already does.
+
+### As reviewed (p-796, 2026-11-17): approved with all three leans, three changes applied
+
+The role "selected" is approved with no Go name and no constant. The
+three changes:
+1. **A selected tab leaves the band.** Basecoat draws it as a raised
+   segment of its list: "foreground" on "background" ("input/30" under
+   dark), and "foreground" with no fill in the line variant. On "selected",
+   which plx paints at 9% on a list at 11%, the tab would vanish.
+2. **Role's paragraph says what Reverse on the band means.** A program
+   with a fill of its own for a focused selection (plx's `sel`) paints
+   "selected" with Reverse as that fill, not in reverse video.
+3. **The fallback for a nav list's current item is "sidebar-accent"**, as
+   navlist.css fills it.
+
+The tests keep a dark, unfocused band.
+## plx: toasts an app owns (G-toast, a pack of its own)
+
+plx's toasts (slice 1's G-toast, which blocks) were plx's own markup,
+because `ui.Toaster` couldn't be driven by the app. This makes it
+drivable, and keeps Basecoat's markup and behaviour for an app that
+doesn't drive it. The asks came from plx's port, read from its code by the
+coordinator (p-653): the app owns lifetimes and the keyboard, and the kit
+draws.
+
+- **`Toast.ID` and `ToasterState.Remove(id)`.** Show with the ID of a
+  toast shown changes it in place: its element (`toast-N`), its place in
+  the stack and, unless Duration changes, its timer stay. Remove closes it
+  as Dismiss does, with its leaving transition, running no OnSelect. A
+  going toast's ID is free: Show adds a new one. "" is as before.
+- **`Toast.Actions []ToastAction`, replacing Action and Cancel.** In
+  order, ids `toast-N-actions-I` (from 1). `ToastAction.Variant` is the
+  look; Outline is Basecoat's cancel (`data-toast-cancel`), any other is
+  its action (`data-toast-action`). A lasting toast without an Outline
+  action keeps the macro's Dismiss (`toast-N-dismiss`). The macro's one
+  action and one cancel are a list of two, so the differential cases are
+  unchanged but for the button ids.
+- **`Toast.OnPress`.** A press on the toast's body (its content, outside
+  its buttons) runs it. The toast stays. A button's press is its own: the
+  surface runs the target's Click only.
+- **`Toast.Focused`.** plx keeps the host's keyboard and walks its toasts
+  with its own keys. Focused draws the one it is on: `data-focused`, the
+  first button with Basecoat's own button focus look, the bar still, and
+  the kit's timer paused (as under the pointer). The toast never takes
+  the host's focus; the app runs the button's OnSelect itself from its
+  key.
+- **`Toast.Left`, `Toast.Total`: the countdown bar.** A 3px bar along the
+  top edge, inset from the corners, shrinking from both ends to the
+  middle. Left of Total is drawn by cutting (Total−Left)/2Total off each
+  end. The host runs it down over Left with a CSS animation, in steps of a
+  tenth of a second, so no render runs it. Focused stops it (animation
+  none) where Left puts it. Its id carries a run number, which grows when
+  Left or Total change or a focus ends, so the host starts a new run: the
+  app re-Shows the toast with what is left after a focus. The bar is a
+  picture: the toast goes by Duration, or when the app removes it.
+- **`ToasterState.OnLeave`.** The pointer leaving the toaster, after the
+  timers resume. plx hears it as "away". It is a field, not a handler on
+  the toaster, since the toaster's element is the kit's.
+
+Open, for review:
+1. **The bar's CSS isn't on the proven list.** `transform: scaleX` and an
+   animation with `steps()` are "known not to draw" in css-subset.md but
+   for the pulse. plx ships the same technique in hottyterm today, so it
+   draws there; it needs a row in css-subset.md with a host check (live,
+   as the pulse's was), not a new gate case. Until then it is the one
+   exception in this pack.
+2. **The focused ring** is Basecoat's `.btn:focus-visible` (a 3px outer
+   box-shadow). The outer ring isn't proven either (the Switch's outer
+   focus ring was dropped from the look). The proven alternative is the
+   kit's 1px inset focus-line.
+3. **Cells.** The bar and the focused look are a host's. In cells a toast
+   draws as before, without the bar; plx draws its cells toasts itself.
+4. **Action and Cancel go.** v0.7 is untagged. The examples, the story and
+   the tests moved to Actions.
+
+### As reviewed (p-796, review-toast.md): applied
+
+- Kept: Toast.ID with the review's ownership contract in its doc,
+  ToasterState.Remove, Toast.Actions, ToastAction.Variant (now checked as
+  a Button's), Toast.Focused (its doc: a key's OnSelect doesn't close the
+  toast; Remove does; the keyboard model's row says so too).
+- **Countdown time.Time replaces Left and Total** (K30). The kit keeps
+  the run on the shown toast: a run's start fraction, length and start,
+  read from the clock (`toastNow`, a test hook) only when a run starts or
+  a focus starts, so a render prints stored values. The same Countdown
+  keeps the run; another starts it full; a focus holds it where it stands
+  (the bar's id grows, its style only its cut); the focus's end runs it on
+  from there to the Countdown given then. Steps are ten a second, capped
+  at 1200. TestToastCountdown walks it on a fixed clock.
+- **OnPress → OnClick.** A body with OnClick gets `cursor: pointer` and
+  the accent hover fill (toast.css).
+- **ToasterProps{OnLeave, Class}; Toaster(st, p).** ToasterState has no
+  exported field. Examples, stories and tests moved.
+- The focused ring mirrors `.btn:focus-visible`, the destructive one with
+  Basecoat's light and dark values, and toast.css says to keep them
+  together. toast.css also says the bar runs under reduced motion.
+- `"time"` sits with the standard library in example_test.go.
+- The stale-timer guard has its test (TestToastStaleTimer), which fails
+  without the guard.
+- Q1: the toast/owned story shows a focused toast with its still bar, so
+  the gate draws it. The running bar's css-subset.md row comes from a live
+  hottyterm check (below, when done).
+- **Added (p-653, plx parity): `Toast.OnClose func()`.** It draws a
+  corner x: a ghost icon-sm button with Lucide's x, `aria-label`
+  "Dismiss", absolute at the top right, the content padded clear of it.
+  A click runs OnClose and closes nothing. TestToastOnClose; the story
+  uses it. Sent to p-796 for a look at its name and doc.
+
+## L5: Clicks and Refocus (plx's G-click-count and G-focus-now)
+
+plx's palette slice has two root-package gaps.
+
+**G-click-count.** A palette row selects on a click and runs on a double
+click. `hotty.Event.Count` exists, and hosts and cells.Screen send it
+(cells counts clicks on one element within 500 ms), but `surf.Click`
+takes `func()`. The pack:
+
+- `surf.Clicks(fn func(count int)) Handler`: Click with the count, 1 for
+  a click or for Enter or space, 2 for a double click's second, and so
+  on. A double click arrives as a click, then a click with count 2, so a
+  row hears both (select, then run).
+- It is stored as the element's Click, reading the count the surface puts
+  on the frame while the click's handler runs. Kit components that wrap
+  an element's Click (ListItem's selection) keep working with Clicks.
+- Click and Clicks on one element are a fault.
+
+**G-focus-now.** The palette's query asks for the keyboard on every
+frame (Autofocus), which moves it only when the asked element changes.
+Tab leaves the query for an invisible stop whose Focus handler gives Tab
+to plx's keymap; the query must have the keyboard back in that same
+frame. plx's stand-in renders once without Autofocus, then once with it,
+through Do.
+
+- `surf.Refocus(ctx, id)`: Autofocus that moves the keyboard though the
+  frame before asked for the same element, unless the element has it
+  already. Asked in the render after the stop's Focus, it goes out in the
+  same event's frame. Asked on every render it would trap the keyboard;
+  its doc says to ask only in the render that should move it.
+
+Questions for the review:
+
+1. The gap row's other route is Tab on the field itself: a KeyScope
+   or data-keys taking `tab=program` on a text field, so no stops are
+   needed. B3 reserved Tab and Shift+Tab from KeyScope (focus traversal
+   is the host's). Refocus keeps that reservation; is it the one to take,
+   or does the maintainer want Tab takeable on a field instead?
+2. `Clicks(func(n int))` or a `Click` taking an event struct (count,
+   mods)? Mods aren't asked for; the narrow shape reads as Click does.
+3. surftest's Rig has no DoubleClick (the tests feed the count as events).
+   Add `Rig.DoubleClick(sel)`, a new name, now or when an app's test
+   needs it?
+
+Reviewed (p-796, ~/.cache/hotty-surf-l5/review-clicks.md): both names
+approved. The questions were settled as: keep Tab reserved (Refocus is
+the route); keep the narrow `func(count int)`; add `Rig.DoubleClick(sel)`
+now. Applied:
+
+- `surftest.Rig.DoubleClick(sel)`, on the test host's DoubleClick (count
+  1, then 2, each a press and a release). TestClicks uses it.
+- Refocus's doc gives the pattern (a handler sets a flag, the view asks
+  once and clears it) and what asking on every render does.
+- Clicks' doc says each click of a double click has its own press and
+  release, so a Drag on the element hears them as usual.
+- The fault reads "(Click or Clicks)": two Clicks fault too.
+
+The caret risk, recorded (not a surf change). Where a text field's caret
+goes when the program focuses it (SPEC §10.1 doesn't say):
+
+- The test host and cells.Screen: at the end on the first focus, and
+  where it was after Tab and Refocus (TestRefocusCaretVector: "query",
+  x, Tab, y gives "queryxy").
+- hotty-blitz v0.8.9 (a probe on its Host, not committed there): a=focus
+  keeps the caret and the selection, as a browser's focus() does. On a
+  first focus the caret is at the end. A caret at 2 stays at 2 through
+  Tab and a=focus, and a typed x gives "quxery". A selection 1..4 stays
+  selected, and a typed x replaces it ("qxy").
+- So no host selects all or moves the caret to the start. A SPEC note
+  ("a=focus keeps a field's selection") would make it a rule; that is
+  the maintainer's.
+
+A cells gap found on the way: cells.Screen's Tab order takes only the
+elements its layout drew, so an empty `<span tabindex="0">` (plx's
+invisible stops) is skipped, and Tab from the query blurs. A browser
+and the hosts tab to it. plx draws its cells palette itself, so it
+doesn't block plx now; it goes to cells' owner.
+
+## plx: which overlays are open (the menu lease, a pack of its own)
+
+plx's SDK hands the keyboard to a tool while the tool's menu is open (its
+"menu lease"). It does so today for its own overlay menu. It needs the
+same for the kit's popups, which only the kit opens and closes: a
+ContextMenu's press, a Select's trigger, Escape, a click outside, one
+popup closing another.
+
+**Shape: `func (s *Surface) Overlays() []string`,** a query like Focused and
+Chars. It gives the ids of the kit's overlays open in the last frame
+rendered (by any call that renders: Document, Update, Event, Key, Focus,
+Blur): the modals outermost first (`rt.Frame.Modal`, as the runtime
+already keeps them), then the one popup.
+
+Inside:
+- A kit popup's render already joins the surface's popup record (one open
+  at a time). The record now keeps the open popup's ID and the frame that
+  drew it.
+- Once the view has rendered, the frame lists the popup the record holds,
+  if this frame drew it (`rt.Frame.Popups`). A popup dropped from the view
+  while open is open nowhere.
+- No new state for modals: Dialog, AlertDialog, Drawer and CommandDialog
+  already list themselves.
+
+Tests:
+- `ui.TestSurfaceOverlays`: each kind, one closing another, Escape, a click
+  outside, a popup dropped from the view, a menu in a dialog.
+- `TestSurfaceOverlaysFirstDocument`: a popover its State opened.
+- `cells.TestOverlaysInCells`.
+- `ExampleSurface_Overlays`: the driver's read between Update and its write.
+
+Open questions, with a lean:
+1. **A query, not an event (lean).** plx's frame loop collects a frame's
+   hotty commands in its own buffer, sends the lease (a Call, acknowledged
+   before the menu reaches the host), then writes. A query read after
+   Update is therefore early enough. A hook run between render and write
+   (`OnOpen(func([]string))`) would serve a driver that writes straight
+   to the pty, but it would be a second name for the same fact, and a
+   callback the Surface runs mid-send. Add one only if a driver needs it.
+2. **Modals included (lean).** Command's list is a CommandDialog, which
+   is a modal, and plx's SDK can't see a tool's Open props. If the kit's
+   modal should not take the lease, `Open` could keep popups only, and
+   modals would wait for an ask of their own.
+3. **What isn't an overlay here:**
+   - `ui.Menu`: the app's own panel, which the app shows itself.
+   - Tooltip: takes no keys.
+   - Toaster: not modal, and takes the keyboard only as any element
+     does.
+   - A native `<select>`'s open list: the host's, which never reaches
+     the program. Not to be added.
+4. **Ids are the components' IDs** (their defaults when ID is ""), the
+   names the app gave, not element ids.
+5. **The name.** `Open` was plx's ask.
+
+As reviewed (p-796, review-open.md):
+- **The name is `Overlays`.** On Surface, a bare verb acts (Focus, Blur,
+  Update, Do), and a query is a noun or a participle (Focused, Chars,
+  Name, Pending), so `Open()` read as "open it".
+- **The doc** names every call that renders. It adds that an overlay
+  opened in its State but not rendered is not open. It drops "gives the
+  keyboard to the surface", which is the driver's policy.
+- **Q1–Q4 as leaned.** plx's port: `if len(s.Overlays()) > 0 { name =
+  s.Name() }`.
+
+## L5: OwnKeys (plx's G-keys-decl, the Own half)
+
+v0.6.3's `Surface.Keys` listed, with each key, whether the focused
+element took it itself (`KeyUse.Own`). plx routes by it: a key the
+element owns goes to the surface ahead of plx's keymap. v0.7 has the
+two other halves: `Chars` (characters) and `ui.Bindings` (KeyScope
+bindings). The pack adds the third:
+
+- `Surface.OwnKeys() []string`: the focused element's own keys other
+  than characters, as hotty names them, sorted. They come from:
+  - the native control (SPEC §10.2's table). A text field's keys are
+    its keymap: `hotty.Resolve` over the platform and the data-keys
+    from the root down, which is what a host and cells.Screen read. A
+    move is listed with shift too. A key the keymap gives the program,
+    a prefix or a scroll is left out. A select, a date or time field,
+    and a button, link, summary, check box or radio button take the
+    keys SPEC lists, each with shift.
+  - a kit control's own declaration: the `k=program` entries on the
+    focused element itself (List rows, Combobox, Select's trigger,
+    Slider, menu items). Under a KeyScope, the kit keeps its own in
+    `data-hotty-default-keys`, and the scope's bindings stay out.
+- Never Tab or Shift+Tab, never characters (space only counts as one in
+  a text field), never a KeyScope's binding, never an app's `surf.Key`
+  handler's keys (it declares none). An app that wants a key first binds
+  it in a KeyScope.
+- One method serves a host and cells. cells.Screen resolves the same
+  keymap, so no Screen method is needed (as with Chars).
+
+Questions for the review:
+
+1. A declaration on an ancestor isn't read. NavList puts its keys on its
+   container, so a focused element inside has them only through the
+   host's data-keys. Should OwnKeys read `=program` entries up the chain
+   until a KeyScope, or is the element alone right? plx's wrappers
+   (`data-keys="k=program"` on a pane) are plx's own keys, not the
+   element's, which argues for the element alone.
+2. A readonly text field lists its edits (backspace) too, as the host
+   keeps them for it. Leave it, or drop the edits?
+3. `[]string`, or a set type (`func(key string) bool`) for routing? The
+   slice is what a palette or a help line shows; plx can build its own
+   set from it.
+
+Reviewed (p-796, ~/.cache/hotty-surf-l5/review-ownkeys.md): OwnKeys was
+approved. The questions were settled as: the element alone (NavList
+declares on its rows and its filter, not its container); keep a readonly
+field's edits; keep `[]string`. The review added kit rule K32: a kit
+control declares its keys on the element that takes focus. Applied:
+
+- The routing rule is written once, in docs/keyboard-model.md, under
+  "Routing". OwnKeys', Chars' and ui.Bindings' docs point at it.
+  - The review's text names `Overlays` (Surface.Overlays, p-794's
+    menu-lease pack, merged into v07 after this branch was cut). With
+    v07 merged in, the rule is the review's text as written.
+- OwnKeys' doc says "as the host resolves it": the data-keys as
+  written, so a KeyScope's bindings are the program's.
+  - TestOwnKeysFieldUnderScope pins it: a field under a scope binding
+    ctrl+a leaves ctrl+a out of OwnKeys, and Bindings lists it.
+  - keymapsOf and rt.NativeKeyDefault's walk each name the other, so
+    nobody merges them.
+- Before Attach (no platform), OwnKeys is nil (TestOwnKeysBeforeAttach).
+- The readonly edits are locked in TestReadonlyKeepsCharsVector, beside
+  Chars' case.
+- TestOwnKeysKit has a case per kit control that takes keys: List row,
+  NavList row and filter, Combobox, Select trigger, Slider thumb,
+  DropdownMenu open and closed, Tabs, Command input. It found two K32
+  breaks in the kit, both fixed here:
+  - Tabs declared nothing; its selected tab took arrow_left, arrow_right,
+    Home and End undeclared. The tab now declares them (tabs.go keys,
+    tabs.templ).
+  - DropdownMenu's handler is on its root, but the keyboard stays on the
+    trigger, which declared only Enter and Space while open. The trigger
+    now declares what the handler takes: arrow_down and arrow_up while
+    closed, and the arrows, Home, End, Enter, Space and Escape while
+    open.
+  - A menu item never takes focus (aria-activedescendant on the trigger),
+    so there is no item case.
 
 ## L5: the kit's sheet as a resource (plx's G-kit-sheet)
 

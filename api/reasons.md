@@ -461,6 +461,12 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `cells.Screen.Focus`: without a host, the pane's focus is the program's; leaving the pane commits a field and blurs the surface.
 - `cells.Screen.Lines`: what the program draws: rows of styled text, which Bubble Tea and a raw program both compose.
 - `cells.Screen.Cursor`: where the program puts the terminal's cursor for a field being typed in.
+- `cells.Screen.Selection`: in cells the Screen has no clipboard and leaves the copy key to the program, which then can't see what the field has selected: plx copied a field's selection to the terminal's clipboard in v0.6 (cr.Copy) and can't in v0.7 (G-cells-copy).
+- `cells.Screen.Cut`: cut is copy plus an edit only the Screen can make (the field's value, its rev, its input event); a program can't delete the selection itself.
+- `cells.Screen.Press`: plx's cells hosts hear the terminal's mouse as press, held move and release with mods and a button (surfhost Mouse, surfdk Pointer); Click alone can't start a drag, carry mods, or make a right press, so surf.Drag, surf.Drop and surf.Secondary (L5) never fire in cells. The button as hotty.Event numbers it, so one call covers the primary and the secondary press.
+- `cells.Screen.Move`: the pointer's motion: a drag's steps and drop target while a button is down, and the hover (menus light their row, tips dwell) with none, which a host sends as hover events (SPEC §9.4); a cell off the Screen is the pointer leaving, as the host's Out.
+- `cells.Screen.Release`: where a drag ends (dragend, the drop) and a click lands, with the click count a double click needs (plx's pick runs a row on a double click, G-click-count) and mods (shift-click selects a range).
+- `cells.Screen.At`: a carry that began outside the surface (a plx pane or tab dragged over nav) asks which row is under the pointer and which half of it: no surface event carries that, since the drag isn't the surface's. Also nav's secondary target. The element's Area answers the half (and a left/right split) with no half-specific name.
 - `cells.Screen.Cells`: plx paints a surface in cells in its own theme, into its own grid, mixing fills into the terminal's ground and keeping muted ink legible on them: it needs each cell's colours as the theme's names, which Lines' SGR can't carry. v0.6's cells gave it runs in roles; Lines alone left plx's two cells hosts with no colour at all (G-cells-colour).
 - `cells.Cell`: one cell of Cells: its text, its colours as roles and its attributes, which plx's grid takes cell by cell.
 - `cells.Cell.Text`: the cell's grapheme cluster; "" marks a wide character's second cell, as a terminal grid has it.
@@ -667,6 +673,48 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.MenuProps.Highlight`: K25: the app holds the highlight, as a List's selection; plx holds an index already.
 - `ui.MenuProps.OnHighlight`: K25: the component asks for a change of highlight, from the pointer and the keys.
 - `ui.MenuProps.Class`: as every Props, on the menu's wrapper.
+- `ui.MenuItem.Leading`: G-menu-rows (plx): a row's own mark in the icon's place: a host's colour dot, an icon outside Lucide's, and on a checkable row its state's look in place of the kit's check (p-653). One slot for all three menus (K29).
+- `ui.MenuItem.Content`: G-menu-rows: a row's words in the label's place when they are more than text: a label with a dim aside, a name being typed with its caret, the current one in semibold. Label still names the item.
+- `ui.MenuItem.Trailing`: G-menu-rows: a note in the shortcut's place (a workspace's tabs, a key's value), drawn where Basecoat draws a shortcut (`data-shortcut`).
+- `ui.MenuItem.Role`: G-menu-rows: a new value, "separator", for plx's bare rule between two items (where Group draws one only between groups); no new name (review-rows.md).
+
+
+
+## L5: what has the keyboard, and lending it (plx's G-keys-decl, G-lend)
+
+- `surf.Surface.Focused`: plx routes its own keys by whether the host's keyboard is in the surface, and gives back the keyboard an autofocused element took while plx held it. A plx-side surf.Focus handler misses Autofocus, which no host reports; only the surface knows it.
+- `surf.Surface.Chars`: plx's bindings of printable keys (a, /, ?) must not run while a field types them or a select picks by them; the host keeps such a key for a field and Key never hears it, so plx has to ask before routing. It reads the last document, which only the surface holds.
+- `surf.Chars`: the three answers, as v0.6.3's cells.Chars had them, so plx's routing ports as it is.
+- `surf.CharsBound`: nothing focused takes characters: the program's bindings get them.
+- `surf.CharsPick`: a native select picks the next option by the character (the kit's keydefault, a host's select).
+- `surf.CharsText`: a text field types it (SPEC §10.2).
+- `surf.Surface.Blur`: the mirror of Focus. plx lends the host's keyboard to its own menu, palette and prompt; a=blur alone leaves the surface's focused set (the host doesn't echo a program's blur), so a later Focus sends nothing and Key handlers hear keys as if the field were focused. Only the surface can take the move as the host's blur (Focus(false), Outside) and keep the element for Focus.
+
+- `ui.Toast.ID`: plx owns its toasts' lives (G-toast): it changes a toast shown (progress, a new title) and takes it off by name, so a toast needs a name the app gives it.
+- `ui.ToasterState.Remove`: G-toast: the app takes a toast off when its own clock or event says so, not only by Duration or a click.
+- `ui.Toast.Actions`: G-toast: plx's toasts carry more than one action. Basecoat's macro has one action and one cancel; a list in order covers both, the cancel being an Outline action.
+- `ui.ToastAction.Variant`: K2(a): picks the button's data-variant: the default action, or Outline for Basecoat's cancel, as the macro draws them.
+- `ui.Toast.OnClick`: K2 exception: G-toast: a click on a toast's body is an action of the app's (plx opens what the toast is about). Named for surf.Click, which it is; OnSelect would collide with ToastAction's.
+- `ui.Toast.Focused`: G-toast: plx keeps the keyboard and moves through its toasts with its own keys; the toast draws the one it is on (its first button ringed, its bar and timer still) without taking the host's keyboard.
+- `ui.Toast.Countdown`: G-toast, K30: the countdown bar runs down to the app's deadline (plx's Stack.Leaves); the kit keeps the run, so the same deadline shown again never restarts it, and the host runs it with no render.
+- `ui.ToasterProps`: K30: a component's callbacks go in its Props, and every State stays opaque.
+- `ui.ToasterProps.OnLeave`: G-toast: plx hears the pointer leaving its toasts as "away" (a focus by the pointer ends). The toaster's own Hover is on the toaster's element, so the app can't add one there.
+- `ui.ToasterProps.Class`: K1: a behavioural component's class, for the app's own; plx's way out if the fixed toaster doesn't fit its surface.
+- `ui.Toaster`: its signature takes ToasterProps (K30).
+- `ui.Toast.OnClose`: plx parity (p-653): plx's toasts have a corner x; it asks the app, which owns the toast and removes it.
+
+## L5: a click's count and taking the keyboard back (plx's G-click-count, G-focus-now)
+
+- `surf.Clicks`: plx's palette selects a row on a click and runs it on a double click. The host and cells.Screen both send the click's count (SPEC §9, count), but surf.Click's func takes nothing, so the count never reaches the app. A variant of Click, not a new event: kit wrappers that wrap an element's Click (ListItem) keep working.
+- `surftest.Rig.DoubleClick`: every gesture surf hears has its Rig verb (Drag, DragStep, Secondary), and plx's palette test (select on one click, run on two) is the first caller of a double click. Added at the review (p-796).
+- `surf.Refocus`: plx's palette query must have the keyboard back in the frame where Tab left it for a stop, whose Focus handler gives Tab to plx. Autofocus asked on every frame is edge-triggered, so asking again moves nothing, and Surface.Focus gives the keyboard to the stop, which had it last. Only the render can say "this element, again, now".
+- `surf.Surface.Overlays`: plx's menu lease (p-653): a driver gives the keyboard to whatever holds an open kit overlay (ContextMenu, Select, DropdownMenu, Popover, Combobox, CommandDialog; on a host and in cells). Only the kit knows when its popups open, and a driver can't read the State of a tool's components.
+
+
+## L5: the focused element's own keys (plx's G-keys-decl, the Own half)
+
+- `surf.Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.
+
 
 
 ## L5: the kit's sheet as a resource (plx's G-kit-sheet)

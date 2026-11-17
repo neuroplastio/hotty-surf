@@ -3,8 +3,10 @@ package ui_test
 import (
 	"context"
 	"fmt"
-	"github.com/a-h/templ"
 	"io"
+	"time"
+
+	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -16,7 +18,7 @@ import (
 //	@ui.Select(&a.sizeMenu, ui.SelectProps{ID: "size", Items: sizes,
 //		Value: a.size, OnChange: a.setSize})
 //	@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(a.save))}) { Save }
-//	@ui.Toaster(&a.toasts)
+//	@ui.Toaster(&a.toasts, ui.ToasterProps{})
 func Example() {
 	type app struct {
 		size     string
@@ -183,9 +185,29 @@ func ExampleRangeSlider() {
 	})
 }
 
+// An app that owns its toasts' lives: an ID to change and remove one,
+// a bar it runs, and the focus its own keys move.
+func ExampleToasterState_Remove() {
+	var st ui.ToasterState
+	done := time.Now().Add(8 * time.Second)
+	st.Show(ui.Toast{
+		ID: "build", Title: "Building", Duration: -1, Countdown: done,
+		OnClick: func() { /* open the build's log */ },
+		OnClose: func() { st.Remove("build") },
+	})
+	// The app's keys reach the toast: it stands still, its first
+	// button ringed, its bar still.
+	st.Show(ui.Toast{
+		ID: "build", Title: "Building", Duration: -1, Focused: true,
+		Countdown: done,
+	})
+	st.Remove("build")
+}
+
 func ExampleToastAction() {
-	_ = ui.Toast{Title: "Deleted", Action: &ui.ToastAction{
-		Label: "Undo", OnSelect: func() {},
+	_ = ui.Toast{Title: "Deleted", Actions: []ui.ToastAction{
+		{Label: "Undo", OnSelect: func() {}},
+		{Label: "Keep", Variant: ui.Outline},
 	}}
 }
 
@@ -204,4 +226,32 @@ func ExampleMenu() {
 		}).Render(ctx, w)
 	})
 	_ = surf.New("pane-menu", view, ui.Stylesheet())
+}
+
+// hostDot is a host's colour as a dot: a component that escapes what it
+// is given (the colour is config's, not constant markup).
+func hostDot(color string) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		style := templ.SanitizeCSS("color", color)
+		_, err := io.WriteString(w, `<span class="dot" style="`+templ.EscapeString(string(style))+`">●</span>`)
+		return err
+	})
+}
+
+// Rows of the app's own: a host's colour in the icon's place, its tabs in
+// the keys' place, a rule, and an on/off row with an aside. templ.Raw is
+// for constant markup only.
+func ExampleMenuItem_slots() {
+	wrap := true
+	_ = []ui.MenuItem{
+		{Label: "build-01",
+			Leading:  hostDot("#3a7"),
+			Trailing: templ.Raw(`<span>3 tabs</span>`),
+			OnSelect: func() {}},
+		{Role: "separator"},
+		{Label: "Wrap", Role: "menuitemcheckbox", Checked: wrap,
+			Content:         templ.Raw(`<span>Wrap <small>long lines</small></span>`),
+			OnCheckedChange: func(on bool) { wrap = on }},
+		{Label: "Here"},
+	}
 }

@@ -1,10 +1,12 @@
 package surf_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
@@ -209,4 +211,135 @@ func ExampleSurface_Link() {
 		}
 		os.Stdout.WriteString(hotty.Doc(name, doc))
 	}
+}
+
+// A program whose own keys sometimes need the keyboard (a menu, a prompt)
+// lends it with Blur and gives it back with Focus. Between the two, a key
+// that types a character goes to the program's bindings only when the
+// focused element wouldn't have typed or picked by it.
+func ExampleSurface_Blur() {
+	s := surf.New("form", templ.Raw(`<input id="name">`), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		return
+	}
+	s.Event(hotty.Event{Surface: "form", Kind: hotty.EventFocus, Target: "name"})
+	fmt.Println(s.Focused(), s.Chars() == surf.CharsText)
+
+	s.Blur() // the program's menu opens
+	fmt.Printf("%q\n", s.Focused())
+
+	s.Focus() // the menu closed: the field has the keyboard again
+	fmt.Println(s.Focused())
+	// Output:
+	// name true
+	// ""
+	// name
+}
+
+// attrs writes a's attributes, as a .templ file's spread does.
+func attrs(w io.Writer, a templ.Attributes) {
+	for _, kv := range a.Items() {
+		fmt.Fprintf(w, " %s=%q", kv.Key, fmt.Sprint(kv.Value))
+	}
+}
+
+// A list row selects on a click and opens on a double click: Clicks hears
+// the click's count.
+func ExampleClicks() {
+	selected, opened := "", ""
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		for _, name := range []string{"notes", "todo"} {
+			io.WriteString(w, "<button")
+			attrs(w, surf.On(ctx, "row-"+name, surf.Clicks(func(n int) {
+				selected = name
+				if n >= 2 {
+					opened = name
+				}
+			})))
+			fmt.Fprintf(w, ">%s</button>", name)
+		}
+		return nil
+	})
+	s := surf.New("files", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	s.Document()
+	s.Update()
+	// The host's events for a double click on todo: count 1, then 2.
+	for _, n := range []int{1, 2} {
+		s.Event(hotty.Event{Surface: "files", Kind: hotty.EventClick, Target: "row-todo", Count: n})
+	}
+	fmt.Println(selected, opened)
+	// Output: todo todo
+}
+
+// A palette's query keeps the keyboard: Tab leaves it for a stop, whose
+// Focus handler hands Tab to the program and asks for the query again.
+// Refocus moves it in the same frame, though every frame asks for the
+// query (which Autofocus would take as no change).
+func ExampleRefocus() {
+	stopped := false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if stopped {
+			stopped = false
+			surf.Refocus(ctx, "query")
+		} else {
+			surf.Autofocus(ctx, "query")
+		}
+		io.WriteString(w, `<input id="query"><span tabindex="0"`)
+		attrs(w, surf.On(ctx, "stop", surf.Focus(func(in bool) {
+			stopped = in // and the program runs its Tab
+		})))
+		_, err := io.WriteString(w, `></span>`)
+		return err
+	})
+	s := surf.New("palette", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	s.Document()
+	s.Update()
+	s.Event(hotty.Event{Surface: "palette", Kind: hotty.EventFocus, Target: "stop"})
+	fmt.Println(s.Focused())
+	// Output: query
+}
+
+// A multiplexer routes a key: to the surface first when the focused
+// element takes it itself, else to its own bindings, then to the surface.
+func ExampleSurface_OwnKeys() {
+	s := surf.New("pane", templ.Raw(`<select id="sort"><option>name</option><option>date</option></select>`), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		return
+	}
+	s.Event(hotty.Event{Surface: "pane", Kind: hotty.EventFocus, Target: "sort"})
+	own := s.OwnKeys()
+	for _, key := range []string{"arrow_down", "ctrl+s"} {
+		fmt.Println(key, slices.Contains(own, key))
+	}
+	// Output:
+	// arrow_down true
+	// ctrl+s false
+}
+
+// A driver that hands the keyboard to whatever holds an open menu writes
+// the surface's output through a buffer of its own: after Update,
+// Overlays says an overlay is opening before the host is sent it.
+func ExampleSurface_Overlays() {
+	var st ui.PopoverState
+	s := surf.New("tool", ui.Popover(&st, ui.PopoverProps{ID: "filter", Trigger: templ.Raw("Filter")}), ui.Stylesheet())
+	var out bytes.Buffer
+	s.Attach(&out, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		return
+	}
+	fmt.Printf("%q\n", s.Overlays())
+
+	s.Do(st.Open) // the app's key opens it
+	if err := s.Update(); err != nil {
+		return
+	}
+	fmt.Println(s.Overlays()) // lease the keyboard here, then pass out on
+	out.WriteTo(io.Discard)
+	// Output:
+	// []
+	// [filter]
 }

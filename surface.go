@@ -3,6 +3,7 @@ package surf
 import (
 	"context"
 	"io"
+	"slices"
 	"sync"
 
 	"github.com/a-h/templ"
@@ -78,6 +79,7 @@ type Surface struct {
 	sheets       []Sheet         // the stylesheets documents link (Link)
 	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
 	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
+	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
 	sending      bool
 	deferred     []hotty.Event
 
@@ -201,6 +203,113 @@ func (s *Surface) Event(e hotty.Event) error {
 func (s *Surface) Focus() (focused bool, err error) {
 	return s.takeFocus()
 }
+
+// Blur takes the keyboard from the surface, as the program's own keys
+// take the host's keyboard (a menu, a prompt) or its focus moves off the
+// surface: it takes the move as a blur itself, so that the surface knows
+// at once, and sends the host a=blur (SPEC §10.1); the blur the host sends
+// after it is taken as this one and runs nothing twice. Focus handlers
+// hear the element lose the keyboard, Outside handlers run (an open select
+// or popover closes), and the element is kept: a later Focus gives it
+// back. A field's change the host commits with the blur still reaches its
+// handler, after the blur. blurred says whether the surface had the
+// keyboard; with nothing focused nothing is sent. In cells the program
+// takes the Screen's keyboard instead (cells.Screen.Focus(false)), which
+// the surface hears as the same blur. It runs on the driver's goroutine,
+// as Event does.
+func (s *Surface) Blur() (blurred bool, err error) {
+	return s.blur()
+}
+
+// Focused is the id of the element that has the keyboard as the surface
+// knows it: the last focus the host reported, a Focus the program gave,
+// or the element a render's Autofocus asked for; "" for none. A blur,
+// the host's or Blur, clears it. It is the surface's view, which changes
+// only with the events the program hands it, Focus, Blur and Autofocus;
+// in cells, cells.Screen.Focus(false) reaches it as a blur event. The id
+// may be one the surface generated. It runs on the driver's goroutine, as
+// Event does.
+func (s *Surface) Focused() string {
+	return s.focused
+}
+
+// Overlays is the ids of the kit's overlays open in the last frame the
+// surface rendered (by Document, Update, Event, Key, Focus or Blur), as
+// their components' IDs: the modals (a Dialog, AlertDialog, Drawer or
+// CommandDialog) outermost first, then the popup (a DropdownMenu,
+// ContextMenu, Select, Combobox or Popover), of which one at most is open.
+// nil is none. An overlay the app opened in its State but didn't render
+// is not open. A driver that writes the surface's output through a writer
+// of its own reads it after rendering and before it passes the bytes on,
+// so it knows an overlay is opening before the host draws it. It is the
+// same in cells. It runs on the driver's goroutine, as Event does.
+func (s *Surface) Overlays() []string {
+	if s.frame == nil || len(s.frame.Modal)+len(s.frame.Popups) == 0 {
+		return nil
+	}
+	return append(slices.Clone(s.frame.Modal), s.frame.Popups...)
+}
+
+// Chars is what the focused element does with a key that types a
+// character ("a", "shift+a", "1", ">"): whether the host keeps such a key
+// for it, ahead of the program's bindings. It reads the last document the
+// surface sent; with nothing focused it is CharsBound. It knows the
+// native elements only: the kit's Select and DropdownMenu don't pick by
+// characters in v0.7, so an open one is CharsBound, as a native select
+// multiple is; a field composing (IME) takes every key, which it doesn't
+// say. How a program routes a key with it is the keyboard model's
+// (docs/keyboard-model.md, Routing). It runs on the driver's goroutine,
+// as Event does.
+func (s *Surface) Chars() Chars {
+	return charsOf(s.byID[s.focused])
+}
+
+// OwnKeys are the keys the focused element takes itself, ahead of the
+// program's bindings, other than characters (Chars says those; space is
+// one only in a text field, which types it), as hotty names them, sorted.
+// They are a native control's (SPEC §10.2) and a kit control's own:
+//   - a text field's keymap as the host resolves it: the platform's
+//     default, then the data-keys from the root down as written, so a
+//     KeyScope's bindings are the program's. A move is listed with shift
+//     too; a key the keymap gives the program, a prefix or a scroll is
+//     not listed.
+//   - a select's, a date or time field's, and a button's, link's, check
+//     box's or radio button's keys, as SPEC lists them, each with shift.
+//   - a kit control's own: those it gives the program on the focused
+//     element itself (a list's arrows, a combobox's Enter), for its Key
+//     handler to take.
+//
+// Tab and Shift+Tab are never in it, nor an app's Key handler's keys,
+// which declare none: an app that wants a key ahead of the program's
+// bindings binds it in a KeyScope. A disabled element, nothing focused
+// and a surface not attached (no platform yet) have none. How a program
+// routes a key with OwnKeys, Chars and ui.Bindings is the keyboard
+// model's (docs/keyboard-model.md, Routing). It reads the last document
+// the surface sent and its focus, as Chars does, and runs on the
+// driver's goroutine.
+func (s *Surface) OwnKeys() []string {
+	if s.out == nil {
+		return nil
+	}
+	return ownKeys(s.byID[s.focused], s.platform)
+}
+
+// Chars is what a focused element does with a key that types a character.
+type Chars uint8
+
+const (
+	// CharsBound is an element that takes no characters, or none focused:
+	// such a key goes to the program's bindings, as any key does.
+	CharsBound Chars = iota
+	// CharsPick is a native select, which picks the next option whose
+	// label starts with the character.
+	CharsPick
+	// CharsText is a text field (an input that edits text, a textarea,
+	// readonly or not) or an editing host (contenteditable), which types
+	// it (SPEC §10.2): the host keeps the key for it, and Key never hears
+	// it.
+	CharsText
+)
 
 // Key offers the surface a key while it has the keyboard (a key the host
 // passed the program because no field in the surface took it, SPEC §10.1),
