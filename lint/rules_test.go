@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"neuroplast.io/hotty-surf/internal/cssclass"
 )
 
 func rules(fs []Finding) string {
@@ -54,6 +56,12 @@ func TestRules(t *testing.T) {
 		{"a button with a type", "page.templ", `<form><button type="button">Cancel</button><button type="submit">Add</button></form>`, ""},
 		{"a button outside a form", "page.templ", `<div><button>Go</button></div>`, ""},
 		{"a button after a form", "page.templ", "<form></form>\n<button>Go</button>", ""},
+		{"an icon-only button", "page.templ", "<button type=\"button\">\n\t@ui.Icon(\"x\", \"\")\n</button>", "1:1:button-label"},
+		{"an icon button with a label", "page.templ", "<button type=\"button\" aria-label=\"Close\">@ui.Icon(\"x\", \"\")</button>", ""},
+		{"an icon button with a spread", "page.templ", "<button { attrs... }>@ui.Icon(\"x\", \"\")</button>", ""},
+		{"an icon and text", "page.templ", "<button>@ui.Icon(\"x\", \"\") Close</button>", ""},
+		{"ui.Button IconOnly", "page.templ", "@ui.Button(ui.ButtonProps{IconOnly: true}) {\n\t@ui.Icon(\"x\", \"\")\n}", "1:2:button-label"},
+		{"ui.Button IconOnly with Attrs", "page.templ", "@ui.Button(ui.ButtonProps{IconOnly: true, Attrs: a}) {}", ""},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if got := rules(file(c.path, c.src)); got != c.want {
@@ -110,6 +118,10 @@ func TestClasses(t *testing.T) {
 	<style>.own-inline { display: block }</style>
 	<div class="flex gap-2 group text-muted-foreground todo-done own-inline line-through-ish"></div>
 	<p class="hover:bg-cosmic w-[12px] bg-[#fff]"></p>
+	<s class={ "flex", templ.KV("line-through text-muted-foreground", done) }></s>
+	<i class={ templ.Classes("strike-x", "gap-2") }></i>
+	@ui.Button(ui.ButtonProps{Class: "w-full grow-x"})
+	<a href="#x" title="not classes">no</a>
 }`)
 	write("style/app.css", ".todo-done { text-decoration: line-through }\n")
 	fs, err := Dir(dir)
@@ -122,7 +134,7 @@ func TestClasses(t *testing.T) {
 			got = append(got, f.Text[:strings.Index(f.Text, " has")])
 		}
 	}
-	if want := []string{`class "line-through-ish"`, `class "hover:bg-cosmic"`}; !slices.Equal(got, want) {
+	if want := []string{`class "line-through-ish"`, `class "hover:bg-cosmic"`, `class "line-through"`, `class "strike-x"`, `class "grow-x"`}; !slices.Equal(got, want) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
@@ -134,7 +146,7 @@ func TestUnescape(t *testing.T) {
 		`\32 xl\:flex`:     "2xl:flex",
 		`size-\[2rem\]`:    "size-[2rem]",
 	} {
-		if got := unescape(in); got != want {
+		if got := cssclass.Unescape(in); got != want {
 			t.Errorf("unescape(%q) = %q, want %q", in, got, want)
 		}
 	}

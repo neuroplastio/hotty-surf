@@ -10,7 +10,8 @@
 // imported in a .templ file), class (a class no stylesheet defines: the
 // kit's has the classes the kit uses, not all of Tailwind's, so an app's
 // other classes go in its own CSS), button-type (a <button> in a <form>
-// with no type, which submits it). colour and px read the app's .css files
+// with no type, which submits it), button-label (a button with only an icon
+// and no label, which the cells fallback draws as "[ · ]"). colour and px read the app's .css files
 // too, but for a theme file (theme*.css) and, for colour, a custom
 // property (--name: value).
 // An exception is written where it is made, with its reason, on the line

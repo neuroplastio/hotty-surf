@@ -102,6 +102,7 @@ func check(path, src string, defined map[string]bool) []Finding {
 	case ".templ":
 		f.templ()
 		f.buttons()
+		f.labels()
 	case ".css":
 		if !strings.HasPrefix(filepath.Base(path), "theme") {
 			f.css()
@@ -225,9 +226,33 @@ func (f *checker) templ() {
 }
 
 type literal struct {
-	text string
-	at   int    // where text starts in its line
-	attr string // the attribute it is the value of ("class", "style"), or "" for a Go string
+	text    string
+	at      int    // where text starts in its line
+	attr    string // the attribute it is the value of ("class", "style"), or "" for a Go string
+	classes bool   // it is classes: a class attribute, or a Go string templ takes as classes
+}
+
+var (
+	kvRe       = regexp.MustCompile(`templ\.KV\(\s*$`)
+	classFldRe = regexp.MustCompile(`\bClass:\s*$`)
+)
+
+// classesAt says whether a Go string that starts after prefix is classes:
+// templ.KV's key, an argument of templ.Classes, a string in a class={ … }
+// expression, or a component's Class field.
+func classesAt(prefix string) bool {
+	if kvRe.MatchString(prefix) || classFldRe.MatchString(prefix) {
+		return true
+	}
+	open := func(start, opening, closing string) bool {
+		i := strings.LastIndex(prefix, start)
+		if i < 0 {
+			return false
+		}
+		rest := prefix[i+len(start):]
+		return strings.Count(rest, opening)+1 > strings.Count(rest, closing)
+	}
+	return open("class={", "{", "}") || open("templ.Classes(", "(", ")")
 }
 
 // styled says whether a literal can hold a colour: a Go string, or the
@@ -264,7 +289,8 @@ func literals(l string) []literal {
 			if m := attrRe.FindStringSubmatch(l[:i]); m != nil {
 				attr = strings.ToLower(m[1])
 			}
-			out = append(out, literal{text: l[i+1 : end], at: i + 1, attr: attr})
+			out = append(out, literal{text: l[i+1 : end], at: i + 1, attr: attr,
+				classes: attr == "class" || attr == "" && classesAt(l[:i])})
 			i = j
 		}
 	}

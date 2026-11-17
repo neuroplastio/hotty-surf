@@ -46,6 +46,7 @@ func (s *Surface) document() (string, error) {
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
 	s.submits(f)
+	s.unlabelled(t.root)
 	s.remember(t.root)
 	s.asked = f.Focus
 	if f.Focus != "" {
@@ -99,6 +100,7 @@ func (s *Surface) send() error {
 		}
 		d.el(s.prev, t.root)
 		s.keep(t)
+		s.unlabelled(t.root)
 	}
 	s.frame = f
 	s.submits(f)

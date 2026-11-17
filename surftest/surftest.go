@@ -50,7 +50,7 @@ func Start(t testing.TB, s *surf.Surface, opts ...Option) *Rig {
 		}
 	}
 	h := hottytest.New(t, hottytest.Size(c.cols, c.rows))
-	r := &Rig{t: t, host: h, s: s}
+	r := &Rig{t: t, host: h, s: s, faulted: map[string]bool{}}
 	s.Attach(h, hottytest.DefaultCaps())
 	doc, err := s.Document()
 	if err != nil {
@@ -82,6 +82,8 @@ type Rig struct {
 	s     *surf.Surface
 	in    input.Reader
 	taken bool // whether the surface took a key in the last drain
+	// faulted are the faults the test has failed on, each said once.
+	faulted map[string]bool
 }
 
 func (r *Rig) send(cmd string) {
@@ -119,7 +121,11 @@ func (r *Rig) settle() {
 	}
 	r.consistent()
 	for _, f := range rt.Peek.Faults(r.s) {
-		r.t.Error(f)
+		// A fault repeats at every render; the test says it once.
+		if !r.faulted[f] {
+			r.faulted[f] = true
+			r.t.Error(f)
+		}
 	}
 }
 

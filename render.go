@@ -373,6 +373,51 @@ func (s *Surface) submits(f *rt.Frame) {
 	}
 }
 
+// unlabelled faults a button with no text and no label (aria-label,
+// aria-labelledby or title), such as one holding only an icon: the cells
+// fallback draws it as "[ · ]", and a screen reader has nothing to say.
+func (s *Surface) unlabelled(n *html.Node) {
+	if n.Type == html.ElementNode && n.DataAtom == atom.Button {
+		if !hasLabel(n) && strings.TrimSpace(textOf(n)) == "" {
+			id := ""
+			for _, a := range n.Attr {
+				if a.Key == "id" {
+					id = a.Val
+				}
+			}
+			s.fault("a button with no text and no label (#" + id + "): give it an aria-label; the cells fallback and a screen reader show a button by its text or its label")
+		}
+		return
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		s.unlabelled(c)
+	}
+}
+
+func hasLabel(n *html.Node) bool {
+	for _, a := range n.Attr {
+		if (a.Key == "aria-label" || a.Key == "aria-labelledby" || a.Key == "title") && strings.TrimSpace(a.Val) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// textOf is n's text, outside an svg.
+func textOf(n *html.Node) string {
+	if n.Type == html.TextNode {
+		return n.Data
+	}
+	if n.Type == html.ElementNode && n.Data == "svg" {
+		return ""
+	}
+	var b strings.Builder
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		b.WriteString(textOf(c))
+	}
+	return b.String()
+}
+
 // maxFaults is as many faults as a surface holds: surftest drains them
 // after each act, and outside a test they would otherwise pile up, one
 // per render.

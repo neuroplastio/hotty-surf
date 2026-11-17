@@ -41,7 +41,7 @@ func TestSubmit(t *testing.T) {
 			surf.Key(func(string) bool { keys++; return false })))
 		fmt.Fprintf(w, ` value=%q><button type="submit"`, draft)
 		attrs(w, surf.On(ctx, "add"))
-		io.WriteString(w, "></button></form><ul>")
+		io.WriteString(w, ">Add</button></form><ul>")
 		for _, it := range items {
 			fmt.Fprintf(w, "<li>%s</li>", templ.EscapeString(it))
 		}
@@ -113,6 +113,39 @@ func TestSubmitOnNoForm(t *testing.T) {
 	f := &faults{T: t}
 	surftest.Start(f, surf.New("t", page, ""))
 	if len(f.got) != 1 || !strings.Contains(f.got[0], "surf.Submit: the element box is a <div>, not a form") {
+		t.Fatalf("faults: %q", f.got)
+	}
+}
+
+// A button with no text and no label is a fault (the cells fallback draws
+// it as "[ · ]"); an aria-label, or text, is enough.
+func TestUnlabelledButton(t *testing.T) {
+	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := io.WriteString(w, `<button id="del"><svg><path d="M1 1"></path></svg></button>`+
+			`<button id="ok" aria-label="Delete"><svg></svg></button><button id="go">Go</button>`)
+		return err
+	})
+	f := &faults{T: t}
+	surftest.Start(f, surf.New("t", page, ""))
+	if len(f.got) != 1 || !strings.Contains(f.got[0], "a button with no text and no label (#del)") {
+		t.Fatalf("faults: %q", f.got)
+	}
+}
+
+// A fault that every render repeats fails the test once.
+func TestFaultOnce(t *testing.T) {
+	n := 0
+	page := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		io.WriteString(w, `<form`)
+		attrs(w, surf.On(ctx, "f", surf.Click(func() { n++ })))
+		_, err := fmt.Fprintf(w, `><p>%d</p><button id="b"></button></form>`, n)
+		return err
+	})
+	f := &faults{T: t}
+	r := surftest.Start(f, surf.New("t", page, ""))
+	r.Click("#f")
+	r.Click("#f")
+	if len(f.got) != 1 {
 		t.Fatalf("faults: %q", f.got)
 	}
 }
