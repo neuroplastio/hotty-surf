@@ -72,9 +72,8 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 // Screen (a negative col or row, or one past its size) is the pointer
 // leaving it, a hover with Out. Lines changes after a Move through what
 // the surface writes (a hover's look, the dragging class), and by itself
-// where a tooltip shows or goes: a program redraws on Writes, on the
-// presses and releases it takes, and after a Move where Dirty says so,
-// not on every motion.
+// where a tooltip shows or goes; Dirty says when, so a program needn't
+// redraw on every motion.
 func (c *Screen) Move(col, row, mods int) (taken bool) {
 	switch {
 	case c.drag != nil:

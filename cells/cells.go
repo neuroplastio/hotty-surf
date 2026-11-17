@@ -58,8 +58,11 @@ type Screen struct {
 	drag     *dragging
 	hoverID  string
 	hoverOut bool
-	// shown is what Lines or Cells last drew (Dirty).
-	shown [][]cell
+	// shown is what Lines or Cells last drew (Dirty): its cells, and
+	// the layout and scroll they came from.
+	shown       [][]cell
+	shownLay    *layout
+	shownScroll int
 	// tip is the element with a tooltip (data-tooltip) the pointer is
 	// over, whose tooltip the layout draws beside it (drawTip).
 	tip    *html.Node
@@ -258,27 +261,48 @@ func (c *Screen) Lines() []string {
 	for i := range out {
 		out[i] = l.cv.line(c.scroll+i, c.cols)
 	}
-	c.shown = c.visible()
+	c.drew(l)
 	return out
 }
 
 // Dirty says whether Lines, or Cells, would now return other than what
-// it last returned: the Screen changed by itself, with no Write, as a
-// tooltip shows or goes when the pointer moves (Move). A program that
-// redraws on Writes and on the presses and releases it takes asks it
-// after the other calls (a Move, a Wheel) and redraws where it says so.
-// It is cheap: the Screen is laid out once for each change.
+// either last returned: after a Write that changed the screen, a key or
+// a paste that edited a field, a press that moved the focus, a wheel that
+// scrolled, or by itself, as a tooltip shows or goes when the pointer
+// moves. A program asks it after whatever it hands the Screen and draws
+// where it says so, with no need to know which calls change what. It is
+// true before the first Lines or Cells. A call that changed nothing costs
+// nothing to ask about.
 func (c *Screen) Dirty() bool {
+	if c.shown == nil {
+		return true
+	}
+	// Every change that can draw differently drops the layout (c.lay):
+	// the one drawn last, at the same scroll, draws the same.
+	if c.lay != nil && c.lay == c.shownLay && c.scroll == c.shownScroll {
+		return false
+	}
 	v := c.visible()
-	if c.shown == nil || len(v) != len(c.shown) {
+	if len(v) != len(c.shown) {
 		return true
 	}
 	for i := range v {
-		if !slices.Equal(v[i], c.shown[i]) {
+		if len(v[i]) != len(c.shown[i]) || !slices.Equal(v[i], c.shown[i]) {
 			return true
 		}
 	}
+	// Laid out again, the same: what was drawn is this layout's.
+	c.shownLay, c.shownScroll = c.lay, c.scroll
 	return false
+}
+
+// drew records l, at the scroll, as what Lines or Cells drew last
+// (Dirty), copying its cells only where it isn't the one recorded.
+func (c *Screen) drew(l *layout) {
+	if c.shown != nil && l == c.shownLay && c.scroll == c.shownScroll {
+		return
+	}
+	c.shown, c.shownLay, c.shownScroll = c.visible(), l, c.scroll
 }
 
 // visible is a copy of the cells Lines and Cells draw: the rows from

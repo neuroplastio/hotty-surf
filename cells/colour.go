@@ -104,7 +104,7 @@ func (c *Screen) Cells() [][]Cell {
 		}
 		out[i] = row
 	}
-	c.shown = c.visible()
+	c.drew(l)
 	return out
 }
 

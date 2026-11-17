@@ -102,10 +102,19 @@ func TestDirty(t *testing.T) {
 		{func() { c.Move(1, 0, 0) }, false, "a move over no tooltip"},
 		{func() { c.Move(1, 1, 0) }, true, "the tooltip shows"},
 		{func() { c.Lines() }, false, "drawn by Lines"},
-		{func() { c.Move(2, 1, 0) }, false, "a move within the element"},
+		{func() {
+			lay := c.lay
+			c.Move(2, 1, 0)
+			if c.lay != lay {
+				t.Error("a move within the element laid the Screen out again")
+			}
+		}, false, "a move within the element"},
 		{func() { c.Move(25, 3, 0) }, true, "the tooltip goes"},
 		{func() { c.Cells() }, false, "drawn by Cells"},
 		{func() { c.Write([]byte(hotty.Doc("t", `<p>new</p>`))) }, true, "a new document"},
+		{func() { c.Lines() }, false, "drawn"},
+		{func() { c.Resize(30, 4) }, false, "a resize to the same size draws the same"},
+		{func() { c.Resize(20, 4) }, true, "a resize"},
 	}
 	for _, s := range steps {
 		s.do()
