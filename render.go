@@ -81,7 +81,7 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 	if err != nil {
 		return nil, false, err
 	}
-	s.faults = append(s.faults, f.Faults...)
+	s.fault(f.Faults...)
 	return f, s.r.valid && bytes.Equal(s.r.buf.Bytes(), s.r.last), nil
 }
 
@@ -144,15 +144,17 @@ func (s *Surface) keep(t *tree) {
 // had in the last frame (the parent's id, its tag, and its index among the
 // siblings without an id of their own), or a new one.
 //
-// Whitespace-only text beside elements is dropped, as JSX drops it: the
-// template's indentation is not the page's, and a parent whose children
-// are all elements can be told as narrow ops. Inside a pre (pre is true)
-// it is the text's own, and stays.
+// Whitespace-only text beside elements is dropped where it holds a line
+// break, or isn't between two inline neighbours (text, or an element that
+// flows in a line), as JSX drops it: the template's indentation is not the
+// page's, and a parent whose children are all elements can be told as
+// narrow ops. A space between two inline elements is the text's ("<b>a</b>
+// <i>b</i>"), and stays. Inside a pre (pre is true) all of it stays.
 func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 	n := 0
 	for c := p.FirstChild; c != nil; {
 		next := c.NextSibling
-		if !pre && c.Type == html.TextNode && strings.TrimSpace(c.Data) == "" && (c.PrevSibling != nil || next != nil) {
+		if !pre && c.Type == html.TextNode && strings.TrimSpace(c.Data) == "" && (c.PrevSibling != nil || next != nil) && (strings.IndexByte(c.Data, '\n') >= 0 || !(inline(c.PrevSibling) && inline(next))) {
 			p.RemoveChild(c)
 			c = next
 			continue
@@ -169,13 +171,16 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			}
 		}
 		id := attr(c, "id")
+		if id != "" && runtimeID(id) {
+			s.fault(fmt.Sprintf("surf: an element's own id %q is the runtime's: root and hotty-css are the document's, and %s followed by base 36 is a generated id", id, idPrefix))
+		}
 		if id == "" {
 			key := pid + "/" + c.Data + "#" + strconv.Itoa(n)
 			n++
 			id = s.ids[key]
 			if id == "" {
 				s.nextID++
-				id = "e" + strconv.FormatInt(int64(s.nextID), 36)
+				id = idPrefix + strconv.FormatInt(int64(s.nextID), 36)
 			}
 			t.ids[key] = id
 			c.Attr = withID(c.Attr, id)
@@ -249,9 +254,13 @@ func isField(n *html.Node) bool {
 	switch n.Data {
 	case "textarea":
 		return true
+	case "select":
+		// One value, as a=field sets it (SPEC §6.4); a multiple select's
+		// options stay attributes.
+		return !hasAttr(n, "multiple")
 	case "input":
 		switch strings.ToLower(attr(n, "type")) {
-		case "hidden", "button", "submit", "reset", "image":
+		case "hidden", "button", "submit", "reset", "image", "file":
 			return false
 		}
 		return true
@@ -279,9 +288,12 @@ func (s *Surface) remember(n *html.Node) {
 	}
 }
 
-// fieldValue is the value a field's markup gives it: a textarea's text, an
-// input's value attribute.
+// fieldValue is the value a field's markup gives it: a textarea's text, a
+// select's chosen option's value, an input's value attribute.
 func fieldValue(n *html.Node) string {
+	if n.Data == "select" {
+		return selectValue(n)
+	}
 	if n.Data == "textarea" {
 		var b strings.Builder
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -292,4 +304,109 @@ func fieldValue(n *html.Node) string {
 		return b.String()
 	}
 	return attr(n, "value")
+}
+
+// inline says whether n is text or an element that flows in a line, so a
+// space beside it is the text's.
+func inline(n *html.Node) bool {
+	if n == nil {
+		return false
+	}
+	if n.Type == html.TextNode {
+		return true
+	}
+	return n.Type == html.ElementNode && (phrasing(n.DataAtom) || n.DataAtom == atom.Svg || n.DataAtom == atom.Select || n.DataAtom == atom.Textarea || n.DataAtom == 0)
+}
+
+// fresh forgets the revs of the fields under n that are new nodes on the
+// host: a control entering the document starts at rev 0 (SPEC §6.4). With
+// kept set, a field the host morphs (an inner, SPEC §6.2: the same id under
+// a parent with the same id, as the last tree had it) keeps its rev.
+func (s *Surface) fresh(n *html.Node, kept bool) {
+	if n.Type == html.ElementNode && isField(n) {
+		id := attr(n, "id")
+		if o := s.byID[id]; !kept || o == nil || o.Data != n.Data || o.Parent == nil || n.Parent == nil || attr(o.Parent, "id") != attr(n.Parent, "id") {
+			delete(s.revs, id)
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		s.fresh(c, kept)
+	}
+}
+
+// idPrefix starts every id the runtime gives an element, so it can't be
+// one an app writes: an app's id with it is a fault, as are root and
+// hotty-css, the document's own.
+const idPrefix = "_"
+
+// runtimeID says whether id is one the runtime owns.
+func runtimeID(id string) bool {
+	if id == "root" || id == "hotty-css" {
+		return true
+	}
+	if !strings.HasPrefix(id, idPrefix) || len(id) == len(idPrefix) {
+		return false
+	}
+	for _, c := range id[len(idPrefix):] {
+		if !('0' <= c && c <= '9' || 'a' <= c && c <= 'z') {
+			return false
+		}
+	}
+	return true
+}
+
+// maxFaults is as many faults as a surface holds: surftest drains them
+// after each act, and outside a test they would otherwise pile up, one
+// per render.
+const maxFaults = 64
+
+// fault records faults while the surface holds fewer than maxFaults.
+func (s *Surface) fault(fs ...string) {
+	for _, f := range fs {
+		if len(s.faults) >= maxFaults {
+			return
+		}
+		s.faults = append(s.faults, f)
+	}
+}
+
+// selectValue is the value of the option a select's markup chooses, as
+// HTML chooses it: the last with selected, or else the first that isn't
+// disabled; "" for none.
+func selectValue(n *html.Node) string {
+	var chosen, first *html.Node
+	var walk func(*html.Node)
+	walk = func(p *html.Node) {
+		for c := p.FirstChild; c != nil; c = c.NextSibling {
+			switch {
+			case c.Type != html.ElementNode:
+			case c.Data == "option":
+				if hasAttr(c, "selected") {
+					chosen = c
+				}
+				if first == nil && !hasAttr(c, "disabled") {
+					first = c
+				}
+			case c.Data == "optgroup":
+				walk(c)
+			}
+		}
+	}
+	walk(n)
+	if chosen == nil {
+		chosen = first
+	}
+	if chosen == nil {
+		return ""
+	}
+	if v, ok := get(chosen, "value"); ok {
+		return v
+	}
+	var b strings.Builder
+	for c := chosen.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.TextNode {
+			b.WriteString(c.Data)
+		}
+	}
+	return strings.Join(strings.Fields(b.String()), " ")
 }

@@ -123,7 +123,7 @@ func (p *parser) text(top *html.Node, t string) bool {
 		}
 	}
 	if strings.IndexByte(t, '&') >= 0 {
-		if !entities(t) {
+		if !entities(t, false) {
 			return false
 		}
 		t = html.UnescapeString(t)
@@ -255,7 +255,7 @@ func (p *parser) start(top *html.Node, s string, i int) (int, bool) {
 				return 0, false
 			}
 			if strings.IndexByte(val, '&') >= 0 {
-				if !entities(val) {
+				if !entities(val, true) {
 					return 0, false
 				}
 				val = html.UnescapeString(val)
@@ -416,9 +416,11 @@ func clone(n *html.Node) *html.Node {
 
 // entities says whether every & in t starts a character reference that
 // ends with its semicolon, which html.UnescapeString reads as the
-// tokenizer would, in text and in an attribute alike. A bare & (one
-// followed by no name) is text in both.
-func entities(t string) bool {
+// tokenizer would. A bare & (one followed by no name) is text. In an
+// attribute (attr) the tokenizer takes no prefix of a name, where
+// UnescapeString does (&notit; is ¬it; in text, and itself in a title), so
+// there only the names templ writes are taken.
+func entities(t string, attr bool) bool {
 	for i := 0; i < len(t); i++ {
 		if t[i] != '&' {
 			continue
@@ -448,6 +450,13 @@ func entities(t string) bool {
 		}
 		if k >= len(t) || t[k] != ';' {
 			return false
+		}
+		if attr {
+			switch t[j:k] {
+			case "amp", "lt", "gt", "quot", "apos":
+			default:
+				return false
+			}
 		}
 		i = k
 	}

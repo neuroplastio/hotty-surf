@@ -25,6 +25,7 @@ func (d *differ) el(o, n *html.Node) {
 	id := attr(n, "id")
 	if o.Data != n.Data {
 		d.ops = append(d.ops, hotty.OpReplace(id, d.render(n)))
+		d.s.fresh(n, false)
 		d.s.remember(n)
 		return
 	}
@@ -40,8 +41,10 @@ func (d *differ) el(o, n *html.Node) {
 
 func (d *differ) attrs(id string, o, n *html.Node) {
 	field := isField(n)
+	// An option's selected is its select's value, which a=field sets.
+	opt := n.Data == "option" && inSelect(n)
 	for _, a := range n.Attr {
-		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") {
+		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") || opt && a.Key == "selected" {
 			continue
 		}
 		if v, ok := get(o, a.Key); !ok || v != a.Val {
@@ -49,7 +52,7 @@ func (d *differ) attrs(id string, o, n *html.Node) {
 		}
 	}
 	for _, a := range o.Attr {
-		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") {
+		if a.Key == "id" || field && (a.Key == "value" || a.Key == "checked") || opt && a.Key == "selected" {
 			continue
 		}
 		if _, ok := get(n, a.Key); !ok {
@@ -80,6 +83,9 @@ func (d *differ) field(id string, n *html.Node) {
 			d.fields = append(d.fields, hotty.SetField(s.name, id, hotty.FieldChange{Rev: s.revs[id], Checked: &want}))
 		}
 		return
+	}
+	if n.Data == "input" && !hasAttr(n, "value") {
+		return // the markup asks for no value: the field is the host's
 	}
 	want := fieldValue(n)
 	if s.vals[id] != want {
@@ -188,6 +194,7 @@ func (d *differ) children(id string, o, n *html.Node) {
 		} else {
 			d.ops = append(d.ops, hotty.OpAppend(id, d.render(c)))
 		}
+		d.s.fresh(c, false)
 		d.s.remember(c)
 	}
 }
@@ -219,6 +226,9 @@ func (d *differ) inner(id string, n *html.Node) {
 		html.Render(&d.b, c)
 	}
 	d.ops = append(d.ops, hotty.OpInner(id, d.b.String()))
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		d.s.fresh(c, true)
+	}
 	d.s.remember(n)
 }
 
@@ -226,4 +236,14 @@ func (d *differ) render(n *html.Node) string {
 	d.b.Reset()
 	html.Render(&d.b, n)
 	return d.b.String()
+}
+
+// inSelect says whether an option is a live select's, its own or its
+// optgroup's.
+func inSelect(n *html.Node) bool {
+	p := n.Parent
+	if p != nil && p.Data == "optgroup" {
+		p = p.Parent
+	}
+	return p != nil && p.Data == "select" && isField(p)
 }

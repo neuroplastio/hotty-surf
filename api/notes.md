@@ -229,15 +229,50 @@ locked API, in the order they were made.
 - **Input on a change runs only when the value differs** from the last
   input event's: a commit after edits Input heard is no edit of its own.
 - **Hidden inputs aren't live fields:** input of type hidden, button,
-  submit, reset and image keep their value attribute in the markup.
+  submit, reset, image and file keep their value attribute in the
+  markup.
 - **A textarea's value is its text,** and its children aren't diffed: the
   host's text is the field's.
 - **A duplicate surf.On id is a fault** (surftest fails on it); the first
   registration wins in the frame.
-- **Whitespace-only text beside elements is dropped,** as the spike did
-  (and JSX does), **except inside a pre, textarea or listing,** where it
-  is the text's own. The spike dropped it there too; ui's review found
-  it.
+- **Whitespace-only text beside elements is dropped where it holds a
+  line break or isn't between two inline neighbours,** as JSX drops it;
+  a space between two inline elements (`<b>a</b> <i>b</i>`) stays, and
+  inside a pre, textarea or listing all of it stays. The spike dropped
+  every such space, which the blind review found. Requiring both
+  neighbours to be inline keeps templ's space between a flex row's input
+  and its popover out of the tree, so Tasks' deltas stay narrow.
+- **An input whose markup has no value attribute is the host's:** the
+  differ sends it no a=field, as React leaves an input without a value.
+  templ writes `value=""` for an empty expression, so a view that binds a
+  value is still the program's. A textarea and a check box stay the
+  program's; their markup can't say "none".
+- **A field entering the document again starts at rev 0** (SPEC §6.4),
+  after a replace, an insert or an append. One the host morphs in an
+  inner (the same id under the same parent) keeps its rev.
+- **A native select is a live field** unless it is `multiple`: its value
+  is the option its markup chooses (the last `selected`, else the first
+  that isn't disabled), set by a=field, and its options' `selected` isn't
+  diffed. hotty-go's test host moves a focused select when an option's
+  `selected` changes, which SPEC §6.2 doesn't allow (it checks the
+  option, not the select, for focus): a hotty-go fix, noted for it.
+- **Focus handlers hear the user's moves only** (Focus's doc says so):
+  the host reports no focus the program gives. ui's Dialog relies on it.
+- **A key with nothing focused** goes to the outermost elements with Key
+  handlers, through elements without one, in tree order; not only to
+  #root's children, so a layout's wrapper doesn't swallow a page's
+  shortcuts.
+- **Generated ids are `_` and base 36** (`_1`, `_a`), where they were
+  `e1`; an app's own id `root`, `hotty-css` or `_<base 36>` is a fault.
+- **At most 64 faults are held:** surftest drains them; a release build
+  would otherwise keep one more per render.
+- **The pointer's place holds across a document sent again** (SPEC §9.4).
+- **The fast parser takes only templ's named references in an
+  attribute** (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`, and numeric
+  ones), and gives any other to x/net/html: an attribute takes no prefix
+  of a name.
+- **js/wasm sends the document again after a refused delta,** as
+  run/term.go does.
 
 ### surftest
 

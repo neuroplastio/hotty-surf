@@ -86,11 +86,15 @@ func app(ctx context.Context, s *surf.Surface) error {
 		_, err := out.Write([]byte(hotty.Place(name, hotty.Placement{Cols: cols, Rows: rows, Press: hotty.On, Hover: hotty.On})))
 		return err
 	}
-	doc, err := s.Document()
-	if err != nil {
+	show := func() error {
+		doc, err := s.Document()
+		if err != nil {
+			return err
+		}
+		_, err = out.Write([]byte(hotty.Doc(name, doc, hotty.Scroll(hotty.ScrollVertical|hotty.ScrollHorizontal))))
 		return err
 	}
-	if _, err := out.Write([]byte(hotty.Doc(name, doc, hotty.Scroll(hotty.ScrollVertical|hotty.ScrollHorizontal)))); err != nil {
+	if err := show(); err != nil {
 		return err
 	}
 	if err := place(page.Get("cols").Int(), page.Get("rows").Int()); err != nil {
@@ -100,6 +104,14 @@ func app(ctx context.Context, s *surf.Surface) error {
 	quitting := false
 	h := input.Handlers{
 		Event: s.Event,
+		Reply: func(r hotty.Reply) error {
+			// The page refused a delta: what it has is no longer what the
+			// surface thinks, so it gets the document, as in a terminal.
+			if !r.OK && r.Surface == name && r.Re == "delta" {
+				return show()
+			}
+			return nil
+		},
 		Key: func(k string) error {
 			taken, err := s.Key(k)
 			if err == nil && !taken && quits(k) {

@@ -27,7 +27,9 @@ func (s *Surface) document() (string, error) {
 	// what the markup gives them, and the keyboard and the pointer are
 	// heard of again.
 	s.reset()
-	s.focused, s.focusIn, s.hoverIn, s.cssDue = "", nil, nil, false
+	// The pointer stays where it was (SPEC §9.4): the host doesn't report
+	// the same element again, so the chain is found again in the new tree.
+	s.focused, s.focusIn, s.cssDue = "", nil, false
 	f, _, err := s.paint()
 	if err != nil {
 		return "", err
@@ -41,6 +43,7 @@ func (s *Surface) document() (string, error) {
 		return "", err
 	}
 	s.keep(t)
+	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
 	s.remember(t.root)
 	s.asked = f.Focus
@@ -270,7 +273,7 @@ func (s *Surface) focus(id string) bool {
 func (s *Surface) hover(id string) bool {
 	to := s.chain(id)
 	from := s.hoverIn
-	s.hoverIn = to
+	s.hoverAt, s.hoverIn = id, to
 	return moved(s.frame.On, from, to, func(h *rt.Handlers) func(bool) { return h.Hover })
 }
 
@@ -316,15 +319,25 @@ func (s *Surface) key(k string) (bool, error) {
 }
 
 // tops is the ids of the elements a key goes to while nothing is focused:
-// #root's children, the view's outermost elements, where a page's
-// shortcuts are.
+// the outermost elements with Key handlers, in tree order, found through
+// any elements without one (a layout's wrappers around the page). They are
+// where a page's shortcuts are.
 func (s *Surface) tops() []string {
 	var out []string
-	for c := s.prev.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode {
-			out = append(out, attr(c, "id"))
+	var walk func(*html.Node)
+	walk = func(p *html.Node) {
+		for c := p.FirstChild; c != nil; c = c.NextSibling {
+			if c.Type != html.ElementNode {
+				continue
+			}
+			if h := s.frame.On[attr(c, "id")]; h != nil && len(h.Key) > 0 {
+				out = append(out, attr(c, "id"))
+				continue
+			}
+			walk(c)
 		}
 	}
+	walk(s.prev)
 	return out
 }
 

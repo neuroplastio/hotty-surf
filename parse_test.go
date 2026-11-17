@@ -87,3 +87,24 @@ func FuzzParse(f *testing.F) {
 		}
 	})
 }
+
+// TestParseAttrReferences: in an attribute the tokenizer takes no prefix of
+// a named reference (&notit; stays as it is in a title, where it is ¬it; in
+// text), so the fast parser takes only the names templ writes there, and
+// gives the rest to x/net/html.
+func TestParseAttrReferences(t *testing.T) {
+	for _, src := range []string{
+		`<a title="&notit;">x</a>`,
+		`<a title="&ampx;">x</a>`,
+		`<a title="&copy;">x</a>`,
+		`<p>&notit;</p>`,
+		`<a title="a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;">x</a>`,
+	} {
+		if fast, d := sameAsSlow(t, src); fast && d != "" {
+			t.Errorf("%s: differs at %s", src, d)
+		}
+	}
+	if fast, _ := sameAsSlow(t, `<a title="a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;">x</a>`); !fast {
+		t.Error("gave up on what templ writes in an attribute")
+	}
+}

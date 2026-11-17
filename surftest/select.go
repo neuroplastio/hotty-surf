@@ -120,8 +120,8 @@ func text(n *html.Node) string {
 func norm(s string) string { return strings.Join(strings.Fields(s), " ") }
 
 // canon is a document as text with each element's attributes sorted, and
-// without a live field's value and checked state: they are the host's,
-// set by a=field, not attributes.
+// without a live field's value and checked state, or a select's chosen
+// option: they are the host's, set by a=field, not attributes.
 func canon(t testing.TB, doc string) string {
 	t.Helper()
 	n, err := html.Parse(strings.NewReader(doc))
@@ -133,7 +133,7 @@ func canon(t testing.TB, doc string) string {
 		if x.Type == html.ElementNode {
 			var keep []html.Attribute
 			for _, a := range x.Attr {
-				if x.Data == "input" && (a.Key == "value" || a.Key == "checked") {
+				if x.Data == "input" && (a.Key == "value" || a.Key == "checked") || x.Data == "option" && a.Key == "selected" {
 					continue
 				}
 				keep = append(keep, a)

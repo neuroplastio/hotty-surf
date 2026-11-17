@@ -52,9 +52,13 @@ goes to the renderer's buffer.
 - **`number` gives every element an id.** An element keeps its own id if
   it has one. One without keeps the id its place had in the last frame:
   the place is the parent's id, the tag, and the index among siblings
-  without ids of their own. Otherwise it gets a new id, `e` plus a base-36
-  count. Whitespace-only text between elements is dropped, and so is an
-  empty `class`.
+  without ids of their own. Otherwise it gets a new id, `_` plus a base-36
+  count. An app's own `root`, `hotty-css` or `_<base 36>` is a fault: those
+  are the runtime's. Whitespace-only text between elements is dropped
+  where it holds a line break or isn't between two inline neighbours, as
+  JSX drops it; a space between two inline elements stays, and inside a
+  `pre`, `textarea` or `listing` all of it stays. An empty `class` is
+  dropped.
 - **The differ** (diff.go) compares the last tree with the new one,
   element by element by id, and writes a delta's ops:
   - an attribute set or removed;
@@ -67,8 +71,13 @@ goes to the renderer's buffer.
   A live field's value and checked state aren't attributes. They are the
   host's (SPEC §6.4): the differ sets them with `a=field` when the markup
   asks for something other than what the surface last heard, using the
-  rev the host last reported. A textarea's children are its value and
-  aren't diffed.
+  rev the host last reported. An input whose markup has no value
+  attribute asks for nothing. A textarea's children are its value and
+  aren't diffed. A select (not `multiple`) is a field too: its value is
+  the option its markup chooses, and its options' `selected` isn't
+  diffed. A field that enters the document again starts at rev 0, as on
+  the host, unless the host morphs it (an `inner` of its parent, the same
+  id under the same parent), where it keeps its rev.
 
 ## Events, keys and focus
 
@@ -84,15 +93,17 @@ pointer.
 - **press** (the surface is placed with Press on) runs the Outside
   handlers of every element the press isn't inside, in render order.
 - **hover** moves the pointer's chain, and Hover handlers hear it as
-  Focus handlers hear the keyboard.
+  Focus handlers hear the keyboard. The pointer's place holds across a
+  document sent again (SPEC §9.4).
 - **A key** goes to the Key handlers of the focused element's chain,
-  innermost first. With nothing focused, it goes to `#root`'s children,
-  where a page's shortcuts are. The host's mod key is written `mod`.
+  innermost first. With nothing focused, it goes to the outermost elements
+  with Key handlers, found through a layout's wrappers: a page's
+  shortcuts. The host's mod key is written `mod`.
 - **Autofocus** sends `a=focus` only when this frame asks for an element
   the frame before didn't, so a view that asks on every render doesn't
   take the keyboard back from where the user moved it. The host sends no
   focus event for focus the program gives (SPEC §10.1), so the surface
-  moves its own chain.
+  moves its own chain, and Focus handlers hear only the user's moves.
 
 An event that arrives while the surface is writing (a `cells.Screen`
 answers inside its Write) is deferred until the write is done.
@@ -109,11 +120,13 @@ answers inside its Write) is deferred until the write is done.
     Screen first, then to the surface, and the Screen's lines are drawn.
   - ctrl+c and ctrl+q quit when the surface doesn't take them.
   - Built for js, App speaks to the page's `globalThis.hottySurf`
-    (run/wasm.go).
+    (run/wasm.go), and sends the document again after a refused delta, as
+    in a terminal.
 - **`surftest`** drives a surface on hotty-go's test host. After every
   act it checks that the host's document, built from the deltas, is the
   surface's own tree, and fails the test on any fault a render recorded
-  (a duplicate `surf.On` id, a value a ui component doesn't take).
+  (a duplicate `surf.On` id, a value a ui component doesn't take). Outside
+  a test a surface holds at most 64 faults.
 - **`cells`** is a hotty host inside the program. It lays a document out
   in character cells, keeps its focus and fields, and sends the surface
   the events a host would.
