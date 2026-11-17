@@ -1004,6 +1004,12 @@ scrollbar classes and Avatar's image for the looks pass.
   nesting, modifiers, native controls, Command, Select and dialog Escape.
   The known editing limitations are in
   `docs/keyboard-model.md`.
+  - **TinyGo size:** the same hello-derived package, built from the same
+    source with `-no-debug` for wasm and a build tag switching the scope,
+    was 2,252,823 bytes raw / 728,707 gzip without KeyScope, and 2,341,413
+    raw / 749,785 gzip with it: +88,590 raw / +21,078 gzip when used.
+    The editing fallback is referenced by the scope instance, so it is
+    not linked just because a surface exists.
 - **Combobox selection: open for review.** Basecoat's combobox supports
   both single and multiple selection. The single case follows Select:
   `Items`, `Value`, `Placeholder`, `Disabled` and `OnChange`, selecting
@@ -1013,6 +1019,13 @@ scrollbar classes and Avatar's image for the looks pass.
   and multiple value fields and callbacks, or separate Props and component
   names for the two modes. The reviewer should decide the shape. Selection
   labels come from the items, not from a second object-valued selection.
+- **Port sources for the remaining work.** The spike has generated
+  Combobox markup but no combobox.js behavior port; that behavior still
+  needs translating. The spike's popup code is the source for the popup
+  interaction already ported. For the slider, hotty-a2ui supplies the
+  stepped-value, drag and cells behavior to adapt; it is not implemented
+  here yet. Each remaining component's pack entry will distinguish ported
+  code from behavior that had to be written here.
 - **Popover** (10 names). Side and Align are strings. Its trigger
   toggles it, and Escape closes it and gives the trigger the keyboard.
   The differential matches popover.js in Chromium except in one place.
