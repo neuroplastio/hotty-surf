@@ -50,8 +50,9 @@ func (st *PopoverState) Close() {
 
 // Popover is Basecoat's popover: its markup generated from
 // popover.html.jinja, its behaviour popover.js's, translated to Go. The
-// trigger opens and closes it; Escape closes it and gives the trigger
-// the keyboard; a click outside closes it; and it closes when another
+// trigger opens and closes it; Escape closes it and gives the trigger the
+// keyboard; a click outside closes it and leaves the keyboard where the
+// click put it; and it closes when another
 // popup (a Popover, a DropdownMenu, a Select) opens. Its children are its
 // content, with Basecoat's <header> (an <h2> or <h4> and a <p>) as plain
 // elements. To give an element in it the keyboard as it opens, as
@@ -128,9 +129,16 @@ func (v *popoverView) key(k string) bool {
 	return true
 }
 
+// outside is handleDocumentClick, but for the keyboard: popover.js gives
+// the trigger the keyboard after any click outside, where this leaves it
+// where the click put it. Outside hears a press before the host moves the
+// keyboard, and also a click off the surface, where taking the keyboard
+// back would take it from the terminal (the differential's outside case).
 func (v *popoverView) outside() { v.close(false) }
 
-func (v *popoverView) refocus() bool { return oneShot(&v.st.focus, v.st.focusAt, v.n) }
+func (v *popoverView) refocus() bool {
+	return oneShot(&v.st.focus, v.st.focusAt, v.n)
+}
 
 // rootAttrs are the root's: Escape, and while open the click outside.
 func (v *popoverView) rootAttrs(ctx context.Context) templ.Attributes {

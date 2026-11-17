@@ -990,6 +990,28 @@ scrollbar classes and Avatar's image for the looks pass.
   this. `surf.Blur(ctx)`, SPEC's `a=blur`, is added only when a
   component must give the keyboard to the terminal.
 
+### Batch B3: overlays (in progress)
+
+- **Popover** (10 names). Side and Align are strings. Its trigger
+  toggles it, and Escape closes it and gives the trigger the keyboard.
+  The differential matches popover.js in Chromium except in one place.
+- **One popup open at a time.** Basecoat's popups close each other
+  through a document event (`basecoat:popover`). A surface has no such
+  event, so a record in the surface's memo plays that part: the popup
+  that opens closes the one that was open. Popover, DropdownMenu and
+  Select take part, and Combobox will. A popup opened by its State's
+  Open joins at its next render, so one drawn earlier in that frame
+  stays drawn open until the next frame.
+- **Open question: the keyboard after a click outside.** popover.js
+  gives the trigger the keyboard after any click outside, even one on
+  another control. On a surface, an Outside handler hears the press
+  before the host moves the keyboard (SPEC §10.1). It also hears a
+  click off the surface, and can't tell the two apart. So the popover
+  leaves the keyboard where the click put it, and the differential
+  lists this as known. To match Basecoat, Outside would have to say
+  whether the click landed on the surface: a change to surf's API,
+  not ui's.
+
 ## L4: the build tools and embedding (the pack)
 
 L4's pack: the names L4 adds, the docs it changes, and the command's

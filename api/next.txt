@@ -115,6 +115,7 @@ pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Progress(ProgressProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Radio(RadioProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
@@ -126,6 +127,8 @@ pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Textarea(TextareaProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
+pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
+pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Open()
 pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Show(Toast)
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Attrs templ.Attributes
@@ -249,6 +252,13 @@ pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Items []SelectItem
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Value string
+pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct
+pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Align string
+pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Side string
+pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Trigger templ.Component
+pkg neuroplast.io/hotty-surf/ui, type PopoverState struct
 pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct
 pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct, Class string

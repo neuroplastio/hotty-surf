@@ -275,6 +275,19 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.TableProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
 - `ui.TableProps.Class`: as ButtonProps.Class.
 
+### ui's overlays (L2, batch B3)
+
+- `ui.Popover`: Basecoat's popover: popover.html.jinja's markup with popover.js translated; replaces the spike's hand Popover. A component of K1's first kind (a script that hears events, a State), so ID, Class and no Attrs.
+- `ui.PopoverProps`: a popover's attributes.
+- `ui.PopoverProps.ID`: names its elements (K14): the root, `-trigger` and `-popover`.
+- `ui.PopoverProps.Trigger`: what the trigger button holds, a component, as DropdownMenuProps.Trigger.
+- `ui.PopoverProps.Side`: K2 (a): Basecoat's data-side on the popover, which its CSS places by. A string, as kit-rules' B3 note says (K5: no shared enum), with its values in the doc.
+- `ui.PopoverProps.Align`: K2 (a): Basecoat's data-align on the popover, the same name and values as DropdownMenuProps.Align.
+- `ui.PopoverProps.Class`: as every Props.
+- `ui.PopoverState`: K2 (b): open is the popover's, and the ask for the keyboard that Escape and Close leave; as DropdownMenuState.
+- `ui.PopoverState.Open`: the app opens it (a shortcut, a first-run hint); it closes any other open popup when it renders.
+- `ui.PopoverState.Close`: the app closes it, as Escape does, giving the trigger the keyboard (closePopover's default), for a form inside that is done.
+
 ## ui/code
 
 - `ui/code.Block`: highlighted code in Basecoat's pre, in a package of its own so an app without code doesn't link Chroma (a large share of a wasm build). One function: the spike's View, Highlight and CSS fold into it, the token colours going into the kit's stylesheet.

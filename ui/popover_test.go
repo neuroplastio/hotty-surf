@@ -16,8 +16,8 @@ func popoverOpen(r *surftest.Rig, id string) bool {
 	return attr(r.One("#"+id+"-popover"), "aria-hidden") == "false"
 }
 
-// popover.js: the trigger toggles it, Escape closes it and gives the
-// trigger the keyboard, a click outside closes it.
+// popover.js: the trigger toggles it; Escape closes it and gives the
+// trigger the keyboard; a click outside closes it.
 func TestPopoverKeysAndClicks(t *testing.T) {
 	var st ui.PopoverState
 	s := surf.New("t", templ.Join(
@@ -40,6 +40,9 @@ func TestPopoverKeysAndClicks(t *testing.T) {
 	r.Click("#outside")
 	if popoverOpen(r, "p") {
 		t.Fatal("a click outside didn't close it")
+	}
+	if f := rt.Peek.Focused(s); f != "outside" {
+		t.Errorf("after a click outside the keyboard is on %q, want where the click put it", f)
 	}
 	st.Open()
 	r.Update()

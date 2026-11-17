@@ -19,12 +19,12 @@ func init() {
 	}
 	add(Story{ID: "popover/default", Doc: "A popover with a small form; Enter on its trigger opens it",
 		View: show(popoverDefault), Keys: []string{"tab", "enter"}, Want: "Dimensions"})
-	add(Story{ID: "popover/sides", Doc: "A popover for each side, the top one open (one popup is open at a time)",
+	add(Story{ID: "popover/sides", Doc: "A popover for each side, the top one open; Enter on the bottom one's trigger opens it and closes the top one (one popup is open at a time)",
 		View: func() templ.Component {
 			s := &overlayState{}
 			s.sides[0].Open()
 			return popoverSides(s)
-		}})
+		}, Keys: []string{"tab", "tab", "enter"}, Want: "Opens to the bottom"})
 }
 
 templ popoverDefault(s *overlayState) {

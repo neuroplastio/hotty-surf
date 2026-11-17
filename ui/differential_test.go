@@ -44,6 +44,7 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"tabs":          tabsSubject,
 	"toast":         toastSubject,
 	"dialog":        dialogSubject,
+	"popover":       popoverSubject,
 }
 
 func init() {
@@ -344,6 +345,27 @@ func tabsSubject(t *testing.T, args map[string]any) subject {
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Tabs(p).Render(templ.WithChildren(ctx, templ.Raw("<p>"+p.Value+"</p>")), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
+}
+
+// popoverSubject is a Popover for popover's macro arguments: id, trigger,
+// and popover_attrs' data-side and data-align. popover.js tells the page
+// nothing, so it reports nothing.
+func popoverSubject(t *testing.T, args map[string]any) subject {
+	var st ui.PopoverState
+	p := ui.PopoverProps{}
+	p.ID, _ = args["id"].(string)
+	trigger, _ := args["trigger"].(string)
+	p.Trigger = templ.Raw(trigger)
+	if pa, ok := args["popover_attrs"].(map[string]any); ok {
+		p.Side, _ = pa["data-side"].(string)
+		p.Align, _ = pa["data-align"].(string)
+	}
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Popover(&st, p).Render(templ.WithChildren(ctx, templ.Raw("<p>Hi</p>")), w)
 		}),
 		events: func() []map[string]any { return nil },
 	}
