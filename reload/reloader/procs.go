@@ -147,7 +147,7 @@ func (r *Reloader) join(p *proc) *devwire.Welcome {
 // that handed over waits for its next process, and any other crashed.
 func (r *Reloader) part(p *proc) {
 	p.mu.Lock()
-	left, handed := p.left, p.handedOver
+	left, handed := p.left, p.handedOver || p.handing
 	p.mu.Unlock()
 	r.mu.Lock()
 	if r.procs[p.key] != p {

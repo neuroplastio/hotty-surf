@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/a-h/templ/generator"
@@ -670,17 +671,17 @@ func (l *loop) restyle(failed map[string]string) bool {
 	l.r.mu.Lock()
 	l.r.styles = append(l.r.styles, st)
 	l.r.mu.Unlock()
-	ok := true
+	var refused atomic.Bool
 	l.each(failed, func(p *proc) error {
 		var res devwire.Restyled
 		err := p.call("restyle", &st, &res, answerWait)
 		if err != nil && !errors.Is(err, errExited) {
-			ok = false
+			refused.Store(true)
 			return nil // the build that follows says how it went
 		}
 		return err
 	})
-	if !ok {
+	if refused.Load() {
 		return false
 	}
 	l.shownCSS = st.New
@@ -881,13 +882,12 @@ func (l *loop) swap() Report {
 		}
 		return rep
 	}
-	deadline := time.NewTimer(comeBackWait)
-	defer deadline.Stop()
+	wait, cancelWait := context.WithTimeout(l.ctx, comeBackWait)
+	defer cancelWait()
 	for _, k := range keys {
 		select {
 		case <-backs[k]:
-		case <-deadline.C:
-		case <-l.ctx.Done():
+		case <-wait.Done():
 		}
 	}
 	r.mu.Lock()
@@ -908,7 +908,11 @@ func (l *loop) swap() Report {
 	r.crashes = nil
 	r.mu.Unlock()
 	for _, k := range crashes {
-		failed[k] = errExited.Error()
+		// A handover that failed says why; only a process that just died
+		// is "exited before handover".
+		if _, ok := failed[k]; !ok {
+			failed[k] = errExited.Error()
+		}
 	}
 	return rep
 }
