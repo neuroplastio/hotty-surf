@@ -21,7 +21,7 @@ func TestIconNames(t *testing.T) {
 	}
 	f.got = nil
 	surftest.Start(f, surf.New("t", page(ui.Icon("nope", "")), ui.Stylesheet()))
-	if len(f.got) != 1 || !strings.Contains(f.got[0], `no icon "nope" (the kit has arrow-down, `) || !strings.Contains(f.got[0], " plus, ") {
+	if len(f.got) != 1 || !strings.Contains(f.got[0], `no icon "nope" (the kit has archive, `) || !strings.Contains(f.got[0], " plus, ") {
 		t.Errorf("an icon the kit hasn't: %v", f.got)
 	}
 }

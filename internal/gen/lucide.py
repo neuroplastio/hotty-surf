@@ -7,12 +7,21 @@ the paths lucide-react draws: the kit's ICONS, and any more named.
 """
 import json, os, re, sys
 
-# The kit's icons: a subset of Lucide's until L2 ships the set.
+# The kit's icons: a subset of Lucide's, the ones its components draw
+# and a set an app commonly needs.
 ICONS = """
-arrow-down arrow-right arrow-up bell check chevron-down chevron-left
-chevron-right chevrons-left chevrons-right chevrons-up-down circle
-circle-alert circle-check-big circle-help circle-off circle-plus ellipsis eye-off folder hand
-inbox plus search settings-2 timer trash trash-2 user x
+archive arrow-down arrow-left arrow-right arrow-up arrow-up-down bell
+bookmark calendar check chevron-down chevron-left chevron-right
+chevron-up chevrons-left chevrons-right chevrons-up-down circle
+circle-alert circle-check-big circle-help circle-off circle-plus
+circle-x clock code copy download ellipsis ellipsis-vertical
+external-link eye eye-off file file-plus file-text filter folder
+folder-open folder-plus git-branch globe hand heart house image inbox
+info layout-grid link list lock lock-open log-in log-out mail menu
+message-square minus moon panel-left paperclip pause pencil play plus
+refresh-cw save search send settings settings-2 share-2 sparkles square
+star sun tag terminal timer trash trash-2 triangle-alert upload user
+user-plus users x
 """.split()
 
 src, out, names = sys.argv[1], sys.argv[2], ICONS + sys.argv[3:]

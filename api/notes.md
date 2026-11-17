@@ -1017,6 +1017,14 @@ scrollbar classes and Avatar's image for the looks pass.
   - **Open question:** Keywords on MenuItem, which a DropdownMenu
     ignores, or a CommandItem with MenuItem's fields and Keywords. The
     lean is Keywords, by K12.
+- **Icons: a set, not one at a time.** L5's apps asked for trash, and
+  will ask for file, folder, pencil, copy, calendar, sun, moon and more.
+  So the kit takes a fixed set of 59 common icons from the same
+  lucide-react 0.474.0, 88 in all. Icon's doc lists every one. Icon takes
+  a string, so there are no new names. They add about 11 KB of SVG
+  paths to the source (icons_gen.go, 4.7 KB to 15.8 KB), and so to every
+  binary that links ui (K13: no import, but the size is noted here).
+  `line-through` joined the kit's utilities, for a done task.
 - **Fixed on the way:** DropdownMenu, Select and Popover made their
   view when called, not when rendered. A component made once and
   rendered many times read its state as it was when made, so a menu
