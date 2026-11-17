@@ -40,11 +40,15 @@ fixed before the audit is complete.
   `audit-alert-events-empty.png`, `audit-alert-html.png`, and
   `audit-button-filter.png` compare the same stories in both windows.
   Alert empty Events lacked the spike's italic style; it is restored.
+  Filtering to Button and a filter with no matches show the same list behavior
+  and no-match text (`audit-button-filter.png`, `audit-empty-filter.png`).
   The Button preview had an extra count; it is removed, while Clicks remains
   editable and shared across renditions. State changes were not logged in
   Events; the spike's prop observation is restored. The model's filter also
   matched opaque IDs in addition to group and title; it now matches only
-  group and title, like the spike.
+  group and title, like the spike. Header spacing and description size
+  differed, and the theme and reset tooltip text was missing; these have
+  been restored.
 - [x] `audit-icons.png` showed the gallery missing tile borders and icon
   sizing. The tile borders and size are restored. The kit has a different
   set of Lucide names, so each gallery shows the icons its kit ships.

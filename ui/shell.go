@@ -44,8 +44,11 @@ type IconButtonProps struct {
 }
 
 func checkIconButtonName(ctx context.Context, attrs templ.Attributes) string {
-	for _, key := range []string{"aria-label", "aria-labelledby"} {
-		if value, ok := attrs[key].(string); ok && strings.TrimSpace(value) != "" {
+	for key, raw := range attrs {
+		if !strings.EqualFold(key, "aria-label") && !strings.EqualFold(key, "aria-labelledby") {
+			continue
+		}
+		if value, ok := raw.(string); ok && strings.TrimSpace(value) != "" {
 			return ""
 		}
 	}
@@ -54,13 +57,20 @@ func checkIconButtonName(ctx context.Context, attrs templ.Attributes) string {
 }
 
 func disableIconButton(ctx context.Context, attrs templ.Attributes) string {
-	value, exists := attrs["disabled"]
-	if !exists || value == nil || value == false {
-		return ""
+	var id string
+	disabled := false
+	for key, value := range attrs {
+		if strings.EqualFold(key, "id") {
+			id, _ = value.(string)
+		}
+		if strings.EqualFold(key, "disabled") && value != nil && value != false {
+			disabled = true
+		}
 	}
-	id, _ := attrs["id"].(string)
-	if f := rt.From(ctx); f != nil && f.On[id] != nil {
-		f.On[id].Click = nil
+	if disabled {
+		if f := rt.From(ctx); f != nil && f.On[id] != nil {
+			f.On[id].Click = nil
+		}
 	}
 	return ""
 }

@@ -20,6 +20,7 @@ func TestIconButtonNamesAndOwnedAttributes(t *testing.T) {
 	}{
 		{"label", templ.Attributes{"aria-label": "Hosts"}, ""},
 		{"labelledby", templ.Attributes{"aria-labelledby": "label"}, ""},
+		{"upper label", templ.Attributes{"ARIA-LABEL": "Hosts"}, ""},
 		{"missing", nil, "accessible name"},
 		{"owned", templ.Attributes{"aria-label": "Hosts", "type": "submit"}, "Attrs has type"},
 	} {
