@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>hotty-surf</title>
+  <link rel="stylesheet" href="xterm.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #1d1f21; }
+    #term { position: absolute; inset: 0; }
+    #report {
+      display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+      max-height: 50%; overflow: auto; margin: 0; padding: 12px 16px;
+      background: #2a1616; color: #f3d6d6; border-top: 2px solid #c94f4f;
+      font: 13px/1.4 ui-monospace, monospace; white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="term"></div>
+  <pre id="report"></pre>
+  <script src="wasm_exec.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

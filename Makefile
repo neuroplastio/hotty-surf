@@ -30,7 +30,7 @@ CAP       ?=
 # internal/apitool the API lock's tools.
 SUBMODULES := surftea internal/apitool
 
-.PHONY: check fmt tidy gen vet lint test canary tinygo api api-check api-frozen api-approve pack coverage print-cap clean
+.PHONY: check fmt tidy gen vet lint test canary tinygo browser api api-check api-frozen api-approve pack coverage print-cap clean
 
 check: fmt tidy gen vet lint test tinygo api-check coverage   ## the gate
 
@@ -133,6 +133,17 @@ coverage:
 	sh scripts/coverage-md.sh "$$t" || exit 1; \
 	if ! diff -q docs/coverage.md "$$t" >/dev/null; then \
 	  echo "docs/coverage.md is not what ui/coverage.tsv makes: sh scripts/coverage-md.sh"; exit 1; fi
+
+# The page build --wasm writes and serve serves, in Chromium through
+# Playwright (scripts/browser): not in check, since it needs a browser.
+# PIN keeps Chromium on the CPUs IDLE_CPUS names.
+NODE ?= mise x -- node
+PIN  ?= $(if $(IDLE_CPUS),taskset -c $(IDLE_CPUS))
+browser: scripts/browser/node_modules   ## build --wasm and serve, proven in Chromium: .shots/browser
+	GO="$(GO_BARE)" NODE="$(NODE)" $(CAP) $(PIN) sh scripts/browser/check.sh
+
+scripts/browser/node_modules: scripts/browser/package.json scripts/browser/package-lock.json
+	cd scripts/browser && $(CAP) $(NODE) npm ci --no-audit --no-fund
 
 print-cap:   ## the CAP the steps run under, for a script that builds outside make
 	@echo '$(CAP)'

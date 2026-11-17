@@ -10,6 +10,13 @@
 //	hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
 //	                                       the app headless: built, run with no
 //	                                       terminal, its document rendered once quiet
+//	hotty-surf build --wasm [-go] [-o dir] [dir]
+//	                                       the app as a page (dir/dist): its wasm,
+//	                                       built by TinyGo (Go with -go), in xterm.js
+//	                                       with xterm-addon-hotty
+//	hotty-surf serve [-addr localhost:7279] [dir]
+//	                                       the app's page, built by Go, reloading in
+//	                                       the browser as its files are saved
 //	hotty-surf lint [dir]                  the kit's rules (package lint): a line a
 //	                                       finding (1: there is one)
 //	hotty-surf new <dir>                   a new app: page, state, styles, a test
@@ -33,6 +40,8 @@ const usage = `usage:
   hotty-surf run [dir]
   hotty-surf ctl reload | shot [-html] [out.png]
   hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
+  hotty-surf build --wasm [-go] [-o dir] [dir]
+  hotty-surf serve [-addr localhost:7279] [dir]
   hotty-surf lint [dir]
   hotty-surf new <dir>
 `
@@ -66,6 +75,10 @@ func cmd(ctx context.Context, args []string) int {
 		return devcmd.Ctl(ctx, devcmd.SockPath(), args[1:], os.Stdout, os.Stderr)
 	case "shot":
 		return devcmd.Shot(ctx, args[1:], os.Stdout, os.Stderr)
+	case "build":
+		return devcmd.Build(ctx, args[1:], os.Stdout, os.Stderr)
+	case "serve":
+		return devcmd.Serve(ctx, args[1:], os.Stdout, os.Stderr)
 	case "lint":
 		return devcmd.Lint(dir(), os.Stdout, os.Stderr)
 	case "new":
