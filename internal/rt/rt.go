@@ -22,7 +22,10 @@ type Handlers struct {
 	Outside func()
 	Hover   func(bool)
 	Submit  func()
-	Drag    func(hotty.Event)
+	// Drag and Drop are surf.Drag's and surf.Drop's, as any: the event's
+	// type is surf's (rt can't import surf). Secondary is surf.Secondary's.
+	Drag, Drop any
+	Secondary  func(hotty.Cell, hotty.Area)
 }
 
 // A Frame is one render's registrations.
