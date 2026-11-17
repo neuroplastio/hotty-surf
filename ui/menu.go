@@ -94,19 +94,7 @@ type menuView struct {
 	items   []int     // the items' indexes into p.Items, as opts
 	enabled []int     // the items not disabled, as indexes into opts (getItems)
 	n       uint64    // the frame rendering it (rt.Frame.N), its handlers'
-	popups  *popup    // the surface's open popup
 }
-
-// join reads the frame: its number, and the surface's popups.
-func (v *menuView) join(ctx context.Context) string {
-	v.n = frameN(ctx)
-	v.popups = popups(ctx)
-	v.popups.track(v.st, v.st.open, v.shut)
-	return ""
-}
-
-// shut closes it for another popup's opening.
-func (v *menuView) shut() { v.st.open, v.st.active = false, -1 }
 
 func newMenuView(st *DropdownMenuState, p DropdownMenuProps) *menuView {
 	v := &menuView{st: st, p: p, id: or(p.ID, "dropdown-menu")}
@@ -171,7 +159,6 @@ func (v *menuView) activeOpt() int {
 // open is openPopover: initial is the item highlighted, if any.
 func (v *menuView) open(initial uint8) {
 	v.st.open = true
-	v.popups.opened(v.st, v.shut)
 	if n := len(v.enabled); n > 0 {
 		switch initial {
 		case pickFirst:
@@ -188,7 +175,6 @@ func (v *menuView) close(focus bool) {
 		return
 	}
 	v.st.open, v.st.active = false, -1
-	v.popups.closed(v.st)
 	if focus {
 		v.ask()
 	}
