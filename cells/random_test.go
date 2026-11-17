@@ -23,7 +23,7 @@ var (
 	fClasses = []string{"flex", "flex-col", "grid", "gap-2", "gap-x-4", "p-4", "px-2", "py-4", "flex-1", "w-full", "justify-between",
 		"justify-end", "justify-center", "hidden", "sr-only", "list-disc", "list-decimal", "whitespace-pre", "input", "btn", "font-bold", "md:flex"}
 	fStyles = []string{"display:flex", "display:none", "padding:16px 8px", "gap:16px", "flex:1", "width:100%", "white-space:pre", "display:grid"}
-	fTexts  = []string{"hello", "a long line of words that wraps", "漢字かな", "é", "👩‍👩‍👧", "\t", "\n", " ", "x‍y", "\x1b[31mred", "\u009b31m", "\r\n", "ab cd", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+	fTexts  = []string{"hello", "a long line of words that wraps", "漢字かな", "é", "👩‍👩‍👧", "\t", "\n", " ", "x\u200dy", "\x1b[31mred", "\u009b31m", "\r\n", "ab\u00a0cd", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 	fTypes  = []string{"text", "checkbox", "radio", "password", "submit", "button", "hidden", "range", "number"}
 	fKeys   = []string{"tab", "shift+tab", "enter", "space", "a", "漢", "backspace", "delete", "arrow_left", "arrow_right", "arrow_up", "arrow_down",
 		"home", "end", "page_up", "page_down", "shift+arrow_left", "ctrl+a", "alt+backspace", "shift+enter", "escape", "ctrl+z", "x", "ctrl+home"}
