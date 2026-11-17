@@ -53,6 +53,12 @@ type Frame struct {
 	// frame is read: a component's last word on what the frame asks
 	// (Focus), given what the whole view asked. A hook may add hooks.
 	After []func()
+	// Modal are the ids of the modal elements open in this render (a
+	// Dialog), outermost first. A key the focused element and its
+	// ancestors don't take is offered to their Key handlers, last opened
+	// first: hotty 0.8 can't keep the keyboard inside a modal region, so it
+	// may be outside the dialog, and Escape still closes it.
+	Modal []string
 }
 
 type key struct{}

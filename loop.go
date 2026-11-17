@@ -3,6 +3,7 @@ package surf
 import (
 	"errors"
 	"io"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -336,6 +337,21 @@ func (s *Surface) key(k string) (bool, error) {
 		for _, fn := range h.Key {
 			if fn(k) {
 				return true, s.send()
+			}
+		}
+	}
+	// An open modal hears what the keyboard outside it didn't take
+	// (rt.Frame.Modal): its Escape.
+	for i := len(s.frame.Modal) - 1; i >= 0; i-- {
+		id := s.frame.Modal[i]
+		if slices.Contains(ids, id) {
+			continue
+		}
+		if h := s.frame.On[id]; h != nil {
+			for _, fn := range h.Key {
+				if fn(k) {
+					return true, s.send()
+				}
 			}
 		}
 	}
