@@ -69,7 +69,7 @@ component values and applies the changes its callbacks report.
 | Table | None of its own; children have their own keys. |
 | Tabs | Left and Right move among enabled tabs, wrapping; Home and End choose the first and last. Focus follows the selected tab. |
 | Textarea | Text editing follows the field keymap and platform; Enter inserts a line break. |
-| Toast / toaster | Action, cancel and Dismiss use button activation; a leaving toast disables its buttons. There are no other toaster keys. |
+| Toast / toaster | Actions and Dismiss use button activation; a leaving toast disables its buttons. There are no other toaster keys. A toast never takes the keyboard by itself: an app that walks its toasts with its own keys sets Focused, which draws the first button ringed, and runs the action itself; that doesn't close the toast as a click does, and Remove does. |
 | Tooltip | No keys; Basecoat shows it on hover, not keyboard focus. Cells does not currently display it. |
 
 Select, DropdownMenu, Tabs, Popover, Command and Dialog have Go handlers.
