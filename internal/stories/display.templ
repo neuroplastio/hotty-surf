@@ -2,6 +2,7 @@ package stories
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,12 @@ type Alert struct {
 	Title string
 	Text string
 	Icon bool
+}
+
+// Table is the editable state of a sortable invoice table story.
+type Table struct {
+	Caption bool
+	Sort string `enum:"invoice,status,amount"`
 }
 
 func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
@@ -73,7 +80,10 @@ func init() {
 	add(Story{ID: "scrollbar/default", Doc: "A plain box of twenty lines that scrolls, with Basecoat's scrollbar class", View: show(scrollbarDefault)})
 	add(Story{ID: "scrollbar/small", Doc: "A Textarea of twenty lines with the scrollbar-sm class", View: show(scrollbarSmall)})
 	add(Story{ID: "skeleton/default", Doc: "A skeleton of a round picture and two lines", View: show(skeletonDefault)})
-	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault)})
+	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault), Props: func() (any, templ.Component) {
+		p := &Table{Caption: true, Sort: "invoice"}
+		return p, bookTable(p)
+	}})
 }
 
 templ alertDefault(s *displayState) {
@@ -394,4 +404,50 @@ templ tableDefault(s *displayState) {
 			</tfoot>
 		}
 	</div>
+}
+
+var bookInvoices = []invoice{
+	{"INV001", "Paid", "Credit card", "$250.00"},
+	{"INV002", "Pending", "PayPal", "$150.00"},
+	{"INV003", "Unpaid", "Bank transfer", "$350.00"},
+	{"INV004", "Paid", "Credit card", "$450.00"},
+	{"INV005", "Paid", "PayPal", "$550.00"},
+}
+
+func sortedInvoices(by string) []invoice {
+	out := slices.Clone(bookInvoices)
+	slices.SortStableFunc(out, func(a, b invoice) int {
+		switch by {
+		case "status": return strings.Compare(a.status, b.status)
+		case "amount": return strings.Compare(a.amount, b.amount)
+		default: return strings.Compare(a.id, b.id)
+		}
+	})
+	return out
+}
+
+templ bookTable(p *Table) {
+	@ui.Table(ui.TableProps{}) {
+		if p.Caption {
+			<caption>A list of your recent invoices.</caption>
+		}
+		<thead><tr>
+			for _, col := range []string{"invoice", "status", "amount"} {
+				<th>
+					@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Attrs: surf.On(ctx, "th-"+col, surf.Click(func() { p.Sort = col }))}) {
+						{ col }
+						if p.Sort == col {
+							@ui.Icon("arrow-down", "size-3.5")
+						}
+					}
+				</th>
+			}
+			<th>Method</th>
+		</tr></thead>
+		<tbody>
+			for _, row := range sortedInvoices(p.Sort) {
+				<tr><td>{ row.id }</td><td>{ row.status }</td><td>{ row.amount }</td><td>{ row.method }</td></tr>
+			}
+		</tbody>
+	}
 }
