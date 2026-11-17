@@ -407,10 +407,6 @@ func (a *App) setProp(path string) func(string) {
 	return func(value string) { a.model.Set(a.model.Sel, path, value) }
 }
 
-func (a *App) setBool(path string) func(bool) {
-	return func(value bool) { a.model.Set(a.model.Sel, path, strconv.FormatBool(value)) }
-}
-
 // controls and entries adapt the model data to the spike's kit parts.
 func (a *App) controls() []ui.Control {
 	var out []ui.Control
@@ -706,18 +702,6 @@ func (a *App) paneErr() string {
 		return ""
 	}
 	return a.cur.err.Error()
-}
-
-// keysLine is the story's Keys and Want, as the gate presses them.
-func keysLine(st stories.Story) string {
-	if len(st.Keys) == 0 {
-		return ""
-	}
-	s := "Keys: " + strings.Join(st.Keys, " ") + " → " + st.Want
-	if st.Gap != "" {
-		s += " (gap: " + st.Gap + ")"
-	}
-	return s
 }
 
 func bstr(b bool) string {
