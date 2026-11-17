@@ -22,7 +22,7 @@ templ breadcrumb(p BreadcrumbProps) {
 							if stop(it.Attrs) {
 								tabindex="0"
 							}
-							{ it.Attrs... }
+							{ scopeNativeAttrs(ctx, it.Attrs, "link")... }
 						>{ it.Label }</a>
 					} else {
 						<span { it.Attrs... }>{ it.Label }</span>
@@ -76,7 +76,7 @@ templ item(p ItemProps) {
 				tabindex="0"
 			}
 			class={ join("item", p.Class) }
-			{ p.Attrs... }
+			{ scopeNativeAttrs(ctx, p.Attrs, "link")... }
 		>
 			{ children... }
 		</a>

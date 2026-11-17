@@ -272,6 +272,64 @@ func TestHandoverBusyDriver(t *testing.T) {
 	<-driven
 }
 
+// A driver can be idle for longer than the old dropped-surface threshold and then be busy in a
+// handler. Its old render time does not permit an off-driver Keep call.
+func TestHandoverIdleThenBusyDriver(t *testing.T) {
+	fresh()
+	exited := exits(t)
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	getRan := make(chan struct{}, 1)
+	var count int
+	Keep(func(w *msgp.Writer) error { getRan <- struct{}{}; return w.WriteInt(count) }, func(*msgp.Reader) error { return nil })
+	t.Cleanup(func() { Keep(nil, nil) })
+	rows := 0
+	s := surf.New("slow", clicker(func() {
+		close(entered)
+		<-release
+		count++
+		rows++
+	}, &rows), "")
+	r, _ := serve(t, context.Background(), "app", &devwire.Welcome{})
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(3050 * time.Millisecond)
+	driven := make(chan struct{})
+	go func() {
+		defer close(driven)
+		_ = s.Event(hotty.Event{Surface: "slow", Kind: hotty.EventClick, Target: "add"})
+		select {
+		case <-s.Pending():
+			_ = s.Update()
+		case <-time.After(2 * time.Second):
+		}
+	}()
+	<-entered
+	if _, err := r.conn.Request("handover", &devwire.Empty{}); err != nil {
+		close(release)
+		t.Fatal(err)
+	}
+	select {
+	case <-getRan:
+		close(release)
+		<-driven
+		t.Fatal("Keep ran while the driver's handler was still active")
+	case <-time.After(3100 * time.Millisecond):
+	}
+	close(release)
+	var hd devwire.Handed
+	if h, err := r.next(&hd); err != nil || h.Error != "" {
+		t.Fatalf("handover: %+v %v", h, err)
+	}
+	if len(hd.State) == 0 || len(hd.Surfaces) != 1 || !strings.Contains(string(hd.Surfaces[0].Data), `id="r0"`) {
+		t.Fatalf("handover did not capture the completed handler: %+v", hd)
+	}
+	<-exited
+	<-driven
+}
+
 // TestRestyleLastMatch: the scaffold's stylesheet is the kit's, "\n",
 // then app.css. An edit replaces app.css's text where it is last, after
 // the kit's rules, which it then beats.
@@ -384,4 +442,189 @@ func TestAreas(t *testing.T) {
 	devhook.Placed(a, 80, 24) // the same size: nothing
 	surf.New("b", clicker(func() {}, &rows), "")
 	next(devwire.Area{Name: "a", Cols: 80, Rows: 24}, devwire.Area{Name: "b"})
+}
+
+// A driver which never answers must not be read off-driver or run a stale
+// queued Keep after the handover has failed.
+func TestHandoverUnresponsiveDriverCancelsWork(t *testing.T) {
+	fresh()
+	oldWait := busyWait
+	busyWait = 100 * time.Millisecond
+	t.Cleanup(func() { busyWait = oldWait; Keep(nil, nil) })
+	getRan := make(chan struct{}, 1)
+	Keep(func(w *msgp.Writer) error { getRan <- struct{}{}; return w.WriteInt(1) }, nil)
+	rows := 0
+	s := surf.New("stopped", clicker(func() {}, &rows), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	c := &child{surfaces: []*surf.Surface{s}}
+	var hd devwire.Handed
+	if err := c.handover(&hd); err == nil || !strings.Contains(err.Error(), "busy handler; kept the running version") {
+		t.Fatalf("handover with an unresponsive driver: %v", err)
+	}
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-getRan:
+		t.Fatal("cancelled handover ran Keep after failing")
+	default:
+	}
+}
+
+// A known stopped driver is handed over as dropped without waiting for the
+// busy timeout, and its last snapshot and state are retained.
+func TestHandoverExitedDriverIsDropped(t *testing.T) {
+	fresh()
+	defer Keep(nil, nil)
+	Keep(func(w *msgp.Writer) error { return w.WriteInt(7) }, nil)
+	rows := 1
+	s := surf.New("exited", clicker(func() {}, &rows), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	devhook.Driver(s, done)
+	close(done)
+	c := &child{surfaces: []*surf.Surface{s}}
+	var hd devwire.Handed
+	start := time.Now()
+	if err := c.handover(&hd); err != nil {
+		t.Fatal(err)
+	}
+	if time.Since(start) >= time.Second {
+		t.Fatal("waited for an exited driver")
+	}
+	if len(hd.State) == 0 || len(hd.Surfaces) != 1 || !strings.Contains(string(hd.Surfaces[0].Data), `id="r0"`) {
+		t.Fatalf("dropped driver handover: %+v", hd)
+	}
+}
+
+// A busy driver that misses the deadline fails the handover and cannot run
+// its cancelled Keep when the handler eventually returns.
+func TestHandoverBusyPastDeadline(t *testing.T) {
+	fresh()
+	t.Cleanup(func() { Keep(nil, nil) })
+	getRan := make(chan struct{}, 1)
+	Keep(func(w *msgp.Writer) error { getRan <- struct{}{}; return w.WriteInt(1) }, nil)
+	entered, release, driven := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	rows := 0
+	s := surf.New("busy", clicker(func() { close(entered); <-release; rows++ }, &rows), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		defer close(driven)
+		_ = s.Event(hotty.Event{Surface: "busy", Kind: hotty.EventClick, Target: "add"})
+		_ = s.Update()
+	}()
+	<-entered
+	c := &child{surfaces: []*surf.Surface{s}}
+	var hd devwire.Handed
+	err := c.handover(&hd)
+	close(release)
+	<-driven
+	if err == nil || !strings.Contains(err.Error(), "reload waited 4s for a busy handler; kept the running version") {
+		t.Fatalf("busy handover: %v", err)
+	}
+	select {
+	case <-getRan:
+		t.Fatal("Keep ran after the handover failed")
+	default:
+	}
+}
+
+func TestHandoverDriverExitsWhileWaiting(t *testing.T) {
+	fresh()
+	defer Keep(nil, nil)
+	Keep(func(w *msgp.Writer) error { return w.WriteInt(7) }, nil)
+	rows := 1
+	first := surf.New("first", clicker(func() {}, &rows), "")
+	second := surf.New("second", clicker(func() {}, &rows), "")
+	for _, s := range []*surf.Surface{first, second} {
+		s.Attach(io.Discard, hotty.Caps{})
+		if _, err := s.Document(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	done := make(chan struct{})
+	devhook.Driver(first, done)
+	driven := make(chan struct{})
+	go func() {
+		defer close(driven)
+		select {
+		case <-second.Pending():
+			_ = second.Update()
+		case <-time.After(2 * time.Second):
+		}
+	}()
+	c := &child{surfaces: []*surf.Surface{first, second}}
+	var hd devwire.Handed
+	result := make(chan error, 1)
+	go func() { result <- c.handover(&hd) }()
+	time.Sleep(50 * time.Millisecond)
+	close(done)
+	if err := <-result; err != nil {
+		t.Fatal(err)
+	}
+	<-driven
+	if len(hd.State) == 0 || len(hd.Surfaces) != 2 {
+		t.Fatalf("handover: %+v", hd)
+	}
+}
+
+// If a later surface is busy, an earlier responsive surface must remain
+// attached when the handover fails and the old build keeps running.
+func TestFailedHandoverKeepsEarlierSurfaceAttached(t *testing.T) {
+	fresh()
+	oldWait := busyWait
+	busyWait = 100 * time.Millisecond
+	t.Cleanup(func() { busyWait = oldWait; Keep(nil, nil) })
+	var output bytes.Buffer
+	rows := 0
+	first := surf.New("first", clicker(func() { rows++ }, &rows), "")
+	first.Attach(&output, hotty.Caps{})
+	if _, err := first.Document(); err != nil {
+		t.Fatal(err)
+	}
+	secondRows := 0
+	second := surf.New("busy", clicker(func() {}, &secondRows), "")
+	second.Attach(io.Discard, hotty.Caps{})
+	if _, err := second.Document(); err != nil {
+		t.Fatal(err)
+	}
+	stop, driven, click, clicked := make(chan struct{}), make(chan struct{}), make(chan struct{}), make(chan struct{})
+	go func() {
+		defer close(driven)
+		for {
+			select {
+			case <-first.Pending():
+				_ = first.Update()
+			case <-click:
+				_ = first.Event(hotty.Event{Surface: "first", Kind: hotty.EventClick, Target: "add"})
+				close(clicked)
+			case <-stop:
+				return
+			}
+		}
+	}()
+	c := &child{surfaces: []*surf.Surface{first, second}}
+	var hd devwire.Handed
+	err := c.handover(&hd)
+	if err == nil {
+		close(stop)
+		<-driven
+		t.Fatal("handover unexpectedly succeeded")
+	}
+	click <- struct{}{}
+	<-clicked
+	close(stop)
+	<-driven
+	if output.Len() == 0 {
+		t.Fatal("earlier surface was detached after the failed handover")
+	}
 }

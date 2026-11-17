@@ -9,7 +9,9 @@ import (
 
 	"github.com/a-h/templ"
 
+	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
 )
@@ -134,7 +136,7 @@ func TestDialogBackdrop(t *testing.T) {
 	if !a.open {
 		t.Fatal("a click inside the dialog closed it")
 	}
-	r.Click("#note")
+	r.Click("#d")
 	if a.open || a.closes != 1 {
 		t.Fatalf("a click outside: open %v after %d closes", a.open, a.closes)
 	}
@@ -163,7 +165,7 @@ func TestDialogBackdropGivesTheKeyboardBack(t *testing.T) {
 	})
 	r := start(t, view)
 	r.Click("#open")
-	r.Click("#note") // outside the box: the backdrop
+	r.Click("#d") // outside the box: the backdrop
 	if open {
 		t.Fatal("a click on the backdrop didn't close the dialog")
 	}
@@ -312,21 +314,112 @@ func TestDialogIDThatChangesOnClose(t *testing.T) {
 	}
 }
 
-// TestDialogEscapeFromOutside: hotty 0.8 can't keep the keyboard in a
-// modal dialog, so Tab can take it out; Escape still closes the dialog.
-func TestDialogEscapeFromOutside(t *testing.T) {
+func TestDialogFocusWrap(t *testing.T) {
 	a := &dialogApp{}
-	r := start(t, a.view())
+	s := surf.New("t", a.view(), ui.Stylesheet())
+	r := surftest.Start(t, s)
 	r.Click("#open")
-	// From the dialog's first field back to the button behind it.
+	if got := rt.Peek.Focused(s); got != "name" {
+		t.Fatalf("initial focus = %q", got)
+	}
 	r.Key("shift+tab")
-	if !a.open {
-		t.Fatal("shift+tab closed the dialog")
+	if got := rt.Peek.Focused(s); got != "d-close" {
+		t.Fatalf("shift+tab from first focused %q, want close", got)
 	}
-	if !r.Key("escape") {
-		t.Fatal("escape with the keyboard outside the open dialog: not taken")
+	r.Key("tab")
+	if got := rt.Peek.Focused(s); got != "name" {
+		t.Fatalf("tab from last focused %q, want name", got)
 	}
+	r.Click("#body-text")
+	if got := rt.Peek.Focused(s); got != "name" {
+		t.Fatalf("click on text focused %q, want name", got)
+	}
+	want(t, r, "#open", "tabindex", "-1")
+	r.Key("escape")
 	if a.open || a.closes != 1 {
 		t.Fatalf("open %v after %d closes", a.open, a.closes)
+	}
+	if got := attr(r.One("#open"), "tabindex"); got != "" {
+		t.Fatalf("tabindex after closing = %q", got)
+	}
+}
+
+func TestDialogBlocksBackground(t *testing.T) {
+	open, clicks := false, 0
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return page(
+			button("open", "Open", func() { open = true }),
+			button("background", "Background", func() { clicks++ }),
+			with(ui.Dialog(ui.DialogProps{ID: "modal", Open: open, OnClose: func() { open = false }}),
+				button("inside", "Inside", func() {})),
+		).Render(ctx, w)
+	})
+	s := surf.New("modal", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#open")
+	r.Click("#background")
+	if clicks != 0 || !open {
+		t.Fatalf("background click: clicks=%d, modal open=%v", clicks, open)
+	}
+	if got := rt.Peek.Focused(s); got != "inside" {
+		t.Fatalf("background click moved focus to %q", got)
+	}
+}
+
+func TestCommandDialogSingleFocusWrap(t *testing.T) {
+	var state ui.CommandState
+	open := false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return page(button("open", "Open", func() { open = true }),
+			ui.CommandDialog(&state, ui.CommandDialogProps{ID: "only", Open: open})).Render(ctx, w)
+	})
+	s := surf.New("modal", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#open")
+	for _, k := range []string{"shift+tab", "tab"} {
+		r.Key(k)
+		if got := rt.Peek.Focused(s); got != "only-input" {
+			t.Fatalf("%s focused %q, want the sole control", k, got)
+		}
+	}
+}
+
+func TestModalDoesNotSendKeysToBackground(t *testing.T) {
+	open, heard := false, false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return page(
+			element("section", "", "background", "Background", surf.Key(func(string) bool { heard = true; return true })),
+			button("open", "Open", func() { open = true }),
+			with(ui.Dialog(ui.DialogProps{ID: "modal", Open: open, OnClose: func() { open = false }}),
+				button("inside", "Inside", func() {})),
+		).Render(ctx, w)
+	})
+	s := surf.New("modal", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#open")
+	if err := s.Event(hotty.Event{Kind: hotty.EventBlur}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Key("arrow_down"); err != nil {
+		t.Fatal(err)
+	}
+	if heard {
+		t.Fatal("a background key handler ran while the modal was open")
+	}
+}
+
+func TestDialogWithoutCloseButton(t *testing.T) {
+	open := false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return page(button("open-no-close", "Open", func() { open = true }), with(ui.Dialog(ui.DialogProps{ID: "plain", Open: open, Title: "Confirm", HideCloseButton: true, OnClose: func() { open = false }}), templ.Raw(`<p>No controls</p>`))).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("dialog", view, ui.Stylesheet()))
+	r.Click("#open-no-close")
+	if len(r.Find("#plain-close")) != 0 {
+		t.Fatal("close button rendered")
+	}
+	r.Key("escape")
+	if open {
+		t.Fatal("Escape did not close empty dialog")
 	}
 }

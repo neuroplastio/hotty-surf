@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/html/atom"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottyedit"
+	"neuroplast.io/hotty-surf/internal/keydefault"
 )
 
 // What the user does, as a host has it done (SPEC §9, §10): focus, keys,
@@ -350,8 +351,30 @@ func (c *Screen) edited(n *html.Node, f *field) {
 	f.rev++
 	c.lay = nil
 	if id := attr(n, "id"); id != "" && tokens(n, "data-on", "input") {
-		c.emit(hotty.Event{Kind: hotty.EventInput, Target: id, Value: f.ed.Value, Rev: f.rev})
+		e := hotty.Event{Kind: hotty.EventInput, Target: id, Value: f.ed.Value, Rev: f.rev}
+		if tokens(n, "data-on", "caret") {
+			sel := fieldSelection(f)
+			e.Sel = &sel
+		}
+		c.emit(e)
 	}
+}
+
+// fieldSelection converts the editor's grapheme positions to the byte
+// offsets carried by hotty field events.
+func fieldSelection(f *field) [2]int {
+	anchor, _ := f.ed.Anchor()
+	bytesAt := func(index int) int {
+		off := 0
+		for i, g := range graphemesOf(f.ed.Value) {
+			if i >= index {
+				break
+			}
+			off += len(g)
+		}
+		return off
+	}
+	return [2]int{bytesAt(anchor), bytesAt(f.ed.Caret)}
 }
 
 // group is a radio button's group: the radios of its name in its form.
@@ -386,8 +409,8 @@ func (c *Screen) check(n *html.Node, on bool) {
 // says so (SPEC §9).
 func (c *Screen) toggle(n *html.Node) {
 	f := c.field(n)
-	on := !f.checked
-	if !on && strings.EqualFold(attr(n, "type"), "radio") {
+	on, changed := keydefault.Check(f.checked, strings.EqualFold(attr(n, "type"), "radio"))
+	if !changed {
 		return
 	}
 	c.check(n, on)
@@ -599,6 +622,7 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 			return true
 		}
 	}
+	before := fieldSelection(f)
 	a, changed := f.ed.Key(km, key)
 	switch {
 	case a == "":
@@ -613,6 +637,11 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 	case changed:
 		c.edited(el, f)
 	}
+	if !changed && tokens(el, "data-on", "caret") {
+		if sel := fieldSelection(f); sel != before && attr(el, "id") != "" {
+			c.emit(hotty.Event{Kind: hotty.EventCaret, Target: attr(el, "id"), Rev: f.rev, Sel: &sel})
+		}
+	}
 	c.lay = nil
 	return true
 }
@@ -622,47 +651,15 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 // case, going round to the first (SPEC §10.2 Selects).
 func (c *Screen) selectKey(el *html.Node, key, name string) bool {
 	opts := options(el)
-	cur := c.field(el).ed.Value
-	i := slices.IndexFunc(opts, func(o option) bool { return o.value == cur })
-	from := func(j, step int) int {
-		for ; j >= 0 && j < len(opts); j += step {
-			if !opts[j].disabled {
-				return j
-			}
-		}
-		return -1
+	choices := make([]keydefault.Option, len(opts))
+	for i, o := range opts {
+		choices[i] = keydefault.Option{Value: o.value, Label: o.label, Disabled: o.disabled}
 	}
-	p := -1
-	switch name {
-	case "arrow_down":
-		p = from(i+1, 1)
-	case "arrow_up":
-		p = from(i-1, -1)
-	case "home", "page_up":
-		p = from(0, 1)
-	case "end", "page_down":
-		p = from(len(opts)-1, -1)
-	case "space", "enter":
-	default:
-		text, ok := hotty.KeyText(key)
-		if !ok || len(graphemesOf(text)) != 1 {
-			return false
-		}
-		for k := 1; k <= len(opts); k++ {
-			j := (i + k + len(opts)) % len(opts)
-			if i < 0 {
-				j = k - 1
-			}
-			if !opts[j].disabled && strings.HasPrefix(strings.ToLower(opts[j].label), strings.ToLower(text)) {
-				p = j
-				break
-			}
-		}
+	value, changed, taken := keydefault.Select(choices, c.field(el).ed.Value, key, name)
+	if changed {
+		c.pick(el, value)
 	}
-	if p >= 0 && p != i {
-		c.pick(el, opts[p].value)
-	}
-	return true
+	return taken
 }
 
 // tab moves focus to the next or the previous element Tab goes to. Past
@@ -676,7 +673,8 @@ func (c *Screen) tab(back bool) bool {
 		if n == c.focused {
 			at = len(order)
 		}
-		if _, shown := l.boxes[n]; shown && tabbable(n) {
+		_, shown := l.boxes[n]
+		if (shown || has(n, "data-hotty-modal-guard")) && tabbable(n) {
 			order = append(order, n)
 		}
 	})
@@ -788,6 +786,11 @@ func (c *Screen) click(col, row int) bool {
 	var hit *html.Node
 	if y < len(l.cv.rows) {
 		hit = l.cv.rows[y][col].own
+	}
+	// The runtime marks the background of an open modal as pointer-inert.
+	// It is still drawn, but must not focus or activate a control.
+	if closest(hit, func(n *html.Node) bool { return has(n, "data-hotty-modal-inert") }) != nil {
+		return true
 	}
 	if c.press {
 		e := hotty.Event{Kind: hotty.EventPress}

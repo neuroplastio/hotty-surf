@@ -28,6 +28,9 @@ var Peek struct {
 	// Snapshot writes the surface as the host has it, for a dev reload's
 	// handover; an error before its first Document.
 	Snapshot func(s any, w *msgp.Writer) error
+	// Pause detaches a surface on its driver and returns a function that
+	// restores its writer and platform; that function also runs on the driver.
+	Pause func(s any) func()
 	// Adopt takes a snapshot of the surface of the same name, from the
 	// build before, as what the host has: the next Update sends a delta
 	// from it, where Document would send it all again. Call it before the

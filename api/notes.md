@@ -155,10 +155,10 @@ between `MenuItem.Keys` and the handler that binds it.
 
 ### Notes for L1 (the verifier's)
 
-- **The handover reads documents directly.** In a dev build the reload
-  registry holds surfaces the program may have dropped, which nobody
-  drives: the Go tier's handover takes each surface's last-sent document
-  as it is, rather than asking the surface through Do and waiting.
+- **The handover reads a dropped surface only after its driver exits.** A
+  framework-owned driver's completion signal proves it has stopped; a last
+  render time does not. The later handover decision below supersedes the
+  earlier direct-read rule.
 - **Dialog keeps no State, yet promises focus goes back where it was
   when it closes.** Either the surface remembers it per id (Dialog's doc
   says so in L2's batch) or `Dialog(st, p)` comes as a MINOR break, as
@@ -560,16 +560,17 @@ What took the floor from about 2 ms to under 1:
   sent from a second Do queued inside the first, which runs at the next
   Update. A surface that never rendered isn't waited for; one that
   doesn't answer in 300 ms (dropped) is given up.
-- **The handover takes each snapshot on the surface's driver,** then
-  detaches the surface (`Attach(nil, …)`) so nothing more goes out of
-  the old build. Keep's get runs on the first live surface's driver, in
-  the same Do and ahead of its snapshot, so get doesn't race the
-  handlers that write the state and no frame comes between the two. A
-  driver that hasn't answered in 300 ms is waited for up to 4 s if it
-  rendered in the last 3 s (busy: reading it would race its render),
-  and read directly otherwise (dropped); whichever takes a snapshot
-  first claims it. A first surface still busy at 4 s fails the
-  handover with that reason; another one starts again in the new build.
+- **The handover takes each live snapshot on the surface's driver,** then
+  detaches the surface (`Attach(nil, …)`) so nothing more goes out of the old
+  build. Keep's get runs on the first live driver's goroutine, ahead of its
+  snapshot. A framework-owned driver signals when its loop returns; a known
+  exited driver is handed over as dropped from its last snapshot immediately.
+  If a driver is still alive and cannot start its queued work within 4 s,
+  the handover fails with a busy-handler message and keeps the running build;
+  cancelled work cannot run Keep later. A custom driver without a completion
+  signal is treated as possibly busy: its exit is unknown, so an unanswered
+  handover fails rather than reading its state off-driver. No public driver
+  lifecycle API is added here.
 - **A handed-over surface carries its stylesheet,** and the new build's
   surface is restyled when its own differs, so a Go save that changed
   the CSS shows it in the first delta.
@@ -766,11 +767,14 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   second takes no part in the keyboard's moves. A Dialog left out of the
   render, rather than rendered closed, gives the keyboard back only if
   another Dialog renders in that frame.
-- **Dialog, not done, and not doable here:** a focus trap (Tab leaves
-  the dialog; the page under it isn't `inert`, and the dialog can't mark
-  it) and a top layer. A click on the
-  dialog's own text takes the keyboard to the terminal, so Escape
-  reaches it again only after a click on one of its controls.
+- **Dialog modality (B3, in progress):** the runtime marks background
+  controls out of the tab order and makes the background pointer-inert.
+  Focus guards at the modal's ends wrap Tab, and a press on its text
+  restores focus inside. The storybook marks its preview as the modal's
+  scope, leaving the book's own controls outside it. A surface has no
+  browser chrome; Chromium visits
+  it once on Tab past the last control, while the surface wraps directly.
+  The application-level keyboard override is still a B3 review question.
 - **Tabs:** the shown tab's panel only (the children), with the roving
   tabindex. The keys are on each tab; while the keyboard is on one of
   them, the selected tab asks for it, so it follows a key's OnChange. A
@@ -785,8 +789,8 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   timers (surf.Hover), tested with a hover event sent to the Surface
   and then `Rig.Update`, as Select's highlight is. A toast paused past
   its deadline (its timer late) has 0 left, and closes on resume.
-  Toast has no action or cancel: one that stays (a negative Duration)
-  gets the macro's cancel button, Dismiss, or it could never go.
+  A toast that stays (a negative Duration) gets a Dismiss button when it
+  has no cancel action. B3 adds the macro's action and cancel buttons.
 - **code.Block links Chroma's lexers package**, every lexer, since its
   doc names "json" and "sh"; the spike embedded five XML lexers. Each
   line is a `<div>` in the `<pre>`, a box of its own. (That began as a
@@ -908,17 +912,9 @@ rules K1–K14.
   in the line.
 - **NativeSelect takes SelectItem** (K12), Select's item, with Group as an
   optgroup, and the shared Size (vega's `data-size=sm`).
-- **Range waits for SPEC** (K10). SPEC §10.2 gives a range no keys and §9
-  no change, Blitz draws no range, and cells has no row for one, so no
-  host can draw or move it. The proposal for hotty's spec, passed to
-  the maintainer: a focused range takes arrow_left and arrow_down (a
-  step down), arrow_right and arrow_up (a step up), home and end (its
-  ends), page_up and page_down (a larger step), unmodified or with
-  shift; a move by key or pointer is heard at once, as a select's pick
-  is (`input`, then `change` with its value); Blitz draws the track and
-  thumb, cells a bar. When it returns, Min and Max both 0 mean HTML's 0
-  to 100 and are otherwise written as given, and its handler stays
-  surf.Input, parsed with strconv.ParseFloat.
+- **Range (K10, superseded).** The earlier native-range spec proposal is
+  withdrawn. The B3 draft uses a kit-owned slider and the existing key and
+  drag protocol; its behavior and API are described in the B3 section.
 - **For cells (L3):** cells reads classes, not the stylesheet, so an
   `.input-group` stacks its addons, its bare control is 20 cells wide,
   and a horizontal Field stacks. cells must take `.input-group` as a row
@@ -990,6 +986,212 @@ scrollbar classes and Avatar's image for the looks pass.
   this. `surf.Blur(ctx)`, SPEC's `a=blur`, is added only when a
   component must give the keyboard to the terminal.
 
+### Batch B3: overlays (in progress)
+
+- **KeyScope: reviewed for B3.** The B3 keyboard review accepts
+  `ui.KeyScope(keys []string, fn func(string) bool) templ.Component` for
+  scoped, named-key overrides. The nearest scope is offered a named key
+  first; a decline proceeds through enclosing scopes to the kit default.
+  Tab and Shift+Tab are reserved, and an open native select list may keep
+  keys. Representative host/cells vectors cover taking and declining keys,
+  nesting, modifiers, native controls, Command, Select and dialog Escape.
+  The known editing limitations are in
+  `docs/keyboard-model.md`.
+  - **TinyGo size at `017f7f4`:** the same hello-derived package, built from
+    the same source with `-no-debug` for wasm and a build tag switching the scope,
+    was 2,252,823 bytes raw / 728,707 gzip without KeyScope, and 2,341,413
+    raw / 749,785 gzip with it: +88,590 raw / +21,078 gzip when used.
+    The editing fallback is referenced by the scope instance, so it is
+    not linked just because a surface exists.
+  - **Total hello wasm delta:** TinyGo `-no-debug -target wasm` builds of
+    the same hello example were 2,218,914 bytes raw / 714,937 gzip at the
+    pre-B3 merge `897c796`, and 2,253,334 raw / 726,329 gzip after the
+    verification fixes: +34,420 raw / +11,392 gzip. The reviewed B3 build
+    was 2,273,254 raw / 732,806 gzip, so the fixes save 19,920 raw / 6,477
+    gzip. Scoped key dispatch and native fallback and modal tree
+    preparation are linked when those features are used. The slider's 853
+    bytes of styles were linked with it too, until the B3 recheck moved
+    them into Stylesheet: two sliders wrote two identical `<style>`
+    elements, and a page now has them once. Small generic
+    dispatch hooks remain; the example also uses Select and Toaster, which
+    gained B3 behavior, and shared runtime code changed. The remaining delta
+    is not an isolated measurement of any one feature. Select uses the
+    existing small JSON string writer rather than general encoding/json.
+- **Combobox selection: reviewed (K22–K23).** One component supports
+  single Value/OnChange and multiple Values/OnValuesChange; the latter
+  follows selection order. SelectItem.Keywords supplies additional search
+  words and InputAttrs names the search input. Item values are unique;
+  labels may repeat. Disabled selected values remain selected.
+- **Combobox implementation.** Its markup follows the generated
+  macro and its selection, filtering, keyboard and pointer behavior follows
+  combobox.js; there was no behavior port in the spike. Four stories cover
+  single, multiple, clear and grouped cases, and the cells keyboard gate
+  exercises each. Chromium differential cases cover search, single and
+  multiple selection, and removing the last chip. `CloseOnSelect` and
+  `AutoHighlight` are script configuration outside K2's listed cases.
+  The four initial stories were rendered with the current live hotty-blitz and
+  Chromium from the same documents; the image comparison reported
+  0.07–0.13% differing pixels, concentrated on text and control edges.
+- **Drawer: reviewed (K24).** Drawer reuses the Dialog modal behavior and
+  translates drawer.js's closing state and reopening cancellation; neither
+  the spike nor hotty-a2ui supplies this component. Its state holds it open
+  for the 500 ms transition and the script's 50 ms allowance. Escape and
+  backdrop call OnClose immediately to ask the application to set Open
+  false; the script's native close event instead arrives after the
+  transition. The reviewer chose the immediate request, consistent with
+  Dialog's controlled Open prop.
+  Four side stories, cells keys and a Chromium Escape differential cover it.
+  An open bottom drawer rendered in Blitz and Chromium differs by 0.21% of
+  pixels.
+- **AlertDialog: reviewed (K24).** Basecoat supplies CSS but no macro or
+  script, and neither existing port has this component. The draft composes
+  the existing Dialog modal behavior with alert-dialog markup and an
+  explicit alertdialog role; it has no automatic close button. Title and
+  Description provide its accessible name and description, while children
+  supply its actions. The small CSS variant uses the shared ui.Size. A story,
+  cells keys and a Chromium Escape differential cover it.
+  An open alert's Blitz/Chromium comparison differs by 0.33% of pixels.
+- **Tooltip: reviewed (K24).** The spike has no tooltip component; this
+  wraps children in Basecoat's data-tooltip markup and uses its CSS. Its
+  popup is hover-only, and cells does not yet show it. hotty-a2ui instead
+  puts hovered descriptions in a separate key-hints status line; that
+  presentation requires an app-owned hints area. A forced-visible hover
+  render shows attr() text in both Blitz and Chromium; the current live
+  renderer and Chromium place the wrapper row at the same height.
+  It adds a span and is not an accessible description; apps name or
+  describe the control separately.
+- **Slider and RangeSlider: reviewed (K24).** These adapt hotty-a2ui's
+  stepped values, nearest-thumb selection, notches, drag steps, and cells
+  track. Their buttons carry role=slider and the relevant ARIA bounds; the
+  native range input is not needed. Keys and pointer updates run in the
+  same Go component on both renditions, and KeyScope can override its
+  keys. Page Up/Down moves ten steps: this addition was written here because
+  the earlier port had no Page key behavior. The draft requires explicit
+  Min and Max, names its thumbs through Attrs (K18), and exposes one- and
+  two-thumb components separately. The review accepts those shapes and
+  ten key increments for Page. Each
+  track has at most 40 drag steps, following hotty-a2ui. Chromium and Blitz
+  renders of the two stories differ in 0.06% and 0.10% of pixels, mainly
+  text and control edges.
+- **Select multiple: reviewed (K23).** Basecoat's select.js supports
+  multiple values and keeps the list open on selection unless configured
+  otherwise. The draft adds Multiple, Values, OnValuesChange and
+  CloseOnSelect to the existing SelectProps, with values in item order and
+  selection by value. The single Value and OnChange stay as locked. The
+  reviewer kept one component with both modes. A Chromium differential
+  covers keyboard selection and pointer toggling; the story runs in cells.
+  A regression test preserves a selected disabled item in the label,
+  ARIA state, hidden value and callback when another item is chosen.
+  Its initial live Blitz/Chromium rendering differs in 0.07% of pixels.
+- **Select alignment: reviewed.** Align exposes the same start,
+  center and end placement as DropdownMenu. End lets the application keep
+  a list at a right-edge trigger inside the surface. This is a manual
+  choice: the surface does not know the trigger's and viewport's pixel
+  geometry, so it does not automatically flip an overflowing list. The
+  spike's popup has caller-supplied side and alignment; hotty-a2ui instead
+  puts the list on a separate surface. Its book combines the click's trigger
+  area with pane and window rectangles, clamps horizontal placement and
+  flips above when there is more room. Automatic placement via that approach
+  remains a known gap for a future design, as agreed for B3. A forced-open
+  right-edge story stays inside the surface in live Blitz and Chromium;
+  their comparison differs by 0.19% of pixels.
+- **DropdownMenu checkbox and radio items: reviewed (K23).** The spike's
+  MenuCheck and MenuRadio supply the indicator markup; dropdown-menu.js
+  supplies toggling and radio grouping. The draft extends the shared
+  MenuItem with Role, Checked and OnCheckedChange; Command ignores them.
+  Selecting a radio reports changes to the enabled radios in its nearest
+  rendered group, or the menu when ungrouped, as the script does. The
+  reviewer kept the shared item shape and callbacks. Its initial story render differs
+  by 0.10% of pixels between live Blitz and Chromium; a Chromium differential
+  exercises both roles.
+- **Toast actions: reviewed.** Action and Cancel point to a shared
+  ToastAction containing a label and Go callback; either closes the toast
+  after calling the callback. A persistent toast without an explicit
+  cancel keeps its existing Dismiss button. Buttons are disabled during the
+  exit transition to honor K19 and participate in KeyScope. The reviewer
+  kept this shape and deferred links until there is a caller. The macro
+  and toast.js supply the button markup and closing behavior. An open toast
+  with its entry animation disabled in both renderers differs by 0.16% of
+  pixels; the still Blitz renderer otherwise captures the start of the
+  animation while Chromium's screenshot captures its end.
+- **Dialog close button: reviewed (K24).** HideCloseButton exposes the
+  macro's close_button switch while retaining the existing zero-value
+  default. Escape and backdrop dismissal still call OnClose. A dialog with
+  no focusable child falls back to its focus guard. The reviewer kept
+  the field name.
+- **Port sources for the remaining work.** The spike has generated
+  Combobox markup but no combobox.js behavior port; the draft above
+  translates it. The spike's popup code is the source for the popup
+  interaction already ported. For the slider, hotty-a2ui supplies the
+  stepped-value, drag and cells behavior adapted above. Each remaining
+  component's pack entry will distinguish ported
+  code from behavior that had to be written here.
+- **Popover** (10 names). Side and Align are strings. Its trigger
+  toggles it, and Escape closes it and gives the trigger the keyboard.
+  The differential matches popover.js in Chromium except in one place.
+- **One popup open at a time.** Basecoat's popups close each other
+  through a document event (`basecoat:popover`). A surface has no such
+  event, so a record in the surface's memo plays that part: the popup
+  that opens closes the one that was open. Popover, DropdownMenu and
+  Select and Combobox take part. A popup opened by its State's
+  Open joins at its next render, so one drawn earlier in that frame
+  stays drawn open until the next frame.
+- **Command and CommandDialog** (18 names, MenuItem.Keywords among
+  them). Their items are MenuItem (K12), which gains Keywords. The
+  search matches an item's Label and Keywords, not its shortcut's text,
+  which command.js's textContent would also match. The field writes the
+  search as its value (K6). It binds the arrows, Home and End to the
+  program only while an item is shown, since command.js gives them back
+  to the field otherwise; Enter is always bound. The differential
+  matches command.js in Chromium for the keys, a search and the pointer.
+  It needed two new step kinds, `type` and `hover`.
+  The reviewer deferred a query getter, search callback and manual filter
+  until a caller needs them, and kept Keywords on MenuItem.
+- **Icons: a set, not one at a time.** L5's apps asked for trash, and
+  will ask for file, folder, pencil, copy, calendar, sun, moon and more.
+  So the kit takes a fixed set of 59 common icons from the same
+  lucide-react 0.474.0, 88 in all. Icon's doc lists every one. Icon takes
+  a string, so there are no new names. They add about 11 KB of SVG
+  paths to the source (icons_gen.go, 4.7 KB to 15.8 KB), and so to every
+  binary that links ui (K13: no import, but the size is noted here).
+  `line-through` joined the kit's utilities, for a done task.
+- **Chart, from L5** (a dashboard; one name, the rest docs and a fix).
+  Chart is approved (B2), so this asks the reviewer:
+  - **`ChartProps.Aspect float64`** (new): the plot's width over its
+    height, 0 for 16:9. The plot was always 16:9 of its width,
+    undocumented, so a chart across two thirds of a screen was 650 px
+    tall. The svg's box and the .chart box's aspect-ratio follow it. A
+    class can't do it, since the svg would letterbox. Below 0 is a fault.
+    The other way would be a Height in rows or px. The plot's height
+    follows its width, as Basecoat's does, so an aspect keeps that.
+  - **Sparse labels: docs, no name.** A label may be "": nothing is
+    written under its point, as a month by day labels every fifth day.
+    L5 found this works, but it was undocumented. A step field
+    (`LabelEvery`) would be the alternative. The lean is the doc, since
+    the app chooses its own labels and keeps them for its text.
+  - **A narrow chart: fixed, no name.** The plot box was as wide as the
+    svg's own width at least, and each label as wide as the longest, so
+    a bar chart in a narrow card spilled past it. The box is now
+    `min-width: 0`, and each label is cut with "…" in its share
+    (`overflow: hidden; text-overflow: ellipsis`, proven CSS). chart/narrow
+    matches in Blitz and Chromium.
+  - **Docs:** Chart's doc says how a test reads its values (each bar's
+    and slice's `data-value`, each line's `data-values`, e.g.
+    `rect[data-value=676]`). Aspect's doc says the plot is 16:9 by
+    default and that its height follows its width.
+  - **A stat (KPI) card: a story, no component.** Neither Basecoat nor
+    shadcn has one (shadcn's dashboard writes Card, Badge and an icon).
+    card/stat shows a label, a number and a change badge with
+    trending-up or trending-down, both added to the icon set.
+- **Fixed on the way:** DropdownMenu, Select and Popover made their
+  view when called, not when rendered. A component made once and
+  rendered many times read its state as it was when made, so a menu
+  opened by its State's Open highlighted nothing. Each is now made at
+  every render.
+- **Outside click: decided.** popover.js focuses its trigger after an
+  outside click; the kit closes and leaves focus where the user put it.
+  The reviewer accepted this intentional difference without a new API.
+
 ## L4: the build tools and embedding (the pack)
 
 L4's pack: the names L4 adds, the docs it changes, and the command's
@@ -1001,8 +1203,8 @@ shape. Nothing else in the lock moves.
   deferral for `plx plugin dev ctl shot`. The process of key answers over
   its reload wire (a `doc` request beside render, restyle and handover)
   with the document of the surface it names, read on the
-  surface's driver through Do, never directly (a handover reads a
-  dropped surface directly only because the process exits after it). 3 s
+  surface's driver through Do, never directly (a handover may read a
+  surface directly only after its driver signals it has exited). 3 s
   at most. `ctl shot` takes its size from the terminal hotty-surf run
   owns, as it does today. `hotty-surf ctl shot`
   moves onto it, so the term wire's `doc` goes.
@@ -1431,3 +1633,111 @@ spike's icon-only button with a name and caller attributes. Symbol renders
 a decorative filled Material Symbol from a Shape; Symbols enumerates the
 seven paths the spike shipped. None of these names include thumbnails or
 busy badges.
+
+## L5: plx's asks for a Report on its wire (a pack of its own)
+
+plx's plugins agent asked for three things (via p-653, 2026-11-17), in
+one pack:
+
+1. **msgp codecs on `reloader.Report` and `lint.Finding`.** plx carries a
+   reload's outcome on its own msgpack wire. Until now the ctl wire carried
+   internal mirrors (`devwire.Report`, `devwire.Finding`), because the API
+   types had no codec; plx would have had to write a third copy. Both types
+   now get msgp's generated `EncodeMsg`, `DecodeMsg` and `Msgsize`
+   (`-marshal=false`, `//msgp:newtime`, `//msgp:limit` 65536 as devwire's),
+   and the mirrors are gone: "reload"'s answer on the ctl wire is
+   `reloader.Report` itself. Its keys are the mirrors' (tier, took in
+   nanoseconds, build, failed, lint; file, line, col, rule, text), so the
+   ctl wire's bytes do not change. Report moves to `report.go` beside its
+   codec; its fields and docs are as they were, with `msg` tags added.
+2. **A text form: `func Text(r *Report) string`.** What `ctl reload` and
+   `hotty-surf serve`'s log printed (devcmd's `ReportText`), moved as it
+   was. A free function, since P-3 keeps hand-written methods (a `String`)
+   off a type on a wire. A pointer, as `View` takes.
+3. **`reload.Serve`'s key:** its doc now says that a key is an opaque
+   string the dev parent chooses, which names one process at a time and
+   keys Report.Failed. No name changes.
+
+7 new names, all in `lint` and `reload/reloader`; none changed or removed.
+
+### As reviewed (p-796, 2026-11-17): all 7, two docs and two tests changed
+
+All 7 names approved as named, with no cuts. The ctl wire's bytes are
+unchanged (msgp 1.6.5's `WriteDuration` is `WriteInt64`), and the release
+wasm gains nothing (`./reload`'s release deps include neither reloader nor
+lint). Applied:
+`reload.Serve`'s key doc says the key is non-empty and also keys
+`Instances`, `Document` and `ctl shot -key`; `Report.Failed` is "by the key
+it gave reload.Serve"; ExampleText's imports are grouped as goimports
+groups them; `TestReportCodec` locks Finding's keys and that took is a
+plain int, since the `msg` tags are plx's wire and api-check doesn't see
+them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
+Left for plx: decode within its capped frame (msgp:limit doesn't cap
+strings), and drop any mirror of its own.
+
+## L5: drags and the secondary press for plx (a pack of its own)
+
+plx asked (via p-653, 2026-11-17) for drags in the root package, for its
+nav and machines lists, which reorder by drag, and for a secondary press,
+on which p-794 builds the kit's context menu. Both are SPEC's, and
+hotty-go already reads them (hotty.Drag; Event.Button, At, Area);
+hottytest drives them. Ported from hotty-a2ui's rendition (drag.go: the
+same events, data-steps "0 1" halves for before and after, a class on what
+was lifted, k-lifted there), adapted to handlers.
+
+- `surf.Drag(func(DragEvent)) Handler` → data-on drag; one func hears
+  Start, the moves and End. `surf.Drop(func(DragEvent)) Handler` → data-on
+  drop; its func runs at the release over it. `DragEvent` is Start, End,
+  ID (the dragged element, which the host's t no longer names after
+  dragstart), Over (the host's t), and hotty.Drag embedded (cell, steps).
+  data-steps is the app's own attribute, beside On's.
+- **The class dragging** is added by the surface to the dragged element
+  from the drag's first move to its release (not at the press, so a click
+  doesn't flash it): the render after either is parsed again and the class
+  put on in `number`. An app styles `.dragging`; the kit defines none.
+- `surf.Secondary(func(at hotty.Cell, area hotty.Area)) Handler` → data-on
+  secondary. It also tells Outside handlers, as a primary press does, so a
+  right click elsewhere closes an open popover. It no longer counts as the
+  press that a blur follows (it moves no focus).
+- surftest: `Rig.Drag(from, to)`, `Rig.DragStep(from, to, tx, ty)`,
+  `Rig.Secondary(sel)`, on hottytest's DragStart/DragOver/DragEnd and
+  SecondaryPress.
+- **cells: none of it.** cells (and `hotty-surf run` in a plain terminal)
+  has no drag and no secondary press: its pointer is Click and Wheel. An
+  app that reorders by drag also gives the keyboard a way, as the docs
+  say. A cells drag (mouse reporting's motion with the button down) and a
+  right click mapped to Secondary are a later cells change, with names of
+  its own on cells.Screen if wanted.
+
+Open for the reviewer:
+1. Drop(nil) adds nothing, as every nil handler does, so a row that only
+   needs drop's steps (tx, ty) for the dragged row's own handler has to
+   give Drop a func. The example does the move in Drop's func, which reads
+   naturally; the alternative is Drag writing "drag drop".
+2. Mods (shift, alt…) are not in DragEvent, as Click carries none; a
+   copy-instead-of-move drag would need them.
+3. Escape cancelling a drag isn't SPEC's; the doc leaves it to a Key
+   handler.
+
+12 new names; none changed or removed.
+
+### As reviewed (p-796, 2026-11-17): all 12, one behaviour fix and docs
+
+All 12 names approved as named, with no cuts. The open questions, settled:
+1. Drop(nil) stays nothing, as every nil handler is; a list that reorders
+   does the move in Drop's func.
+2. No Mods now. DragEvent is a struct, so adding Mods later breaks no
+   caller: that is the plan when a copy-instead-of-move drag needs them.
+3. Escape stays an app's Key handler; Drag's doc says what the app then
+   ignores (the End, the Drop's) and that the class stays until release.
+
+Applied: a secondary press runs Outside before Secondary, so a right click
+on another row moves an open menu instead of closing it
+(`TestSecondaryAfterOutside`); Drop's doc says it runs only while its
+element is the drag's Over, after Drag's End, and on the dragged element
+itself when it has Drop; Drag's doc says the surface writes the class
+dragging into what it sends and the view never does, and Escape's text as
+above; Secondary's doc says at and area are zero when the host doesn't say
+them. Kit rule K26 (pointer gestures are root handlers; Outside before
+Secondary). hotty.Drag must stay method-free, or embedding it promotes its
+methods into surf's API.

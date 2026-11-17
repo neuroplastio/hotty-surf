@@ -53,13 +53,17 @@ func TestEveryStory(t *testing.T) {
 func TestListByKeyboard(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
-	first := a.ID
+	visible := a.model.Visible()
+	if len(visible) < 2 || a.ID != visible[0].ID() {
+		t.Fatalf("the book opened on %q, want the first in its list", a.ID)
+	}
+	// The next in the list as the book shows it, grouped, which need not
+	// be the next in stories.All().
 	r.Key("arrow_down")
-	if a.ID == first || a.ID != a.all[1].ID {
-		t.Fatalf("arrow_down showed %q, want %q", a.ID, a.all[1].ID)
+	if a.ID != visible[1].ID() {
+		t.Fatalf("arrow_down showed %q, want %q", a.ID, visible[1].ID())
 	}
 	r.Key("end")
-	visible := a.model.Visible()
 	if a.ID != visible[len(visible)-1].ID() {
 		t.Fatalf("end showed %q", a.ID)
 	}

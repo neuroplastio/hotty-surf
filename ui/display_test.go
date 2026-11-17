@@ -129,3 +129,31 @@ func TestChartPlot(t *testing.T) {
 		}
 	}
 }
+
+// A Chart's Aspect is its plot's width over its height: the svg's box and
+// the .chart box's aspect-ratio follow it. 0 is Basecoat's 16:9, written
+// with no aspect-ratio; below 0 is a fault. The box is min-width 0, so a
+// narrow column cuts the labels and never widens past the svg's own width.
+func TestChartAspect(t *testing.T) {
+	p := ui.ChartProps{Labels: []string{"a", "b"}, Series: []ui.ChartSeries{{Label: "s", Values: []float64{1, 2}}},
+		Attrs: templ.Attributes{"aria-label": "x"}}
+	for _, c := range []struct {
+		aspect     float64
+		box, style string
+	}{{0, "0 0 640 360", "min-width: 0;"}, {3, "0 0 640 213.33", "min-width: 0; aspect-ratio: 640 / 213.33;"}} {
+		p.Aspect = c.aspect
+		r := surftest.Start(t, surf.New("t", ui.Chart(p), ui.Stylesheet()))
+		if b := attr(r.One("svg"), "viewBox"); b != c.box {
+			t.Errorf("Aspect %v: viewBox %q, want %q", c.aspect, b, c.box)
+		}
+		if st := attr(r.One("div[class=chart]"), "style"); st != c.style {
+			t.Errorf("Aspect %v: .chart style %q, want %q", c.aspect, st, c.style)
+		}
+	}
+	f := &faults{T: t}
+	p.Aspect = -1
+	surftest.Start(f, surf.New("t", ui.Chart(p), ui.Stylesheet()))
+	if all := strings.Join(f.got, "\n"); !strings.Contains(all, "ui.Chart: Aspect -1") {
+		t.Errorf("no fault for Aspect -1 in %q", all)
+	}
+}

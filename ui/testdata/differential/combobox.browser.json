@@ -1,0 +1,149 @@
+{
+ "search-and-select": [
+  {
+   "step": "load",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><input type=\"text\" role=\"combobox\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"fruit-listbox\" class=\"\" id=\"fruit-input\"> <svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"combobox-trigger-icon\"><path d=\"m6 9 6 6 6-6\"></path></svg><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"true\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"\"></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click fruit-input",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><input type=\"text\" role=\"combobox\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" class=\"\" id=\"fruit-input\"> <svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"combobox-trigger-icon\"><path d=\"m6 9 6 6 6-6\"></path></svg><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"\"></div>",
+   "focus": "fruit-input",
+   "events": []
+  },
+  {
+   "step": "type ba",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><input type=\"text\" role=\"combobox\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" class=\"\" id=\"fruit-input\"> <svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"combobox-trigger-icon\"><path d=\"m6 9 6 6 6-6\"></path></svg><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"true\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"\"></div>",
+   "focus": "fruit-input",
+   "events": []
+  },
+  {
+   "step": "key arrow_down",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><input type=\"text\" role=\"combobox\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" class=\"\" id=\"fruit-input\" aria-activedescendant=\"fruit-items-2\"> <svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"combobox-trigger-icon\"><path d=\"m6 9 6 6 6-6\"></path></svg><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\" class=\"active\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"true\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"\"></div>",
+   "focus": "fruit-input",
+   "events": []
+  },
+  {
+   "step": "key enter",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><input type=\"text\" role=\"combobox\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"fruit-listbox\" class=\"\" id=\"fruit-input\"> <svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"combobox-trigger-icon\"><path d=\"m6 9 6 6 6-6\"></path></svg><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"true\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\" class=\"\" aria-selected=\"true\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"true\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"b\"></div>",
+   "focus": "fruit-input",
+   "events": [
+    {
+     "type": "change",
+     "detail": {
+      "value": "b",
+      "selected": {
+       "value": "b",
+       "label": "Banana"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "multiple": [
+  {
+   "step": "load",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"fruit-listbox\" id=\"fruit-input\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"true\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[]\"></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click fruit-input",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" id=\"fruit-input\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[]\"></div>",
+   "focus": "fruit-input",
+   "events": []
+  },
+  {
+   "step": "key arrow_down",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" id=\"fruit-input\" aria-activedescendant=\"fruit-items-1\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\" class=\"active\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[]\"></div>",
+   "focus": "fruit-input",
+   "events": []
+  },
+  {
+   "step": "key enter",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><span class=\"combobox-chip\" data-value=\"a\"><span>Apple</span><button type=\"button\" class=\"combobox-chip-remove btn\" data-variant=\"ghost\" data-size=\"icon-xs\" aria-label=\"Remove Apple\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg></button></span><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" id=\"fruit-input\" aria-activedescendant=\"fruit-items-1\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\" class=\"active\" aria-selected=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[&quot;a&quot;]\"></div>",
+   "focus": "fruit-input",
+   "events": [
+    {
+     "type": "change",
+     "detail": {
+      "value": [
+       "a"
+      ],
+      "selected": [
+       {
+        "value": "a",
+        "label": "Apple"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "step": "key arrow_down",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><span class=\"combobox-chip\" data-value=\"a\"><span>Apple</span><button type=\"button\" class=\"combobox-chip-remove btn\" data-variant=\"ghost\" data-size=\"icon-xs\" aria-label=\"Remove Apple\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg></button></span><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" id=\"fruit-input\" aria-activedescendant=\"fruit-items-2\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\" class=\"\" aria-selected=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\" class=\"active\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[&quot;a&quot;]\"></div>",
+   "focus": "fruit-input",
+   "events": []
+  },
+  {
+   "step": "key enter",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><span class=\"combobox-chip\" data-value=\"a\"><span>Apple</span><button type=\"button\" class=\"combobox-chip-remove btn\" data-variant=\"ghost\" data-size=\"icon-xs\" aria-label=\"Remove Apple\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg></button></span><span class=\"combobox-chip\" data-value=\"b\"><span>Banana</span><button type=\"button\" class=\"combobox-chip-remove btn\" data-variant=\"ghost\" data-size=\"icon-xs\" aria-label=\"Remove Banana\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg></button></span><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" id=\"fruit-input\" aria-activedescendant=\"fruit-items-2\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\" class=\"\" aria-selected=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\" class=\"active\" aria-selected=\"true\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[&quot;a&quot;,&quot;b&quot;]\"></div>",
+   "focus": "fruit-input",
+   "events": [
+    {
+     "type": "change",
+     "detail": {
+      "value": [
+       "a",
+       "b"
+      ],
+      "selected": [
+       {
+        "value": "a",
+        "label": "Apple"
+       },
+       {
+        "value": "b",
+        "label": "Banana"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "step": "key backspace",
+   "note": "",
+   "html": "<div id=\"fruit\" class=\"combobox \" data-combobox-initialized=\"true\" data-basecoat-component=\"combobox\"><div class=\"combobox-chips\"><span class=\"combobox-chip\" data-value=\"a\"><span>Apple</span><button type=\"button\" class=\"combobox-chip-remove btn\" data-variant=\"ghost\" data-size=\"icon-xs\" aria-label=\"Remove Apple\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg></button></span><input type=\"text\" role=\"combobox\" class=\"\" placeholder=\"Choose fruit\" autocomplete=\"off\" autocorrect=\"off\" spellcheck=\"false\" aria-autocomplete=\"list\" aria-expanded=\"true\" aria-controls=\"fruit-listbox\" id=\"fruit-input\" aria-activedescendant=\"fruit-items-2\"></div><div id=\"fruit-popover\" data-popover=\"\" aria-hidden=\"false\" data-empty=\"false\"><div role=\"listbox\" id=\"fruit-listbox\" aria-orientation=\"vertical\" aria-multiselectable=\"true\"><div role=\"option\" id=\"fruit-items-1\" data-value=\"a\" aria-hidden=\"false\" class=\"\" aria-selected=\"true\">Apple</div><div role=\"option\" id=\"fruit-items-2\" data-value=\"b\" aria-hidden=\"false\" class=\"active\">Banana</div><div role=\"option\" id=\"fruit-items-3\" data-value=\"c\" aria-hidden=\"false\">Cherry</div></div></div><input type=\"hidden\" name=\"fruit-value\" value=\"[&quot;a&quot;]\"></div>",
+   "focus": "fruit-input",
+   "events": [
+    {
+     "type": "change",
+     "detail": {
+      "value": [
+       "a"
+      ],
+      "selected": [
+       {
+        "value": "a",
+        "label": "Apple"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

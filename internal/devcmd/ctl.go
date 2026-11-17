@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"maps"
 	"net"
 	"os"
 	"os/exec"
@@ -17,7 +16,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tinylib/msgp/msgp"
 	"neuroplast.io/hotty-go"
@@ -98,8 +96,7 @@ func serveCtl(ctx context.Context, ln net.Listener, t ctlTarget) {
 					if err != nil {
 						err = conn.Respond(h.ID, err.Error(), nil)
 					} else {
-						w := wireReport(rep)
-						err = conn.Respond(h.ID, "", &w)
+						err = conn.Respond(h.ID, "", &rep)
 					}
 					if err != nil {
 						return
@@ -176,15 +173,6 @@ func shotOf(ctx context.Context, r *reloader.Reloader, key, surface string) (dev
 	return devwire.Doc{Surface: o.p.Name, HTML: html, Cols: o.p.Cols, Rows: o.p.Rows}, nil
 }
 
-// wireReport is r as the ctl wire carries it.
-func wireReport(r reloader.Report) devwire.Report {
-	w := devwire.Report{Tier: r.Tier, Took: int64(r.Took), Build: r.Build, Failed: r.Failed}
-	for _, f := range r.Lint {
-		w.Lint = append(w.Lint, devwire.Finding{File: f.File, Line: f.Line, Col: f.Col, Rule: f.Rule, Text: f.Text})
-	}
-	return w
-}
-
 const ctlUsage = "usage: hotty-surf ctl reload | shot [-html] [-o out.png] [-key key] [-surface name]\n"
 
 // Ctl is `hotty-surf ctl <reload|shot …>`, at sock: it asks the running
@@ -258,12 +246,12 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 	}
 	switch args[0] {
 	case "reload":
-		var rep devwire.Report
+		var rep reloader.Report
 		if err := ask("reload", &devwire.Empty{}, &rep); err != nil {
 			fmt.Fprintln(errOut, "hotty-surf ctl reload:", err)
 			return 1
 		}
-		fmt.Fprint(out, ReportText(rep))
+		fmt.Fprint(out, reloader.Text(&rep))
 		if rep.Build != "" || len(rep.Failed) > 0 {
 			return 1
 		}
@@ -275,31 +263,6 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 		return 1
 	}
 	return writeShot("hotty-surf ctl shot", doc, *html, *path, out, errOut)
-}
-
-// ReportText is a report as ctl reload prints it: what the save took,
-// what failed, and the lint's findings, a line each.
-func ReportText(r devwire.Report) string {
-	var b strings.Builder
-	took := time.Duration(r.Took).Round(time.Millisecond)
-	switch {
-	case r.Build != "":
-		fmt.Fprintf(&b, "build failed (%s tier; the app runs the last build):\n%s\n", r.Tier, strings.TrimRight(r.Build, "\n"))
-	case r.Tier == "":
-		b.WriteString("ok: nothing reloaded yet\n")
-	default:
-		fmt.Fprintf(&b, "ok: %s in %v\n", r.Tier, took)
-	}
-	for _, k := range slices.Sorted(maps.Keys(r.Failed)) {
-		fmt.Fprintf(&b, "%s: %s\n", k, strings.TrimRight(r.Failed[k], "\n"))
-	}
-	if n := len(r.Lint); n > 0 {
-		fmt.Fprintf(&b, "lint: %d finding%s\n", n, map[bool]string{true: "", false: "s"}[n == 1])
-		for _, f := range r.Lint {
-			fmt.Fprintf(&b, "  %s\n", findingLine(lint.Finding{File: f.File, Line: f.Line, Col: f.Col, Rule: f.Rule, Text: f.Text}))
-		}
-	}
-	return b.String()
 }
 
 func findingLine(f lint.Finding) string {

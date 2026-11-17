@@ -1,0 +1,97 @@
+package ui
+
+// Command's and CommandDialog's markup: command.html.jinja's (Basecoat
+// 1.1.0, MIT; NOTICE.md), written in templ as the macros render it for the
+// Props, with what command.js sets on it from CommandState.
+
+import "neuroplast.io/hotty-surf"
+
+templ command(v *commandView) {
+	{{ v.check(ctx) }}
+	<div class={ join("command", v.p.Class) } aria-label="Command menu" data-command-initialized="true" { kitOn(ctx, v.id, surf.Key(v.key))... }>
+		@commandBody(v)
+	</div>
+}
+
+// commandDialog is command_dialog's <dialog>, open; body is commandBody's,
+// rendered first so the dialog knows its field.
+templ commandDialog(v *commandView, d *dialogView, class string, body string) {
+	{{ v.check(ctx) }}
+	<dialog class={ join("command-dialog", class) } aria-label="Command menu" open { kitOn(ctx, v.id, surf.Key(v.key))... }>
+		<div class="command" data-command-initialized="true" { surf.On(ctx, v.id+"-content", surf.Focus(d.focus), surf.Outside(d.outside))... }>
+			@templ.Raw(body)
+		</div>
+	</dialog>
+}
+
+// commandBody is the search field and the list.
+templ commandBody(v *commandView) {
+	<header>
+		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+		<input
+			type="text"
+			placeholder={ v.placeholder() }
+			autocomplete="off"
+			autocorrect="off"
+			spellcheck="false"
+			aria-autocomplete="list"
+			role="combobox"
+			aria-expanded="true"
+			aria-controls={ v.id + "-menu" }
+			if o := v.activeOpt(); o >= 0 {
+				aria-activedescendant={ v.opts[o].id }
+			}
+			value={ v.st.query }
+			{ scopeCommandAttrs(ctx, surf.On(ctx, v.id+"-input", surf.Input(v.input)), v.fieldKeys())... }
+		/>
+	</header>
+	<div role="menu" id={ v.id + "-menu" } aria-orientation="vertical" data-empty={ v.empty() } class="">
+		for _, e := range v.entries {
+			switch e.kind {
+				case entryOpt:
+					@commandItem(v, e.opt)
+				case entryGroup:
+					<div role="group" aria-labelledby={ e.labelID }>
+						<span role="heading" id={ e.labelID }>{ e.group }</span>
+						for _, o := range e.opts {
+							@commandItem(v, o)
+						}
+					</div>
+				case entrySeparator:
+					<hr role="separator"/>
+			}
+		}
+	</div>
+}
+
+// commandItem is render_command_items' item, with the aria-hidden that
+// filterItems gives it, and its shortcut as a DropdownMenu's item shows
+// one.
+templ commandItem(v *commandView, o int) {
+	{{ it := v.p.Items[o] }}
+	<div
+		role="menuitem"
+		if it.Keywords != "" {
+			data-keywords={ it.Keywords }
+		}
+		if it.Disabled {
+			aria-disabled="true"
+		}
+		if it.Variant != Primary {
+			data-variant={ string(it.Variant) }
+		}
+		aria-hidden={ bstr(!v.shown[o]) }
+		if o == v.activeOpt() {
+			class="active"
+		}
+		{ v.itemAttrs(ctx, o)... }
+	>
+		if it.Icon != "" {
+			@icon(it.Icon, "")
+		}
+		{ it.Label }
+		if it.Keys != "" {
+			@kbd(it.Keys)
+		}
+	</div>
+}

@@ -11,6 +11,7 @@ var (
 	surfaces []any
 	added    func(s any)
 	areas    = map[any][2]int{}
+	drivers  = map[any]<-chan struct{}{}
 	placed   func(s any, cols, rows int)
 )
 
@@ -64,6 +65,21 @@ func Area(s any) (cols, rows int) {
 	return a[0], a[1]
 }
 
+// Driver records a framework-owned surface driver's completion signal.
+// A missing signal means the driver's lifetime is unknown.
+func Driver(s any, done <-chan struct{}) {
+	mu.Lock()
+	drivers[s] = done
+	mu.Unlock()
+}
+
+// DriverDone is closed only when the registered driver has returned.
+func DriverDone(s any) <-chan struct{} {
+	mu.Lock()
+	defer mu.Unlock()
+	return drivers[s]
+}
+
 // Reset forgets every surface and the listeners, for a test that serves
 // more than once in one process.
 func Reset() {
@@ -71,4 +87,5 @@ func Reset() {
 	defer mu.Unlock()
 	surfaces, added, placed = nil, nil, nil
 	clear(areas)
+	clear(drivers)
 }

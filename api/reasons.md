@@ -29,6 +29,15 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Focus`: the keyboard coming onto an element or leaving it: what roving focus (tabs, a list) and a field's commit on blur need.
 - `surf.Outside`: a click outside an element, or the surface losing the keyboard (a click on the program's cells or on another surface gives only a blur): how Basecoat's popover, dropdown menu, select and combobox close; the spike had no way to hear it.
 - `surf.Hover`: the pointer onto an element and off it (SPEC §9.4): Basecoat's menus move their highlighted item with the pointer, which CSS's :hover can't do.
+- `surf.Drag`: SPEC §9.1's drags (dragstart, drag, dragend) on an element, which a click can't carry: plx's nav and machines lists reorder by drag, and a slider or a splitter follows the pointer. A Handler like the others, so data-on drag comes from On as click does. One func for the three events, as the host sends them for one gesture; Start and End say which.
+- `surf.Drop`: an element that is only a place to drop on (SPEC §9.1's drop): the host names it as t, and with data-steps says where in it the pointer is (tx, ty), which a reordering list needs for before and after. Its func runs at a drag's release over it, where a folder takes a file; separate from Drag because a target is often not draggable (a list's empty area, a trash), and Drag's func belongs to what is dragged.
+- `surf.DragEvent`: what each of those calls hears: which phase, which element is dragged, which it is over, and the host's detail. A surf type rather than hotty.Event, so a handler gets the dragged element's id (the host's t is the element under the pointer, not the dragged one) and Drop's handler gets what was dragged.
+- `surf.DragEvent.Start`: the press that starts it: where a handler records its origin.
+- `surf.DragEvent.End`: the release, or the host cutting it short: where a list reorders, and a lifted look ends.
+- `surf.DragEvent.ID`: the element dragged, which the host's events don't name after dragstart; Drop's handler needs it to know what landed.
+- `surf.DragEvent.Over`: the element under the pointer (the host's t), "" over none: where it would land.
+- `surf.DragEvent.embedded`: hotty.Drag embedded, so its cell and steps (Col, Row, X, Y, TX, TY and their Has…) read as d.X, d.TY with hotty-go's own docs, as SDKs in other languages name them: ported, not restated in a second set of names.
+- `surf.Secondary`: SPEC §9's secondary press (data-on secondary): a right click, a long press, for a context menu at the pointer, which p-794's kit menu opens on. The cell is where the menu opens, and the element's area for a menu placed by the element instead; both are hotty-go's types, as Platform's and Event's are.
 - `surf.Submit`: a form submitted (SPEC §9 `submit`): Enter in a text field, or its submit button. A text field keeps Enter, which the host turns into a commit and a submit, so without it no app could act on Enter in a field: the L4 trial's todo, "type and press Enter", had no way to.
 - `surf.Autofocus`: moving the keyboard after a frame (a dialog opens, a menu closes back to its trigger); edge-triggered, so a view can ask on every render.
 
@@ -276,6 +285,130 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.TableProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
 - `ui.TableProps.Class`: as ButtonProps.Class.
 
+### ui's overlays (L2, batch B3)
+
+- `ui.Popover`: Basecoat's popover: popover.html.jinja's markup with popover.js translated; replaces the spike's hand Popover. A component of K1's first kind (a script that hears events, a State), so ID, Class and no Attrs.
+- `ui.PopoverProps`: a popover's attributes.
+- `ui.PopoverProps.ID`: names its elements (K14): the root, `-trigger` and `-popover`.
+- `ui.PopoverProps.Trigger`: what the trigger button holds, a component, as DropdownMenuProps.Trigger.
+- `ui.PopoverProps.Side`: K2 (a): Basecoat's data-side on the popover, which its CSS places by. A string, as kit-rules' B3 note says (K5: no shared enum), with its values in the doc.
+- `ui.PopoverProps.Align`: K2 (a): Basecoat's data-align on the popover, the same name and values as DropdownMenuProps.Align.
+- `ui.PopoverProps.Class`: as every Props.
+- `ui.PopoverState`: K2 (b): open is the popover's, and the ask for the keyboard that Escape and Close leave; as DropdownMenuState.
+- `ui.PopoverState.Open`: the app opens it (a shortcut, a first-run hint); it closes any other open popup when it renders.
+- `ui.PopoverState.Close`: the app closes it, as Escape does, giving the trigger the keyboard (closePopover's default), for a form inside that is done.
+- `ui.Command`: Basecoat's command menu: command.html.jinja's markup with command.js translated; replaces the spike's hand CommandBox. K1's first kind (a script that hears events, a State).
+- `ui.CommandProps`: a command menu's attributes.
+- `ui.CommandProps.ID`: names the command's input, menu and items (K14).
+- `ui.CommandProps.Items`: K2 (c), what it lists. MenuItem's shape (Label, Icon, Keys, Group, Variant, Disabled, OnSelect) fits a command, so it is reused (K12), with Keywords added to it.
+- `ui.CommandProps.Placeholder`: K2 (e), the field's placeholder, the macro's `placeholder`; "" is the macro's default.
+- `ui.CommandProps.Empty`: the macro's `empty_text` (data-empty), which Basecoat's CSS shows when nothing matches: K2 (a), an attribute its CSS reads. "" is the macro's default.
+- `ui.CommandProps.Class`: as every Props.
+- `ui.CommandState`: K2 (b): the search and the highlighted item are the menu's.
+- `ui.CommandState.Search`: the app sets the search: a palette that opens afresh clears it, which command.js leaves to the page.
+- `ui.CommandDialog`: Basecoat's command_dialog: a Command in a modal <dialog>, a command palette. Its own component, as the macro is: no title, no close button, and choosing closes it.
+- `ui.CommandDialogProps`: a command dialog's attributes.
+- `ui.CommandDialogProps.ID`: as DialogProps.ID: unique among the surface's dialogs, which share the memo where each remembers the keyboard.
+- `ui.CommandDialogProps.Open`: K2 (b), as DialogProps.Open: the app keeps it.
+- `ui.CommandDialogProps.OnClose`: as DialogProps.OnClose, and a choice closes it too (command.js's handleMenuClick).
+- `ui.CommandDialogProps.Class`: as every Props.
+- `ui.KeyScope`: a lexical Go handler for named keys, shared by native and
+  compound kit controls; nearest scope first, then the kit default on a
+  decline. Tab remains focus traversal. It adds no wrapper or per-component
+  Props fields; its open native-select and editing limitations are in the
+  keyboard model.
+- `ui.Combobox`: Basecoat's searchable selection, with the combobox.js
+  interaction translated to Go; it reuses SelectItem (K12).
+- `ui.ComboboxProps`: a combobox's attributes.
+- `ui.ComboboxProps.ID`: names the input, list, options and controls (K14).
+- `ui.ComboboxProps.Items`: K2(c), the options the component renders.
+- `ui.ComboboxProps.Placeholder`: K2(e), the search field's placeholder.
+- `ui.ComboboxProps.Disabled`: K2(a), the input's disabled attribute.
+- `ui.ComboboxProps.Class`: as every Props.
+- `ui.ComboboxState`: the component's search, popup and highlight (K2(b)).
+- `ui.DrawerProps.ID`: names the dialog and its content (K14).
+- `ui.DrawerProps.Open`: the controlled open state (K2(b)).
+- `ui.DrawerProps.Side`: the drawer's side (K2(a)).
+- `ui.DrawerProps.OnClose`: asks the application to close the drawer.
+- `ui.DrawerProps.Class`: as every Props.
+- `ui.AlertDialogProps.ID`: names the dialog and labels (K14).
+- `ui.AlertDialogProps.Open`: the controlled open state (K2(b)).
+- `ui.AlertDialogProps.Size`: Basecoat's small variant (K2(a)).
+- `ui.AlertDialogProps.OnClose`: asks the application to close the dialog.
+- `ui.AlertDialogProps.Class`: as every Props.
+- `ui.TooltipProps.Text`: the text used by Basecoat's data-tooltip.
+- `ui.TooltipProps.Class`: as every Props.
+- `ui.TooltipProps.Attrs`: K1's attributes for the CSS-only wrapper.
+- `ui.ComboboxProps.InputAttrs`: K22's narrow K1 exception, naming the
+  search input without exposing the component's owned bindings.
+- `ui.SelectItem.Keywords`: additional Combobox search words shared by the
+  item type (K12, K23); Select and NativeSelect ignore them.
+- `ui.SelectProps.CloseOnSelect`: select.js's multiple-mode configuration
+  (data-close-on-select).
+- `ui.SelectProps.Align`: the popover's data-align placement (K2(a)), so an
+  app can align a Select's list to the right edge of its trigger.
+- `ui.DialogProps.HideCloseButton`: the macro's close_button option with a
+  zero value that preserves the existing close button (K2(a)).
+- `ui.AlertDialog`: A modal confirmation with Basecoat's alert-dialog CSS and shared Dialog behavior (K1).
+- `ui.AlertDialogProps`: Attributes of the modal confirmation (K1).
+- `ui.AlertDialogProps.Title`: Visible heading, which names the dialog (K2(c)).
+- `ui.AlertDialogProps.Description`: Visible description of the confirmation (K2(c)).
+- `ui.ChartProps.Aspect`: The plot's width-to-height ratio, needed to render the SVG (K2(c)).
+- `ui.ComboboxProps.AutoHighlight`: combobox.js's auto-highlight configuration, accepted script configuration (K22).
+- `ui.ComboboxProps.Clear`: The macro's optional clear button, part of its rendered content (K2(c)).
+- `ui.ComboboxProps.CloseOnSelect`: combobox.js's close-on-select configuration, accepted script configuration (K22).
+- `ui.ComboboxProps.Multiple`: Selects the script's single or multiple mode; the combined shape is accepted (K23) (K2(b)).
+- `ui.ComboboxProps.Value`: The app-controlled single selection by item value (K2(b)).
+- `ui.ComboboxProps.Values`: The app-controlled multiple selection by item values (K2(b)).
+- `ui.ComboboxProps.OnChange`: Reports the single selected value to the application (K1).
+- `ui.ComboboxProps.OnValuesChange`: Reports multiple selected values to the application (K1).
+- `ui.CommandDialogProps.Empty`: The command's empty text, an attribute its CSS reads (K2(a)).
+- `ui.CommandDialogProps.Items`: The command's rendered items (K2(c)).
+- `ui.CommandDialogProps.Placeholder`: The command field's placeholder (K2(e)).
+- `ui.Drawer`: Basecoat's modal drawer with drawer.js's transition in Go (K1).
+- `ui.DrawerProps`: The modal drawer's attributes (K1).
+- `ui.DrawerState`: The drawer's close transition and cancellation state (K2(b)).
+- `ui.MenuItem.Role`: The Basecoat menu item's checkbox or radio role (K2(a)); Command ignores it.
+- `ui.MenuItem.Checked`: The controlled checked state for checkbox and radio items (K2(b)).
+- `ui.MenuItem.OnCheckedChange`: Reports checkbox and radio state changes to the application (K1).
+- `ui.RangeSlider`: A two-thumb slider with shared Go keyboard and drag behavior (K1).
+- `ui.RangeSliderProps`: The two-thumb slider's attributes (K1).
+- `ui.RangeSliderProps.ID`: Names the track, notches and thumbs (K14).
+- `ui.RangeSliderProps.StartAttrs`: Names the start thumb using ARIA attributes (K18); the reviewed exception to K1 (K22).
+- `ui.RangeSliderProps.EndAttrs`: Names the end thumb using ARIA attributes (K18); the reviewed exception to K1 (K22).
+- `ui.RangeSliderProps.Min`: The lower numeric bound used for rendering and interaction (K2(c)).
+- `ui.RangeSliderProps.Max`: The upper numeric bound used for rendering and interaction (K2(c)).
+- `ui.RangeSliderProps.Step`: The increment and snap interval used for interaction (K2(c)).
+- `ui.RangeSliderProps.Start`: The app-controlled start value (K2(b)).
+- `ui.RangeSliderProps.End`: The app-controlled end value (K2(b)).
+- `ui.RangeSliderProps.Disabled`: Disables pointer and keyboard interaction (K2(a)).
+- `ui.RangeSliderProps.OnChange`: Reports both controlled values to the application (K1).
+- `ui.RangeSliderProps.Class`: Additional classes on the track, as every Props.
+- `ui.SelectProps.Multiple`: Selects select.js's multiple-selection mode; the shape is accepted (K23) (K2(b)).
+- `ui.SelectProps.Values`: The app-controlled multiple values (K2(b)).
+- `ui.SelectProps.OnValuesChange`: Reports selected values in item order (K1).
+- `ui.Slider`: A single-thumb slider with shared Go keyboard and drag behavior (K1).
+- `ui.SliderProps`: The single-thumb slider's attributes (K1).
+- `ui.SliderProps.ID`: Names its track, notches and thumb (K14).
+- `ui.SliderProps.Attrs`: Names its thumb using ARIA attributes (K18); the reviewed exception to K1 (K22).
+- `ui.SliderProps.Min`: The lower numeric bound used for rendering and interaction (K2(c)).
+- `ui.SliderProps.Max`: The upper numeric bound used for rendering and interaction (K2(c)).
+- `ui.SliderProps.Step`: The increment and snap interval used for interaction (K2(c)).
+- `ui.SliderProps.Value`: The app-controlled numeric value (K2(b)).
+- `ui.SliderProps.Disabled`: Disables pointer and keyboard interaction (K2(a)).
+- `ui.SliderProps.OnChange`: Reports the new value to the application (K1).
+- `ui.SliderProps.Class`: Additional classes on the track, as every Props.
+- `ui.Toast.Action`: The macro's optional action button (K2(c)).
+- `ui.Toast.Cancel`: The macro's optional cancel button (K2(c)).
+- `ui.ToastAction`: A toast footer button and its callback, shared by action and cancel (K12).
+- `ui.ToastAction.Label`: Visible button text, needed to render the action (K2(c)).
+- `ui.ToastAction.OnSelect`: A Go callback before closing, replacing the macro's onclick (K1).
+- `ui.Tooltip`: Basecoat's CSS hover tooltip wrapping children (K1).
+- `ui.TooltipProps`: The tooltip wrapper's attributes (K1).
+- `ui.TooltipProps.Side`: Basecoat's data-side placement attribute (K2(a)).
+- `ui.TooltipProps.Align`: Basecoat's data-align placement attribute (K2(a)).
+- `ui.TooltipProps.Arrow`: Basecoat's data-arrow attribute (K2(a)).
+- `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 ## ui/code
 
 - `ui/code.Block`: highlighted code in Basecoat's pre, in a package of its own so an app without code doesn't link Chroma (a large share of a wasm build). One function: the spike's View, Highlight and CSS fold into it, the token colours going into the kit's stylesheet.
@@ -306,6 +439,9 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surftest.Rig`: a surface under test.
 - `surftest.Rig.Click`: clicks an element by selector.
 - `surftest.Rig.Type`: types into a field by selector.
+- `surftest.Rig.Drag`: a test drags one element onto another by selectors, as it clicks: the Drag and Drop handlers hear what a host sends. The test host lays nothing out, so cells and steps are 0 and unsaid.
+- `surftest.Rig.DragStep`: the same released at a step of the target (tx, ty), which a list's before and after depend on; without it a reorder test can only land "on" a row.
+- `surftest.Rig.Secondary`: a test opens a context menu as the user does, by selector.
 - `surftest.Rig.Key`: presses a key where the keyboard is.
 - `surftest.Rig.Update`: a test of background work (a load, a toast's timer) runs what Do queued through the rig, so the check after every act still runs.
 - `surftest.Rig.Find`: what the user would see: the elements matching a selector. The spike's Has is len(Find) > 0, and its ClickID, ClickNth, Press and Check are cut.
@@ -324,6 +460,9 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `lint.Finding.Col`: where.
 - `lint.Finding.Rule`: which rule, the name an allow comment uses.
 - `lint.Finding.Text`: what is wrong and what to write instead.
+- `lint.Finding.EncodeMsg`: msgp's generated codec (gov P-3), so a dev parent carries findings on its own msgpack wire without a mirror type; plx's ask. A map keyed by the tags' names: file, line, col, rule, text.
+- `lint.Finding.DecodeMsg`: the codec's other half; Finding is decoded inside Report and on plx's wire.
+- `lint.Finding.Msgsize`: generated with the codec; msgp's Encodable and Sizer use it, and generating without it isn't an option msgp has.
 
 ## reload (the app's side of live reload)
 
@@ -355,6 +494,10 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `reload/reloader.Placed.Cols`: the columns it was last placed at: the word hotty.Placement and cells use.
 - `reload/reloader.Placed.Rows`: the rows it was last placed at.
 - `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
+- `reload/reloader.Report.EncodeMsg`: msgp's generated codec (gov P-3), so `hotty-surf ctl reload` and plx carry the same Report on their wires; until now the ctl wire had an internal mirror, and plx would have needed another (plx's ask). A map keyed by the tags' names (tier, took, build, failed, lint), Took in nanoseconds.
+- `reload/reloader.Report.DecodeMsg`: the codec's other half: ctl and plx decode the answer to a reload.
+- `reload/reloader.Report.Msgsize`: generated with the codec, as for lint.Finding.
+- `reload/reloader.Text`: a Report as `hotty-surf ctl reload` prints it, so plx prints the same lines instead of copying the format, which would drift (plx's ask). A free function, not a String method: P-3 keeps hand-written methods off a type that goes on a wire. A pointer, as View takes.
 
 ## surftea (a module of its own)
 

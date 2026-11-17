@@ -1,0 +1,21 @@
+package ui
+
+templ tooltip(p TooltipProps) {
+ {{ checkAttrs(ctx,"Tooltip",p.Attrs,"data-tooltip","data-side","data-align","data-arrow","class") }}
+ {{ checkEnum(ctx,"Tooltip","Side",p.Side,[]string{"","top","bottom","left","right","inline-start","inline-end"}) }}
+ {{ checkEnum(ctx,"Tooltip","Align",p.Align,[]string{"","center","start","end"}) }}
+ <span data-tooltip={ p.Text }
+  if p.Side != "" {
+   data-side={ p.Side }
+  }
+  if p.Align != "" {
+   data-align={ p.Align }
+  }
+  if p.Arrow {
+   data-arrow=""
+  }
+  if p.Class != "" {
+   class={ p.Class }
+  }
+  { p.Attrs... }>{ children... }</span>
+}
