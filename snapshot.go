@@ -64,6 +64,7 @@ func (s *Surface) adopt(r *msgp.Reader) error {
 	}
 	s.reset()
 	s.prev, s.nextID, s.focused, s.asked = kids[0], sn.Next, sn.Focused, sn.Asked
+	s.lastFocus = sn.Focused
 	for k, v := range sn.IDs {
 		s.ids[k] = v
 	}

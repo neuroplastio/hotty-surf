@@ -12,9 +12,10 @@ import (
 	"neuroplast.io/hotty-surf"
 
 	"neuroplast.io/hotty-surf/internal/input"
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// The page's side, which `hotty-surf build --wasm` writes: xterm.js with
+// The page's side, which `hotty-surf build -wasm` writes: xterm.js with
 // xterm-addon-hotty, which is always a host. Before the app starts, the
 // page sets globalThis.hottySurf to an object with:
 //
@@ -83,7 +84,7 @@ func app(ctx context.Context, s *surf.Surface) error {
 	name := s.Name()
 	s.Attach(out, caps)
 	place := func(cols, rows int) error {
-		_, err := out.Write([]byte(hotty.Place(name, hotty.Placement{Cols: cols, Rows: rows, Press: hotty.On, Hover: hotty.On})))
+		_, err := out.Write([]byte(hotty.PlaceAt(name, 0, 0, hotty.Placement{Cols: cols, Rows: rows, Press: hotty.On, Hover: hotty.On})))
 		return err
 	}
 	show := func() error {
@@ -94,7 +95,13 @@ func app(ctx context.Context, s *surf.Surface) error {
 		_, err = out.Write([]byte(hotty.Doc(name, doc, hotty.Scroll(hotty.ScrollVertical|hotty.ScrollHorizontal))))
 		return err
 	}
-	if err := show(); err != nil {
+	if rt.Peek.Tree(s) != nil {
+		// It took over a build before's surface (hotty-surf serve): the
+		// terminal still has it, so the first frame is a delta.
+		if err := s.Update(); err != nil {
+			return err
+		}
+	} else if err := show(); err != nil {
 		return err
 	}
 	if err := place(page.Get("cols").Int(), page.Get("rows").Int()); err != nil {

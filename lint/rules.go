@@ -23,7 +23,7 @@ func walk(root string) ([]Finding, error) {
 		}
 		name := d.Name()
 		if d.IsDir() {
-			if path != root && (strings.HasPrefix(name, ".") || name == "node_modules" || name == "testdata") {
+			if path != root && (strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") || name == "node_modules" || name == "testdata" || name == "dist") {
 				return filepath.SkipDir
 			}
 			return nil

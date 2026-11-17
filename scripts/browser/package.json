@@ -1,0 +1,9 @@
+{
+  "name": "hotty-surf-browser-check",
+  "private": true,
+  "description": "Chromium, driven by Playwright, for hotty-surf's page: build -wasm and serve",
+  "type": "module",
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

@@ -141,7 +141,7 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	done := make(chan error, 1)
-	go func() { done <- serve(ctx, term, dir, ln) }()
+	go func() { done <- serve(ctx, term, true, dir, ln) }()
 	ctl := func(wantCode int, want string) {
 		t.Helper()
 		var o, e bytes.Buffer
@@ -174,7 +174,7 @@ func TestRun(t *testing.T) {
 
 	var o, e bytes.Buffer
 	page := filepath.Join(t.TempDir(), "shot.html")
-	if code := Ctl(ctx, sock, []string{"shot", "-html", page}, &o, &e); code != 0 {
+	if code := Ctl(ctx, sock, []string{"shot", "-html", "-o", page}, &o, &e); code != 0 {
 		t.Fatalf("ctl shot: %q", e.String())
 	}
 	if b, _ := os.ReadFile(page); !strings.Contains(string(b), "Count 1!") {

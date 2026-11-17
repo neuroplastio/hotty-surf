@@ -1,0 +1,27 @@
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+templ Details(a *App) {
+	<main class="flex flex-col gap-2 p-2">
+		<h2 id="name" class="font-semibold">{ a.file().Name }</h2>
+		<p class="text-sm text-muted-foreground">{ a.file().Kind }, { a.file().Size }</p>
+		<input
+			class="input"
+			placeholder="A note"
+			value={ a.file().Note }
+			{ surf.On(ctx, "note", surf.Input(a.SetNote))... }
+		/>
+		<div class="flex gap-2">
+			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "star", surf.Click(a.Star))}) {
+				Star
+			}
+		</div>
+		<p id="stars" class="text-sm">Starred { strconv.Itoa(a.file().Stars) } times.</p>
+	</main>
+}

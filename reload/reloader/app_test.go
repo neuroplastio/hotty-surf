@@ -1,6 +1,7 @@
 package reloader
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strconv"
@@ -140,5 +141,31 @@ func TestTextRightAfterRender(t *testing.T) {
 	// the save's render.
 	if d := after[n/2] - idle[n/2]; d > 50*time.Millisecond {
 		t.Errorf("a save right after a render takes %v longer than one after a pause", d)
+	}
+}
+
+// TestDocument: Document asks the process of a key for its surface's
+// document as the surface last sent it, after the deltas; an unknown key fails.
+func TestDocument(t *testing.T) {
+	h, stop := begin(t)
+	defer stop()
+	p1 := h.proc(1)
+	h.shown(p1)
+	h.click(p1, "add")
+	h.out(p1, "Count 1")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	doc, err := h.r.Document(ctx, "app", "t")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(doc, `<style id="hotty-css">`) || !strings.Contains(doc, "Count 1") {
+		t.Fatalf("the document: %.300q", doc)
+	}
+	if _, err := h.r.Document(ctx, "tool:none", "t"); err == nil {
+		t.Fatal("a key no process has answered")
+	}
+	if _, err := h.r.Document(ctx, "app", "none"); err == nil {
+		t.Fatal("a surface the process hasn't answered")
 	}
 }

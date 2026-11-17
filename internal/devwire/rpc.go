@@ -1,6 +1,7 @@
 package devwire
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -24,6 +25,10 @@ const MaxDepth = 5
 // maxBytes bounds one string or bin from a peer: a document or a
 // snapshot is at most a few MB, a build's binary never crosses.
 const maxBytes = 64 << 20
+
+// MaxBytes is maxBytes for a transport that frames messages itself (a
+// Framer), which caps a frame, and so a message, at it (serve's WebSocket).
+const MaxBytes = maxBytes
 
 var (
 	readers = sync.Pool{New: func() any {
@@ -117,6 +122,15 @@ func Decode(r *msgp.Reader, v msgp.Decodable) error {
 // Skip reads past the params or result that follow a Head.
 func Skip(r *msgp.Reader) error { return r.Skip() }
 
+// A Framer is a transport whose every Write is a frame of its own, as a
+// WebSocket's messages are (serve's page wire). A Conn on one writes each
+// message in one Write, so a frame is a whole message: the frame's cap is
+// the message's, and a frame can be put between two messages.
+type Framer interface {
+	io.Writer
+	Frames()
+}
+
 // A Conn writes one connection's messages: whole, one at a time, from any
 // goroutine (a shared connection's write lock is held across a message
 // and its flush).
@@ -125,10 +139,30 @@ type Conn struct {
 	w   *msgp.Writer
 	id  uint32
 	err error
+	// On a Framer, w encodes into frame and flush writes it to out whole.
+	frame *bytes.Buffer
+	out   io.Writer
 }
 
-// NewConn writes to w with a pooled Writer, which Close gives back.
-func NewConn(w io.Writer) *Conn { return &Conn{w: NewWriter(w)} }
+// frames are the pooled buffers a Conn on a Framer encodes a message into.
+var frames = sync.Pool{New: func() any { return new(bytes.Buffer) }}
+
+// keepFrame is the largest buffer that goes back to the pool: one that
+// held a state or a snapshot is let go, not kept for every message.
+const keepFrame = 1 << 20
+
+// NewConn writes to w with a pooled Writer, which Close gives back. On a
+// Framer it encodes each message into a pooled buffer and writes it in one
+// Write: the exception to streaming that gov P-3 names, for a transport
+// that frames messages itself.
+func NewConn(w io.Writer) *Conn {
+	if f, ok := w.(Framer); ok {
+		buf := frames.Get().(*bytes.Buffer)
+		buf.Reset()
+		return &Conn{w: NewWriter(buf), frame: buf, out: f}
+	}
+	return &Conn{w: NewWriter(w)}
+}
 
 // Close gives the Writer back; later writes fail.
 func (c *Conn) Close() {
@@ -137,6 +171,13 @@ func (c *Conn) Close() {
 	if c.w != nil {
 		PutWriter(c.w)
 		c.w = nil
+	}
+	if c.frame != nil {
+		if c.frame.Cap() <= keepFrame {
+			c.frame.Reset()
+			frames.Put(c.frame)
+		}
+		c.frame = nil
 	}
 }
 
@@ -236,6 +277,14 @@ func (c *Conn) flush(write func(*msgp.Writer) error) error {
 	if err := c.w.Flush(); err != nil {
 		c.err = err
 		return err
+	}
+	if c.frame != nil {
+		_, err := c.out.Write(c.frame.Bytes())
+		c.frame.Reset()
+		if err != nil {
+			c.err = err
+			return err
+		}
 	}
 	return nil
 }

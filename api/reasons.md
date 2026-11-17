@@ -13,6 +13,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Surface.Attach`: where the deltas go and what the host is (its version and platform) are known only after detection, later than New, and change when the host's capabilities change. Its doc carries the two rules a driver keeps (one command per Write; placed with Press and Hover), without which Hover and Outside never fire.
 - `surf.Surface.Document`: hottytea and hottyterm send a surface's document themselves, and again when the host lost it (hottytea's Surface.Doc), so the surface hands the document over instead of writing it.
 - `surf.Surface.Event`: the host's events are how the user acts on the view; a driver has them decoded already (hottytea's EventMsg, hottyterm's messages), so the surface takes hotty.Event, not bytes.
+- `surf.Surface.Focus`: the program gives the surface the keyboard (Tab between panes), and learns whether it took it, as Key says whether a key was taken: a surface with nothing to focus, or not shown yet, leaves the keyboard with the program, which otherwise would wait for a blur that never comes. A host doesn't echo focus the program gives (SPEC §10.1), so only the surface, which has the tree, can pick the element, name it in a=focus and take the move as the user's. Without it, a raw-mode program's or a plx tool's Key handlers hear keys as if nothing were focused, and surftea would need surf's internals for the same act.
 - `surf.Surface.Key`: keys the host passes the program name no element (SPEC §10.1); only the program knows the surface has the keyboard, so it offers them, and gets back whether the surface took them.
 - `surf.Surface.Update`: a change of state outside a handler (a timer, a load) has to reach the screen; this is the one call that renders and sends.
 - `surf.Surface.Do`: the one safe way for another goroutine to change the app's state: it runs on the driver's goroutine, so state needs no locks.
@@ -276,6 +277,7 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 - `reload/reloader.Report.Build`: what kept a save from the app: the compiler's output, or why start failed.
 - `reload/reloader.Report.Failed`: per-process failures by key: restart's error, a key that didn't come back, a process that exited before handover.
 - `reload/reloader.Report.Lint`: the save's lint findings.
+- `reload/reloader.Reloader.Document`: the document of a surface of an instance, as the surface last sent it to its host, asked of its process over the reload wire: `plx plugin dev ctl shot` renders a tool that plx relays, where hotty-surf run's term wire doesn't reach (L0's deferral, A1). It takes the key, as Serve's processes name themselves, and the surface's name, which the caller has because it places the surface. A process can have more than one surface (a dialog opened later, two surftea Hosts), and the one that rendered last changes with a toast's timer.
 - `reload/reloader.View`: the error surface as a view of *Report, so a dev surface made once shows the latest report: plx shows build errors and findings as hotty-surf run does (plx's ask A3).
 
 ## surftea (a module of its own)
@@ -287,4 +289,6 @@ Each is one of Basecoat's CSS-only form components. A component that is one elem
 - `surftea.Host.Focus`: the program moves its focus onto the surface (Tab between panes); without it, P1's focus is one-way.
 - `surftea.Host.Blur`: the program moves its focus off the surface: a field commits, Outside handlers hear it.
 - `surftea.Host.Place`: the program's layout puts the surface at a rectangle; the entry goes into the Session's Layout with the program's others, with Press and Hover on, which Outside and Hover need.
-- `surftea.Host.Cells`: the surface in cells, for a terminal that is no host, as the program's View composes it.
+- `surftea.Host.Cells`: the surface's rectangle as the program's View composes it: in cells for a terminal that is no host, blank for one that is, so one View joins it the same way in both.
+- `surftea.Host.Focused`: where the keyboard is: the user gives it to the surface with a click and takes it back with Tab past the last element or a click elsewhere, which the Host hears and the program doesn't. A program draws its own pane's focus, and routes its keys, from it.
+- `surftea.Host.Cursor`: a field edited in cells needs the terminal's caret, which only the program's tea.View sets. It is `*tea.Cursor`, as bubbles' textinput and textarea give theirs, in the screen's cells because the Host knows its rectangle.

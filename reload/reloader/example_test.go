@@ -38,3 +38,15 @@ func ExampleNew() {
 		go r.Serve(ctx, io.ReadWriteCloser(c))
 	}
 }
+
+// A shot of an instance: its document now, rendered by the program (hotty
+// render, a browser) at the size the instance draws at.
+func ExampleReloader_Document() {
+	ctx := context.Background()
+	var r *reloader.Reloader // the program's, as in New's example
+	doc, err := r.Document(ctx, "tool:files", "files")
+	if err != nil {
+		return // no such process or surface, or it didn't answer
+	}
+	_ = doc // `<style id="hotty-css">…</style><div id="root">…</div>`
+}

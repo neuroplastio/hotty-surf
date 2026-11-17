@@ -1,3 +1,5 @@
 /bin/
 /.shots/
 coverage.out
+node_modules/
+dist/

@@ -301,6 +301,23 @@ func (c *child) serve() {
 			if c.conn.Respond(h.ID, errText, &devwire.Restyled{Surfaces: n}) != nil {
 				return
 			}
+		case "doc":
+			var of devwire.Doc
+			if devwire.Decode(c.r, &of) != nil {
+				return
+			}
+			// Off the read loop: a busy driver holds a shot up to docWait,
+			// and a save's render mustn't wait behind it. The Conn writes
+			// a message whole, from any goroutine.
+			id := h.ID
+			go func() {
+				doc, err := c.document(of.Surface)
+				errText := ""
+				if err != nil {
+					errText = err.Error()
+				}
+				c.conn.Respond(id, errText, &doc)
+			}()
 		case "handover":
 			if devwire.Skip(c.r) != nil {
 				return
@@ -339,6 +356,46 @@ func (c *child) live() []*surf.Surface {
 		}
 	}
 	return out
+}
+
+// docWait is how long a doc request waits for a busy driver: within the
+// reloader's 3 s.
+var docWait = 2500 * time.Millisecond
+
+// document is the document of the live surface named name, as it last
+// sent it to its host, read on its driver through Do and never off it: a
+// handover reads a dropped surface directly only because the process exits
+// after it, and this one lives on. A driver busy for docWait is a failure.
+func (c *child) document(name string) (devwire.Doc, error) {
+	var s *surf.Surface
+	for _, x := range c.live() {
+		if x.Name() == name {
+			s = x
+		}
+	}
+	if s == nil {
+		return devwire.Doc{}, fmt.Errorf("reload: no surface %q", name)
+	}
+	type read struct {
+		html string
+		err  error
+	}
+	got := make(chan read, 1) // a read after docWait goes nowhere
+	s.Do(func() {
+		html, err := rt.Peek.Document(s)
+		got <- read{html, err}
+	})
+	t := time.NewTimer(docWait)
+	defer t.Stop()
+	select {
+	case r := <-got:
+		if r.err == nil && r.html == "" {
+			r.err = fmt.Errorf("reload: surface %q has sent no document", name)
+		}
+		return devwire.Doc{Surface: name, HTML: r.html}, r.err
+	case <-t.C:
+		return devwire.Doc{}, fmt.Errorf("reload: surface %q is busy", name)
+	}
 }
 
 // each runs fn on every surface's driver goroutine, and waits until each

@@ -57,6 +57,30 @@ func main() {
 
 The whole app is [`examples/hello`](examples/hello).
 
+## The dev tool
+
+`hotty-surf` (`go install neuroplast.io/hotty-surf/cmd/hotty-surf@latest`)
+makes, runs and ships an app whose main is `run.App`:
+
+```sh
+hotty-surf new hello      # a new app that builds, tests and lints clean
+hotty-surf run hello      # in this terminal, reloading as you save
+hotty-surf ctl reload     # from another shell: wait for a save to show
+hotty-surf ctl shot       # the app as the terminal has it, as shot.png
+hotty-surf shot hello     # the app headless, with no terminal
+hotty-surf serve hello    # in a browser, reloading as you save
+hotty-surf build -wasm hello   # a static page: TinyGo's wasm in xterm.js
+```
+
+`run` draws the app in character cells where the terminal is no hotty
+host. `hotty-surf help` lists every command, and each takes `-h`.
+
+A program that owns its terminal shows a surface in part of its screen
+with `surftea` (Bubble Tea,
+[`surftea/examples/files`](surftea/examples/files)) or with `surf`,
+`cells` and hottyterm alone ([`examples/pane`](examples/pane)). Such a
+program gets no live reload: reload its surface's app on its own.
+
 ## Packages
 
 | Package | What it is |

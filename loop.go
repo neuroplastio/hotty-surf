@@ -110,6 +110,7 @@ func (s *Surface) send() error {
 		// The host sends no focus for focus the program gives (SPEC
 		// §10.1): the surface knows it from here.
 		s.focused, s.focusIn = f.Focus, s.chain(f.Focus)
+		s.lastFocus = f.Focus
 	}
 	s.asked, s.askDue = f.Focus, false
 	return s.write(cmds)
@@ -265,6 +266,9 @@ func moved(on map[string]*rt.Handlers, from, to []string, pick func(*rt.Handlers
 // focus moves what the surface knows of the keyboard to id ("" for a blur)
 // and tells the Focus handlers.
 func (s *Surface) focus(id string) bool {
+	if id != "" {
+		s.lastFocus = id
+	}
 	to := s.chain(id)
 	from := s.focusIn
 	s.focused, s.focusIn = id, to
@@ -375,4 +379,111 @@ func modName(p hotty.Platform, k string) string {
 		}
 	}
 	return k
+}
+
+// takeFocus is Focus's: a=focus for the element that had the keyboard last,
+// while it is drawn, else the first drawn that takes focus, then that move
+// as the host's focus event.
+func (s *Surface) takeFocus() (bool, error) {
+	if s.focused != "" {
+		return true, nil
+	}
+	if s.prev == nil || s.out == nil {
+		return false, nil
+	}
+	id := ""
+	if n := s.byID[s.lastFocus]; n != nil && focusable(n) && drawn(n, s.prev) {
+		id = s.lastFocus
+	} else {
+		id = firstFocusable(s.prev)
+	}
+	if id == "" {
+		return false, nil
+	}
+	if err := s.write([]string{hotty.Focus(s.name, id)}); err != nil {
+		return false, err
+	}
+	return true, s.event(hotty.Event{Kind: hotty.EventFocus, Surface: s.name, Target: id})
+}
+
+// firstFocusable is the id of the first element under n, in tree order,
+// that a click gives the keyboard to and that is drawn; "" if none is.
+func firstFocusable(n *html.Node) string {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type != html.ElementNode || hides(c) {
+			continue
+		}
+		if focusable(c) {
+			if id := attr(c, "id"); id != "" {
+				return id
+			}
+		}
+		if c.Data == "details" && !hasAttr(c, "open") {
+			// Closed: only its summary is drawn.
+			for k := c.FirstChild; k != nil; k = k.NextSibling {
+				if k.Type == html.ElementNode && k.Data == "summary" {
+					// HTML draws the first summary only.
+					if hides(k) {
+						break
+					}
+					if focusable(k) && attr(k, "id") != "" {
+						return attr(k, "id")
+					}
+					if id := firstFocusable(k); id != "" {
+						return id
+					}
+					break
+				}
+			}
+			continue
+		}
+		if id := firstFocusable(c); id != "" {
+			return id
+		}
+	}
+	return ""
+}
+
+// hides says whether n is not drawn, and nothing in it: hidden or inert, a
+// closed dialog, a hidden input, or a popover the kit has closed, as cells
+// lays them out.
+func hides(n *html.Node) bool {
+	return hasAttr(n, "hidden") || hasAttr(n, "inert") ||
+		n.Data == "dialog" && !hasAttr(n, "open") ||
+		n.Data == "input" && strings.EqualFold(attr(n, "type"), "hidden") ||
+		hasAttr(n, "data-popover") && attr(n, "aria-hidden") == "true"
+}
+
+// drawn says whether n, under root, is drawn: neither it nor an ancestor
+// hides it, and no closed details holds it outside its summary.
+func drawn(n, root *html.Node) bool {
+	for c := n; c != nil && c != root; c = c.Parent {
+		if hides(c) {
+			return false
+		}
+		if p := c.Parent; p != nil && p.Data == "details" && !hasAttr(p, "open") && c.Data != "summary" {
+			return false
+		}
+	}
+	return true
+}
+
+// focusable says whether a click on n gives it the keyboard (SPEC §10.1),
+// and so Tab: a control, a link, a summary, an editing host, or tabindex 0
+// or more, not disabled.
+func focusable(n *html.Node) bool {
+	if hasAttr(n, "disabled") {
+		return false
+	}
+	if hasAttr(n, "tabindex") {
+		t := strings.TrimSpace(attr(n, "tabindex"))
+		return t != "" && !strings.HasPrefix(t, "-")
+	}
+	switch n.Data {
+	case "input", "select", "textarea", "button", "summary":
+		return true
+	case "a":
+		return hasAttr(n, "href")
+	}
+	return hasAttr(n, "contenteditable") && attr(n, "contenteditable") != "false"
 }

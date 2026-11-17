@@ -134,9 +134,11 @@ func Key(fn func(key string) bool) Handler {
 
 // Focus calls fn with true when the user moves the keyboard onto the
 // element or into it, and false when it leaves (SPEC §10.1). It hears the
-// user's moves only: the host reports no focus the program gives
-// (Autofocus), so an element Autofocus put the keyboard on hears false
-// when it leaves without having heard true.
+// user's moves, the program's Surface.Focus among them (the user's Tab
+// between panes, which the program carries), but not the focus a view
+// asks for with Autofocus, which the host doesn't report: an element
+// Autofocus put the keyboard on hears false when it leaves without having
+// heard true.
 func Focus(fn func(in bool)) Handler {
 	return handler(kindFocus, fn, fn == nil)
 }

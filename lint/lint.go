@@ -20,7 +20,9 @@ type Finding struct {
 }
 
 // Dir checks the app's sources under dir: its .templ, .go and .css files,
-// not the kit's. err is for files it couldn't read.
+// not the kit's, and not under node_modules, testdata, dist (a build's
+// output) or a directory whose name starts with . or _. err is for files
+// it couldn't read.
 func Dir(dir string) ([]Finding, error) {
 	return walk(dir)
 }

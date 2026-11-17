@@ -14,6 +14,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Do(func())
 pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Event(hotty.Event) error
+pkg neuroplast.io/hotty-surf, method (*Surface) Focus() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
@@ -45,6 +46,7 @@ pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Cont
 pkg neuroplast.io/hotty-surf/reload/reloader, func Output(string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func Tags(...string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func View(*Report) templ.Component
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Document(context.Context, string, string) (string, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Reload(context.Context) (Report, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
@@ -60,7 +62,9 @@ pkg neuroplast.io/hotty-surf/run, func App(context.Context, *surf.Surface) error
 pkg neuroplast.io/hotty-surf/surftea, func New(*surf.Surface, *hottytea.Session) *Host
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Blur()
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Cells() string
+pkg neuroplast.io/hotty-surf/surftea, method (*Host) Cursor() *tea.Cursor
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Focus()
+pkg neuroplast.io/hotty-surf/surftea, method (*Host) Focused() bool
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Init() tea.Cmd
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Place(hottytea.Rect) hottytea.Surface
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Update(tea.Msg) (tea.Msg, tea.Cmd)

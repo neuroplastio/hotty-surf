@@ -2,6 +2,8 @@ package lint
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -57,5 +59,25 @@ func TestDirIsRelative(t *testing.T) {
 	}
 	for _, f := range fs {
 		t.Errorf("examples/hello breaks a rule: %s:%d:%d: %s: %s", f.File, f.Line, f.Col, f.Rule, f.Text)
+	}
+}
+
+func TestDirSkipsBuildsAndHidden(t *testing.T) {
+	dir := t.TempDir()
+	bad := ":root { font-size: 16px }"
+	for _, sub := range []string{"dist", "_old", ".cache", "node_modules", "testdata", "style"} {
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, sub, "x.css"), []byte(bad), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	fs, err := Dir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(fs) != 1 || fs[0].File != filepath.Join("style", "x.css") {
+		t.Fatalf("want style/x.css alone: %+v", fs)
 	}
 }
