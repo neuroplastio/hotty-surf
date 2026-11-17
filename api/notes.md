@@ -1854,3 +1854,65 @@ data-keys forwarding only ctrl+s, and ctrl+s running the scope. B3's three
 text vectors bound a bare `b` to exercise the scope's editing fallback.
 They now bind `backspace`, which the field uses and the scope declines,
 so the fallback is still exercised.
+
+## Draft: spike list rows, icon buttons and symbols
+
+The maintainer asked to port the spike's ListItem, IconButton and Symbols
+into `ui`, with their book stories, and to review these new names as one
+small pack. LayoutThumb and BusyBadge belong with plx and are not in this
+port. The code follows the spike's public shape and markup for review; no
+lock has been approved for these names.
+
+The spike's List is a named listbox of button rows. ListItem carries the
+selection and active visuals, slots and a click callback; the app owns the
+selected index. The spike's list has no default arrow-key handling. Review
+whether the kit's keyboard-default rule calls for that behavior here and
+how it is overridden, and whether the spike's ID, callback and accessible
+label need adaptation to the v0.7 kit conventions. IconButton is the
+spike's icon-only button with a name and caller attributes. Symbol renders
+a decorative filled Material Symbol from a Shape; Symbols enumerates the
+seven paths the spike shipped. None of these names include thumbnails or
+busy badges.
+
+### As reviewed (review-shell-components.md), applied
+
+The review's shapes are applied as written: ListItemProps loses ID and
+OnClick for Attrs (the id and surf.On handlers) and Class; List takes
+ListProps (OnChange by item index, Attrs for its name, Class); the
+text lines, IconButton and the Symbol names were applied earlier.
+
+List now has the listbox keys. Tab enters at the selected enabled item
+when the app changes selection, else where the keyboard or a click last
+was, else the first enabled; ↑ ↓ move one enabled item, Home and End to the ends, stopping
+there (an end is taken with no request). A move asks OnChange and moves
+the keyboard; it never runs the row's click. A click asks OnChange (if
+the row isn't selected already) and then runs the row's own click once.
+Disabled rows are skipped, not renumbered. Without OnChange the keyboard
+still moves. The keyboard is kept by item id across renders, so a row
+removed or reordered doesn't hand it to another.
+
+How: List renders its children with a registry in the context; each
+ListItem joins it and adds the list's click, focus and keys to the
+handlers the app registered for its id (a row without an id gets one
+from the list's). The roving tabindex is only known once every item has
+rendered, so the items write a placeholder the List fills. The keys are
+marked as the kit's default, so a KeyScope takes a named key first and a
+declined one keeps the default (TestListKeyScope). Faults: a List with
+no accessible name, more than one Selected item, an owned attribute in
+Attrs, and a ListItem outside a List.
+
+Tests: ui/list_test.go (click selects and activates once, arrows select
+without activating, ends, disabled and none enabled, empty, no
+OnChange, removal, KeyScope take and decline, faults) and the host and
+cells key vectors (TestNativeKeyVectors/list).
+
+An app's own surf.Key on a ListItem's id runs after the list's keys. A
+KeyScope still takes a named key first (the row is a kit control to it);
+only a declined key's path differs: the list's navigation then runs
+among the ordinary Key handlers (first of them) rather than as the kit's
+default, with the same result.
+
+Verified (verify-shell-components.md), with three fixes applied: two
+Lists with one id (none given) are a fault, and ListProps.Attrs says two
+need their own; a selection the app changes moves the Tab stop to it;
+IconButton is a kit button to a KeyScope (scopeNativeAttrs, as Button).
