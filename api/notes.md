@@ -817,3 +817,69 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   ids surf.On sees; Dialog has its own fault.
 - **nav imports spikeui as `spikeui`**, as tasks does, so `ui.` in it is
   only the kit.
+
+## L2 notes
+
+L2 gives every Basecoat component its typed API, stories and tests, in
+four batch packs: B1 forms, B2 display, B3 overlays, B4 disclosure and
+navigation.
+
+### How the markup is made
+
+- **The nine Jinja components' markup is templ written by hand,** as L1
+  wrote Select, DropdownMenu, Dialog, Tabs and Toaster, to render what
+  the macro renders for the Props. What is generated is the oracle: the
+  spike's translator (Jinja to templ, kept in internal/) turns
+  Basecoat's macros into untyped templ, and each component's render
+  test compares ui's markup with the translated macro's for the same
+  arguments. A Basecoat bump regenerates the oracle, and the render
+  tests that fail name the components to change. Generating ui's markup
+  itself would bring back the macros' dynamic semantics (`jor`,
+  `jget`) under closed, typed Props. This is how NEIO-15's "markup from
+  Basecoat's Jinja macros, by a translator" is met (p-653, 2026-11-17).
+- **The CSS-only components that are one element are generated** from
+  a table (internal/uigen: their tag, class, data-slot, fields and the
+  attributes each writes), with their Props, doc and markup. ui's
+  `go generate` runs it. Button, Badge and Card moved into it unchanged.
+  The ones with parts of their own (a native select's options, a
+  range's fill, a separator's label) are written by hand beside them.
+- **Basecoat's sources are in the repository** (internal/basecoat: its
+  component CSS, the vega theme, the macros and the scripts, MIT), and
+  ui/style/build.mjs builds kit.css from all of them. kit.css was the
+  spike's selection, without .dialog, .toast or .toaster; whole, it is
+  226 KB where it was 117 KB. Every document with `ui.Stylesheet()`
+  carries it; an app's own build (L4) can leave out what it doesn't
+  use.
+
+### Batch B1: forms
+
+- **A control's value is a Props field, always written.** InputProps.Value,
+  TextareaProps.Value, RangeProps.Value and NativeSelectProps.Value are
+  what the surface sets on the host (a=field) when they differ from what
+  the host last reported, and Checked is the same for the check box,
+  radio and switch. The change comes back through a handler in Attrs
+  (surf.Input, surf.Check), as for any element, so a CSS-only component
+  keeps no On… callbacks. L1 made an input with no value attribute the
+  host's. A typed Input can't say "no value" apart from "", so it
+  always writes one; an app that wants the host's own field writes a
+  plain `<input>`.
+- **Input's Type is one of the 13 types Basecoat's input.css draws.** A
+  check box, radio and range are components of their own, so another
+  type is a fault. Field's Orientation and an addon's Align are strings
+  with their values in the doc, by Q2's rule.
+- **Invalid is aria-invalid** on the controls, which Basecoat draws in the
+  destructive colour, and data-invalid on a Field, which colours its own
+  text.
+- **Checkbox's Mixed is aria-checked="mixed".** Basecoat has no look for
+  it, so it draws as not checked; it is there for Tasks' select-all,
+  which the spike's kit had.
+- **Field and FieldSet hold plain elements,** as Card does: Basecoat
+  styles a field's parts by tag (`> label`, `> p`, `[role=alert]`,
+  `> section`), so parts as components would only rename them.
+- **An InputGroup's control is a plain element.** The group draws its
+  border, and `.input`'s own rules outrank the group's resets, so
+  ui.Input inside a group would draw two borders.
+- **Range has no State:** range.js only fills the track from the value
+  (--slider-value), which the markup writes from Props at every render.
+- **NativeSelect takes SelectItem,** Select's item, with Group as an
+  optgroup.

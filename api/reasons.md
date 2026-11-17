@@ -124,6 +124,96 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.ToasterState.Show`: shows a toast from a handler: an imperative call, the pattern's one kind of state an app pushes in.
 - `ui.Toaster`: Basecoat's toaster with toast.js translated: where toasts show; the pattern's case for a timer (surf.Of).
 
+### ui's forms (L2, batch B1)
+
+Each is one of Basecoat's CSS-only form components. A component that is one element is generated from internal/uigen's table, and the three with parts of their own (NativeSelect, Range, FieldSeparator) are written by hand. Every Props has `Attrs` (any attribute of the element, its handlers through surf.On, as ButtonProps.Attrs) and `Class` (ButtonProps.Class): they have no lines of their own below. A control's value or state is a field of its Props, because the surface sets it on the host (a=field, SPEC §6.4) when the markup asks for another than the host holds, and its change comes back through a handler in Attrs (surf.Input, surf.Check), as for any element.
+
+- `ui.Checkbox`: Basecoat's check box (`.input[type=checkbox]`), the native control the host toggles (SPEC §9).
+- `ui.CheckboxProps`: a check box's attributes.
+- `ui.CheckboxProps.Checked`: the app's state, set on the host when it differs from what the host reported: a select-all ticks the rows' boxes.
+- `ui.CheckboxProps.Mixed`: aria-checked="mixed", for a box standing for a set of which some are checked (Tasks' select-all); Basecoat has no look for it, so it draws as not checked.
+- `ui.CheckboxProps.Disabled`: a box that can't change now.
+- `ui.CheckboxProps.Invalid`: aria-invalid, which Basecoat draws in the destructive colour; a field's error marks its control.
+- `ui.Radio`: Basecoat's radio button (`.input[type=radio]`), the native control the host checks (SPEC §9).
+- `ui.RadioProps`: a radio's attributes.
+- `ui.RadioProps.Name`: a radio is one of a group by its name, which the host needs to uncheck the others: without it, every radio is a group of one.
+- `ui.RadioProps.Value`: what a radio stands for in its group, for the app's handler to tell them apart without an id per value.
+- `ui.RadioProps.Checked`: as CheckboxProps.Checked.
+- `ui.RadioProps.Disabled`: as CheckboxProps.Disabled.
+- `ui.RadioProps.Invalid`: as CheckboxProps.Invalid.
+- `ui.Switch`: Basecoat's switch (a check box with role=switch), an on/off setting.
+- `ui.SwitchProps`: a switch's attributes.
+- `ui.SwitchProps.Checked`: as CheckboxProps.Checked.
+- `ui.SwitchProps.Size`: Basecoat's switch sizes, data-size: Medium or Small (the shared Size).
+- `ui.SwitchProps.Disabled`: as CheckboxProps.Disabled.
+- `ui.SwitchProps.Invalid`: as CheckboxProps.Invalid.
+- `ui.Input`: Basecoat's text input (`.input`), any of the 13 types its CSS draws.
+- `ui.InputProps`: an input's attributes.
+- `ui.InputProps.Type`: Basecoat draws 13 input types (text, email, password, number, file, tel, url, search, date, datetime-local, month, week, time); a check box, radio or range is its own component, so a type outside the 13 is a fault. A string with its values in the doc, not a type of its own, by Q2's rule (only data-variant and data-size are shared enums).
+- `ui.InputProps.Value`: the field's text, always written, so the app keeps it in step and can clear it (a filter's reset). An input whose markup has no value is the host's (L1), which a typed component would make the zero value's meaning and so lose ""; an app wanting the host's own field writes a plain `<input>`.
+- `ui.InputProps.Placeholder`: Basecoat draws it (placeholder:text-muted-foreground); the most common attribute after the value.
+- `ui.InputProps.Disabled`: as CheckboxProps.Disabled.
+- `ui.InputProps.Invalid`: as CheckboxProps.Invalid.
+- `ui.Textarea`: Basecoat's textarea (`.textarea`).
+- `ui.TextareaProps`: a textarea's attributes.
+- `ui.TextareaProps.Value`: its text, which is its value (L1: a textarea's children aren't diffed), as InputProps.Value.
+- `ui.TextareaProps.Placeholder`: as InputProps.Placeholder.
+- `ui.TextareaProps.Disabled`: as CheckboxProps.Disabled.
+- `ui.TextareaProps.Invalid`: as CheckboxProps.Invalid.
+- `ui.Label`: Basecoat's label (`.label`), which dims with a disabled control inside it or after it.
+- `ui.LabelProps`: a label's attributes.
+- `ui.LabelProps.For`: the control a label names when it isn't inside it, the one attribute every such label has.
+- `ui.Field`: Basecoat's field (`.field`): a control with its label, description and error laid out together. Those are plain elements, as a Card's parts are, since Basecoat styles them by tag (`> label`, `> p`, `[role=alert]`).
+- `ui.FieldProps`: a field's attributes.
+- `ui.FieldProps.Orientation`: Basecoat's data-orientation for a field: horizontal or responsive; a string by Q2's rule.
+- `ui.FieldProps.Invalid`: data-invalid, the field's own text in the destructive colour (the control's aria-invalid is its own Invalid).
+- `ui.FieldProps.Disabled`: data-disabled, which dims the field's label and title.
+- `ui.FieldSet`: Basecoat's fieldset (`.fieldset`): fields under a legend and a description, as plain elements.
+- `ui.FieldSetProps`: a fieldset's attributes (Attrs and Class only), so that it takes Props as every component does and can gain a field without a break.
+- `ui.FieldSeparator`: Basecoat's field separator (`.field-separator`), a rule with an optional word in it ("Or"); the word is its one input, as Kbd's keys are.
+- `ui.InputGroup`: Basecoat's input group (`.input-group`): one bare control and its addons in one border.
+- `ui.InputGroupProps`: an input group's attributes (Attrs and Class), as FieldSetProps.
+- `ui.InputGroupAddon`: an addon of an input group, Basecoat's `[data-align]` child: an icon, text, a key or a button beside the control.
+- `ui.InputGroupAddonProps`: an addon's attributes.
+- `ui.InputGroupAddonProps.Align`: Basecoat's data-align for an addon: inline-start, inline-end, block-start, block-end; a string by Q2's rule.
+- `ui.NativeSelect`: Basecoat's native select (`select.select`): the host's own control, for a form that needs no list drawn in the page; with no list of the host's, the arrows choose (SPEC §10.2).
+- `ui.NativeSelectProps`: a native select's attributes.
+- `ui.NativeSelectProps.Items`: its options as SelectItem, the type Select's items are, with Group as an optgroup: one item type for both selects.
+- `ui.NativeSelectProps.Value`: the chosen option, set on the host as InputProps.Value; a Value no item has leaves the choice to the host (L1: a select whose markup chooses none is the host's).
+- `ui.NativeSelectProps.Disabled`: as CheckboxProps.Disabled.
+- `ui.NativeSelectProps.Invalid`: as CheckboxProps.Invalid.
+- `ui.Range`: Basecoat's range (`.input[type=range]`) and range.js, which fills the track up to the value (--slider-value): written from Value at each render, so no state.
+- `ui.RangeProps`: a range's attributes.
+- `ui.RangeProps.Value`: where it is set, a number, set on the host as InputProps.Value, and the track's fill.
+- `ui.RangeProps.Min`: its low end, which the fill needs (range.js reads min).
+- `ui.RangeProps.Max`: its high end, which the fill needs (range.js reads max); 0 is HTML's 100.
+- `ui.RangeProps.Step`: how far a key moves it; 0 is HTML's 1.
+- `ui.RangeProps.Disabled`: as CheckboxProps.Disabled.
+- `ui.CheckboxProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.CheckboxProps.Class`: as ButtonProps.Class.
+- `ui.FieldProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.FieldProps.Class`: as ButtonProps.Class.
+- `ui.FieldSetProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.FieldSetProps.Class`: as ButtonProps.Class.
+- `ui.InputProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.InputProps.Class`: as ButtonProps.Class.
+- `ui.InputGroupProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.InputGroupProps.Class`: as ButtonProps.Class.
+- `ui.InputGroupAddonProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.InputGroupAddonProps.Class`: as ButtonProps.Class.
+- `ui.LabelProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.LabelProps.Class`: as ButtonProps.Class.
+- `ui.NativeSelectProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.NativeSelectProps.Class`: as ButtonProps.Class.
+- `ui.RadioProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.RadioProps.Class`: as ButtonProps.Class.
+- `ui.RangeProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.RangeProps.Class`: as ButtonProps.Class.
+- `ui.SwitchProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.SwitchProps.Class`: as ButtonProps.Class.
+- `ui.TextareaProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.TextareaProps.Class`: as ButtonProps.Class.
+
 ## ui/code
 
 - `ui/code.Block`: highlighted code in Basecoat's pre, in a package of its own so an app without code doesn't link Chroma (a large share of a wasm build). One function: the spike's View, Highlight and CSS fold into it, the token colours going into the kit's stylesheet.

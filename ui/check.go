@@ -12,9 +12,13 @@ import (
 // The values each component takes, as Basecoat's CSS has them: a value
 // outside them is a fault, which fails a surftest test (package doc).
 var (
-	buttonVariants = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
-	badgeVariants  = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
-	sizes          = []Size{Medium, XSmall, Small, Large}
+	buttonVariants    = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
+	badgeVariants     = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
+	buttonSizes       = []Size{Medium, XSmall, Small, Large}
+	switchSizes       = []Size{Medium, Small}
+	inputTypes        = []string{"", "email", "password", "number", "file", "tel", "url", "search", "date", "datetime-local", "month", "week", "time"}
+	fieldOrientations = []string{"", "horizontal", "responsive"}
+	addonAligns       = []string{"", "inline-start", "inline-end", "block-start", "block-end"}
 )
 
 func checkVariant(ctx context.Context, comp string, v Variant, ok []Variant) string {
@@ -24,9 +28,17 @@ func checkVariant(ctx context.Context, comp string, v Variant, ok []Variant) str
 	return ""
 }
 
-func checkSize(ctx context.Context, comp string, s Size) string {
-	if !slices.Contains(sizes, s) {
-		rt.Fault(ctx, fmt.Sprintf("ui.%s: no size %q (it takes %s)", comp, s, list(sizes)))
+func checkSize(ctx context.Context, comp string, s Size, ok []Size) string {
+	if !slices.Contains(ok, s) {
+		rt.Fault(ctx, fmt.Sprintf("ui.%s: no size %q (it takes %s)", comp, s, list(ok)))
+	}
+	return ""
+}
+
+// checkEnum faults a string field's value that isn't one of ok.
+func checkEnum(ctx context.Context, comp, field, v string, ok []string) string {
+	if !slices.Contains(ok, v) {
+		rt.Fault(ctx, fmt.Sprintf("ui.%s: no %s %q (it takes %s)", comp, field, v, list(ok)))
 	}
 	return ""
 }

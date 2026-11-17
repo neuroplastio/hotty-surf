@@ -1,0 +1,67 @@
+package ui
+
+// The form components with parts of their own (css.go): a native select's
+// options, a range's filled track, a field separator's label.
+
+templ nativeSelect(p NativeSelectProps) {
+	<select
+		data-slot="native-select"
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ join("select", p.Class) }
+		{ p.Attrs... }
+	>
+		for _, g := range optionGroups(p.Items) {
+			if g.label == "" {
+				for _, it := range g.items {
+					@nativeOption(it, p.Value)
+				}
+			} else {
+				<optgroup label={ g.label }>
+					for _, it := range g.items {
+						@nativeOption(it, p.Value)
+					}
+				</optgroup>
+			}
+		}
+	</select>
+}
+
+templ nativeOption(it SelectItem, value string) {
+	<option value={ it.Value } selected?={ it.Value == value } disabled?={ it.Disabled }>{ it.Label }</option>
+}
+
+// rangeInput is range.js's input: --slider-value is how far Value is from
+// Min to Max, as updateRange computes it.
+templ rangeInput(p RangeProps) {
+	<input
+		data-slot="range"
+		type="range"
+		if p.Min != 0 {
+			min={ num(p.Min) }
+		}
+		if p.Max != 0 {
+			max={ num(p.Max) }
+		}
+		if p.Step != 0 {
+			step={ num(p.Step) }
+		}
+		value={ num(p.Value) }
+		disabled?={ p.Disabled }
+		style={ rangeStyle(p) }
+		data-range-initialized="true"
+		class={ join("input", p.Class) }
+		{ p.Attrs... }
+	/>
+}
+
+templ fieldSeparator(label string) {
+	<div data-slot="field-separator" class="field-separator">
+		<hr role="separator"/>
+		if label != "" {
+			<span>{ label }</span>
+		}
+	</div>
+}

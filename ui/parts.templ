@@ -1,7 +1,6 @@
 package ui
 
-// The components made from Basecoat's CSS alone, and the icons and keys:
-// the markup their exported functions (css.go, ui.go) return.
+// The icons and keys: the markup their exported functions (ui.go) return.
 
 import (
 	"neuroplast.io/hotty-surf"
@@ -15,45 +14,8 @@ templ icon(name, class string) {
 	</svg>
 }
 
-templ button(p ButtonProps) {
-	{{ checkVariant(ctx, "Button", p.Variant, buttonVariants) }}
-	{{ checkSize(ctx, "Button", p.Size) }}
-	<button
-		data-slot="button"
-		if _, ok := p.Attrs["type"]; !ok {
-			type="button"
-		}
-		disabled?={ p.Disabled }
-		if p.Variant != "" {
-			data-variant={ string(p.Variant) }
-		}
-		if s := buttonSize(p); s != "" {
-			data-size={ s }
-		}
-		class={ join("btn", p.Class) }
-		{ p.Attrs... }
-	>
-		{ children... }
-	</button>
-}
 
-templ badge(p BadgeProps) {
-	{{ checkVariant(ctx, "Badge", p.Variant, badgeVariants) }}
-	<span
-		data-slot="badge"
-		if p.Variant != "" {
-			data-variant={ string(p.Variant) }
-		}
-		class={ join("badge", p.Class) }
-		{ p.Attrs... }
-	>{ children... }</span>
-}
 
-templ card(p CardProps) {
-	<div data-slot="card" class={ join("card", p.Class) } { p.Attrs... }>
-		{ children... }
-	</div>
-}
 
 templ kbd(keys string) {
 	<kbd data-slot="kbd" class="kbd">{ keycap.Text(surf.Platform(ctx), keys) }</kbd>
