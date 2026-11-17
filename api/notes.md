@@ -1688,7 +1688,8 @@ was lifted, k-lifted there), adapted to handlers.
   app that reorders by drag also gives the keyboard a way, as the docs
   say. A cells drag (mouse reporting's motion with the button down) and a
   right click mapped to Secondary are a later cells change, with names of
-  its own on cells.Screen if wanted.
+  its own on cells.Screen if wanted. (L6, below, gives it: Press, Move,
+  Release and At.)
 
 Open for the reviewer:
 1. Drop(nil) adds nothing, as every nil handler does, so a row that only
