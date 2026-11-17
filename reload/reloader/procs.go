@@ -97,6 +97,7 @@ func (r *Reloader) serve(ctx context.Context, rw io.ReadWriteCloser) error {
 		return nil
 	}
 
+	var areasMsg devwire.Areas
 	for {
 		h, err := devwire.ReadHead(rd)
 		if err != nil {
@@ -111,8 +112,11 @@ func (r *Reloader) serve(ctx context.Context, rw io.ReadWriteCloser) error {
 			p.mu.Unlock()
 			err = devwire.Skip(rd)
 		case h.Type == devwire.Notification && h.Method == "areas":
-			var a devwire.Areas
-			if err = devwire.Decode(rd, &a); err == nil {
+			// One message value per connection, reset and reused (P-3):
+			// what it held is copied out before the next.
+			areasMsg = devwire.Areas{Surfaces: areasMsg.Surfaces[:0]}
+			a := &areasMsg
+			if err = devwire.Decode(rd, a); err == nil {
 				areas := make([]Placed, len(a.Surfaces))
 				for i, s := range a.Surfaces {
 					areas[i] = Placed{Name: s.Name, Cols: s.Cols, Rows: s.Rows}

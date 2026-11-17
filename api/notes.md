@@ -1185,10 +1185,13 @@ approved with changes, applied as written:
 
 ### What is still open
 
-- **A dropped surface stays listed** until the GC collects it (surfaces
-  register weakly): a program that says `reload.Placed(s, 0, 0)` when it
-  hides or drops an overlay keeps it out of a shot. The real fix is L0's
-  open `Surface.Close`.
+- **A dropped surface stays listed** for the life of its process: a
+  dev build holds every surface it made (devhook's registry and the
+  reload wire's child), so none is collected. A program that says
+  `reload.Placed(s, 0, 0)` when it hides or drops an overlay keeps it
+  out of a shot. One that makes a surface per opening (a menu) gains
+  one entry each time, and should reuse its overlay surfaces until
+  L0's open `Surface.Close` lands.
 - **Overlays have a size but no position,** so a shot of a tool and its open
   menu together isn't possible yet. X and Y on Placed would be an addition,
   not a break, once a shot needs them.
