@@ -92,7 +92,7 @@ Of 39 components:
 - **markup:** 9 jinja, 29 css, 1 hand.
 - **behaviour:** 11 scripts translated (`accordion.js`, `combobox.js`, `command.js`, `drawer.js`, `dropdown-menu.js`, `popover.js`, `range.js`, `select.js`, `sidebar.js`, `tabs.js`, `toast.js`); 2 components by hand (chart, dialog); 26 with none.
 - **browser:** 18 components rely on a browser feature.
-- **status:** 23 done, 11 port, 4 new, 1 waits.
+- **status:** 23 done, 12 port, 3 new, 1 waits.
 - **tests:** render 9, spec 28, differential 11, keys-cells 21.
 
 ## The components
@@ -137,4 +137,4 @@ Of 39 components:
 | tabs | jinja | `tabs.js` | - | `ui.Tabs`, `ui.TabsProps`, `ui.Tab` | `tabs/default`, `tabs/line`, `tabs/many`, `tabs/vertical` | `render`, `differential`, `keys-cells` | port | the macro's markup in templ, the shown tab's panel only (the children); tabs.js's ← → Home End, the keyboard following the selected tab; horizontal only, no line variant: TabsProps has neither |
 | textarea | css | - | `<textarea>` | `ui.Textarea`, `ui.TextareaProps` | `textarea/default` | `spec`, `keys-cells` | done | field-sizing: content needs Blitz patch 0056 (blitz-gaps); storybook css.go |
 | toast | jinja | `toast.js` | - | `ui.Toaster`, `ui.ToasterState`, `ui.Toast` | `toast/default`, `toast/categories`, `toast/action` | `render`, `differential`, `keys-cells` | port | macros toaster and toast in templ; toast.js's timers through Surface.Do, Basecoat's durations, the pause while the pointer is over it (surf.Hover); categories success, error, info, warning; Toast has no action or cancel, so one that stays gets the cancel button, Dismiss; kit.css has no .toaster or .toast rules |
-| tooltip | css | - | `:hover`, `attr()` | `ui.Tooltip`, `ui.TooltipProps` | `tooltip/default`, `tooltip/sides` | `spec` | new | hover only: hidden on focus, none in cells; content: attr() unchecked in Blitz |
+| tooltip | css | - | `:hover`, `attr()` | `ui.Tooltip`, `ui.TooltipProps` | `tooltip/default`, `tooltip/sides` | `spec` | port | the Basecoat attribute and CSS on a wrapper; hover only, hidden on focus; cells has no tooltip; attr() unchecked in Blitz |

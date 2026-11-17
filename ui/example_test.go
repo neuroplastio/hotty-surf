@@ -72,3 +72,7 @@ func ExampleAlertDialog() {
 		Description: "This cannot be undone.", OnClose: func() {},
 	})
 }
+
+func ExampleTooltip() {
+	_ = ui.Tooltip(ui.TooltipProps{Text: "Add to library", Side: "top"})
+}

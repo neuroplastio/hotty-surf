@@ -106,6 +106,29 @@ func init() {
 	}
 	add(Story{ID: "dialog/with-alert", Doc: "A modal confirmation with two actions",
 		View: show(alertDialogStory), Keys: []string{"tab", "enter", "escape"}, Want: "alert: off"})
+	add(Story{ID: "tooltip/default", Doc: "A tooltip shown when its button is hovered",
+		View: func() templ.Component { return tooltipStory(false) }})
+	add(Story{ID: "tooltip/sides", Doc: "Tooltips on four sides",
+		View: func() templ.Component { return tooltipStory(true) }})
+}
+
+templ tooltipStory(sides bool) {
+	<div class="flex gap-3 p-4">
+		@ui.Tooltip(ui.TooltipProps{Text:"Add to library"}) {
+			@ui.Button(ui.ButtonProps{}) { Add }
+		}
+		if sides {
+			@ui.Tooltip(ui.TooltipProps{Text:"Below", Side:"bottom", Arrow:true}) {
+				@ui.Button(ui.ButtonProps{}) { Bottom }
+			}
+			@ui.Tooltip(ui.TooltipProps{Text:"Left", Side:"left"}) {
+				@ui.Button(ui.ButtonProps{}) { Left }
+			}
+			@ui.Tooltip(ui.TooltipProps{Text:"Right", Side:"right"}) {
+				@ui.Button(ui.ButtonProps{}) { Right }
+			}
+		}
+	</div>
 }
 
 templ alertDialogStory(s *overlayState) {

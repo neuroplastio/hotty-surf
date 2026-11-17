@@ -141,6 +141,7 @@ pkg neuroplast.io/hotty-surf/ui, func Table(TableProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Textarea(TextareaProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Tooltip(TooltipProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*CommandState) Search(string)
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
@@ -384,5 +385,11 @@ pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
 pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Align string
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Arrow bool
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Side string
+pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Text string
 pkg neuroplast.io/hotty-surf/ui, type Variant string
 pkg neuroplast.io/hotty-surf/ui/code, func Block(string, string, int) templ.Component

@@ -1053,6 +1053,14 @@ scrollbar classes and Avatar's image for the looks pass.
   Description provide its accessible name and description, while children
   supply its actions. The small CSS variant is exposed as Size. A story,
   cells keys and a Chromium Escape differential cover it.
+- **Tooltip: draft for review.** The spike has no tooltip component; this
+  wraps children in Basecoat's data-tooltip markup and uses its CSS. Its
+  popup is hover-only, and cells does not yet show it. hotty-a2ui instead
+  puts hovered descriptions in a separate key-hints status line; that
+  presentation requires an app-owned hints area. The Basecoat CSS uses
+  generated content via attr(), which still needs a Blitz hover looks check.
+  The wrapper changes the DOM around its child; exposing an attribute helper
+  instead is an alternative for the reviewer.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup

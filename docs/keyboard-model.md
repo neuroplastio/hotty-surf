@@ -68,7 +68,7 @@ component values and applies the changes its callbacks report.
 | Tabs | Left and Right move among enabled tabs, wrapping; Home and End choose the first and last. Focus follows the selected tab. |
 | Textarea | Text editing follows the field keymap and platform; Enter inserts a line break. |
 | Toast / toaster | Buttons in a toast use button activation; there are no other toaster keys. |
-| Tooltip | Planned; Basecoat's tooltip is hover-only, including no tooltip on keyboard focus. |
+| Tooltip | No keys; Basecoat shows it on hover, not keyboard focus. Cells does not currently display it. |
 
 Select, DropdownMenu, Tabs, Popover, Command and Dialog have Go handlers.
 The same surface handlers run when a host or cells sends the event or
