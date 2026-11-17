@@ -47,7 +47,7 @@ const (
 // host's dialog) uses it as it is. A surface links the kit rather than
 // carry it: Surface.Link(Sheet()).
 func Stylesheet() string {
-	return kitCSS + navCSS + controlsCSS + sliderCSS
+	return kitCSS + navCSS + controlsCSS + sliderCSS + contextMenuCSS
 }
 
 // Sheet is Stylesheet as a resource that documents link rather than carry

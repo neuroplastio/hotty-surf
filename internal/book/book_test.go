@@ -34,8 +34,8 @@ func paneText(a *App) string {
 // Every story is in the book, a later one with no step of its own.
 func TestEveryStory(t *testing.T) {
 	a := New()
-	if len(a.all) != len(stories.All()) || len(a.all) == 0 {
-		t.Fatalf("the book has %d stories, package stories %d", len(a.all), len(stories.All()))
+	if len(a.all) != len(stories.BookAll()) || len(a.all) == 0 {
+		t.Fatalf("the book has %d stories, package stories %d", len(a.all), len(stories.BookAll()))
 	}
 	for _, st := range a.all {
 		a.show(st.ID)
@@ -108,18 +108,54 @@ func TestBookInspection(t *testing.T) {
 	}
 }
 
+func TestBookLogsStoryStateChanges(t *testing.T) {
+	a := New()
+	a.show("button/default")
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
+	r.Click("#save")
+	for _, event := range a.model.Events(a.model.Sel) {
+		if event.Kind == "state" && strings.Contains(event.Text, "Clicks") {
+			return
+		}
+	}
+	t.Fatalf("button state change was not logged: %+v", a.model.Events(a.model.Sel))
+}
+
+func TestStoryHTMLIsComponentOnly(t *testing.T) {
+	a := New()
+	a.show("alert/default")
+	got := a.storyHTML()
+	if strings.Contains(got, "<style") || strings.Contains(got, `id="root"`) {
+		t.Fatalf("HTML includes surface document: %s", got)
+	}
+	if !strings.Contains(got, "Heads up!") ||
+		!strings.Contains(got, `<svg class="lucide`) ||
+		!strings.Contains(got, " …></svg>") || strings.Contains(got, "<path") {
+		t.Fatalf("HTML did not format and shorten the component: %s", got)
+	}
+}
+
 func TestRenditionsShareStoryState(t *testing.T) {
 	a := New()
 	a.show("button/default")
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	r.Key("r")
-	if !a.Cells || !strings.Contains(paneText(a), "clicks: 1") {
+	if !a.Cells || !strings.Contains(paneText(a), "Button") {
 		t.Fatalf("cells=%v; pane=%q", a.Cells, paneText(a))
 	}
 	r.Key("r")
-	if a.Cells || !strings.Contains(r.HTML(), "clicks: 1") {
-		t.Fatal("hotty rendition did not retain the story state")
+	if a.Cells || !strings.Contains(r.HTML(), "Button") {
+		t.Fatal("hotty rendition did not retain the story")
+	}
+	var clicks string
+	for _, c := range a.model.Sel.Controls() {
+		if c.Path == "Clicks" {
+			clicks = c.Value
+		}
+	}
+	if clicks != "1" {
+		t.Fatalf("click count after switching renditions: %q", clicks)
 	}
 }
 
@@ -136,7 +172,7 @@ func TestBookRestore(t *testing.T) {
 	if b.ID != "badge/default" || b.model.Filter != "badge" || b.model.Tab != "props" || b.model.Dark {
 		t.Fatalf("restored book: story %q, filter %q, tab %q, dark %v", b.ID, b.model.Filter, b.model.Tab, b.model.Dark)
 	}
-	if got := b.model.Sel.Controls(); len(got) != 1 || got[0].Value != "Ready" {
+	if got := b.model.Sel.Controls(); len(got) != 2 || got[1].Path != "Label" || got[1].Value != "Ready" {
 		t.Fatalf("restored controls: %+v", got)
 	}
 }
@@ -299,5 +335,99 @@ func TestPaneKeysOnlyItsOwn(t *testing.T) {
 	}
 	if strings.Contains(paneText(a), "[x]") {
 		t.Fatal("space reached the pane without the keyboard")
+	}
+}
+
+func TestCodeStoryPropsChangePreview(t *testing.T) {
+	a := New()
+	a.show("code/go")
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
+	if !a.model.Sel.Set("First", "120") {
+		t.Fatal("could not change the first line number")
+	}
+	r.Update()
+	if got := a.storyHTML(); !strings.Contains(got, "120") {
+		t.Fatalf("code preview did not use the edited line number: %s", got)
+	}
+}
+
+func TestBookEventLogDemoClears(t *testing.T) {
+	a := New()
+	a.show("event-log/default")
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
+	if !strings.Contains(r.HTML(), "Popup.Open") {
+		t.Fatal("event log demo did not show its entries")
+	}
+	r.Click("#demo-clear")
+	if strings.Contains(r.HTML(), "Popup.Open") || !strings.Contains(r.HTML(), "Nothing yet: add an event.") {
+		t.Fatal("event log demo did not clear")
+	}
+}
+
+func TestBookDemonstrationsHaveSource(t *testing.T) {
+	a := New()
+	for _, id := range []string{"code/go", "nav-list/default", "controls/default", "event-log/default", "icons/default", "separator/default"} {
+		a.show(id)
+		if src := a.model.Sel.Sources(); len(src) < 2 || !strings.HasPrefix(src[1].Title, "render:") {
+			t.Errorf("%s source: %+v", id, src)
+		}
+	}
+}
+
+func TestTabsDemoSharesSelectionAndProps(t *testing.T) {
+	a := New()
+	a.show("tabs-demo/line")
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
+	r.Click("#demo-tab-2")
+	if got := a.storyHTML(); !strings.Contains(got, "password panel") {
+		t.Fatalf("tab selection did not update demo: %s", got)
+	}
+	if !a.model.Sel.Set("Tabs.Active", "team") {
+		t.Fatal("could not edit the active tab prop")
+	}
+	r.Update()
+	if got := a.storyHTML(); !strings.Contains(got, "team panel") {
+		t.Fatalf("active prop did not update demo: %s", got)
+	}
+}
+
+func TestShellStoriesUseTheirEditableState(t *testing.T) {
+	a := New()
+	a.show("list-item/default")
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
+	r.Click("#row-0")
+	if got := storyControl(a, "Selected"); got != "0" {
+		t.Fatalf("list selection = %q, want 0", got)
+	}
+	a.show("icon-button/default")
+	r.Update()
+	r.Click("#ib-Layout")
+	if got := storyControl(a, "Accent"); got != "Layout" {
+		t.Fatalf("icon button accent = %q, want Layout", got)
+	}
+}
+
+func storyControl(a *App, path string) string {
+	for _, c := range a.model.Sel.Controls() {
+		if c.Path == path {
+			return c.Value
+		}
+	}
+	return ""
+}
+
+// A component's variants are listed as the spike listed them: the order
+// their stories were added, not by name.
+func TestVariantOrder(t *testing.T) {
+	a := New()
+	var got []string
+	for _, s := range a.model.Stories {
+		if strings.HasPrefix(s.Name, "Button") {
+			got = append(got, s.Name)
+		}
+	}
+	want := "Button, Button / destructive, Button / ghost with icon, Button / disabled, Button / every variant and size"
+	if strings.Join(got, ", ") != want {
+		t.Fatalf("Button's stories: %s\nwant: %s", strings.Join(got, ", "), want)
 	}
 }

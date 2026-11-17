@@ -112,7 +112,7 @@ type shown struct {
 
 // New is a book of every story, showing the first.
 func New() *App {
-	a := &App{all: stories.All(), startFocus: true}
+	a := &App{all: stories.BookAll(), startFocus: true}
 	var ss []*storybook.Story
 	for _, st := range a.all {
 		ss = append(ss, storybook.Wrap(st.ID, st.Doc, st.View, st.Props))
@@ -132,7 +132,9 @@ func New() *App {
 			}
 			return -1
 		}
-		return strings.Compare(x.Name, y.Name)
+		// A component's variants stay in the order its stories were
+		// added (stories.BookAll), as the spike listed them.
+		return 0
 	})
 	a.model = storybook.New(ss)
 	a.nav = ui.NavList{ID: "book-nav", Label: "Stories", FilterLabel: "Filter stories", Placeholder: "Filter stories  ( / )", Empty: "No story matches."}
@@ -436,18 +438,14 @@ func (a *App) entries() []ui.LogEntry {
 }
 
 func (a *App) storyHTML() string {
-	if a.cur == nil {
+	if a.model.Sel == nil {
 		return ""
 	}
-	a.cur.start()
-	if a.cur.err != nil {
-		return a.cur.err.Error()
+	var b strings.Builder
+	if err := a.model.Sel.HTML(nil).Render(context.Background(), &b); err != nil {
+		return "<!-- " + err.Error() + " -->"
 	}
-	doc, err := rt.Peek.Document(a.cur.pane)
-	if err != nil {
-		return err.Error()
-	}
-	return prettyHTML(doc)
+	return prettyHTML(b.String())
 }
 
 // PaneKey is a key the host passed the program while the pane has the

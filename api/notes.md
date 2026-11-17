@@ -1917,6 +1917,202 @@ Lists with one id (none given) are a fault, and ListProps.Attrs says two
 need their own; a selection the app changes moves the Tab stop to it;
 IconButton is a kit button to a KeyScope (scopeNativeAttrs, as Button).
 
+## L6: colour in cells, for plx (a pack of its own)
+
+plx draws its surfaces in cells where the terminal is no hotty host, and
+paints them in its theme: accent, muted, border, error, a selected row's
+band, a card's and a field's fill mixed into the terminal's ground. v0.7's
+`cells.Screen` emits bold, dim, italic, underline and reverse only, so
+both of plx's cells hosts (surfhost, surfdk) lose every colour: the
+gap blocks plx's slices 1–6 (`l4c-gaps.md`, G-cells-colour).
+
+### The shape: roles named as the kit's CSS variables, as a grid
+
+- `cells.Role` is a theme colour named as the kit's (Basecoat's,
+  shadcn's) CSS variable: `primary`, `primary-foreground`,
+  `muted-foreground`, `destructive`, `accent`, `card`, `popover`,
+  `border`, `input`, `chart-1`…. plx already maps exactly these names to
+  its theme (`internal/theme/theme.go`, `kitVarRoles`, which writes the
+  kit's variables for v0.7 on a host), so in cells it maps the same names
+  to the same colours. No role list of hotty-surf's own to keep in step.
+- A program's own variable, named in an inline style or an arbitrary
+  class (`color: var(--plx-warn)`, `text-[var(--plx-warn)]`), passes
+  through as its name: plx's own markup keeps its own colours in cells.
+- Basecoat's tinted fills keep Tailwind's opacity in the role:
+  `destructive/10` (a destructive button's fill), `input/30` (a dark
+  field). plx mixes that much into the ground, as v0.6's host did with
+  its `mixes`.
+- `Screen.Cells() [][]Cell`, `Cell{Text, Fg, Bg, Attr}`: plx paints into
+  its own grid cell by cell (`gridOf`, `cellOf`), and its `legible` pass
+  needs the fill and the ink apart; SGR can't carry roles.
+- `Lines()` doesn't change: attributes only, `muted-foreground` still
+  dim. It is `Cells()` with the roles left out.
+- The focused element stays `Reverse`, as in Lines; plx's v0.6 drew a
+  focused list's selection as `sel`, which it can do from Reverse.
+
+What the Screen reads (SUBSET.md gets a "Colours" section with the
+implementation): `text-*`, `bg-*` (and `border-*` for a rule's role) of the
+kit's tokens; the inline `color`, `background`, `background-color` when
+they are a `var()`; and, as `kit.go` knows the kit's layout, the colours
+of its components from Basecoat's sheet (vega.css): a button's and a
+badge's variant (primary: `primary` on `primary-foreground`; secondary;
+destructive: `destructive` on `destructive/10`; link: `primary`), an
+alert's, a card's and a popover's ground, a highlighted menu or list item
+(`accent` / `accent-foreground`), a selected tab, a `kbd`'s `muted`, a
+progress bar's `primary`, a chart's `chart-N`, the rules (`hr`, a table
+head's rule) in `border`. Port: the v0.6.3 cells (`pkg/cells/colors.go`,
+`screen.go`) had roles as runs; their names were surf.css's, which v0.7
+dropped for Basecoat's, so the role names and the reading are new, the
+shape (roles per cell, program paints) is v0.6.3's.
+
+### Open questions, as drafted
+
+1. **The shape.** (a) roles as a `Cells()` grid (this pack); (b) the
+   program passes a palette (`func(Role) RGB`) and `Lines()` emits 24-bit
+   SGR; (c) the Screen computes truecolor itself from the stylesheet's
+   values. **Lean (a).** (b) loses what plx does per cell (mixing a tint
+   into the ground under a dialog, muted ink made to clear 3:1 on its
+   fill) unless the palette func grows those cases; a program that wants
+   (b) writes it over Cells in a dozen lines. (c) needs the Screen to
+   read the stylesheet, which SUBSET.md rules out, and the terminal's own
+   colours, which only the program has.
+2. **Role as a string.** A string type with the variable's name, not a
+   closed enum of constants. **Lean: string, no constants.** The set is
+   Basecoat's (and the program's own vars), which the Screen doesn't
+   own; constants would be a second list to keep in step and couldn't name
+   `plx-warn` or `destructive/10`.
+3. **Opacity inside the role** (`destructive/10`) or a separate
+   `Cell.BgMix uint8`. **Lean: inside the role**, Tailwind's own spelling,
+   one field; a program that ignores tints maps the name before `/`.
+4. **A `Paint(func(Role) (RGB, bool)) []string`** convenience for run and
+   surftea. **Lean: not now** (one way per thing; nobody asks for it yet;
+   run's cells stay in the terminal's colours via Lines).
+
+### Size (K13-like)
+
+A stripped native `examples/hello` (`go build -trimpath -ldflags='-s -w'`,
+which links cells through run) grows from 6,881,545 to 6,897,929 bytes:
+**+16,384 raw**, +5,547 with `gzip -9` (the verifier measured +7,406
+with gzip's default). The wasm build doesn't link cells (`GOOS=js
+GOARCH=wasm go list -deps` has no `cells`), so web builds don't change.
+
+### Lines stays as it was
+
+`Lines` is byte-identical to v07 `69dcd99`'s, over every story and a
+probe document the stories don't reach (coloured and struck text inside
+muted text, a rule, a placeholder, an opacity), both generated with the
+base's code (`TestLinesGolden`). Lines has its own view of a look
+(`lineLook`): muted text, a rule and text-muted-foreground stay Dim
+under a colour of its own, and Strike isn't drawn.
+
+### As reviewed (p-796, 2026-11-17): all names, five doc changes, applied
+
+Approved lean (a) and every name as named (`Role`, `Attr` with Bold…Strike,
+`Cell{Text, Fg, Bg, Attr}`, `Screen.Cells`). All four questions went with
+the leans: a grid of roles; Role a string with no constants; opacity
+inside the role; no Paint now. The docs of Role (its grammar, SPEC §8's
+`hotty-*` variables, literal colours read as ""), Cell, Cells, Reverse and
+the example were changed as written. The implementation covers the
+`dark:` scheme from the root's `.dark`/`.light`, the selected band
+(`accent`/`accent-foreground`, with focus adding Reverse), v4's
+`text-(--x)`, the size delta and a Lines golden. Kit rule K28: cells
+names colours, and the program paints them.
+
+### As verified (p-797, 2026-11-17): one fix, applied
+
+Lines was not byte-identical off the story corpus (coloured or struck text
+inside muted text). Lines now has its own view of a look (`lineLook`, with
+`lFaint` keeping text-muted-foreground's Dim), and the golden gains a
+probe document generated with 69dcd99's code. The size delta is stated
+above.
+
+## plx: the context menu (a pack of its own)
+
+plx's ask (b): a menu opened at the pointer by a right click, or by the
+keyboard's menu keys at the focused element, not from a trigger. Neither
+hotty-a2ui (its KIT-28 is unbuilt) nor the spike has one. hotty-surf
+v0.6.3 had one (surfrun's context menu, 2026-11-06's journal), and this
+ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
+
+### As drafted
+
+- `ContextMenu(st *ContextMenuState, p ContextMenuProps)`. Its children
+  are the area; `ContextMenuProps{ID, Items []MenuItem, Class}`.
+  `ContextMenuState` is opaque, with no methods, since only the user opens
+  it.
+- **Opening.** A secondary press in the area opens it at the pointer's
+  cell, with no item highlighted (v0.6). shift+f10 or context_menu on an
+  element in the area opens it under the area, with the first item
+  highlighted (v0.6). They reach the area's surf.Key, as SPEC §10.2 gives
+  them to the program.
+- **Where.** The menu is a DropdownMenu's popover inside the area's
+  wrapper (`position: relative`), at
+  `top: calc(var(--hotty-cell-h) * (r - area.r))` and
+  `left: calc(var(--hotty-cell-w) * (c - area.c))`. That's the press's
+  cell less the area's (SPEC §9: both count from the surface), using only
+  proven CSS: `position: absolute` with top/left, `calc()`, and the
+  host's `var()`s. With no area (surftest's host lays nothing out) it
+  opens under the area, as a key does.
+- **Open.** The menu (`role=menu`, `tabindex=0`) takes the keyboard and
+  has a DropdownMenu's keys. Escape, a choice, or the opening keys again
+  close it and give the keyboard back to the element that had it (v0.6). A
+  press outside closes it (Outside runs before Secondary, so a second
+  right click moves it). It is the surface's one open popup, as a
+  DropdownMenu is.
+- **Cells.** The menu is drawn after the area in the flow, as a
+  DropdownMenu's is after its button. v0.6 drew it over the screen at the
+  cell. That needs the cells renderer to overlay a popover, which isn't
+  this leg's (cells is L3's).
+
+### Open for the reviewer
+
+1. **A wrapper.** The area is wrapped in a `div` (the dropdown-menu block)
+   that holds the menu and takes the press and the keys. A row of a table
+   can't be wrapped in a div. The other choice is an attrs helper the app
+   spreads on its own element, plus a menu component rendered beside it:
+   two calls where there is one now.
+2. **A key-opened menu goes under the area,** not under the focused
+   element. A `focus` event carries no area (SPEC §9's table), so the
+   program can't know where the element is. Exact for a ContextMenu per
+   row; for a large area it is the area's bottom edge. The fix is a SPEC
+   proposal (an area on `focus`, as on `press`), which is the
+   maintainer's call. Not worked around.
+3. **No flip at the edges.** v0.6 flipped the menu left and up near the
+   surface's edges. The kit doesn't know the surface's size in cells
+   during a render, so a menu near the right or bottom edge is cut off by
+   the surface. Same remedy class as 2: the host could place it. Noted,
+   not worked around.
+4. **No Open method.** DropdownMenuState has Open (a shortcut opens it).
+   A context menu opened by the app would have no cell to open at; an app
+   wanting a menu from a button uses DropdownMenu.
+5. **The test host.** hottytest 0.8.1 typed neither shift+f10 nor
+   context_menu. Reported with a repro and fixed in hotty-go e31f778
+   (hottytest types f1–f12 and context_menu as xterm does, and
+   hotty.DecodeKeys reads them). This branch pins that commit until
+   hottytest v0.8.2 is tagged, and the key tests type through the Rig.
+
+### As reviewed (p-796, review-ctx.md): applied
+
+- ContextMenu, ContextMenuProps{ID, Items, Class} and the opaque
+  ContextMenuState kept as approved (Q4: no Open).
+- Q1: the area paragraph replaced: the area is a block; a menu per row is
+  surf.Secondary on the rows plus a ui.Menu the app draws.
+- Q2, Q3: the doc names both host limits (a key opens it under the area;
+  no flip). The SPEC proposal is deferred (p-653), not made now.
+- Q5: the hotty-go pseudo-version stays on the branch; hottytest v0.8.2
+  is tagged in the release batch before v0.7.0 (p-653, P-5).
+- **Added `ui.Menu(MenuProps{ID, Items, Highlight, OnHighlight, Class})`**
+  with the review's texts: the `[role=menu]` panel alone, shown, its
+  highlight the app's (K25). It renders through DropdownMenu's view and
+  items (`menuView.ctl`), takes no part in the surface's one open popup,
+  and a choice closes nothing. A highlight out of range or on a disabled
+  item is none. Its panel sits in the flow (`position: static`), so a
+  surface whose view it is draws it at its top left. TestMenuControlled,
+  ExampleMenu.
+- K29 (menus: three ways in, one panel) is the reviewer's.
+- G-menu-rows (MenuItem slots for all three menus) is next after the
+  toast pack (p-653's queue).
+
 ## L5: the kit's sheet as a resource (plx's G-kit-sheet)
 
 `ui.Stylesheet()` is 228,864 bytes, and an app carries it in every
