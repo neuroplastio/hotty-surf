@@ -1,0 +1,5 @@
+/* ContextMenu: a dropdown menu's items in an area of the app's, opened
+   where the pointer was. The area is a block, the menu placed in it. */
+.dropdown-menu.context-menu { display: block; position: relative; }
+.dropdown-menu.context-menu > [data-popover] { min-width: calc(var(--spacing) * 32); }
+.dropdown-menu.context-menu > [data-popover][data-at] { margin-top: 0; }
