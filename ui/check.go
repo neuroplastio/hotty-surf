@@ -33,7 +33,7 @@ func checkSize(ctx context.Context, comp string, s Size) string {
 
 func checkIcon(ctx context.Context, name string) string {
 	if _, ok := icons[name]; !ok {
-		rt.Fault(ctx, fmt.Sprintf("ui.Icon: no icon %q in the kit's set", name))
+		rt.Fault(ctx, fmt.Sprintf("ui.Icon: no icon %q (the kit has %s)", name, strings.Join(iconNames(), ", ")))
 	}
 	return ""
 }

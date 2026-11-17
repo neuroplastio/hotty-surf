@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 """lucide.py: lucide's icons, as Go, for ui (Icon): the inner SVG
 of each icon named, read from lucide-react's ESM files (their __iconNode),
-the paths lucide-react draws.
+the paths lucide-react draws: the kit's ICONS, and any more named.
 
-    lucide.py <lucide-react dir> <out.go> <icon>...
+    lucide.py <lucide-react dir> <out.go> [<icon>...]
 """
 import json, os, re, sys
-src, out, names = sys.argv[1], sys.argv[2], sys.argv[3:]
+
+# The kit's icons: a subset of Lucide's until L2 ships the set.
+ICONS = """
+arrow-down arrow-right arrow-up check chevron-down chevron-left
+chevron-right chevrons-left chevrons-right chevrons-up-down circle
+circle-check-big circle-help circle-off circle-plus ellipsis eye-off hand
+plus search settings-2 timer x
+""".split()
+
+src, out, names = sys.argv[1], sys.argv[2], ICONS + sys.argv[3:]
 ver = json.load(open(os.path.join(src, "package.json")))["version"]
 rows = []
 for n in sorted(set(names)):
