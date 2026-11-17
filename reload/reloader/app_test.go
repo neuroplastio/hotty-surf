@@ -227,3 +227,26 @@ func TestNewStateFieldKept(t *testing.T) {
 		t.Fatalf("the new field wasn't kept: %.400q", doc)
 	}
 }
+
+// TestRevertAfterAFailedBuild: a Go expression in the .templ is broken and
+// put back. The revert is the running build's .templ again, but the Go on
+// disk is the broken one, so it takes the go tier and the failure goes.
+func TestRevertAfterAFailedBuild(t *testing.T) {
+	h, stop := begin(t)
+	defer stop()
+	p1 := h.proc(1)
+	h.shown(p1)
+	good, bad := "{ strconv.Itoa(a.Count) }", "{ strconv.Itoa(a.Count) + nope }"
+	h.edit("page.templ", good, bad)
+	if rep := h.reload(); !strings.Contains(rep.Build, "nope") {
+		t.Fatalf("the broken save: %+v", rep)
+	}
+	h.edit("page.templ", bad, good)
+	rep := h.reload()
+	if rep.Build != "" || rep.Tier != tierGo {
+		t.Fatalf("the revert: tier %q, build %q", rep.Tier, rep.Build)
+	}
+	if rep := h.reload(); rep.Build != "" {
+		t.Fatalf("after the revert: %+v", rep)
+	}
+}

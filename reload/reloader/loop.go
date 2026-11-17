@@ -664,7 +664,11 @@ func (l *loop) apply() {
 			}
 			l.gen[f] = out
 			prev, ok := l.live[f]
-			if !ok || generator.HasGoChanged(prev, out) || !l.underRoot(f) {
+			// While the last build failed, the Go on disk may be the
+			// broken Go this save fixes: it takes the go tier until a
+			// build passes, where the comparison with the running build's
+			// would call a revert text.
+			if !ok || generator.HasGoChanged(prev, out) || !l.underRoot(f) || l.broken != "" {
 				// The build needs the Go now, and gofmt is where a bad
 				// expression in the .templ shows.
 				if err := templgen.WriteGo(f, raw); err != nil {
