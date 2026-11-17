@@ -461,6 +461,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `cells.Screen.Focus`: without a host, the pane's focus is the program's; leaving the pane commits a field and blurs the surface.
 - `cells.Screen.Lines`: what the program draws: rows of styled text, which Bubble Tea and a raw program both compose.
 - `cells.Screen.Cursor`: where the program puts the terminal's cursor for a field being typed in.
+- `cells.Screen.Selection`: in cells the Screen has no clipboard and leaves the copy key to the program, which then can't see what the field has selected: plx copied a field's selection to the terminal's clipboard in v0.6 (cr.Copy) and can't in v0.7 (G-cells-copy).
+- `cells.Screen.Cut`: cut is copy plus an edit only the Screen can make (the field's value, its rev, its input event); a program can't delete the selection itself.
 - `cells.Screen.Press`: plx's cells hosts hear the terminal's mouse as press, held move and release with mods and a button (surfhost Mouse, surfdk Pointer); Click alone can't start a drag, carry mods, or make a right press, so surf.Drag, surf.Drop and surf.Secondary (L5) never fire in cells. The button as hotty.Event numbers it, so one call covers the primary and the secondary press.
 - `cells.Screen.Move`: the pointer's motion: a drag's steps and drop target while a button is down, and the hover (menus light their row, tips dwell) with none, which a host sends as hover events (SPEC §9.4); a cell off the Screen is the pointer leaving, as the host's Out.
 - `cells.Screen.Release`: where a drag ends (dragend, the drop) and a click lands, with the click count a double click needs (plx's pick runs a row on a double click, G-click-count) and mods (shift-click selects a range).

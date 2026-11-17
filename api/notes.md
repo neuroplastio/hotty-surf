@@ -2190,3 +2190,48 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
 - K29 (menus: three ways in, one panel) is the reviewer's.
 - G-menu-rows (MenuItem slots for all three menus) is next after the
   toast pack (p-653's queue).
+
+## L6: a field's selection in cells, for plx's copy and cut (a pack of its own)
+
+In cells, plx copies a field's selection to the terminal's clipboard
+(v0.6: `cr.Copy` callback → `Host.SetCopy`). v0.7's Screen has no
+clipboard and leaves the copy, cut and paste keys to the program, but
+exposes no field selection, so plx's copy and cut do nothing in cells
+(`l4c-gaps.md`, G-cells-copy; it blocks slice 2, where copying in cells
+is a tool feature).
+
+### The shape: the program asks, on its own key
+
+- `Selection() string`: the focused text field's selected text, "" for
+  none (no field, nothing selected, a password).
+- `Cut() string`: the same, deleted from the field as the user's edit
+  (rev, input where it listens, change on commit). "" and no edit in a
+  readonly or disabled field, or a password.
+- The keys stay as they are: the Screen doesn't take copy or cut
+  (`fieldKey`), so the program hears them and calls these. Paste is
+  already `Paste(text)`. One direction each way: the program owns the
+  clipboard.
+- Implemented and tested in the branch (grapheme-correct, readonly,
+  password).
+
+### Open questions, as drafted
+
+1. **Methods, or a copy callback on New** (v0.6's `Copy func(string)`).
+   **Lean: methods.** New's signature is approved, and a callback needs
+   a second option. With methods, the program, which already decides what
+   its copy key means (a pane's own selection vs the field's), asks only
+   when it's the field's.
+2. **Cut as its own method, or `Selection()` plus a `Delete()`.**
+   **Lean: Cut.** It's one act. A separate Delete is a second name and a
+   window where the two disagree.
+3. **A password's selection.** **Lean: "".** Browsers refuse to copy from
+   `type=password`, and a host does the same.
+
+### As reviewed (p-796, 2026-11-17): both names, two doc changes, applied
+
+Both names were approved as named, and the three questions went with the
+leans: methods, Cut as its own method, and "" for a password. The docs say
+"text field or textarea", and Cut and Paste each say that Lines changes
+with them, so the program draws the Screen again.
+
+### As verified (p-653's spot check, 2026-11-17): approved
