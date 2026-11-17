@@ -135,3 +135,23 @@ func TestSecondary(t *testing.T) {
 		t.Fatalf("menus %d clicks %d at %v", menus, clicks, at)
 	}
 }
+
+// A right click on another row while a menu is open moves the menu: the
+// open menu's Outside closes it first, then the row's Secondary opens it.
+func TestSecondaryAfterOutside(t *testing.T) {
+	open, row := false, ""
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		for _, r := range []string{"a", "b"} {
+			fmt.Fprintf(w, `<button%s>%s</button>`, on("row-"+r, surf.Secondary(func(hotty.Cell, hotty.Area) { open, row = true, r })), r)
+		}
+		if open {
+			fmt.Fprintf(w, `<div%s>menu</div>`, on("menu", surf.Outside(func() { open = false })))
+		}
+	})
+	r := surftest.Start(t, surf.New("t", v, ""))
+	r.Secondary("#row-a")
+	r.Secondary("#row-b")
+	if !open || row != "b" {
+		t.Fatalf("open %v at row %q, want the menu open at b", open, row)
+	}
+}

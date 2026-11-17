@@ -1500,3 +1500,24 @@ Open for the reviewer:
    handler.
 
 12 new names; none changed or removed.
+
+### As reviewed (p-796, 2026-11-17): all 12, one behaviour fix and docs
+
+All 12 names approved as named, with no cuts. The open questions, settled:
+1. Drop(nil) stays nothing, as every nil handler is; a list that reorders
+   does the move in Drop's func.
+2. No Mods now. DragEvent is a struct, so adding Mods later breaks no
+   caller: that is the plan when a copy-instead-of-move drag needs them.
+3. Escape stays an app's Key handler; Drag's doc says what the app then
+   ignores (the End, the Drop's) and that the class stays until release.
+
+Applied: a secondary press runs Outside before Secondary, so a right click
+on another row moves an open menu instead of closing it
+(`TestSecondaryAfterOutside`); Drop's doc says it runs only while its
+element is the drag's Over, after Drag's End, and on the dragged element
+itself when it has Drop; Drag's doc says the surface writes the class
+dragging into what it sends and the view never does, and Escape's text as
+above; Secondary's doc says at and area are zero when the host doesn't say
+them. Kit rule K26 (pointer gestures are root handlers; Outside before
+Secondary). hotty.Drag must stay method-free, or embedding it promotes its
+methods into surf's API.

@@ -212,10 +212,13 @@ func (s *Surface) event(e hotty.Event) error {
 			ran = true
 		}
 	case hotty.EventPress:
+		// Outside first, as a primary press's precedes its click: a right
+		// click elsewhere closes an open menu, then the Secondary it lands on
+		// may open one there.
+		ran = s.outside(e.Target)
 		if e.Button == 2 {
-			ran = s.secondary(e)
+			ran = s.secondary(e) || ran
 		}
-		ran = s.outside(e.Target) || ran
 	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
 		ran = s.dragged(e)
 	case hotty.EventFocus:

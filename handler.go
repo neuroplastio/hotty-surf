@@ -236,13 +236,16 @@ type DragEvent struct {
 // after has data-steps="0 1" (with Drop, which is what carries TX, TY).
 //
 // While the pointer is moving the element, from the first move after the
-// press to the release, the surface adds the class dragging to it, so a
-// stylesheet shows it lifted (.dragging { opacity: .5 }); a press and
-// release with no move in between leaves it off. A release on the element
-// the drag began on is also its click, after End, which Click hears. A
-// press with Alt held is the program's and starts no drag (SPEC §9.2).
-// Escape is not the host's: an app that cancels a drag by key does so in
-// a Key handler, and ignores the drag's End.
+// press to the release, the surface adds the class dragging to it in
+// what it sends (the view doesn't write it), so a stylesheet shows it
+// lifted (.dragging { opacity: .5 }); a press and release with no move
+// in between leaves it off. A release on the element the drag began on is
+// also its click, after End, which Click hears. A press with Alt held is
+// the program's and starts no drag (SPEC §9.2).
+// Escape is not the host's: an app that cancels a drag by key does so
+// in a Key handler, then ignores that drag's remaining calls, its End
+// and the Drop's, while the element keeps the class dragging until the
+// release.
 //
 // A drag needs a pointer: in cells (package cells) and from the keyboard
 // there is none, so an app that reorders by drag also gives the keyboard a
@@ -254,11 +257,18 @@ func Drag(fn func(d DragEvent)) Handler {
 // Drop makes the element a place to drop on (data-on drop): the host names
 // it as a drag's Over while the pointer is over it, though a press on it
 // drags nothing, and with data-steps it says where in it the pointer is
-// (TX, TY). fn is called once, at the End of a drag released over the
-// element, with that drag's DragEvent (ID is what was dragged); what it
-// was over before that, the dragged element's Drag handler hears. An
-// element may have both Drag and Drop: the rows of a list that reorders
-// are dragged and dropped on.
+// (TX, TY).
+//
+// fn is called once, at the End of a drag released while the element
+// is the drag's Over, after the dragged element's Drag has heard that
+// End, with the same DragEvent (ID is what was dragged, Over this
+// element). Over is the nearest element that takes a drag, so a Drop
+// on a list whose rows have Drag or Drop hears only releases outside
+// them; and a release on the dragged element itself calls its own
+// Drop, if it has one, with Over == ID. What the drag was over before
+// the End, the dragged element's Drag handler hears. An element may
+// have both Drag and Drop: the rows of a list that reorders are dragged
+// and dropped on.
 func Drop(fn func(d DragEvent)) Handler {
 	return handler(kindDrop, fn, fn == nil)
 }
@@ -268,9 +278,11 @@ func Drop(fn func(d DragEvent)) Handler {
 // and the primary button on macOS, a pen's barrel button, or a long press
 // of a touch, as the user's platform makes one (SPEC §9). at is the cell
 // the pointer was on, from the surface's top left, where a context menu
-// opens; area is the element's cells. The press does nothing else: no
-// click, no focus, no drag, and the terminal's own menu doesn't open. It
-// tells Outside handlers, as a primary press does. Shift with it makes it
+// opens; area is the element's cells. Either is zero when the host
+// doesn't say it (surftest's host lays nothing out). The press does
+// nothing else: no click, no focus, no drag, and the terminal's own menu
+// doesn't open. It tells Outside handlers first, as a primary press
+// does, so a menu opened elsewhere closes before fn runs. Shift with it makes it
 // the terminal's, and Alt the program's (SPEC §9.2), and a host with no
 // secondary gesture sends none, so whatever it opens can also be opened
 // another way (a key, a button).
