@@ -23,12 +23,16 @@ type BreadcrumbItem struct {
 	// Attrs are more attributes for the item's element: its id and its
 	// click handler, through surf.On, for a step the app takes itself
 	// (another page of its own). An item with a click handler or an href,
-	// but the last, is a link the pointer and the keyboard reach (Enter
-	// and Space click it, SPEC §10.2); one without is text. A step that
-	// opens a page outside the app is a hyperlink, the terminal's: href
-	// and target="_blank" in Attrs (SPEC §9). The last item is the page
-	// shown: its Attrs go on its <span>, which is no stop. A link without
-	// an href writes tabindex="0", which a tabindex here replaces.
+	// but the last, is a link; one without is text. A link the app takes
+	// (a click handler, or an href without a target) is reached by the
+	// pointer and the keyboard: Enter and Space click it (SPEC §10.2). A
+	// step that opens a page outside the app is a hyperlink, the
+	// terminal's: href and target="_blank" in Attrs. The terminal opens
+	// it, the keyboard doesn't reach it, and the app hears no click (SPEC
+	// §9, §10.1). The last item is the page shown: its Attrs go on its
+	// <span>, which is no stop. A link without an href writes
+	// tabindex="0", which a tabindex here replaces. role and
+	// aria-current, which the step writes itself, are a fault here.
 	Attrs templ.Attributes
 }
 
@@ -117,9 +121,13 @@ type ItemProps struct {
 // as plain elements in its children. ItemGroup holds several.
 //
 // An Item whose Attrs has a click handler (surf.Click) or an href is an
-// <a>, which Basecoat draws with a hover (a.item) and SPEC gives Enter and
-// Space (§10.2). It writes tabindex="0" unless Attrs has a tabindex. Its
-// role is the app's, in Attrs (a list's option).
+// <a>, which Basecoat draws with a hover (a.item). One the app takes (a
+// click handler, or an href without a target) is a stop, and SPEC gives
+// it Enter and Space (§10.2). Without an href it writes tabindex="0",
+// unless Attrs has a tabindex. One with an href and target="_blank" is a
+// hyperlink, the terminal's (SPEC §9): the terminal opens it, the
+// keyboard doesn't reach it, and the app hears no click. Its role is the
+// app's, in Attrs (a list's option).
 func Item(p ItemProps) templ.Component {
 	return scoped(item(p), false)
 }

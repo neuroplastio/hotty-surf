@@ -225,7 +225,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.BreadcrumbProps.Items`: (c) the trail it renders, root first.
 - `ui.BreadcrumbItem`: one step. A new item type (K12): MenuItem reports through OnSelect, which is K1's first kind, and SelectItem and Tab are values a component chooses between; a step is a CSS-only part whose handler goes through surf.On, as K1's second kind's do.
 - `ui.BreadcrumbItem.Label`: (c) the step's text.
-- `ui.BreadcrumbItem.Attrs`: the step's attributes. A step with a click handler or an href is an `<a role=link>` (K15), writing tabindex=0 when it has no href and Attrs no tabindex (K3's default), so the keyboard reaches it and SPEC §10.2 gives it Enter and Space. A surface never navigates (SPEC §9), so there is no Href: a hyperlink, the terminal's, is `href` and `target=_blank` here. The last step is the page shown, a `<span>` that is no stop.
+- `ui.BreadcrumbItem.Attrs`: the step's attributes. A step with a click handler or an href is an `<a role=link>` (K15), writing tabindex=0 when it has no href and Attrs no tabindex (K3's default), so the keyboard reaches it (not a hyperlink, which is the terminal's) and SPEC §10.2 gives it Enter and Space. A surface never navigates (SPEC §9), so there is no Href: a hyperlink, the terminal's, is `href` and `target=_blank` here. The last step is the page shown, a `<span>` that is no stop.
 - `ui.Empty`: Basecoat's empty state (`.empty`): what a view shows with nothing in it.
 - `ui.EmptyProps`: an empty state's attributes (Attrs and Class), as FieldSetProps (K7).
 - `ui.Item`: Basecoat's item (`.item`): a list's row with a picture, a title and a description, and its buttons. With a click handler or an href in its Attrs it is Basecoat's `a.item` (K15): a link with a hover, which SPEC gives Enter and Space, and which writes tabindex=0 unless Attrs has one. A clickable `div` would click by pointer but not by Enter.
@@ -259,7 +259,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.AvatarGroupProps.Class`: as ButtonProps.Class.
 - `ui.BreadcrumbProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
 - `ui.BreadcrumbProps.Class`: as ButtonProps.Class.
-- `ui.ChartProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
+- `ui.ChartProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On; its aria-label names the chart (K18).
 - `ui.ChartProps.Class`: as ButtonProps.Class.
 - `ui.EmptyProps.Attrs`: as ButtonProps.Attrs: any attribute of its element, its handlers through surf.On.
 - `ui.EmptyProps.Class`: as ButtonProps.Class.

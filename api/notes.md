@@ -940,13 +940,15 @@ series. The blind review (2026-11-17) approved it with changes, cutting
   values, since Basecoat's y axis has no ticks. Its Type is chart.js's
   word (K17). An aria-label in Attrs names it (K18): there is no Label
   field, and its root is `role=figure`. A pie always writes its labels.
-  Each bar and slice carries its value (`data-value`) for cells. A
+  Each bar and slice carries its value (`data-value`), and each line its
+  values (`data-values`), for cells. A
   tooltip comes back as ChartState, `Chart(st, p)`, a MINOR break.
 - **Item and a breadcrumb step are links by their handler** (K15): an
   `<a>` when Attrs has a click handler or an href. An `<a>` without an
   href writes tabindex=0 unless Attrs has a tabindex, so Enter and Space
   click it (SPEC §10.2). There is no Link, As or Href field; a
-  hyperlink is `href` and `target=_blank` in Attrs (SPEC §9). nav's rows
+  hyperlink is `href` and `target=_blank` in Attrs (SPEC §9), which takes
+  no focus and reports no click. nav's rows
   become Items when spikeui retires.
 - **Breadcrumb takes Items** (K8's exception, for its separators and the
   page mark). BreadcrumbItem is a new item type (K12). Avatar has no Src:

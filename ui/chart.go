@@ -120,8 +120,8 @@ func chartKeys(p ChartProps) []chartKey {
 
 // chartPlot is the SVG's inner markup: numbers and the theme's colours
 // only, never the app's text, which the templ writes escaped. Each bar
-// and slice carries its value (data-value), for a host that draws no SVG
-// (cells).
+// and slice carries its value (data-value), and each line its values
+// (data-values), for a host that draws no SVG (cells).
 func chartPlot(p ChartProps) templ.Component {
 	var b strings.Builder
 	n := len(p.Labels)
@@ -135,7 +135,9 @@ func chartPlot(p ChartProps) templ.Component {
 	if ok {
 		switch p.Type {
 		case "pie":
-			piePlot(&b, p.Series[0].Values)
+			if len(p.Series) > 0 {
+				piePlot(&b, p.Series[0].Values)
+			}
 		default:
 			barPlot(&b, p)
 		}
@@ -167,11 +169,12 @@ func barPlot(b *strings.Builder, p ChartProps) {
 	band := chartW / float64(n)
 	if p.Type == "line" {
 		for si, s := range p.Series {
-			var pts []string
+			var pts, vals []string
 			for i, v := range s.Values {
 				pts = append(pts, num((float64(i)+0.5)*band)+","+num(y(v)))
+				vals = append(vals, num(v))
 			}
-			fmt.Fprintf(b, `<polyline points="%s" style="fill: none; stroke: %s; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round;"/>`, strings.Join(pts, " "), chartColour(si))
+			fmt.Fprintf(b, `<polyline points="%s" data-values="%s" style="fill: none; stroke: %s; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round;"/>`, strings.Join(pts, " "), strings.Join(vals, " "), chartColour(si))
 		}
 		return
 	}
