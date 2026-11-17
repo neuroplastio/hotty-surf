@@ -68,6 +68,10 @@ type Frame struct {
 	// Dialog), outermost first. The last is the active modal; the runtime
 	// confines interaction and focus to it.
 	Modal []string
+	// Popups are the ids of the kit's popups open when this render ends
+	// (a DropdownMenu, ContextMenu, Select, Combobox or Popover): at most
+	// one, as one opening closes another.
+	Popups []string
 	// ModalOps is installed by a modal component, so applications without
 	// one do not link its tree preparation and focus confinement code.
 	ModalOps *ModalOps

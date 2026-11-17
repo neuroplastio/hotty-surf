@@ -3,6 +3,7 @@ package surf
 import (
 	"context"
 	"io"
+	"slices"
 	"sync"
 
 	"github.com/a-h/templ"
@@ -192,6 +193,23 @@ func (s *Surface) Blur() (blurred bool, err error) {
 // Event does.
 func (s *Surface) Focused() string {
 	return s.focused
+}
+
+// Open is the ids of the kit's overlays open in the last frame the
+// surface rendered (its last Document or Update), as their components'
+// IDs: the modals (a Dialog, AlertDialog, Drawer or CommandDialog)
+// outermost first, then the popup (a DropdownMenu, ContextMenu, Select,
+// Combobox or Popover), of which one at most is open. nil is none. A
+// driver that writes the surface's output through a writer of its own
+// reads it after Update and before it passes the bytes on, so it knows
+// an overlay is opening before the host draws it, and gives the keyboard
+// to the surface while one is. It is the same in cells. It runs on the
+// driver's goroutine, as Event does.
+func (s *Surface) Open() []string {
+	if s.frame == nil || len(s.frame.Modal)+len(s.frame.Popups) == 0 {
+		return nil
+	}
+	return append(slices.Clone(s.frame.Modal), s.frame.Popups...)
 }
 
 // Chars is what the focused element does with a key that types a
