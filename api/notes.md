@@ -2825,3 +2825,15 @@ Tests: `TestDirty` covers these cases:
   every motion." Move's taken keeps its meaning: whose gesture it is.
 - TestDirty gains Resize cases: the same size is clean, a new size dirty.
 - plx's port: after Move, or any call, `if s.cr.Dirty() { redraw }`.
+
+### As verified (p-801, ~/.cache/hotty-surf/verify-cells-redraw.md)
+
+- Fix first: the slow path compared the cells Lines draws from (text,
+  look, owner). But Cells works out roles from the elements' classes and
+  attributes at call time, so a change that shows only in Cells was
+  clean. Two cases: a colour class (text-primary to text-destructive),
+  and the selected band moving to another row in an unfocused list (plx's
+  nav and lists after a click). The snapshot now holds Cells' grid too,
+  through one helper (cellsOf) that Cells and Dirty share. TestDirtyRoles
+  covers both, plus a data-x change that stays clean. The fast path is
+  unchanged: such changes come by Write, which drops the layout.

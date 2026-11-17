@@ -77,6 +77,15 @@ type Cell struct {
 // where its role says it and a painter would dim it twice.
 func (c *Screen) Cells() [][]Cell {
 	l := c.layout()
+	out := c.cellsOf(l)
+	c.drew(l)
+	return out
+}
+
+// cellsOf is Cells' grid of l: also what Dirty compares, so a change that
+// shows only in the roles (a colour class, the selected band moving)
+// counts.
+func (c *Screen) cellsOf(l *layout) [][]Cell {
 	memo := map[*html.Node][2]Role{}
 	out := make([][]Cell, c.rows)
 	for i := range out {
@@ -104,7 +113,6 @@ func (c *Screen) Cells() [][]Cell {
 		}
 		out[i] = row
 	}
-	c.drew(l)
 	return out
 }
 

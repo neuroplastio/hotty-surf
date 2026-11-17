@@ -60,7 +60,7 @@ type Screen struct {
 	hoverOut bool
 	// shown is what Lines or Cells last drew (Dirty): its cells, and
 	// the layout and scroll they came from.
-	shown       [][]cell
+	shown       snapshot
 	shownLay    *layout
 	shownScroll int
 	// tip is the element with a tooltip (data-tooltip) the pointer is
@@ -274,7 +274,7 @@ func (c *Screen) Lines() []string {
 // true before the first Lines or Cells. A call that changed nothing costs
 // nothing to ask about.
 func (c *Screen) Dirty() bool {
-	if c.shown == nil {
+	if c.shown.raw == nil {
 		return true
 	}
 	// Every change that can draw differently drops the layout (c.lay):
@@ -282,14 +282,8 @@ func (c *Screen) Dirty() bool {
 	if c.lay != nil && c.lay == c.shownLay && c.scroll == c.shownScroll {
 		return false
 	}
-	v := c.visible()
-	if len(v) != len(c.shown) {
+	if !c.visible().same(c.shown) {
 		return true
-	}
-	for i := range v {
-		if len(v[i]) != len(c.shown[i]) || !slices.Equal(v[i], c.shown[i]) {
-			return true
-		}
 	}
 	// Laid out again, the same: what was drawn is this layout's.
 	c.shownLay, c.shownScroll = c.lay, c.scroll
@@ -299,7 +293,7 @@ func (c *Screen) Dirty() bool {
 // drew records l, at the scroll, as what Lines or Cells drew last
 // (Dirty), copying its cells only where it isn't the one recorded.
 func (c *Screen) drew(l *layout) {
-	if c.shown != nil && l == c.shownLay && c.scroll == c.shownScroll {
+	if c.shown.raw != nil && l == c.shownLay && c.scroll == c.shownScroll {
 		return
 	}
 	c.shown, c.shownLay, c.shownScroll = c.visible(), l, c.scroll
@@ -307,17 +301,43 @@ func (c *Screen) drew(l *layout) {
 
 // visible is a copy of the cells Lines and Cells draw: the rows from
 // the scroll, as wide as the Screen.
-func (c *Screen) visible() [][]cell {
+func (c *Screen) visible() snapshot {
 	l := c.layout()
-	out := make([][]cell, c.rows)
-	for i := range out {
+	raw := make([][]cell, c.rows)
+	for i := range raw {
 		row := make([]cell, c.cols)
 		if y := c.scroll + i; y >= 0 && y < len(l.cv.rows) {
 			copy(row, l.cv.rows[y])
 		}
-		out[i] = row
+		raw[i] = row
 	}
-	return out
+	return snapshot{raw: raw, cells: c.cellsOf(l)}
+}
+
+// snapshot is what Lines and Cells drew: the cells Lines draws from, and
+// Cells' grid, whose roles come from the elements' classes and
+// attributes as Cells is called.
+type snapshot struct {
+	raw   [][]cell
+	cells [][]Cell
+}
+
+// same says whether two snapshots draw the same in Lines and in Cells.
+func (a snapshot) same(b snapshot) bool {
+	if len(a.raw) != len(b.raw) || len(a.cells) != len(b.cells) {
+		return false
+	}
+	for i := range a.raw {
+		if !slices.Equal(a.raw[i], b.raw[i]) {
+			return false
+		}
+	}
+	for i := range a.cells {
+		if !slices.Equal(a.cells[i], b.cells[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // Cursor is where the focused field's caret is, from the top left, and
