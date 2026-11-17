@@ -6,3 +6,5 @@
 /* Menu: the panel shown as it is, in the flow, where the app put it. */
 .dropdown-menu.menu-panel { display: block; }
 .dropdown-menu.menu-panel > [data-popover] { position: static; margin-top: 0; }
+/* A menu item's Leading, in the icon's box. */
+.dropdown-menu [data-leading] { display: inline-flex; align-items: center; justify-content: center; width: calc(var(--spacing) * 4); height: calc(var(--spacing) * 4); flex-shrink: 0; }

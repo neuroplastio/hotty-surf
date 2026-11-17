@@ -46,6 +46,14 @@ type layout struct {
 	hasCaret  bool
 	measuring bool
 	memo      map[memoKey]int
+	// heights are the definite heights of the elements that have one
+	// (h-screen, h-full, h-[…]), and of a column's growing items, which
+	// it gives the rows its other items leave (flex-1).
+	heights map[*html.Node]int
+	grown   map[*html.Node]bool
+	// overlays are the open popovers, drawn over the flow once it is
+	// laid out (overlay).
+	overlays []overlay
 	// active is the element the focused one names its active one
 	// (aria-activedescendant), where it is shown; adDone says it was
 	// looked for.
@@ -82,6 +90,9 @@ type memoKey struct {
 type inh struct {
 	look look
 	pre  bool
+	// nowrap is a truncate's content: one line, cut with … where it
+	// runs out of room.
+	nowrap bool
 }
 
 // layout is the document laid out at the Screen's width, made again after
@@ -100,6 +111,7 @@ func (c *Screen) layout() *layout {
 	}
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
+		l.drawOverlays()
 	}
 	if l.adjusted {
 		c.lay = nil
@@ -207,9 +219,35 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 	if n == l.c.body {
 		st = box{}
 	}
+	// Its margins (mt-*, mb-*): rows above and below its box.
+	h, used = l.box(n, st, x, y+st.marginT, w, in)
+	return h + st.marginT + st.marginB, used
+}
+
+// box lays n out, as node does, without its margins.
+func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
+	// Its width (w-*, width) and its largest (max-w-*, max-width), as far
+	// as its container has room.
+	if st.width > 0 {
+		w = min(w, st.width)
+	}
+	if st.maxWidth > 0 {
+		w = min(w, st.maxWidth)
+	}
+	if st.width > 0 {
+		defer func() { used = max(used, w) }()
+	}
 	in.look = l.lookOf(n, in.look, st)
 	in.pre = in.pre || st.pre
-	if n.DataAtom == atom.Hr {
+	in.nowrap = in.nowrap || st.truncate
+	if separator(n) == "vertical" {
+		if l.cv != nil {
+			l.cv.put(x, y, "│", 1, in.look|lRule, n)
+		}
+		l.done(n, rect{x, y, 1, 1})
+		return 1, 1
+	}
+	if n.DataAtom == atom.Hr || separator(n) == "horizontal" {
 		for i := 0; i < w && l.cv != nil; i++ {
 			l.cv.put(x+i, y, "─", 1, in.look|lRule, n)
 		}
@@ -251,6 +289,11 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 	}
 	limit, bounded := scrollLimit(st.maxHeight, l.c.rows)
 	bounded = bounded && st.scrollY
+	def := l.definite(n, st)
+	if l.grown[n] && st.scrollY {
+		// A growing item that scrolls: the rows its column gave it.
+		limit, bounded = max(def-st.padT-st.padB-lead, 0), true
+	}
 	originalY := cy
 	offset := 0
 	if bounded {
@@ -263,6 +306,9 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 	switch st.display {
 	case dFlex:
 		if st.column {
+			if def > 0 {
+				l.grow(n, cw, in, max(def-st.padT-st.padB-lead, 0), st.gapY)
+			}
 			ch, cu = l.children(n, cx, cy, cw, in, true, st.gapY)
 		} else {
 			ch, cu = l.row(n, st, cx, cy, cw, in)
@@ -300,12 +346,169 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 		ch = min(ch, limit)
 	}
 	h = st.padT + lead + ch + st.padB
+	if def > 0 && (st.display == dFlex && st.column || l.grown[n]) {
+		h = max(h, def) // a column as high as it is, an item as it grew
+	}
 	used += st.padL + max(cu, ew) + st.padR
 	if h == 0 && marker(n) != "" {
 		h = 1
 	}
 	l.done(n, rect{x, y, w, h})
 	return h, used
+}
+
+// definite is n's height where it has one, in rows, 0 where it is its
+// content's: h-screen (the Screen's), h-full (its parent's, the body's
+// the Screen's), h-[…] or an inline height, or the rows its column gave
+// it as a growing item (grow).
+func (l *layout) definite(n *html.Node, st box) int {
+	if l.measuring {
+		return 0
+	}
+	if n == l.c.body || n.Parent == l.c.body && attr(n, "id") == "root" {
+		// The window, and the document's own root in it, which a host
+		// makes as high as the window.
+		return l.c.rows
+	}
+	if h, ok := l.heights[n]; ok {
+		return h
+	}
+	h := 0
+	switch st.height {
+	case "":
+	case "screen", "dvh", "svh", "lvh":
+		h = l.c.rows
+	case "full", "100%":
+		if p := n.Parent; p != nil && p.Type == html.ElementNode {
+			h = l.definite(p, styleOf(p))
+		}
+	default:
+		h, _ = scrollLimit(st.height, l.c.rows)
+	}
+	if h > 0 {
+		if l.heights == nil {
+			l.heights = map[*html.Node]int{}
+		}
+		l.heights[n] = h
+	}
+	return h
+}
+
+// grow gives a column's growing items (flex-1, grow) the rows of its
+// height (fill) that its other items and its gaps leave, shared alike,
+// measured w wide: a list that fills the screen above a pinned footer.
+func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
+	var growers []*html.Node
+	used, items := 0, 0
+	m := &layout{c: l.c, measuring: true, memo: l.memo}
+	var run []*html.Node
+	flush := func() {
+		if len(run) > 0 {
+			hh, _ := m.inline(run, n, 0, 0, w, in, false)
+			used += hh
+			items++
+			run = nil
+		}
+	}
+	for _, k := range kids(n) {
+		switch k.Type {
+		case html.TextNode:
+			if strings.TrimSpace(k.Data) != "" {
+				run = append(run, k)
+				flush()
+			}
+		case html.ElementNode:
+			st := styleOf(k)
+			if st.display == dNone {
+				continue
+			}
+			items++
+			if st.grow {
+				growers = append(growers, k)
+				continue
+			}
+			hh, _ := m.node(k, 0, 0, w, in)
+			used += hh
+		}
+	}
+	if len(growers) == 0 {
+		return
+	}
+	rest := max(fill-used-gap*max(items-1, 0), 0)
+	if l.heights == nil {
+		l.heights = map[*html.Node]int{}
+	}
+	if l.grown == nil {
+		l.grown = map[*html.Node]bool{}
+	}
+	for i, k := range growers {
+		share := rest / (len(growers) - i)
+		rest -= share
+		l.heights[k], l.grown[k] = share, true
+	}
+}
+
+// overlay is an open popover drawn over the flow, below its trigger, as
+// a host draws it.
+type overlay struct {
+	n    *html.Node
+	x, y int
+	w    int
+	in   inh
+}
+
+// overlay takes an open popover below its trigger out of the flow (it
+// takes no rows) to draw it over what follows, once the rest is laid
+// out; y is where its trigger ends. One above its trigger (data-side
+// top) stays before it in the flow, which has no room above the top
+// row, and one beside it (inline-*) a row with it.
+func (l *layout) overlay(k *html.Node, x, y, w int, in inh) bool {
+	if !has(k, "data-popover") {
+		return false
+	}
+	switch attr(k, "data-side") {
+	case "", "bottom", "block-end":
+	default:
+		return false
+	}
+	if l.cv != nil {
+		l.overlays = append(l.overlays, overlay{n: k, x: x, y: y, w: w, in: in})
+	}
+	return true
+}
+
+// drawOverlays draws the open popovers over the flow, each on a ground
+// of its own (its cells blanked), as wide as its content: the last
+// drawn is on top, and one opened inside another is drawn after it.
+func (l *layout) drawOverlays() {
+	for len(l.overlays) > 0 {
+		o := l.overlays[0]
+		l.overlays = l.overlays[1:]
+		m := &layout{c: l.c, measuring: true, memo: l.memo}
+		h, pw := m.node(o.n, 0, 0, o.w, o.in)
+		pw = max(min(pw, o.w), 1)
+		for j := o.y; j < o.y+h; j++ {
+			for i := o.x; i < o.x+pw; i++ {
+				l.cv.put(i, j, " ", 1, 0, o.n)
+			}
+		}
+		l.node(o.n, o.x, o.y, pw, o.in)
+	}
+}
+
+// separator is the orientation of a separator with nothing in it
+// (role=separator, Basecoat's and the kit's), "" for an element that is
+// none: "horizontal" a rule row, "vertical" a bar a cell wide.
+func separator(n *html.Node) string {
+	if attr(n, "role") != "separator" || textOf(n) != "" {
+		return ""
+	}
+	for _, k := range []string{"aria-orientation", "data-orientation"} {
+		if attr(n, k) == "vertical" {
+			return "vertical"
+		}
+	}
+	return "horizontal"
 }
 
 // done records n's box, and makes its empty cells its own.
@@ -395,6 +598,9 @@ func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int
 				continue
 			}
 			flush()
+			if l.overlay(k, x, at(), w, in) {
+				continue
+			}
 			add(l.node(k, x, at(), w, in))
 		}
 		if items {
@@ -432,9 +638,10 @@ func hasBlock(n *html.Node) bool {
 // (justify-between); too little room is taken from the widest.
 func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	type item struct {
-		n    *html.Node
-		w    int
-		grow bool
+		n     *html.Node
+		w     int
+		grow  bool
+		fixed bool // shrink-0: not made narrower
 	}
 	var items []item
 	for _, k := range kids(n) {
@@ -452,7 +659,7 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 			if ks.display == dNone {
 				continue
 			}
-			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k) || kitGrows(k)})
+			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k) || kitGrows(k), fixed: ks.noShrink})
 		}
 	}
 	if len(items) == 0 {
@@ -529,13 +736,13 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		}
 	} else {
 		for over := sum - avail; over > 0; over-- {
-			wi := 0
+			wi := -1
 			for i := range items {
-				if items[i].w > items[wi].w {
+				if !items[i].fixed && (wi < 0 || items[i].w > items[wi].w) {
 					wi = i
 				}
 			}
-			if items[wi].w <= 1 {
+			if wi < 0 || items[wi].w <= 1 {
 				break
 			}
 			items[wi].w--
@@ -729,7 +936,40 @@ func (l *layout) inline(nodes []*html.Node, stop *html.Node, x, y, w int, in inh
 		cy += lineH
 		cx, lineH, lineUsed = 0, 1, false
 	}
+	// cut ends a truncate's one line: … in its last cell, and nothing
+	// after it.
+	cut := false
+	ellipsis := func(p piece) {
+		at := max(min(cx, w-1), 0)
+		l.paint([]char{{"…", 1}}, x+at, y+cy, p.look, p.own, stop)
+		cx, cut, lineUsed = at+1, true, true
+		used = max(used, cx)
+	}
 	for _, p := range ps {
+		if cut {
+			break
+		}
+		if in.nowrap && !l.measuring {
+			switch {
+			case p.kind == pBreak:
+				continue
+			case p.kind == pSpace && cx+1 > w,
+				p.kind == pWord && cx+p.w > w,
+				p.kind == pAtom && cx > 0 && cx+p.w > w:
+				if p.kind == pWord {
+					// As much of the word as leaves the last cell for …
+					for _, ch := range p.chars {
+						if cx+ch.w > w-1 {
+							break
+						}
+						l.paint([]char{ch}, x+cx, y+cy, p.look, p.own, stop)
+						cx += ch.w
+					}
+				}
+				ellipsis(p)
+				continue
+			}
+		}
 		switch p.kind {
 		case pBreak:
 			newline()
@@ -839,6 +1079,7 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	}
 	in.look = l.lookOf(n, in.look, st)
 	in.pre = in.pre || st.pre
+	in.nowrap = in.nowrap || st.truncate
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
 		ps = l.pieces(ps, k, in, false)
 	}

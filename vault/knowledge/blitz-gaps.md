@@ -898,6 +898,36 @@ hotty-blitz binary at `70c6d38`, its bundled fonts, 80 columns, 12 rows,
 still scores 0.81% different, with text and antialiasing differences in the
 sheet; this result closes the wrapper-height report, not every pixel difference.
 
+## A styled select kept Blitz's arrow (2026-11-17): fixed in 0.8.8
+
+| Gap | Where it showed in the kit | How bad |
+| --- | --- | --- |
+| 10. **Fixed in hotty-blitz 0.8.8** (v0.8.8, mod 0102 "select-appearance-none"). Up to 0.8.7 a closed `<select>` with `appearance: none` still drew Blitz's ▾: the UA sheet's `select:not([multiple])::after { content: "\25BE" }` (blitz-dom `assets/default.css`, from fork patch 0023) applied whatever the appearance, so the author's background chevron and Blitz's glyph both drew. | Basecoat's select, as in the book's Props (`alert-props-arrow-fixed.png` in the audit captures, hottyterm on 0.8.7) | Was cosmetic: two arrows |
+
+Rechecked with 0.8.8's `hotty render` (2026-11-17): a select with
+`appearance: none` draws no ▾, and a native one keeps it. The kit's CSS
+was never changed for it.
+
+## A scroll box keeps an offset past its shrunk content (2026-11-17)
+
+| Gap | Where it shows in the kit | How bad |
+| --- | --- | --- |
+| 11. When a scrolling element's content shrinks (a delta removes rows), its scroll offset stays where it was, past the new end, so the box shows nothing. A browser clamps the offset to the new scroll range at layout. blitz-dom clamps a text input's own offset (`clamp_scroll_offset`, `layout/mod.rs`) and nothing else; no hotty-blitz mod does it for elements. | The book's story list (NavList): scrolled to its end (End), then a filter that keeps a few stories at the top leaves the list blank, with the filter and the first match selected (`scroll-end.png`, `scroll-filtered.png` in the audit captures, hottyterm on 0.8.7). Any list a delta shortens while scrolled | Functional: the matches can't be seen until the list is scrolled |
+
+For hotty-blitz: clamp each element's scroll offset to its scrollable
+overflow after layout, as CSSOM View does. The kit keeps its markup.
+
+## A box a delta changes keeps its old width until the next layout (2026-11-17)
+
+| Gap | Where it shows in the kit | How bad |
+| --- | --- | --- |
+| 12. After a delta that swaps a preview's content, a shrink-wrapped inline box (a Badge, `display:inline-flex`, `rounded-full`) can keep the width of what it held before: its new text is laid out in the old, narrower box and cut at its left. The next render that touches the document (any focus move) lays it out right. A static `hotty render` of the same page draws it right at 1×, 1.25×, 1.5×, 1.6× and 2×, so it is incremental layout, not the CSS. | The book's Badge / every variant, opened from the filter: the third badge reads "structive" (on an earlier run, with another order, "tline"), and is whole after Tab (`gap12-before.png`, `gap12-after.png` in the audit captures, hottyterm on 0.8.7) | Looks: a word cut until the next change |
+
+For hotty-blitz: find which node keeps its old measure (likely the
+inline box whose text node a delta replaced isn't marked for a layout
+of its own; see mod 0041 for the transform and overflow side). The kit
+keeps its markup.
+
 ## Toasts don't draw on hottyterm 0.8 (2026-11-17)
 
 **Closed by hotty-blitz 0.8.9** (the same day), which fixes animations

@@ -227,3 +227,31 @@ func ExampleMenu() {
 	})
 	_ = surf.New("pane-menu", view, ui.Stylesheet())
 }
+
+// hostDot is a host's colour as a dot: a component that escapes what it
+// is given (the colour is config's, not constant markup).
+func hostDot(color string) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		style := templ.SanitizeCSS("color", color)
+		_, err := io.WriteString(w, `<span class="dot" style="`+templ.EscapeString(string(style))+`">●</span>`)
+		return err
+	})
+}
+
+// Rows of the app's own: a host's colour in the icon's place, its tabs in
+// the keys' place, a rule, and an on/off row with an aside. templ.Raw is
+// for constant markup only.
+func ExampleMenuItem_slots() {
+	wrap := true
+	_ = []ui.MenuItem{
+		{Label: "build-01",
+			Leading:  hostDot("#3a7"),
+			Trailing: templ.Raw(`<span>3 tabs</span>`),
+			OnSelect: func() {}},
+		{Role: "separator"},
+		{Label: "Wrap", Role: "menuitemcheckbox", Checked: wrap,
+			Content:         templ.Raw(`<span>Wrap <small>long lines</small></span>`),
+			OnCheckedChange: func(on bool) { wrap = on }},
+		{Label: "Here"},
+	}
+}

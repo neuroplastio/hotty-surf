@@ -80,6 +80,9 @@ func (s *Story) Sources() []Source {
 // Those registrations wrap their render functions in closures, so the
 // closure's program counter alone cannot name the original component.
 func storySources(id string) []Source {
+	if demo := demoSources(id); len(demo) > 0 {
+		return demo
+	}
 	dir := filepath.Join(root, "internal", "stories")
 	entries, _ := os.ReadDir(dir)
 	needle := `ID: "` + id + `"`
@@ -123,6 +126,66 @@ func storySources(id string) []Source {
 		return out
 	}
 	return nil
+}
+
+// demoSources finds the book-only demonstrations, whose registrations use
+// loops to share the spike's variant data instead of a separate add call.
+func demoSources(id string) []Source {
+	dir := filepath.Join(root, "internal", "stories")
+	var file, render string
+	switch {
+	case strings.HasPrefix(id, "code/"):
+		file, render = "book_code.go", "codeDemo"
+	case strings.HasPrefix(id, "list-item/"):
+		file, render = "book_shell.templ", "rowsDemo"
+	case strings.HasPrefix(id, "icon-button/"):
+		file, render = "book_shell.templ", "iconButtonsDemo"
+	case strings.HasPrefix(id, "symbols/"):
+		file, render = "book_shell.templ", "symbolsDemo"
+	case strings.HasPrefix(id, "separator/"):
+		file, render = "book_misc.templ", "separatorDemo"
+	case strings.HasPrefix(id, "icons/"):
+		file, render = "book_misc.templ", "iconsDemo"
+	case strings.HasPrefix(id, "tabs-demo/"):
+		file, render = "book_parts.templ", "tabsDemo"
+	case strings.HasPrefix(id, "nav-list/"):
+		file, render = "book_parts.templ", "navDemo"
+	case strings.HasPrefix(id, "controls/"):
+		file, render = "book_parts.templ", "controlsDemo"
+	case strings.HasPrefix(id, "event-log/"):
+		file, render = "book_parts.templ", "logDemo"
+	default:
+		return nil
+	}
+	path := filepath.Join(dir, file)
+	text, ok := read(path)
+	if !ok {
+		return nil
+	}
+	at := strings.Index(text, `"`+id+`"`)
+	if at < 0 {
+		return nil
+	}
+	start := strings.LastIndex(text[:at], "\n") + 1
+	end := strings.Index(text[at:], "\n")
+	if end < 0 {
+		end = len(text)
+	} else {
+		end += at
+	}
+	out := []Source{{Title: "story", Path: rel(path), Line: 1 + strings.Count(text[:start], "\n"), Lang: "go", Code: strings.TrimSpace(text[start:end])}}
+	var src Source
+	if strings.HasSuffix(file, ".templ") {
+		src, ok = templBlock(path, render)
+	} else {
+		src, ok = goDecl(path, render)
+	}
+	if ok {
+		src.Title = "render: " + render
+		out = append(out, src)
+		out = refs(out, out[1:], dir, map[string]bool{}, 1)
+	}
+	return out
 }
 
 // propTypes adds the module's types the props hold (a field's type, through

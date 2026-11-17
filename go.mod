@@ -14,10 +14,10 @@ require (
 	github.com/tinylib/msgp v1.6.5
 	golang.org/x/net v0.62.0
 	golang.org/x/sys v0.50.0
-	neuroplast.io/hotty-go v0.8.1-0.20261117165951-e31f7785bc8a
+	neuroplast.io/hotty-go v0.8.1-0.20261117175548-e1d9f6887ae0
 	neuroplast.io/hotty-go/hottyedit v0.8.0
 	neuroplast.io/hotty-go/hottyterm v0.8.0
-	neuroplast.io/hotty-go/hottytest v0.8.2-0.20261117165951-e31f7785bc8a
+	neuroplast.io/hotty-go/hottytest v0.8.2-0.20261117175548-e1d9f6887ae0
 	neuroplast.io/myelin/myelinkey v0.2.0
 )
 

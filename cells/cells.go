@@ -44,8 +44,20 @@ type Screen struct {
 	ids  map[string]*html.Node
 	// What its controls hold (SPEC §6.4).
 	fields map[*html.Node]*field
-	// press is the placement's Press: on unless a placement turns it off.
-	press bool
+	// press is the placement's Press, and hover its Hover: on unless a
+	// placement turns them off.
+	press, hover bool
+
+	// The pointer (pointer.go): the press whose release may click, a
+	// drag in progress, the element the last hover named, and the run of
+	// clicks a double click counts.
+	down     *pressed
+	held     bool // a press the Screen took is down
+	pressing bool // a press of any button is down, the Screen's or not
+	drag     *dragging
+	hoverID  string
+	hoverOut bool
+	clicks   clickRun
 
 	// active is whether the Screen has the program's keyboard (Focus);
 	// focused is the element that has the keyboard, and remembered the
@@ -84,6 +96,7 @@ func New(cols, rows int, events func(hotty.Event)) *Screen {
 		events: events,
 		fields: map[*html.Node]*field{},
 		press:  true,
+		hover:  true,
 		active: true,
 	}
 }
@@ -111,6 +124,9 @@ func (c *Screen) Write(p []byte) (int, error) {
 			c.flush()
 			return 0, err
 		}
+		if c.drag != nil && c.byID(c.drag.from) == nil {
+			c.cutDrag() // the dragged element left the document
+		}
 	}
 	c.flush()
 	return len(p), nil
@@ -135,7 +151,8 @@ func (c *Screen) Key(key string) (taken bool) {
 }
 
 // Paste puts text into the focused field, as a bracketed paste reaches a
-// host; taken is false when no field has the keyboard.
+// host; taken is false when no field has the keyboard. Lines changes with
+// it: the program draws the Screen again.
 func (c *Screen) Paste(text string) (taken bool) {
 	n := c.focused
 	if c.body == nil || !c.active || !isTextField(n) || disabled(n) {
@@ -156,8 +173,10 @@ func (c *Screen) Paste(text string) (taken bool) {
 // Click clicks the cell at col, row of the Screen, from its top left; taken
 // says whether it landed on something of the surface's.
 func (c *Screen) Click(col, row int) (taken bool) {
-	taken = c.click(col, row)
-	c.flush()
+	// The release always follows, taken or not: it ends the press (a
+	// release with nothing of the surface's pressed sends nothing).
+	taken = c.Press(col, row, 0, 0)
+	c.Release(col, row, 0)
 	return taken
 }
 
@@ -208,6 +227,7 @@ func (c *Screen) Focus(in bool) {
 			c.focusTo(n, true)
 		}
 	case !in && c.active:
+		c.cutDrag()
 		if c.body != nil {
 			n := c.focused
 			c.blur()
@@ -281,6 +301,12 @@ func (c *Screen) apply(m hotty.Message) error {
 		case hotty.Off:
 			c.press = false
 		}
+		switch p.Hover {
+		case hotty.On:
+			c.hover = true
+		case hotty.Off:
+			c.hover = false
+		}
 		return nil
 	case "del":
 		c.del()
@@ -336,6 +362,7 @@ func (c *Screen) apply(m hotty.Message) error {
 
 // del forgets the surface's document, as a=del deletes the surface.
 func (c *Screen) del() {
+	c.cutDrag()
 	c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
 	c.fields = map[*html.Node]*field{}
 	c.changed()

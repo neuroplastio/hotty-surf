@@ -1688,7 +1688,8 @@ was lifted, k-lifted there), adapted to handlers.
   app that reorders by drag also gives the keyboard a way, as the docs
   say. A cells drag (mouse reporting's motion with the button down) and a
   right click mapped to Secondary are a later cells change, with names of
-  its own on cells.Screen if wanted.
+  its own on cells.Screen if wanted. (L6, below, gives it: Press, Move,
+  Release and At.)
 
 Open for the reviewer:
 1. Drop(nil) adds nothing, as every nil handler does, so a row that only
@@ -1723,6 +1724,83 @@ them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
 
+## L6: the pointer in cells, for plx (a pack of its own)
+
+plx draws its surfaces in cells where the terminal is no hotty host, and
+hands its cells host the terminal's mouse: press, held motion and
+release, each with mods, the right button, and motion with no button
+down. v0.7's `cells.Screen` took only `Click(col,row)` and `Wheel`, so
+nothing in cells could drag (surf.Drag/Drop, L5), right-click
+(surf.Secondary), double-click, shift-click or hover. plx also couldn't
+ask what is under a cell for a carry that began outside the surface
+(`l4c-gaps.md`, G-cells-hit). This includes the cells half of L5's drags
+and secondary press.
+
+### The names
+
+```go
+func (c *Screen) Press(col, row, mods, button int) (taken bool)
+func (c *Screen) Move(col, row, mods int) (taken bool)
+func (c *Screen) Release(col, row, mods int) (taken bool)
+func (c *Screen) At(col, row int) (id string, area hotty.Area)
+```
+
+- The Screen is the host for the pointer too. It sends the surface the
+  events a host sends for the same gesture (SPEC §9, §9.1, §9.4), so the
+  existing handlers (Click, Drag, Drop, Secondary, Hover) need no new
+  names. These are:
+  - a press, with its Button (0 or 2), At, Area and Mods;
+  - a click, with its Count and Mods;
+  - dragstart, drag and dragend, with Col, Row and the steps;
+  - a hover, with Out where the pointer leaves.
+
+  Ported from v0.6.3's `pkg/cells` (input.go's Press, Release and count;
+  drag.go's start, move and end, and its steps), adapted to v0.7's tree.
+- `button` is numbered as `hotty.Event.Button` is: 0 the primary, 2 the
+  secondary. One Press covers both. `mods` comes third in all three, so
+  `ModAlt` (2) can't be taken for the secondary button.
+- `taken` has one meaning in all three: the gesture is the surface's. That
+  is a press the surface took, the moves and release of that press, and a
+  move with no button down over the Screen's cells. While a press the
+  surface didn't take is down, its moves are the program's.
+- `Click(col, row)` stays: it is Press(col, row, 0, 0), then Release(col,
+  row, 0). A drag it starts on a handle ends with it.
+- `At` is the innermost element with an id of the app's (generated ids
+  skipped, by `rt.RuntimeID`, the rule surf faults an app's id with), and
+  its cells. The half plx asks for is `row < area.Row + area.H/2`.
+- A drag ends short (a dragend with no target and its last steps, no drop
+  and no click) on `Focus(false)`, a new document, a=del, the dragged
+  element leaving, or a Press before its Release. A press of any button
+  also drops a click whose release was lost. Escape doesn't end a drag,
+  as on a host.
+- `surf.Drag`'s doc no longer says cells has no pointer.
+
+### As reviewed (p-796, 2026-11-17): all four, with changes, applied
+
+The open questions were settled with the leans:
+1. At returns `(id, area)`: neither a half nor a `Hits()` list.
+2. Hover goes through Move with no button down, not a `Hover` method. A
+   move with a non-primary button down is a hover too.
+3. The double click's clock is internal: 500 ms on one element, by the
+   wall clock, tested through an internal hook.
+4. Escape during a drag does what it does without one, as on a host.
+
+The changes:
+- Press's order became `(col, row, mods, button)`.
+- At skips generated ids.
+- `taken` got one meaning.
+- The cut-short cases were added, in the docs and in behaviour.
+
+### As verified (p-801, 2026-11-17): three fixes, applied
+
+- Move's `taken` holds only with no button down, or for a press the surface
+  took (F1).
+- A press of any button resets the primary press waiting for its click
+  (F2).
+- Click is literally Press and Release (F3).
+
+Each has a test (`TestMoveOfUntakenPress`, `TestPressAfterLostRelease`,
+`TestClickOnDragHandle`). This pack's notes were folded in here (F4).
 ## plx: key labels (a pack of its own)
 
 plx's move to v0.7 (its ask (c)) needs every scoped key labelled, with an
@@ -2112,6 +2190,185 @@ ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
 - K29 (menus: three ways in, one panel) is the reviewer's.
 - G-menu-rows (MenuItem slots for all three menus) is next after the
   toast pack (p-653's queue).
+
+## L6: a field's selection in cells, for plx's copy and cut (a pack of its own)
+
+In cells, plx copies a field's selection to the terminal's clipboard
+(v0.6: `cr.Copy` callback → `Host.SetCopy`). v0.7's Screen has no
+clipboard and leaves the copy, cut and paste keys to the program, but
+exposes no field selection, so plx's copy and cut do nothing in cells
+(`l4c-gaps.md`, G-cells-copy; it blocks slice 2, where copying in cells
+is a tool feature).
+
+### The shape: the program asks, on its own key
+
+- `Selection() string`: the focused text field's selected text, "" for
+  none (no field, nothing selected, a password).
+- `Cut() string`: the same, deleted from the field as the user's edit
+  (rev, input where it listens, change on commit). "" and no edit in a
+  readonly or disabled field, or a password.
+- The keys stay as they are: the Screen doesn't take copy or cut
+  (`fieldKey`), so the program hears them and calls these. Paste is
+  already `Paste(text)`. One direction each way: the program owns the
+  clipboard.
+- Implemented and tested in the branch (grapheme-correct, readonly,
+  password).
+
+### Open questions, as drafted
+
+1. **Methods, or a copy callback on New** (v0.6's `Copy func(string)`).
+   **Lean: methods.** New's signature is approved, and a callback needs
+   a second option. With methods, the program, which already decides what
+   its copy key means (a pane's own selection vs the field's), asks only
+   when it's the field's.
+2. **Cut as its own method, or `Selection()` plus a `Delete()`.**
+   **Lean: Cut.** It's one act. A separate Delete is a second name and a
+   window where the two disagree.
+3. **A password's selection.** **Lean: "".** Browsers refuse to copy from
+   `type=password`, and a host does the same.
+
+### As reviewed (p-796, 2026-11-17): both names, two doc changes, applied
+
+Both names were approved as named, and the three questions went with the
+leans: methods, Cut as its own method, and "" for a password. The docs say
+"text field or textarea", and Cut and Paste each say that Lines changes
+with them, so the program draws the Screen again.
+
+### As verified (p-653's spot check, 2026-11-17): approved
+
+## plx: menu rows of the app's own (G-menu-rows, a pack of its own)
+
+plx won't build stand-in rows, so this blocks its copy's removal
+(p-653). Its rows (a host's colour dot, a switch, an aside, a note, a
+name being typed, the current workspace, an MDI icon, a bare rule) are
+three slots on MenuItem and a rule, for DropdownMenu, ContextMenu and
+Menu at once, as K29 asks:
+
+- **Leading** replaces the icon (Icon is ignored when it is set), drawn
+  first in the row.
+- **Content** replaces the label's text. The item then has
+  `aria-label` = Label, so its name stays its words.
+- **Trailing** replaces the shortcut (Keys is ignored), wrapped in
+  Basecoat's `<span data-shortcut>`, which puts it at the row's end as a
+  shortcut is.
+- **Separator** makes the item an `<hr role="separator">`, its other
+  fields ignored. It keeps its place in Items (an index in a Menu's
+  Highlight still counts it), is never highlighted, and no key or press
+  reaches it.
+
+The slots are the app's markup. The press and keys stay the row's: a click
+anywhere on it runs the item. Command ignores the slots, as it ignores Role.
+TestMenuRows covers all three menus, ExampleMenuItem_slots shows plx's
+rows.
+
+Open, for review:
+1. **A switch in Leading is an `<input>`.** A host toggles it on a click
+   before the row's click runs, so plx's OnSelect should set the state it
+   draws from, not read the input. A non-interactive switch look (a
+   `Switch` with no input, or `aria-hidden` and `pointer-events: none` on
+   one in a row) is the alternative; it adds a name, so not here.
+2. **Separator as an item vs a field on the next item.** An item keeps
+   the slices plx builds (its `Sep` rows) one to one, and a Menu's
+   Highlight index lines up with plx's own. The cost is a MenuItem whose
+   other fields mean nothing.
+3. **Content's text in cells** is whatever the markup draws. plx's caret
+   (`span.cur`) is plx's CSS.
+
+### As reviewed (p-796, review-rows.md): applied
+
+- Leading, Content and Trailing kept, for all three menus.
+  - A slot set with the field it replaces (Leading with Icon, Trailing
+    with Keys) is a fault.
+  - A control in a slot is a fault (K31: slots are pictures): an input,
+    button, select, textarea, `a[href]`, `[tabindex]` or a `data-on`
+    handler. Each slot is rendered once, scanned with x/net/html's
+    tokenizer, then written (`menuSlot`).
+  - Leading sits in the icon's box: `<span data-leading>`, a 16 px
+    square, centred.
+- **Separator bool cut.** A rule is `Role: "separator"`, with the
+  review's Role doc. surftest faults on a separator first or last, next
+  to another, or at a group change.
+- Q1: no live control in a slot. The pack's Switch row is now
+  TestMenuRowFaults' first case, and the example's Wrap row is a
+  `menuitemcheckbox` with Content for its aside.
+- **p-653's addition:** on a checkable row, Leading is drawn in place of
+  the kit's check or radio indicator, not beside it. plx draws its
+  switch's look there as an aria-hidden picture, and `aria-checked` still
+  says the state. This is drawing only, with no live control. Whether
+  the kit itself should draw a checkbox item as a switch stays the
+  maintainer's call (review Q1). TestMenuRows checks that one indicator
+  is drawn and that Follow keeps aria-checked.
+- Heading maps to Group; no new name.
+- The example's dot is an escaping component (`templ.SanitizeCSS`,
+  `templ.EscapeString`), and the example says templ.Raw is for constant
+  markup only.
+- K31 is the reviewer's.
+
+## L5: Focused, Chars and Blur (plx's G-keys-decl and G-lend)
+
+plx's integration list (l4c) has two gaps in the root package:
+
+- **G-keys-decl.** plx routes a key that types a character to its own
+  bindings only when the focused element wouldn't type or pick by it,
+  and needs to know which element is focused (an element autofocused
+  while plx held the keyboard gives it back). v0.6.3's surfrun had
+  `Keys() ([]KeyUse, Chars)`; v0.7 has neither.
+- **G-lend.** plx lends the host's keyboard to its own menus with a=blur.
+  The host doesn't report a program's blur, so the surface kept
+  `focused`, and a later `Focus()` sent nothing. (That premise was
+  wrong: SPEC §10.1 has the host send `blur` after a program's a=blur,
+  and plx confirms every host does; see the review below.)
+
+The pack: `Surface.Focused() string`, `Surface.Chars() Chars` with
+`CharsBound`, `CharsPick`, `CharsText`, and `Surface.Blur() (bool, error)`,
+the mirror of `Focus`. Blur sends a=blur and runs the blur itself, as the
+host's would: Focus handlers hear the loss, Outside runs for every element
+(a press still down doesn't spare its own), and the element stays the one
+Focus gives back.
+
+**Cells.** No Screen method: a cells.Screen feeds its focus to the surface
+as events, so `Surface.Focused` and `Chars` answer the same in cells. To
+lend the keyboard there, the program calls `cells.Screen.Focus(false)`,
+which the surface hears as the same blur (Blur's doc says so). The cells
+builder (p-800) is told.
+
+**What Chars says.** From the last document sent and the focused element:
+a text input or textarea types (CharsText); a native single select picks
+(CharsPick); anything else, a disabled element, or nothing focused is
+CharsBound. The kit's own Select and DropdownMenu don't pick by
+characters in v0.7, so an open one is CharsBound: printable keys reach the
+program, which is what their key handlers do with them now. Combobox and
+Command type into their inputs (CharsText).
+
+**Not in this pack.** The bound keys with their labels (v0.6.3's
+`[]KeyUse`) are `ui.Bindings` and KeyScope labels' (G-keyscope-labels,
+p-794's). Chars covers the other half.
+
+Questions for the review:
+
+1. `Focused() string` alone, or `(id, Chars)` as the gap row suggested? Two
+   methods keep each answer readable at its call site.
+2. A readonly text field is CharsText (the host keeps the key, which moves
+   nothing): right, or CharsBound?
+
+Reviewed (review-focus.md): approved as named, Q1 two methods, Q2
+readonly is CharsText. Applied:
+
+- **The echo.** Blur runs the blur itself first, so the surface knows at
+  once, then sends a=blur and sets a flag; the host's `blur` that follows
+  (SPEC §10.1) is swallowed as its echo: nothing runs twice. A focus
+  event, Focus() or an Autofocus taking effect clears the flag, so a host
+  that sent none never loses a later real blur. A cells.Screen echoes
+  while it is written to; the surface defers that event past the write
+  and swallows it the same way. Tests: TestBlurEcho (echo, no echo, Focus
+  in between) and TestBlurInCells, each failing without the swallow.
+- **Chars.** contenteditable (not "false") is CharsText; a readonly field
+  is CharsText, locked by TestReadonlyKeepsCharsVector on the test host
+  and in cells (the test host's readonly fix is hotty-go e1d9f68, pinned
+  as hottytest v0.8.2-0.20261117175548-e1d9f6887ae0).
+- **Docs.** Focused and Chars run on the driver's goroutine; Focused is
+  the surface's view; Chars names its limits (the kit's Select and
+  DropdownMenu, select multiple, composition).
 
 ## plx: toasts an app owns (G-toast, a pack of its own)
 
