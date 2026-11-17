@@ -64,11 +64,12 @@ type MenuItem struct {
 	// OnSelect runs when the user chooses the item; the menu closes.
 	OnSelect func()
 	// Leading is drawn in the icon's place, in place of Icon, and in its
-	// box (a 16 px square, centred): a colour dot, an icon of the app's
-	// own. On a checkable row ("menuitemcheckbox", "menuitemradio") it is
-	// also drawn in place of the kit's check or radio indicator, not
-	// beside it: the app draws the row's state there (a switch's look,
-	// aria-hidden), and aria-checked still says it. Trailing is drawn in the shortcut's place, in place of Keys: a
+	// box (a 16 px square, centred), hidden from the row's name: a colour
+	// dot, an icon of the app's own. On a checkable row
+	// ("menuitemcheckbox", "menuitemradio") it is also drawn in place of
+	// the kit's check or radio indicator, not beside it: the app draws the
+	// row's state there (a switch's look), and aria-checked still says
+	// it. Trailing is drawn in the shortcut's place, in place of Keys: a
 	// note, a count. Content is drawn in the label's place: the label with
 	// an aside after it, a name being typed with its caret. Label still
 	// names the item (its aria-label, then) and is what a pick reports.
@@ -158,7 +159,14 @@ func (v *menuView) shut() { v.st.open, v.st.active = false, -1 }
 func newMenuView(st *DropdownMenuState, p DropdownMenuProps) *menuView {
 	v := &menuView{st: st, p: p, id: or(p.ID, "dropdown-menu")}
 	v.entries, v.opts = grouped(v.id+"-items", len(p.Items),
-		func(i int) string { return p.Items[i].Group },
+		// A separator is in the group of the item before it (its own Group
+		// is ignored), so a rule inside a group doesn't split it.
+		func(i int) string {
+			if p.Items[i].Role == "separator" && i > 0 {
+				return p.Items[i-1].Group
+			}
+			return p.Items[i].Group
+		},
 		func(i int, id string) listOpt {
 			v.items = append(v.items, i)
 			it := p.Items[i]

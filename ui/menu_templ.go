@@ -335,8 +335,9 @@ func dropdownMenu(v *menuView) templ.Component {
 }
 
 // menuItem is render_dropdown_items' item: its icon, label and shortcut,
-// or the app's Leading, Content and Trailing in their places (Leading in
-// place of a checkable row's indicator too); a separator item is a rule. Its click stays live while the menu is closed, as a
+// or the app's Leading, Content and Trailing in their places (Leading
+// in place of a checkable row's indicator too); a separator item is a
+// rule. Its click stays live while the menu is closed, as a
 // Select's option's.
 func menuItem(v *menuView, o int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -364,7 +365,7 @@ func menuItem(v *menuView, o int) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.NewAttributeExpression(id).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 68, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 69, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
@@ -386,7 +387,7 @@ func menuItem(v *menuView, o int) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templruntime.NewAttributeExpression(or(it.Role, "menuitem")).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 71, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 72, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 				if templ_7745c5c3_Err != nil {
@@ -404,7 +405,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templruntime.NewAttributeExpression(bstr(it.Checked)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 73, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 74, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 					if templ_7745c5c3_Err != nil {
@@ -429,7 +430,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var18 string
 					templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.NewAttributeExpression(it.Label).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 79, Col: 25}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 80, Col: 25}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 					if templ_7745c5c3_Err != nil {
@@ -448,7 +449,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var19 string
 					templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(it.Variant)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 82, Col: 37}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 83, Col: 37}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 					if templ_7745c5c3_Err != nil {
@@ -473,7 +474,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var20 string
 					templ_7745c5c3_Var20, templ_7745c5c3_Err = templruntime.NewAttributeExpression(id).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 88, Col: 11}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 89, Col: 11}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 					if templ_7745c5c3_Err != nil {
@@ -504,7 +505,7 @@ func menuItem(v *menuView, o int) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if it.Leading != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<span data-leading>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<span data-leading aria-hidden=\"true\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -531,7 +532,7 @@ func menuItem(v *menuView, o int) templ.Component {
 				var templ_7745c5c3_Var21 string
 				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 103, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 104, Col: 14}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {

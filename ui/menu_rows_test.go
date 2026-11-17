@@ -41,7 +41,7 @@ func TestMenuRows(t *testing.T) {
 			}
 			r := surftest.Start(t, surf.New("rows", page(view), ui.Stylesheet()))
 			html := r.HTML()
-			for _, want := range []string{`id="dot"`, `data-shortcut=""><span id="note">`, `id="note"`, `id="content"`, `aria-label="Wrap"`, `<hr role="separator" id="m-items-2"`, `data-leading=""><span id="look"`} {
+			for _, want := range []string{`id="dot"`, `data-shortcut=""><span id="note">`, `id="note"`, `id="content"`, `aria-label="Wrap"`, `<hr role="separator" id="m-items-2"`, `data-leading="" aria-hidden="true"><span id="look"`} {
 				if !strings.Contains(html, want) {
 					t.Errorf("no %s in %s", want, html)
 				}
@@ -93,5 +93,22 @@ func TestMenuRowFaults(t *testing.T) {
 				t.Fatalf("faults %q, want one with %q", f.got, c.want)
 			}
 		})
+	}
+}
+
+// A separator inside a group keeps the group whole: one heading, one
+// rule, no group rules around it.
+func TestMenuSeparatorInGroup(t *testing.T) {
+	items := []ui.MenuItem{
+		{Label: "a", Group: "Hosts"}, {Role: "separator"},
+		{Label: "b", Group: "Hosts"}, {Label: "c", Group: "Hosts"},
+	}
+	r := surftest.Start(t, surf.New("rows", page(ui.Menu(ui.MenuProps{ID: "m", Items: items, Highlight: -1})), ui.Stylesheet()))
+	html := r.HTML()
+	if n := strings.Count(html, `role="heading"`); n != 1 {
+		t.Errorf("%d headings, want one Hosts", n)
+	}
+	if n := strings.Count(html, `<hr`); n != 1 {
+		t.Errorf("%d rules, want the separator's alone", n)
 	}
 }
