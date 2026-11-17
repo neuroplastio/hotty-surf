@@ -31,10 +31,12 @@ fixed before the audit is complete.
 
 ## In progress
 
-- [ ] The host draws a native select arrow despite Basecoat `appearance:none`,
-  in addition to Basecoat's background chevron. The CSS retains the spike
-  markup and Basecoat chevron; the host issue is under investigation.
-  `alert-props-arrow-fixed.png` shows the double arrow on hottyterm 0.8.7.
+- [x] The host draws a native select arrow despite Basecoat `appearance:none`,
+  in addition to Basecoat's background chevron. Cause: Blitz's UA sheet adds
+  the ▾ as `select::after` whatever the appearance. It is Blitz gap 10 in
+  `vault/knowledge/blitz-gaps.md`, for hotty-blitz; the kit keeps the spike
+  markup and Basecoat chevron. `alert-props-arrow-fixed.png` shows it on
+  hottyterm 0.8.7.
 - [ ] Complete the comparison across every story and populated Events.
   `audit-alert-source.png`, `alert-props-side-by-side.png`,
   `audit-alert-events-empty.png`, `audit-alert-html.png`, and
