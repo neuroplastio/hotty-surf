@@ -104,7 +104,7 @@ templ Page(a *App) {
 				if a.renameErr != "" {
 					<p class="text-sm text-destructive">{ a.renameErr }</p>
 				}
-				<footer>
+				<footer class="form-actions">
 					@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "rename-cancel", surf.Click(a.Close))}) {
 						Cancel
 					}
