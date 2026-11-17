@@ -11,12 +11,95 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 	"neuroplast.io/hotty-surf/ui/code"
 )
+
+// TabsDemo holds the state shown by the kit Tabs demonstration.
+type TabsDemo struct{ Tabs TabsDemoState }
+
+// TabsDemoState is the spike demonstration's editable tab state.
+type TabsDemoState struct {
+	ID         string
+	Label      string
+	Tabs       []ui.Tab
+	Active     string
+	Variant    string
+	ListClass  string
+	PanelClass string
+}
+
+func tabsDemo(p *TabsDemo) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p>The ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Tabs.Active)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_parts.templ`, Line: 29, Col: 24}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " panel. Click a tab, or Tab to the tabs and use ← → Home End.</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = ui.Tabs(ui.TabsProps{ID: p.Tabs.ID, Label: p.Tabs.Label, Tabs: p.Tabs.Tabs, Value: p.Tabs.Active, Line: p.Tabs.Variant == "line", ListClass: p.Tabs.ListClass, PanelClass: p.Tabs.PanelClass, OnChange: func(v string) { p.Tabs.Active = v }}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func bookTabsDemo(line bool, n int) *TabsDemo {
+	names := []string{"Account", "Password", "Team", "Billing", "Notifications", "Integrations", "Danger zone"}
+	p := &TabsDemo{Tabs: TabsDemoState{ID: "demo", Label: "Settings", Active: "account", PanelClass: "card mt-2 p-4 text-sm"}}
+	if line {
+		p.Tabs.Variant = "line"
+	}
+	for _, name := range names[:n] {
+		p.Tabs.Tabs = append(p.Tabs.Tabs, ui.Tab{Value: strings.ToLower(strings.ReplaceAll(name, " ", "-")), Label: name})
+	}
+	return p
+}
 
 // NavDemo holds the retained navigation list used by a story.
 type NavDemo struct{ Nav ui.NavList }
@@ -55,7 +138,7 @@ func navDemo(p *NavDemo) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-sidebar text-sidebar-foreground flex w-64 flex-col rounded-md border p-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-sidebar text-sidebar-foreground flex w-64 flex-col rounded-md border p-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,7 +150,7 @@ func navDemo(p *NavDemo) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -130,11 +213,11 @@ func logDemo(p *LogDemo) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"flex w-full max-w-xl flex-col gap-3\"><div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex w-full max-w-xl flex-col gap-3\"><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var4 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var7 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -146,7 +229,7 @@ func logDemo(p *LogDemo) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "Add an event ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Add an event ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -154,11 +237,11 @@ func logDemo(p *LogDemo) templ.Component {
 		})
 		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.Small, Attrs: surf.On(ctx, "demo-add", surf.Click(func() {
 			p.Entries = append(p.Entries, ui.LogEntry{At: time.Now(), Kind: "act", Text: "event " + strconv.Itoa(len(p.Entries)+1), KindClass: code.TokenClass("keyword")})
-		}))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		}))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -166,7 +249,7 @@ func logDemo(p *LogDemo) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -175,6 +258,16 @@ func logDemo(p *LogDemo) templ.Component {
 }
 
 func init() {
+	for _, x := range []struct {
+		id    string
+		line  bool
+		count int
+	}{{"tabs-demo/default", false, 3}, {"tabs-demo/line", true, 3}, {"tabs-demo/many", true, 7}} {
+		x := x
+		makeView := func() (any, templ.Component) { p := bookTabsDemo(x.line, x.count); return p, tabsDemo(p) }
+		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+	}
+
 	for _, x := range []struct{ id, filter string }{{"nav-list/default", ""}, {"nav-list/filtered", "an"}, {"nav-list/nothing-matches", "zzz"}} {
 		x := x
 		makeView := func() (any, templ.Component) { p := &NavDemo{Nav: bookNav(x.filter)}; return p, navDemo(p) }

@@ -2,12 +2,43 @@ package stories
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 	"neuroplast.io/hotty-surf/ui/code"
 )
+
+// TabsDemo holds the state shown by the kit Tabs demonstration.
+type TabsDemo struct { Tabs TabsDemoState }
+
+// TabsDemoState is the spike demonstration's editable tab state.
+type TabsDemoState struct {
+	ID string
+	Label string
+	Tabs []ui.Tab
+	Active string
+	Variant string
+	ListClass string
+	PanelClass string
+}
+
+templ tabsDemo(p *TabsDemo) {
+	@ui.Tabs(ui.TabsProps{ID: p.Tabs.ID, Label: p.Tabs.Label, Tabs: p.Tabs.Tabs, Value: p.Tabs.Active, Line: p.Tabs.Variant == "line", ListClass: p.Tabs.ListClass, PanelClass: p.Tabs.PanelClass, OnChange: func(v string) { p.Tabs.Active = v }}) {
+		<p>The { p.Tabs.Active } panel. Click a tab, or Tab to the tabs and use ← → Home End.</p>
+	}
+}
+
+func bookTabsDemo(line bool, n int) *TabsDemo {
+	names := []string{"Account", "Password", "Team", "Billing", "Notifications", "Integrations", "Danger zone"}
+	p := &TabsDemo{Tabs: TabsDemoState{ID: "demo", Label: "Settings", Active: "account", PanelClass: "card mt-2 p-4 text-sm"}}
+	if line { p.Tabs.Variant = "line" }
+	for _, name := range names[:n] {
+		p.Tabs.Tabs = append(p.Tabs.Tabs, ui.Tab{Value: strings.ToLower(strings.ReplaceAll(name, " ", "-")), Label: name})
+	}
+	return p
+}
 
 // NavDemo holds the retained navigation list used by a story.
 type NavDemo struct { Nav ui.NavList }
@@ -61,6 +92,12 @@ templ logDemo(p *LogDemo) {
 }
 
 func init() {
+	for _, x := range []struct { id string; line bool; count int }{{"tabs-demo/default", false, 3}, {"tabs-demo/line", true, 3}, {"tabs-demo/many", true, 7}} {
+		x := x
+		makeView := func() (any, templ.Component) { p := bookTabsDemo(x.line, x.count); return p, tabsDemo(p) }
+		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+	}
+
 	for _, x := range []struct { id, filter string }{{"nav-list/default", ""}, {"nav-list/filtered", "an"}, {"nav-list/nothing-matches", "zzz"}} {
 		x := x
 		makeView := func() (any, templ.Component) { p := &NavDemo{Nav: bookNav(x.filter)}; return p, navDemo(p) }

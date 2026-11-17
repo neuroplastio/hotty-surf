@@ -56,7 +56,7 @@ func Wrap(id, doc string, makeView func() templ.Component, makeProps func() (any
 		family = "Display"
 	case "checkbox", "field", "input", "input-group", "label", "native-select", "radio", "select", "switch", "textarea":
 		family = "Forms"
-	case "breadcrumb", "tabs", "nav-list":
+	case "breadcrumb", "tabs", "nav-list", "tabs-demo":
 		family = "Navigation"
 	case "dialog", "dropdown-menu", "toast":
 		family = "Overlays"

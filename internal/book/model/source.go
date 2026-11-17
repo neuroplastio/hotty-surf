@@ -136,6 +136,8 @@ func demoSources(id string) []Source {
 	switch {
 	case strings.HasPrefix(id, "code/"):
 		file, render = "book_code.go", "codeDemo"
+	case strings.HasPrefix(id, "tabs-demo/"):
+		file, render = "book_parts.templ", "tabsDemo"
 	case strings.HasPrefix(id, "nav-list/"):
 		file, render = "book_parts.templ", "navDemo"
 	case strings.HasPrefix(id, "controls/"):

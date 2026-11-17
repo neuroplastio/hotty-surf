@@ -348,3 +348,20 @@ func TestBookDemonstrationsHaveSource(t *testing.T) {
 		}
 	}
 }
+
+func TestTabsDemoSharesSelectionAndProps(t *testing.T) {
+	a := New()
+	a.show("tabs-demo/line")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#demo-tab-2")
+	if got := a.storyHTML(); !strings.Contains(got, "password panel") {
+		t.Fatalf("tab selection did not update demo: %s", got)
+	}
+	if !a.model.Sel.Set("Tabs.Active", "team") {
+		t.Fatal("could not edit the active tab prop")
+	}
+	r.Update()
+	if got := a.storyHTML(); !strings.Contains(got, "team panel") {
+		t.Fatalf("active prop did not update demo: %s", got)
+	}
+}
