@@ -24,7 +24,7 @@ const (
 )
 
 // look is a cell's attributes, as SGR draws them.
-type look uint8
+type look uint16
 
 const (
 	lBold look = 1 << iota
@@ -32,6 +32,15 @@ const (
 	lItalic
 	lUnderline
 	lReverse
+	lStrike // Cells' Strike; Lines doesn't draw it
+	// lMuted is text in the muted colour (text-muted-foreground, a
+	// placeholder, a chart's labels) and lRule a rule's line: Lines draws
+	// both dim, and Cells as their roles (colour.go).
+	lMuted
+	lRule
+	// lFaint is text-muted-foreground's Dim in Lines, kept under a colour
+	// of its own, which clears lMuted (Lines as before Cells).
+	lFaint
 )
 
 // box is what the layout reads of an element.
@@ -105,6 +114,8 @@ func styleOf(n *html.Node) box {
 		b.look |= lItalic
 	case atom.U, atom.Ins:
 		b.look |= lUnderline
+	case atom.S, atom.Del, atom.Strike:
+		b.look |= lStrike
 	case atom.A:
 		if has(n, "href") {
 			b.look |= lUnderline
@@ -207,8 +218,12 @@ func (b *box) class(c string) {
 		b.look |= lBold
 	case "font-normal", "font-light":
 		b.look &^= lBold
-	case "text-muted-foreground", "opacity-50", "opacity-60", "opacity-70":
+	case "text-muted-foreground":
+		b.look |= lMuted | lFaint
+	case "opacity-50", "opacity-60", "opacity-70":
 		b.look |= lDim
+	case "line-through":
+		b.look |= lStrike
 	case "italic":
 		b.look |= lItalic
 	case "underline":
@@ -380,6 +395,9 @@ func (b *box) inline(style string) {
 		case "text-decoration", "text-decoration-line":
 			if strings.Contains(v, "underline") {
 				b.look |= lUnderline
+			}
+			if strings.Contains(v, "line-through") {
+				b.look |= lStrike
 			}
 		case "opacity":
 			if f, err := strconv.ParseFloat(v, 64); err == nil && f < 0.8 {

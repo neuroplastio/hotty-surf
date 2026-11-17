@@ -317,6 +317,31 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   decline. Tab remains focus traversal. It adds no wrapper or per-component
   Props fields; its open native-select and editing limitations are in the
   keyboard model.
+  Changed for plx (pack "key labels", p-796): it takes []KeyBinding, each
+  with its own Run, so one way to scope keys also names the actions a menu
+  and a palette list; and it reaches all focus inside it (plain elements
+  whose surf.On ran in it, and nothing focused for the outermost), as
+  plx's surface-wide `bind label=…` needs.
+- `ui.KeyBinding`: one action of a KeyScope, keyed or not: the item of a
+  hotty menu (SPEC §10.7) and of an app's palette, made where the key is.
+  Not MenuItem: its Keys is display text, and it has no Name.
+- `ui.KeyBinding.Key`: the key, in surf.Key's notation; empty for an
+  action only a pick reaches (a palette's keyless actions, plx's ask).
+- `ui.KeyBinding.Label`: what a menu's level and a palette show.
+- `ui.KeyBinding.Name`: the command a hotty menu's pick sends (SPEC §10.7's
+  item name), and what Pick takes; one Name is one action on a surface.
+- `ui.KeyBinding.Disabled`: a menu shows an item that does nothing now as
+  disabled (SPEC §10.7's enabled), and its key goes on. Disabled rather
+  than Enabled so that the zero value is an action that works.
+- `ui.KeyBinding.Run`: the action on the binding, as MenuItem.OnSelect is:
+  no list and switch to keep in step.
+- `ui.Bindings`: plx's which-key overlay and palette read what a surface
+  offers now as plain data, from the last render, in a stable order.
+- `ui.HostMenu`: the same list as hotty-go's MenuTree, so a host draws the
+  which-key level and lists the actions in its palette. Not `Menu`: every
+  other noun function in ui is a component.
+- `ui.Pick`: a pick from a host's menu or an app's palette arrives as a
+  name (a command event); this runs that action's nearest binding.
 - `ui.Combobox`: Basecoat's searchable selection, with the combobox.js
   interaction translated to Go; it reuses SelectItem (K12).
 - `ui.ComboboxProps`: a combobox's attributes.
@@ -434,6 +459,20 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `cells.Screen.Move`: the pointer's motion: a drag's steps and drop target while a button is down, and the hover (menus light their row, tips dwell) with none, which a host sends as hover events (SPEC §9.4); a cell off the Screen is the pointer leaving, as the host's Out.
 - `cells.Screen.Release`: where a drag ends (dragend, the drop) and a click lands, with the click count a double click needs (plx's pick runs a row on a double click, G-click-count) and mods (shift-click selects a range).
 - `cells.Screen.At`: a carry that began outside the surface (a plx pane or tab dragged over nav) asks which row is under the pointer and which half of it: no surface event carries that, since the drag isn't the surface's. Also nav's secondary target. The element's Area answers the half (and a left/right split) with no half-specific name.
+- `cells.Screen.Cells`: plx paints a surface in cells in its own theme, into its own grid, mixing fills into the terminal's ground and keeping muted ink legible on them: it needs each cell's colours as the theme's names, which Lines' SGR can't carry. v0.6's cells gave it runs in roles; Lines alone left plx's two cells hosts with no colour at all (G-cells-colour).
+- `cells.Cell`: one cell of Cells: its text, its colours as roles and its attributes, which plx's grid takes cell by cell.
+- `cells.Cell.Text`: the cell's grapheme cluster; "" marks a wide character's second cell, as a terminal grid has it.
+- `cells.Cell.Fg`: the role of the cell's text.
+- `cells.Cell.Bg`: the role of the cell's fill: a primary button, a selected row, a card.
+- `cells.Cell.Attr`: bold, italic, underline and the focused element's reverse, which colour doesn't replace.
+- `cells.Role`: a theme colour named as the kit's CSS variable, so a program maps it as it already writes those variables (plx's kitVarRoles), and its own var() names pass through. A string, not an enum, so a program's own variables and the opacity Basecoat's tinted fills use need no new names.
+- `cells.Attr`: a cell's text attributes as a set.
+- `cells.Bold`: an attribute.
+- `cells.Dim`: an attribute: a disabled control, a placeholder.
+- `cells.Italic`: an attribute.
+- `cells.Underline`: an attribute: a link, a text field's cells.
+- `cells.Reverse`: the element that has the keyboard, as Lines draws it.
+- `cells.Strike`: an attribute: `s`, `del`, `line-through`, which plx's v0.6 cells drew.
 
 ## surftest
 
@@ -573,3 +612,49 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
 - `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
+
+## List, icon button and symbols spike port (draft)
+
+- `ui.List`: The spike list gives ListItem rows a named listbox, with the kit's listbox keys (review: a listbox is behavioral, K-default keys).
+- `ui.ListProps`: The list's options follow the kit's Props pattern (K7).
+- `ui.ListProps.OnChange`: K2 exception: the app owns selection; the list requests a change by index.
+- `ui.ListProps.Attrs`: K1/K18: the listbox's accessible name and handlers, without a Label field.
+- `ui.ListProps.Class`: K3: classes after the list's own.
+- `ui.ListItem`: Apps need the spike's selectable row with leading and trailing slots.
+- `ui.ListItemProps`: The row's state and slots follow the Props pattern; its id and click are Attrs (K1/K3).
+- `ui.ListItemProps.Selected`: K2(b): the selected state is shown by the row and its accent bar.
+- `ui.ListItemProps.Active`: K2(b): the active state is shown as a tint.
+- `ui.ListItemProps.Leading`: K2(c): the optional leading component is read to render the row.
+- `ui.ListItemProps.Trailing`: K2(c): the optional trailing component is read to render the row.
+- `ui.ListItemProps.Attrs`: K1/K3: the button's id, handlers through surf.On, and disabled.
+- `ui.ListItemProps.Class`: K3: classes after the row's own.
+- `ui.ItemTitle`: A row needs the spike's truncated bold title slot.
+- `ui.ItemSubtitle`: A row needs the spike's truncated muted subtitle slot.
+- `ui.ItemDetail`: A row needs the spike's truncated detail slot.
+- `ui.IconButton`: The spike's named icon-only button is used by its navigation chrome.
+- `ui.Symbol`: The spike's filled Material Symbols are used by its chrome and list rows.
+- `ui.Shape`: A Symbol needs the spike's filled path on a 24-unit grid.
+- `ui.NamedShape`: A gallery needs a shape and its Go name together.
+- `ui.NamedShape.Name`: The gallery displays the shape's Go name.
+- `ui.NamedShape.Shape`: The gallery passes the named shape to Symbol.
+- `ui.Symbols`: The spike's gallery enumerates the shipped shapes.
+- `ui.ShapeAccountTree`: The spike uses the account-tree symbol in chrome.
+- `ui.ShapeDesktopWindows`: The spike uses the desktop-windows symbol in chrome.
+- `ui.ShapeGridView`: The spike uses the grid-view symbol in chrome.
+- `ui.ShapeMoreHoriz`: The spike uses the more-horiz symbol in chrome.
+- `ui.ShapePublic`: The spike uses the public symbol in chrome.
+- `ui.ShapeRemove`: The spike uses the remove symbol in chrome.
+- `ui.ShapeTerminal`: The spike uses the terminal symbol in list rows.
+- `ui.IconButtonProps`: K7: the compact button takes Props like the other kit components.
+- `ui.IconButtonProps.Shape`: K2(c): the filled symbol is read to render the button.
+- `ui.IconButtonProps.Attrs`: K1/K18: the caller supplies the accessible name, optional title and handlers.
+- `ui.IconButtonProps.Class`: K1: the caller can add classes to the compact button.
+- `ui.ItemTitleProps`: K7: the title line takes Props like the other CSS-only parts.
+- `ui.ItemTitleProps.Attrs`: K1: the caller may add span attributes except class.
+- `ui.ItemTitleProps.Class`: K1: the caller may add title classes.
+- `ui.ItemSubtitleProps`: K7: the subtitle line takes Props like the other CSS-only parts.
+- `ui.ItemSubtitleProps.Attrs`: K1: the caller may add span attributes except class.
+- `ui.ItemSubtitleProps.Class`: K1: the caller may add subtitle classes.
+- `ui.ItemDetailProps`: K7: the detail line takes Props like the other CSS-only parts.
+- `ui.ItemDetailProps.Attrs`: K1: the caller may add span attributes except class.
+- `ui.ItemDetailProps.Class`: K1: the caller may add detail classes.

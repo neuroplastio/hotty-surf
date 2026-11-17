@@ -53,7 +53,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
 		return a
 	}
-	e := &rt.Handlers{}
+	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
 	for _, h := range hs {
 		switch h.kind {
 		case kindClick:
