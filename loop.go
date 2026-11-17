@@ -403,11 +403,13 @@ func (s *Surface) key(k string) (bool, error) {
 	physical, _ := s.platform.ReadKey(k)
 	k = modName(s.platform, k)
 	intercepted := false
+	var fallback func(rt.KeyDefault) rt.KeyResult
 	if n := s.byID[s.focused]; n != nil && !hasAttr(n, "disabled") {
 		if index, err := strconv.Atoi(attr(n, "data-hotty-keyscope")); err == nil && index > 0 && index <= len(s.frame.KeyScopes) {
 			for scope := s.frame.KeyScopes[index-1]; scope != nil; scope = scope.Parent {
 				if scope.Keys[physical] {
 					intercepted = true
+					fallback = scope.Default
 					if scope.Handle(k) {
 						return true, s.send()
 					}
@@ -415,7 +417,7 @@ func (s *Surface) key(k string) (bool, error) {
 			}
 		}
 	}
-	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && s.nativeKeyDefault(physical) {
+	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && s.nativeKeyDefault(physical, fallback) {
 		return true, s.send()
 	}
 	ids := s.chain(s.focused)
@@ -439,7 +441,7 @@ func (s *Surface) key(k string) (bool, error) {
 				}
 			}
 		}
-		if s.nativeKeyDefault(physical) {
+		if s.nativeKeyDefault(physical, fallback) {
 			return true, s.send()
 		}
 	}

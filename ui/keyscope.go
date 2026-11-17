@@ -36,7 +36,7 @@ func KeyScope(keys []string, fn func(string) bool) templ.Component {
 		if f := rt.From(ctx); f != nil {
 			p = f.Platform
 		}
-		scope := &rt.KeyScope{Keys: map[string]bool{}, Handle: fn, Parent: rt.KeyScopeFrom(ctx)}
+		scope := &rt.KeyScope{Keys: map[string]bool{}, Handle: fn, Parent: rt.KeyScopeFrom(ctx), Default: keyScopeDefault}
 		for _, key := range keys {
 			k, ok := p.ReadKey(key)
 			if !ok || k == "tab" || k == "shift+tab" || scope.Keys[k] {
