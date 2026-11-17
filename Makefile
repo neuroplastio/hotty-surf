@@ -82,8 +82,8 @@ TINYGO ?= $(CAP) mise x -- tinygo
 NO_RELOAD = internal/devwire internal/devchild internal/devhook reload/reloader
 tinygo:   ## the examples build for js/wasm under TinyGo, and link no reload
 	@mkdir -p bin
-	@for e in tasks nav hello todo settings dashboard; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done
-	@for e in tasks nav hello todo settings dashboard; do \
+	@for e in tasks nav hello todo settings dashboard logs; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done
+	@for e in tasks nav hello todo settings dashboard logs; do \
 		deps=$$(GOOS=js GOARCH=wasm $(GO_BARE) list -deps ./examples/$$e) || exit 1; \
 		for p in $(NO_RELOAD); do \
 			if echo "$$deps" | grep -qx "neuroplast.io/hotty-surf/$$p"; then \
