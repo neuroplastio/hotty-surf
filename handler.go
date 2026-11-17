@@ -161,8 +161,14 @@ func Hover(fn func(over bool)) Handler {
 // Autofocus asks for the keyboard to go to the element id once this frame
 // is shown. It moves the keyboard only when this frame asks for an element
 // the frame before did not, so a view may ask on every render without
-// taking the keyboard back from where the user moved it.
+// taking the keyboard back from where the user moved it. id "" is a
+// fault: a program asks for an element, never for nothing focused (which
+// is SPEC's to define, not the program's to ask for).
 func Autofocus(ctx context.Context, id string) {
+	if id == "" {
+		rt.Fault(ctx, `surf.Autofocus: id "" (ask for an element; nothing focused is not the program's to ask for)`)
+		return
+	}
 	if f := rt.From(ctx); f != nil {
 		f.Focus = id
 	}
