@@ -29,6 +29,15 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Focus`: the keyboard coming onto an element or leaving it: what roving focus (tabs, a list) and a field's commit on blur need.
 - `surf.Outside`: a click outside an element, or the surface losing the keyboard (a click on the program's cells or on another surface gives only a blur): how Basecoat's popover, dropdown menu, select and combobox close; the spike had no way to hear it.
 - `surf.Hover`: the pointer onto an element and off it (SPEC §9.4): Basecoat's menus move their highlighted item with the pointer, which CSS's :hover can't do.
+- `surf.Drag`: SPEC §9.1's drags (dragstart, drag, dragend) on an element, which a click can't carry: plx's nav and machines lists reorder by drag, and a slider or a splitter follows the pointer. A Handler like the others, so data-on drag comes from On as click does. One func for the three events, as the host sends them for one gesture; Start and End say which.
+- `surf.Drop`: an element that is only a place to drop on (SPEC §9.1's drop): the host names it as t, and with data-steps says where in it the pointer is (tx, ty), which a reordering list needs for before and after. Its func runs at a drag's release over it, where a folder takes a file; separate from Drag because a target is often not draggable (a list's empty area, a trash), and Drag's func belongs to what is dragged.
+- `surf.DragEvent`: what each of those calls hears: which phase, which element is dragged, which it is over, and the host's detail. A surf type rather than hotty.Event, so a handler gets the dragged element's id (the host's t is the element under the pointer, not the dragged one) and Drop's handler gets what was dragged.
+- `surf.DragEvent.Start`: the press that starts it: where a handler records its origin.
+- `surf.DragEvent.End`: the release, or the host cutting it short: where a list reorders, and a lifted look ends.
+- `surf.DragEvent.ID`: the element dragged, which the host's events don't name after dragstart; Drop's handler needs it to know what landed.
+- `surf.DragEvent.Over`: the element under the pointer (the host's t), "" over none: where it would land.
+- `surf.DragEvent.embedded`: hotty.Drag embedded, so its cell and steps (Col, Row, X, Y, TX, TY and their Has…) read as d.X, d.TY with hotty-go's own docs, as SDKs in other languages name them: ported, not restated in a second set of names.
+- `surf.Secondary`: SPEC §9's secondary press (data-on secondary): a right click, a long press, for a context menu at the pointer, which p-794's kit menu opens on. The cell is where the menu opens, and the element's area for a menu placed by the element instead; both are hotty-go's types, as Platform's and Event's are.
 - `surf.Submit`: a form submitted (SPEC §9 `submit`): Enter in a text field, or its submit button. A text field keeps Enter, which the host turns into a commit and a submit, so without it no app could act on Enter in a field: the L4 trial's todo, "type and press Enter", had no way to.
 - `surf.Autofocus`: moving the keyboard after a frame (a dialog opens, a menu closes back to its trigger); edge-triggered, so a view can ask on every render.
 
@@ -451,6 +460,9 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surftest.Rig`: a surface under test.
 - `surftest.Rig.Click`: clicks an element by selector.
 - `surftest.Rig.Type`: types into a field by selector.
+- `surftest.Rig.Drag`: a test drags one element onto another by selectors, as it clicks: the Drag and Drop handlers hear what a host sends. The test host lays nothing out, so cells and steps are 0 and unsaid.
+- `surftest.Rig.DragStep`: the same released at a step of the target (tx, ty), which a list's before and after depend on; without it a reorder test can only land "on" a row.
+- `surftest.Rig.Secondary`: a test opens a context menu as the user does, by selector.
 - `surftest.Rig.Key`: presses a key where the keyboard is.
 - `surftest.Rig.Update`: a test of background work (a load, a toast's timer) runs what Do queued through the rig, so the check after every act still runs.
 - `surftest.Rig.Find`: what the user would see: the elements matching a selector. The spike's Has is len(Find) > 0, and its ClickID, ClickNth, Press and Check are cut.

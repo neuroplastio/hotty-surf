@@ -128,3 +128,67 @@ func ExampleSubmit() {
 	a := &todo{}
 	_ = surf.New("todo", a.view(), ui.Stylesheet())
 }
+
+// A list the user reorders by drag. Each row is dragged and dropped on,
+// split into halves (data-steps="0 1") so that a release over a row's top
+// half lands before it and over its bottom half after it. Drag's handler
+// keeps where the row would land, for a line the view draws there; Drop's
+// moves the row. Its stylesheet shows the row lifted while it moves
+// (.dragging { opacity: .5 }), and a Key handler moves the focused row for
+// the keyboard, which can't drag. In its .templ file:
+//
+//	for _, r := range a.rows {
+//		<li data-steps="0 1" { surf.On(ctx, "row-"+r.ID,
+//			surf.Drag(a.over), surf.Drop(a.drop), surf.Key(a.rowKey(r.ID)))... }>
+//			{ r.Name }
+//		</li>
+//	}
+func ExampleDrag() {
+	type row struct{ ID, Name string }
+	rows := []row{{"a", "Alpha"}, {"b", "Beta"}, {"c", "Gamma"}}
+	at := func(id string) int {
+		for i, r := range rows {
+			if "row-"+r.ID == id {
+				return i
+			}
+		}
+		return -1
+	}
+	var line string // the row a line shows the drop at, "" for none
+	over := func(d surf.DragEvent) {
+		line = d.Over
+		if d.End {
+			line = ""
+		}
+	}
+	drop := func(d surf.DragEvent) {
+		if d.Over == d.ID {
+			return // released where it began: its click, not a move
+		}
+		from := at(d.ID)
+		r := rows[from]
+		rows = append(rows[:from], rows[from+1:]...)
+		to := at(d.Over)
+		if d.HasTY && d.TY == 1 {
+			to++ // the bottom half: after it
+		}
+		rows = append(rows[:to], append([]row{r}, rows[to:]...)...)
+	}
+	_, _ = surf.Drag(over), surf.Drop(drop)
+	_ = line // the view draws it
+}
+
+// A row that opens a context menu at the pointer, where the user right
+// clicks it (or long-presses it), as well as from a key:
+//
+//	<li { surf.On(ctx, "row-"+r.ID, surf.Click(open),
+//		surf.Secondary(func(at hotty.Cell, _ hotty.Area) { a.menuAt(r.ID, at) }))... }>
+func ExampleSecondary() {
+	var menu struct {
+		open bool
+		at   hotty.Cell
+	}
+	_ = surf.Secondary(func(at hotty.Cell, area hotty.Area) {
+		menu.open, menu.at = true, at // the next render draws the menu at at
+	})
+}

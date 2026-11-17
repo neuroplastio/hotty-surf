@@ -200,12 +200,26 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			c.Attr = withID(c.Attr, id)
 		}
 		t.byID[id] = c
+		if s.lifted && id == s.drag {
+			addClass(c, "dragging")
+		}
 		if isField(c) {
 			t.fields = append(t.fields, id)
 		}
 		s.number(c, id, t, pre || c.Data == "pre" || c.Data == "textarea" || c.Data == "listing")
 		c = next
 	}
+}
+
+// addClass adds class to n's class attribute.
+func addClass(n *html.Node, class string) {
+	for i, a := range n.Attr {
+		if a.Key == "class" {
+			n.Attr[i].Val = a.Val + " " + class
+			return
+		}
+	}
+	n.Attr = append(n.Attr, html.Attribute{Key: "class", Val: class})
 }
 
 // withID is as with the id attribute put first: in place, when the fast

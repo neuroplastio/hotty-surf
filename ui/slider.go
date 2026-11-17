@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
-	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/rt"
 )
@@ -257,15 +256,15 @@ func (v *sliderView) press(x float64) {
 		v.set(k, x)
 	}
 }
-func (v *sliderView) drag(e hotty.Event) {
+func (v *sliderView) drag(d surf.DragEvent) {
 	if v.memo == nil || v.p.Disabled {
 		return
 	}
-	if e.Drag == nil || !e.Drag.HasX {
+	if !d.HasX {
 		return
 	}
-	x := v.at(e.Drag.X)
-	if e.Kind == hotty.EventDragStart {
+	x := v.at(d.X)
+	if d.Start {
 		v.memo.dragged = false
 		v.press(x)
 		return
@@ -283,8 +282,8 @@ func (v *sliderView) drag(e hotty.Event) {
 		v.memo.focus = v.thumbID(k)
 	}
 	v.set(k, x)
-	if e.Kind == hotty.EventDragEnd {
-		v.memo.dragged = e.Target == v.p.ID || strings.HasPrefix(e.Target, v.p.ID+"-notch-") || e.Target == v.thumbID(0) || e.Target == v.thumbID(1)
+	if d.End {
+		v.memo.dragged = d.Over == v.p.ID || strings.HasPrefix(d.Over, v.p.ID+"-notch-") || d.Over == v.thumbID(0) || d.Over == v.thumbID(1)
 	}
 }
 func (v *sliderView) thumbID(k int) string {
@@ -297,14 +296,11 @@ func (v *sliderView) thumbID(k int) string {
 	return v.p.ID + "-end"
 }
 func (v *sliderView) track(ctx context.Context) templ.Attributes {
-	a := surf.On(ctx, v.p.ID)
-	if !v.p.Disabled {
-		a["data-on"] = "drag"
-		a["data-steps"] = strconv.Itoa(v.count())
-		if f := rt.From(ctx); f != nil {
-			f.On[v.p.ID].Drag = v.drag
-		}
+	if v.p.Disabled {
+		return surf.On(ctx, v.p.ID)
 	}
+	a := surf.On(ctx, v.p.ID, surf.Drag(v.drag))
+	a["data-steps"] = strconv.Itoa(v.count())
 	return a
 }
 func (v *sliderView) notch(ctx context.Context, i int) templ.Attributes {

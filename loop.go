@@ -212,7 +212,7 @@ func (s *Surface) event(e hotty.Event) error {
 	// already told the Outside handlers where the click was; the blur is
 	// that click's, not a click off the surface.
 	afterPress, scopedPress := s.pressed, s.modalPressed
-	s.pressed = e.Kind == hotty.EventPress
+	s.pressed = e.Kind == hotty.EventPress && e.Button == 0
 	modal := activeModal(s.frame)
 	inside := modal == "" || contains(s.chain(e.Target), modal)
 	if e.Kind == hotty.EventPress {
@@ -228,26 +228,6 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 	}
 	switch e.Kind {
-	case hotty.EventDragStart:
-		s.dragTarget = ""
-		if h := on[e.Target]; h != nil && h.Drag != nil {
-			s.dragTarget = e.Target
-			h.Drag(e)
-			ran = true
-		}
-	case hotty.EventDrag, hotty.EventDragEnd:
-		target := s.dragTarget
-		if target != "" && modal != "" && s.modalApplies(s.frame, modal, target) && !contains(s.chain(target), modal) {
-			s.dragTarget = ""
-			return nil
-		}
-		if e.Kind == hotty.EventDragEnd {
-			s.dragTarget = ""
-		}
-		if h := on[target]; target != "" && h != nil && h.Drag != nil {
-			h.Drag(e)
-			ran = true
-		}
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
 			h.Click()
@@ -290,7 +270,15 @@ func (s *Surface) event(e hotty.Event) error {
 			ran = true
 		}
 	case hotty.EventPress:
+		// Outside first, as a primary press's precedes its click: a right
+		// click elsewhere closes an open menu, then the Secondary it lands on
+		// may open one there.
 		ran = s.outside(e.Target)
+		if e.Button == 2 {
+			ran = s.secondary(e) || ran
+		}
+	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
+		ran = s.dragged(e)
 	case hotty.EventFocus:
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
@@ -325,6 +313,83 @@ func (s *Surface) event(e hotty.Event) error {
 		return nil
 	}
 	return s.send()
+}
+
+// secondary runs the Secondary handler of a secondary press's element.
+func (s *Surface) secondary(e hotty.Event) bool {
+	h := s.frame.On[e.Target]
+	if h == nil || h.Secondary == nil {
+		return false
+	}
+	var at hotty.Cell
+	var area hotty.Area
+	if e.At != nil {
+		at = *e.At
+	}
+	if e.Area != nil {
+		area = *e.Area
+	}
+	h.Secondary(at, area)
+	return true
+}
+
+// dragged takes a drag's event (SPEC §9.1): the dragged element's Drag
+// hears each one, and at the End, the Drop of the element it is over. The
+// element gets the class dragging at the drag's first move, and loses it
+// at the End; the render after either is parsed again, so number puts it
+// on or leaves it off (the same HTML is otherwise the same tree).
+func (s *Surface) dragged(e hotty.Event) bool {
+	on := s.frame.On
+	ran := false
+	d := DragEvent{Over: e.Target}
+	// An active modal confines the pointer as it does the keyboard: a drag
+	// of an element behind it (one that began before it opened) ends
+	// without a word and isn't lifted (no dragging class), and a Drop
+	// behind it hears nothing.
+	modal := activeModal(s.frame)
+	behind := func(id string) bool {
+		return modal != "" && id != "" && s.modalApplies(s.frame, modal, id) && !contains(s.chain(id), modal)
+	}
+	if e.Drag != nil {
+		d.Drag = *e.Drag
+	}
+	switch e.Kind {
+	case hotty.EventDragStart:
+		s.drag, s.lifted = e.Target, false
+		d.Start = true
+	case hotty.EventDrag:
+		if s.drag != "" && !s.lifted && !behind(s.drag) {
+			s.lifted, s.r.valid, ran = true, false, true
+		}
+	case hotty.EventDragEnd:
+		d.End = true
+		if s.lifted {
+			s.r.valid, ran = false, true
+		}
+	}
+	d.ID = s.drag
+	if e.Kind != hotty.EventDragStart && behind(s.drag) {
+		if d.End {
+			s.drag, s.lifted = "", false
+		}
+		return ran
+	}
+	if h := on[s.drag]; h != nil {
+		if fn, ok := h.Drag.(func(DragEvent)); ok {
+			fn(d)
+			ran = true
+		}
+	}
+	if d.End {
+		if h := on[e.Target]; e.Target != "" && s.drag != "" && h != nil && !behind(e.Target) {
+			if fn, ok := h.Drop.(func(DragEvent)); ok {
+				fn(d)
+				ran = true
+			}
+		}
+		s.drag, s.lifted = "", false
+	}
+	return ran
 }
 
 // chain is the ids of id's element and its ancestors, innermost first, up
