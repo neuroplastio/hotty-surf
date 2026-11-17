@@ -79,3 +79,13 @@ func onoff(b bool) string {
 	}
 	return "off"
 }
+
+// BookAll includes inspector component demonstrations alongside the kit's
+// coverage stories. They are book examples rather than Basecoat coverage.
+func BookAll() []Story {
+	out := append(All(), bookStories...)
+	slices.SortStableFunc(out, func(a, b Story) int { return strings.Compare(a.ID, b.ID) })
+	return out
+}
+
+var bookStories []Story

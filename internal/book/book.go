@@ -111,7 +111,7 @@ type shown struct {
 
 // New is a book of every story, showing the first.
 func New() *App {
-	a := &App{all: stories.All(), startFocus: true}
+	a := &App{all: stories.BookAll(), startFocus: true}
 	var ss []*storybook.Story
 	for _, st := range a.all {
 		ss = append(ss, storybook.Wrap(st.ID, st.Doc, st.View, st.Props))

@@ -35,8 +35,8 @@ func paneText(a *App) string {
 // Every story is in the book, a later one with no step of its own.
 func TestEveryStory(t *testing.T) {
 	a := New()
-	if len(a.all) != len(stories.All()) || len(a.all) == 0 {
-		t.Fatalf("the book has %d stories, package stories %d", len(a.all), len(stories.All()))
+	if len(a.all) != len(stories.BookAll()) || len(a.all) == 0 {
+		t.Fatalf("the book has %d stories, package stories %d", len(a.all), len(stories.BookAll()))
 	}
 	for _, st := range a.all {
 		a.show(st.ID)
@@ -310,5 +310,18 @@ func TestPaneKeysOnlyItsOwn(t *testing.T) {
 	}
 	if strings.Contains(paneText(a), "[x]") {
 		t.Fatal("space reached the pane without the keyboard")
+	}
+}
+
+func TestCodeStoryPropsChangePreview(t *testing.T) {
+	a := New()
+	a.show("code/go")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	if !a.model.Sel.Set("First", "120") {
+		t.Fatal("could not change the first line number")
+	}
+	r.Update()
+	if got := a.storyHTML(); !strings.Contains(got, "120") {
+		t.Fatalf("code preview did not use the edited line number: %s", got)
 	}
 }
