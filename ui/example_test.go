@@ -3,8 +3,10 @@ package ui_test
 import (
 	"context"
 	"fmt"
-	"github.com/a-h/templ"
 	"io"
+	"time"
+
+	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -16,7 +18,7 @@ import (
 //	@ui.Select(&a.sizeMenu, ui.SelectProps{ID: "size", Items: sizes,
 //		Value: a.size, OnChange: a.setSize})
 //	@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(a.save))}) { Save }
-//	@ui.Toaster(&a.toasts)
+//	@ui.Toaster(&a.toasts, ui.ToasterProps{})
 func Example() {
 	type app struct {
 		size     string
@@ -183,9 +185,29 @@ func ExampleRangeSlider() {
 	})
 }
 
+// An app that owns its toasts' lives: an ID to change and remove one,
+// a bar it runs, and the focus its own keys move.
+func ExampleToasterState_Remove() {
+	var st ui.ToasterState
+	done := time.Now().Add(8 * time.Second)
+	st.Show(ui.Toast{
+		ID: "build", Title: "Building", Duration: -1, Countdown: done,
+		OnClick: func() { /* open the build's log */ },
+		OnClose: func() { st.Remove("build") },
+	})
+	// The app's keys reach the toast: it stands still, its first
+	// button ringed, its bar still.
+	st.Show(ui.Toast{
+		ID: "build", Title: "Building", Duration: -1, Focused: true,
+		Countdown: done,
+	})
+	st.Remove("build")
+}
+
 func ExampleToastAction() {
-	_ = ui.Toast{Title: "Deleted", Action: &ui.ToastAction{
-		Label: "Undo", OnSelect: func() {},
+	_ = ui.Toast{Title: "Deleted", Actions: []ui.ToastAction{
+		{Label: "Undo", OnSelect: func() {}},
+		{Label: "Keep", Variant: ui.Outline},
 	}}
 }
 
