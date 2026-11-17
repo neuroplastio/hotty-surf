@@ -569,3 +569,13 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.EventLogProps.OnClear`: K2 exception: the app owns the log and supplies the optional Clear action.
 - `ui.TabsProps.Line`: K2(a): selects the line data-variant used by Basecoat CSS.
 - `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.
+
+## L5: what has the keyboard, and lending it (plx's G-keys-decl, G-lend)
+
+- `surf.Surface.Focused`: plx routes its own keys by whether the host's keyboard is in the surface, and gives back the keyboard an autofocused element took while plx held it. A plx-side surf.Focus handler misses Autofocus, which no host reports; only the surface knows it.
+- `surf.Surface.Chars`: plx's bindings of printable keys (a, /, ?) must not run while a field types them or a select picks by them; the host keeps such a key for a field and Key never hears it, so plx has to ask before routing. It reads the last document, which only the surface holds.
+- `surf.Chars`: the three answers, as v0.6.3's cells.Chars had them, so plx's routing ports as it is.
+- `surf.CharsBound`: nothing focused takes characters: the program's bindings get them.
+- `surf.CharsPick`: a native select picks the next option by the character (the kit's keydefault, a host's select).
+- `surf.CharsText`: a text field types it (SPEC §10.2).
+- `surf.Surface.Blur`: the mirror of Focus. plx lends the host's keyboard to its own menu, palette and prompt; a=blur alone leaves the surface's focused set (the host doesn't echo a program's blur), so a later Focus sends nothing and Key handlers hear keys as if the field were focused. Only the surface can take the move as the host's blur (Focus(false), Outside) and keep the element for Focus.

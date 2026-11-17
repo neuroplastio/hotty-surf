@@ -164,6 +164,53 @@ func (s *Surface) Focus() (focused bool, err error) {
 	return s.takeFocus()
 }
 
+// Blur takes the keyboard from the surface, as the program's own keys
+// take the host's keyboard (a menu, a prompt) or its focus moves off the
+// surface: it sends the host a=blur (SPEC §10.1) and takes the move as a
+// blur itself, since the host sends no event for a blur the program asks
+// for. Focus handlers hear the element lose the keyboard, Outside handlers
+// run (an open select or popover closes), and the element is kept: a
+// later Focus gives it back. blurred says whether the surface had the
+// keyboard; with nothing focused nothing is sent. In cells the program
+// takes the Screen's keyboard instead (cells.Screen.Focus(false)), which
+// the surface hears as the same blur. It runs on the driver's goroutine,
+// as Event does.
+func (s *Surface) Blur() (blurred bool, err error) {
+	return s.blur()
+}
+
+// Focused is the id of the element that has the keyboard as the surface
+// knows it: the last focus the host reported, a Focus the program gave,
+// or the element a render's Autofocus asked for; "" for none. A blur,
+// the host's or Blur, clears it.
+func (s *Surface) Focused() string {
+	return s.focused
+}
+
+// Chars is what the focused element does with a key that types a
+// character ("a", "shift+a", "1", ">"): whether the host keeps such a key
+// for it, ahead of the program's bindings. It reads the last document the
+// surface sent; with nothing focused it is CharsBound.
+func (s *Surface) Chars() Chars {
+	return charsOf(s.byID[s.focused])
+}
+
+// Chars is what a focused element does with a key that types a character.
+type Chars uint8
+
+const (
+	// CharsBound is an element that takes no characters, or none focused:
+	// such a key goes to the program's bindings, as any key does.
+	CharsBound Chars = iota
+	// CharsPick is a native select, which picks the next option whose
+	// label starts with the character.
+	CharsPick
+	// CharsText is a text field (an input that edits text, a textarea),
+	// which types it (SPEC §10.2): the host keeps the key for it, and Key
+	// never hears it.
+	CharsText
+)
+
 // Key offers the surface a key while it has the keyboard (a key the host
 // passed the program because no field in the surface took it, SPEC §10.1),
 // named as hotty names keys ("enter", "arrow_down", "ctrl+s"). The [Key]

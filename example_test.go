@@ -192,3 +192,27 @@ func ExampleSecondary() {
 		menu.open, menu.at = true, at // the next render draws the menu at at
 	})
 }
+
+// A program whose own keys sometimes need the keyboard (a menu, a prompt)
+// lends it with Blur and gives it back with Focus. Between the two, a key
+// that types a character goes to the program's bindings only when the
+// focused element wouldn't have typed or picked by it.
+func ExampleSurface_Blur() {
+	s := surf.New("form", templ.Raw(`<input id="name">`), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		return
+	}
+	s.Event(hotty.Event{Surface: "form", Kind: hotty.EventFocus, Target: "name"})
+	fmt.Println(s.Focused(), s.Chars() == surf.CharsText)
+
+	s.Blur() // the program's menu opens
+	fmt.Printf("%q\n", s.Focused())
+
+	s.Focus() // the menu closed: the field has the keyboard again
+	fmt.Println(s.Focused())
+	// Output:
+	// name true
+	// ""
+	// name
+}

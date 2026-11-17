@@ -1722,3 +1722,48 @@ above; Secondary's doc says at and area are zero when the host doesn't say
 them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
+
+## L5: Focused, Chars and Blur (plx's G-keys-decl and G-lend)
+
+plx's integration list (l4c) has two gaps in the root package:
+
+- **G-keys-decl.** plx routes a key that types a character to its own
+  bindings only when the focused element wouldn't type or pick by it,
+  and needs to know which element is focused (an element autofocused
+  while plx held the keyboard gives it back). v0.6.3's surfrun had
+  `Keys() ([]KeyUse, Chars)`; v0.7 has neither.
+- **G-lend.** plx lends the host's keyboard to its own menus with a=blur.
+  The host doesn't report a program's blur, so the surface kept
+  `focused`, and a later `Focus()` sent nothing.
+
+The pack: `Surface.Focused() string`, `Surface.Chars() Chars` with
+`CharsBound`, `CharsPick`, `CharsText`, and `Surface.Blur() (bool, error)`,
+the mirror of `Focus`. Blur sends a=blur and runs the blur itself, as the
+host's would: Focus handlers hear the loss, Outside runs for every element
+(a press still down doesn't spare its own), and the element stays the one
+Focus gives back.
+
+**Cells.** No Screen method: a cells.Screen feeds its focus to the surface
+as events, so `Surface.Focused` and `Chars` answer the same in cells. To
+lend the keyboard there, the program calls `cells.Screen.Focus(false)`,
+which the surface hears as the same blur (Blur's doc says so). The cells
+builder (p-800) is told.
+
+**What Chars says.** From the last document sent and the focused element:
+a text input or textarea types (CharsText); a native single select picks
+(CharsPick); anything else, a disabled element, or nothing focused is
+CharsBound. The kit's own Select and DropdownMenu don't pick by
+characters in v0.7, so an open one is CharsBound: printable keys reach the
+program, which is what their key handlers do with them now. Combobox and
+Command type into their inputs (CharsText).
+
+**Not in this pack.** The bound keys with their labels (v0.6.3's
+`[]KeyUse`) are `ui.Bindings` and KeyScope labels' (G-keyscope-labels,
+p-794's). Chars covers the other half.
+
+Questions for the review:
+
+1. `Focused() string` alone, or `(id, Chars)` as the gap row suggested? Two
+   methods keep each answer readable at its call site.
+2. A readonly text field is CharsText (the host keeps the key, which moves
+   nothing): right, or CharsBound?

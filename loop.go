@@ -645,6 +645,45 @@ func (s *Surface) takeFocus() (bool, error) {
 	return true, s.event(hotty.Event{Kind: hotty.EventFocus, Surface: s.name, Target: id})
 }
 
+// blur is Blur: a=blur, then the blur the host won't report. The press
+// that may have come before was the user's, not this blur's, so Outside
+// runs for every element.
+func (s *Surface) blur() (bool, error) {
+	if s.focused == "" {
+		return false, nil
+	}
+	if s.out != nil {
+		if err := s.write([]string{hotty.Blur(s.name)}); err != nil {
+			return false, err
+		}
+	}
+	s.pressed = false
+	return true, s.event(hotty.Event{Kind: hotty.EventBlur, Surface: s.name})
+}
+
+// charsOf is what n, focused, does with a character key.
+func charsOf(n *html.Node) Chars {
+	if n == nil || hasAttr(n, "disabled") {
+		return CharsBound
+	}
+	switch n.Data {
+	case "textarea":
+		return CharsText
+	case "select":
+		if hasAttr(n, "multiple") {
+			return CharsBound
+		}
+		return CharsPick
+	case "input":
+		switch strings.ToLower(attr(n, "type")) {
+		case "hidden", "checkbox", "radio", "file", "submit", "image", "reset", "button", "color", "range":
+			return CharsBound
+		}
+		return CharsText
+	}
+	return CharsBound
+}
+
 // firstFocusable is the id of the first element under n, in tree order,
 // that a click gives the keyboard to and that is drawn; "" if none is.
 func firstFocusable(n *html.Node) string {
