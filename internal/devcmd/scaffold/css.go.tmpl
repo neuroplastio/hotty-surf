@@ -5,6 +5,7 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"github.com/a-h/templ"
 )
 
 //go:embed style/app.css
@@ -12,12 +13,13 @@ var appCSS string
 
 // CSS is the app's own stylesheet (style/app.css), which hotty-surf run
 // swaps in as the file is saved. The kit's is linked, not carried
-// (ui.Sheet): sent once rather than in every document.
+// (newSurface): sent once rather than in every document.
 var CSS = appCSS
 
-// Surface is the app's surface: Page styled by the kit's sheet, then CSS.
-func Surface(a *App) *surf.Surface {
-	s := surf.New("APPNAME", Page(a), CSS)
+// newSurface is one of the app's surfaces: view, styled by the kit's sheet,
+// linked rather than carried (ui.Sheet), then by CSS.
+func newSurface(name string, view templ.Component) *surf.Surface {
+	s := surf.New(name, view, CSS)
 	s.Link(ui.Sheet())
 	return s
 }

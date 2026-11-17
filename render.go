@@ -258,8 +258,18 @@ const cssID = "hotty-css"
 func (s *Surface) documentOf(root *html.Node) (string, error) {
 	var b strings.Builder
 	for _, sh := range s.sheets {
-		l := &html.Node{Type: html.ElementNode, Data: "link", DataAtom: atom.Link, Attr: []html.Attribute{{Key: "rel", Val: "stylesheet"}, {Key: "href", Val: "cid:" + sh.ID}}}
-		if err := html.Render(&b, l); err != nil {
+		var n *html.Node
+		if limit, _ := s.overLimit(sh); limit != "" {
+			// No room for it as a resource: the document carries it.
+			if strings.Contains(strings.ToLower(sh.CSS), "</style") {
+				return "", fmt.Errorf("surf: the sheet %q holds </style, which would end it early", sh.ID)
+			}
+			n = &html.Node{Type: html.ElementNode, Data: "style", DataAtom: atom.Style}
+			n.AppendChild(&html.Node{Type: html.TextNode, Data: sh.CSS})
+		} else {
+			n = &html.Node{Type: html.ElementNode, Data: "link", DataAtom: atom.Link, Attr: []html.Attribute{{Key: "rel", Val: "stylesheet"}, {Key: "href", Val: "cid:" + sh.ID}}}
+		}
+		if err := html.Render(&b, n); err != nil {
 			return "", err
 		}
 	}

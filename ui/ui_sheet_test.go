@@ -2,6 +2,7 @@ package ui_test
 
 import (
 	"fmt"
+	"hash/fnv"
 	"io"
 	"regexp"
 	"strings"
@@ -20,6 +21,11 @@ func TestSheet(t *testing.T) {
 	}
 	if sh.CSS != ui.Stylesheet() || ui.Sheet() != sh {
 		t.Fatal("Sheet isn't Stylesheet, or not the same each call")
+	}
+	h := fnv.New32a()
+	h.Write([]byte(sh.CSS))
+	if want := fmt.Sprintf("hotty-surf-kit-%08x", h.Sum32()); sh.ID != want {
+		t.Fatalf("id %q, want FNV-1a's %q", sh.ID, want)
 	}
 }
 

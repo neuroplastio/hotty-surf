@@ -1,9 +1,7 @@
 package ui
 
 import (
-	"crypto/sha256"
 	_ "embed"
-	"encoding/hex"
 	"sync"
 
 	"github.com/a-h/templ"
@@ -46,7 +44,8 @@ const (
 // defines its other classes in its own CSS, after this one (style/app.css
 // in an app hotty-surf new made), and lint's class rule names those it
 // doesn't. A surface with no CSS of its own (a dev tool's error surface, a
-// host's dialog) uses it as it is.
+// host's dialog) uses it as it is. A surface links the kit rather than
+// carry it: Surface.Link(Sheet()).
 func Stylesheet() string {
 	return kitCSS + navCSS + controlsCSS + sliderCSS
 }
@@ -54,8 +53,8 @@ func Stylesheet() string {
 // Sheet is Stylesheet as a resource that documents link rather than carry
 // (surf.Surface.Link): sent once on a connection rather than in every
 // document of every surface. Its ID is "hotty-surf-kit-" and 8 hex digits
-// of the sheet's SHA-256, so a kit with other CSS has another ID. An app
-// links it, and New takes only its own CSS:
+// of the sheet's FNV-1a hash, so a kit with other CSS has another ID. An
+// app links it, and New takes only its own CSS:
 //
 //	s := surf.New("hello", Page(a), appCSS)
 //	s.Link(ui.Sheet())
@@ -65,8 +64,17 @@ func Sheet() surf.Sheet {
 
 var kitSheet = sync.OnceValue(func() surf.Sheet {
 	css := Stylesheet()
-	sum := sha256.Sum256([]byte(css))
-	return surf.Sheet{ID: "hotty-surf-kit-" + hex.EncodeToString(sum[:4]), CSS: css}
+	// FNV-1a, 32 bits: a name that changes with the CSS, not a secret.
+	h := uint32(2166136261)
+	for i := 0; i < len(css); i++ {
+		h = (h ^ uint32(css[i])) * 16777619
+	}
+	const digits = "0123456789abcdef"
+	id := []byte("hotty-surf-kit-00000000")
+	for i := len(id) - 1; h != 0; i, h = i-1, h>>4 {
+		id[i] = digits[h&15]
+	}
+	return surf.Sheet{ID: string(id), CSS: css}
 })
 
 // kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind

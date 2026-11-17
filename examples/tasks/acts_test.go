@@ -16,7 +16,6 @@ import (
 
 	"golang.org/x/sys/unix"
 	"neuroplast.io/hotty-go"
-	"neuroplast.io/hotty-surf"
 )
 
 // sample is one act's cost, in the shape the spike's benchmark
@@ -175,7 +174,7 @@ func acts(t *testing.T, dir string, n, rounds, run int) {
 	must(err)
 	a := NewApp(tasks)
 	end()
-	s := surf.New(surface, Page(a), CSS)
+	s := newSurface(surface, Page(a))
 	s.Attach(io.Writer(out), hotty.Caps{})
 	begin("mount")
 	doc, err := s.Document()

@@ -8,7 +8,7 @@ import (
 
 func TestWave(t *testing.T) {
 	a := NewApp()
-	r := surftest.Start(t, Surface(a))
+	r := surftest.Start(t, newSurface("hello", Page(a)))
 	r.Type("#name", "Ada")
 	r.Click("button:text(Wave)")
 	r.One("p:text(Waved 1 times.)")

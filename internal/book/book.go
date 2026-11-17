@@ -48,8 +48,9 @@ import (
 //go:embed book.css
 var bookCSS string
 
-// CSS is the book's stylesheet: the kit's, and the book's own.
-var CSS = ui.Stylesheet() + bookCSS + bookcode.Stylesheet()
+// CSS is the book's own stylesheet and the code blocks'. The kit's is
+// linked, not carried (newSurface).
+var CSS = bookCSS + bookcode.Stylesheet()
 
 // The cells pane's size. A story is at most 28rem wide (max-w-md), which
 // cells takes as 56 columns.
@@ -148,7 +149,7 @@ func New() *App {
 // Main shows the book until ctx is done or the user quits.
 func Main(ctx context.Context) error {
 	a := New()
-	s := surf.New("book", View(a), CSS)
+	s := newSurface("book", View(a))
 	reload.Keep(a.Save, a.Restore)
 	return run.App(ctx, s)
 }
@@ -235,7 +236,8 @@ func (sh *shown) start() {
 	if sh.pane != nil {
 		return
 	}
-	sh.pane = surf.New("book-pane", sh.view, ui.Stylesheet())
+	sh.pane = surf.New("book-pane", sh.view, "")
+	sh.pane.Link(ui.Sheet())
 	sh.scr = cells.New(paneCols, paneRows, func(e hotty.Event) {
 		switch e.Kind {
 		case hotty.EventFocus:
@@ -720,4 +722,12 @@ func itoa(i int) string {
 		b = append([]byte{byte('0' + i%10)}, b...)
 	}
 	return string(b)
+}
+
+// newSurface is one of the book's surfaces: view, styled by the kit's sheet,
+// linked rather than carried (ui.Sheet), then by CSS.
+func newSurface(name string, view templ.Component) *surf.Surface {
+	s := surf.New(name, view, CSS)
+	s.Link(ui.Sheet())
+	return s
 }

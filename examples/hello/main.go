@@ -13,7 +13,7 @@ import (
 
 func main() {
 	a := NewApp()
-	s := Surface(a)
+	s := newSurface("hello", Page(a))
 	reload.Keep(a.Save, a.Restore)
 	if err := run.App(context.Background(), s); err != nil {
 		fmt.Fprintln(os.Stderr, "hello:", err)

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/a-h/templ"
+	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
 
@@ -33,5 +35,14 @@ func (a *App) file() *File { return &a.Files[a.Sel] }
 func (a *App) SetNote(v string) { a.file().Note = v }
 func (a *App) Star()            { a.file().Stars++ }
 
-// CSS is the surface's stylesheet: the kit's.
-var CSS = ui.Stylesheet()
+// CSS is the surface's own stylesheet: none. The kit's is linked, not
+// carried (newSurface): sent once rather than in every document.
+var CSS = ""
+
+// newSurface is one of the app's surfaces: view, styled by the kit's sheet,
+// linked rather than carried (ui.Sheet), then by CSS.
+func newSurface(name string, view templ.Component) *surf.Surface {
+	s := surf.New(name, view, CSS)
+	s.Link(ui.Sheet())
+	return s
+}

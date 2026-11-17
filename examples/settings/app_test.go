@@ -3,14 +3,13 @@ package main
 import (
 	"testing"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
 // TestSettings fills the form by keyboard: two wrong fields keep it from
 // saving, fixed it saves, and Reset puts back what it saved.
 func TestSettings(t *testing.T) {
-	r := surftest.Start(t, surf.New("settings", Page(NewApp()), CSS), surftest.Size(100, 40))
+	r := surftest.Start(t, newSurface("settings", Page(NewApp())), surftest.Size(100, 40))
 	r.One("p:text(All changes saved)")
 
 	// Empty the name, and cut the email's domain short.

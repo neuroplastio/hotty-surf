@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/net/html"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/surftest"
 )
@@ -52,7 +51,7 @@ func TestEveryStory(t *testing.T) {
 // The list by keyboard, in cells (a terminal that is no host).
 func TestListByKeyboard(t *testing.T) {
 	a := New()
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	visible := a.model.Visible()
 	if len(visible) < 2 || a.ID != visible[0].ID() {
 		t.Fatalf("the book opened on %q, want the first in its list", a.ID)
@@ -74,7 +73,7 @@ func TestListByKeyboard(t *testing.T) {
 
 func TestFilterFromLaunch(t *testing.T) {
 	a := New()
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Key("/")
 	for _, k := range strings.Split("block", "") {
 		r.Key(k)
@@ -87,7 +86,7 @@ func TestFilterFromLaunch(t *testing.T) {
 func TestBookInspection(t *testing.T) {
 	a := New()
 	a.show("button/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	if events := a.model.Events(a.model.Sel); len(events) == 0 || !strings.Contains(events[0].Text, "save") {
 		t.Fatalf("click event not recorded: %v", events)
@@ -112,7 +111,7 @@ func TestBookInspection(t *testing.T) {
 func TestRenditionsShareStoryState(t *testing.T) {
 	a := New()
 	a.show("button/default")
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	r.Key("r")
 	if !a.Cells || !strings.Contains(paneText(a), "clicks: 1") {
@@ -234,7 +233,7 @@ func TestNoControlsNoTab(t *testing.T) {
 	a := New()
 	a.show("chart/bar")
 	a.setRendition(true)
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if a.cur.controls {
 		t.Fatal("chart/bar has controls")
 	}
@@ -254,7 +253,7 @@ func TestNoControlsNoTab(t *testing.T) {
 // as it shows, and Escape there closes the dialog.
 func TestListKeepsTheKeyboard(t *testing.T) {
 	a := New()
-	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("button[aria-current=true]") // the list takes the keyboard
 	a.show("dialog/default")
 	r.Update()

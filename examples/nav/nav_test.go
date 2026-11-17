@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/net/html"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -22,7 +21,7 @@ type rig struct {
 func start(t *testing.T) *rig {
 	t.Helper()
 	a := NewApp(Mock())
-	return &rig{surftest.Start(t, surf.New(surface, Page(a), CSS), surftest.Size(40, 40)), t, a}
+	return &rig{surftest.Start(t, newSurface(surface, Page(a)), surftest.Size(40, 40)), t, a}
 }
 
 // Walk calls f on every element of the host's document, in order.

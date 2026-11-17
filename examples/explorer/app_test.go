@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"golang.org/x/net/html"
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -55,7 +54,7 @@ func menu(t *testing.T, a *App, r *surftest.Rig, name string) string {
 
 func TestExplore(t *testing.T) {
 	a := NewApp()
-	r := surftest.Start(t, surf.New("explorer", Page(a), CSS), surftest.Size(100, 30))
+	r := surftest.Start(t, newSurface("explorer", Page(a)), surftest.Size(100, 30))
 	root := []string{"cmd", "docs", "internal", "themes", "go.mod", "go.sum", "LICENSE", "Makefile", "README.md"}
 	want(t, r, root...)
 

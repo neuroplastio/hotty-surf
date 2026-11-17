@@ -69,3 +69,22 @@ func TestLinkKeepsOwnStyle(t *testing.T) {
 		t.Fatalf("an unlinked surface without CSS has %q", doc)
 	}
 }
+
+// Each Link replaces the sheets an earlier one gave; Link() links none.
+func TestLinkReplaces(t *testing.T) {
+	s := surf.New("t", templ.Raw(`<p>hi</p>`), "")
+	s.Link(surf.Sheet{ID: "a"}, surf.Sheet{ID: "b"})
+	s.Link(surf.Sheet{ID: "c"})
+	s.Attach(&bytes.Buffer{}, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(doc, "cid:a") || strings.Contains(doc, "cid:b") || !strings.Contains(doc, "cid:c") {
+		t.Fatalf("document %q links other than c", doc)
+	}
+	s.Link()
+	if doc, _ = s.Document(); strings.Contains(doc, "<link") || strings.Contains(doc, "<style") {
+		t.Fatalf("after Link(): %q", doc)
+	}
+}

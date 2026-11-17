@@ -3,14 +3,13 @@ package main
 import (
 	"testing"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
 // TestRange switches the range as a user would, by a click and by the
 // arrows, and checks that a number, both charts and the table follow.
 func TestRange(t *testing.T) {
-	r := surftest.Start(t, surf.New("dashboard", Page(NewApp()), CSS), surftest.Size(160, 48))
+	r := surftest.Start(t, newSurface("dashboard", Page(NewApp())), surftest.Size(160, 48))
 
 	// 7 days: the week's revenue, a bar per channel, no plate set in the top five.
 	r.One("h2:text($12,933)")

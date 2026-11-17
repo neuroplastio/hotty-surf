@@ -77,6 +77,7 @@ type Surface struct {
 	cssDue       bool            // the stylesheet changed (a dev reload): sent at the next Update
 	sheets       []Sheet         // the stylesheets documents link (Link)
 	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
+	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
 	sending      bool
 	deferred     []hotty.Event
 
@@ -124,7 +125,7 @@ func (s *Surface) Name() string {
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
-	s.sheetSent = nil
+	s.sheetSent, s.limits = nil, caps.Limits
 }
 
 // Sheet is a stylesheet that documents link as a resource (SPEC §7.1)
@@ -132,13 +133,14 @@ func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 // sent there after, and every surface that links it. A kit's sheet is
 // ui.Sheet().
 type Sheet struct {
-	// ID names the resource: the document links cid:<ID>. It changes
-	// whenever CSS does (a content hash), so a host holding an older sheet
-	// under another ID is never asked to style with it.
+	// ID names the resource: documents link cid:<ID>. Give the sheet a
+	// new ID whenever its CSS changes (a content hash, as ui.Sheet's is),
+	// so a host that kept an older sheet never styles a document with it.
 	ID string
 	// CSS is the sheet. Empty, the program sends the resource itself
-	// (hotty.Res(ID, "text/css", …)): a program with one connection for
-	// many surfaces sends it once for all of them.
+	// (hotty.Res(ID, "text/css", …)), before the first document that links
+	// it: a program with one connection for many surfaces sends it once
+	// for all of them.
 	CSS string
 }
 
@@ -147,15 +149,21 @@ type Sheet struct {
 // href="cid:ID">. A sheet with CSS is sent on the writer Attach gave, as
 // a=res, once per Attach: before the next document Document returns, so a
 // program that sends that document on the same writer has the sheet
-// there first. A sheet without CSS is the program's to send. Link before
-// the first Document; a later Link takes effect at the next Document,
-// whose links change.
+// there first; after the host drops its resources, Attach again. When the
+// host's caps leave no room for it (limits.message or limits.resources
+// smaller than the CSS), the surface writes the CSS into the document as
+// it does New's css, and records a fault. A sheet without CSS is the
+// program's to send. Each Link replaces the sheets an earlier one gave;
+// Link() with none links none. Link before the first Document; a later
+// Link takes effect at the next Document.
 func (s *Surface) Link(sheets ...Sheet) {
 	s.sheets = append([]Sheet(nil), sheets...)
 }
 
 // Document renders the view and returns the whole document, its stylesheet
-// and its body, for the program to send as the surface's document. The
+// and its body, for the program to send as the surface's document. When
+// the surface links a sheet with CSS it hasn't sent since Attach (Link),
+// Document first writes it (a=res) to Attach's writer. The
 // deltas that follow are written against it, so the program sends every
 // Document it takes. It takes one again whenever the host may not hold the
 // document as it was sent: it lost it, or it refused a delta (an error reply

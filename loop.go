@@ -2,6 +2,7 @@ package surf
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"slices"
 	"strings"
@@ -658,6 +659,10 @@ func (s *Surface) sendSheets() error {
 		if sh.CSS == "" || s.sheetSent[sh.ID] {
 			continue
 		}
+		if limit, n := s.overLimit(sh); limit != "" {
+			s.fault(fmt.Sprintf("surf: the sheet %q (%d bytes) is past the host's limits.%s (%d): the document carries it", sh.ID, len(sh.CSS), limit, n))
+			continue
+		}
 		cmds = append(cmds, hotty.Res(sh.ID, "text/css", []byte(sh.CSS)))
 	}
 	if err := s.write(cmds); err != nil {
@@ -672,6 +677,20 @@ func (s *Surface) sendSheets() error {
 		}
 	}
 	return nil
+}
+
+// overLimit names the host's limit a sheet with CSS is past, and the
+// limit: a resource is one message (SPEC §7.1, §13), within the quota.
+func (s *Surface) overLimit(sh Sheet) (string, int) {
+	if sh.CSS == "" {
+		return "", 0
+	}
+	for _, k := range []string{"message", "resources"} {
+		if n := s.limits[k]; n > 0 && len(sh.CSS) > n {
+			return k, n
+		}
+	}
+	return "", 0
 }
 
 // firstFocusable is the id of the first element under n, in tree order,
