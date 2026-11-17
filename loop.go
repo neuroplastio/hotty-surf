@@ -617,4 +617,3 @@ func firstFocusable(n *html.Node) string {
 	}
 	return ""
 }
-
