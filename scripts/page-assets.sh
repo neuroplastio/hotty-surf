@@ -1,5 +1,5 @@
 #!/bin/sh
-# The terminal hotty-surf's page runs an app in (build --wasm, serve):
+# The terminal hotty-surf's page runs an app in (build -wasm, serve):
 # xterm.js, its fit addon and xterm-addon-hotty, as their npm packages
 # ship them, checked against the integrity npm records, into
 # internal/page/assets. Run it to bump a version; the files are committed,

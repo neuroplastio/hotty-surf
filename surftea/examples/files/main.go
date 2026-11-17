@@ -104,9 +104,7 @@ func (m *model) View() tea.View {
 	v := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, left, m.files.Cells()))
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
-	if col, row, ok := m.files.Cursor(); ok {
-		v.Cursor = tea.NewCursor(listW+col, row)
-	}
+	v.Cursor = m.files.Cursor() // a field's caret in cells, nil otherwise
 	return v
 }
 

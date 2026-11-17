@@ -57,15 +57,18 @@ type Surface struct {
 	// Where the keyboard and the pointer are, as the host said: the
 	// element and the ids of it and its ancestors, which Focus and Hover
 	// handlers are told about as they change.
-	focused  string
-	focusIn  []string
-	hoverIn  []string
-	hoverAt  string // the element under the pointer, as the host last said
-	asked    string // the element the last frame's Autofocus asked for
-	askDue   bool   // a Document's Autofocus, sent at the next Update
-	cssDue   bool   // the stylesheet changed (a dev reload): sent at the next Update
-	sending  bool
-	deferred []hotty.Event
+	focused string
+	// lastFocus is the element that had the keyboard last, which Focus
+	// gives it back to.
+	lastFocus string
+	focusIn   []string
+	hoverIn   []string
+	hoverAt   string // the element under the pointer, as the host last said
+	asked     string // the element the last frame's Autofocus asked for
+	askDue    bool   // a Document's Autofocus, sent at the next Update
+	cssDue    bool   // the stylesheet changed (a dev reload): sent at the next Update
+	sending   bool
+	deferred  []hotty.Event
 
 	r renderer
 }
@@ -134,6 +137,21 @@ func (s *Surface) Document() (string, error) {
 // once that send is done, before the call that wrote returns.
 func (s *Surface) Event(e hotty.Event) error {
 	return s.event(e)
+}
+
+// Focus gives the surface the keyboard, as the program's own focus moves
+// onto it (Tab between panes): it sends the host a=focus for the element
+// that had the keyboard last, while it is in the document, else for the
+// first that takes focus, by its id (SPEC §10.1). The host sends no focus
+// event for focus the program gives, so the surface takes the move as that
+// event itself: its Focus handlers hear it, as they hear a Tab inside the
+// surface, and the keys the host passes on reach that element's Key
+// handlers. It does nothing while the surface has the keyboard, or when
+// nothing in it takes focus. In cells the program gives the Screen the
+// keyboard first (cells.Screen.Focus), which may already have restored
+// the element. It runs on the driver's goroutine, as Event does.
+func (s *Surface) Focus() error {
+	return s.takeFocus()
 }
 
 // Key offers the surface a key while it has the keyboard (a key the host

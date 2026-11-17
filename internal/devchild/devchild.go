@@ -302,10 +302,11 @@ func (c *child) serve() {
 				return
 			}
 		case "doc":
-			if devwire.Skip(c.r) != nil {
+			var of devwire.Doc
+			if of.DecodeMsg(c.r) != nil {
 				return
 			}
-			doc, err := c.document()
+			doc, err := c.document(of.Surface)
 			errText := ""
 			if err != nil {
 				errText = err.Error()
@@ -357,55 +358,39 @@ func (c *child) live() []*surf.Surface {
 // reloader's 3 s.
 var docWait = 2500 * time.Millisecond
 
-// document is the document of the surface that rendered last, as its host
-// has it (reloader.Document). It is read on the surface's driver, or
-// directly when the driver hasn't answered in answerWait and hasn't
-// rendered in goneAfter (the program dropped it, so nothing else reads
-// it). A driver busy rendering is waited for up to docWait.
-func (c *child) document() (devwire.Doc, error) {
+// document is the document of the live surface named name, as it last
+// sent it to its host, read on its driver through Do and never off it: a
+// handover reads a dropped surface directly only because the process exits
+// after it, and this one lives on. A driver busy for docWait is a failure.
+func (c *child) document(name string) (devwire.Doc, error) {
 	var s *surf.Surface
-	var last time.Time
 	for _, x := range c.live() {
-		if t := rt.Peek.Rendered(x); t.After(last) {
-			s, last = x, t
+		if x.Name() == name {
+			s = x
 		}
 	}
 	if s == nil {
-		return devwire.Doc{}, errors.New("reload: no surface has rendered")
+		return devwire.Doc{}, fmt.Errorf("reload: no surface %q", name)
 	}
 	type read struct {
 		html string
 		err  error
 	}
-	var claimed atomic.Bool
-	got := make(chan read, 1)
-	take := func() {
-		if claimed.CompareAndSwap(false, true) {
-			html, err := rt.Peek.Document(s)
-			got <- read{html, err}
+	got := make(chan read, 1) // a read after docWait goes nowhere
+	s.Do(func() {
+		html, err := rt.Peek.Document(s)
+		got <- read{html, err}
+	})
+	t := time.NewTimer(docWait)
+	defer t.Stop()
+	select {
+	case r := <-got:
+		if r.err == nil && r.html == "" {
+			r.err = fmt.Errorf("reload: surface %q has sent no document", name)
 		}
-	}
-	s.Do(take)
-	short := time.NewTicker(answerWait)
-	defer short.Stop()
-	long := time.NewTimer(docWait)
-	defer long.Stop()
-	for {
-		select {
-		case r := <-got:
-			if r.err == nil && r.html == "" {
-				r.err = errors.New("reload: the surface has sent no document")
-			}
-			return devwire.Doc{Surface: s.Name(), HTML: r.html}, r.err
-		case <-short.C:
-			if time.Since(rt.Peek.Rendered(s)) > goneAfter {
-				take()
-			}
-		case <-long.C:
-			if !claimed.Load() {
-				return devwire.Doc{}, fmt.Errorf("reload: surface %s is busy", s.Name())
-			}
-		}
+		return devwire.Doc{Surface: name, HTML: r.html}, r.err
+	case <-t.C:
+		return devwire.Doc{}, fmt.Errorf("reload: surface %q is busy", name)
 	}
 }
 

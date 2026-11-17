@@ -161,16 +161,19 @@ func (r *Reloader) Reload(ctx context.Context) (Report, error) {
 	return r.reload(ctx)
 }
 
-// Document is the whole document an instance shows now, its stylesheet and
-// its view, as the host it draws on has it: what `hotty-surf ctl shot` and
-// `plx plugin dev ctl shot` render. The process of key answers it over its
-// reload wire. Of a process's surfaces, it is the one that rendered last.
+// Document is the whole document of the surface named surface in the
+// process of key, its stylesheet and its view, as the surface last sent it
+// to its host: what `hotty-surf ctl shot` and `plx plugin dev ctl shot`
+// render, at the size they place it at. The process answers over its
+// reload wire, and reads the surface on its driver (through its Do), never
+// off it.
 //
-// It fails when no process of key is serving, when its surfaces have sent
-// no document yet, and when the process doesn't answer before ctx is done
-// or within 3 s (it is busy in a handler, or handing over).
-func (r *Reloader) Document(ctx context.Context, key string) (string, error) {
-	return r.document(ctx, key)
+// It fails when no process of key is serving, when the process has no
+// surface of that name or the surface has sent no document yet, and when
+// the driver doesn't answer before ctx is done or within 3 s (it is busy in
+// a handler, or the process is handing over).
+func (r *Reloader) Document(ctx context.Context, key, surface string) (string, error) {
+	return r.document(ctx, key, surface)
 }
 
 // A Report is the outcome of a save.

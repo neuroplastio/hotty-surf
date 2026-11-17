@@ -8,7 +8,9 @@
 // app as its files are saved: each build's app dials the reloader back
 // over a WebSocket (dev/wire) as the instance page:<key>, and dev/events
 // says when a new build is up (restart) and what the last save did
-// (report).
+// (report). The page tells serve where it is (dev/page: its key, the app's
+// surface and the terminal's size, for ctl shot) and that it goes
+// (dev/leave), as JSON and text: the site's own data (gov P-3).
 
 import { Terminal } from "./xterm.mjs";
 import { FitAddon } from "./addon-fit.mjs";
@@ -34,8 +36,22 @@ term.focus();
 term.write("\x1b[?1049h\x1b[?25l");
 
 const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+const dev = document.documentElement.hasAttribute("data-dev");
+// surface is the app's surface, as its first a=doc or a=place names it
+// (serve's ctl shot asks the app for it by name).
+let surface = "";
+const named = /\x1b\]7279;a=(?:doc|place):(?:[^;\x1b]*:)?s=([^:;\x1b]+)/;
 const glue = {
-  write: (bytes) => term.write(bytes),
+  write(bytes) {
+    if (dev && !surface) {
+      const m = named.exec(new TextDecoder().decode(bytes.subarray(0, 256)));
+      if (m) {
+        surface = m[1];
+        where();
+      }
+    }
+    term.write(bytes);
+  },
   cols: term.cols,
   rows: term.rows,
   caps: { mod: mac ? "super" : "ctrl" },
@@ -52,9 +68,15 @@ term.onResize(({ cols, rows }) => {
   glue.cols = cols;
   glue.rows = rows;
   if (alive.ok) glue.resize?.(cols, rows);
+  where();
 });
 
-const dev = document.documentElement.hasAttribute("data-dev");
+// where tells serve where the page is.
+function where() {
+  if (!dev || !surface) return;
+  const body = JSON.stringify({ key: glue.dev.key, surface, cols: term.cols, rows: term.rows });
+  fetch("dev/page", { method: "POST", body, keepalive: true }).catch(() => {});
+}
 let running = 0; // the build whose app runs, 0 for none
 let exits = 0; // how many apps exited
 
@@ -80,12 +102,9 @@ async function start(build) {
 if (!dev) {
   start(1).catch(fail);
 } else {
-  // The instance's key, kept across a reload of the page.
-  let key = sessionStorage.getItem("hotty-surf-key");
-  if (!key) {
-    key = "page:" + Math.random().toString(36).slice(2, 10);
-    sessionStorage.setItem("hotty-surf-key", key);
-  }
+  // The instance's key, the page's own: a reload of the page is a leave
+  // and a new page, so a late leave can't end the next page's wire.
+  const key = "page:" + Math.random().toString(36).slice(2, 10);
   // The app's end of the reload wire: run/dev_js.go opens it, and gets
   // the bytes the reloader sends through onData.
   glue.dev = {
@@ -94,6 +113,7 @@ if (!dev) {
     open(onData, onClose) {
       const me = alive;
       const url = new URL("dev/wire", location.href);
+      url.searchParams.set("key", key);
       url.protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(url);
       ws.binaryType = "arraybuffer";
@@ -116,9 +136,13 @@ if (!dev) {
     report.textContent = e.data;
     report.style.display = e.data ? "block" : "none";
   });
-  // A page that goes away says so, as ctrl+q would: the reloader doesn't
-  // wait for it to come back.
-  addEventListener("pagehide", () => glue.quit?.());
+  // A page that goes away (closed, reloaded) says so: a leave, not a
+  // crash, and the reloader doesn't wait for it to come back. Its wire is
+  // closing, so serve says it on the wire for it.
+  addEventListener("pagehide", () => {
+    navigator.sendBeacon("dev/leave", key);
+    glue.quit?.();
+  });
 }
 
 function fail(err) {

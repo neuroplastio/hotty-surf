@@ -157,7 +157,16 @@ msgpack-RPC (gov P-3). A save takes one of three tiers:
   its surfaces' snapshots, and the new process adopts them, so its first
   frame is a delta.
 
-Outside a `surfdev` build, none of this is linked.
+Outside a `surfdev` build, none of this is linked (`make tinygo`
+checks the release wasm).
+
+Where the terminal is no hotty host, `hotty-surf run` hosts the app's
+surface on a `cells.Screen` of its own, which outlives builds, so a Go
+reload is a delta there too. `hotty-surf serve` builds for js/wasm with
+Go and serves `internal/page` (xterm.js and xterm-addon-hotty): each
+page's app is an instance `page:<n>`, its reload wire a WebSocket
+(`run/dev_js.go`). `hotty-surf shot` runs the app with no terminal and
+asks the reloader for its document (`Reloader.Document`).
 
 ## The kit
 

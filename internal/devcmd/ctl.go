@@ -4,6 +4,7 @@ package devcmd
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"maps"
@@ -23,7 +24,7 @@ import (
 	"neuroplast.io/hotty-surf/reload/reloader"
 )
 
-// SockPath is where `hotty-surf run` listens for ctl: $HOTTY_SURF_SOCK, or
+// SockPath is where `hotty-surf run` and serve listen for ctl: $HOTTY_SURF_SOCK, or
 // run.sock in $XDG_RUNTIME_DIR/hotty-surf (a directory of the user's own
 // under the system's temporary one without it).
 func SockPath() string {
@@ -36,20 +37,21 @@ func SockPath() string {
 	return filepath.Join(os.TempDir(), "hotty-surf-"+strconv.Itoa(os.Getuid()), "run.sock")
 }
 
-// listen listens on sock for ctl, unless a `hotty-surf run` already does.
+// listen listens on sock for ctl, unless a `hotty-surf run` or serve
+// already does.
 func listen(sock string) (net.Listener, error) {
 	if err := os.MkdirAll(filepath.Dir(sock), 0o700); err != nil {
 		return nil, err
 	}
 	if c, err := net.Dial("unix", sock); err == nil {
 		c.Close()
-		return nil, fmt.Errorf("another hotty-surf run listens at %s: give this one another (HOTTY_SURF_SOCK)", sock)
+		return nil, fmt.Errorf("another hotty-surf run or serve listens at %s: give this one another (HOTTY_SURF_SOCK)", sock)
 	}
 	os.Remove(sock)
 	return net.Listen("unix", sock)
 }
 
-// ctlTarget is what ctl's requests reach in `hotty-surf run`.
+// ctlTarget is what ctl's requests reach in `hotty-surf run` or serve.
 type ctlTarget struct {
 	reload func(ctx context.Context) (reloader.Report, error)
 	shot   func(ctx context.Context) (devwire.Doc, error)
@@ -105,7 +107,7 @@ func serveCtl(ctx context.Context, ln net.Listener, t ctlTarget) {
 						return
 					}
 				default:
-					if conn.Respond(h.ID, "hotty-surf run: no method "+h.Method, nil) != nil {
+					if conn.Respond(h.ID, "hotty-surf: no ctl method "+h.Method, nil) != nil {
 						return
 					}
 				}
@@ -123,16 +125,43 @@ func wireReport(r reloader.Report) devwire.Report {
 	return w
 }
 
-// Ctl is `hotty-surf ctl <reload|shot …>`, at sock: it prints what it got
-// to out and returns the exit code.
+const ctlUsage = "usage: hotty-surf ctl reload | shot [-html] [-o out.png]\n"
+
+// Ctl is `hotty-surf ctl <reload|shot …>`, at sock: it asks the running
+// hotty-surf run or serve, prints what it got to out and returns the exit
+// code.
 func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(errOut, "usage: hotty-surf ctl reload | shot [-html] [out.png]")
+		fmt.Fprint(errOut, ctlUsage)
+		return 2
+	}
+	var fs *flag.FlagSet
+	html, path := new(bool), new(string)
+	switch args[0] {
+	case "-h", "-help", "--help", "help":
+		fmt.Fprint(out, ctlUsage)
+		return 0
+	case "reload":
+		fs = Flags("ctl reload", "ctl reload")
+	case "shot":
+		fs = Flags("ctl shot", "ctl shot [-html] [-o out.png]")
+		html = fs.Bool("html", false, "write the document as HTML, not a PNG")
+		path = fs.String("o", "", "where to write it (shot.png, or shot.html with -html)")
+	default:
+		fmt.Fprintf(errOut, "hotty-surf ctl: no command %q (reload, shot)\n", args[0])
+		return 2
+	}
+	if code, ok := Parse(fs, args[1:], out, errOut); !ok {
+		return code
+	}
+	if fs.NArg() > 0 {
+		fmt.Fprintf(errOut, "hotty-surf %s: no arguments: %q\n", fs.Name(), fs.Args())
+		fs.Usage()
 		return 2
 	}
 	c, err := net.Dial("unix", sock)
 	if err != nil {
-		fmt.Fprintf(errOut, "hotty-surf ctl: no hotty-surf run at %s: %v\n", sock, err)
+		fmt.Fprintf(errOut, "hotty-surf ctl: no hotty-surf run or serve at %s: %v\n", sock, err)
 		return 1
 	}
 	defer c.Close()
@@ -177,11 +206,13 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 			return 1
 		}
 		return 0
-	case "shot":
-		return shot(ask, args[1:], out, errOut)
 	}
-	fmt.Fprintf(errOut, "hotty-surf ctl: no command %q (reload, shot)\n", args[0])
-	return 2
+	var doc devwire.Doc
+	if err := ask("shot", &doc); err != nil {
+		fmt.Fprintln(errOut, "hotty-surf ctl shot:", err)
+		return 1
+	}
+	return writeShot("hotty-surf ctl shot", doc, *html, *path, out, errOut)
 }
 
 // ReportText is a report as ctl reload prints it: what the save took,
@@ -211,25 +242,6 @@ func ReportText(r devwire.Report) string {
 
 func findingLine(f lint.Finding) string {
 	return fmt.Sprintf("%s:%d:%d: %s: %s", f.File, f.Line, f.Col, f.Rule, f.Text)
-}
-
-// shot is ctl shot: the app's document as the host has it, rendered to a
-// PNG by hotty-blitz's hotty (render), or written as HTML with -html.
-func shot(ask func(string, msgp.Decodable) error, args []string, out, errOut io.Writer) int {
-	html := false
-	if len(args) > 0 && args[0] == "-html" {
-		html, args = true, args[1:]
-	}
-	path := ""
-	if len(args) > 0 {
-		path = args[0]
-	}
-	var doc devwire.Doc
-	if err := ask("shot", &doc); err != nil {
-		fmt.Fprintln(errOut, "hotty-surf ctl shot:", err)
-		return 1
-	}
-	return writeShot("hotty-surf ctl shot", doc, html, path, out, errOut)
 }
 
 // writeShot writes doc as a PNG that hotty-blitz's hotty renders at the

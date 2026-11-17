@@ -2,8 +2,8 @@ package devcmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 
 	"golang.org/x/net/websocket"
 
+	"neuroplast.io/hotty-surf/internal/devwire"
 	"neuroplast.io/hotty-surf/internal/page"
 	"neuroplast.io/hotty-surf/reload/reloader"
 )
@@ -25,46 +27,88 @@ import (
 // Serve is `hotty-surf serve [-addr localhost:7279] [dir]`: the app's page
 // with live reload. The app is built for js/wasm by Go with surfdev, and
 // each page's app is an instance of the reloader, its reload wire a
-// WebSocket (dev/wire). dev/events tells the pages when a new build is up
-// and what the last save did, as server-sent events: "restart" (the
-// build's number) and "report" (ctl reload's text, "" when there is
-// nothing to show).
+// WebSocket (dev/wire?key=page:…), msgpack-RPC as on any reload wire.
+//
+// The page's own channel is the site's own data, so JSON and text (gov
+// P-3): dev/events tells the pages when a new build is up and what the last
+// save did, as server-sent events, "restart" (the build's number) and
+// "report" (ctl reload's text, "" when there is nothing to show). A page
+// posts dev/page ({"key", "surface", "cols", "rows"}) once its app shows and
+// as its terminal resizes, for ctl shot, and dev/leave (its key) as it goes:
+// a tab closed or reloaded is a leave, not a crash.
+//
+// It answers ctl as run does, at the same socket: ctl reload, and ctl shot
+// of the newest page, at its terminal's size.
 func Serve(ctx context.Context, args []string, out, errOut io.Writer) int {
-	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
-	fs.SetOutput(errOut)
+	fs := Flags("serve", "serve [-addr localhost:7279] [dir]")
 	addr := fs.String("addr", "localhost:7279", "where to listen")
-	if err := fs.Parse(args); err != nil {
+	if code, ok := Parse(fs, args, out, errOut); !ok {
+		return code
+	}
+	dir, ok := dirArg(fs)
+	if !ok {
 		return 2
 	}
-	dir := "."
-	if fs.NArg() > 0 {
-		dir = fs.Arg(0)
+	ctl, err := listen(SockPath())
+	if err != nil {
+		fmt.Fprintln(errOut, "hotty-surf serve:", err)
+		return 1
 	}
-	if fs.NArg() > 1 {
-		fs.Usage()
-		return 2
-	}
+	defer ctl.Close()
 	ln, err := net.Listen("tcp", *addr)
 	if err != nil {
 		fmt.Fprintln(errOut, "hotty-surf serve:", err)
 		return 1
 	}
 	fmt.Fprintf(out, "hotty-surf serve: http://%s/\n", ln.Addr())
-	if err := servePage(ctx, ln, dir, out); err != nil {
+	if err := servePage(ctx, ln, ctl, dir, out); err != nil {
 		fmt.Fprintln(errOut, "hotty-surf serve:", err)
 		return 1
 	}
 	return 0
 }
 
-// pages is serve's state: the build the pages run, and the pages that
-// listen for the next.
+// pages is serve's state: the build the pages run, the pages that listen
+// for the next, and the pages that are open.
 type pages struct {
 	mu     sync.Mutex
 	build  int    // the latest build's number, 0 before the first
 	wasm   []byte // its app.wasm
 	report string // the last report's text
 	subs   map[chan struct{}]bool
+	open   []*page1 // by when each first said where it is, the newest last
+	wires  map[string]*pageWire
+}
+
+// page1 is an open page, as it last posted dev/page.
+type page1 struct {
+	Key     string `json:"key"`
+	Surface string `json:"surface"`
+	Cols    int    `json:"cols"`
+	Rows    int    `json:"rows"`
+}
+
+// newest is the page ctl shot shows: the one opened last.
+func (p *pages) newest() *page1 {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if len(p.open) == 0 {
+		return nil
+	}
+	c := *p.open[len(p.open)-1]
+	return &c
+}
+
+// leave forgets the page of key and ends its wire with a leave.
+func (p *pages) leave(key string) {
+	p.mu.Lock()
+	p.open = slices.DeleteFunc(p.open, func(o *page1) bool { return o.Key == key })
+	w := p.wires[key]
+	delete(p.wires, key)
+	p.mu.Unlock()
+	if w != nil {
+		w.leave()
+	}
 }
 
 // changed wakes every page's event stream.
@@ -79,14 +123,14 @@ func (p *pages) changed() {
 
 // servePage serves the page on ln and reloads the app in dir until ctx is
 // done.
-func servePage(ctx context.Context, ln net.Listener, dir string, log io.Writer) error {
+func servePage(ctx context.Context, ln, ctl net.Listener, dir string, log io.Writer) error {
 	tmp, err := os.MkdirTemp("", "hotty-surf-serve-*")
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(tmp)
 	bin := filepath.Join(tmp, "app.wasm")
-	execJS, err := wasmExec(ctx, true)
+	execJS, err := wasmExec(ctx, "go")
 	if err != nil {
 		return err
 	}
@@ -96,7 +140,7 @@ func servePage(ctx context.Context, ln net.Listener, dir string, log io.Writer) 
 	}
 	files["wasm_exec.js"] = execJS
 
-	p := &pages{subs: map[chan struct{}]bool{}}
+	p := &pages{subs: map[chan struct{}]bool{}, wires: map[string]*pageWire{}}
 	restart := func(ctx context.Context, bin string) error {
 		b, err := os.ReadFile(bin)
 		if err != nil {
@@ -143,8 +187,60 @@ func servePage(ctx context.Context, ln net.Listener, dir string, log io.Writer) 
 	mux.Handle("/dev/wire", websocket.Server{
 		Handshake: sameOrigin,
 		Handler: func(ws *websocket.Conn) {
-			ws.PayloadType = websocket.BinaryFrame
-			r.Serve(ctx, ws)
+			key := ws.Request().URL.Query().Get("key")
+			w := newPageWire(ws)
+			p.mu.Lock()
+			if old := p.wires[key]; old != nil {
+				old.ws.Close()
+			}
+			p.wires[key] = w
+			p.mu.Unlock()
+			r.Serve(ctx, w)
+			p.mu.Lock()
+			if p.wires[key] == w {
+				delete(p.wires, key)
+			}
+			p.mu.Unlock()
+		},
+	})
+	mux.HandleFunc("POST /dev/page", func(w http.ResponseWriter, req *http.Request) {
+		if !fromPage(req) {
+			http.Error(w, "not the page's", http.StatusForbidden)
+			return
+		}
+		var at page1
+		if err := json.NewDecoder(io.LimitReader(req.Body, 4<<10)).Decode(&at); err != nil || at.Key == "" {
+			http.Error(w, "want {key, surface, cols, rows}", http.StatusBadRequest)
+			return
+		}
+		p.mu.Lock()
+		if i := slices.IndexFunc(p.open, func(o *page1) bool { return o.Key == at.Key }); i >= 0 {
+			*p.open[i] = at
+		} else {
+			p.open = append(p.open, &at)
+		}
+		p.mu.Unlock()
+	})
+	mux.HandleFunc("POST /dev/leave", func(w http.ResponseWriter, req *http.Request) {
+		if !fromPage(req) {
+			http.Error(w, "not the page's", http.StatusForbidden)
+			return
+		}
+		key, _ := io.ReadAll(io.LimitReader(req.Body, 256))
+		p.leave(strings.TrimSpace(string(key)))
+	})
+	go serveCtl(ctx, ctl, ctlTarget{
+		reload: r.Reload,
+		shot: func(ctx context.Context) (devwire.Doc, error) {
+			at := p.newest()
+			if at == nil || at.Surface == "" {
+				return devwire.Doc{}, errors.New("no page shows the app: open the page serve printed")
+			}
+			html, err := r.Document(ctx, at.Key, at.Surface)
+			if err != nil {
+				return devwire.Doc{}, err
+			}
+			return devwire.Doc{Surface: at.Surface, HTML: html, Cols: at.Cols, Rows: at.Rows}, nil
 		},
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) { page.Serve(w, req, files) })
@@ -160,6 +256,17 @@ func servePage(ctx context.Context, ln net.Listener, dir string, log io.Writer) 
 		return err
 	}
 	return ran
+}
+
+// fromPage says whether req comes from serve's own page, as far as the
+// browser says: another site's page may not post a page's leave.
+func fromPage(req *http.Request) bool {
+	o := req.Header.Get("Origin")
+	if o == "" {
+		return req.Header.Get("Sec-Fetch-Site") != "cross-site"
+	}
+	u, err := url.Parse(o)
+	return err == nil && u.Host == req.Host
 }
 
 // sameOrigin refuses a WebSocket from another site's page: the reload
@@ -225,4 +332,80 @@ func writeEvent(w io.Writer, name, data string) {
 	}
 	b.WriteString("\n")
 	io.WriteString(w, b.String())
+}
+
+// pageWire is a page's reload wire, its messages a WebSocket's frames, up
+// to devwire.MaxBytes each (gov P-3: a capped reassembly). A page that goes
+// can't say so on the wire (it is closing), so serve says it for it: leave
+// hands the reloader a "leave" after the last whole message, then the end.
+type pageWire struct {
+	ws *websocket.Conn
+	pr *io.PipeReader
+	pw *io.PipeWriter
+
+	mu   sync.Mutex // one whole message into pw at a time
+	gone bool
+}
+
+func newPageWire(ws *websocket.Conn) *pageWire {
+	ws.PayloadType = websocket.BinaryFrame
+	ws.MaxPayloadBytes = devwire.MaxBytes
+	pr, pw := io.Pipe()
+	w := &pageWire{ws: ws, pr: pr, pw: pw}
+	go func() {
+		for {
+			var msg []byte
+			if err := websocket.Message.Receive(ws, &msg); err != nil {
+				w.mu.Lock()
+				if !w.gone {
+					w.gone = true
+					pw.CloseWithError(err)
+				}
+				w.mu.Unlock()
+				return
+			}
+			w.mu.Lock()
+			if w.gone {
+				w.mu.Unlock()
+				return
+			}
+			_, err := pw.Write(msg)
+			w.mu.Unlock()
+			if err != nil {
+				return
+			}
+		}
+	}()
+	return w
+}
+
+func (w *pageWire) Read(p []byte) (int, error) { return w.pr.Read(p) }
+
+// Write sends p as one frame: the reload wire's writer flushes once a
+// message (devwire), so each is one msgpack-RPC message.
+func (w *pageWire) Write(p []byte) (int, error) {
+	if err := websocket.Message.Send(w.ws, p); err != nil {
+		return 0, err
+	}
+	return len(p), nil
+}
+
+func (w *pageWire) Close() error {
+	w.pr.Close()
+	return w.ws.Close()
+}
+
+// leave ends the wire as the page's leaving would.
+func (w *pageWire) leave() {
+	w.mu.Lock()
+	if !w.gone {
+		w.gone = true
+		// The pipe hands the reader the notification whole, then EOF.
+		go func() {
+			devwire.NewConn(w.pw).Notify("leave", &devwire.Empty{})
+			w.pw.Close()
+		}()
+	}
+	w.mu.Unlock()
+	w.ws.Close()
 }

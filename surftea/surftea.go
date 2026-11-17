@@ -8,11 +8,15 @@
 //
 //   - Init: the Host's Init with the program's.
 //   - Update: every message goes through the Host's Update after the
-//     Session's. It takes what is its own (an EventMsg that names its
-//     surface, a key while its surface has the keyboard, a click, the wheel
-//     or a paste in its rectangle in cells, its own wake-ups) and gives the
-//     rest back. It reads the Session's ReadyMsg and gives it back too, so
-//     that every Host and the program hear it.
+//     Session's. It takes what is its own: an EventMsg that names its
+//     surface, an ErrorMsg that names it (a refused delta: it sends the
+//     document again, as run.App does), a key while its surface has the
+//     keyboard (the Tab that takes the keyboard out of it included), a
+//     click, the wheel or a paste in its rectangle in cells, and its own
+//     wake-ups. It gives the rest back. It reads the Session's ReadyMsg,
+//     and in cells a click outside its rectangle (which gives the program
+//     the keyboard back, as a click elsewhere does on a host), and gives
+//     them back too, so that every Host and the program hear them.
 //   - Layout: where the program lays out its frame, Place gives the
 //     Session's Layout the Host's entry at the rectangle the program picked.
 //   - View: Cells is the rectangle as the program draws it: the surface in
@@ -26,6 +30,10 @@
 // focus moves (Tab between panes). Focused says where it is.
 //
 // A program makes one Host per surface.
+//
+// A surftea program has no live reload: `hotty-surf run`, shot and serve
+// start a run.App main, and only run.App finds the reload wire they give
+// it. Reload a surface's app on its own with them, and embed it here.
 package surftea
 
 import (
@@ -33,13 +41,10 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	xhtml "golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
-
-	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // A Host is a surf.Surface in a Bubble Tea program. Its methods run on the
@@ -54,9 +59,6 @@ type Host struct {
 
 	mode    hottytea.Mode
 	focused bool
-	// last is the element that last had the keyboard, which Focus gives
-	// it back to.
-	last string
 
 	// scr is the surface in cells, where the terminal is no host: made at
 	// the first Place after detection found Text.
@@ -112,9 +114,6 @@ func (h *Host) Update(msg tea.Msg) (tea.Msg, tea.Cmd) {
 		switch m.Kind {
 		case hotty.EventFocus:
 			h.focused = true
-			if m.Target != "" {
-				h.last = m.Target
-			}
 		case hotty.EventBlur:
 			h.focused = false
 		case hotty.EventCaps:
@@ -241,8 +240,12 @@ func (h *Host) document() string {
 // Place puts the surface at r, the screen's cells it covers, and returns its
 // entry for the Session's Layout, with Press and Hover on, as the surface's
 // Outside and Hover handlers need (surf.Surface.Attach), and the host
-// scrolling the document both ways, as run.App has it. In cells, the
-// surface is laid out again at r's size.
+// scrolling the document both ways, as run.App has it. A program calls it
+// in every Update, as it calls the Session's Layout, so that the surface
+// shows once the Session is ready and comes back after a RelayoutMsg. A
+// program that sets the entry's Scroll sets it the same each time: a change
+// sends the document again. In cells, a change of r's size lays the surface
+// out again, and the Screen scrolls as it does whatever Scroll says.
 func (h *Host) Place(r hottytea.Rect) hottytea.Surface {
 	resized := r.W != h.rect.W || r.H != h.rect.H
 	h.rect = r
@@ -288,9 +291,6 @@ func (h *Host) event(e hotty.Event) {
 	switch e.Kind {
 	case hotty.EventFocus:
 		h.focused = true
-		if e.Target != "" {
-			h.last = e.Target
-		}
 	case hotty.EventBlur:
 		h.focused = false
 	}
@@ -316,102 +316,26 @@ func (h *Host) check(err error) bool {
 }
 
 // Focus gives the surface the keyboard, as the program's own focus moves
-// onto it (Tab between panes): through the Session where the terminal is a
-// hotty host, to its cells otherwise. The element that had it last gets it
-// back, else the first that takes focus.
+// onto it (Tab between panes): the surface's Focus (surf.Surface.Focus)
+// picks the element and sends it, through the Session where the terminal
+// is a hotty host, and to its cells otherwise, which get the keyboard too.
+// Focused is true from then on.
 func (h *Host) Focus() {
 	switch {
 	case h.scr != nil:
-		h.scr.Focus(true) // the Screen's keyboard, and the element it kept
-		if !h.focused {
-			// It kept none (Tab went past the last element): as on a host.
-			h.give(h.scr.Write)
-		}
+		// The Screen's keyboard first, and the element it kept, if any: the
+		// surface hears that as the user's focus, and its Focus then does
+		// nothing. Otherwise (Tab went past the last element) the surface
+		// picks one, as on a host.
+		h.scr.Focus(true)
+		h.check(h.s.Focus())
 		h.focused = true
 		h.settle()
 	case h.mode == hottytea.Native:
-		h.give(func(p []byte) (int, error) { h.sess.Send(string(p)); return len(p), nil })
+		h.check(h.s.Focus())
 		h.focused = true
 	}
 }
-
-// give sends the host a=focus at the element Focus picks, and tells the
-// surface: the host sends no focus event for focus the program gives (SPEC
-// §10.1).
-func (h *Host) give(send func([]byte) (int, error)) {
-	t := h.target()
-	send([]byte(hotty.Focus(h.name, t)))
-	if t != "" {
-		h.check(h.s.Event(hotty.Event{Kind: hotty.EventFocus, Surface: h.name, Target: t}))
-	}
-}
-
-// target is the element Focus gives the keyboard to: the one that had it
-// last if it is still there, else the first that takes focus.
-func (h *Host) target() string {
-	root := rt.Peek.Tree(h.s)
-	if root == nil {
-		return ""
-	}
-	var first, last string
-	var walk func(n *xhtml.Node)
-	walk = func(n *xhtml.Node) {
-		for c := n.FirstChild; c != nil && last == ""; c = c.NextSibling {
-			if c.Type != xhtml.ElementNode {
-				continue
-			}
-			id := attr(c, "id")
-			if id != "" && id == h.last {
-				last = id
-				return
-			}
-			if first == "" && id != "" && focusable(c) {
-				first = id
-			}
-			walk(c)
-		}
-	}
-	walk(root)
-	if last != "" {
-		return last
-	}
-	return first
-}
-
-// focusable says whether a click on n would give it the keyboard (SPEC
-// §10.1).
-func focusable(n *xhtml.Node) bool {
-	if hasAttr(n, "disabled") || attr(n, "type") == "hidden" {
-		return false
-	}
-	switch n.Data {
-	case "input", "select", "textarea", "button":
-		return true
-	case "a":
-		if hasAttr(n, "href") {
-			return true
-		}
-	case "summary":
-		return true
-	}
-	if t, ok := lookup(n, "tabindex"); ok {
-		return !strings.HasPrefix(strings.TrimSpace(t), "-")
-	}
-	return hasAttr(n, "contenteditable")
-}
-
-func lookup(n *xhtml.Node, key string) (string, bool) {
-	for _, a := range n.Attr {
-		if a.Namespace == "" && a.Key == key {
-			return a.Val, true
-		}
-	}
-	return "", false
-}
-
-func attr(n *xhtml.Node, key string) string { v, _ := lookup(n, key); return v }
-
-func hasAttr(n *xhtml.Node, key string) bool { _, ok := lookup(n, key); return ok }
 
 // Blur takes the keyboard from the surface, as the program's focus moves
 // off it: a field being edited commits, and Outside handlers hear it.
@@ -465,13 +389,23 @@ func fit(s string, w int) string {
 	return string(r) + strings.Repeat(" ", w-len(r))
 }
 
-// Cursor is where a text field of the surface in cells has its caret, from
-// the rectangle's top left, for the program's tea.View: ok is false where
-// there is none (the surface hasn't the keyboard, the terminal is a hotty
-// host and draws its own).
-func (h *Host) Cursor() (col, row int, ok bool) {
+// Cursor is the terminal's cursor for the program's tea.View, while a text
+// field of the surface is being edited in cells: at the field's caret, in
+// the screen's cells (the Host adds the rectangle Place gave it), shaped as
+// a field's caret. It is nil where there is none: the surface hasn't the
+// keyboard, no text field has it, or the terminal is a hotty host, which
+// draws its own.
+//
+//	v.Cursor = h.Cursor()
+func (h *Host) Cursor() *tea.Cursor {
 	if h.scr == nil || !h.focused {
-		return 0, 0, false
+		return nil
 	}
-	return h.scr.Cursor()
+	col, row, ok := h.scr.Cursor()
+	if !ok {
+		return nil
+	}
+	c := tea.NewCursor(h.rect.X+col, h.rect.Y+row)
+	c.Shape = tea.CursorBar
+	return c
 }

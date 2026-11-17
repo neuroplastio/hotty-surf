@@ -1,4 +1,4 @@
-// Package page is the page `hotty-surf build --wasm` writes and `hotty-surf
+// Package page is the page `hotty-surf build -wasm` writes and `hotty-surf
 // serve` serves: xterm.js with xterm-addon-hotty (assets/, from
 // scripts/page-assets.sh), and main.js, which runs the app's wasm in the
 // terminal (run/wasm.go is the app's side). The app's app.wasm and its

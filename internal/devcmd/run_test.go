@@ -174,7 +174,7 @@ func TestRun(t *testing.T) {
 
 	var o, e bytes.Buffer
 	page := filepath.Join(t.TempDir(), "shot.html")
-	if code := Ctl(ctx, sock, []string{"shot", "-html", page}, &o, &e); code != 0 {
+	if code := Ctl(ctx, sock, []string{"shot", "-html", "-o", page}, &o, &e); code != 0 {
 		t.Fatalf("ctl shot: %q", e.String())
 	}
 	if b, _ := os.ReadFile(page); !strings.Contains(string(b), "Count 1!") {

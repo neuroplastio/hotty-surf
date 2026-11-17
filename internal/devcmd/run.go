@@ -567,7 +567,7 @@ func (h *host) shot(ctx context.Context) (devwire.Doc, error) {
 	if !h.running() {
 		return devwire.Doc{}, errors.New("no app is running")
 	}
-	html, err := h.r.Document(ctx, "app")
+	html, err := h.r.Document(ctx, "app", h.appName())
 	if err != nil {
 		return devwire.Doc{}, err
 	}

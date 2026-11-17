@@ -25,6 +25,10 @@ const MaxDepth = 5
 // snapshot is at most a few MB, a build's binary never crosses.
 const maxBytes = 64 << 20
 
+// MaxBytes is maxBytes for a transport that frames messages itself, which
+// caps a message at it (serve's WebSocket).
+const MaxBytes = maxBytes
+
 var (
 	readers = sync.Pool{New: func() any {
 		r := msgp.NewReaderSize(nil, 64<<10)

@@ -67,6 +67,10 @@ func New(dir string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	// build -wasm's output stays out of the repository (lint skips it too).
+	if err := os.WriteFile(filepath.Join(abs, ".gitignore"), []byte("dist/\n"), 0o644); err != nil {
+		return err
+	}
 	// The view's Go, so that go build and go test need no templ binary.
 	page := filepath.Join(abs, "page.templ")
 	_, raw, err := templgen.Gen(page)
@@ -88,11 +92,17 @@ func New(dir string, out io.Writer) error {
 			return err
 		}
 	}
-	fmt.Fprintf(out, `made %s: main.go app.go page.templ css.go app_test.go style/app.css
+	fmt.Fprintf(out, `made %s: main.go app.go page.templ css.go app_test.go style/app.css .gitignore
   cd %[1]s && %s       its requirements
   go test .                 its tests, the lint among them
   hotty-surf run .          the app in this terminal, reloading as you save
   hotty-surf ctl reload     from another shell: wait for a save to show
+  hotty-surf shot .         the app headless, as shot.png
+  hotty-surf serve .        the app in a browser, reloading as you save
+  hotty-surf build -wasm .  the app as a page, in dist
+To show its surface in a program of your own, see hotty-surf's examples:
+  examples/pane             a raw-mode program (surf, cells, hottyterm)
+  surftea/examples/files    a Bubble Tea program (surftea)
 `, dir, next)
 	return nil
 }

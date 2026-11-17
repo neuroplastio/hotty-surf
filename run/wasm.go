@@ -15,7 +15,7 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// The page's side, which `hotty-surf build --wasm` writes: xterm.js with
+// The page's side, which `hotty-surf build -wasm` writes: xterm.js with
 // xterm-addon-hotty, which is always a host. Before the app starts, the
 // page sets globalThis.hottySurf to an object with:
 //

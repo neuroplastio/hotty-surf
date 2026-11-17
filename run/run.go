@@ -8,7 +8,7 @@
 // the surface drawn in character cells (package cells).
 //
 // Built with GOOS=js GOARCH=wasm, the same App speaks to the page that runs
-// it: xterm.js with xterm-addon-hotty, as `hotty-surf build --wasm` and
+// it: xterm.js with xterm-addon-hotty, as `hotty-surf build -wasm` and
 // `hotty-surf serve` make it. The app's main is the same for both.
 //
 // Under `hotty-surf run`, App draws through `hotty-surf run` instead of the

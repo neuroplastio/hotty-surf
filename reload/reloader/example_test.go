@@ -44,9 +44,9 @@ func ExampleNew() {
 func ExampleReloader_Document() {
 	ctx := context.Background()
 	var r *reloader.Reloader // the program's, as in New's example
-	doc, err := r.Document(ctx, "tool:files")
+	doc, err := r.Document(ctx, "tool:files", "files")
 	if err != nil {
-		return // no such process, or it didn't answer
+		return // no such process or surface, or it didn't answer
 	}
 	_ = doc // `<style id="hotty-css">…</style><div id="root">…</div>`
 }

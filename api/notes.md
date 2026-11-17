@@ -829,8 +829,10 @@ shape. Nothing else in the lock moves.
   deferral for `plx plugin dev ctl shot`. The process of key answers over
   its reload wire (a `doc` request beside render, restyle and handover)
   with the document of its surface that rendered last, read on the
-  surface's driver through Do as a handover reads it, and directly when
-  the driver hasn't answered in 300 ms. 3 s at most. `hotty-surf ctl shot`
+  surface's driver through Do, never directly (a handover reads a
+  dropped surface directly only because the process exits after it). 3 s
+  at most. `ctl shot` takes its size from the terminal hotty-surf run
+  owns, as it does today. `hotty-surf ctl shot`
   moves onto it, so the term wire's `doc` goes.
 - **`surftea.(*Host).Focused() bool`:** the keyboard moves without the
   program: a click into the surface, Tab past its last element, a click
@@ -905,3 +907,83 @@ hotty-surf book                (L3)
   to it.
 - **No new cells name.** A raw-mode program hosts a surface with
   `surf.Surface`, `cells.New` and hottyterm alone (examples/pane).
+
+### As reviewed (p-767, 2026-11-17): approved with changes, applied
+
+- **`Reloader.Document(ctx, key, surface string)`:** the surface by its
+  name, which the caller has because it places it (hotty-surf run from
+  the term wire's `show`, shot likewise, serve from the page, plx from the
+  slot). The `doc` request's params are a `Doc` naming it. Read on the
+  driver only; a driver busy for 2.5 s is a failure.
+- **`surftea.(*Host).Cursor() *tea.Cursor`:** Bubble Tea's shape (bubbles'
+  textinput and textarea), nil where there is none, in the screen's cells
+  (the Host adds its rectangle), a bar.
+- **`surf.(*Surface).Focus() error`, added:** the program gives the
+  surface the keyboard. It sends a=focus for the element that had it last
+  (while it is in the document), else the first that takes focus, and
+  takes the move as the host's focus event, which the host doesn't echo
+  (SPEC §10.1): Focus handlers hear it, and passed keys reach that
+  element's Key handlers. It does nothing while the surface has the
+  keyboard. surftea's Focus calls it and imports nothing of surf's
+  internals; examples/pane calls it in a raw-mode program. `surf.Focus`'s
+  doc says its handlers hear it.
+- **surftea's docs:** Update takes an ErrorMsg naming its surface (a
+  refused delta sends the document again) and the Tab that leaves the
+  surface, and gives back a click outside its rectangle in cells, which
+  blurs it. Place is called in every Update. The package doc says a
+  surftea program gets no live reload. The example lays out every Update
+  (once the window's size is known), sets AltScreen, and takes Cursor
+  whole.
+- **lint.Dir** skips `dist` (a build's output) and directories that start
+  with `_`, as the reloader's walk does.
+- **The command:**
+
+  ```
+  hotty-surf new <dir>
+  hotty-surf run [dir]
+  hotty-surf ctl reload | shot [-html] [-o out.png]
+  hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
+  hotty-surf build -wasm [-o dist] [dir]
+  hotty-surf serve [-addr localhost:7279] [dir]
+  hotty-surf lint [dir]
+  hotty-surf book                     (L3)
+  hotty-surf help | -h | --help       and <command> -h
+  hotty-surf version
+  ```
+
+  - `new -t` is cut: run, shot, serve and build start a run.App main
+    only. The Bubble Tea and raw-mode shapes are examples, tested in the
+    gate (surftea/examples/files, examples/pane), and new's next steps
+    name them. new writes a `.gitignore` with `dist/`.
+  - `run` works in cells where the terminal is no host: it hosts the
+    app's surface and the report's on cells.Screens of its own, which
+    outlive builds, so a Go reload is a delta there too.
+  - `ctl shot` takes `-o`, as shot does.
+  - `shot` takes the document once quiet 200 ms, or after 3 s at most,
+    with a line on stderr.
+  - `build -wasm`: TinyGo only, from `$HOTTY_SURF_TINYGO` or PATH. It
+    prints the version, warns when it isn't the proven 0.43.0, and prints
+    app.wasm's size raw and gzipped. `-o` is `dist` in the working
+    directory. Without -wasm: "-wasm is the only kind; a native build is
+    go build", exit 2. The terminal's scripts (xterm.js 6.1.0-beta.304,
+    @xterm/addon-fit 0.12.0-beta.301, xterm-addon-hotty 0.8.0) are in
+    the command, pinned, with their licences, so neither build nor serve
+    touches the network.
+  - `serve` answers ctl at run's socket (one of the two listens): `ctl
+    reload`, and `ctl shot` of the newest page at its terminal's size. A
+    page closed or reloaded is a leave: its `pagehide` beacons
+    `dev/leave`, and serve ends its wire with a `leave` for it. The
+    WebSocket caps a message at devwire's 64 MiB. The page's own channel
+    is the site's own data, so JSON and text (gov P-3): server-sent
+    events from `dev/events` (restart, report), and `dev/page` (the
+    page's key, surface and size) and `dev/leave` from the page. The
+    reload wire is msgpack-RPC end to end. Its builds go to a temporary
+    directory, never the app's.
+  - `help`, `-h` and `--help` print the command table to stdout, exit
+    0; every command takes `-h`. `version` prints `hotty-surf <module
+    version> (hotty <spec>)`, `(devel)` for a checkout's build.
+- **The gate:** `make tinygo` fails when a release js build of an
+  example links internal/devwire, internal/devchild or reload/reloader
+  (the browser's reload is behind `surfdev && js`).
+- **Not promised:** reload in the browser takes a Go js/wasm link, about
+  0.3 s for hello and seconds for a large app; Report.Took says.

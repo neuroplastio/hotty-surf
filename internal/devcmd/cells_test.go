@@ -106,7 +106,7 @@ func TestRunInCells(t *testing.T) {
 	out.wait(t, m, "Hello 41") // the count, handed over
 
 	page := filepath.Join(t.TempDir(), "shot.html")
-	if code := Ctl(ctx, sock, []string{"shot", "-html", page}, &o, &e); code != 0 {
+	if code := Ctl(ctx, sock, []string{"shot", "-html", "-o", page}, &o, &e); code != 0 {
 		t.Fatalf("ctl shot: %q", e.String())
 	}
 	if doc, _ := os.ReadFile(page); !strings.Contains(string(doc), "Count 1") {

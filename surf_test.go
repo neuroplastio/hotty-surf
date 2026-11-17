@@ -197,3 +197,48 @@ func TestWhitespaceInPreStays(t *testing.T) {
 		t.Fatalf("whitespace beside elements outside a pre stays: %q", r.HTML())
 	}
 }
+
+func TestSurfaceFocusGivesTheKeyboardBack(t *testing.T) {
+	var log []string
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div%s><button%s>a</button><button%s>b</button><p>text</p></div>`,
+			on("page", surf.Key(func(k string) bool { log = append(log, "page:"+k); return false })),
+			on("a", surf.Click(func() {}), surf.Focus(func(in bool) { log = append(log, fmt.Sprint("a ", in)) })),
+			on("b", surf.Click(func() {}), surf.Focus(func(in bool) { log = append(log, fmt.Sprint("b ", in)) }),
+				surf.Key(func(k string) bool { log = append(log, "b:"+k); return false })))
+	})
+	s := surf.New("t", v, "")
+	r := surftest.Start(t, s)
+
+	// Nothing had the keyboard: the first element that takes it.
+	if err := s.Focus(); err != nil {
+		t.Fatal(err)
+	}
+	r.Update()
+	if strings.Join(log, ",") != "a true" {
+		t.Fatalf("first focus: %v", log)
+	}
+	r.Click("button:text(b)")
+	r.Click("p:text(text)") // the keyboard leaves the surface
+	log = nil
+	if err := s.Focus(); err != nil {
+		t.Fatal(err)
+	}
+	r.Update()
+	if strings.Join(log, ",") != "b true" {
+		t.Fatalf("focus back: %v", log)
+	}
+	log = nil
+	r.Key("x") // the host passes it on: b's handlers hear it
+	if strings.Join(log, ",") != "b:x,page:x" {
+		t.Fatalf("a key after Focus: %v", log)
+	}
+	log = nil
+	if err := s.Focus(); err != nil { // it has the keyboard: nothing
+		t.Fatal(err)
+	}
+	r.Update()
+	if len(log) != 0 {
+		t.Fatalf("focus while focused: %v", log)
+	}
+}

@@ -77,9 +77,19 @@ canary:   ## mods/ applied to each upstream's latest, and its tests (gov P-7; we
 # The examples' release wasm, as TinyGo builds it (gov NEIO-15).
 # scripts/wasm-stream.sh holds its stream to Go's, with node.
 TINYGO ?= $(CAP) mise x -- tinygo
-tinygo:   ## the examples build for js/wasm under TinyGo
+# A release wasm links no reload: the reload wire, its child and the
+# reloader stay behind surfdev, and the page's WebSocket with them.
+NO_RELOAD = internal/devwire internal/devchild reload/reloader
+tinygo:   ## the examples build for js/wasm under TinyGo, and link no reload
 	@mkdir -p bin
 	@for e in tasks nav hello; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done
+	@for e in tasks nav hello; do \
+		deps=$$(GOOS=js GOARCH=wasm $(GO_BARE) list -deps ./examples/$$e) || exit 1; \
+		for p in $(NO_RELOAD); do \
+			if echo "$$deps" | grep -qx "neuroplast.io/hotty-surf/$$p"; then \
+				echo "examples/$$e: a release js build links $$p" >&2; exit 1; fi; \
+		done; \
+	done
 
 # The API lock (NEIO-15's review loop). api/v0.7.txt is the approved API, in
 # Go's api/ format; it changes only when the maintainer approves a pack.
@@ -134,12 +144,12 @@ coverage:
 	if ! diff -q docs/coverage.md "$$t" >/dev/null; then \
 	  echo "docs/coverage.md is not what ui/coverage.tsv makes: sh scripts/coverage-md.sh"; exit 1; fi
 
-# The page build --wasm writes and serve serves, in Chromium through
+# The page build -wasm writes and serve serves, in Chromium through
 # Playwright (scripts/browser): not in check, since it needs a browser.
 # PIN keeps Chromium on the CPUs IDLE_CPUS names.
 NODE ?= mise x -- node
 PIN  ?= $(if $(IDLE_CPUS),taskset -c $(IDLE_CPUS))
-browser: scripts/browser/node_modules   ## build --wasm and serve, proven in Chromium: .shots/browser
+browser: scripts/browser/node_modules   ## build -wasm and serve, proven in Chromium: .shots/browser
 	GO="$(GO_BARE)" NODE="$(NODE)" $(CAP) $(PIN) sh scripts/browser/check.sh
 
 scripts/browser/node_modules: scripts/browser/package.json scripts/browser/package-lock.json

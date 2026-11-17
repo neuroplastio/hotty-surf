@@ -69,7 +69,7 @@ func TestCtl(t *testing.T) {
 	}
 
 	page := filepath.Join(t.TempDir(), "shot.html")
-	if code, out, errOut := ctl("shot", "-html", page); code != 0 || out != page+"\n" {
+	if code, out, errOut := ctl("shot", "-html", "-o", page); code != 0 || out != page+"\n" {
 		t.Fatalf("shot -html: %d %q %q", code, out, errOut)
 	}
 	if b, err := os.ReadFile(page); err != nil || string(b) != "<p>hi</p>" {
@@ -78,6 +78,12 @@ func TestCtl(t *testing.T) {
 
 	if code, _, _ := ctl("nonsense"); code != 2 {
 		t.Fatalf("an unknown command exits %d", code)
+	}
+	if code, _, _ := ctl("shot", page); code != 2 {
+		t.Fatalf("shot's path without -o exits %d", code)
+	}
+	if code, out, _ := ctl("shot", "-h"); code != 0 || !strings.Contains(out, "usage: hotty-surf ctl shot [-html] [-o out.png]") {
+		t.Fatalf("shot -h: %d %q", code, out)
 	}
 	if code, _, errOut := func() (int, string, string) {
 		var out, errOut bytes.Buffer

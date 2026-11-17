@@ -155,14 +155,17 @@ func TestDocument(t *testing.T) {
 	h.out(p1, "Count 1")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	doc, err := h.r.Document(ctx, "app")
+	doc, err := h.r.Document(ctx, "app", "t")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(doc, `<style id="hotty-css">`) || !strings.Contains(doc, "Count 1") {
 		t.Fatalf("the document: %.300q", doc)
 	}
-	if _, err := h.r.Document(ctx, "tool:none"); err == nil {
+	if _, err := h.r.Document(ctx, "tool:none", "t"); err == nil {
 		t.Fatal("a key no process has answered")
+	}
+	if _, err := h.r.Document(ctx, "app", "none"); err == nil {
+		t.Fatal("a surface the process hasn't answered")
 	}
 }

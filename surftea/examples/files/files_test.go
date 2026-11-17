@@ -182,10 +182,12 @@ func TestInCells(t *testing.T) {
 	if i := m.sel(); i != 0 {
 		t.Fatalf("typing in the surface moved the list to %d", i)
 	}
-	var caret bool
-	m.at(func(m *model) { _, _, caret = m.files.Cursor() })
-	if !caret {
+	var caret *tea.Cursor
+	m.at(func(m *model) { caret = m.files.Cursor() })
+	if caret == nil {
 		t.Error("no caret in the note")
+	} else if caret.X < listW || caret.Shape != tea.CursorBar {
+		t.Errorf("the caret is at %d,%d shaped %v: not in the surface's cells, or no bar", caret.X, caret.Y, caret.Shape)
 	}
 
 	// A click on the button, where it is drawn.

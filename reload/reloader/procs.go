@@ -206,7 +206,7 @@ func (r *Reloader) live() []*proc {
 const docWait = 3 * time.Second
 
 // document is Document's: a doc request to the process of key.
-func (r *Reloader) document(ctx context.Context, key string) (string, error) {
+func (r *Reloader) document(ctx context.Context, key, surface string) (string, error) {
 	r.mu.Lock()
 	p := r.procs[key]
 	r.mu.Unlock()
@@ -214,7 +214,7 @@ func (r *Reloader) document(ctx context.Context, key string) (string, error) {
 		return "", fmt.Errorf("reloader: no process %q is serving", key)
 	}
 	var doc devwire.Doc
-	done := p.conn.Call(&p.calls, "doc", &devwire.Empty{}, &doc)
+	done := p.conn.Call(&p.calls, "doc", &devwire.Doc{Surface: surface}, &doc)
 	t := time.NewTimer(docWait)
 	defer t.Stop()
 	select {

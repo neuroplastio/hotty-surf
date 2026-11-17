@@ -42,10 +42,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
 	}
-	// every frame says where the surface goes; the Session sends what changed
-	m.sess.Layout([]hottytea.Surface{
-		m.files.Place(hottytea.Rect{X: m.w / 2, Y: 0, W: m.w - m.w/2, H: m.h}),
-	})
+	if m.w > 0 {
+		// Every frame: the surface shows once the Session is ready, and
+		// comes back after a RelayoutMsg.
+		m.sess.Layout([]hottytea.Surface{
+			m.files.Place(hottytea.Rect{X: m.w / 2, Y: 0, W: m.w - m.w/2, H: m.h}),
+		})
+	}
 	return m, tea.Batch(cmd, cmd2, m.sess.Flush())
 }
 
@@ -55,9 +58,8 @@ func (m *model) View() tea.View {
 		left = left.Bold(true) // the program's pane has the keyboard
 	}
 	v := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, left.Render(m.list), m.files.Cells()))
-	if col, row, ok := m.files.Cursor(); ok {
-		v.Cursor = tea.NewCursor(m.w/2+col, row)
-	}
+	v.AltScreen = true
+	v.Cursor = m.files.Cursor() // a field's caret in cells, nil otherwise
 	return v
 }
 

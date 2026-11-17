@@ -1,4 +1,4 @@
-// The page `hotty-surf build --wasm` writes, in Chromium: hello's, served
+// The page `hotty-surf build -wasm` writes, in Chromium: hello's, served
 // as any static server serves it. The app shows, takes typing and a click,
 // and draws them.
 //

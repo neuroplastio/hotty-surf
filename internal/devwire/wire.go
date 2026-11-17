@@ -85,7 +85,7 @@ type Dropped struct {
 }
 
 // Empty is the params or result of a message that carries nothing:
-// "render", "handover", "leave" and "doc" on the reload wire, "bye" on the
+// "render", "handover" and "leave" on the reload wire, "bye" on the
 // term wire, "reload" and "shot" on the ctl wire.
 type Empty struct{}
 
@@ -115,9 +115,10 @@ type Show struct {
 	Surface string `msg:"surface"`
 }
 
-// Doc answers "doc" (the reload wire) and "shot" (the ctl wire): a
-// surface's document as the host has it, and on the ctl wire the size it
-// is drawn at.
+// Doc asks for and answers "doc" (the reload wire), and answers "shot" (the
+// ctl wire): a surface's document as it last sent it to its host, and on
+// the ctl wire the size it is drawn at. As "doc"'s params only Surface is
+// set: the surface it asks for.
 type Doc struct {
 	Surface string `msg:"surface"`
 	HTML    string `msg:"html"`

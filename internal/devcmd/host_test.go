@@ -148,7 +148,7 @@ func TestCrashInputDropped(t *testing.T) {
 		t.Fatalf("ctl reload: %d %q %q", code, o.String(), e.String())
 	}
 	page := filepath.Join(t.TempDir(), "shot.html")
-	if code := Ctl(r.ctx, r.sock, []string{"shot", "-html", page}, &o, &e); code != 0 {
+	if code := Ctl(r.ctx, r.sock, []string{"shot", "-html", "-o", page}, &o, &e); code != 0 {
 		t.Fatalf("ctl shot: %q", e.String())
 	}
 	if doc, _ := os.ReadFile(page); !strings.Contains(string(doc), "Count 0") {

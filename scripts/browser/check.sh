@@ -1,6 +1,6 @@
 #!/bin/sh
 # hotty-surf's page in Chromium (make browser): hello built by `hotty-surf
-# build --wasm` (TinyGo) and served statically, then `hotty-surf serve` on a
+# build -wasm` (TinyGo) and served statically, then `hotty-surf serve` on a
 # copy of hello outside the repository, with a Go, a css and a failed save.
 # Screenshots go to .shots/browser. Needs node and Playwright's Chromium
 # (npx playwright-core install chromium-headless-shell, once).
@@ -14,7 +14,7 @@ mkdir -p "$out"
 cd "$root"
 $GO build -o bin/hotty-surf ./cmd/hotty-surf
 
-PATH="$root/bin:$PATH" hotty-surf build --wasm -o "$out/dist" examples/hello
+PATH="$root/bin:$PATH" hotty-surf build -wasm -o "$out/dist" examples/hello
 $NODE scripts/browser/release.mjs "$out/dist" "$out/release.png"
 
 # A module of its own that requires this one, so the saves stay out of the
