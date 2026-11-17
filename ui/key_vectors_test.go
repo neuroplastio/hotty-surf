@@ -147,10 +147,6 @@ func TestReadonlyKeepsCharsVector(t *testing.T) {
 			s := surf.New("vector", view, ui.Stylesheet())
 			var press func(string)
 			if mode == "host" {
-				// hotty-go v0.8's test host types into a readonly field,
-				// which SPEC §6.4 says the user cannot change: its bug, to
-				// be fixed there; until then only cells runs the vector.
-				t.Skip("hottytest v0.8 edits a readonly field (hotty-go bug)")
 				r := surftest.Start(t, s)
 				r.Click("#control")
 				press = func(k string) {

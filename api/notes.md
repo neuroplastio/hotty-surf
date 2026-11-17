@@ -1782,9 +1782,9 @@ readonly is CharsText. Applied:
   and swallows it the same way. Tests: TestBlurEcho (echo, no echo, Focus
   in between) and TestBlurInCells, each failing without the swallow.
 - **Chars.** contenteditable (not "false") is CharsText; a readonly field
-  is CharsText, locked by TestReadonlyKeepsCharsVector. Its host half is
-  skipped: hotty-go v0.8's test host types into a readonly field, a bug
-  of that host's (SPEC §6.4) to fix in hotty-go; cells keeps the keys.
+  is CharsText, locked by TestReadonlyKeepsCharsVector on the test host
+  and in cells (the test host's readonly fix is hotty-go e1d9f68, pinned
+  as hottytest v0.8.2-0.20261117175548-e1d9f6887ae0).
 - **Docs.** Focused and Chars run on the driver's goroutine; Focused is
   the surface's view; Chars names its limits (the kit's Select and
   DropdownMenu, select multiple, composition).
