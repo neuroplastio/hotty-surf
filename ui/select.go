@@ -333,10 +333,3 @@ func bstr(b bool) string {
 	}
 	return "false"
 }
-
-// moved is the Focus handler of a trigger that may ask for the keyboard
-// again: it does nothing, but a handler that runs makes the surface
-// render, so a frame that asks for nothing comes between two that ask for
-// the trigger (surf.Autofocus moves the keyboard only when the frame
-// before didn't ask for it).
-func moved(bool) {}

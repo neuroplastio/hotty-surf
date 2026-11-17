@@ -165,7 +165,7 @@ func selectBox(v *selectView) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key), surf.Focus(moved)))
+			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "button", surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

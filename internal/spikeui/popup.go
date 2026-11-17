@@ -43,13 +43,6 @@ type Popup struct {
 // without Trigger. It returns "" for a templ statement.
 func (p *Popup) Home(id string) string { p.home = id; return "" }
 
-// Moved is the Focus handler of p's home. It does nothing, but a handler
-// that runs makes the surface render: when the keyboard leaves home (a
-// click on an item, which takes no focus), that frame asks for nothing, so
-// the frame after an item's click can ask again (surf.Autofocus moves the
-// keyboard only when the frame before did not ask for the element).
-func (p *Popup) Moved(bool) {}
-
 // refocus gives home the keyboard when an item asked for it. A popup calls
 // it after its children, so a command's search inside it is home.
 func (p *Popup) refocus(ctx context.Context) string {
@@ -156,7 +149,7 @@ func (p *Popup) Keys(k string) bool {
 // which closes p). So while p is open they go to the program, where
 // Popup.Keys picks the active item, as the arrows already do.
 func Trigger(ctx context.Context, id, haspopup string, p *Popup) templ.Attributes {
-	a := surf.On(ctx, id, surf.Click(p.Toggle), surf.Key(p.Keys), surf.Focus(p.Moved))
+	a := surf.On(ctx, id, surf.Click(p.Toggle), surf.Key(p.Keys))
 	p.home = id
 	a["aria-haspopup"] = haspopup
 	a["aria-expanded"] = bstr(p.Open)

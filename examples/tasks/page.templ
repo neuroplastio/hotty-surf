@@ -320,7 +320,7 @@ templ row(a *App, k, i int) {
 templ rowActions(a *App, r string, i int) {
 	{{ open := a.rowMenu.Open && a.rowFor == i }}
 	<div data-slot="dropdown-menu" class="dropdown-menu align-middle">
-		<button data-slot="dropdown-menu-trigger" aria-haspopup="menu" aria-expanded={ boolStr(open) } data-state={ openState(open) } data-variant="ghost" data-size="icon" class="btn size-8 data-[state=open]:bg-muted" { surf.On(ctx, r+"-menu", surf.Click(func() { a.OpenRowMenu(i) }), surf.Key(a.rowMenu.Keys), surf.Focus(a.rowMenu.Moved))... }>
+		<button data-slot="dropdown-menu-trigger" aria-haspopup="menu" aria-expanded={ boolStr(open) } data-state={ openState(open) } data-variant="ghost" data-size="icon" class="btn size-8 data-[state=open]:bg-muted" { surf.On(ctx, r+"-menu", surf.Click(func() { a.OpenRowMenu(i) }), surf.Key(a.rowMenu.Keys))... }>
 			@ui.Icon("ellipsis", "")
 			<span class="sr-only">Open menu</span>
 		</button>

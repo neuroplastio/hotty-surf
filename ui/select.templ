@@ -28,7 +28,7 @@ templ selectBox(v *selectView) {
 				data-keys="enter=program"
 			}
 			disabled?={ v.p.Disabled }
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key), surf.Focus(moved))... }
+			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key))... }
 		>
 			{{ label, muted := v.label() }}
 			<span
