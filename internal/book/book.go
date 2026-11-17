@@ -131,7 +131,9 @@ func New() *App {
 			}
 			return -1
 		}
-		return strings.Compare(x.Name, y.Name)
+		// A component's variants stay in the order its stories were
+		// added (stories.BookAll), as the spike listed them.
+		return 0
 	})
 	a.model = storybook.New(ss)
 	a.nav = ui.NavList{ID: "book-nav", Label: "Stories", FilterLabel: "Filter stories", Placeholder: "Filter stories  ( / )", Empty: "No story matches."}

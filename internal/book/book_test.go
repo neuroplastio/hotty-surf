@@ -412,3 +412,19 @@ func storyControl(a *App, path string) string {
 	}
 	return ""
 }
+
+// A component's variants are listed as the spike listed them: the order
+// their stories were added, not by name.
+func TestVariantOrder(t *testing.T) {
+	a := New()
+	var got []string
+	for _, s := range a.model.Stories {
+		if strings.HasPrefix(s.Name, "Button") {
+			got = append(got, s.Name)
+		}
+	}
+	want := "Button, Button / destructive, Button / ghost with icon, Button / disabled, Button / every variant and size"
+	if strings.Join(got, ", ") != want {
+		t.Fatalf("Button's stories: %s\nwant: %s", strings.Join(got, ", "), want)
+	}
+}

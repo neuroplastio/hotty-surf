@@ -29,6 +29,13 @@ fixed before the audit is complete.
   gap before the code. Restored monospace small labels, field sizes, spacing,
   and the spike's checkbox appearance.
 
+- [x] Story order: the book sorted a component's variants by name
+  (destructive, disabled, every variant, ghost with icon), where the spike
+  listed them as its file did (destructive, ghost with icon, disabled,
+  every variant). They keep their order of addition now
+  (`TestVariantOrder`); groups and components stay sorted by name, as the
+  category groups have no spike order.
+
 ## In progress
 
 - [x] The host drew a native select arrow despite Basecoat `appearance:none`,
