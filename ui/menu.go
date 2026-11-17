@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"fmt"
+	"io"
 	"slices"
 
 	"github.com/a-h/templ"
@@ -35,10 +36,25 @@ type MenuItem struct {
 	Icon string
 	// Keys is the item's shortcut, shown as Kbd shows it. The menu shows it
 	// only: the app binds the key itself.
-	Keys     string
-	Group    string
+	Keys  string
+	Group string
+	// Keywords are more words a Command's search finds the item by,
+	// separated by spaces or commas (data-keywords), case-insensitively, in
+	// addition to Label. Keys is display text, not a search keyword.
+	// A DropdownMenu has no search, and doesn't use Keywords.
+	Keywords string
 	Variant  Variant // Destructive, or Primary
 	Disabled bool
+	// Role is "" or "menuitem" for an action, "menuitemcheckbox" for a
+	// toggle, or "menuitemradio" for a choice. Command ignores it.
+	Role string
+	// Checked and OnCheckedChange control a checkbox or radio item. Radio
+	// items in the same rendered group are exclusive; selecting one calls
+	// changed, enabled items' callbacks in item order. Choosing an item calls
+	// these callbacks before OnSelect, then closes the menu. Command ignores
+	// these fields.
+	Checked         bool
+	OnCheckedChange func(bool)
 	// OnSelect runs when the user chooses the item; the menu closes.
 	OnSelect func()
 }
@@ -78,7 +94,10 @@ func (st *DropdownMenuState) Open() {
 // dropdown-menu.html.jinja, its behaviour dropdown-menu.js's, translated to
 // Go (the arrows, Home, End, Enter, Escape, a click outside closing it).
 func DropdownMenu(st *DropdownMenuState, p DropdownMenuProps) templ.Component {
-	return dropdownMenu(newMenuView(st, p))
+	// The view is made at each render, from the state as it is then.
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return dropdownMenu(newMenuView(st, p)).Render(ctx, w)
+	})
 }
 
 var (
@@ -96,7 +115,19 @@ type menuView struct {
 	items   []int     // the items' indexes into p.Items, as opts
 	enabled []int     // the items not disabled, as indexes into opts (getItems)
 	n       uint64    // the frame rendering it (rt.Frame.N), its handlers'
+	popups  *popup    // the surface's open popup
 }
+
+// join reads the frame: its number, and the surface's popups.
+func (v *menuView) join(ctx context.Context) string {
+	v.n = frameN(ctx)
+	v.popups = popups(ctx)
+	v.popups.track(v.st, v.st.open, v.shut)
+	return ""
+}
+
+// shut closes it for another popup's opening.
+func (v *menuView) shut() { v.st.open, v.st.active = false, -1 }
 
 func newMenuView(st *DropdownMenuState, p DropdownMenuProps) *menuView {
 	v := &menuView{st: st, p: p, id: or(p.ID, "dropdown-menu")}
@@ -135,6 +166,7 @@ func (v *menuView) check(ctx context.Context) string {
 	}
 	for _, it := range v.p.Items {
 		checkVariant(ctx, "MenuItem", it.Variant, menuItemVariants)
+		checkEnum(ctx, "MenuItem", "Role", it.Role, []string{"", "menuitem", "menuitemcheckbox", "menuitemradio"})
 	}
 	return ""
 }
@@ -161,6 +193,7 @@ func (v *menuView) activeOpt() int {
 // open is openPopover: initial is the item highlighted, if any.
 func (v *menuView) open(initial uint8) {
 	v.st.open = true
+	v.popups.opened(v.st, v.shut)
 	if n := len(v.enabled); n > 0 {
 		switch initial {
 		case pickFirst:
@@ -177,6 +210,7 @@ func (v *menuView) close(focus bool) {
 		return
 	}
 	v.st.open, v.st.active = false, -1
+	v.popups.closed(v.st)
 	if focus {
 		v.ask()
 	}
@@ -200,6 +234,14 @@ func (v *menuView) choose(o int) {
 	if it.Disabled {
 		return
 	}
+	switch it.Role {
+	case "menuitemcheckbox":
+		if it.OnCheckedChange != nil {
+			it.OnCheckedChange(!it.Checked)
+		}
+	case "menuitemradio":
+		v.checkRadio(o)
+	}
 	if it.OnSelect != nil {
 		it.OnSelect()
 	}
@@ -209,11 +251,44 @@ func (v *menuView) choose(o int) {
 	v.ask()
 }
 
+// checkRadio follows dropdown-menu.js's nearest group, or the whole menu
+// for an ungrouped radio; disabled radios are left alone.
+func (v *menuView) checkRadio(chosen int) {
+	indices := make([]int, 0, len(v.opts))
+	for _, e := range v.entries {
+		if e.kind == entryGroup && slices.Contains(e.opts, chosen) {
+			indices = e.opts
+			break
+		}
+	}
+	if len(indices) == 0 {
+		for i := range v.opts {
+			indices = append(indices, i)
+		}
+	}
+	for _, i := range indices {
+		it := v.item(i)
+		if it.Role != "menuitemradio" || it.Disabled || it.Checked == (i == chosen) {
+			continue
+		}
+		if it.OnCheckedChange != nil {
+			it.OnCheckedChange(i == chosen)
+		}
+	}
+}
+
 // ask is trigger.focus(), from a handler of this view's frame: for the
 // frame after it.
 func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
 // key is handleKeydown, on the menu's root.
+func (v *menuView) triggerKeys() string {
+	if v.st.open {
+		return "enter=program space=program"
+	}
+	return ""
+}
+
 func (v *menuView) key(k string) bool {
 	if k == "escape" {
 		if !v.st.open {
@@ -294,7 +369,7 @@ func (v *menuView) refocus() bool {
 // rootAttrs are the root's: its keys, and while open the click outside.
 func (v *menuView) rootAttrs(ctx context.Context) templ.Attributes {
 	if !v.st.open {
-		return surf.On(ctx, v.id, surf.Key(v.key))
+		return kitOn(ctx, v.id, surf.Key(v.key))
 	}
-	return surf.On(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
+	return kitOn(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
 }

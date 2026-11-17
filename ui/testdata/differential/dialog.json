@@ -93,13 +93,77 @@
    "known": [
     {
      "steps": [
+      4,
       5,
       6
      ],
      "what": [
       "focus"
      ],
-     "why": "A modal dialog keeps Tab inside it in a browser (showModal makes the rest of the page inert), so Tab from its last stop wraps to its first. A hotty document can't mark a region modal, so Tab off the last stop leaves the surface: hotty's 0.9 task \"a modal region\" proposes it."
+     "why": "Chromium moves focus to browser chrome once after the last modal control before wrapping. A surface has no browser chrome, so its focus guards wrap directly; subsequent steps in this sequence consequently start at different controls."
+    }
+   ]
+  },
+  {
+   "name": "reverse-wrap",
+   "args": {
+    "id": "d",
+    "trigger": "Rename",
+    "trigger_attrs": {
+     "id": "d-trigger",
+     "class": "btn"
+    },
+    "title": "Rename",
+    "description": "A new name.",
+    "close_on_overlay_click": true
+   },
+   "caller": "<input id=\"d-name\" class=\"input\"><button id=\"d-save\" type=\"button\" class=\"btn\">Save</button>",
+   "root": "#d",
+   "steps": [
+    {
+     "click": "d-trigger"
+    },
+    {
+     "key": "shift+tab"
+    },
+    {
+     "key": "tab"
+    }
+   ],
+   "known": [
+    {
+     "steps": [
+      2
+     ],
+     "what": [
+      "focus"
+     ],
+     "why": "Chromium visits browser chrome on Shift+Tab before the first control; a surface has no browser chrome and wraps straight to the last control."
+    }
+   ]
+  },
+  {
+   "name": "no-close-button",
+   "args": {
+    "id": "d",
+    "trigger": "Rename",
+    "trigger_attrs": {
+     "id": "d-trigger",
+     "class": "btn"
+    },
+    "title": "Rename",
+    "description": "A new name.",
+    "close_on_overlay_click": true,
+    "close_button": false
+   },
+   "caller": "<input id=\"d-name\" class=\"input\"><button id=\"d-save\" type=\"button\" class=\"btn\">Save</button>",
+   "root": "#d",
+   "steps": [
+    {
+     "click": "d-trigger"
+    },
+    {
+     "key": "escape"
     }
    ]
   }

@@ -50,9 +50,12 @@ type Surface struct {
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).
-	vals    map[string]string
-	checked map[string]bool
-	revs    map[string]int
+	vals          map[string]string
+	checked       map[string]bool
+	revs          map[string]int
+	sels          map[string][2]int
+	pendingSel    map[string][2]int
+	pendingNative map[string]hotty.FieldChange
 
 	// Where the keyboard and the pointer are, as the host said: the
 	// element and the ids of it and its ancestors, which Focus and Hover
@@ -60,18 +63,20 @@ type Surface struct {
 	focused string
 	// lastFocus is the element that had the keyboard last, which Focus
 	// gives it back to.
-	lastFocus string
-	focusIn   []string
-	hoverIn   []string
-	hoverAt   string // the element under the pointer, as the host last said
-	pressed   bool   // the last event was a press on the surface (see event)
-	drag      string // the element a drag under way began on, "" for none
-	lifted    bool   // that drag has moved: the element has the class dragging
-	asked     string // the element the last frame's Autofocus asked for
-	askDue    bool   // a Document's Autofocus, sent at the next Update
-	cssDue    bool   // the stylesheet changed (a dev reload): sent at the next Update
-	sending   bool
-	deferred  []hotty.Event
+	lastFocus    string
+	focusIn      []string
+	hoverIn      []string
+	hoverAt      string // the element under the pointer, as the host last said
+	pressed      bool   // the last event was a primary press on the surface (see event)
+	drag         string // the element a drag under way began on, "" for none
+	lifted       bool   // that drag has moved: the element has the class dragging
+	modalPressed bool   // the last press was inside the active modal's scope
+	modalFocus   string // first or last modal control to focus after an event
+	asked        string // the element the last frame's Autofocus asked for
+	askDue       bool   // a Document's Autofocus, sent at the next Update
+	cssDue       bool   // the stylesheet changed (a dev reload): sent at the next Update
+	sending      bool
+	deferred     []hotty.Event
 
 	r renderer
 }
@@ -165,6 +170,9 @@ func (s *Surface) Focus() (focused bool, err error) {
 // handlers of the focused element and its ancestors are asked, innermost
 // first, with the key as [Key] says; taken says whether one took it. A key
 // no handler takes is the program's.
+// A ui.KeyScope naming a key runs before a focused kit control's default
+// and ordinary Key handlers; a decline tries enclosing scopes, then the
+// default.
 func (s *Surface) Key(key string) (taken bool, err error) {
 	return s.key(key)
 }

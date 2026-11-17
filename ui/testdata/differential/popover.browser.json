@@ -1,0 +1,68 @@
+{
+ "toggle": [
+  {
+   "step": "load",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"false\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"true\" data-align=\"end\" data-side=\"top\"><p>Hi</p></div></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click p-trigger",
+   "note": "",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"true\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"false\" data-align=\"end\" data-side=\"top\"><p>Hi</p></div></div>",
+   "focus": "p-trigger",
+   "events": []
+  },
+  {
+   "step": "click p-trigger",
+   "note": "",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"false\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"true\" data-align=\"end\" data-side=\"top\"><p>Hi</p></div></div>",
+   "focus": "p-trigger",
+   "events": []
+  }
+ ],
+ "escape": [
+  {
+   "step": "load",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"false\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"true\"><p>Hi</p></div></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click p-trigger",
+   "note": "",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"true\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"false\"><p>Hi</p></div></div>",
+   "focus": "p-trigger",
+   "events": []
+  },
+  {
+   "step": "key escape",
+   "note": "",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"false\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"true\"><p>Hi</p></div></div>",
+   "focus": "p-trigger",
+   "events": []
+  }
+ ],
+ "outside": [
+  {
+   "step": "load",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"false\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"true\"><p>Hi</p></div></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click p-trigger",
+   "note": "",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"true\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"false\"><p>Hi</p></div></div>",
+   "focus": "p-trigger",
+   "events": []
+  },
+  {
+   "step": "click outside",
+   "note": "",
+   "html": "<div id=\"p\" class=\"popover \" data-popover-initialized=\"true\" data-basecoat-component=\"popover\"><button id=\"p-trigger\" type=\"button\" aria-expanded=\"false\" aria-controls=\"p-popover\" class=\"btn\" data-variant=\"outline\">Open</button><div id=\"p-popover\" data-popover=\"\" aria-hidden=\"true\"><p>Hi</p></div></div>",
+   "focus": "p-trigger",
+   "events": []
+  }
+ ]
+}

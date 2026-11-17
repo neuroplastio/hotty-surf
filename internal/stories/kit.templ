@@ -2,6 +2,7 @@ package stories
 
 import (
 	"strconv"
+	"strings"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -13,11 +14,21 @@ import (
 type kitState struct {
 	clicks int
 	value  string
+	values []string
+	checked bool
+	theme string
 	ran    string
 	open   bool
 	sel    ui.SelectState
 	menu   ui.DropdownMenuState
 	toasts ui.ToasterState
+}
+
+// labelled names an icon-only button, which has no text of its own: its
+// handlers' attributes, with its aria-label (kit rule K18).
+func labelled(a templ.Attributes, name string) templ.Attributes {
+	a["aria-label"] = name
+	return a
 }
 
 type bookButtonProps struct {
@@ -62,20 +73,29 @@ func init() {
 		return p, bookBadge(p)
 	}})
 	add(Story{ID: "badge/every-variant", Doc: "A badge of each variant", View: kit(badgeEvery, nil)})
+	add(Story{ID: "badge/warning", Doc: "A warning: Basecoat has no such variant, so an Outline badge in amber, by class", View: kit(badgeWarning, nil)})
 	add(Story{ID: "card/default", Doc: "A card with a header, a section and a footer", View: kit(cardDefault, nil)})
 	add(Story{ID: "kbd/default", Doc: "Shortcuts as the host's platform writes them", View: kit(kbdDefault, nil)})
 	add(Story{ID: "select/default", Doc: "A select with a placeholder",
 		View: kit(selectDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
+	add(Story{ID: "select/multiple", Doc: "Select several sizes",
+		View: kit(selectMultiple, nil), Keys: []string{"tab", "enter", "arrow_down", "enter", "arrow_down", "enter"}, Want: "sizes: s,m"})
+	add(Story{ID: "select/end-aligned", Doc: "A select aligned to the right edge",
+		View: kit(selectEndAligned, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "size: s"})
 	add(Story{ID: "select/grouped", Doc: "A select with groups and a disabled option",
 		View: kit(selectGrouped, func(s *kitState) { s.value = "apple" }), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "fruit: banana"})
 	add(Story{ID: "dropdown-menu/default", Doc: "A menu with an icon, a shortcut, a disabled item and a group",
 		View: kit(menuDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "ran: profile"})
 	add(Story{ID: "dropdown-menu/end-aligned", Doc: "A menu aligned to its trigger's end",
 		View: kit(menuEndAligned, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "ran: profile"})
+	add(Story{ID: "dropdown-menu/checkbox-radio", Doc: "Checkbox and radio items in a menu",
+		View: kit(menuChecks, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "checked: on"})
 	add(Story{ID: "dialog/default", Doc: "A dialog its button opens, with a field and a footer",
 		View: kit(dialogDefault, nil), Keys: []string{"tab", "enter", "escape"}, Want: "open: off"})
 	add(Story{ID: "dialog/open", Doc: "A dialog open from the start",
-		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "tab", "enter"}, Want: "open: off"})
+		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "enter"}, Want: "open: off"})
+	add(Story{ID: "dialog/without-close-button", Doc: "A dialog without the corner close button",
+		View: kit(dialogNoClose, nil), Keys: []string{"tab", "enter", "escape"}, Want: "open: off"})
 	add(Story{ID: "tabs/default", Doc: "Three tabs, the shown one's panel below",
 		View: kit(tabsDefault, func(s *kitState) { s.value = "account" }), Keys: []string{"tab", "arrow_right"}, Want: "tab: password"})
 	add(Story{ID: "tabs/many", Doc: "More tabs than fit, one disabled",
@@ -84,6 +104,8 @@ func init() {
 		View: kit(toastDefault, nil), Keys: []string{"tab", "enter"}, Want: "Event created"})
 	add(Story{ID: "toast/categories", Doc: "A button for each category of toast",
 		View: kit(toastCategories, nil), Keys: []string{"tab", "tab", "enter"}, Want: "Couldn't save"})
+	add(Story{ID: "toast/action", Doc: "A toast with an undo action",
+		View: kit(toastAction, nil), Keys: []string{"tab", "enter", "tab", "enter"}, Want: "action: undone"})
 }
 
 templ count(s *kitState) {
@@ -136,7 +158,7 @@ templ buttonGhostWithIcon(s *kitState) {
 				@ui.Icon("plus", "")
 				New
 			}
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: surf.On(ctx, "settings", surf.Click(s.click), ) }) {
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: labelled(surf.On(ctx, "settings", surf.Click(s.click)), "Settings")}) {
 				@ui.Icon("settings-2", "")
 			}
 		</div>
@@ -188,7 +210,7 @@ templ buttonEvery(s *kitState) {
 				@ui.Button(ui.ButtonProps{Size: z, Variant: ui.Outline, Attrs: surf.On(ctx, "s-"+sizeName(z), surf.Click(s.click))}) {
 					{ sizeName(z) }
 				}
-				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click))}) {
+				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: labelled(surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click)), "Add ("+sizeName(z)+")")}) {
 					@ui.Icon("plus", "")
 				}
 			}
@@ -212,6 +234,16 @@ templ badgeEvery(s *kitState) {
 				{ variantName(v) }
 			}
 		}
+	</div>
+}
+
+templ badgeWarning(s *kitState) {
+	<div class="flex flex-row flex-wrap items-center gap-2 p-4">
+		@ui.Badge(ui.BadgeProps{Variant: ui.Outline, Class: "border-amber-500/50 text-amber-600 dark:text-amber-400"}) {
+			@ui.Icon("triangle-alert", "")
+			Low stock
+		}
+		<span class="text-sm text-muted-foreground">3 left</span>
 	</div>
 }
 
@@ -272,6 +304,23 @@ templ selectGrouped(s *kitState) {
 	</div>
 }
 
+templ selectMultiple(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Select(&s.sel, ui.SelectProps{ID:"sizes", Items:sizeItems, Multiple:true, Values:s.values, Placeholder:"Pick sizes", OnValuesChange:func(v []string){s.values=v}})
+		<p>sizes: { strings.Join(s.values, ",") }</p>
+	</div>
+}
+
+templ selectEndAligned(s *kitState) {
+	<div class="p-4">
+		<div class="flex flex-row justify-between">
+			<span></span>
+			@ui.Select(&s.sel, ui.SelectProps{ID:"edge", Items:sizeItems, Value:s.value, Placeholder:"Pick a size", Align:"end", OnChange:s.choose})
+		</div>
+		<p>size: { s.value }</p>
+	</div>
+}
+
 func (s *kitState) menuItems() []ui.MenuItem {
 	return []ui.MenuItem{
 		{Label: "Profile", Icon: "settings-2", Keys: "mod+p", OnSelect: s.run("profile")},
@@ -298,6 +347,17 @@ templ menuEndAligned(s *kitState) {
 	</div>
 }
 
+templ menuChecks(s *kitState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.DropdownMenu(&s.menu, ui.DropdownMenuProps{ID:"choices", Trigger:templ.Raw("Choices"), Items:[]ui.MenuItem{
+			{Label:"Show status", Role:"menuitemcheckbox", Checked:s.checked, OnCheckedChange:func(v bool){s.checked=v}},
+			{Label:"Light", Group:"Theme", Role:"menuitemradio", Checked:s.theme=="light", OnCheckedChange:func(v bool){if v {s.theme="light"}}},
+			{Label:"Dark", Group:"Theme", Role:"menuitemradio", Checked:s.theme=="dark", OnCheckedChange:func(v bool){if v {s.theme="dark"}}},
+		}})
+		<p>checked: { onoff(s.checked) }</p>
+	</div>
+}
+
 templ dialogBody(s *kitState) {
 	@ui.Dialog(ui.DialogProps{ID: "rename", Open: s.open, Title: "Rename", Description: "Give the project a new name.", OnClose: func() { s.open = false }}) {
 		<section>
@@ -310,6 +370,16 @@ templ dialogBody(s *kitState) {
 		</footer>
 	}
 	<p class="text-sm text-muted-foreground">open: { onoff(s.open) }</p>
+}
+
+templ dialogNoClose(s *kitState) {
+	<div class="p-4">
+		@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"open-no-close",surf.Click(func(){s.open=true}))}) { Open }
+		@ui.Dialog(ui.DialogProps{ID:"no-close", Open:s.open, Title:"Confirm", HideCloseButton:true, OnClose:func(){s.open=false}}) {
+			<footer>@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"done-no-close",surf.Click(func(){s.open=false}))}) { Done }</footer>
+		}
+		<p>open: { onoff(s.open) }</p>
+	</div>
 }
 
 templ dialogDefault(s *kitState) {
@@ -364,6 +434,16 @@ templ toastDefault(s *kitState) {
 		}))}) {
 			Show a toast
 		}
+		@ui.Toaster(&s.toasts)
+	</div>
+}
+
+templ toastAction(s *kitState) {
+	<div class="p-4">
+		@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"show-action",surf.Click(func(){
+			s.toasts.Show(ui.Toast{Title:"Event deleted",Duration:-1,Action:&ui.ToastAction{Label:"Undo",OnSelect:func(){s.ran="undone"}}})
+		}))}) { Delete }
+		<p>action: { s.ran }</p>
 		@ui.Toaster(&s.toasts)
 	</div>
 }

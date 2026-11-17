@@ -84,9 +84,9 @@ func filtered(n *html.Node) bool {
 		return attr(n, "aria-hidden") == "true" && in("combobox")
 	case "group":
 		switch {
-		case in("command"):
+		case in("command") && closest(n, func(a *html.Node) bool { return attr(a, "role") == "menu" }) != nil:
 			return !hasShown(n, "menuitem")
-		case in("combobox"):
+		case in("combobox") && closest(n, func(a *html.Node) bool { return attr(a, "role") == "listbox" }) != nil:
 			return !hasShown(n, "option")
 		}
 	}
@@ -199,6 +199,8 @@ func kids(n *html.Node) []*html.Node {
 // false for anything else.
 func (l *layout) figure(n *html.Node, x, y, w int, in inh) (h, used int, ok bool) {
 	switch {
+	case has(n, "data-hotty-slider"):
+		return l.slider(n, x, y, w, in), min(w, 40), true
 	case attr(n, "role") == "progressbar":
 		return l.bar(n, x, y, w, in), min(w, barW), true
 	case tokens(n, "class", "skeleton"):
@@ -219,6 +221,79 @@ func (l *layout) figure(n *html.Node, x, y, w int, in inh) (h, used int, ok bool
 		return 1, 1, true
 	}
 	return 0, 0, false
+}
+
+// slider follows the cells range presentation: two thumbs with a filled
+// track between them, or one thumb with a filled track from the start.
+func (l *layout) slider(n *html.Node, x, y, w int, in inh) int {
+	var thumbs, notches []*html.Node
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		switch {
+		case attr(k, "role") == "slider":
+			thumbs = append(thumbs, k)
+		case has(k, "data-hotty-slider-notch"):
+			notches = append(notches, k)
+		}
+	}
+	if len(thumbs) == 0 || w < 1 {
+		return 1
+	}
+	label := strings.TrimSuffix(attr(thumbs[0], "aria-label"), ", start")
+	value := attr(thumbs[0], "aria-valuenow")
+	if len(thumbs) > 1 {
+		value += "–" + attr(thumbs[1], "aria-valuenow")
+	}
+	labelWidth := min(widthOf(charsOf(label)), max(0, w-4))
+	for i, c := range charsOf(label) {
+		if i >= labelWidth {
+			break
+		}
+		l.put(x+i, y, c.s, in.look, n)
+	}
+	start := x + labelWidth + 1
+	tw := min(17, max(1, w-labelWidth-2-widthOf(charsOf(value))))
+	lo := num(attr(thumbs[0], "aria-valuemin"), 0)
+	hi := num(attr(thumbs[len(thumbs)-1], "aria-valuemax"), 100)
+	pos := func(t *html.Node) int {
+		if hi <= lo {
+			return 0
+		}
+		return int(math.Round(math.Max(0, math.Min(1, (num(attr(t, "aria-valuenow"), lo)-lo)/(hi-lo))) * float64(tw-1)))
+	}
+	a, b := 0, pos(thumbs[len(thumbs)-1])
+	if len(thumbs) > 1 {
+		a = pos(thumbs[0])
+	}
+	for i := range tw {
+		owner := n
+		if len(notches) > 0 && tw > 1 {
+			owner = notches[int(math.Round(float64(i)*float64(len(notches)-1)/float64(tw-1)))]
+		}
+		mark := "⎯"
+		if i >= a && i <= b {
+			mark = "━"
+		}
+		l.put(start+i, y, mark, in.look, owner)
+	}
+	for _, t := range thumbs {
+		at := start + pos(t)
+		lk := in.look
+		if l.c.active && l.c.focused == t {
+			lk |= lReverse
+		}
+		if disabled(t) {
+			lk |= lDim
+		}
+		l.put(at, y, "■", lk, t)
+		l.done(t, rect{at, y, 1, 1})
+	}
+	for i, c := range charsOf(value) {
+		if start+tw+1+i >= x+w {
+			break
+		}
+		l.put(start+tw+1+i, y, c.s, in.look, n)
+	}
+	return 1
 }
 
 // barW is the widest a bar is drawn.

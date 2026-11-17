@@ -87,6 +87,11 @@ type Step struct {
 	Click  string `json:"click,omitempty"`
 	Select string `json:"select,omitempty"`
 	Key    string `json:"key,omitempty"`
+	// Type is text typed into the focused field, a character at a time.
+	Type string `json:"type,omitempty"`
+	// Hover moves the pointer onto the element with this id, as it moves
+	// before a click (a click step moves it too, in the browser only).
+	Hover string `json:"hover,omitempty"`
 }
 
 // Name is the step as the snapshots name it.
@@ -96,6 +101,10 @@ func Name(s Step) string {
 		return "click " + s.Click
 	case s.Select != "":
 		return "click " + s.Select
+	case s.Type != "":
+		return "type " + s.Type
+	case s.Hover != "":
+		return "hover " + s.Hover
 	}
 	return "key " + s.Key
 }

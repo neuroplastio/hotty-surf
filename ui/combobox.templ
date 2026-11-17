@@ -1,0 +1,79 @@
+package ui
+
+// Combobox's Basecoat 1.1.0 macro markup, with combobox.js's state in Go.
+import "neuroplast.io/hotty-surf"
+
+templ combobox(v *comboboxView) {
+ {{ v.join(ctx) }}
+ <div class={ join("combobox",v.p.Class) } data-combobox-initialized="true"
+  if v.p.Multiple && v.p.CloseOnSelect { data-close-on-select="true" }
+  if v.p.AutoHighlight { data-auto-highlight="true" }
+  { v.rootAttrs(ctx)... }>
+  if v.p.Multiple {
+   <div class="combobox-chips">
+    for i, value := range v.p.Values {
+     <span class="combobox-chip" data-value={ value }><span>{ v.label(value) }</span>
+      <button type="button" class="combobox-chip-remove btn" data-variant="ghost" data-size="icon-xs" aria-label={ "Remove " + v.label(value) } disabled?={ v.p.Disabled } { scopeNativeAttrs(ctx,surf.On(ctx,v.chipID(i),surf.Click(v.removeClick(value))),"button")... }>
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      </button>
+     </span>
+    }
+    @comboboxInput(v)
+   </div>
+  } else if v.p.Clear {
+   <div class="input-group">
+    @comboboxInput(v)
+    <span role="group" data-align="inline-end">
+     <button type="button" data-clear aria-label="Clear selection" hidden?={ v.p.Value == "" && v.st.text == "" } disabled?={ v.p.Disabled } { scopeNativeAttrs(ctx,surf.On(ctx,v.id+"-clear",surf.Click(v.clear)),"button")... }>
+      <svg class="size-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+     </button>
+     <button type="button" class="btn" data-variant="ghost" data-size="icon-xs" aria-label="Open suggestions" aria-haspopup="listbox" aria-expanded={ bstr(v.st.open) } aria-controls={ v.id+"-listbox" } disabled?={ v.p.Disabled } { scopeNativeAttrs(ctx,surf.On(ctx,v.id+"-trigger",surf.Click(v.toggle)),"button")... }>
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+     </button>
+    </span>
+   </div>
+  } else {
+   @comboboxInput(v)
+   <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="combobox-trigger-icon"><path d="m6 9 6 6 6-6"></path></svg>
+  }
+  <div id={ v.id+"-popover" } data-popover aria-hidden={ bstr(!v.st.open) } data-empty={ bstr(len(v.visible)==0) }>
+   <div role="listbox" id={ v.id+"-listbox" } aria-orientation="vertical" if v.p.Multiple { aria-multiselectable="true" }>
+    for _, e := range v.entries {
+     switch e.kind {
+      case entryOpt:
+       @comboboxOption(v,e.opt)
+      case entryGroup:
+       <div role="group" aria-labelledby={ e.labelID }><div role="heading" id={ e.labelID }>{ e.group }</div>
+		for _, i := range e.opts {
+			@comboboxOption(v,i)
+		}
+       </div>
+      case entrySeparator:
+       <hr role="separator"/>
+     }
+    }
+   </div>
+  </div>
+  <input type="hidden" name={ v.id+"-value" } value={ v.hiddenValue() }/>
+  if v.refocus() {
+   {{ surf.Autofocus(ctx,v.id+"-input") }}
+  }
+ </div>
+}
+
+templ comboboxInput(v *comboboxView) {
+ <input type="text" role="combobox" placeholder={ v.p.Placeholder } autocomplete="off" autocorrect="off" spellcheck="false" aria-autocomplete="list" aria-expanded={ bstr(v.st.open) } aria-controls={ v.id+"-listbox" } value={ v.fieldValue() } disabled?={ v.p.Disabled }
+  if i := v.active(); i >= 0 { aria-activedescendant={ v.opts[i].id } }
+  { v.inputAttrs(ctx)... }/>
+}
+
+templ comboboxOption(v *comboboxView, i int) {
+ {{ o:=v.opts[i] }}
+ <div role="option" data-value={ o.value } aria-hidden={ bstr(!v.shown[i]) }
+  if v.p.Items[i].Keywords != "" { data-keywords={ v.p.Items[i].Keywords } }
+  if v.selected(o.value) { aria-selected="true" }
+  if o.disabled { aria-disabled="true" }
+  if i==v.active() { class="active" }
+  if o.disabled { id={ o.id } } else { { surf.On(ctx,o.id,surf.Click(v.selectClick(i)),surf.Hover(v.hover(i)))... } }
+ >{ o.label }</div>
+}

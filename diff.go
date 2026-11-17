@@ -98,9 +98,18 @@ func (d *differ) field(id string, n *html.Node) {
 		return // the markup asks for no value: the field is the host's
 	}
 	want := fieldValue(n)
-	if s.vals[id] != want {
+	sel, selection := s.pendingSel[id]
+	if s.vals[id] != want || selection {
+		change := hotty.FieldChange{Rev: s.revs[id]}
+		if s.vals[id] != want {
+			change.Value = &want
+		}
+		if selection {
+			change.Sel = &sel
+			delete(s.pendingSel, id)
+		}
 		s.vals[id] = want
-		d.fields = append(d.fields, hotty.SetField(s.name, id, hotty.FieldChange{Rev: s.revs[id], Value: &want}))
+		d.fields = append(d.fields, hotty.SetField(s.name, id, change))
 	}
 }
 

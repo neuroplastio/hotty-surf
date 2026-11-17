@@ -1,0 +1,9 @@
+/* Range track and thumbs, adapted from the hotty-a2ui slider. */
+[data-hotty-slider] { position:relative; width:100%; min-width:6rem; height:1.25rem; touch-action:pan-y; }
+[data-hotty-slider-rail], [data-hotty-slider-fill] { position:absolute; top:50%; height:0.375rem; margin-top:-0.1875rem; border-radius:999px; }
+[data-hotty-slider-rail] { left:0; right:0; background:var(--muted); }
+[data-hotty-slider-fill] { background:var(--primary); }
+[data-hotty-slider-notch] { position:absolute; top:0; bottom:0; }
+[data-hotty-slider-thumb] { position:absolute; top:50%; width:1rem; height:1rem; margin:-0.5rem 0 0 -0.5rem; padding:0; border:1px solid var(--primary); border-radius:50%; background:var(--background); }
+[data-hotty-slider-thumb]:focus { outline:2px solid var(--ring); outline-offset:2px; }
+[data-hotty-slider-thumb]:disabled { opacity:0.5; }

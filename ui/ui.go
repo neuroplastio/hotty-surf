@@ -58,14 +58,22 @@ var navCSS string
 //go:embed controls.css
 var controlsCSS string
 
-// Icon is the icon named name, one of the kit's Lucide icons, as an
-// inline SVG. The kit has a subset of Lucide, the icons its own components
-// and examples draw with: arrow-down, arrow-right, arrow-up, bell, check,
-// chevron-down, chevron-left, chevron-right, chevrons-left,
-// chevrons-right, chevrons-up-down, circle, circle-alert,
-// circle-check-big, circle-help, circle-off, circle-plus, ellipsis,
-// eye-off, folder, hand, inbox, plus, search, settings-2, timer, user and
-// x. Another name is a fault. In a button or a badge the kit sizes it;
+// Icon is the icon named name, one of the kit's Lucide icons, as an inline
+// SVG. The kit has a subset of Lucide: the icons its own components use, and
+// a set an app commonly needs, which apps draw with: archive, arrow-down,
+// arrow-left, arrow-right, arrow-up, arrow-up-down, bell, bookmark,
+// calendar, check, chevron-down, chevron-left, chevron-right, chevron-up,
+// chevrons-left, chevrons-right, chevrons-up-down, circle, circle-alert,
+// circle-check-big, circle-help, circle-off, circle-plus, circle-x, clock,
+// code, copy, download, ellipsis, ellipsis-vertical, external-link, eye,
+// eye-off, file, file-plus, file-text, filter, folder, folder-open,
+// folder-plus, git-branch, globe, hand, heart, house, image, inbox, info,
+// layout-grid, link, list, lock, lock-open, log-in, log-out, mail, menu,
+// message-square, minus, moon, panel-left, paperclip, pause, pencil, play,
+// plus, refresh-cw, save, search, send, settings, settings-2, share-2,
+// sparkles, square, star, sun, tag, terminal, timer, trash, trash-2,
+// trending-down, trending-up, triangle-alert, upload, user, user-plus, users
+// and x. Another name is a fault. In a button or a badge the kit sizes it;
 // class is for the app's own (one its stylesheet has), or "".
 func Icon(name, class string) templ.Component {
 	return icon(name, class)

@@ -39,11 +39,85 @@ type subject struct {
 
 // subjects make each component's subject from a case's macro arguments.
 var subjects = map[string]func(t *testing.T, args map[string]any) subject{
-	"select":        selectSubject,
-	"dropdown-menu": menuSubject,
-	"tabs":          tabsSubject,
-	"toast":         toastSubject,
-	"dialog":        dialogSubject,
+	"select":         selectSubject,
+	"dropdown-menu":  menuSubject,
+	"dropdown-check": menuCheckSubject,
+	"tabs":           tabsSubject,
+	"toast":          toastSubject,
+	"dialog":         dialogSubject,
+	"popover":        popoverSubject,
+	"command":        commandSubject,
+	"combobox":       comboboxSubject,
+	"drawer":         drawerSubject,
+	"alert-dialog":   alertDialogSubject,
+}
+
+func menuCheckSubject(_ *testing.T, _ map[string]any) subject {
+	p := ui.DropdownMenuProps{ID: "check", Trigger: templ.Raw("Choices"), Items: []ui.MenuItem{
+		{Label: "Status", Role: "menuitemcheckbox"},
+		{Label: "Light", Group: "Theme", Role: "menuitemradio", Checked: true},
+		{Label: "Dark", Group: "Theme", Role: "menuitemradio"},
+	}}
+	var heard []map[string]any
+	for i := range p.Items {
+		i := i
+		p.Items[i].OnCheckedChange = func(v bool) { p.Items[i].Checked = v }
+		id := []string{"check-items-1", "check-items-3-1", "check-items-3-2"}[i]
+		p.Items[i].OnSelect = func() { heard = append(heard, map[string]any{"item": id}) }
+	}
+	var st ui.DropdownMenuState
+	return subject{view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.DropdownMenu(&st, p).Render(ctx, w) }), events: func() []map[string]any { h := heard; heard = nil; return h }}
+}
+
+func alertDialogSubject(_ *testing.T, _ map[string]any) subject {
+	p := ui.AlertDialogProps{ID: "alert", Title: "Delete?", Description: "Cannot undo."}
+	p.OnClose = func() { p.Open = false }
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "alert-open", surf.Click(func() { p.Open = true }))})
+			if err := open.Render(templ.WithChildren(ctx, templ.Raw("Open")), w); err != nil {
+				return err
+			}
+			return ui.AlertDialog(p).Render(templ.WithChildren(ctx, templ.Raw(`<footer><button id="alert-cancel" type="button">Cancel</button></footer>`)), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
+}
+
+func drawerSubject(_ *testing.T, args map[string]any) subject {
+	var st ui.DrawerState
+	p := ui.DrawerProps{}
+	p.ID, _ = args["id"].(string)
+	p.Side, _ = args["side"].(string)
+	p.OnClose = func() { p.Open = false }
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "drawer-open", surf.Click(func() { p.Open = true }))})
+			if err := open.Render(templ.WithChildren(ctx, templ.Raw("Open")), w); err != nil {
+				return err
+			}
+			inside := templ.Raw(`<button id="drawer-inside" type="button">Inside</button>`)
+			return ui.Drawer(&st, p).Render(templ.WithChildren(ctx, inside), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
+}
+
+func comboboxSubject(_ *testing.T, args map[string]any) subject {
+	p := ui.ComboboxProps{Items: []ui.SelectItem{
+		{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"}, {Value: "c", Label: "Cherry"},
+	}}
+	p.ID, _ = args["id"].(string)
+	p.Placeholder, _ = args["placeholder"].(string)
+	p.Multiple, _ = args["multiple"].(bool)
+	var events []map[string]any
+	p.OnChange = func(v string) { p.Value = v; events = append(events, map[string]any{"value": v}) }
+	p.OnValuesChange = func(v []string) { p.Values = v; events = append(events, map[string]any{"value": v}) }
+	var st ui.ComboboxState
+	return subject{
+		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Combobox(&st, p).Render(ctx, w) }),
+		events: func() []map[string]any { result := events; events = nil; return result },
+	}
 }
 
 func init() {
@@ -85,9 +159,13 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 	r.Click("#outside")
 	sub.events()
 	root := differential.RootSel(cs)
+	// pristine is that no step has moved the keyboard yet: a hover
+	// doesn't, so the click on #outside still counts as nothing focused.
+	pristine := true
 	for i, w := range want {
 		if i > 0 {
 			st := cs.Steps[i-1]
+			pristine = pristine && st.Hover != ""
 			switch {
 			case st.Click != "":
 				r.Click("#" + st.Click)
@@ -98,6 +176,18 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 					t.Fatalf("step %d: nothing matches %s", i, st.Select)
 				}
 				r.Click("#" + attr(ns[0], "id"))
+			case st.Hover != "":
+				hover(t, s, r, st.Hover)
+			case st.Type != "":
+				// Into the field that has the keyboard, a key at a
+				// time, as surftest's Type types once it has clicked.
+				for _, c := range st.Type {
+					k := string(c)
+					if c == ' ' {
+						k = "space"
+					}
+					r.Key(k)
+				}
 			default:
 				r.Key(st.Key)
 			}
@@ -113,7 +203,7 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 		gotHTML := canonical(t, b.String(), sp.Drop)
 		wantHTML := canonical(t, shown(t, sp, w.HTML), sp.Drop)
 		gotFocus := focusOf(s, sp.Drop)
-		if i == 0 && gotFocus == "outside" {
+		if pristine && gotFocus == "outside" {
 			gotFocus = ""
 		}
 		gotEvents := sub.events()
@@ -243,6 +333,15 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 	p.ID, _ = args["id"].(string)
 	p.Placeholder, _ = args["placeholder"].(string)
 	p.Value, _ = args["selected"].(string)
+	p.Multiple, _ = args["multiple"].(bool)
+	p.CloseOnSelect, _ = args["close_on_select"].(bool)
+	if values, ok := args["selected"].([]any); ok {
+		for _, value := range values {
+			if s, ok := value.(string); ok {
+				p.Values = append(p.Values, s)
+			}
+		}
+	}
 	var walk func(items []any, group string)
 	walk = func(items []any, group string) {
 		for _, x := range items {
@@ -263,7 +362,7 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 	// With no selected and no placeholder the macro chooses its first
 	// option (its default_option); ui's Value "" is none, so the app says
 	// it.
-	if _, ok := args["selected"]; !ok && p.Placeholder == "" && len(p.Items) > 0 {
+	if _, ok := args["selected"]; !ok && !p.Multiple && p.Placeholder == "" && len(p.Items) > 0 {
 		p.Value = p.Items[0].Value
 	}
 	var heard []map[string]any
@@ -271,6 +370,7 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 		p.Value = v
 		heard = append(heard, map[string]any{"value": v})
 	}
+	p.OnValuesChange = func(v []string) { p.Values = v; heard = append(heard, map[string]any{"value": v}) }
 	var st ui.SelectState
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
@@ -324,6 +424,41 @@ func menuSubject(t *testing.T, args map[string]any) subject {
 	}
 }
 
+// commandSubject is a Command for command's macro arguments: id, and
+// items (label, keywords, disabled; separators; groups of them). Its items
+// report their clicks, as the page's do.
+func commandSubject(t *testing.T, args map[string]any) subject {
+	p := ui.CommandProps{}
+	p.ID, _ = args["id"].(string)
+	var heard []map[string]any
+	add := func(it map[string]any, group, id string) {
+		l, _ := it["label"].(string)
+		k, _ := it["keywords"].(string)
+		p.Items = append(p.Items, ui.MenuItem{Label: l, Keywords: k, Group: group, Disabled: it["disabled"] == true,
+			OnSelect: func() { heard = append(heard, map[string]any{"item": id}) }})
+	}
+	for n, x := range args["items"].([]any) {
+		it := x.(map[string]any)
+		id := fmt.Sprintf("%s-items-%d", p.ID, n+1)
+		switch it["type"] {
+		case "separator":
+		case "group":
+			for m, y := range it["items"].([]any) {
+				add(y.(map[string]any), it["label"].(string), fmt.Sprintf("%s-%d", id, m+1))
+			}
+		default:
+			add(it, "", id)
+		}
+	}
+	var st ui.CommandState
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Command(&st, p).Render(ctx, w)
+		}),
+		events: func() []map[string]any { h := heard; heard = nil; return h },
+	}
+}
+
 // tabsSubject is a Tabs for tabs' macro arguments: id, tabsets (tab text,
 // tab_attrs' disabled) and default_tab_index (1-based, 1 by default). Its
 // OnChange shows the tab chosen; the macro's tabs.js tells the page
@@ -349,6 +484,27 @@ func tabsSubject(t *testing.T, args map[string]any) subject {
 	}
 }
 
+// popoverSubject is a Popover for popover's macro arguments: id, trigger,
+// and popover_attrs' data-side and data-align. popover.js tells the page
+// nothing, so it reports nothing.
+func popoverSubject(t *testing.T, args map[string]any) subject {
+	var st ui.PopoverState
+	p := ui.PopoverProps{}
+	p.ID, _ = args["id"].(string)
+	trigger, _ := args["trigger"].(string)
+	p.Trigger = templ.Raw(trigger)
+	if pa, ok := args["popover_attrs"].(map[string]any); ok {
+		p.Side, _ = pa["data-side"].(string)
+		p.Align, _ = pa["data-align"].(string)
+	}
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.Popover(&st, p).Render(templ.WithChildren(ctx, templ.Raw("<p>Hi</p>")), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
+}
+
 // toastSubject is a Toaster for toaster's macro arguments: toasts, each
 // a category, title, description and duration (-1 to stay open, with a
 // cancel button). toast.js tells the page nothing, so it reports nothing.
@@ -360,6 +516,14 @@ func toastSubject(t *testing.T, args map[string]any) subject {
 		ts.Category, _ = m["category"].(string)
 		ts.Title, _ = m["title"].(string)
 		ts.Description, _ = m["description"].(string)
+		if action, ok := m["action"].(map[string]any); ok {
+			label, _ := action["label"].(string)
+			ts.Action = &ui.ToastAction{Label: label}
+		}
+		if cancel, ok := m["cancel"].(map[string]any); ok {
+			label, _ := cancel["label"].(string)
+			ts.Cancel = &ui.ToastAction{Label: label}
+		}
 		if d, ok := m["duration"].(float64); ok && d < 0 {
 			ts.Duration = -1
 		}
@@ -380,6 +544,9 @@ func dialogSubject(t *testing.T, args map[string]any) subject {
 	p.ID, _ = args["id"].(string)
 	p.Title, _ = args["title"].(string)
 	p.Description, _ = args["description"].(string)
+	if closeButton, ok := args["close_button"].(bool); ok {
+		p.HideCloseButton = !closeButton
+	}
 	p.OnClose = func() { p.Open = false }
 	trigger, _ := args["trigger"].(string)
 	return subject{

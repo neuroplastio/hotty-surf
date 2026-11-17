@@ -108,7 +108,14 @@ func genTempl() []byte {
 		} else {
 			b.WriteString("\t\tif p.Class != \"\" {\n\t\t\tclass={ p.Class }\n\t\t}\n")
 		}
-		b.WriteString("\t\t{ p.Attrs... }\n")
+		switch c.Name {
+		case "Input", "Textarea":
+			b.WriteString("\t\t{ scopeTextAttrs(ctx, p.Attrs)... }\n")
+		case "Button", "Checkbox", "Radio", "Switch":
+			fmt.Fprintf(&b, "\t\t{ scopeNativeAttrs(ctx, p.Attrs, %q)... }\n", strings.ToLower(c.Name))
+		default:
+			b.WriteString("\t\t{ p.Attrs... }\n")
+		}
 		switch {
 		case c.Void:
 			b.WriteString("\t/>\n")

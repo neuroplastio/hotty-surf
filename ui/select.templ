@@ -8,11 +8,15 @@ package ui
 import "neuroplast.io/hotty-surf"
 
 templ selectBox(v *selectView) {
-	{{ v.n = frameN(ctx) }}
+	{{ v.join(ctx) }}
+	{{ checkEnum(ctx, "Select", "Align", v.p.Align, menuAligns) }}
 	<div
 		class={ join("select", v.p.Class) }
 		if v.p.Placeholder != "" {
 			data-placeholder={ v.p.Placeholder }
+		}
+		if v.p.Multiple && v.p.CloseOnSelect {
+			data-close-on-select="true"
 		}
 		data-select-initialized="true"
 		{ v.rootAttrs(ctx)... }
@@ -25,11 +29,8 @@ templ selectBox(v *selectView) {
 			if i := v.activeOpt(); i >= 0 {
 				aria-activedescendant={ v.opts[i].id }
 			}
-			if v.st.open {
-				data-keys="enter=program"
-			}
 			disabled?={ v.p.Disabled }
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key))... }
+			{ scopeWithKeys(ctx, kitOn(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key)), v.triggerKeys())... }
 		>
 			{{ label, muted := v.label() }}
 			<span
@@ -41,10 +42,16 @@ templ selectBox(v *selectView) {
 			>{ label }</span>
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down text-muted-foreground opacity-50 shrink-0"><path d="m6 9 6 6 6-6"></path></svg>
 		</button>
-		<div id={ v.id + "-popover" } data-popover aria-hidden={ bstr(!v.st.open) }>
+		<div id={ v.id + "-popover" } data-popover aria-hidden={ bstr(!v.st.open) }
+			if v.p.Align != "" {
+				data-align={ v.p.Align }
+			}>
 			<div
 				role="listbox"
 				aria-orientation="vertical"
+				if v.p.Multiple {
+					aria-multiselectable="true"
+				}
 				aria-labelledby={ v.id + "-trigger" }
 				{ surf.On(ctx, v.id+"-listbox", surf.Hover(v.leave))... }
 			>
@@ -80,7 +87,7 @@ templ selectOption(v *selectView, i int) {
 	<div
 		role="option"
 		data-value={ o.value }
-		if i == v.chosen {
+		if v.selected(i) {
 			aria-selected="true"
 		}
 		if o.disabled {

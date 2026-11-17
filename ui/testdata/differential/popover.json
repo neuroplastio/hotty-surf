@@ -1,0 +1,93 @@
+{
+ "component": "popover",
+ "macro": "popover",
+ "scripts": [
+  "popover.js"
+ ],
+ "events": [],
+ "ready": "[data-popover-initialized]",
+ "drop": [
+  "div#p@data-popover-initialized",
+  "div#p@data-basecoat-component"
+ ],
+ "cases": [
+  {
+   "name": "toggle",
+   "args": {
+    "id": "p",
+    "trigger": "Open",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "popover_attrs": {
+     "data-side": "top",
+     "data-align": "end"
+    }
+   },
+   "caller": "<p>Hi</p>",
+   "root": "#p",
+   "steps": [
+    {
+     "click": "p-trigger"
+    },
+    {
+     "click": "p-trigger"
+    }
+   ]
+  },
+  {
+   "name": "escape",
+   "args": {
+    "id": "p",
+    "trigger": "Open",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    }
+   },
+   "caller": "<p>Hi</p>",
+   "root": "#p",
+   "steps": [
+    {
+     "click": "p-trigger"
+    },
+    {
+     "key": "escape"
+    }
+   ]
+  },
+  {
+   "name": "outside",
+   "args": {
+    "id": "p",
+    "trigger": "Open",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    }
+   },
+   "caller": "<p>Hi</p>",
+   "root": "#p",
+   "steps": [
+    {
+     "click": "p-trigger"
+    },
+    {
+     "click": "outside"
+    }
+   ],
+   "known": [
+    {
+     "steps": [
+      2
+     ],
+     "what": [
+      "focus"
+     ],
+     "why": "popover.js gives the trigger the keyboard after any click outside, even one on another control. On a hotty surface an Outside handler hears the press before the host moves the keyboard (SPEC \u00a710.1), and also hears a click off the surface, where taking the keyboard back would take it from the terminal; it can't tell the two apart. The popover leaves the keyboard where the click put it."
+    }
+   ]
+  }
+ ]
+}

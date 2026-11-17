@@ -19,7 +19,7 @@ templ nativeSelect(p NativeSelectProps) {
 			aria-invalid="true"
 		}
 		class={ join(bare(ctx, "select"), p.Class) }
-		{ p.Attrs... }
+		{ scopeNativeAttrs(ctx, p.Attrs, "select")... }
 	>
 		for _, g := range optionGroups(p.Items) {
 			if g.label == "" {

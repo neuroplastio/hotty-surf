@@ -2,7 +2,11 @@ package ui
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/a-h/templ"
 
@@ -19,20 +23,45 @@ type SelectProps struct {
 	// Value is the value of the item shown as chosen; "" is none, and the
 	// trigger shows Placeholder. With neither, the trigger is blank, which
 	// is a fault: a Select with nothing chosen takes a Placeholder.
-	Value       string
+	// Value and OnChange are used in single mode; Values and OnValuesChange
+	// are used in multiple mode. The other pair is ignored.
+	// A single choice closes the list; multiple choices keep it open unless
+	// CloseOnSelect is set. An absent selected value or a repeated value in
+	// Values is a fault and is omitted outside tests.
+	Value string
+	// Multiple selects more than one value, reported through OnValuesChange.
+	Multiple bool
+	// Values are the selected item values when Multiple is true; nil or empty
+	// means none. The callback receives a fresh slice in item order, unlike
+	// Combobox's selection order. Disabled selected items stay selected.
+	Values []string
+	// CloseOnSelect closes a multiple-select list after each choice.
+	CloseOnSelect bool
+	// Align places the list along its trigger: "" or "start" (the default),
+	// "center" or "end". surftest fails any other. It does not automatically
+	// flip or clamp the list to the surface.
+	Align       string
 	Placeholder string
 	Disabled    bool
 	// OnChange hears the value the user chose.
 	OnChange func(value string)
-	Class    string
+	// OnValuesChange hears selected values in item order when Multiple.
+	OnValuesChange func(values []string)
+	Class          string
 }
 
-// A SelectItem is one of a Select's options. Consecutive items with the same
-// Group are shown under its label, the groups apart.
+// A SelectItem is an option of a Select, NativeSelect or Combobox.
+// Consecutive items with the same Group are shown under its label, the
+// groups apart. Values uniquely identify items in Select and Combobox;
+// those components fault on duplicate item values. Labels may repeat.
+// NativeSelect does not check for duplicate option values.
 type SelectItem struct {
 	Value, Label string
 	Group        string
 	Disabled     bool
+	// Keywords are additional search words for Combobox, separated by
+	// spaces or commas. Select and NativeSelect ignore them.
+	Keywords string
 }
 
 // SelectState is what a Select remembers between renders: whether its list
@@ -53,7 +82,10 @@ type SelectState struct {
 // its behaviour select.js's, translated to Go (opening, the arrows, Home,
 // End, choosing, Escape, a click outside closing it).
 func Select(st *SelectState, p SelectProps) templ.Component {
-	return selectBox(newSelectView(st, p))
+	// The view is made at each render, from the state as it is then.
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return selectBox(newSelectView(st, p)).Render(ctx, w)
+	})
 }
 
 // selectView is one render of a Select: the macro's entries for its items,
@@ -67,7 +99,47 @@ type selectView struct {
 	enabled []int       // the options not disabled, as indexes into opts (its options)
 	chosen  int         // the option whose value is Value, into opts; -1 for none
 	n       uint64      // the frame rendering it (rt.Frame.N), its handlers'
+	popups  *popup      // the surface's open popup
 }
+
+func (v *selectView) triggerKeys() string {
+	if v.st.open {
+		return "enter=program"
+	}
+	return ""
+}
+
+// join reads the frame: its number, and the surface's popups.
+func (v *selectView) join(ctx context.Context) string {
+	values := map[string]bool{}
+	for _, item := range v.p.Items {
+		if values[item.Value] {
+			rt.Fault(ctx, fmt.Sprintf("ui.Select: duplicate item value %q", item.Value))
+		}
+		values[item.Value] = true
+	}
+	selected := v.p.Values
+	if !v.p.Multiple && v.p.Value != "" {
+		selected = []string{v.p.Value}
+	}
+	if !v.p.Multiple && v.p.Value == "" {
+		selected = nil
+	}
+	seen := map[string]bool{}
+	for _, value := range selected {
+		if !values[value] || seen[value] {
+			rt.Fault(ctx, fmt.Sprintf("ui.Select: selected value %q is absent or repeated", value))
+		}
+		seen[value] = true
+	}
+	v.n = frameN(ctx)
+	v.popups = popups(ctx)
+	v.popups.track(v.st, v.st.open, v.shut)
+	return ""
+}
+
+// shut closes it for another popup's opening.
+func (v *selectView) shut() { v.st.open, v.st.active = false, -1 }
 
 // A listEntry is a child of a select's listbox or a menu's menu, as the
 // macros render their items: an option, a group of them under a heading,
@@ -138,6 +210,9 @@ func newSelectView(st *SelectState, p SelectProps) *selectView {
 			return listOpt{id: id, value: it.Value, label: it.Label, disabled: it.Disabled}
 		})
 	for i, o := range v.opts {
+		if v.chosen < 0 && v.selected(i) {
+			v.chosen = i
+		}
 		if o.disabled {
 			continue
 		}
@@ -145,9 +220,6 @@ func newSelectView(st *SelectState, p SelectProps) *selectView {
 		// select.js finds the chosen among the options not disabled. ""
 		// is none, as the Props say, where select.js would show the
 		// first option when there is no placeholder.
-		if v.chosen < 0 && p.Value != "" && o.value == p.Value {
-			v.chosen = i
-		}
 	}
 	if !st.open || st.active >= len(v.enabled) {
 		// refreshSelect: an active option that went away is none.
@@ -181,6 +253,18 @@ func (v *selectView) activeOpt() int {
 // label is what the trigger shows: the chosen option's label, or the
 // placeholder (muted).
 func (v *selectView) label() (string, bool) {
+	if v.p.Multiple {
+		var labels []string
+		for i := range v.opts {
+			if v.selected(i) {
+				labels = append(labels, v.opts[i].label)
+			}
+		}
+		if len(labels) > 0 {
+			return strings.Join(labels, ", "), false
+		}
+		return v.p.Placeholder, v.p.Placeholder != ""
+	}
 	if v.chosen >= 0 {
 		return v.opts[v.chosen].label, false
 	}
@@ -189,16 +273,40 @@ func (v *selectView) label() (string, bool) {
 
 // value is the hidden input's: the chosen value, or "".
 func (v *selectView) value() string {
+	if v.p.Multiple {
+		var values strings.Builder
+		values.WriteByte('[')
+		first := true
+		for i := range v.opts {
+			if v.selected(i) {
+				if !first {
+					values.WriteByte(',')
+				}
+				writeJSONText(&values, v.opts[i].value)
+				first = false
+			}
+		}
+		values.WriteByte(']')
+		return values.String()
+	}
 	if v.chosen >= 0 {
 		return v.opts[v.chosen].value
 	}
 	return ""
 }
 
+func (v *selectView) selected(i int) bool {
+	if v.p.Multiple {
+		return slices.Contains(v.p.Values, v.opts[i].value)
+	}
+	return v.p.Value != "" && v.opts[i].value == v.p.Value
+}
+
 // open is root.open(): the list shows, the chosen option highlighted.
 func (v *selectView) open() {
 	v.st.open = true
 	v.st.active = v.pos(v.chosen)
+	v.popups.opened(v.st, v.shut)
 }
 
 // close is closePopover: focus says whether the trigger takes the keyboard.
@@ -210,6 +318,7 @@ func (v *selectView) close(focus bool) {
 		v.ask()
 	}
 	v.st.open, v.st.active = false, -1
+	v.popups.closed(v.st)
 }
 
 // toggle is the trigger's click.
@@ -239,6 +348,28 @@ func (v *selectView) rootAttrs(ctx context.Context) templ.Attributes {
 // closes and the trigger takes the keyboard.
 func (v *selectView) choose(i int) {
 	o := v.opts[i]
+	if v.p.Multiple {
+		values := make([]string, 0)
+		for j := range v.opts {
+			selected := v.selected(j)
+			if j == i {
+				selected = !selected
+			}
+			if selected {
+				values = append(values, v.opts[j].value)
+			}
+		}
+		if v.p.OnValuesChange != nil {
+			v.p.OnValuesChange(values)
+		}
+		if v.p.CloseOnSelect {
+			v.close(true)
+		} else {
+			v.st.active = v.pos(i)
+			v.ask()
+		}
+		return
+	}
 	if v.p.OnChange != nil {
 		if v.p.Placeholder != "" && o.value == "" {
 			v.p.OnChange("")

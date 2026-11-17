@@ -120,7 +120,7 @@ func TestClasses(t *testing.T) {
 	<style>.own-inline { display: block }</style>
 	<div class="flex gap-2 group text-muted-foreground todo-done own-inline line-through-ish"></div>
 	<p class="hover:bg-cosmic w-[12px] bg-[#fff]"></p>
-	<s class={ "flex", templ.KV("line-through text-muted-foreground", done) }></s>
+	<s class={ "flex", templ.KV("overline text-muted-foreground", done) }></s>
 	<i class={ templ.Classes("strike-x", "gap-2") }></i>
 	@ui.Button(ui.ButtonProps{Class: "w-full grow-x"})
 	<a href="#x" title="not classes">no</a>
@@ -136,7 +136,7 @@ func TestClasses(t *testing.T) {
 			got = append(got, f.Text[:strings.Index(f.Text, " has")])
 		}
 	}
-	if want := []string{`class "line-through-ish"`, `class "hover:bg-cosmic"`, `class "line-through"`, `class "strike-x"`, `class "grow-x"`}; !slices.Equal(got, want) {
+	if want := []string{`class "line-through-ish"`, `class "hover:bg-cosmic"`, `class "overline"`, `class "strike-x"`, `class "grow-x"`}; !slices.Equal(got, want) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
