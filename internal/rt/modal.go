@@ -59,7 +59,7 @@ func PrepareModal(root *html.Node, id string) {
 			return
 		}
 		if n.Type == html.ElementNode && n != root {
-			if modalFocusable(n) {
+			if Focusable(n) {
 				setModalAttr(n, "tabindex", "-1")
 			}
 			if !ancestors[n] {
@@ -126,13 +126,13 @@ func ModalTarget(byID map[string]*html.Node, id string, last bool) string {
 	var guard string
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
-		if n.Type != html.ElementNode || modalHides(n) {
+		if n.Type != html.ElementNode || Hides(n) {
 			return
 		}
 		if hasAttr(n, modalGuard) && guard == "" {
 			guard = attr(n, "id")
 		}
-		if !hasAttr(n, modalGuard) && modalFocusable(n) && modalDrawn(n, root) {
+		if !hasAttr(n, modalGuard) && Focusable(n) && Drawn(n, root) {
 			if found == "" || last {
 				found = attr(n, "id")
 			}
@@ -148,12 +148,21 @@ func ModalTarget(byID map[string]*html.Node, id string, last bool) string {
 	return found
 }
 
-func modalHides(n *html.Node) bool {
-	return hasAttr(n, "hidden") || hasAttr(n, "inert") || n.Data == "dialog" && !hasAttr(n, "open") || n.Data == "input" && strings.EqualFold(attr(n, "type"), "hidden") || hasAttr(n, "data-popover") && attr(n, "aria-hidden") == "true"
+// Hides says whether n is not drawn, and nothing in it: hidden or inert, a
+// closed dialog, a hidden input, or a popover the kit has closed, as cells
+// lays them out.
+func Hides(n *html.Node) bool {
+	return hasAttr(n, "hidden") || hasAttr(n, "inert") ||
+		n.Data == "dialog" && !hasAttr(n, "open") ||
+		n.Data == "input" && strings.EqualFold(attr(n, "type"), "hidden") ||
+		hasAttr(n, "data-popover") && attr(n, "aria-hidden") == "true"
 }
-func modalDrawn(n, root *html.Node) bool {
+
+// Drawn says whether n, under root, is drawn: neither it nor an ancestor
+// hides it, and no closed details holds it outside its summary.
+func Drawn(n, root *html.Node) bool {
 	for c := n; c != nil && c != root; c = c.Parent {
-		if modalHides(c) {
+		if Hides(c) {
 			return false
 		}
 		if p := c.Parent; p != nil && p.Data == "details" && !hasAttr(p, "open") && c.Data != "summary" {
@@ -162,7 +171,11 @@ func modalDrawn(n, root *html.Node) bool {
 	}
 	return true
 }
-func modalFocusable(n *html.Node) bool {
+
+// Focusable says whether a click on n gives it the keyboard (SPEC §10.1),
+// and so Tab: a control, a link, a summary, an editing host, or tabindex 0
+// or more, not disabled.
+func Focusable(n *html.Node) bool {
 	if hasAttr(n, "disabled") {
 		return false
 	}

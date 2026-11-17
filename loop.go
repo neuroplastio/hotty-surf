@@ -566,7 +566,7 @@ func (s *Surface) takeFocus() (bool, error) {
 		return false, nil
 	}
 	id := ""
-	if n := s.byID[s.lastFocus]; n != nil && focusable(n) && drawn(n, s.prev) {
+	if n := s.byID[s.lastFocus]; n != nil && rt.Focusable(n) && rt.Drawn(n, s.prev) {
 		id = s.lastFocus
 	} else {
 		id = firstFocusable(s.prev)
@@ -584,10 +584,10 @@ func (s *Surface) takeFocus() (bool, error) {
 // that a click gives the keyboard to and that is drawn; "" if none is.
 func firstFocusable(n *html.Node) string {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type != html.ElementNode || hides(c) {
+		if c.Type != html.ElementNode || rt.Hides(c) {
 			continue
 		}
-		if focusable(c) {
+		if rt.Focusable(c) {
 			if id := attr(c, "id"); id != "" {
 				return id
 			}
@@ -597,10 +597,10 @@ func firstFocusable(n *html.Node) string {
 			for k := c.FirstChild; k != nil; k = k.NextSibling {
 				if k.Type == html.ElementNode && k.Data == "summary" {
 					// HTML draws the first summary only.
-					if hides(k) {
+					if rt.Hides(k) {
 						break
 					}
-					if focusable(k) && attr(k, "id") != "" {
+					if rt.Focusable(k) && attr(k, "id") != "" {
 						return attr(k, "id")
 					}
 					if id := firstFocusable(k); id != "" {
@@ -616,48 +616,4 @@ func firstFocusable(n *html.Node) string {
 		}
 	}
 	return ""
-}
-
-// hides says whether n is not drawn, and nothing in it: hidden or inert, a
-// closed dialog, a hidden input, or a popover the kit has closed, as cells
-// lays them out.
-func hides(n *html.Node) bool {
-	return hasAttr(n, "hidden") || hasAttr(n, "inert") ||
-		n.Data == "dialog" && !hasAttr(n, "open") ||
-		n.Data == "input" && strings.EqualFold(attr(n, "type"), "hidden") ||
-		hasAttr(n, "data-popover") && attr(n, "aria-hidden") == "true"
-}
-
-// drawn says whether n, under root, is drawn: neither it nor an ancestor
-// hides it, and no closed details holds it outside its summary.
-func drawn(n, root *html.Node) bool {
-	for c := n; c != nil && c != root; c = c.Parent {
-		if hides(c) {
-			return false
-		}
-		if p := c.Parent; p != nil && p.Data == "details" && !hasAttr(p, "open") && c.Data != "summary" {
-			return false
-		}
-	}
-	return true
-}
-
-// focusable says whether a click on n gives it the keyboard (SPEC §10.1),
-// and so Tab: a control, a link, a summary, an editing host, or tabindex 0
-// or more, not disabled.
-func focusable(n *html.Node) bool {
-	if hasAttr(n, "disabled") {
-		return false
-	}
-	if hasAttr(n, "tabindex") {
-		t := strings.TrimSpace(attr(n, "tabindex"))
-		return t != "" && !strings.HasPrefix(t, "-")
-	}
-	switch n.Data {
-	case "input", "select", "textarea", "button", "summary":
-		return true
-	case "a":
-		return hasAttr(n, "href")
-	}
-	return hasAttr(n, "contenteditable") && attr(n, "contenteditable") != "false"
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -91,9 +90,6 @@ func TestNativeKeyVectors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			for _, mode := range []string{"host", "cells"} {
 				t.Run(mode, func(t *testing.T) {
-					if mode == "host" && (v.kind == "item" || v.kind == "breadcrumb") && os.Getenv("HOTTYTEST_LINK_FIX") == "" {
-						t.Skip("hottytest 0.8.0 skips an href-less link with tabindex=0; reported for the test host")
-					}
 					a := &nativeKeyApp{kind: v.kind, disabled: v.disabled, value: v.initial}
 					s := surf.New("vector", a.view(), ui.Stylesheet())
 					var press func(string)
