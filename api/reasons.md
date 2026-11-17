@@ -673,3 +673,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.MenuProps.Highlight`: K25: the app holds the highlight, as a List's selection; plx holds an index already.
 - `ui.MenuProps.OnHighlight`: K25: the component asks for a change of highlight, from the pointer and the keys.
 - `ui.MenuProps.Class`: as every Props, on the menu's wrapper.
+- `ui.MenuItem.Leading`: G-menu-rows (plx): a row's own mark in the icon's place: a host's colour dot, an icon outside Lucide's, and on a checkable row its state's look in place of the kit's check (p-653). One slot for all three menus (K29).
+- `ui.MenuItem.Content`: G-menu-rows: a row's words in the label's place when they are more than text: a label with a dim aside, a name being typed with its caret, the current one in semibold. Label still names the item.
+- `ui.MenuItem.Trailing`: G-menu-rows: a note in the shortcut's place (a workspace's tabs, a key's value), drawn where Basecoat draws a shortcut (`data-shortcut`).
+- `ui.MenuItem.Role`: G-menu-rows: a new value, "separator", for plx's bare rule between two items (where Group draws one only between groups); no new name (review-rows.md).
