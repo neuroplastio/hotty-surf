@@ -148,12 +148,13 @@ coverage:
 # Playwright (scripts/browser): not in check, since it needs a browser.
 # PIN keeps Chromium on the CPUs IDLE_CPUS names.
 NODE ?= mise x -- node
+NPM  ?= mise x -- npm
 PIN  ?= $(if $(IDLE_CPUS),taskset -c $(IDLE_CPUS))
 browser: scripts/browser/node_modules   ## build -wasm and serve, proven in Chromium: .shots/browser
 	GO="$(GO_BARE)" NODE="$(NODE)" $(CAP) $(PIN) sh scripts/browser/check.sh
 
 scripts/browser/node_modules: scripts/browser/package.json scripts/browser/package-lock.json
-	cd scripts/browser && $(CAP) $(NODE) npm ci --no-audit --no-fund
+	cd scripts/browser && $(CAP) $(NPM) ci --no-audit --no-fund && touch node_modules
 
 print-cap:   ## the CAP the steps run under, for a script that builds outside make
 	@echo '$(CAP)'
