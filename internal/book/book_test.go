@@ -147,7 +147,7 @@ func TestBookRestore(t *testing.T) {
 	if b.ID != "badge/default" || b.model.Filter != "badge" || b.model.Tab != "props" || b.model.Dark {
 		t.Fatalf("restored book: story %q, filter %q, tab %q, dark %v", b.ID, b.model.Filter, b.model.Tab, b.model.Dark)
 	}
-	if got := b.model.Sel.Controls(); len(got) != 1 || got[0].Value != "Ready" {
+	if got := b.model.Sel.Controls(); len(got) != 2 || got[1].Path != "Label" || got[1].Value != "Ready" {
 		t.Fatalf("restored controls: %+v", got)
 	}
 }
