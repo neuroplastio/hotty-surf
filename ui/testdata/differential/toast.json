@@ -13,9 +13,11 @@
   "div#toast-1@id",
   "div#toast-2@id",
   "button#toast-1-dismiss@id",
-  "button#toast-2-dismiss@id"
+  "button#toast-2-dismiss@id",
+  "button#toast-1-action@id",
+  "button@disabled"
  ],
- "why": "toast.js and basecoat.js mark the toaster and each toast they started; ui names each toast and its button for its handlers.",
+ "why": "toast.js and basecoat.js mark the toaster and each toast they started; ui names each toast and its button for its handlers. A leaving toast disables its controls to drop focus, as the kit requires.",
  "cases": [
   {
    "name": "dismiss",
@@ -89,6 +91,41 @@
       "focus"
      ],
      "why": "toast.js blurs a toast's focused element when it closes it. surf has no way to ask for a blur (Autofocus asks for an element), so on a hotty host the keyboard stays on the hidden Dismiss button until the toast leaves and the host drops it with the element: an API question for surf (a blur through Autofocus), raised with the batch."
+    }
+   ]
+  },
+  {
+   "name": "action",
+   "args": {
+    "toasts": [
+     {
+      "category": "success",
+      "title": "Deleted",
+      "duration": -1,
+      "action": {
+       "label": "Undo"
+      },
+      "cancel": {
+       "label": "Dismiss"
+      }
+     }
+    ]
+   },
+   "root": "#toaster",
+   "steps": [
+    {
+     "select": "button[data-toast-action]"
+    }
+   ],
+   "known": [
+    {
+     "steps": [
+      1
+     ],
+     "what": [
+      "focus"
+     ],
+     "why": "The kit disables the leaving button and follows the host focus fixup; toast.js explicitly blurs it."
     }
    ]
   }

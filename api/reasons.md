@@ -369,6 +369,11 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   (data-close-on-select).
 - `ui.MenuItem.Role`, `.Checked`, `.OnCheckedChange`: checkbox and radio
   items and their controlled state (K2(a), K2(b)); Command ignores them.
+- `ui.ToastAction`, `.Label`, `.OnSelect`: a footer action or cancel
+  button's text and Go callback, replacing the macro's onclick (K2(e)).
+- `ui.Toast.Action`, `.Cancel`: the macro's optional footer buttons (K2(c)).
+- `ui.DialogProps.HideCloseButton`: the macro's close_button option with a
+  zero value that preserves the existing close button (K2(a)).
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

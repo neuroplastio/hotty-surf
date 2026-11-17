@@ -23,6 +23,16 @@ type Toast struct {
 	// Duration is how long it stays; 0 is Basecoat's default, and a
 	// negative one stays until dismissed.
 	Duration time.Duration
+	// Action and Cancel are optional buttons; either closes the toast when
+	// chosen. A lasting toast with no Cancel gets a Dismiss button.
+	Action, Cancel *ToastAction
+}
+
+// ToastAction is a toast footer button. OnSelect runs before the toast
+// closes; a nil OnSelect only closes it.
+type ToastAction struct {
+	Label    string
+	OnSelect func()
 }
 
 // ToasterState holds the toasts shown. The zero value shows none.
@@ -118,6 +128,23 @@ func (st *ToasterState) close(t *shownToast) {
 	}
 	s := t.s
 	time.AfterFunc(toastLeave, func() { s.Do(func() { st.remove(t) }) })
+}
+
+func (st *ToasterState) choose(t *shownToast, action *ToastAction) {
+	if t.hidden {
+		return
+	}
+	if action != nil && action.OnSelect != nil {
+		action.OnSelect()
+	}
+	st.close(t)
+}
+
+func (t *shownToast) cancelLabel() string {
+	if t.Cancel != nil {
+		return t.Cancel.Label
+	}
+	return "Dismiss"
 }
 
 func (st *ToasterState) remove(t *shownToast) {

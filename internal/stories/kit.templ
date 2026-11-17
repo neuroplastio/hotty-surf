@@ -92,6 +92,8 @@ func init() {
 		View: kit(dialogDefault, nil), Keys: []string{"tab", "enter", "escape"}, Want: "open: off"})
 	add(Story{ID: "dialog/open", Doc: "A dialog open from the start",
 		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "enter"}, Want: "open: off"})
+	add(Story{ID: "dialog/without-close-button", Doc: "A dialog without the corner close button",
+		View: kit(dialogNoClose, nil), Keys: []string{"tab", "enter", "escape"}, Want: "open: off"})
 	add(Story{ID: "tabs/default", Doc: "Three tabs, the shown one's panel below",
 		View: kit(tabsDefault, func(s *kitState) { s.value = "account" }), Keys: []string{"tab", "arrow_right"}, Want: "tab: password"})
 	add(Story{ID: "tabs/many", Doc: "More tabs than fit, one disabled",
@@ -100,6 +102,8 @@ func init() {
 		View: kit(toastDefault, nil), Keys: []string{"tab", "enter"}, Want: "Event created"})
 	add(Story{ID: "toast/categories", Doc: "A button for each category of toast",
 		View: kit(toastCategories, nil), Keys: []string{"tab", "tab", "enter"}, Want: "Couldn't save"})
+	add(Story{ID: "toast/action", Doc: "A toast with an undo action",
+		View: kit(toastAction, nil), Keys: []string{"tab", "enter", "tab", "enter"}, Want: "action: undone"})
 }
 
 templ count(s *kitState) {
@@ -356,6 +360,16 @@ templ dialogBody(s *kitState) {
 	<p class="text-sm text-muted-foreground">open: { onoff(s.open) }</p>
 }
 
+templ dialogNoClose(s *kitState) {
+	<div class="p-4">
+		@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"open-no-close",surf.Click(func(){s.open=true}))}) { Open }
+		@ui.Dialog(ui.DialogProps{ID:"no-close", Open:s.open, Title:"Confirm", HideCloseButton:true, OnClose:func(){s.open=false}}) {
+			<footer>@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"done-no-close",surf.Click(func(){s.open=false}))}) { Done }</footer>
+		}
+		<p>open: { onoff(s.open) }</p>
+	</div>
+}
+
 templ dialogDefault(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
@@ -408,6 +422,16 @@ templ toastDefault(s *kitState) {
 		}))}) {
 			Show a toast
 		}
+		@ui.Toaster(&s.toasts)
+	</div>
+}
+
+templ toastAction(s *kitState) {
+	<div class="p-4">
+		@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"show-action",surf.Click(func(){
+			s.toasts.Show(ui.Toast{Title:"Event deleted",Duration:-1,Action:&ui.ToastAction{Label:"Undo",OnSelect:func(){s.ran="undone"}}})
+		}))}) { Delete }
+		<p>action: { s.ran }</p>
 		@ui.Toaster(&s.toasts)
 	</div>
 }

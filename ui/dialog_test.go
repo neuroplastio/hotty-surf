@@ -407,3 +407,19 @@ func TestModalDoesNotSendKeysToBackground(t *testing.T) {
 		t.Fatal("a background key handler ran while the modal was open")
 	}
 }
+
+func TestDialogWithoutCloseButton(t *testing.T) {
+	open := false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return page(button("open-no-close", "Open", func() { open = true }), with(ui.Dialog(ui.DialogProps{ID: "plain", Open: open, Title: "Confirm", HideCloseButton: true, OnClose: func() { open = false }}), templ.Raw(`<p>No controls</p>`))).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("dialog", view, ui.Stylesheet()))
+	r.Click("#open-no-close")
+	if len(r.Find("#plain-close")) != 0 {
+		t.Fatal("close button rendered")
+	}
+	r.Key("escape")
+	if open {
+		t.Fatal("Escape did not close empty dialog")
+	}
+}

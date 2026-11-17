@@ -240,6 +240,7 @@ pkg neuroplast.io/hotty-surf/ui, type CommandState struct
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Description string
+pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, HideCloseButton bool
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, ID string
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, OnClose func()
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Open bool
@@ -411,10 +412,15 @@ pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Placeholder string
 pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Action *ToastAction
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Cancel *ToastAction
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Category string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
+pkg neuroplast.io/hotty-surf/ui, type ToastAction struct
+pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Label string
+pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Align string

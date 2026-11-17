@@ -141,6 +141,31 @@
      "why": "Chromium visits browser chrome on Shift+Tab before the first control; a surface has no browser chrome and wraps straight to the last control."
     }
    ]
+  },
+  {
+   "name": "no-close-button",
+   "args": {
+    "id": "d",
+    "trigger": "Rename",
+    "trigger_attrs": {
+     "id": "d-trigger",
+     "class": "btn"
+    },
+    "title": "Rename",
+    "description": "A new name.",
+    "close_on_overlay_click": true,
+    "close_button": false
+   },
+   "caller": "<input id=\"d-name\" class=\"input\"><button id=\"d-save\" type=\"button\" class=\"btn\">Save</button>",
+   "root": "#d",
+   "steps": [
+    {
+     "click": "d-trigger"
+    },
+    {
+     "key": "escape"
+    }
+   ]
   }
  ],
  "drop": [

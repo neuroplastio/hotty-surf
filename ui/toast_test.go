@@ -99,3 +99,25 @@ func TestToasterPausesUnderThePointer(t *testing.T) {
 	hover(t, s, r, "note")
 	eventually(t, r, "gone after the pointer left", func() bool { return len(r.Find("#toast-1")) == 0 })
 }
+
+func TestToastActionAndCancel(t *testing.T) {
+	var st ui.ToasterState
+	acted, canceled := 0, 0
+	toast := ui.Toast{Title: "Deleted", Duration: -1,
+		Action: &ui.ToastAction{Label: "Undo", OnSelect: func() { acted++ }},
+		Cancel: &ui.ToastAction{Label: "Later", OnSelect: func() { canceled++ }},
+	}
+	r := start(t, page(button("show", "Show", func() { st.Show(toast) }), ui.Toaster(&st)))
+	r.Click("#show")
+	r.Click("#toast-1-action")
+	if acted != 1 || canceled != 0 {
+		t.Fatalf("action=%d cancel=%d", acted, canceled)
+	}
+	r.One("#toast-1-action[disabled]")
+	r.One("#toast-1-dismiss[disabled]")
+	r.Click("#show")
+	r.Click("#toast-2-dismiss")
+	if acted != 1 || canceled != 1 {
+		t.Fatalf("action=%d cancel=%d", acted, canceled)
+	}
+}

@@ -788,8 +788,8 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   timers (surf.Hover), tested with a hover event sent to the Surface
   and then `Rig.Update`, as Select's highlight is. A toast paused past
   its deadline (its timer late) has 0 left, and closes on resume.
-  Toast has no action or cancel: one that stays (a negative Duration)
-  gets the macro's cancel button, Dismiss, or it could never go.
+  A toast that stays (a negative Duration) gets a Dismiss button when it
+  has no cancel action. B3 adds the macro's action and cancel buttons.
 - **code.Block links Chroma's lexers package**, every lexer, since its
   doc names "json" and "sh"; the spike embedded five XML lexers. Each
   line is a `<div>` in the `<pre>`, a box of its own. (That began as a
@@ -1038,6 +1038,8 @@ scrollbar classes and Avatar's image for the looks pass.
   transition. Should OnClose report the request or the completed close?
   The lean is the request, consistent with Dialog's controlled Open prop.
   Four side stories, cells keys and a Chromium Escape differential cover it.
+  An open bottom drawer rendered in Blitz and Chromium differs by 0.21% of
+  pixels.
 - **AlertDialog: draft for review.** Basecoat supplies CSS but no macro or
   script, and neither existing port has this component. The draft composes
   the existing Dialog modal behavior with alert-dialog markup and an
@@ -1045,12 +1047,14 @@ scrollbar classes and Avatar's image for the looks pass.
   Description provide its accessible name and description, while children
   supply its actions. The small CSS variant is exposed as Size. A story,
   cells keys and a Chromium Escape differential cover it.
+  An open alert's Blitz/Chromium comparison differs by 0.33% of pixels.
 - **Tooltip: draft for review.** The spike has no tooltip component; this
   wraps children in Basecoat's data-tooltip markup and uses its CSS. Its
   popup is hover-only, and cells does not yet show it. hotty-a2ui instead
   puts hovered descriptions in a separate key-hints status line; that
-  presentation requires an app-owned hints area. The Basecoat CSS uses
-  generated content via attr(), which still needs a Blitz hover looks check.
+  presentation requires an app-owned hints area. A forced-visible hover
+  render shows attr() text in both Blitz and Chromium; the current live
+  renderer and Chromium place the wrapper row at the same height.
   The wrapper changes the DOM around its child; exposing an attribute helper
   instead is an alternative for the reviewer.
 - **Slider and RangeSlider: draft for review.** These adapt hotty-a2ui's
@@ -1085,6 +1089,21 @@ scrollbar classes and Avatar's image for the looks pass.
   separate checkbox and radio item types. Its initial story render differs
   by 0.25% of pixels between Blitz and Chromium; a Chromium differential
   exercises both roles.
+- **Toast actions: draft for review.** Action and Cancel point to a shared
+  ToastAction containing a label and Go callback; either closes the toast
+  after calling the callback. A persistent toast without an explicit
+  cancel keeps its existing Dismiss button. Buttons are disabled during the
+  exit transition to honor K19 and participate in KeyScope. The reviewer
+  should decide this shape and whether links belong in the API. The macro
+  and toast.js supply the button markup and closing behavior. An open toast
+  with its entry animation disabled in both renderers differs by 0.16% of
+  pixels; the still Blitz renderer otherwise captures the start of the
+  animation while Chromium's screenshot captures its end.
+- **Dialog close button: draft for review.** HideCloseButton exposes the
+  macro's close_button switch while retaining the existing zero-value
+  default. Escape and backdrop dismissal still call OnClose. A dialog with
+  no focusable child falls back to its focus guard. The reviewer should
+  decide the field name.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup

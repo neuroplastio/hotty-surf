@@ -516,6 +516,14 @@ func toastSubject(t *testing.T, args map[string]any) subject {
 		ts.Category, _ = m["category"].(string)
 		ts.Title, _ = m["title"].(string)
 		ts.Description, _ = m["description"].(string)
+		if action, ok := m["action"].(map[string]any); ok {
+			label, _ := action["label"].(string)
+			ts.Action = &ui.ToastAction{Label: label}
+		}
+		if cancel, ok := m["cancel"].(map[string]any); ok {
+			label, _ := cancel["label"].(string)
+			ts.Cancel = &ui.ToastAction{Label: label}
+		}
 		if d, ok := m["duration"].(float64); ok && d < 0 {
 			ts.Duration = -1
 		}
@@ -536,6 +544,9 @@ func dialogSubject(t *testing.T, args map[string]any) subject {
 	p.ID, _ = args["id"].(string)
 	p.Title, _ = args["title"].(string)
 	p.Description, _ = args["description"].(string)
+	if closeButton, ok := args["close_button"].(bool); ok {
+		p.HideCloseButton = !closeButton
+	}
 	p.OnClose = func() { p.Open = false }
 	trigger, _ := args["trigger"].(string)
 	return subject{

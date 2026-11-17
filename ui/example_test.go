@@ -91,3 +91,9 @@ func ExampleRangeSlider() {
 		Start: 20, End: 70, OnChange: func(float64, float64) {},
 	})
 }
+
+func ExampleToastAction() {
+	_ = ui.Toast{Title: "Deleted", Action: &ui.ToastAction{
+		Label: "Undo", OnSelect: func() {},
+	}}
+}

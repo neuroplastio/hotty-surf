@@ -44,9 +44,14 @@ templ toast(st *ToasterState, t *shownToast) {
 					<p>{ t.Description }</p>
 				}
 			</section>
-			if t.Duration < 0 {
+			if t.Action != nil || t.Cancel != nil || t.Duration < 0 {
 				<footer>
-					<button type="button" class="btn" data-variant="outline" data-size="sm" data-toast-cancel { surf.On(ctx, t.id()+"-dismiss", surf.Click(func() { st.close(t) }))... }>Dismiss</button>
+					if t.Action != nil {
+						<button type="button" class="btn" data-size="sm" data-toast-action disabled?={ t.hidden } { scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-action", surf.Click(func() { st.choose(t,t.Action) })), "button")... }>{ t.Action.Label }</button>
+					}
+					if t.Cancel != nil || t.Duration < 0 {
+						<button type="button" class="btn" data-variant="outline" data-size="sm" data-toast-cancel disabled?={ t.hidden } { scopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-dismiss", surf.Click(func() { st.choose(t,t.Cancel) })), "button")... }>{ t.cancelLabel() }</button>
+					}
 				</footer>
 			}
 		</div>
