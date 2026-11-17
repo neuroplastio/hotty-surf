@@ -19,7 +19,7 @@ func DispatchKeyScope(scopes []*KeyScope, marker, physical, key string) (interce
 	for scope := scopes[index-1]; scope != nil; scope = scope.Parent {
 		if scope.Keys[physical] {
 			intercepted, fallback, native = true, scope.Default, scope.Native
-			if scope.Handle(key) {
+			if scope.Handle(physical) {
 				taken = true
 				return
 			}

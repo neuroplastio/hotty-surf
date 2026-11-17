@@ -123,7 +123,7 @@ func TestComboboxKeywordsAndInputAttrs(t *testing.T) {
 		child := ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", Items: []ui.SelectItem{
 			{Value: "a", Label: "Same", Keywords: "orchard, crimson"}, {Value: "b", Label: "Same", Keywords: "tropical"},
 		}, InputAttrs: attrs, OnChange: func(v string) { value = v }})
-		return with(ui.KeyScope([]string{"arrow_down"}, func(string) bool { return false }), child).Render(ctx, w)
+		return with(ui.KeyScope([]ui.KeyBinding{{Key: "arrow_down", Run: func() bool { return false }}}), child).Render(ctx, w)
 	})
 	r := surftest.Start(t, surf.New("combobox", view, ui.Stylesheet()))
 	r.One(`#fruit-input[aria-label="Choose fruit"][data-hotty-keyscope]`)
@@ -145,7 +145,7 @@ func TestComboboxInputAttrsCollision(t *testing.T) {
 	var st ui.ComboboxState
 	attrs := templ.Attributes{"ID": "wrong", "DATA-KEYS": "home=field", "ArIa-Expanded": "wrong", "DATA-Hotty-KeyScope": "999", "aria-label": "Choose"}
 	child := ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", InputAttrs: attrs})
-	view := with(ui.KeyScope([]string{"arrow_down"}, func(string) bool { return false }), child)
+	view := with(ui.KeyScope([]ui.KeyBinding{{Key: "arrow_down", Run: func() bool { return false }}}), child)
 	r := surftest.Start(f, surf.New("combobox", view, ui.Stylesheet()))
 	r.One(`#fruit-input[aria-label="Choose"]`)
 	if got := attr(r.One("#fruit-input"), "data-keys"); !strings.Contains(got, "arrow_down=program") || strings.Contains(got, "home=field") {
