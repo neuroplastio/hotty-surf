@@ -97,6 +97,15 @@ func (v *tabsView) handlers(i int) []surf.Handler {
 	return hs
 }
 
+// keys are what tab i's Key handler takes, declared on it (K32): only the
+// selected tab hears them.
+func (v *tabsView) keys(i int) string {
+	if i == v.sel {
+		return "arrow_left=program arrow_right=program home=program end=program"
+	}
+	return ""
+}
+
 // key is handleKeydown on the tablist (horizontal): the keys move from the
 // tab that has the keyboard, among the tabs not disabled, wrapping round.
 func (v *tabsView) key(from int) func(string) bool {

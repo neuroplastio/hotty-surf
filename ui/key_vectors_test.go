@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -192,6 +193,11 @@ func TestReadonlyKeepsCharsVector(t *testing.T) {
 			}
 			if s.Focused() != "control" || s.Chars() != surf.CharsText {
 				t.Fatalf("focused %q, chars %v", s.Focused(), s.Chars())
+			}
+			// Its edits are its own too: the host keeps them for it, where
+			// they change nothing (review-ownkeys Q2, beside Chars').
+			if own := s.OwnKeys(); !slices.Contains(own, "backspace") || !slices.Contains(own, "delete") {
+				t.Fatalf("a readonly field's OwnKeys %v lack its edits", own)
 			}
 			for _, k := range []string{"a", "shift+b", "1"} {
 				press(k)

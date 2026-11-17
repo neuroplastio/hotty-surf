@@ -2667,3 +2667,80 @@ As reviewed (p-796, review-open.md):
   keyboard to the surface", which is the driver's policy.
 - **Q1–Q4 as leaned.** plx's port: `if len(s.Overlays()) > 0 { name =
   s.Name() }`.
+
+## L5: OwnKeys (plx's G-keys-decl, the Own half)
+
+v0.6.3's `Surface.Keys` listed, with each key, whether the focused
+element took it itself (`KeyUse.Own`). plx routes by it: a key the
+element owns goes to the surface ahead of plx's keymap. v0.7 has the
+two other halves: `Chars` (characters) and `ui.Bindings` (KeyScope
+bindings). The pack adds the third:
+
+- `Surface.OwnKeys() []string`: the focused element's own keys other
+  than characters, as hotty names them, sorted. They come from:
+  - the native control (SPEC §10.2's table). A text field's keys are
+    its keymap: `hotty.Resolve` over the platform and the data-keys
+    from the root down, which is what a host and cells.Screen read. A
+    move is listed with shift too. A key the keymap gives the program,
+    a prefix or a scroll is left out. A select, a date or time field,
+    and a button, link, summary, check box or radio button take the
+    keys SPEC lists, each with shift.
+  - a kit control's own declaration: the `k=program` entries on the
+    focused element itself (List rows, Combobox, Select's trigger,
+    Slider, menu items). Under a KeyScope, the kit keeps its own in
+    `data-hotty-default-keys`, and the scope's bindings stay out.
+- Never Tab or Shift+Tab, never characters (space only counts as one in
+  a text field), never a KeyScope's binding, never an app's `surf.Key`
+  handler's keys (it declares none). An app that wants a key first binds
+  it in a KeyScope.
+- One method serves a host and cells. cells.Screen resolves the same
+  keymap, so no Screen method is needed (as with Chars).
+
+Questions for the review:
+
+1. A declaration on an ancestor isn't read. NavList puts its keys on its
+   container, so a focused element inside has them only through the
+   host's data-keys. Should OwnKeys read `=program` entries up the chain
+   until a KeyScope, or is the element alone right? plx's wrappers
+   (`data-keys="k=program"` on a pane) are plx's own keys, not the
+   element's, which argues for the element alone.
+2. A readonly text field lists its edits (backspace) too, as the host
+   keeps them for it. Leave it, or drop the edits?
+3. `[]string`, or a set type (`func(key string) bool`) for routing? The
+   slice is what a palette or a help line shows; plx can build its own
+   set from it.
+
+Reviewed (p-796, ~/.cache/hotty-surf-l5/review-ownkeys.md): OwnKeys was
+approved. The questions were settled as: the element alone (NavList
+declares on its rows and its filter, not its container); keep a readonly
+field's edits; keep `[]string`. The review added kit rule K32: a kit
+control declares its keys on the element that takes focus. Applied:
+
+- The routing rule is written once, in docs/keyboard-model.md, under
+  "Routing". OwnKeys', Chars' and ui.Bindings' docs point at it.
+  - The review's text names `Overlays` (Surface.Overlays, p-794's
+    menu-lease pack, merged into v07 after this branch was cut). With
+    v07 merged in, the rule is the review's text as written.
+- OwnKeys' doc says "as the host resolves it": the data-keys as
+  written, so a KeyScope's bindings are the program's.
+  - TestOwnKeysFieldUnderScope pins it: a field under a scope binding
+    ctrl+a leaves ctrl+a out of OwnKeys, and Bindings lists it.
+  - keymapsOf and rt.NativeKeyDefault's walk each name the other, so
+    nobody merges them.
+- Before Attach (no platform), OwnKeys is nil (TestOwnKeysBeforeAttach).
+- The readonly edits are locked in TestReadonlyKeepsCharsVector, beside
+  Chars' case.
+- TestOwnKeysKit has a case per kit control that takes keys: List row,
+  NavList row and filter, Combobox, Select trigger, Slider thumb,
+  DropdownMenu open and closed, Tabs, Command input. It found two K32
+  breaks in the kit, both fixed here:
+  - Tabs declared nothing; its selected tab took arrow_left, arrow_right,
+    Home and End undeclared. The tab now declares them (tabs.go keys,
+    tabs.templ).
+  - DropdownMenu's handler is on its root, but the keyboard stays on the
+    trigger, which declared only Enter and Space while open. The trigger
+    now declares what the handler takes: arrow_down and arrow_up while
+    closed, and the arrows, Home, End, Enter, Space and Escape while
+    open.
+  - A menu item never takes focus (aria-activedescendant on the trigger),
+    so there is no item case.

@@ -709,3 +709,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surftest.Rig.DoubleClick`: every gesture surf hears has its Rig verb (Drag, DragStep, Secondary), and plx's palette test (select on one click, run on two) is the first caller of a double click. Added at the review (p-796).
 - `surf.Refocus`: plx's palette query must have the keyboard back in the frame where Tab left it for a stop, whose Focus handler gives Tab to plx. Autofocus asked on every frame is edge-triggered, so asking again moves nothing, and Surface.Focus gives the keyboard to the stop, which had it last. Only the render can say "this element, again, now".
 - `surf.Surface.Overlays`: plx's menu lease (p-653): a driver gives the keyboard to whatever holds an open kit overlay (ContextMenu, Select, DropdownMenu, Popover, Combobox, CommandDialog; on a host and in cells). Only the kit knows when its popups open, and a driver can't read the State of a tool's components.
+
+
+## L5: the focused element's own keys (plx's G-keys-decl, the Own half)
+
+- `surf.Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.

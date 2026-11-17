@@ -30,6 +30,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Focused() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
+pkg neuroplast.io/hotty-surf, method (*Surface) OwnKeys() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
 pkg neuroplast.io/hotty-surf, type Chars uint8

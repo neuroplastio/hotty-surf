@@ -326,12 +326,14 @@ func (v *menuView) checkRadio(chosen int) {
 // frame after it.
 func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
-// key is handleKeydown, on the menu's root.
+// triggerKeys are the keys key takes, declared on the trigger, which
+// keeps the keyboard while the menu is open (K32: where the keyboard is,
+// though the handler is on the root).
 func (v *menuView) triggerKeys() string {
 	if v.st.open {
-		return "enter=program space=program"
+		return "arrow_down=program arrow_up=program home=program end=program enter=program space=program escape=program"
 	}
-	return ""
+	return "arrow_down=program arrow_up=program"
 }
 
 func (v *menuView) key(k string) bool {
