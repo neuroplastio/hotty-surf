@@ -22,6 +22,7 @@ package cells
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -57,6 +58,8 @@ type Screen struct {
 	drag     *dragging
 	hoverID  string
 	hoverOut bool
+	// shown is what Lines or Cells last drew (Dirty).
+	shown [][]cell
 	// tip is the element with a tooltip (data-tooltip) the pointer is
 	// over, whose tooltip the layout draws beside it (drawTip).
 	tip    *html.Node
@@ -254,6 +257,41 @@ func (c *Screen) Lines() []string {
 	out := make([]string, c.rows)
 	for i := range out {
 		out[i] = l.cv.line(c.scroll+i, c.cols)
+	}
+	c.shown = c.visible()
+	return out
+}
+
+// Dirty says whether Lines, or Cells, would now return other than what
+// it last returned: the Screen changed by itself, with no Write, as a
+// tooltip shows or goes when the pointer moves (Move). A program that
+// redraws on Writes and on the presses and releases it takes asks it
+// after the other calls (a Move, a Wheel) and redraws where it says so.
+// It is cheap: the Screen is laid out once for each change.
+func (c *Screen) Dirty() bool {
+	v := c.visible()
+	if c.shown == nil || len(v) != len(c.shown) {
+		return true
+	}
+	for i := range v {
+		if !slices.Equal(v[i], c.shown[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+// visible is a copy of the cells Lines and Cells draw: the rows from
+// the scroll, as wide as the Screen.
+func (c *Screen) visible() [][]cell {
+	l := c.layout()
+	out := make([][]cell, c.rows)
+	for i := range out {
+		row := make([]cell, c.cols)
+		if y := c.scroll + i; y >= 0 && y < len(l.cv.rows) {
+			copy(row, l.cv.rows[y])
+		}
+		out[i] = row
 	}
 	return out
 }

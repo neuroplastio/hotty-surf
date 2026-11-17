@@ -84,3 +84,33 @@ func TestTooltipEdges(t *testing.T) {
 		t.Errorf("the tooltip's cell is %q on %q", cell.Fg, cell.Bg)
 	}
 }
+
+// Dirty says when the Screen changed by itself, with no Write: a
+// tooltip showing or going on a Move, and not a move within the same
+// element; Lines and Cells both take what they draw as drawn.
+func TestDirty(t *testing.T) {
+	c := tipScreen(t, `<p>plain</p><span data-tooltip="a hint">tip me</span>`, 30, 4)
+	if !c.Dirty() {
+		t.Fatal("not dirty before the first draw")
+	}
+	c.Lines()
+	steps := []struct {
+		do    func()
+		dirty bool
+		what  string
+	}{
+		{func() { c.Move(1, 0, 0) }, false, "a move over no tooltip"},
+		{func() { c.Move(1, 1, 0) }, true, "the tooltip shows"},
+		{func() { c.Lines() }, false, "drawn by Lines"},
+		{func() { c.Move(2, 1, 0) }, false, "a move within the element"},
+		{func() { c.Move(25, 3, 0) }, true, "the tooltip goes"},
+		{func() { c.Cells() }, false, "drawn by Cells"},
+		{func() { c.Write([]byte(hotty.Doc("t", `<p>new</p>`))) }, true, "a new document"},
+	}
+	for _, s := range steps {
+		s.do()
+		if got := c.Dirty(); got != s.dirty {
+			t.Errorf("%s: Dirty %v, want %v", s.what, got, s.dirty)
+		}
+	}
+}

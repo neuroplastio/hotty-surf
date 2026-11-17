@@ -714,3 +714,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 ## L5: the focused element's own keys (plx's G-keys-decl, the Own half)
 
 - `surf.Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.
+
+## L6: the Screen's own redraw, for plx's tooltips
+
+- `cells.Screen.Dirty`: a tooltip (ui.Tooltip) shows and goes on a bare Move, with nothing written, and Move's approved doc told a program to redraw only on Writes and on the presses and releases it takes, so plx would draw a tip late and leave it behind (p-801's spot-check of the tooltip merge). The Screen says when what it draws changed; Move keeps its approved signature, and anything else local (a hover's own look, later) is covered too.
