@@ -1,0 +1,385 @@
+{
+ "component": "dropdown-menu",
+ "macro": "dropdown_menu",
+ "scripts": [
+  "dropdown-menu.js"
+ ],
+ "events": [
+  "click"
+ ],
+ "eventsOn": "[role^=menuitem]:not([aria-disabled=true])",
+ "ready": "[data-dropdown-menu-initialized]",
+ "drop": [
+  "div@data-dropdown-menu-initialized",
+  "div@data-basecoat-component"
+ ],
+ "why": "dropdown-menu.js and basecoat.js mark the menu they started.",
+ "cases": [
+  {
+   "name": "mouse",
+   "args": {
+    "id": "m",
+    "trigger": "Account",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "items": [
+     {
+      "label": "Profile"
+     },
+     {
+      "label": "Billing",
+      "attrs": {
+       "aria-disabled": "true"
+      }
+     },
+     {
+      "label": "Settings"
+     },
+     {
+      "type": "separator"
+     },
+     {
+      "type": "group",
+      "label": "Danger",
+      "items": [
+       {
+        "label": "Delete",
+        "attrs": {
+         "data-variant": "destructive"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [
+    {
+     "click": "m-trigger"
+    },
+    {
+     "click": "m-items-1"
+    },
+    {
+     "click": "m-trigger"
+    },
+    {
+     "click": "outside"
+    },
+    {
+     "click": "m-trigger"
+    },
+    {
+     "click": "m-trigger"
+    },
+    {
+     "click": "m-trigger"
+    },
+    {
+     "click": "m-items-5-1"
+    }
+   ]
+  },
+  {
+   "name": "keyboard",
+   "args": {
+    "id": "m",
+    "trigger": "Account",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "items": [
+     {
+      "label": "Profile"
+     },
+     {
+      "label": "Billing",
+      "attrs": {
+       "aria-disabled": "true"
+      }
+     },
+     {
+      "label": "Settings"
+     },
+     {
+      "type": "separator"
+     },
+     {
+      "type": "group",
+      "label": "Danger",
+      "items": [
+       {
+        "label": "Delete",
+        "attrs": {
+         "data-variant": "destructive"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [
+    {
+     "key": "tab"
+    },
+    {
+     "key": "enter"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "arrow_up"
+    },
+    {
+     "key": "end"
+    },
+    {
+     "key": "home"
+    },
+    {
+     "key": "enter"
+    }
+   ]
+  },
+  {
+   "name": "arrows-open",
+   "args": {
+    "id": "m",
+    "trigger": "Account",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "items": [
+     {
+      "label": "Profile"
+     },
+     {
+      "label": "Billing",
+      "attrs": {
+       "aria-disabled": "true"
+      }
+     },
+     {
+      "label": "Settings"
+     },
+     {
+      "type": "separator"
+     },
+     {
+      "type": "group",
+      "label": "Danger",
+      "items": [
+       {
+        "label": "Delete",
+        "attrs": {
+         "data-variant": "destructive"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [
+    {
+     "key": "tab"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "escape"
+    },
+    {
+     "key": "arrow_up"
+    },
+    {
+     "key": "enter"
+    }
+   ]
+  },
+  {
+   "name": "space",
+   "args": {
+    "id": "m",
+    "trigger": "Account",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "items": [
+     {
+      "label": "Profile"
+     },
+     {
+      "label": "Billing",
+      "attrs": {
+       "aria-disabled": "true"
+      }
+     },
+     {
+      "label": "Settings"
+     },
+     {
+      "type": "separator"
+     },
+     {
+      "type": "group",
+      "label": "Danger",
+      "items": [
+       {
+        "label": "Delete",
+        "attrs": {
+         "data-variant": "destructive"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [
+    {
+     "key": "tab"
+    },
+    {
+     "key": "space"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "arrow_down"
+    },
+    {
+     "key": "space"
+    }
+   ]
+  },
+  {
+   "name": "disabled-and-heading",
+   "args": {
+    "id": "m",
+    "trigger": "Account",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "items": [
+     {
+      "label": "Profile"
+     },
+     {
+      "label": "Billing",
+      "attrs": {
+       "aria-disabled": "true"
+      }
+     },
+     {
+      "label": "Settings"
+     },
+     {
+      "type": "separator"
+     },
+     {
+      "type": "group",
+      "label": "Danger",
+      "items": [
+       {
+        "label": "Delete",
+        "attrs": {
+         "data-variant": "destructive"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [
+    {
+     "click": "m-trigger"
+    },
+    {
+     "click": "m-items-2"
+    },
+    {
+     "click": "group-label-m-items-5"
+    },
+    {
+     "key": "escape"
+    }
+   ],
+   "known": [
+    {
+     "steps": [
+      4
+     ],
+     "what": [
+      "document",
+      "focus"
+     ],
+     "why": "A click on a disabled item or a heading takes no focus. In a browser the keyboard goes to the body, outside the menu that dropdown-menu.js hears keys on, so escape leaves it open. On a hotty host it goes to the terminal, which gives the keys to the program (SPEC \u00a710.1), and the open menu closes and gives the trigger the keyboard."
+    }
+   ]
+  },
+  {
+   "name": "enter-with-none-active",
+   "args": {
+    "id": "m",
+    "trigger": "Account",
+    "trigger_attrs": {
+     "class": "btn",
+     "data-variant": "outline"
+    },
+    "items": [
+     {
+      "label": "Profile"
+     },
+     {
+      "label": "Billing",
+      "attrs": {
+       "aria-disabled": "true"
+      }
+     },
+     {
+      "label": "Settings"
+     },
+     {
+      "type": "separator"
+     },
+     {
+      "type": "group",
+      "label": "Danger",
+      "items": [
+       {
+        "label": "Delete",
+        "attrs": {
+         "data-variant": "destructive"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "steps": [
+    {
+     "key": "tab"
+    },
+    {
+     "key": "enter"
+    },
+    {
+     "key": "enter"
+    },
+    {
+     "key": "arrow_down"
+    }
+   ]
+  }
+ ]
+}

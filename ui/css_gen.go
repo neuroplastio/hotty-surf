@@ -50,9 +50,12 @@ func Badge(p BadgeProps) templ.Component {
 
 // CardProps are a Card's attributes.
 type CardProps struct {
+	// Size is Medium or Small (data-size): Small draws its padding and gaps
+	// tighter.
+	Size Size
 	// Attrs are more attributes for the div element: its id and handlers,
 	// through surf.On, and any other but those the component writes itself
-	// (class or data-slot), which are a fault here.
+	// (class, data-slot or data-size), which are a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -336,4 +339,125 @@ type InputGroupAddonProps struct {
 // an icon, text, a Kbd or a small Button.
 func InputGroupAddon(p InputGroupAddonProps) templ.Component {
 	return scoped(cssInputGroupAddon(p), false)
+}
+
+// AlertProps are an Alert's attributes.
+type AlertProps struct {
+	// Variant is Primary (Basecoat's default) or Destructive.
+	Variant Variant
+	// Attrs are more attributes for the div element: its id and handlers,
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot, role or data-variant), which are a fault here.
+	Attrs templ.Attributes
+	// Class is more classes for the element, after its own.
+	Class string
+}
+
+// Alert is Basecoat's alert (role="alert"). Its parts are plain elements in
+// its children, as Basecoat's markup has them: an icon, its title (an <h2>
+// or a <strong>), a <section> of <p>s or a list, and a <footer> for a
+// button:
+//
+//	@ui.Alert(ui.AlertProps{Variant: ui.Destructive}) {
+//		@ui.Icon("circle-alert", "")
+//		<h2>Not saved</h2>
+//		<section><p>The disk is full.</p></section>
+//	}
+func Alert(p AlertProps) templ.Component {
+	return scoped(cssAlert(p), false)
+}
+
+// AvatarProps are an Avatar's attributes.
+type AvatarProps struct {
+	// Size is Medium, Small or Large (data-size).
+	Size Size
+	// Attrs are more attributes for the span element: its id and handlers,
+	// through surf.On, and any other but those the component writes itself
+	// (class, data-slot or data-size), which are a fault here.
+	Attrs templ.Attributes
+	// Class is more classes for the element, after its own.
+	Class string
+}
+
+// Avatar is Basecoat's avatar: a round picture of someone. Its parts are
+// plain elements in its children, as Basecoat's markup has them: an <img>,
+// whose src is a cid: resource or a data: URL (SPEC §7, nothing else is
+// fetched), a <span> with what shows until it has (initials, an icon), and
+// a <span class="avatar-badge"> for a status dot:
+//
+//	@ui.Avatar(ui.AvatarProps{}) {
+//		<img src={ "cid:" + u.ID } alt={ u.Name }/>
+//		<span>{ u.Initials }</span>
+//	}
+func Avatar(p AvatarProps) templ.Component {
+	return scoped(cssAvatar(p), false)
+}
+
+// AvatarGroupProps are an AvatarGroup's attributes.
+type AvatarGroupProps struct {
+	// Attrs are more attributes for the div element: its id and handlers,
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
+	Attrs templ.Attributes
+	// Class is more classes for the element, after its own.
+	Class string
+}
+
+// AvatarGroup is Basecoat's avatar group: Avatars side by side,
+// overlapping, in its children, and after them, if the group shows only
+// some, a plain <span data-count> with the rest's count ("+3"), which
+// Basecoat draws as one more avatar.
+func AvatarGroup(p AvatarGroupProps) templ.Component {
+	return scoped(cssAvatarGroup(p), false)
+}
+
+// EmptyProps are an Empty's attributes.
+type EmptyProps struct {
+	// Attrs are more attributes for the div element: its id and handlers,
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
+	Attrs templ.Attributes
+	// Class is more classes for the element, after its own.
+	Class string
+}
+
+// Empty is Basecoat's empty state: what a view shows with nothing in it.
+// Its parts are plain elements in its children, as Basecoat's markup has
+// them: a <header> (a <figure> with an icon or an image, an <h3> and a
+// <p>), then a <section> or a <footer> for its buttons.
+func Empty(p EmptyProps) templ.Component {
+	return scoped(cssEmpty(p), false)
+}
+
+// ItemGroupProps are an ItemGroup's attributes.
+type ItemGroupProps struct {
+	// Attrs are more attributes for the div element: its id and handlers,
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
+	Attrs templ.Attributes
+	// Class is more classes for the element, after its own.
+	Class string
+}
+
+// ItemGroup is Basecoat's item group: Items in a column, in its children,
+// with a plain <hr> between two where a line parts them.
+func ItemGroup(p ItemGroupProps) templ.Component {
+	return scoped(cssItemGroup(p), false)
+}
+
+// SkeletonProps are a Skeleton's attributes.
+type SkeletonProps struct {
+	// Attrs are more attributes for the div element: its id and handlers,
+	// through surf.On, and any other but those the component writes itself
+	// (class or data-slot), which are a fault here.
+	Attrs templ.Attributes
+	// Class is more classes for the element, after its own.
+	Class string
+}
+
+// Skeleton is Basecoat's skeleton: a muted, pulsing block standing for
+// something still loading, its size in Class ("h-4 w-[250px]", "size-12
+// rounded-full").
+func Skeleton(p SkeletonProps) templ.Component {
+	return scoped(cssSkeleton(p), false)
 }

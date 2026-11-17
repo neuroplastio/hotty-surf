@@ -163,6 +163,12 @@ func (s *Surface) event(e hotty.Event) error {
 	}
 	on := s.frame.On
 	ran := false
+	// A press on what takes no focus gives the keyboard back to the
+	// terminal (SPEC §10.1), so a blur comes right after it. The press
+	// already told the Outside handlers where the click was; the blur is
+	// that click's, not a click off the surface.
+	afterPress := s.pressed
+	s.pressed = e.Kind == hotty.EventPress
 	switch e.Kind {
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
@@ -202,7 +208,9 @@ func (s *Surface) event(e hotty.Event) error {
 		ran = true
 	case hotty.EventBlur:
 		s.focus("")
-		s.outside("")
+		if !afterPress {
+			s.outside("")
+		}
 		ran = true
 	case hotty.EventHover:
 		t := e.Target
