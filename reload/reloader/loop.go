@@ -104,6 +104,7 @@ func (r *Reloader) run(ctx context.Context) error {
 	done := make(chan struct{})
 	r.running, r.done = true, done
 	r.mu.Unlock()
+	r.startOnce.Do(func() { close(r.started) })
 	defer func() {
 		r.mu.Lock()
 		r.running = false
@@ -244,6 +245,12 @@ func (l *loop) idle() bool {
 // reload is Reload: Run's loop answers once what the files on disk set off
 // is applied.
 func (r *Reloader) reload(ctx context.Context) (Report, error) {
+	// A Reload as the program starts Run's goroutine waits for it.
+	select {
+	case <-r.started:
+	case <-ctx.Done():
+		return Report{}, ctx.Err()
+	}
 	r.mu.Lock()
 	running, done := r.running, r.done
 	r.mu.Unlock()

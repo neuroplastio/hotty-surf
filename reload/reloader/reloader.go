@@ -71,8 +71,11 @@ type Reloader struct {
 	dropped map[string]string
 	wake    chan struct{}
 	reqs    chan chan Report
-	// done is closed when the Run under way returns.
-	done chan struct{}
+	// started is closed once Run first started, done when the Run under
+	// way returns.
+	started   chan struct{}
+	startOnce sync.Once
+	done      chan struct{}
 }
 
 // New makes a Reloader for the app in dir (its main package).
@@ -90,7 +93,7 @@ func New(dir string, restart func(ctx context.Context, bin string) error, report
 	r := &Reloader{dir: dir, restart: restart, report: report,
 		procs: map[string]*proc{}, known: map[string]bool{}, handed: map[string]*devwire.Handed{},
 		back: map[string]chan struct{}{}, dropped: map[string]string{},
-		wake: make(chan struct{}, 1), reqs: make(chan chan Report)}
+		wake: make(chan struct{}, 1), reqs: make(chan chan Report), started: make(chan struct{})}
 	for _, o := range opts {
 		if o.apply != nil {
 			o.apply(r)
@@ -152,7 +155,8 @@ func (r *Reloader) Serve(ctx context.Context, rw io.ReadWriteCloser) error {
 // expected back connected again or reported in Report.Failed. A process that
 // crashes doesn't make it hang. It is what `hotty-surf ctl reload` and
 // `plx plugin dev ctl reload` answer; when nothing changed it reports the
-// last save.
+// last save. A Reload before Run has started waits for it, and for its
+// first build; one after Run returned fails.
 func (r *Reloader) Reload(ctx context.Context) (Report, error) {
 	return r.reload(ctx)
 }

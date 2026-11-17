@@ -22,7 +22,7 @@ import (
 //go:embed scaffold
 var scaffold embed.FS
 
-var appName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
+var appName = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 
 // New is `hotty-surf new <dir>`: a new app in dir, which must be empty or
 // not be there. The app builds, passes its tests and lints clean as

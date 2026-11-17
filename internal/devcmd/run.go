@@ -3,6 +3,7 @@ package devcmd
 import (
 	"context"
 	"errors"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -70,8 +71,22 @@ func serve(ctx context.Context, t *hottyterm.Term, dir string, ln net.Listener, 
 	h.dev = surf.New(h.devName, reloader.View(&h.last), ui.Stylesheet())
 	h.r = reloader.New(dir, h.restart, h.report, opts...)
 	go serveCtl(ctx, ln, ctlTarget{reload: h.r.Reload, shot: h.shot})
-	return h.run(ctx)
+	// Run is waited for: its directory, with every build's binary, goes
+	// before serve returns and main exits.
+	ran := make(chan error, 1)
+	runDone := make(chan struct{})
+	go func() {
+		defer close(runDone)
+		ran <- h.r.Run(ctx)
+	}()
+	err := h.run(ctx, ran)
+	cancel()
+	<-runDone
+	return err
 }
+
+// maxQueue bounds the input kept while no app is up.
+const maxQueue = 256
 
 // commands writes each command a surface writes in a write of its own.
 type commands struct{ t *hottyterm.Term }
@@ -94,9 +109,9 @@ type host struct {
 	placed  bool            // dev is placed
 
 	mu      sync.Mutex
-	app     *app            // the process started last
-	surface string          // the app's surface, as it named it
-	queue   []devwire.Input // the input while no app is up
+	app     *app             // the process started last
+	surface string           // the app's surface, as it named it
+	queue   []*devwire.Input // the input during a handover, pooled
 
 	shows chan string
 	exits chan *app
@@ -113,7 +128,7 @@ type app struct {
 	exited chan struct{}
 }
 
-func (h *host) run(ctx context.Context) error {
+func (h *host) run(ctx context.Context, ran <-chan error) error {
 	h.dev.Attach(commands{h.t}, h.caps)
 	if err := h.showDev(); err != nil {
 		return err
@@ -129,8 +144,6 @@ func (h *host) run(ctx context.Context) error {
 		h.t.Send(hotty.Del(h.devName))
 		h.t.Fence(context.Background())
 	}()
-	ran := make(chan error, 1)
-	go func() { ran <- h.r.Run(ctx) }()
 	winch := make(chan os.Signal, 1)
 	signal.Notify(winch, syscall.SIGWINCH)
 	defer signal.Stop(winch)
@@ -183,7 +196,9 @@ func (h *host) input(ev hottyterm.Event) (quit bool, err error) {
 			}
 			return false, nil
 		}
-		h.send(devwire.Input{Msg: []byte(hotty.EncodePlain(ev.Control, ev.Payload))})
+		in := devwire.GetInput()
+		in.Msg = append(in.Msg, hotty.EncodePlain(ev.Control, ev.Payload)...)
+		h.send(in)
 	case uv.KeyPressEvent:
 		k := hottyterm.KeyName(uv.Key(ev))
 		if k == "" {
@@ -192,7 +207,9 @@ func (h *host) input(ev hottyterm.Event) (quit bool, err error) {
 		if !h.running() {
 			return k == "ctrl+c" || k == "ctrl+q", nil
 		}
-		h.send(devwire.Input{Key: k})
+		in := devwire.GetInput()
+		in.Key = k
+		h.send(in)
 	}
 	return false, nil
 }
@@ -213,21 +230,31 @@ func (h *host) running() bool {
 	}
 }
 
-// send gives the app an input, or keeps it for the next one.
-func (h *host) send(in devwire.Input) {
+// send gives the app an input. During a handover (no app is up) the next
+// process takes it, up to maxQueue; an app that exited, or crashed, gets
+// nothing, and its frame's input is dropped rather than replayed into
+// the next build. It puts in back.
+func (h *host) send(in *devwire.Input) {
 	h.mu.Lock()
 	a := h.app
 	if a == nil {
-		h.queue = append(h.queue, in)
+		if len(h.queue) < maxQueue {
+			h.queue = append(h.queue, in)
+			in = nil
+		}
 		h.mu.Unlock()
+		if in != nil {
+			devwire.PutInput(in)
+		}
 		return
 	}
 	h.mu.Unlock()
-	if a.term.Notify("input", &in) != nil {
-		h.mu.Lock()
-		h.queue = append(h.queue, in)
-		h.mu.Unlock()
+	select {
+	case <-a.exited:
+	default:
+		a.term.Notify("input", in) // an error: the app is gone, and the input with it
 	}
+	devwire.PutInput(in)
 }
 
 func (h *host) placeApp() {
@@ -369,43 +396,57 @@ func (h *host) restart(ctx context.Context, bin string) error {
 	return nil
 }
 
-// read takes what the app sends: its commands go to the terminal.
+// read takes what the app sends: its commands go to the terminal. What
+// doesn't decode ends the term wire, which the app hears as run gone, and
+// is reported.
 func (h *host) read(a *app, c net.Conn) {
 	r := devwire.NewReader(c)
 	defer devwire.PutReader(r)
+	// One Out for the loop, its Data reused: Send copies it (string).
+	var o devwire.Out
 	for {
 		hd, err := devwire.ReadHead(r)
+		if err == nil {
+			switch {
+			case hd.Type == devwire.Notification && hd.Method == "out":
+				if err = devwire.Decode(r, &o); err == nil {
+					h.t.Send(string(o.Data))
+				}
+			case hd.Type == devwire.Notification && hd.Method == "show":
+				var s devwire.Show
+				if err = devwire.Decode(r, &s); err == nil {
+					h.shows <- s.Surface
+				}
+			case hd.Type == devwire.Notification && hd.Method == "bye":
+				a.bye.Store(true)
+				err = devwire.Skip(r)
+			case hd.Type == devwire.Response:
+				err = a.calls.Answer(r, hd)
+			default:
+				err = devwire.Skip(r)
+			}
+		}
 		if err != nil {
+			h.unread(a, c, err)
 			return
 		}
-		switch {
-		case hd.Type == devwire.Notification && hd.Method == "out":
-			var o devwire.Out
-			if devwire.Decode(r, &o) != nil {
-				return
-			}
-			h.t.Send(string(o.Data))
-		case hd.Type == devwire.Notification && hd.Method == "show":
-			var s devwire.Show
-			if devwire.Decode(r, &s) != nil {
-				return
-			}
-			h.shows <- s.Surface
-		case hd.Type == devwire.Notification && hd.Method == "bye":
-			a.bye.Store(true)
-			if devwire.Skip(r) != nil {
-				return
-			}
-		case hd.Type == devwire.Response:
-			if a.calls.Answer(r, hd) != nil {
-				return
-			}
-		default:
-			if devwire.Skip(r) != nil {
-				return
-			}
-		}
 	}
+}
+
+// unread ends a's term wire after what it sent didn't decode, and says so
+// in the report; the wire closing as the app exits is no news.
+func (h *host) unread(a *app, c net.Conn, err error) {
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, net.ErrClosed) {
+		return
+	}
+	select {
+	case <-a.exited:
+		return
+	default:
+	}
+	c.Close()
+	h.report(reloader.Report{Failed: map[string]string{
+		"app": "hotty-surf run: what the app sent didn't decode, so its term wire is closed: " + err.Error()}})
 }
 
 // stop ends the app: its term wire closes, so it leaves; it is killed if
