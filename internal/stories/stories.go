@@ -25,6 +25,9 @@ type Story struct {
 	Doc string
 	// View makes a new view, with state of its own.
 	View func() templ.Component
+	// Props, when present, creates editable props and their shared view for
+	// the book. Stories without editable props leave it nil.
+	Props func() (any, templ.Component)
 	// Keys, pressed in cells from the first frame (Tab first, since
 	// nothing has the keyboard), use the story by keyboard alone; Want is
 	// text the cells' lines show afterwards. A story of a component that

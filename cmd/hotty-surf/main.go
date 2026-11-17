@@ -163,7 +163,7 @@ func cmd(ctx context.Context, args []string, out, errOut io.Writer) int {
 	case "serve":
 		return devcmd.Serve(ctx, args[1:], out, errOut)
 	case "book":
-		fs := devcmd.Flags("book", "book\n\nThe kit's storybook in this terminal: the stories in a list, the one\nchosen drawn by the host and beside it in cells, as a terminal that is\nno hotty host draws it; in cells alone on such a terminal. Tab moves\nthrough the list, the story and the cells pane; in the list the arrows,\nHome, End and the pages move, and typing finds a story by its name. A\nstory's dialog that opens as the list reaches it leaves the keyboard on\nthe list; Esc closes it. While a dialog in the story has the keyboard,\nTab doesn't go on into the cells pane. ctrl+q quits. From a checkout it\nreloads as the stories are saved; its first start builds the book.")
+		fs := devcmd.Flags("book", "book\n\nThe kit's storybook in this terminal: the stories in a list, the one\nchosen drawn by the host and beside it in cells, as a terminal that is\nno hotty host draws it; in cells alone on such a terminal. Tab moves\nthrough the list, the story and the cells pane; in the list the arrows,\nHome, End and the pages move; / opens the story filter. t changes the\ntheme and n moves between panes. A\nstory's dialog that opens as the list reaches it leaves the keyboard on\nthe list; Esc closes it. While a dialog in the story has the keyboard,\nTab doesn't go on into the cells pane. ctrl+q quits. From a checkout it\nreloads as the stories are saved; its first start builds the book. Its\nctl socket is book.sock unless HOTTY_SURF_SOCK is set; it prints the path.")
 		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
 			return code
 		}
@@ -171,7 +171,7 @@ func cmd(ctx context.Context, args []string, out, errOut io.Writer) int {
 			fs.Usage()
 			return 2
 		}
-		if err := devcmd.Book(ctx, devcmd.SockPath()); err != nil {
+		if err := devcmd.Book(ctx, devcmd.SockPath(), errOut); err != nil {
 			fmt.Fprintln(errOut, "hotty-surf book:", err)
 			return 1
 		}

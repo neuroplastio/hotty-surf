@@ -13,6 +13,12 @@ type formState struct {
 	choice string
 }
 
+type bookInputProps struct {
+	Placeholder string
+	Disabled bool
+	text string
+}
+
 func (s *formState) set(b bool)     { s.on = b }
 func (s *formState) typed(v string) { s.text = v }
 func (s *formState) chose(v string) { s.choice = v }
@@ -36,7 +42,10 @@ func init() {
 	add(Story{ID: "switch/disabled", Doc: "A switch that can't change",
 		View: form(switchDisabled, formState{}), Keys: []string{"tab", "space"}, Want: "airplane mode: off"})
 	add(Story{ID: "input/default", Doc: "A text input with a placeholder",
-		View: form(inputDefault, formState{}), Keys: []string{"tab", "a", "d", "a"}, Want: "name: ada"})
+		View: form(inputDefault, formState{}), Props: func() (any, templ.Component) {
+			p := &bookInputProps{Placeholder: "Name"}
+			return p, bookInput(p)
+		}, Keys: []string{"tab", "a", "d", "a"}, Want: "name: ada"})
 	add(Story{ID: "input/date", Doc: "A date input (Type date), its value the app's",
 		View: form(inputDate, formState{text: "2026-11-17"}), Keys: []string{"tab"}, Want: "date: 2026-11-17"})
 	add(Story{ID: "input/time", Doc: "A time input (Type time), its value the app's",
@@ -158,6 +167,13 @@ templ inputDefault(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.Input(ui.InputProps{Value: s.text, Placeholder: "Name", Attrs: surf.On(ctx, "name", surf.Input(s.typed))})
 		@status("name", s.text)
+	</div>
+}
+
+templ bookInput(p *bookInputProps) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Value: p.text, Placeholder: p.Placeholder, Disabled: p.Disabled, Attrs: surf.On(ctx, "name", surf.Input(func(v string) { p.text = v }))})
+		@status("name", p.text)
 	</div>
 }
 

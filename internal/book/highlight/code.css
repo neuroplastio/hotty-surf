@@ -1,0 +1,20 @@
+/* code's token colours (View's tok-* classes), by theme: a theme, so its
+   colours are literals, as an app's theme.go has them. Xcode's palettes,
+   as hotty-a2ui's storybook has them. */
+.dark .tok-comment { color: #7f8c98; font-style: italic; }
+.dark .tok-keyword { color: #ff7ab2; font-weight: 600; }
+.dark .tok-type { color: #6bdfff; }
+.dark .tok-function { color: #67b7a4; }
+.dark .tok-string { color: #ff8170; }
+.dark .tok-literal { color: #d9c97c; }
+.dark .tok-meta { color: #fd8f3f; }
+.dark .tok-invalid { color: #ff4f4f; }
+
+.light .tok-comment { color: #6c7986; font-style: italic; }
+.light .tok-keyword { color: #9b2393; font-weight: 600; }
+.light .tok-type { color: #0b4f79; }
+.light .tok-function { color: #326d74; }
+.light .tok-string { color: #c41a16; }
+.light .tok-literal { color: #1c00cf; }
+.light .tok-meta { color: #643820; }
+.light .tok-invalid { color: #d12f1b; }
