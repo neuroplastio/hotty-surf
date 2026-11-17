@@ -126,6 +126,7 @@ pkg neuroplast.io/hotty-surf/surftest, func Size(int, int) Option
 pkg neuroplast.io/hotty-surf/surftest, func Start(testing.TB, *surf.Surface, ...Option) *Rig
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Checked(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Click(string)
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DoubleClick(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Drag(string, string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DragStep(string, string, int, int)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Find(string) []*html.Node

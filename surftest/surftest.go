@@ -200,6 +200,18 @@ func (r *Rig) Click(sel string) {
 	r.settle()
 }
 
+// DoubleClick double clicks the element sel as a host reports it: a
+// click with count 1, then one with count 2, each with its press and
+// release.
+func (r *Rig) DoubleClick(sel string) {
+	r.t.Helper()
+	n := r.One(sel)
+	if err := r.host.DoubleClick(r.s.Name(), attr(n, "id")); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
+		r.t.Fatalf("surftest: double click %s: %v", sel, err)
+	}
+	r.settle()
+}
+
 // Drag drags the one element matching from onto the one matching to, as a
 // user's pointer does (SPEC §9.1): a press on from, a move onto to, and the
 // release there. from's surf.Drag hears Start, a move Over to, and End;

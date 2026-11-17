@@ -59,7 +59,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		switch h.kind {
 		case kindClick, kindClicks:
 			if clicks++; clicks > 1 {
-				f.Faults = append(f.Faults, "surf.On: the id "+id+" has two click handlers (Click and Clicks): give it one")
+				f.Faults = append(f.Faults, "surf.On: the id "+id+" has two click handlers (Click or Clicks): give it one")
 				continue
 			}
 			if h.kind == kindClick {
@@ -139,9 +139,10 @@ func Click(fn func()) Handler {
 // Clicks is Click with the click's count: fn hears 1 for a click, 2 for the
 // second click of a double click, 3 for a triple click's third (SPEC §9,
 // count), as the host or a cells.Screen counts them, and 1 for Enter or
-// space. A double click is a click then a click with count 2, so fn hears
-// both: a row that selects on a click and opens on a double click does
-// each in turn. An element takes Click or Clicks, not both: two are a
+// space. A double click is a click then a click with count 2, each with
+// its own press and release, so a Drag on the same element hears them as
+// it hears any click, and fn hears both: a row that selects on a click
+// and opens on a double click does each in turn. An element takes Click or Clicks, not both: two are a
 // fault.
 func Clicks(fn func(count int)) Handler {
 	return handler(kindClicks, fn, fn == nil)
@@ -152,8 +153,11 @@ func Clicks(fn func(count int)) Handler {
 // a view uses to take the keyboard back after the user moved it, as a
 // palette's query does when Tab leaves it for a stop of its own. A render
 // that asks for the element that already has the keyboard sends nothing.
-// Ask only in the render that should move it: asked on every render, it
-// would keep the user from ever leaving id. id "" is a fault.
+// A handler decides it and the next render asks once: the handler sets a
+// flag, and the view asks Refocus and clears the flag (see the example).
+// Asked on every render, it would take the keyboard back from wherever
+// the user moves it, within the surface or by a click away. id "" is a
+// fault.
 func Refocus(ctx context.Context, id string) {
 	if id == "" {
 		rt.Fault(ctx, `surf.Refocus: id "" (ask for an element; nothing focused is not the program's to ask for)`)

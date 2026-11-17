@@ -2413,3 +2413,37 @@ Questions for the review:
 3. surftest's Rig has no DoubleClick (the tests feed the count as events).
    Add `Rig.DoubleClick(sel)`, a new name, now or when an app's test
    needs it?
+
+Reviewed (p-796, ~/.cache/hotty-surf-l5/review-clicks.md): both names
+approved. The questions were settled as: keep Tab reserved (Refocus is
+the route); keep the narrow `func(count int)`; add `Rig.DoubleClick(sel)`
+now. Applied:
+
+- `surftest.Rig.DoubleClick(sel)`, on the test host's DoubleClick (count
+  1, then 2, each a press and a release). TestClicks uses it.
+- Refocus's doc gives the pattern (a handler sets a flag, the view asks
+  once and clears it) and what asking on every render does.
+- Clicks' doc says each click of a double click has its own press and
+  release, so a Drag on the element hears them as usual.
+- The fault reads "(Click or Clicks)": two Clicks fault too.
+
+The caret risk, recorded (not a surf change). Where a text field's caret
+goes when the program focuses it (SPEC §10.1 doesn't say):
+
+- The test host and cells.Screen: at the end on the first focus, and
+  where it was after Tab and Refocus (TestRefocusCaretVector: "query",
+  x, Tab, y gives "queryxy").
+- hotty-blitz v0.8.9 (a probe on its Host, not committed there): a=focus
+  keeps the caret and the selection, as a browser's focus() does. On a
+  first focus the caret is at the end. A caret at 2 stays at 2 through
+  Tab and a=focus, and a typed x gives "quxery". A selection 1..4 stays
+  selected, and a typed x replaces it ("qxy").
+- So no host selects all or moves the caret to the start. A SPEC note
+  ("a=focus keeps a field's selection") would make it a rule; that is
+  the maintainer's.
+
+A cells gap found on the way: cells.Screen's Tab order takes only the
+elements its layout drew, so an empty `<span tabindex="0">` (plx's
+invisible stops) is skipped, and Tab from the query blurs. A browser
+and the hosts tab to it. plx draws its cells palette itself, so it
+doesn't block plx now; it goes to cells' owner.

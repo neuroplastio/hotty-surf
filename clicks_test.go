@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/a-h/templ"
+
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
@@ -35,11 +37,7 @@ func TestClicks(t *testing.T) {
 	if on := attrOf(r.One("#row-a"), "data-on"); on != "click" {
 		t.Fatalf("data-on %q", on)
 	}
-	for _, n := range []int{1, 2} {
-		if err := s.Event(hotty.Event{Surface: "t", Kind: hotty.EventClick, Target: "row-b", Count: n}); err != nil {
-			t.Fatal(err)
-		}
-	}
+	r.DoubleClick("#row-b")
 	if fmt.Sprint(heard) != "[1 2]" || selected != "b" || ran != "b" {
 		t.Fatalf("heard %v, selected %q, ran %q after a double click on b", heard, selected, ran)
 	}
@@ -144,3 +142,72 @@ type faultT struct {
 }
 
 func (f *faultT) Error(args ...any) { f.got = append(f.got, fmt.Sprint(args...)) }
+
+// Where the caret is after Refocus gives a field holding text the
+// keyboard back (SPEC §10.1 doesn't say): a key vector, on the test host
+// and in cells. Tab leaves the query for a stop, the stop's Focus asks for
+// Refocus, and a typed x shows where the caret went. Recorded, not
+// required: hosts differ, and a SPEC note would settle it.
+func TestRefocusCaretVector(t *testing.T) {
+	type app struct {
+		value string
+		back  bool
+	}
+	viewOf := func(a *app) templ.Component {
+		return view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+			fmt.Fprintf(w, `<input value="%s"%s>`, a.value, on("line", surf.Input(func(v string) { a.value = v })))
+			// The stop holds a character: cells' Tab order takes only what
+			// it draws, so an empty stop (as plx's are) is skipped there.
+			fmt.Fprintf(w, `<span tabindex="0"%s>·</span>`, on("stop", surf.Focus(func(in bool) { a.back = in })))
+			if a.back {
+				a.back = false
+				surf.Refocus(ctx, "line")
+			} else {
+				surf.Autofocus(ctx, "line")
+			}
+		})
+	}
+	for _, mode := range []string{"host", "cells"} {
+		t.Run(mode, func(t *testing.T) {
+			a := &app{value: "query"}
+			s := surf.New("t", viewOf(a), "")
+			var key func(string)
+			if mode == "host" {
+				r := surftest.Start(t, s)
+				key = func(k string) { r.Key(k) }
+			} else {
+				c := cells.New(40, 3, func(e hotty.Event) {
+					if err := s.Event(e); err != nil {
+						t.Fatal(err)
+					}
+				})
+				s.Attach(c, hotty.Caps{})
+				doc, err := s.Document()
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := c.Write([]byte(hotty.Doc("t", doc))); err != nil {
+					t.Fatal(err)
+				}
+				if err := s.Update(); err != nil {
+					t.Fatal(err)
+				}
+				key = func(k string) {
+					if !c.Key(k) {
+						if _, err := s.Key(k); err != nil {
+							t.Fatal(err)
+						}
+					}
+				}
+			}
+			key("x")
+			first := a.value
+			key("tab")
+			if s.Focused() != "line" {
+				t.Fatalf("after Tab and Refocus, focused %q", s.Focused())
+			}
+			key("y")
+			t.Logf("%s: first focus then x: %q; Tab, Refocus, then y: %q", mode, first, a.value)
+		})
+	}
+}
