@@ -1,0 +1,84 @@
+package book
+
+import "neuroplast.io/hotty-surf"
+
+// View is the book: the list of stories, and the one shown, drawn by the
+// host and, beside it, in cells.
+templ View(a *App) {
+	<div id="book" class="book flex gap-4 p-2">
+		{{ from, sts, below := a.window() }}
+		<nav class="book-list flex flex-col">
+			<h1 class="font-semibold">Stories</h1>
+			if from > 0 {
+				<p class="text-sm text-muted-foreground">↑ { itoa(from) } more</p>
+			}
+			<ul
+				role="listbox"
+				aria-label="Stories"
+				tabindex="0"
+				{ surf.On(ctx, "book-list", surf.Key(a.ListKey))... }
+			>
+				for i, st := range sts {
+					<li
+						role="option"
+						aria-selected={ bstr(st.ID == a.ID) }
+						class={ "book-item", templ.KV("book-chosen", st.ID == a.ID) }
+						{ surf.On(ctx, optionID(from+i), surf.Click(a.Pick(st.ID)))... }
+					>
+						if st.ID == a.ID {
+							› { st.ID }
+						} else {
+							{ "\u00a0\u00a0" + st.ID }
+						}
+					</li>
+				}
+			</ul>
+			if below > 0 {
+				<p class="text-sm text-muted-foreground">↓ { itoa(below) } more</p>
+			}
+		</nav>
+		if a.cur != nil {
+			<main class="book-main flex flex-col gap-2">
+				<header>
+					<h2 class="font-semibold">{ a.cur.st.ID }</h2>
+					<p class="text-sm text-muted-foreground">{ a.cur.st.Doc }</p>
+					if k := keysLine(a.cur.st); k != "" {
+						<p class="text-sm text-muted-foreground">{ k }</p>
+					}
+				</header>
+				<div class="flex gap-4">
+					<section class="book-html" aria-label="the story">
+						@a.cur.view
+					</section>
+					<section id="book-cells" class="book-cells hidden flex-col gap-2" aria-label="the story in cells">
+						<p class="text-sm text-muted-foreground">in cells</p>
+						<span tabindex="0" { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }></span>
+						<div
+							class="book-pane"
+							tabindex="0"
+							{ surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }
+						>
+							for _, l := range a.lines() {
+								<div>
+									for _, sg := range l {
+										<span class={ sg.class }>{ sg.text }</span>
+									}
+								</div>
+							}
+						</div>
+						<span tabindex="0" { surf.On(ctx, "book-pane-after", surf.Focus(a.Edge(false)))... }></span>
+						if e := a.paneErr(); e != "" {
+							<p class="text-sm text-destructive">{ e }</p>
+						}
+					</section>
+				</div>
+			</main>
+			if a.takeRefocus() {
+				{{ surf.Autofocus(ctx, "book-pane") }}
+			}
+		}
+		if a.takeOnList() {
+			{{ surf.Autofocus(ctx, "book-list") }}
+		}
+	</div>
+}

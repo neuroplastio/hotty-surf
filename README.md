@@ -111,10 +111,14 @@ hotty-surf serve hello    # in a browser, reloading as you save
 hotty-surf build -wasm hello   # a static page: TinyGo's wasm in xterm.js
 hotty-surf lint hello     # the kit's rules, which run also checks on save
 hotty-surf classes        # the classes the kit's stylesheet defines
+hotty-surf book           # the kit's storybook, drawn by the host and in cells
 ```
 
 `run` draws the app in character cells where the terminal is no hotty
-host. `hotty-surf help` lists every command, and each takes `-h`.
+host. `book` shows every story of the kit: the one chosen drawn by the
+host, and beside it in cells, as such a terminal draws it, both one view
+that the keyboard works in either. `hotty-surf help` lists every command,
+and each takes `-h`.
 
 ### What it needs
 
