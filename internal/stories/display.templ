@@ -1,0 +1,366 @@
+package stories
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// The stories of B2's display components: Alert, Avatar, Breadcrumb,
+// Card's sizes, Chart, Empty, Item, Progress, Skeleton and Table, and
+// Basecoat's scrollbar classes. Their data is made up.
+
+type displayState struct {
+	page string
+}
+
+func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
+
+// named is the aria-label that names a chart (kit rule K18).
+func named(l string) templ.Attributes { return templ.Attributes{"aria-label": l} }
+
+func logText() string {
+	var b strings.Builder
+	for i := range 20 {
+		fmt.Fprintf(&b, "Line %d of the log\n", i+1)
+	}
+	return b.String()
+}
+
+func init() {
+	show := func(f func(*displayState) templ.Component) func() templ.Component {
+		return func() templ.Component { return f(&displayState{page: "Breadcrumb"}) }
+	}
+	add(Story{ID: "alert/default", Doc: "An alert with an icon, a title and a description", View: show(alertDefault)})
+	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive)})
+	add(Story{ID: "avatar/default", Doc: "An avatar's initials, as it shows without its image", View: show(avatarDefault)})
+	add(Story{ID: "avatar/sizes", Doc: "An avatar of each size", View: show(avatarSizes)})
+	add(Story{ID: "avatar/badge", Doc: "An avatar with a status dot", View: show(avatarBadge)})
+	add(Story{ID: "avatar/group", Doc: "Three avatars overlapping, and the count of the rest", View: show(avatarGroup)})
+	add(Story{ID: "breadcrumb/default", Doc: "A trail of three steps; Enter on the first goes there",
+		View: show(breadcrumbDefault), Keys: []string{"tab", "enter"}, Want: "page: Home"})
+	add(Story{ID: "card/small", Doc: "A small card (CardProps.Size)", View: show(cardSmall)})
+	add(Story{ID: "chart/bar", Doc: "A bar chart of two series", View: show(chartBar)})
+	add(Story{ID: "chart/line", Doc: "A line chart of two series", View: show(chartLine)})
+	add(Story{ID: "chart/pie", Doc: "A pie of five slices, its labels beside their colours", View: show(chartPie)})
+	add(Story{ID: "chart/legend", Doc: "Bar charts of two series and of one, with their legends", View: show(chartLegend)})
+	add(Story{ID: "empty/default", Doc: "An empty state with a title, a description and a button", View: show(emptyDefault)})
+	add(Story{ID: "empty/with-icon", Doc: "An empty state with an icon", View: show(emptyWithIcon)})
+	add(Story{ID: "item/default", Doc: "An item with an icon, a title, a description and a button", View: show(itemDefault)})
+	add(Story{ID: "item/variants", Doc: "An item of each variant: default, Outline and Muted", View: show(itemVariants)})
+	add(Story{ID: "item/sizes", Doc: "An outline item of each size", View: show(itemSizes)})
+	add(Story{ID: "item/group", Doc: "Three items in a group, a line between two; each a link, and Enter on the first opens it",
+		View: show(itemGroup), Keys: []string{"tab", "enter"}, Want: "page: Ada Lovelace"})
+	add(Story{ID: "progress/default", Doc: "A progress bar at 60%", View: show(progressDefault)})
+	add(Story{ID: "progress/values", Doc: "Progress at 0, 25, 50, 75 and 100%", View: show(progressValues)})
+	add(Story{ID: "scrollbar/default", Doc: "A plain box of twenty lines that scrolls, with Basecoat's scrollbar class", View: show(scrollbarDefault)})
+	add(Story{ID: "scrollbar/small", Doc: "A Textarea of twenty lines with the scrollbar-sm class", View: show(scrollbarSmall)})
+	add(Story{ID: "skeleton/default", Doc: "A skeleton of a round picture and two lines", View: show(skeletonDefault)})
+	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault)})
+}
+
+templ alertDefault(s *displayState) {
+	<div class="p-4 max-w-md">
+		@ui.Alert(ui.AlertProps{}) {
+			@ui.Icon("circle-check-big", "")
+			<h2>Your changes are saved</h2>
+			<section>
+				<p>They show on every device within a minute.</p>
+			</section>
+		}
+	</div>
+}
+
+templ alertDestructive(s *displayState) {
+	<div class="p-4 max-w-md">
+		@ui.Alert(ui.AlertProps{Variant: ui.Destructive}) {
+			@ui.Icon("circle-alert", "")
+			<h2>The payment failed</h2>
+			<section>
+				<p>Check the card's details and try again.</p>
+				<ul>
+					<li>The card number</li>
+					<li>The expiry date</li>
+				</ul>
+			</section>
+		}
+	</div>
+}
+
+templ avatarDefault(s *displayState) {
+	<div class="p-4">
+		@ui.Avatar(ui.AvatarProps{}) {
+			<span>AL</span>
+		}
+	</div>
+}
+
+templ avatarSizes(s *displayState) {
+	<div class="p-4 flex items-center gap-4">
+		for _, z := range []ui.Size{ui.Small, ui.Medium, ui.Large} {
+			@ui.Avatar(ui.AvatarProps{Size: z}) {
+				<span>GH</span>
+			}
+		}
+	</div>
+}
+
+templ avatarBadge(s *displayState) {
+	<div class="p-4 flex items-center gap-4">
+		@ui.Avatar(ui.AvatarProps{}) {
+			<span>MK</span>
+			<span class="avatar-badge" style="background-color: var(--chart-2);"></span>
+		}
+		@ui.Avatar(ui.AvatarProps{Size: ui.Large}) {
+			<span>RT</span>
+			<span class="avatar-badge" style="background-color: var(--chart-2);"></span>
+		}
+	</div>
+}
+
+templ avatarGroup(s *displayState) {
+	<div class="p-4">
+		@ui.AvatarGroup(ui.AvatarGroupProps{}) {
+			for _, n := range []string{"AL", "GH", "MK"} {
+				@ui.Avatar(ui.AvatarProps{}) {
+					<span>{ n }</span>
+				}
+			}
+			<span data-count>+4</span>
+		}
+	</div>
+}
+
+templ breadcrumbDefault(s *displayState) {
+	<div class="p-4 grid gap-2">
+		@ui.Breadcrumb(ui.BreadcrumbProps{Items: []ui.BreadcrumbItem{
+			{Label: "Home", Attrs: surf.On(ctx, "home", surf.Click(s.goTo("Home")))},
+			{Label: "Components", Attrs: surf.On(ctx, "components", surf.Click(s.goTo("Components")))},
+			{Label: "Breadcrumb"},
+		}})
+		<p class="text-sm text-muted-foreground">page: { s.page }</p>
+	</div>
+}
+
+templ cardSmall(s *displayState) {
+	<div class="p-4 max-w-sm">
+		@ui.Card(ui.CardProps{Size: ui.Small}) {
+			<header>
+				<h2>Storage</h2>
+				<p>4.2 GB of 10 GB used.</p>
+			</header>
+			<section>
+				@ui.Progress(ui.ProgressProps{Value: 42})
+			</section>
+		}
+	</div>
+}
+
+var (
+	months  = []string{"Jan", "Feb", "Mar", "Apr", "May", "Jun"}
+	visits  = []ui.ChartSeries{{Label: "Desktop", Values: []float64{186, 305, 237, 73, 209, 214}}, {Label: "Mobile", Values: []float64{80, 200, 120, 190, 130, 140}}}
+	browser = ui.ChartProps{Type: "pie", Labels: []string{"Arc", "Firefox", "Safari", "Edge", "Other"},
+		Series: []ui.ChartSeries{{Label: "Visitors", Values: []float64{275, 200, 187, 173, 90}}},
+		Attrs:  named("Visitors by browser")}
+)
+
+templ chartBar(s *displayState) {
+	<div class="p-4 max-w-md">
+		@ui.Chart(ui.ChartProps{Labels: months, Series: visits, Attrs: named("Visitors by month")})
+	</div>
+}
+
+templ chartLine(s *displayState) {
+	<div class="p-4 max-w-md">
+		@ui.Chart(ui.ChartProps{Type: "line", Labels: months, Series: visits, Attrs: named("Visitors by month")})
+	</div>
+}
+
+templ chartPie(s *displayState) {
+	<div class="p-4 max-w-sm">
+		@ui.Chart(browser)
+	</div>
+}
+
+templ chartLegend(s *displayState) {
+	<div class="p-4 max-w-md grid gap-4">
+		@ui.Chart(ui.ChartProps{Labels: months, Series: visits, Legend: true, Attrs: named("Visitors by month")})
+		@ui.Chart(ui.ChartProps{Type: "bar", Labels: months, Series: visits[:1], Legend: true, Attrs: named("Desktop visitors by month")})
+	</div>
+}
+
+templ emptyDefault(s *displayState) {
+	<div class="p-4">
+		@ui.Empty(ui.EmptyProps{}) {
+			<header>
+				<h3>No projects yet</h3>
+				<p>Make your first project to start.</p>
+			</header>
+			<section>
+				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "create")}) {
+					Create project
+				}
+			</section>
+		}
+	</div>
+}
+
+templ emptyWithIcon(s *displayState) {
+	<div class="p-4">
+		@ui.Empty(ui.EmptyProps{}) {
+			<header>
+				<figure>
+					@ui.Icon("inbox", "")
+				</figure>
+				<h3>No messages</h3>
+				<p>Messages you get show here.</p>
+			</header>
+		}
+	</div>
+}
+
+templ itemBody(icon, title, text string) {
+	<figure>
+		@ui.Icon(icon, "")
+	</figure>
+	<section>
+		<h3>{ title }</h3>
+		<p>{ text }</p>
+	</section>
+}
+
+templ itemDefault(s *displayState) {
+	<div class="p-4 max-w-md">
+		@ui.Item(ui.ItemProps{}) {
+			@itemBody("folder", "Reports", "Monthly reports for the team.")
+			<aside>
+				@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.Small, Attrs: surf.On(ctx, "open")}) {
+					Open
+				}
+			</aside>
+		}
+	</div>
+}
+
+templ itemVariants(s *displayState) {
+	<div class="p-4 max-w-md grid gap-4">
+		@ui.Item(ui.ItemProps{}) {
+			@itemBody("bell", "Default", "No border, no background.")
+		}
+		@ui.Item(ui.ItemProps{Variant: ui.Outline}) {
+			@itemBody("bell", "Outline", "A border.")
+		}
+		@ui.Item(ui.ItemProps{Muted: true}) {
+			@itemBody("bell", "Muted", "The muted background.")
+		}
+	</div>
+}
+
+templ itemSizes(s *displayState) {
+	<div class="p-4 max-w-md grid gap-4">
+		for _, z := range []ui.Size{ui.Medium, ui.Small, ui.XSmall} {
+			@ui.Item(ui.ItemProps{Variant: ui.Outline, Size: z}) {
+				@itemBody("user", "Ada Lovelace", "ada@example.com")
+			}
+		}
+	</div>
+}
+
+templ itemGroup(s *displayState) {
+	<div class="p-4 max-w-md grid gap-2">
+		@ui.ItemGroup(ui.ItemGroupProps{}) {
+			for i, n := range []string{"Ada Lovelace", "Grace Hopper", "Mary Kenneth Keller"} {
+				if i > 0 {
+					<hr/>
+				}
+				@ui.Item(ui.ItemProps{Attrs: surf.On(ctx, "person-"+strconv.Itoa(i), surf.Click(s.goTo(n)))}) {
+					@itemBody("user", n, "Opens their page.")
+				}
+			}
+		}
+		<p class="text-sm text-muted-foreground">page: { s.page }</p>
+	</div>
+}
+
+templ progressDefault(s *displayState) {
+	<div class="p-4 max-w-sm">
+		@ui.Progress(ui.ProgressProps{Value: 60})
+	</div>
+}
+
+templ progressValues(s *displayState) {
+	<div class="p-4 max-w-sm grid gap-4">
+		for _, v := range []float64{0, 25, 50, 75, 100} {
+			@ui.Progress(ui.ProgressProps{Value: v})
+		}
+	</div>
+}
+
+templ lines() {
+	for i := range 20 {
+		<p class="text-sm py-1">Line { strconv.Itoa(i + 1) } of the log</p>
+	}
+}
+
+templ scrollbarDefault(s *displayState) {
+	<div class="p-4 max-w-sm">
+		<div class="scrollbar p-2" style="height: 12rem; overflow-y: auto;">
+			@lines()
+		</div>
+	</div>
+}
+
+templ scrollbarSmall(s *displayState) {
+	<div class="p-4 max-w-sm">
+		@ui.Textarea(ui.TextareaProps{Value: logText(), Class: "scrollbar-sm", Attrs: templ.Attributes{"style": "height: 12rem;"}})
+	</div>
+}
+
+templ skeletonDefault(s *displayState) {
+	<div class="p-4 flex items-center gap-4">
+		@ui.Skeleton(ui.SkeletonProps{Attrs: templ.Attributes{"style": "width: 3rem; height: 3rem; border-radius: 9999px;"}})
+		<div class="grid gap-2">
+			@ui.Skeleton(ui.SkeletonProps{Attrs: templ.Attributes{"style": "width: 250px; height: 1rem;"}})
+			@ui.Skeleton(ui.SkeletonProps{Attrs: templ.Attributes{"style": "width: 200px; height: 1rem;"}})
+		</div>
+	</div>
+}
+
+type invoice struct{ id, status, method, amount string }
+
+var invoices = []invoice{
+	{"INV001", "Paid", "Credit card", "$250.00"},
+	{"INV002", "Pending", "Bank transfer", "$150.00"},
+	{"INV003", "Unpaid", "Credit card", "$350.00"},
+}
+
+templ tableDefault(s *displayState) {
+	<div class="p-4 max-w-md">
+		@ui.Table(ui.TableProps{}) {
+			<caption>Recent invoices.</caption>
+			<thead>
+				<tr><th>Invoice</th><th>Status</th><th>Method</th><th style="text-align: right;">Amount</th></tr>
+			</thead>
+			<tbody>
+				for i, v := range invoices {
+					<tr
+						if i == 1 {
+							data-state="selected"
+						}
+					>
+						<td class="font-medium">{ v.id }</td>
+						<td>{ v.status }</td>
+						<td>{ v.method }</td>
+						<td style="text-align: right;">{ v.amount }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr><td colspan="3">Total</td><td style="text-align: right;">$750.00</td></tr>
+			</tfoot>
+		}
+	</div>
+}

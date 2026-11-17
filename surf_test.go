@@ -112,9 +112,31 @@ func TestFocusOutsideHover(t *testing.T) {
 		t.Fatalf("click out: %v", log)
 	}
 	log = nil
-	r.Click("p:text(text)") // takes no focus: a press, then a blur
-	if strings.Join(log, ",") != "outside,outside" {
+	// It takes no focus: a press, then the blur it makes, which is the
+	// same click, heard once.
+	r.Click("p:text(text)")
+	if strings.Join(log, ",") != "outside" {
 		t.Fatalf("click on text: %v", log)
+	}
+}
+
+// A click inside the element on what takes no focus (a list's heading)
+// blurs the surface, but it is no click outside: Outside isn't called.
+func TestOutsideNotForAClickInside(t *testing.T) {
+	n := 0
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div><div%s><button%s>in</button><p id="heading">heading</p></div><p id="text">text</p></div>`,
+			on("menu", surf.Outside(func() { n++ })), on("in", surf.Click(func() {})))
+	})
+	r := surftest.Start(t, surf.New("t", v, ""))
+	r.Click("#in")
+	r.Click("#heading")
+	if n != 0 {
+		t.Fatalf("a click on the element's own heading called Outside %d times", n)
+	}
+	r.Click("#text")
+	if n != 1 {
+		t.Fatalf("a click on text outside it called Outside %d times, want 1", n)
 	}
 }
 

@@ -30,7 +30,7 @@ CAP       ?=
 # internal/apitool the API lock's tools.
 SUBMODULES := surftea internal/apitool
 
-.PHONY: check fmt tidy gen vet lint test canary tinygo browser api api-check api-frozen api-approve pack coverage oracle kit print-cap clean
+.PHONY: check fmt tidy gen vet lint test canary tinygo browser api api-check api-frozen api-approve pack coverage oracle kit differential print-cap clean
 
 check: fmt tidy gen vet lint test tinygo api-check coverage   ## the gate
 
@@ -168,6 +168,13 @@ browser: scripts/browser/node_modules   ## build -wasm and serve, proven in Chro
 
 scripts/browser/node_modules: scripts/browser/package.json scripts/browser/package-lock.json
 	cd scripts/browser && $(CAP) $(NPM) ci --no-audit --no-fund && touch node_modules
+
+# The browser half of ui's differential tests: Basecoat's own scripts
+# driven in a headless Chromium, recorded in ui/testdata/differential.
+# Needs chromium and node; run it on a Basecoat bump or a new case, then
+# make test.
+differential:
+	$(CAP) sh scripts/differential.sh
 
 print-cap:   ## the CAP the steps run under, for a script that builds outside make
 	@echo '$(CAP)'

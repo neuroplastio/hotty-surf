@@ -101,3 +101,16 @@ func attrsOf(a templ.Attributes) string {
 	}
 	return b.String()
 }
+
+// Autofocus asks for an element: id "" is a fault (kit rule K19).
+func TestAutofocusNothingIsAFault(t *testing.T) {
+	s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		Autofocus(ctx, "a")
+		Autofocus(ctx, "")
+		fmt.Fprint(w, `<div><button id="a">a</button></div>`)
+		return nil
+	}))
+	if len(s.faults) == 0 || !strings.Contains(s.faults[0], `surf.Autofocus: id ""`) {
+		t.Errorf("faults %q, want Autofocus's", s.faults)
+	}
+}

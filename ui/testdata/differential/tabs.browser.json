@@ -1,0 +1,131 @@
+{
+ "keyboard": [
+  {
+   "step": "load",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "key tab",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-1",
+   "events": []
+  },
+  {
+   "step": "key arrow_right",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"true\" tabindex=\"0\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-2",
+   "events": []
+  },
+  {
+   "step": "key arrow_right",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"true\" tabindex=\"0\">Billing</button></nav>",
+   "focus": "t-tab-4",
+   "events": []
+  },
+  {
+   "step": "key arrow_right",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-1",
+   "events": []
+  },
+  {
+   "step": "key arrow_left",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"true\" tabindex=\"0\">Billing</button></nav>",
+   "focus": "t-tab-4",
+   "events": []
+  },
+  {
+   "step": "key home",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-1",
+   "events": []
+  },
+  {
+   "step": "key end",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"true\" tabindex=\"0\">Billing</button></nav>",
+   "focus": "t-tab-4",
+   "events": []
+  },
+  {
+   "step": "key arrow_right",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-1",
+   "events": []
+  }
+ ],
+ "mouse": [
+  {
+   "step": "load",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"true\" tabindex=\"0\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click t-tab-1",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-1",
+   "events": []
+  },
+  {
+   "step": "click t-tab-3",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click t-tab-4",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"true\" tabindex=\"0\">Billing</button></nav>",
+   "focus": "t-tab-4",
+   "events": []
+  },
+  {
+   "step": "click outside",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"true\" tabindex=\"0\">Billing</button></nav>",
+   "focus": "outside",
+   "events": []
+  }
+ ],
+ "tab-in-and-out": [
+  {
+   "step": "load",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"true\" tabindex=\"0\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "key tab",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"false\" tabindex=\"-1\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"true\" tabindex=\"0\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-2",
+   "events": []
+  },
+  {
+   "step": "key arrow_left",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "t-tab-1",
+   "events": []
+  },
+  {
+   "step": "key tab",
+   "note": "",
+   "html": "<nav role=\"tablist\" aria-orientation=\"horizontal\"><button type=\"button\" role=\"tab\" id=\"t-tab-1\" aria-controls=\"t-panel-1\" aria-selected=\"true\" tabindex=\"0\">Account</button><button type=\"button\" role=\"tab\" id=\"t-tab-2\" aria-controls=\"t-panel-2\" aria-selected=\"false\" tabindex=\"-1\">Password</button><button type=\"button\" role=\"tab\" id=\"t-tab-3\" aria-controls=\"t-panel-3\" aria-selected=\"false\" tabindex=\"-1\" disabled=\"True\">Team</button><button type=\"button\" role=\"tab\" id=\"t-tab-4\" aria-controls=\"t-panel-4\" aria-selected=\"false\" tabindex=\"-1\">Billing</button></nav>",
+   "focus": "",
+   "events": []
+  }
+ ]
+}

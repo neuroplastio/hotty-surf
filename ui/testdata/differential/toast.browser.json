@@ -1,0 +1,32 @@
+{
+ "dismiss": [
+  {
+   "step": "load",
+   "html": "<div id=\"toaster\" class=\"toaster \" data-toaster-initialized=\"true\" data-basecoat-component=\"toaster\"><div class=\"toast \" role=\"status\" aria-atomic=\"true\" aria-hidden=\"false\" data-category=\"success\" data-duration=\"-1\" data-toast-initialized=\"true\"><div class=\"toast-content\"><svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m9 12 2 2 4-4\"></path></svg><section><h2>Saved</h2><p>All of it.</p></section><footer><button type=\"button\" class=\"btn\" data-variant=\"outline\" data-size=\"sm\" data-toast-cancel=\"\">Dismiss</button></footer></div></div></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click button[data-toast-cancel]",
+   "note": "",
+   "html": "<div id=\"toaster\" class=\"toaster \" data-toaster-initialized=\"true\" data-basecoat-component=\"toaster\"><div class=\"toast \" role=\"status\" aria-atomic=\"true\" aria-hidden=\"true\" data-category=\"success\" data-duration=\"-1\" data-toast-initialized=\"true\"><div class=\"toast-content\"><svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m9 12 2 2 4-4\"></path></svg><section><h2>Saved</h2><p>All of it.</p></section><footer><button type=\"button\" class=\"btn\" data-variant=\"outline\" data-size=\"sm\" data-toast-cancel=\"\">Dismiss</button></footer></div></div></div>",
+   "focus": "",
+   "events": []
+  }
+ ],
+ "dismiss-one-of-two": [
+  {
+   "step": "load",
+   "html": "<div id=\"toaster\" class=\"toaster \" data-toaster-initialized=\"true\" data-basecoat-component=\"toaster\"><div class=\"toast \" role=\"status\" aria-atomic=\"true\" aria-hidden=\"false\" data-category=\"success\" data-duration=\"-1\" data-toast-initialized=\"true\"><div class=\"toast-content\"><svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m9 12 2 2 4-4\"></path></svg><section><h2>Saved</h2><p>All of it.</p></section><footer><button type=\"button\" class=\"btn\" data-variant=\"outline\" data-size=\"sm\" data-toast-cancel=\"\">Dismiss</button></footer></div></div><div class=\"toast \" role=\"alert\" aria-atomic=\"true\" aria-hidden=\"false\" data-category=\"error\" data-duration=\"-1\" data-toast-initialized=\"true\"><div class=\"toast-content\"><svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m15 9-6 6\"></path><path d=\"m9 9 6 6\"></path></svg><section><h2>Not sent</h2><p>Try again.</p></section><footer><button type=\"button\" class=\"btn\" data-variant=\"outline\" data-size=\"sm\" data-toast-cancel=\"\">Dismiss</button></footer></div></div></div>",
+   "focus": "",
+   "events": []
+  },
+  {
+   "step": "click button[data-toast-cancel]",
+   "note": "",
+   "html": "<div id=\"toaster\" class=\"toaster \" data-toaster-initialized=\"true\" data-basecoat-component=\"toaster\"><div class=\"toast \" role=\"status\" aria-atomic=\"true\" aria-hidden=\"true\" data-category=\"success\" data-duration=\"-1\" data-toast-initialized=\"true\"><div class=\"toast-content\"><svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m9 12 2 2 4-4\"></path></svg><section><h2>Saved</h2><p>All of it.</p></section><footer><button type=\"button\" class=\"btn\" data-variant=\"outline\" data-size=\"sm\" data-toast-cancel=\"\">Dismiss</button></footer></div></div><div class=\"toast \" role=\"alert\" aria-atomic=\"true\" aria-hidden=\"false\" data-category=\"error\" data-duration=\"-1\" data-toast-initialized=\"true\"><div class=\"toast-content\"><svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m15 9-6 6\"></path><path d=\"m9 9 6 6\"></path></svg><section><h2>Not sent</h2><p>Try again.</p></section><footer><button type=\"button\" class=\"btn\" data-variant=\"outline\" data-size=\"sm\" data-toast-cancel=\"\">Dismiss</button></footer></div></div></div>",
+   "focus": "",
+   "events": []
+  }
+ ]
+}

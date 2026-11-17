@@ -9,10 +9,10 @@ import json, os, re, sys
 
 # The kit's icons: a subset of Lucide's until L2 ships the set.
 ICONS = """
-arrow-down arrow-right arrow-up check chevron-down chevron-left
+arrow-down arrow-right arrow-up bell check chevron-down chevron-left
 chevron-right chevrons-left chevrons-right chevrons-up-down circle
-circle-check-big circle-help circle-off circle-plus ellipsis eye-off hand
-plus search settings-2 timer x
+circle-alert circle-check-big circle-help circle-off circle-plus ellipsis eye-off folder hand
+inbox plus search settings-2 timer user x
 """.split()
 
 src, out, names = sys.argv[1], sys.argv[2], ICONS + sys.argv[3:]

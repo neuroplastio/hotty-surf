@@ -80,6 +80,11 @@ var table = []Comp{
 	{
 		Name: "Card", File: "card", Tag: "div", Slot: "card", Class: "card",
 		Doc: `is Basecoat's card. Its parts are plain elements in its children, as Basecoat's markup has them: <header> (an <h2> and a <p>), <section> and <footer>.`,
+		Fields: []Field{
+			{"Size", "Size", "Size is Medium or Small (data-size): Small draws its padding and gaps tighter."},
+		},
+		Attrs:  []Attr{{Name: "data-size", Field: "Size"}},
+		Checks: []Check{{"Size", "size", "cardSizes"}},
 	},
 
 	// Forms (B1).
@@ -232,5 +237,54 @@ var table = []Comp{
 		},
 		Attrs:  []Attr{{Name: "data-align", Field: "Align", Default: "inline-start"}},
 		Checks: []Check{{"Align", "enum", "addonAligns"}},
+	},
+
+	// Display (B2).
+	{
+		Name: "Alert", File: "alert", Tag: "div", Slot: "alert", Class: "alert",
+		Doc: `is Basecoat's alert (role="alert"). Its parts are plain elements in its children, as Basecoat's markup has them: an icon, its title (an <h2> or a <strong>), a <section> of <p>s or a list, and a <footer> for a button:
+
+	@ui.Alert(ui.AlertProps{Variant: ui.Destructive}) {
+		@ui.Icon("circle-alert", "")
+		<h2>Not saved</h2>
+		<section><p>The disk is full.</p></section>
+	}`,
+		Fields: []Field{
+			{"Variant", "Variant", "Variant is Primary (Basecoat's default) or Destructive."},
+		},
+		Attrs: []Attr{
+			{Name: "role", Value: "alert"},
+			{Name: "data-variant", Field: "Variant"},
+		},
+		Checks: []Check{{"Variant", "variant", "alertVariants"}},
+	},
+	{
+		Name: "Avatar", File: "avatar", Tag: "span", Slot: "avatar", Class: "avatar",
+		Doc: `is Basecoat's avatar: a round picture of someone. Its parts are plain elements in its children, as Basecoat's markup has them: an <img>, whose src is a cid: resource or a data: URL (SPEC §7, nothing else is fetched), a <span> with what shows until it has (initials, an icon), and a <span class="avatar-badge"> for a status dot:
+
+	@ui.Avatar(ui.AvatarProps{}) {
+		<img src={ "cid:" + u.ID } alt={ u.Name }/>
+		<span>{ u.Initials }</span>
+	}`,
+		Fields: []Field{
+			{"Size", "Size", "Size is Medium, Small or Large (data-size)."},
+		},
+		Attrs:  []Attr{{Name: "data-size", Field: "Size"}},
+		Checks: []Check{{"Size", "size", "avatarSizes"}},
+	},
+	{
+		Name: "AvatarGroup", File: "avatar", Tag: "div", Slot: "avatar-group", Class: "avatar-group",
+		Doc: `is Basecoat's avatar group: Avatars side by side, overlapping, in its children, and after them, if the group shows only some, a plain <span data-count> with the rest's count ("+3"), which Basecoat draws as one more avatar.`,
+	},
+	{
+		Name: "Empty", File: "empty", Tag: "div", Slot: "empty", Class: "empty",
+		Doc: `is Basecoat's empty state: what a view shows with nothing in it. Its parts are plain elements in its children, as Basecoat's markup has them: a <header> (a <figure> with an icon or an image, an <h3> and a <p>), then a <section> or a <footer> for its buttons.`,
+	},
+	{
+		Name: "ItemGroup", File: "item", Tag: "div", Slot: "item-group", Class: "item-group", Doc: `is Basecoat's item group: Items in a column, in its children, with a plain <hr> between two where a line parts them.`,
+	},
+	{
+		Name: "Skeleton", File: "skeleton", Tag: "div", Slot: "skeleton", Class: "skeleton",
+		Doc: `is Basecoat's skeleton: a muted, pulsing block standing for something still loading, its size in Class ("h-4 w-[250px]", "size-12 rounded-full").`,
 	},
 }
