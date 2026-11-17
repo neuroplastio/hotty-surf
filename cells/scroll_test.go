@@ -34,6 +34,13 @@ func TestOverflowWheelAndReveal(t *testing.T) {
 	if got := text(); strings.Contains(got, "item 1") || !strings.Contains(got, "item 3") || !strings.Contains(got, "item 5") || !strings.Contains(got, "after list") {
 		t.Fatalf("wheel did not keep the list bounded:\n%s", got)
 	}
+	inner := strings.TrimSuffix(strings.TrimPrefix(scrollDoc(8), `<div id="root">`), `</div>`)
+	if _, err := c.Write([]byte(hotty.Delta("test", []hotty.Op{hotty.OpInner("root", inner)}))); err != nil {
+		t.Fatal(err)
+	}
+	if got := text(); strings.Contains(got, "item 1") || !strings.Contains(got, "item 3") {
+		t.Fatalf("inner morph lost the list scroll:\n%s", got)
+	}
 	if _, err := c.Write([]byte(hotty.Reveal("test", "item-8", hotty.RevealNearest))); err != nil {
 		t.Fatal(err)
 	}

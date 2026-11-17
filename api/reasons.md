@@ -368,3 +368,67 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `surftea.Host.Cells`: the surface's rectangle as the program's View composes it: in cells for a terminal that is no host, blank for one that is, so one View joins it the same way in both.
 - `surftea.Host.Focused`: where the keyboard is: the user gives it to the surface with a click and takes it back with Tab past the last element or a click elsewhere, which the Host hears and the program doesn't. A program draws its own pane's focus, and routes its keys, from it.
 - `surftea.Host.Cursor`: a field edited in cells needs the terminal's caret, which only the program's tea.View sets. It is `*tea.Cursor`, as bubbles' textinput and textarea give theirs, in the screen's cells because the Host knows its rectangle.
+
+## Storybook component port (draft)
+
+- `ui.ControlID`: A caller can associate its own label or focus request with a named control.
+- `ui.Controls`: A property inspector needs the same editable controls as the spike book.
+- `ui.EventLog`: An inspector needs the same chronological event list and clearing action as the spike book.
+- `ui.Fuzzy`: The navigation filter and its callers can share the spike matching rule.
+- `ui.NavList.FilterID`: The list names the filter for focus and labels.
+- `ui.NavList.FilterInput`: The list renders the filter separately for the app’s layout.
+- `ui.NavList.FocusFilter`: The list moves the keyboard to the filter.
+- `ui.NavList.FocusList`: The list moves the keyboard to the current item.
+- `ui.NavList.ItemID`: The list names an item for focus and accessibility.
+- `ui.NavList.Keys`: The list handles the navigation key bindings.
+- `ui.NavList.List`: The list renders the grouped scrollable list.
+- `ui.NavList.Move`: The list moves the selection by an amount.
+- `ui.NavList.Select`: The list selects an item through the same callback as a click.
+- `ui.NavList.SetFilter`: The list applies a new filter and repairs the selection.
+- `ui.NavList.Shown`: The list returns the groups that pass the filter.
+- `ui.Control`: Controls needs a typed name, value and optional choices for each editable property.
+- `ui.Control.Kind`: The Control selects the control or event kind.
+- `ui.Control.Name`: The Control names this value.
+- `ui.Control.Options`: The Control supplies enum choices.
+- `ui.Control.Value`: The Control supplies the controlled value.
+- `ui.LogEntry`: EventLog needs the time, kind and text of each entry and its optional kind styling.
+- `ui.LogEntry.At`: The LogEntry records the event time.
+- `ui.LogEntry.Kind`: The LogEntry selects the control or event kind.
+- `ui.LogEntry.KindClass`: The LogEntry chooses the event kind colour.
+- `ui.LogEntry.Text`: The LogEntry holds the event text.
+- `ui.NavGroup`: A navigation list needs a heading and its items together.
+- `ui.NavGroup.Items`: The NavGroup supplies the items in the group.
+- `ui.NavGroup.Name`: The NavGroup names this value.
+- `ui.NavItem`: A navigation item needs a stable ID and a visible label.
+- `ui.NavItem.ID`: The NavItem keeps element IDs distinct.
+- `ui.NavItem.Label`: The NavItem supplies the visible or accessible name.
+- `ui.NavList`: The spike navigation is a reusable grouped, filterable list with keyboard movement and a scrollable view.
+- `ui.NavList.Current`: The NavList identifies the current item.
+- `ui.NavList.Empty`: The NavList supplies the empty-list message.
+- `ui.NavList.Filter`: The NavList holds the current search text.
+- `ui.NavList.FilterLabel`: The NavList names the filter for assistive technology.
+- `ui.NavList.Groups`: The NavList supplies the grouped items.
+- `ui.NavList.ID`: The NavList keeps element IDs distinct.
+- `ui.NavList.Label`: The NavList supplies the visible or accessible name.
+- `ui.NavList.OnFilter`: The NavList reports changes to the filter.
+- `ui.NavList.OnSelect`: The NavList reports the newly selected item.
+- `ui.NavList.Placeholder`: The NavList supplies the filter hint.
+- `ui.TabsProps.Label`: The TabsProps supplies the visible or accessible name.
+- `ui.TabsProps.ListClass`: The TabsProps styles the tab list.
+- `ui.TabsProps.PanelClass`: The TabsProps styles the tab panel.
+- `ui.TabsProps.Variant`: The TabsProps selects the spike’s line or standard tabs.
+- `ui/code.TokenClass`: An event log can colour kinds consistently with the code view.
+- `ui/code.View`: The spike book and other inspectors need highlighted source with line numbers and wrapping.
+- `ui/code.CSS`: A caller adds the highlighter palette to its surface stylesheet.
+- `ui.ControlsProps`: the inspector's options follow the kit's Props pattern without changing its controls.
+- `ui.ControlsProps.Class`: the caller positions and styles the controls grid.
+- `ui.ControlsProps.Controls`: the component needs the ordered values to render.
+- `ui.ControlsProps.ID`: the caller prefixes the generated control IDs to keep them distinct.
+- `ui.ControlsProps.OnChange`: the app owns and updates the values when the user edits them.
+- `ui.EventLogProps`: the event log's inputs follow the kit's Props pattern.
+- `ui.EventLogProps.Empty`: the app supplies its own empty-state text.
+- `ui.EventLogProps.Entries`: the app owns the chronological event list.
+- `ui.EventLogProps.ID`: the clear button's ID must be distinct on the surface.
+- `ui.EventLogProps.OnClear`: the app decides how to clear its own event list.
+- `ui.TabsProps.Line`: the spike's underlined tabs are a component-specific style, expressed as a bool.
+- `ui/code.Stylesheet`: callers append the spike code view's palette and layout to their surface stylesheet.

@@ -233,6 +233,10 @@ func (c *Screen) adopt(t *html.Node, old map[string]*html.Node) {
 		if idOf(from) != idOf(n.Parent) {
 			return
 		}
+		if offset, ok := c.boxScroll[o]; ok {
+			c.boxScroll[n] = offset
+			delete(c.boxScroll, o)
+		}
 		if f := c.fields[o]; f != nil {
 			c.fields[n] = f
 			delete(c.fields, o)

@@ -36,28 +36,26 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
-	bookcode "neuroplast.io/hotty-surf/internal/book/highlight"
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/reload"
 	"neuroplast.io/hotty-surf/run"
 	"neuroplast.io/hotty-surf/ui"
+	bookcode "neuroplast.io/hotty-surf/ui/code"
 )
 
 //go:embed book.css
 var bookCSS string
 
 // CSS is the book's stylesheet: the kit's, and the book's own.
-var CSS = ui.Stylesheet() + bookCSS + bookcode.CSS
+var CSS = ui.Stylesheet() + bookCSS + bookcode.Stylesheet()
 
 // The cells pane's size. A story is at most 28rem wide (max-w-md), which
 // cells takes as 56 columns.
 const (
 	paneCols = 56
 	paneRows = 40
-	// listRows is how many stories the list shows around the chosen one.
-	listRows = 24
 )
 
 // State is what the book keeps across a live reload.
@@ -73,6 +71,7 @@ type App struct {
 	all   []stories.Story
 	cur   *shown
 	model *storybook.Book
+	nav   ui.NavList
 
 	// The pane's keyboard. inPane is set while the pane has it, and on the
 	// way between it and the elements round it; refocus asks the next
@@ -89,7 +88,9 @@ type App struct {
 // own are the book's elements that take the keyboard: while one has it, a
 // story's ask for the keyboard (a dialog that opens as the list lands on
 // its story, a menu opened from the pane) doesn't take it (keep).
-var own = map[string]bool{"book-list": true, "book-filter": true, "book-pane": true, "book-pane-before": true, "book-pane-after": true}
+func own(id string) bool {
+	return strings.HasPrefix(id, "book-nav-") || id == "book-pane" || id == "book-pane-before" || id == "book-pane-after"
+}
 
 // shown is the story on show: its view, which the preview and the pane
 // both draw, and the pane's surface on its Screen.
@@ -133,10 +134,14 @@ func New() *App {
 		return strings.Compare(x.Name, y.Name)
 	})
 	a.model = storybook.New(ss)
+	a.nav = ui.NavList{ID: "book-nav", Label: "Stories", FilterLabel: "Filter stories", Placeholder: "Filter stories  ( / )", Empty: "No story matches."}
+	a.nav.OnSelect = a.show
+	a.nav.OnFilter = a.model.SetFilter
 	a.model.SetRegion(storybook.RegionList)
 	if len(a.all) > 0 {
 		a.show(a.all[0].ID)
 	}
+	a.sync()
 	return a
 }
 
@@ -161,20 +166,6 @@ func (a *App) Restore(s *State) {
 	}
 }
 
-// index is the place of the story shown in the list, -1 for none.
-func (a *App) index() int {
-	return a.storyIndex(a.ID)
-}
-
-func (a *App) storyIndex(id string) int {
-	for i, st := range a.all {
-		if st.ID == id {
-			return i
-		}
-	}
-	return -1
-}
-
 // show opens the story id: a new view, with state of its own, and its
 // pane.
 func (a *App) show(id string) {
@@ -183,6 +174,7 @@ func (a *App) show(id string) {
 			continue
 		}
 		a.ID = id
+		a.nav.Current = id
 		story := a.model.Find(id)
 		a.model.Select(story)
 		view := story.HTML(a.model.Env(story))
@@ -289,79 +281,18 @@ func (sh *shown) pump() {
 	sh.err = err
 }
 
-// ListKey moves through the list and handles the book shortcuts.
-func (a *App) ListKey(k string) bool {
-	if k == "escape" && a.modalOpen {
-		return false
-	}
-	if k == "/" || k == "enter" || k == "escape" || k == "t" || k == "n" || k == "N" || k == "shift+n" || k == "r" {
-		return a.bookKey(k)
-	}
-	visible := a.model.Visible()
-	i, n := 0, len(visible)
-	for j, st := range visible {
-		if st.ID() == a.ID {
-			i = j
-			break
+// sync adapts the book model's groups and selection to the spike NavList.
+func (a *App) sync() {
+	a.nav.Groups = nil
+	for _, st := range a.model.Stories {
+		n := len(a.nav.Groups)
+		if n == 0 || a.nav.Groups[n-1].Name != st.Group {
+			a.nav.Groups = append(a.nav.Groups, ui.NavGroup{Name: st.Group})
+			n++
 		}
+		a.nav.Groups[n-1].Items = append(a.nav.Groups[n-1].Items, ui.NavItem{ID: st.ID(), Label: st.Name})
 	}
-	if n == 0 {
-		return false
-	}
-	switch k {
-	case "arrow_down":
-		i++
-	case "arrow_up":
-		i--
-	case "page_down":
-		i += listRows / 2
-	case "page_up":
-		i -= listRows / 2
-	case "home":
-		i = 0
-	case "end":
-		i = n - 1
-	default:
-		return false
-	}
-	i = max(0, min(n-1, i))
-	if visible[i].ID() != a.ID {
-		a.show(visible[i].ID())
-	}
-	return true
-}
-
-// ListFocus hears the list take the keyboard or lose it. It does nothing:
-// listening has the host tell the surface where the keyboard is
-// (rt.Frame.Focused), which keep reads.
-func (a *App) ListFocus(bool) {}
-
-// Pick shows the story id: a click in the list.
-func (a *App) Pick(id string) func() { return func() { a.show(id) } }
-
-func (a *App) filter(v string) {
-	a.model.SetFilter(v)
-	if a.model.Sel != nil && a.model.Sel.ID() != a.ID {
-		a.show(a.model.Sel.ID())
-	}
-}
-
-func (a *App) storyLabel(id string) string {
-	if st := a.model.Find(id); st != nil {
-		return st.Name
-	}
-	return id
-}
-
-func (a *App) groupHeading(i, from int) string {
-	visible := a.model.Visible()
-	if i < 0 || i >= len(visible) {
-		return ""
-	}
-	if i == from || i == 0 || visible[i-1].Group != visible[i].Group {
-		return visible[i].Group
-	}
-	return ""
+	a.nav.Current, a.nav.Filter = a.ID, a.model.Filter
 }
 
 func (a *App) startingList(ctx context.Context) bool {
@@ -387,9 +318,9 @@ func (a *App) bookKey(k string) bool {
 	}
 	switch a.model.Wanted() {
 	case storybook.RegionList:
-		a.wantFocus = "book-list"
+		a.wantFocus = a.nav.ItemID(a.ID)
 	case storybook.RegionFilter:
-		a.wantFocus = "book-filter"
+		a.wantFocus = a.nav.FilterID()
 	case storybook.RegionPreview:
 		a.wantFocus = "book-preview"
 	case storybook.RegionTabs:
@@ -440,9 +371,9 @@ func (a *App) focusRequest(ctx context.Context) string {
 		return a.wantFocus
 	}
 	switch {
-	case f.Focused == "book-list":
+	case strings.HasPrefix(f.Focused, a.nav.ID+"-item-"):
 		a.model.SetRegion(storybook.RegionList)
-	case f.Focused == "book-filter":
+	case f.Focused == a.nav.FilterID():
 		a.model.SetRegion(storybook.RegionFilter)
 	case strings.HasPrefix(f.Focused, "book-tabs-tab-"):
 		a.model.SetRegion(storybook.RegionTabs)
@@ -480,6 +411,32 @@ func (a *App) setBool(path string) func(bool) {
 	return func(value bool) { a.model.Set(a.model.Sel, path, strconv.FormatBool(value)) }
 }
 
+// controls and entries adapt the model data to the spike's kit parts.
+func (a *App) controls() []ui.Control {
+	var out []ui.Control
+	for _, c := range a.model.Sel.Controls() {
+		out = append(out, ui.Control{Name: c.Path, Kind: c.Kind, Value: c.Value, Options: c.Options})
+	}
+	return out
+}
+
+func (a *App) entries() []ui.LogEntry {
+	var out []ui.LogEntry
+	for _, e := range a.model.Events(a.model.Sel) {
+		kind := ""
+		switch e.Kind {
+		case "click", "submit", "key":
+			kind = "keyword"
+		case "input", "check":
+			kind = "string"
+		case "control":
+			kind = "literal"
+		}
+		out = append(out, ui.LogEntry{At: e.At, Kind: e.Kind, Text: e.Text, KindClass: bookcode.TokenClass(kind)})
+	}
+	return out
+}
+
 func (a *App) storyHTML() string {
 	if a.cur == nil {
 		return ""
@@ -493,30 +450,6 @@ func (a *App) storyHTML() string {
 		return err.Error()
 	}
 	return prettyHTML(doc)
-}
-
-// window is the stories the list shows: listRows of them round the one
-// shown, and how many are above and below it.
-func (a *App) window() (from int, sts []stories.Story, below int) {
-	visible := a.model.Visible()
-	for _, v := range visible {
-		for _, st := range a.all {
-			if st.ID == v.ID() {
-				sts = append(sts, st)
-				break
-			}
-		}
-	}
-	i := 0
-	for n, st := range sts {
-		if st.ID == a.ID {
-			i = n
-			break
-		}
-	}
-	from = max(0, min(i-listRows/2, len(sts)-listRows))
-	to := min(len(sts), from+listRows)
-	return from, sts[from:to], len(sts) - to
 }
 
 // PaneKey is a key the host passed the program while the pane has the
@@ -615,7 +548,7 @@ func (a *App) Edge(back bool) func(bool) {
 func (a *App) inert(ctx context.Context) bool {
 	f := rt.From(ctx)
 	a.modalOpen = f != nil && len(f.Modal) > 0
-	return f != nil && len(f.Modal) > 0 && !(own[f.Focused] && f.Focused != "book-list")
+	return f != nil && len(f.Modal) > 0 && !(own(f.Focused) && !strings.HasPrefix(f.Focused, a.nav.ID+"-item-"))
 }
 
 // keep has the last word on what the render asks for the keyboard: a
@@ -627,7 +560,7 @@ func (a *App) keep(ctx context.Context) {
 		return
 	}
 	last := func() {
-		if own[f.Focused] && f.Focus != "" && !own[f.Focus] && f.Focus != a.wantFocus {
+		if own(f.Focused) && f.Focus != "" && !own(f.Focus) && f.Focus != a.wantFocus {
 			f.Focus = ""
 		}
 	}
@@ -793,8 +726,6 @@ func bstr(b bool) string {
 	}
 	return "false"
 }
-
-func optionID(i int) string { return "book-s-" + itoa(i) }
 
 func itoa(i int) string {
 	if i == 0 {

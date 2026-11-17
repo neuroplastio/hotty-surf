@@ -38,14 +38,14 @@ func TestEveryStory(t *testing.T) {
 	if len(a.all) != len(stories.All()) || len(a.all) == 0 {
 		t.Fatalf("the book has %d stories, package stories %d", len(a.all), len(stories.All()))
 	}
-	for range a.all {
+	for _, st := range a.all {
+		a.show(st.ID)
 		if a.cur == nil || a.cur.err != nil {
 			t.Fatalf("%s: %v", a.ID, a.cur.err)
 		}
 		if strings.TrimSpace(paneText(a)) == "" {
 			t.Errorf("%s: the pane is blank", a.ID)
 		}
-		a.ListKey("arrow_down")
 	}
 }
 
@@ -72,7 +72,7 @@ func TestFilterFromLaunch(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
 	r.Key("/")
-	for _, k := range strings.Split("input-group/block", "") {
+	for _, k := range strings.Split("block", "") {
 		r.Key(k)
 	}
 	if a.ID != "input-group/block" {
@@ -251,7 +251,7 @@ func TestNoControlsNoTab(t *testing.T) {
 func TestListKeepsTheKeyboard(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
-	r.Click("#book-list") // the list takes the keyboard
+	r.Click("button[aria-current=true]") // the list takes the keyboard
 	a.show("dialog/default")
 	r.Update()
 	if !r.Key("arrow_down") || a.ID != "dialog/open" {

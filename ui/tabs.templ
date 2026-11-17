@@ -8,7 +8,10 @@ import "neuroplast.io/hotty-surf"
 
 templ tabs(v *tabsView) {
 	<div class={ join("tabs", v.p.Class) } id={ v.id } data-tabs-initialized="true">
-		<nav role="tablist" aria-orientation="horizontal">
+		<nav role="tablist" aria-orientation="horizontal"
+			if v.p.Label != "" { aria-label={ v.p.Label } }
+			if v.p.Line { data-variant="line" }
+			if v.p.ListClass != "" { class={ v.p.ListClass } }>
 			for i, t := range v.p.Tabs {
 				<button
 					type="button"
@@ -22,7 +25,8 @@ templ tabs(v *tabsView) {
 			}
 		</nav>
 		if v.sel >= 0 {
-			<div role="tabpanel" id={ v.panelID(v.sel) } aria-labelledby={ v.tabID(v.sel) } tabindex="-1" aria-selected="true">
+			<div role="tabpanel" id={ v.panelID(v.sel) } aria-labelledby={ v.tabID(v.sel) } tabindex="-1" aria-selected="true"
+				if v.p.PanelClass != "" { class={ v.p.PanelClass } }>
 				{ children... }
 			</div>
 		}

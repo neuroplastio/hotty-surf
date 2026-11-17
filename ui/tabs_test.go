@@ -100,3 +100,14 @@ func TestTabsKeysWithNothingFocused(t *testing.T) {
 		}
 	}
 }
+
+func TestTabsLineAndInnerClasses(t *testing.T) {
+	view := ui.Tabs(ui.TabsProps{ID: "sample", Label: "Details", Line: true,
+		ListClass: "test-list", PanelClass: "test-panel",
+		Tabs: []ui.Tab{{Value: "one", Label: "One"}}, Value: "one"})
+	r := start(t, view)
+	want(t, r, "nav[role=tablist]", "aria-label", "Details")
+	want(t, r, "nav[role=tablist]", "data-variant", "line")
+	want(t, r, "nav[role=tablist]", "class", "test-list")
+	want(t, r, "div[role=tabpanel]", "class", "test-panel")
+}

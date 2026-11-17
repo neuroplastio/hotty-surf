@@ -105,6 +105,9 @@ func (s *Surface) send() error {
 	}
 	s.frame = f
 	s.submits(f)
+	if f.Reveal != "" {
+		d.ops = append(d.ops, hotty.OpReveal(f.Reveal, hotty.RevealNearest))
+	}
 	var cmds []string
 	if len(d.ops) > 0 {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))

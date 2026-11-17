@@ -1,148 +1,148 @@
+// The book's view, ported from the spike's htmlbook: navigation, a live
+// preview, and the source, props, events and HTML inspection tabs.
 package book
 
 import (
+	"strconv"
+
 	"neuroplast.io/hotty-surf"
-	code "neuroplast.io/hotty-surf/internal/book/highlight"
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/code"
 )
 
-// View is the storybook's list, live preview, and inspection tabs.
 templ View(a *App) {
+	{{ a.sync() }}
 	<div class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book", surf.Key(a.bookKey))... }>
-		{{ from, sts, below := a.window() }}
-		<aside class="book-list flex flex-col">
-			<div class="book-brand flex items-center gap-2">
-				<span class="font-semibold">hotty storybook</span>
-				<span class="text-sm text-muted-foreground">{ itoa(len(a.all)) }</span>
-				@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme))}) {
-					if a.model.Dark {
-						Light
-					} else {
-						Dark
-					}
-				}
-			</div>
-			<div class="book-filter">
-				@ui.Input(ui.InputProps{Value: a.model.Filter, Placeholder: "Filter stories  ( / )", Attrs: surf.On(ctx, "book-filter", surf.Input(a.filter), surf.Key(a.bookKey))})
-			</div>
-			if from > 0 {
-				<p class="text-sm text-muted-foreground">↑ { itoa(from) } more</p>
-			}
-			<ul role="listbox" aria-label="Stories" tabindex="0"
-				if i := a.index(); i >= 0 {
-					aria-activedescendant={ optionID(i) }
-				}
-				{ surf.On(ctx, "book-list", surf.Key(a.ListKey), surf.Focus(a.ListFocus))... }>
-				if len(sts) == 0 {
-					<li class="book-group" role="presentation">No story matches.</li>
-				}
-				for i, st := range sts {
-					if heading := a.groupHeading(from+i, from); heading != "" {
-						<li class="book-group" role="presentation">{ heading }</li>
-					}
-					<li role="option" aria-selected={ bstr(st.ID == a.ID) } class={ "book-item", templ.KV("book-chosen", st.ID == a.ID) } { surf.On(ctx, optionID(a.storyIndex(st.ID)), surf.Click(a.Pick(st.ID)))... }>{ a.storyLabel(st.ID) }</li>
-				}
-			</ul>
-			if below > 0 {
-				<p class="text-sm text-muted-foreground">↓ { itoa(below) } more</p>
-			}
-			<p class="book-hints text-muted-foreground">↑↓ story · / filter · Enter preview · n pane · r rendition · Esc list · t theme</p>
-		</aside>
-		if a.cur != nil {
-			<main class="book-main flex flex-col">
-				<header class="book-header flex items-center gap-2">
-					<span class="book-crumb text-muted-foreground">{ a.model.Sel.Group }</span>
-					<span class="font-semibold">{ a.model.Sel.Name }</span>
-					<span class="text-sm text-muted-foreground">{ a.cur.st.Doc }</span>
-					@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory)))}) { Reset }
-				</header>
-				if k := keysLine(a.cur.st); k != "" {
-					<p class="book-keys text-sm text-muted-foreground">{ k }</p>
-				}
-				<div class="book-preview-area flex flex-col">
-					<nav class="book-renditions" role="tablist" aria-label="Rendition">
-						<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(!a.Cells) } { surf.On(ctx, "book-render-hotty", surf.Click(func() { a.setRendition(false) }), surf.Key(a.renditionKey))... }>hotty</button>
-						<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(a.Cells) } { surf.On(ctx, "book-render-cells", surf.Click(func() { a.setRendition(true) }), surf.Key(a.renditionKey))... }>cells</button>
-					</nav>
-					<section class="book-preview" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
-					if !a.Cells {
-						@a.cur.view
-						{{ _ = a.inert(ctx) }}
-					} else {
-					<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label="the story in cells">
-						{{ ls := a.lines() }}
-						{{ inert := a.inert(ctx) }}
-						{{ tab := a.cur.controls && !inert }}
-						<span class="book-edge text-sm text-muted-foreground"
-							if tab { tabindex="0" }
-							{ surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }>in cells</span>
-						<div class="book-pane"
-							if tab { tabindex="0" }
-							{ surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
-							for _, l := range ls {
-								<div class="book-line">
-									for _, sg := range l {
-										<span class={ sg.class }>{ sg.text }</span>
-									}
-								</div>
-							}
-						</div>
-						<span if tab { tabindex="0" } { surf.On(ctx, "book-pane-after", surf.Focus(a.Edge(false)))... }></span>
-						if e := a.paneErr(); e != "" {
-							<p class="text-sm text-destructive">{ e }</p>
-						}
-					</div>
-					}
-					</section>
-				</div>
-				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
+		@sidebar(a)
+		<main class="book-main flex flex-col">
+			if a.cur != nil {
+				@header(a)
+				@preview(a)
+				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
 					<div class="book-panel" tabindex="-1" { surf.On(ctx, "book-panel", surf.Focus(func(bool) {}))... }>
 						switch a.model.Tab {
 							case storybook.TabSource:
-								for _, src := range a.model.Sel.Sources() {
-									<p class="text-sm text-muted-foreground">{ src.Title } · { src.Path }:{ itoa(src.Line) }</p>
-									@code.View(src.Code, src.Lang, src.Line)
-								}
+								@sources(a.model.Sel)
 							case storybook.TabProps:
-								if a.model.Sel.Props() == nil {
-									<p class="text-sm text-muted-foreground">No editable props for this story.</p>
-								} else {
-									for _, c := range a.model.Sel.Controls() {
-										<label class="book-control">
-											<span>{ c.Path }</span>
-											if c.Kind == "bool" {
-												<input type="checkbox" checked?={ c.Value == "true" } { surf.On(ctx, "book-control-"+c.Path, surf.Check(a.setBool(c.Path)))... }/>
-											} else {
-												@ui.Input(ui.InputProps{Value: c.Value, Attrs: surf.On(ctx, "book-control-"+c.Path, surf.Input(a.setProp(c.Path)))})
-											}
-										</label>
-									}
-									@code.View(storybook.Pretty(a.model.Sel.Props()), "go", 1)
-								}
+								@props(a)
 							case storybook.TabEvents:
-								@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: surf.On(ctx, "book-clear-events", surf.Click(a.clearEvents))}) { Clear }
-								if len(a.model.Events(a.model.Sel)) == 0 {
-									<p class="text-sm text-muted-foreground">Nothing yet: use the component, and what it does shows here.</p>
-								}
-								for _, e := range a.model.Events(a.model.Sel) {
-									<p>{ e.Kind }: { e.Text }</p>
-								}
+								@ui.EventLog(ui.EventLogProps{ID: "book", Entries: a.entries(), OnClear: a.clearEvents, Empty: "Nothing yet: use the component, and what it does shows here."})
 							case storybook.TabHTML:
-								@code.View(a.storyHTML(), "html", 1)
+								@htmlTab(a)
 						}
 					</div>
 				}
-			</main>
-			if a.takeRefocus() {
-				{{ surf.Autofocus(ctx, "book-pane") }}
+			} else {
+				<p class="text-muted-foreground">No stories.</p>
 			}
+		</main>
+		if a.takeRefocus() {
+			{{ surf.Autofocus(ctx, "book-pane") }}
 		}
 		if target := a.focusRequest(ctx); target != "" {
 			{{ surf.Autofocus(ctx, target) }}
 		} else if a.takeToList() || a.startingList(ctx) {
-			{{ surf.Autofocus(ctx, "book-list") }}
+			{{ a.nav.FocusList(ctx) }}
 		}
 		{{ a.keep(ctx) }}
 	</div>
+}
+
+templ sidebar(a *App) {
+	<aside class="book-list flex flex-col">
+		<div class="book-brand flex items-center gap-2">
+			<span class="font-semibold">hotty storybook</span>
+			<span class="text-sm text-muted-foreground">{ strconv.Itoa(len(a.model.Stories)) }</span>
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme))}) {
+				if a.model.Dark {
+					Light
+				} else {
+					Dark
+				}
+			}
+		</div>
+		<div class="book-filter">
+			@a.nav.FilterInput("book-filter-input")
+		</div>
+		@a.nav.List("book-nav max-h-[40vh] overflow-y-auto px-2 pb-2 md:max-h-none md:flex-1")
+		<p class="book-hints text-muted-foreground">↑↓ story · / filter · Enter preview · n pane · r rendition · Esc list · t theme</p>
+	</aside>
+}
+
+templ header(a *App) {
+	<div class="book-header flex items-center gap-2">
+		<span class="book-crumb text-muted-foreground">{ a.model.Sel.Group }</span>
+		<span class="font-semibold">{ a.model.Sel.Name }</span>
+		if a.model.Sel.Doc != "" {
+			<span class="text-sm text-muted-foreground">{ a.model.Sel.Doc }</span>
+		}
+		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory)))}) { Reset }
+	</div>
+}
+
+templ preview(a *App) {
+	<div class="book-preview-area flex flex-col">
+		<nav class="book-renditions" role="tablist" aria-label="Rendition">
+			<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(!a.Cells) } { surf.On(ctx, "book-render-hotty", surf.Click(func() { a.setRendition(false) }), surf.Key(a.renditionKey))... }>hotty</button>
+			<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(a.Cells) } { surf.On(ctx, "book-render-cells", surf.Click(func() { a.setRendition(true) }), surf.Key(a.renditionKey))... }>cells</button>
+		</nav>
+		<section class="book-preview" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
+			if !a.Cells {
+				@a.cur.view
+				{{ _ = a.inert(ctx) }}
+			} else {
+				@cellsPreview(a)
+			}
+		</section>
+	</div>
+}
+
+templ cellsPreview(a *App) {
+	<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label="the story in cells">
+		{{ ls := a.lines() }}
+		{{ inert := a.inert(ctx) }}
+		{{ tab := a.cur.controls && !inert }}
+		<span class="book-edge text-sm text-muted-foreground" if tab { tabindex="0" } { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }>in cells</span>
+		<div class="book-pane" if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
+			for _, l := range ls {
+				<div class="book-line">
+					for _, sg := range l {
+						<span class={ sg.class }>{ sg.text }</span>
+					}
+				</div>
+			}
+		</div>
+		<span if tab { tabindex="0" } { surf.On(ctx, "book-pane-after", surf.Focus(a.Edge(false)))... }></span>
+		if e := a.paneErr(); e != "" {
+			<p class="text-sm text-destructive">{ e }</p>
+		}
+	</div>
+}
+
+templ sources(s *storybook.Story) {
+	for _, src := range s.Sources() {
+		<div class="book-source-label text-sm text-muted-foreground">
+			<span class="font-semibold">{ src.Title }</span>
+			<span>{ src.Path }:{ strconv.Itoa(src.Line) }</span>
+		</div>
+		@code.View(src.Code, src.Lang, src.Line)
+	}
+	if len(s.Sources()) == 0 {
+		<p class="text-muted-foreground text-sm">No source: this build runs away from its source tree.</p>
+	}
+}
+
+templ props(a *App) {
+	if a.model.Sel.Props() == nil {
+		<p class="text-sm text-muted-foreground">No editable props for this story.</p>
+	} else {
+		@ui.Controls(ui.ControlsProps{ID: "book", Controls: a.controls(), OnChange: func(name, value string) { a.model.Set(a.model.Sel, name, value) }, Class: "book-controls"})
+		@code.View(storybook.Pretty(a.model.Sel.Props()), "go", 1)
+	}
+}
+
+templ htmlTab(a *App) {
+	<p class="text-muted-foreground text-sm">The component's current HTML, formatted for reading.</p>
+	@code.View(a.storyHTML(), "html", 1)
 }

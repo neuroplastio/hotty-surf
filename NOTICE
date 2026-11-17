@@ -9,6 +9,9 @@ beside each says what was taken and how.
 - ui/kit.css: Basecoat 1.1.0, Copyright (c) 2025 Ronan Berder, MIT
   License; and Tailwind CSS 4.1.18's utilities, Copyright (c) Tailwind
   Labs, Inc., MIT License (ui/NOTICE.md).
+- internal/highlight/lexers: Chroma lexer definitions, Copyright (C) 2017
+  Alec Thomas, MIT; and the Go lexer from hotty-a2ui, Apache-2.0
+  (ui/NOTICE.md; internal/highlight/lexers/COPYING).
 - ui/icons_gen.go: lucide-react 0.474.0's icons, Copyright (c) Lucide
   Contributors 2022, ISC License (ui/NOTICE.md).
 - internal/spikeui: markup and classes of Basecoat 1.1.0's and
