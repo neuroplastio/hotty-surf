@@ -105,9 +105,6 @@
   box-shadow: none;
   font-size: 0.75rem;
 }
-.book-main > .tabs > nav > button[aria-selected="true"] {
-  border-bottom: calc(2 * var(--hotty-px)) solid var(--foreground);
-}
 .book-panel pre {
   background: var(--muted);
   border-radius: var(--radius-md);

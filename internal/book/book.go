@@ -138,8 +138,8 @@ func New() *App {
 	a.nav.OnSelect = a.show
 	a.nav.OnFilter = a.model.SetFilter
 	a.model.SetRegion(storybook.RegionList)
-	if len(a.all) > 0 {
-		a.show(a.all[0].ID)
+	if len(a.model.Stories) > 0 {
+		a.show(a.model.Stories[0].ID())
 	}
 	a.sync()
 	return a

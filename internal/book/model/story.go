@@ -50,10 +50,16 @@ var registry []*Story
 // made once per selection and shared by the preview and the cells pane.
 func Wrap(id, doc string, makeView func() templ.Component, makeProps func() (any, templ.Component)) *Story {
 	group, name, _ := strings.Cut(id, "/")
-	family := "Kit · native/ui"
+	family := "Components"
 	switch group {
-	case "alert", "avatar", "badge", "breadcrumb", "button", "card", "empty", "field", "input", "input-group", "item", "kbd", "label", "native-select", "progress", "scrollbar", "skeleton", "table", "textarea":
-		family = "Basecoat · CSS"
+	case "alert", "avatar", "badge", "button", "card", "chart", "empty", "item", "kbd", "progress", "scrollbar", "skeleton", "table":
+		family = "Display"
+	case "checkbox", "field", "input", "input-group", "label", "native-select", "radio", "select", "switch", "textarea":
+		family = "Forms"
+	case "breadcrumb", "tabs":
+		family = "Navigation"
+	case "dialog", "dropdown-menu", "toast":
+		family = "Overlays"
 	}
 	title := titlePart(group)
 	if name != "" && name != "default" {
