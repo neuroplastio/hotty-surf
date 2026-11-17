@@ -28,13 +28,26 @@ func TestMenuControlled(t *testing.T) {
 			hi = i
 		}}).Render(ctx, w)
 	})
-	r := surftest.Start(t, surf.New("menu", view, ui.Stylesheet()))
+	s := surf.New("menu", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
 	if got := attr1(r, "#m-menu", "aria-activedescendant"); got != "" {
 		t.Fatalf("highlight %q at -1, want none", got)
 	}
 	if got := attr1(r, "#m-popover", "aria-hidden"); got != "false" {
 		t.Fatalf("the panel is aria-hidden=%q, want shown", got)
 	}
+	// The pointer onto an enabled item asks for it once; again on the
+	// same item asks nothing.
+	hover(t, s, r, "m-items-3")
+	if want := []string{"Rename"}; !reflect.DeepEqual(asked, want) {
+		t.Fatalf("hover asked %v, want %v", asked, want)
+	}
+	hover(t, s, r, "m-items-3")
+	if len(asked) != 1 {
+		t.Fatalf("a second hover on the same item asked %v", asked)
+	}
+	hi, asked = -1, nil
+	r.Update()
 	r.Click("#m-menu")
 	r.Key("arrow_down")
 	r.Key("arrow_down") // past Locked
