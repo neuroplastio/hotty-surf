@@ -900,22 +900,15 @@ sheet; this result closes the wrapper-height report, not every pixel difference.
 
 ## Toasts don't draw on hottyterm 0.8 (2026-11-17)
 
-Found by the toast bar's live check (l2-toast). On headless hottyterm 0.8
-(hotty-blitz v0.8.0, 22ee077), with `run` serving a full-height surface
-and two toasts shown at start:
-- neither toast draws for the first two seconds;
-- after a delta (a toast focused at +2 s) both appear as a partial paint,
-  one box empty, the other cut where its footer button is;
-- the next delta (+3 s) takes them away again, and they stay gone.
-
-hottyterm logged no hotty warning or error. Not yet told apart:
-- Basecoat's own enter animation on `.toaster .toast` (`animation: .3s
-  ease-in-out toast-up`, first keyframe `opacity: 0;
-  transform: translateY(100%)`): Blitz holding an element present at load
-  at the first keyframe, or not filling to the end state;
-- or a damage/repaint problem for the fixed toaster.
-
-The next probe overrides `animation: none` on `.toast` alone. It affects
-every kit toast on hottyterm, not only the bar. The gate can't show it: it
-renders still documents. It is fixed in hotty-blitz as a mod, not worked
-around in the kit. The probe and its shots are local cache artifacts.
+**Closed by hotty-blitz 0.8.9** (the same day), which fixes animations
+stalling and frames not coming due. Found by the toast bar's live check
+(l2-toast) on a stale host: hottyterm on hotty-blitz v0.8.0 (22ee077).
+There, with `run` serving a full-height surface and two toasts shown at
+start, neither toast drew for two seconds, then both showed as a partial
+paint between two deltas and went again: Basecoat's `toast-up` enter
+animation on `.toaster .toast` (first keyframe `opacity: 0`) never
+finished. On hottyterm with hotty-blitz 0.8.9 (caps Version "0.8.9") the
+toasts enter and stay, and the bar runs as written (css-subset.md). Any
+host on hotty-blitz 0.8.8 or earlier still shows it. The gate can't: it
+renders still documents. The probe and its shots are local cache
+artifacts.
