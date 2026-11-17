@@ -13,6 +13,8 @@ import (
 
 // DropdownMenuProps are a DropdownMenu's attributes.
 type DropdownMenuProps struct {
+	// ID names its elements; "" is "dropdown-menu". Two on one surface
+	// need IDs of their own.
 	ID string
 	// Trigger is what opens the menu: Basecoat's button, holding it.
 	Trigger templ.Component

@@ -27,10 +27,10 @@ func Block(src, lang string, first int) templ.Component {
 }
 
 // block is Basecoat's pre (its base styles give it the mono face) holding
-// the lines, a block each, so that no line break is text the runtime
-// could drop as whitespace beside elements. An empty line holds a space,
-// to keep its height. It is written in Go, not templ, because every byte
-// in a pre is shown.
+// the lines, a block each, so that each line is a box of its own, its
+// number the box's first text. An empty line holds a space, to keep its
+// height. It is written in Go, not templ, because every byte in a pre is
+// shown.
 func block(lines [][]token, lang string, first int) string {
 	var b strings.Builder
 	b.WriteString(`<pre data-slot="code"`)
@@ -93,10 +93,10 @@ func number(first, i, lines int) string {
 }
 
 // highlight is src as lines of tokens, lexed by Chroma's lexer for lang. A
-// line holds no "\n", a tab is four spaces, and no token is only spaces:
-// they join the token after them (the runtime drops text that is only
-// whitespace beside elements). It keeps the last 256 it lexed, since a
-// view renders a block on every frame.
+// line holds no "\n" and no "\r" (a CRLF or a CR ends a line, as Chroma
+// reads it), a tab is four spaces, and no token is only spaces: they join
+// the token after them, as the spike's code view had them. It keeps the
+// last 256 it lexed, since a view renders a block on every frame.
 func highlight(src, lang string) [][]token {
 	key := lang + "\x00" + src
 	mu.Lock()
@@ -118,9 +118,13 @@ func highlight(src, lang string) [][]token {
 var (
 	mu    sync.Mutex
 	cache = map[string][][]token{}
+	// lineEnds makes every line end "\n", for the plain path as Chroma
+	// does for a lexer's.
+	lineEnds = strings.NewReplacer("\r\n", "\n", "\r", "\n")
 )
 
 func lex(src, lang string) [][]token {
+	src = lineEnds.Replace(src)
 	src = strings.ReplaceAll(strings.TrimRight(src, "\n"), "\t", "    ")
 	var toks []chroma.Token
 	if l := lexers.Get(lang); l != nil && lang != "" {

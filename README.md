@@ -33,7 +33,7 @@ templ Page(a *App) {
 		@ui.Button(ui.ButtonProps{
 			Attrs: surf.On(ctx, "wave", surf.Click(a.Wave)),
 		}) {
-			@ui.Icon("hand", "size-4")
+			@ui.Icon("hand", "")
 			Wave
 		}
 	</main>

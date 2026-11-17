@@ -12,6 +12,8 @@ import (
 
 // SelectProps are a Select's attributes.
 type SelectProps struct {
+	// ID names its elements; "" is "select". Two on one surface need IDs
+	// of their own.
 	ID    string
 	Items []SelectItem
 	// Value is the value of the item shown as chosen; "" is none, and the

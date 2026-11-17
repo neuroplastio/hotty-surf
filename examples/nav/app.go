@@ -1,6 +1,6 @@
 package main
 
-import ui "neuroplast.io/hotty-surf/internal/spikeui"
+import "neuroplast.io/hotty-surf/internal/spikeui"
 
 // App is the nav's state: what plx told it, and where the user has put the
 // cursor and picked.
@@ -46,6 +46,6 @@ func (a *App) Keys(key string) bool {
 	return true
 }
 
-func isBusy(s Session) bool { return ui.AnyBusy(s.Layout) }
+func isBusy(s Session) bool { return spikeui.AnyBusy(s.Layout) }
 
 func rowID(s Session) string { return "row-" + s.ID }

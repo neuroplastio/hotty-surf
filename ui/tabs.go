@@ -12,6 +12,8 @@ import (
 
 // TabsProps are a Tabs' attributes.
 type TabsProps struct {
+	// ID names its elements; "" is "tabs". Two on one surface need IDs
+	// of their own.
 	ID   string
 	Tabs []Tab
 	// Value is the value of the tab shown.
