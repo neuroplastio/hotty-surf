@@ -38,14 +38,14 @@ func TestEveryStory(t *testing.T) {
 	if len(a.all) != len(stories.All()) || len(a.all) == 0 {
 		t.Fatalf("the book has %d stories, package stories %d", len(a.all), len(stories.All()))
 	}
-	for range a.all {
+	for _, st := range a.all {
+		a.show(st.ID)
 		if a.cur == nil || a.cur.err != nil {
 			t.Fatalf("%s: %v", a.ID, a.cur.err)
 		}
 		if strings.TrimSpace(paneText(a)) == "" {
 			t.Errorf("%s: the pane is blank", a.ID)
 		}
-		a.ListKey("arrow_down")
 	}
 }
 
@@ -53,19 +53,22 @@ func TestEveryStory(t *testing.T) {
 func TestListByKeyboard(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
-	first := a.ID
+	visible := a.model.Visible()
+	if len(visible) < 2 || a.ID != visible[0].ID() {
+		t.Fatalf("the book opened on %q, want the first in its list", a.ID)
+	}
+	// The next in the list as the book shows it, grouped, which need not
+	// be the next in stories.All().
 	r.Key("arrow_down")
-	if a.ID == first || a.ID != a.all[1].ID {
-		t.Fatalf("arrow_down showed %q, want %q", a.ID, a.all[1].ID)
+	if a.ID != visible[1].ID() {
+		t.Fatalf("arrow_down showed %q, want %q", a.ID, visible[1].ID())
 	}
 	r.Key("end")
-	visible := a.model.Visible()
 	if a.ID != visible[len(visible)-1].ID() {
 		t.Fatalf("end showed %q", a.ID)
 	}
-	pane := r.One("section#book-cells")
-	if c := attrOf(pane.Attr, "class"); !strings.Contains(" "+c+" ", " hidden ") {
-		t.Fatalf("the pane isn't hidden from cells: class %q", c)
+	if len(r.Find("#book-cells")) != 0 {
+		t.Fatal("cells rendition is visible before it is selected")
 	}
 }
 
@@ -73,7 +76,7 @@ func TestFilterFromLaunch(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
 	r.Key("/")
-	for _, k := range strings.Split("input-group/block", "") {
+	for _, k := range strings.Split("block", "") {
 		r.Key(k)
 	}
 	if a.ID != "input-group/block" {
@@ -103,6 +106,21 @@ func TestBookInspection(t *testing.T) {
 	}
 	if html := a.storyHTML(); !strings.Contains(html, "Apply") {
 		t.Fatalf("HTML tab has no current label: %s", html)
+	}
+}
+
+func TestRenditionsShareStoryState(t *testing.T) {
+	a := New()
+	a.show("button/default")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#save")
+	r.Key("r")
+	if !a.Cells || !strings.Contains(paneText(a), "clicks: 1") {
+		t.Fatalf("cells=%v; pane=%q", a.Cells, paneText(a))
+	}
+	r.Key("r")
+	if a.Cells || !strings.Contains(r.HTML(), "clicks: 1") {
+		t.Fatal("hotty rendition did not retain the story state")
 	}
 }
 
@@ -215,6 +233,7 @@ func TestTabPastThePaneGoesToTheList(t *testing.T) {
 func TestNoControlsNoTab(t *testing.T) {
 	a := New()
 	a.show("chart/bar")
+	a.setRendition(true)
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
 	if a.cur.controls {
 		t.Fatal("chart/bar has controls")
@@ -236,7 +255,7 @@ func TestNoControlsNoTab(t *testing.T) {
 func TestListKeepsTheKeyboard(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
-	r.Click("#book-list") // the list takes the keyboard
+	r.Click("button[aria-current=true]") // the list takes the keyboard
 	a.show("dialog/default")
 	r.Update()
 	if !r.Key("arrow_down") || a.ID != "dialog/open" {

@@ -17,6 +17,7 @@ import (
 	"neuroplast.io/hotty-surf"
 
 	"neuroplast.io/hotty-surf/internal/devchild"
+	"neuroplast.io/hotty-surf/internal/devhook"
 	"neuroplast.io/hotty-surf/internal/devwire"
 	"neuroplast.io/hotty-surf/internal/input"
 	"neuroplast.io/hotty-surf/internal/rt"
@@ -139,6 +140,9 @@ func devHost(ctx context.Context, s *surf.Surface, reloadW, termW io.ReadWriter,
 // drive is the app's loop under hotty-surf run: its first frame, then the
 // terminal's input, the surface's updates and the document asked for.
 func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Reader) error {
+	driverDone := make(chan struct{})
+	devhook.Driver(s, driverDone)
+	defer close(driverDone)
 	name := s.Name()
 	show := func() error {
 		doc, err := s.Document()

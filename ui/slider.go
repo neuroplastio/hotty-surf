@@ -15,6 +15,9 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
+// sliderCSS is the Slider's styles, part of Stylesheet: a page has them
+// once, however many sliders it draws.
+//
 //go:embed slider.css
 var sliderCSS string
 

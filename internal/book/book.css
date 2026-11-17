@@ -24,7 +24,7 @@
 .book-hints {
   font-size: 0.75rem;
 }
-.book-list ul {
+.book-list .nav-list {
   outline: 0;
   flex: 1 1 auto;
   overflow-y: auto;
@@ -48,7 +48,7 @@
   color: var(--foreground);
   border: var(--hotty-px) solid var(--border);
 }
-.book-list ul:focus .book-chosen {
+.book-list .nav-list:focus .book-chosen {
   background: var(--muted);
   color: var(--foreground);
 }
@@ -63,15 +63,26 @@
 .book-reset {
   margin-left: auto;
 }
-.book-previews {
+.book-preview-area {
   flex: 1 1 auto;
   min-height: 12rem;
-  flex-wrap: wrap;
-  padding: 1.5rem;
 }
-.book-html {
-  flex: 1 1 0;
-  min-width: 20rem;
+.book-renditions {
+  border-bottom: var(--hotty-px) solid var(--border);
+  padding: 0.25rem 0.75rem;
+}
+.book-renditions button {
+  background: transparent;
+  border: 0;
+  padding: 0.25rem 0.5rem;
+  color: var(--muted-foreground);
+}
+.book-renditions button[aria-selected="true"] {
+  color: var(--foreground);
+  border-bottom: calc(2 * var(--hotty-px)) solid var(--foreground);
+}
+.book-preview {
+  padding: 1.5rem;
 }
 .book-panel {
   padding: 0.75rem;
@@ -94,55 +105,22 @@
   box-shadow: none;
   font-size: 0.75rem;
 }
-.book-main > .tabs > nav > button[aria-selected="true"] {
-  border-bottom: calc(2 * var(--hotty-px)) solid var(--foreground);
-}
 .book-panel pre {
   background: var(--muted);
   border-radius: var(--radius-md);
   padding: 0.5rem;
-}
-.book-code {
-  background: var(--muted);
-  border: var(--hotty-px) solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 0.5rem;
-  font-family: var(--hotty-font);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-.book-code-line {
-  display: flex;
-  min-height: 1.5em;
-}
-.book-code-number {
-  width: 4ch;
-  margin-right: 1.5ch;
-  flex: 0 0 auto;
-  text-align: right;
-  color: var(--muted-foreground);
-}
-.book-code-text {
-  min-width: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 .book-control {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
-/* cells reads the hidden class and leaves the pane out; a host shows it. */
-.book-cells.hidden {
-  display: flex;
-  flex: 0 0 auto;
-}
 .book-pane {
   font-family: var(--hotty-font);
   font-size: 1rem;
   line-height: var(--hotty-cell-h);
   white-space: pre;
-  width: calc(56 * var(--hotty-cell-w));
+  width: 100%;
   box-shadow: inset 0 0 0 var(--hotty-px) var(--border);
   outline: 0;
 }
@@ -181,7 +159,7 @@
     width: 100%;
     height: auto;
   }
-  .book-list ul {
+  .book-list .nav-list {
     max-height: 18vh;
   }
   .book-main {

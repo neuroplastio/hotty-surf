@@ -39,6 +39,8 @@ type layout struct {
 	cv        *canvas // nil while measuring
 	boxes     map[*html.Node]rect
 	fields    map[*html.Node]rect // each field's cells, its value's place
+	scrolls   map[*html.Node]scrollBox
+	adjusted  bool
 	height    int
 	caret     [2]int
 	hasCaret  bool
@@ -49,6 +51,25 @@ type layout struct {
 	// looked for.
 	active *html.Node
 	adDone bool
+}
+
+type scrollBox struct {
+	view    rect
+	content int
+}
+
+// scrollLimit reads the bounded overflow heights cells supports.
+func scrollLimit(value string, screenRows int) (int, bool) {
+	if strings.HasSuffix(value, "vh") {
+		n, err := strconv.ParseFloat(strings.TrimSuffix(value, "vh"), 64)
+		if err == nil && n > 0 {
+			return max(1, int(float64(screenRows)*n/100)), true
+		}
+	}
+	if px, ok := length(value); ok && px > 0 {
+		return max(1, int((px+15)/16)), true
+	}
+	return 0, false
 }
 
 type memoKey struct {
@@ -70,19 +91,29 @@ func (c *Screen) layout() *layout {
 		return c.lay
 	}
 	l := &layout{
-		c:      c,
-		cv:     &canvas{w: max(c.cols, 1)},
-		boxes:  map[*html.Node]rect{},
-		fields: map[*html.Node]rect{},
-		memo:   map[memoKey]int{},
+		c:       c,
+		cv:      &canvas{w: max(c.cols, 1)},
+		boxes:   map[*html.Node]rect{},
+		fields:  map[*html.Node]rect{},
+		scrolls: map[*html.Node]scrollBox{},
+		memo:    map[memoKey]int{},
 	}
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
 	}
+	if l.adjusted {
+		c.lay = nil
+		return c.layout()
+	}
 	c.lay = l
 	if t := c.revealAfter; t != nil {
-		c.revealAfter = nil
-		c.reveal(t)
+		where := c.revealWhere
+		c.revealAfter, c.revealWhere = nil, ""
+		c.reveal(t, where)
+		if c.lay == nil {
+			return c.layout()
+		}
+		l = c.lay
 	}
 	c.scroll = min(c.scroll, max(l.height-c.rows, 0))
 	c.scroll = max(c.scroll, 0)
@@ -214,6 +245,17 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 		l.done(n, rect{x, y, w, h})
 		return h, used
 	}
+	limit, bounded := scrollLimit(st.maxHeight, l.c.rows)
+	bounded = bounded && st.scrollY
+	originalY := cy
+	offset := 0
+	if bounded {
+		offset = l.c.boxScroll[n]
+		cy -= offset
+		if l.cv != nil {
+			l.cv.clips = append(l.cv.clips, rect{cx, originalY, cw, limit})
+		}
+	}
 	switch st.display {
 	case dFlex:
 		if st.column {
@@ -241,6 +283,17 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 		} else {
 			ch, cu = l.children(n, cx, cy, cw, in, false, 0)
 		}
+	}
+	if bounded {
+		if l.cv != nil {
+			l.cv.clips = l.cv.clips[:len(l.cv.clips)-1]
+			l.scrolls[n] = scrollBox{view: rect{cx, originalY, cw, min(ch, limit)}, content: ch}
+			if maxOffset := max(ch-limit, 0); offset > maxOffset {
+				l.c.boxScroll[n] = maxOffset
+				l.adjusted = true
+			}
+		}
+		ch = min(ch, limit)
 	}
 	h = st.padT + lead + ch + st.padB
 	used += st.padL + max(cu, ew) + st.padR

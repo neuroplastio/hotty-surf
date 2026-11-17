@@ -33,10 +33,8 @@ import (
 	"context"
 	"io"
 	"sync"
-	"time"
 
 	"github.com/a-h/templ"
-	"neuroplast.io/hotty-surf/lint"
 
 	"neuroplast.io/hotty-surf/internal/devwire"
 )
@@ -199,22 +197,6 @@ func (r *Reloader) Instances() map[string][]Placed {
 type Placed struct {
 	Name       string
 	Cols, Rows int
-}
-
-// A Report is the outcome of a save.
-type Report struct {
-	Tier string        // "text", "css" or "go"
-	Took time.Duration // from the save to every process showing it
-	// Build is what kept the save from the app, when the build failed:
-	// the compiler's output. The old processes still run. It is "" when
-	// the build succeeded.
-	Build string
-	// Failed is what went wrong for a process, by its key: restart's
-	// error, a key that didn't come back in time, a process that "exited
-	// before handover", a handover's own error, or a new process that
-	// started without the state handed over, which no longer decoded.
-	Failed map[string]string
-	Lint   []lint.Finding
 }
 
 // View is the error surface: a failed build or process over the app, and the

@@ -19,6 +19,8 @@ import (
 // surface over all of it when the terminal is a hotty host, in cells when
 // it isn't.
 func app(ctx context.Context, s *surf.Surface) error {
+	driverDone := driverStarted(s)
+	defer driverDone()
 	t, err := hottyterm.Open(s.Name())
 	if err != nil {
 		return err

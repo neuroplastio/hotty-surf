@@ -34,8 +34,13 @@ does for a few of its components. This is the subset (v0.7, L1 and L3).
   without `open`, a closed `details` but for its `summary`, a Basecoat
   popover with `aria-hidden=true`, `svg`, `style`, `script`, `template`.
 - A class with a variant (`md:flex`, `hover:…`, `dark:…`) is not read.
-- Not done: margins, widths and heights but `w-full`, alignment of text,
-  `position`, `overflow` (only the document scrolls, vertically), colours.
+- **Vertical overflow**: `overflow-y-auto` / `overflow-y-scroll` (also
+  `overflow-auto` / `overflow-scroll`) or inline `overflow-y` / `overflow`
+  with a bounded `max-height` or `height` in px, rem or viewport-height
+  units. `max-h-[40vh]` is read as well. The box clips and scrolls its
+  content independently; wheel and reveal walk out through its ancestors.
+- Not done: margins, widths and heights beyond those above and `w-full`,
+  alignment of text, `position`, horizontal overflow, colours.
 
 ## Looks (SGR)
 

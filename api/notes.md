@@ -155,10 +155,10 @@ between `MenuItem.Keys` and the handler that binds it.
 
 ### Notes for L1 (the verifier's)
 
-- **The handover reads documents directly.** In a dev build the reload
-  registry holds surfaces the program may have dropped, which nobody
-  drives: the Go tier's handover takes each surface's last-sent document
-  as it is, rather than asking the surface through Do and waiting.
+- **The handover reads a dropped surface only after its driver exits.** A
+  framework-owned driver's completion signal proves it has stopped; a last
+  render time does not. The later handover decision below supersedes the
+  earlier direct-read rule.
 - **Dialog keeps no State, yet promises focus goes back where it was
   when it closes.** Either the surface remembers it per id (Dialog's doc
   says so in L2's batch) or `Dialog(st, p)` comes as a MINOR break, as
@@ -560,16 +560,17 @@ What took the floor from about 2 ms to under 1:
   sent from a second Do queued inside the first, which runs at the next
   Update. A surface that never rendered isn't waited for; one that
   doesn't answer in 300 ms (dropped) is given up.
-- **The handover takes each snapshot on the surface's driver,** then
-  detaches the surface (`Attach(nil, …)`) so nothing more goes out of
-  the old build. Keep's get runs on the first live surface's driver, in
-  the same Do and ahead of its snapshot, so get doesn't race the
-  handlers that write the state and no frame comes between the two. A
-  driver that hasn't answered in 300 ms is waited for up to 4 s if it
-  rendered in the last 3 s (busy: reading it would race its render),
-  and read directly otherwise (dropped); whichever takes a snapshot
-  first claims it. A first surface still busy at 4 s fails the
-  handover with that reason; another one starts again in the new build.
+- **The handover takes each live snapshot on the surface's driver,** then
+  detaches the surface (`Attach(nil, …)`) so nothing more goes out of the old
+  build. Keep's get runs on the first live driver's goroutine, ahead of its
+  snapshot. A framework-owned driver signals when its loop returns; a known
+  exited driver is handed over as dropped from its last snapshot immediately.
+  If a driver is still alive and cannot start its queued work within 4 s,
+  the handover fails with a busy-handler message and keeps the running build;
+  cancelled work cannot run Keep later. A custom driver without a completion
+  signal is treated as possibly busy: its exit is unknown, so an unanswered
+  handover fails rather than reading its state off-driver. No public driver
+  lifecycle API is added here.
 - **A handed-over surface carries its stylesheet,** and the new build's
   surface is restyled when its own differs, so a Go save that changed
   the CSS shows it in the first delta.
@@ -1007,8 +1008,11 @@ scrollbar classes and Avatar's image for the looks pass.
     pre-B3 merge `897c796`, and 2,253,334 raw / 726,329 gzip after the
     verification fixes: +34,420 raw / +11,392 gzip. The reviewed B3 build
     was 2,273,254 raw / 732,806 gzip, so the fixes save 19,920 raw / 6,477
-    gzip. Scoped key dispatch and native fallback, modal tree preparation,
-    and slider styles are linked when those features are used. Small generic
+    gzip. Scoped key dispatch and native fallback and modal tree
+    preparation are linked when those features are used. The slider's 853
+    bytes of styles were linked with it too, until the B3 recheck moved
+    them into Stylesheet: two sliders wrote two identical `<style>`
+    elements, and a page now has them once. Small generic
     dispatch hooks remain; the example also uses Select and Toaster, which
     gained B3 behavior, and shared runtime code changed. The remaining delta
     is not an isolated measurement of any one feature. Select uses the
@@ -1199,8 +1203,8 @@ shape. Nothing else in the lock moves.
   deferral for `plx plugin dev ctl shot`. The process of key answers over
   its reload wire (a `doc` request beside render, restyle and handover)
   with the document of the surface it names, read on the
-  surface's driver through Do, never directly (a handover reads a
-  dropped surface directly only because the process exits after it). 3 s
+  surface's driver through Do, never directly (a handover may read a
+  surface directly only after its driver signals it has exited). 3 s
   at most. `ctl shot` takes its size from the terminal hotty-surf run
   owns, as it does today. `hotty-surf ctl shot`
   moves onto it, so the term wire's `doc` goes.
@@ -1595,3 +1599,59 @@ Not ours: ui.Checkbox drawn as Blitz's native box is hotty-blitz's gap 6.
 - **Open:** `shot -h` saying it draws the starting state.
 - **Not ours:** `hotty version`, which is hotty-blitz's; ui.Checkbox drawn
   as Blitz's native box, hotty-blitz's gap 6.
+
+
+## Draft: spike storybook components
+
+The maintainer asked to port the spike's storybook and its reusable
+NavList, Controls, EventLog and code view. This draft carries the spike's
+component shapes, with existing v0.7 surf handlers in place of the spike
+runtime. The reviewer kept the retained NavList but made its helper
+mechanics private, changed Controls and EventLog to Props, kept distinct
+code View and Block with code.Stylesheet, and chose TabsProps.Line.
+The approved API is not changed by this draft. NavList requests reveal
+in the same delta as the changes; public reveal remains a separate pack.
+
+Review the public shapes against the spike and v0.7's existing conventions,
+including the number of NavList methods and the string control kinds.
+
+## L5: plx's asks for a Report on its wire (a pack of its own)
+
+plx's plugins agent asked for three things (via p-653, 2026-11-17), in
+one pack:
+
+1. **msgp codecs on `reloader.Report` and `lint.Finding`.** plx carries a
+   reload's outcome on its own msgpack wire. Until now the ctl wire carried
+   internal mirrors (`devwire.Report`, `devwire.Finding`), because the API
+   types had no codec; plx would have had to write a third copy. Both types
+   now get msgp's generated `EncodeMsg`, `DecodeMsg` and `Msgsize`
+   (`-marshal=false`, `//msgp:newtime`, `//msgp:limit` 65536 as devwire's),
+   and the mirrors are gone: "reload"'s answer on the ctl wire is
+   `reloader.Report` itself. Its keys are the mirrors' (tier, took in
+   nanoseconds, build, failed, lint; file, line, col, rule, text), so the
+   ctl wire's bytes do not change. Report moves to `report.go` beside its
+   codec; its fields and docs are as they were, with `msg` tags added.
+2. **A text form: `func Text(r *Report) string`.** What `ctl reload` and
+   `hotty-surf serve`'s log printed (devcmd's `ReportText`), moved as it
+   was. A free function, since P-3 keeps hand-written methods (a `String`)
+   off a type on a wire. A pointer, as `View` takes.
+3. **`reload.Serve`'s key:** its doc now says that a key is an opaque
+   string the dev parent chooses, which names one process at a time and
+   keys Report.Failed. No name changes.
+
+7 new names, all in `lint` and `reload/reloader`; none changed or removed.
+
+### As reviewed (p-796, 2026-11-17): all 7, two docs and two tests changed
+
+All 7 names approved as named, with no cuts. The ctl wire's bytes are
+unchanged (msgp 1.6.5's `WriteDuration` is `WriteInt64`), and the release
+wasm gains nothing (`./reload`'s release deps include neither reloader nor
+lint). Applied:
+`reload.Serve`'s key doc says the key is non-empty and also keys
+`Instances`, `Document` and `ctl shot -key`; `Report.Failed` is "by the key
+it gave reload.Serve"; ExampleText's imports are grouped as goimports
+groups them; `TestReportCodec` locks Finding's keys and that took is a
+plain int, since the `msg` tags are plx's wire and api-check doesn't see
+them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
+Left for plx: decode within its capped frame (msgp:limit doesn't cap
+strings), and drop any mirror of its own.

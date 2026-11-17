@@ -14,7 +14,7 @@ require (
 	github.com/a-h/templ v0.3.1118
 	neuroplast.io/hotty-go v0.8.0
 	neuroplast.io/hotty-go/hottytea v0.8.0
-	neuroplast.io/hotty-go/hottytest v0.8.0
+	neuroplast.io/hotty-go/hottytest v0.8.1
 	neuroplast.io/hotty-surf v0.0.0-00010101000000-000000000000
 )
 

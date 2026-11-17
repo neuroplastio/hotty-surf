@@ -14,8 +14,16 @@ import (
 type TabsProps struct {
 	// ID names its elements; "" is "tabs". Two on one surface need IDs
 	// of their own.
-	ID   string
-	Tabs []Tab
+	ID string
+	// Label is the tab list's accessible name (aria-label); it is not visible text.
+	Label string
+	// Line uses Basecoat's underlined tabs instead of the default tabs.
+	Line bool
+	// ListClass adds classes to the tab list.
+	ListClass string
+	// PanelClass adds classes to the selected tab panel.
+	PanelClass string
+	Tabs       []Tab
 	// Value is the value of the tab shown.
 	Value string
 	// OnChange hears the tab the user chose.

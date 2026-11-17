@@ -33,6 +33,8 @@ type Frame struct {
 	Order []string
 	// Focus is the element Autofocus asked for ("" for none).
 	Focus string
+	// Reveal names an element to scroll into view after this frame.
+	Reveal string
 	// Platform is the host's, for a render that shows keys.
 	Platform hotty.Platform
 	// Surface is the *surf.Surface rendering, as any (rt can't import surf).

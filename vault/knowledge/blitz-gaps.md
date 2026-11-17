@@ -879,3 +879,21 @@ render of the same document (`hotty-surf ctl shot`, hotty-blitz's
 
 They're for hottyterm and hotty-blitz (repaint and restyle after a
 delta, and on focus), and each needs a repro cut down from the book.
+
+## Tooltip wrapper offset (2026-11-17)
+
+**Not reproduced on the live hotty-blitz build based on 0.8.7.** An earlier
+comparison showed the wrapper of an inline-flex button, and its tooltip,
+about 2–3 CSS px lower than Chromium. That sheet used an older renderer and
+is not evidence of a gap in 0.8.7. A Host probe with the oracle's 10 × 21
+CSS px cell metrics measured the flex row at 68 CSS px at both 1× and 2×:
+16 px padding above and below a 36 px button wrapper, as Chromium measured
+with the same host stylesheet. The tooltip pseudo-element was present in the
+probe.
+
+The original HTML was then rerun through `internal/looks` with the live
+hotty-blitz binary at `70c6d38`, its bundled fonts, 80 columns, 12 rows,
+20 × 42 device px cells and 2× scale. Both rendered rows end at device row
+136 (68 CSS px); the reported 73 px row was not reproduced. The comparison
+still scores 0.81% different, with text and antialiasing differences in the
+sheet; this result closes the wrapper-height report, not every pixel difference.

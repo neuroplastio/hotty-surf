@@ -57,6 +57,8 @@ type Screen struct {
 	lay         *layout
 	scroll      int
 	revealAfter *html.Node
+	revealWhere string
+	boxScroll   map[*html.Node]int
 
 	// The events an act sends, sent once it is done (flush).
 	queue    []hotty.Event
@@ -165,7 +167,27 @@ func (c *Screen) Wheel(col, row, lines int) (taken bool) {
 	if c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
 		return false
 	}
-	h := c.layout().height
+	l := c.layout()
+	y := row + c.scroll
+	var hit *html.Node
+	if y >= 0 && y < len(l.cv.rows) {
+		hit = l.cv.rows[y][col].own
+	}
+	for n := hit; n != nil; n = n.Parent {
+		if box, ok := l.scrolls[n]; ok {
+			old := c.boxScroll[n]
+			to := max(min(old+lines, box.content-box.view.h), 0)
+			if to != old {
+				if c.boxScroll == nil {
+					c.boxScroll = map[*html.Node]int{}
+				}
+				c.boxScroll[n] = to
+				c.lay = nil
+				return true
+			}
+		}
+	}
+	h := l.height
 	to := max(min(c.scroll+lines, h-c.rows), 0)
 	taken = to != c.scroll
 	c.scroll = to

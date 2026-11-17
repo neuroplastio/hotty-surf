@@ -43,7 +43,7 @@ const (
 // doesn't. A surface with no CSS of its own (a dev tool's error surface, a
 // host's dialog) uses it as it is.
 func Stylesheet() string {
-	return kitCSS
+	return kitCSS + navCSS + controlsCSS + sliderCSS
 }
 
 // kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind
@@ -51,6 +51,12 @@ func Stylesheet() string {
 //
 //go:embed kit.css
 var kitCSS string
+
+//go:embed navlist.css
+var navCSS string
+
+//go:embed controls.css
+var controlsCSS string
 
 // Icon is the icon named name, one of the kit's Lucide icons, as an inline
 // SVG. The kit has a subset of Lucide: the icons its own components use, and
