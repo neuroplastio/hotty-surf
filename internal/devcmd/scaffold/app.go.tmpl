@@ -33,7 +33,7 @@ func (a *App) SetBy(v string) { a.By = v }
 // Submit, so Enter in the field adds as the button does.
 func (a *App) Add() {
 	n, err := strconv.Atoi(strings.TrimSpace(a.By))
-	if err != nil || n == 0 {
+	if err != nil {
 		n = 1
 	}
 	a.Count += n

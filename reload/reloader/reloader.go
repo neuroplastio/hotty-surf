@@ -15,7 +15,7 @@
 //   - "text": only the text, classes or static markup of .templ files
 //     changed. templ's strings are written and every process renders again
 //     (≈ 32 ms, no compiler, the same processes).
-//   - "css": only the app's stylesheet changed. It is built again and every
+//   - "css": only the app's stylesheet (style/app.css) changed. Every
 //     process restyles.
 //   - "go": any Go changed. The app is built once, with the surfdev tag,
 //     while the old processes keep drawing. Then each hands its state and
@@ -23,7 +23,10 @@
 //     dials in with its key and takes its own over (≈ 0.3 s warm). A build
 //     that fails leaves the old processes running.
 //
-// Every save is linted (package lint).
+// A save regenerates the code it made stale: templ's Go, and the codec of a
+// file with a //go:generate msgp directive (msgp's generator at the version
+// this module requires, with that directive's flags). Every save is linted
+// (package lint).
 package reloader
 
 import (

@@ -1324,3 +1324,21 @@ exactly:
   the app `hotty-surf new` writes.
 - **The risk lean, a lint rule:** `button-type`, a raw `<button>` in a raw
   `<form>` that doesn't say its type. The kit's buttons say theirs.
+
+### Also from the trial
+
+None of these is a name, but each changes what an app's author sees:
+- **lint's class rule:** a class that neither ui.Stylesheet, the app's
+  .css, nor a `<style>` in a .templ defines is a finding, for every app.
+  The reloader's `style/build.sh` hook (L0's, above), which nothing used
+  or documented, is gone, and with it the rule's switch. An app's own CSS
+  build is an open question on the board. A watcher writing
+  `style/app.css` works today.
+- **msgp's codecs are regenerated on a save,** by msgp's generator as a
+  library. That adds `golang.org/x/tools` to the module graph, for the
+  reloader only: an app's own build doesn't link it.
+- **`hotty-surf new` from a checkout** writes a go.mod that replaces
+  hotty-surf with that checkout, until v0.7 is published.
+- **The tools and their versions** (Go, templ, msgp, TinyGo, hotty) are in
+  the README, `help` and `new`'s output, and build's and shot's errors
+  name the one missing.
