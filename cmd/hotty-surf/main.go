@@ -23,6 +23,9 @@
 //	                                       finding (1: there is one)
 //	hotty-surf classes                     the classes the kit's stylesheet defines, one a
 //	                                       line: what a class attribute can use
+//	hotty-surf book                        the kit's storybook: every story, drawn by
+//	                                       the host and beside it in cells (in cells
+//	                                       alone where it is no hotty host)
 //	hotty-surf help                        this table
 //	hotty-surf version                     the command's version and the hotty spec
 //	                                       it speaks
@@ -82,6 +85,9 @@ const help = `hotty-surf: hotty-surf's dev tool
                                          finding (1: there is one)
   hotty-surf classes                     the classes the kit's stylesheet defines, one a
                                          line: what a class attribute can use
+  hotty-surf book                        the kit's storybook: every story, drawn by
+                                         the host and beside it in cells (in cells
+                                         alone where it is no hotty host)
   hotty-surf help                        this table
   hotty-surf version                     the command's version and the hotty spec
                                          it speaks
@@ -111,6 +117,7 @@ const usage = `usage:
   hotty-surf serve [-addr localhost:7279] [dir]
   hotty-surf lint [dir]
   hotty-surf classes
+  hotty-surf book
   hotty-surf help | version
 `
 
@@ -155,6 +162,20 @@ func cmd(ctx context.Context, args []string, out, errOut io.Writer) int {
 		return devcmd.Build(ctx, args[1:], out, errOut)
 	case "serve":
 		return devcmd.Serve(ctx, args[1:], out, errOut)
+	case "book":
+		fs := devcmd.Flags("book", "book\n\nThe kit's storybook in this terminal: the stories in a list, the one\nchosen drawn by the host and beside it in cells, as a terminal that is\nno hotty host draws it; in cells alone on such a terminal. Tab moves\nthrough the list, the story and the cells pane, the arrows through the\nlist; a story's open dialog has the keyboard until Esc closes it; ctrl+q\nquits. From a checkout it reloads as the stories are saved.")
+		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
+			return code
+		}
+		if fs.NArg() > 0 {
+			fs.Usage()
+			return 2
+		}
+		if err := devcmd.Book(ctx, devcmd.SockPath()); err != nil {
+			fmt.Fprintln(errOut, "hotty-surf book:", err)
+			return 1
+		}
+		return 0
 	case "classes":
 		fs := devcmd.Flags("classes", "classes\n\nThe classes the kit's stylesheet defines, one a line: what a class\nattribute can use. Any other goes in the app's style/app.css.")
 		if code, ok := devcmd.Parse(fs, args[1:], out, errOut); !ok {
