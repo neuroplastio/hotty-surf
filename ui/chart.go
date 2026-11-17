@@ -14,12 +14,9 @@ import (
 
 // ChartProps are a Chart's attributes.
 type ChartProps struct {
-	// Kind is "" (bars, Basecoat's default), "line" or "pie". surftest
+	// Type is "" or "bar" (Basecoat's default), "line" or "pie". surftest
 	// fails any other.
-	Kind string
-	// Label is what the chart shows, for who can't see it (the plot's
-	// aria-label): "Visitors by month".
-	Label string
+	Type string
 	// Labels are the categories, one per value of each series, written
 	// under the bars or the line's points; a pie's slices.
 	Labels []string
@@ -28,12 +25,16 @@ type ChartProps struct {
 	// surftest fails a chart that doesn't, a negative slice, and a value
 	// that isn't a number.
 	Series []ChartSeries
-	// Legend writes the series' names (a pie's labels) under the plot,
-	// each beside its colour.
+	// Legend writes the series' names under bars or lines, each beside its
+	// colour. A pie always writes its labels beside their colours, since
+	// they are its categories, as bars write theirs under the plot. Legend
+	// changes nothing there.
 	Legend bool
 	// Attrs are more attributes for the div element: its id and handlers,
 	// through surf.On, and any other but those the component writes itself
-	// (class or data-slot), which are a fault here.
+	// (class, data-slot or role), which are a fault here. A chart is named
+	// for who can't see it by aria-label here:
+	// templ.Attributes{"aria-label": "Visitors by month"}.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -51,14 +52,18 @@ type ChartSeries struct {
 // with Chart.js, which a surface can't run; this is a still plot, without
 // its tooltip.
 //
-//	@ui.Chart(ui.ChartProps{Label: "Visitors by month",
-//		Labels: []string{"Jan", "Feb", "Mar"},
-//		Series: []ui.ChartSeries{{Label: "Desktop", Values: []float64{186, 305, 237}}}})
+// It shows no values: Basecoat's y axis has no ticks and gives values by
+// its tooltip, which a still plot hasn't. A tooltip comes back as
+// ChartState, Chart(st, p), a MINOR break as Tabs' would be.
+//
+//	@ui.Chart(ui.ChartProps{Labels: []string{"Jan", "Feb", "Mar"},
+//		Series: []ui.ChartSeries{{Label: "Desktop", Values: []float64{186, 305, 237}}},
+//		Attrs:  templ.Attributes{"aria-label": "Visitors by month"}})
 func Chart(p ChartProps) templ.Component {
 	return chart(p)
 }
 
-var chartKinds = []string{"", "line", "pie"}
+var chartTypes = []string{"", "bar", "line", "pie"}
 
 // The plot's box: Basecoat's .chart is 16:9 (aspect-video). Its strokes
 // scale with it, as Blitz applies no vector-effect (vault/knowledge/
@@ -67,7 +72,7 @@ const chartW, chartH = 640.0, 360.0
 
 // checkChart faults data the plot can't draw.
 func checkChart(ctx context.Context, p ChartProps) string {
-	if p.Kind == "pie" && len(p.Series) != 1 {
+	if p.Type == "pie" && len(p.Series) != 1 {
 		rt.Fault(ctx, fmt.Sprintf("ui.Chart: a pie has one series, not %d", len(p.Series)))
 	}
 	for _, s := range p.Series {
@@ -77,7 +82,7 @@ func checkChart(ctx context.Context, p ChartProps) string {
 		for _, v := range s.Values {
 			if math.IsNaN(v) || math.IsInf(v, 0) {
 				rt.Fault(ctx, fmt.Sprintf("ui.Chart: series %q has %v", s.Label, v))
-			} else if p.Kind == "pie" && v < 0 {
+			} else if p.Type == "pie" && v < 0 {
 				rt.Fault(ctx, fmt.Sprintf("ui.Chart: a pie's slice is %v, below 0", v))
 			}
 		}
@@ -101,7 +106,7 @@ func chartKeys(p ChartProps) []chartKey {
 	key := func(i int, l string) {
 		ks = append(ks, chartKey{l, templ.SafeCSS("--chart-indicator-color: " + chartColour(i) + ";")})
 	}
-	if p.Kind == "pie" {
+	if p.Type == "pie" {
 		for i, l := range p.Labels {
 			key(i, l)
 		}
@@ -114,7 +119,9 @@ func chartKeys(p ChartProps) []chartKey {
 }
 
 // chartPlot is the SVG's inner markup: numbers and the theme's colours
-// only, never the app's text, which the templ writes escaped.
+// only, never the app's text, which the templ writes escaped. Each bar
+// and slice carries its value (data-value), for a host that draws no SVG
+// (cells).
 func chartPlot(p ChartProps) templ.Component {
 	var b strings.Builder
 	n := len(p.Labels)
@@ -126,7 +133,7 @@ func chartPlot(p ChartProps) templ.Component {
 		ok = ok && len(s.Values) == n
 	}
 	if ok {
-		switch p.Kind {
+		switch p.Type {
 		case "pie":
 			piePlot(&b, p.Series[0].Values)
 		default:
@@ -158,7 +165,7 @@ func barPlot(b *strings.Builder, p ChartProps) {
 	}
 	n := len(p.Labels)
 	band := chartW / float64(n)
-	if p.Kind == "line" {
+	if p.Type == "line" {
 		for si, s := range p.Series {
 			var pts []string
 			for i, v := range s.Values {
@@ -174,8 +181,8 @@ func barPlot(b *strings.Builder, p ChartProps) {
 	for si, s := range p.Series {
 		for i, v := range s.Values {
 			y0, y1 := y(max(v, 0)), y(min(v, 0))
-			fmt.Fprintf(b, `<rect x="%s" y="%s" width="%s" height="%s" rx="6" style="fill: %s;"/>`,
-				num(float64(i)*band+gap+float64(si)*w+1), num(y0), num(max(w-2, 1)), num(max(y1-y0, 0)), chartColour(si))
+			fmt.Fprintf(b, `<rect x="%s" y="%s" width="%s" height="%s" rx="6" data-value="%s" style="fill: %s;"/>`,
+				num(float64(i)*band+gap+float64(si)*w+1), num(y0), num(max(w-2, 1)), num(max(y1-y0, 0)), num(v), chartColour(si))
 		}
 	}
 }
@@ -196,7 +203,7 @@ func piePlot(b *strings.Builder, vs []float64) {
 			continue
 		}
 		if v == sum {
-			fmt.Fprintf(b, `<circle cx="%s" cy="%s" r="%s" style="fill: %s;"/>`, num(cx), num(cy), num(r), chartColour(i))
+			fmt.Fprintf(b, `<circle cx="%s" cy="%s" r="%s" data-value="%s" style="fill: %s;"/>`, num(cx), num(cy), num(r), num(v), chartColour(i))
 			return
 		}
 		d := v / sum * 2 * math.Pi
@@ -204,9 +211,9 @@ func piePlot(b *strings.Builder, vs []float64) {
 		if d > math.Pi {
 			large = 1
 		}
-		fmt.Fprintf(b, `<path d="M%s %sL%s %sA%s %s 0 %d 1 %s %sZ" style="fill: %s; stroke: var(--background); stroke-width: 2;"/>`,
+		fmt.Fprintf(b, `<path d="M%s %sL%s %sA%s %s 0 %d 1 %s %sZ" data-value="%s" style="fill: %s; stroke: var(--background); stroke-width: 2;"/>`,
 			num(cx), num(cy), num(cx+r*math.Cos(a)), num(cy+r*math.Sin(a)), num(r), num(r), large,
-			num(cx+r*math.Cos(a+d)), num(cy+r*math.Sin(a+d)), chartColour(i))
+			num(cx+r*math.Cos(a+d)), num(cy+r*math.Sin(a+d)), num(v), chartColour(i))
 		a += d
 	}
 }

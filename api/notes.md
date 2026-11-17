@@ -927,54 +927,63 @@ rules K1–K14.
 
 ### Batch B2: display
 
-B2 adds 68 names, all in ui: eleven components, CardProps.Size and
-Chart's series. Each follows kit-rules.md, and
-reasons.md gives each field's K2 case. These are open for the reviewer:
+B2 adds 62 names, all in ui: ten components, CardProps.Size and Chart's
+series. The blind review (2026-11-17) approved it with changes, cutting
+68 to 62, and added kit rules K15 to K19:
 
-- **Chart is a still SVG plot.** Basecoat's chart.js gives Chart.js a
-  canvas, and a surface runs no script, so ui.Chart draws bars, a line or
-  a pie in Go, in the theme's chart colours. It has no tooltip, so it has
-  no ChartState, which coverage had planned; coverage now drops it. A
-  hover tooltip could come later as a surf state, but SPEC's hover (§9.4)
-  reaches only an element, not a point on a plot.
-  - Kind is a string ("", line, pie), by Q2's rule.
-  - One Labels serves every series, as Chart.js's data.labels does.
-  - Its category labels and legend are HTML under the plot, not SVG text,
-    so they draw in the document's font and stay out of usvg.
-- **Breadcrumb takes Items, not plain children.** Its separators are
-  markup the app shouldn't write, and the last step must be marked the
-  page. A step with Attrs is an `<a role=link tabindex=0>`, a stop the
-  keyboard reaches and Enter clicks (SPEC §10.2). There is no Href,
-  because a surface never navigates (SPEC §9); an app that wants a
-  hyperlink writes `<a target=_blank>` itself. BreadcrumbItem is a new
-  item type, and reasons.md says why none of the shared ones fits (K12).
-- **Avatar has no Src.** Its image is a plain `<img>` in the children
-  (K8, Basecoat's `.avatar > img`), as its initials are.
-- **Sizes are the app's.** Skeleton and Scrollbar take their size, and a
-  scrolling box its overflow, in Class or Attrs. kit.css has only the
-  kit's own utilities, so an app whose build lacks `h-4` or `w-[250px]`
-  writes a style. The stories do that.
-- **An Item that is a link.** Basecoat gives `a.item` a hover. ui.Item is
-  a div, so a clickable row is an Item with surf.On and a tabindex in
-  Attrs. An `As` field, or a `Link bool` that writes `<a tabindex=0>`,
-  is the alternative. Lean: neither until an app asks.
-- **Progress' Value is a float64,** clamped for the fill and faulted
-  outside 0 to 100.
+- **Scrollbar is cut.** Basecoat's `scrollbar` and `scrollbar-sm` are
+  modifier classes for the element that scrolls, a kit component's
+  Class included (K16). Its stories draw them on a plain box and on a
+  Textarea.
+- **Chart** is a still SVG plot of bars, a line or a pie. chart.js needs a
+  canvas and a script, so the plot has no tooltip, which also means no
+  values, since Basecoat's y axis has no ticks. Its Type is chart.js's
+  word (K17). An aria-label in Attrs names it (K18): there is no Label
+  field, and its root is `role=figure`. A pie always writes its labels.
+  Each bar and slice carries its value (`data-value`) for cells. A
+  tooltip comes back as ChartState, `Chart(st, p)`, a MINOR break.
+- **Item and a breadcrumb step are links by their handler** (K15): an
+  `<a>` when Attrs has a click handler or an href. An `<a>` without an
+  href writes tabindex=0 unless Attrs has a tabindex, so Enter and Space
+  click it (SPEC §10.2). There is no Link, As or Href field; a
+  hyperlink is `href` and `target=_blank` in Attrs (SPEC §9). nav's rows
+  become Items when spikeui retires.
+- **Breadcrumb takes Items** (K8's exception, for its separators and the
+  page mark). BreadcrumbItem is a new item type (K12). Avatar has no Src:
+  its `<img>` is a plain part (K8), and its src is a `cid:` resource or a
+  `data:` URL (SPEC §7).
+- **Sizes are the app's.** Skeleton takes its size in Class or Attrs.
+- **Progress' Value is a float64**, a fault outside 0 to 100.
 - **Icons.** The kit's Lucide subset gains bell, circle-alert, folder,
-  inbox and user, for the stories and Alert's doc. They come from the
-  same lucide-react release (0.474.0).
-- **Size (K13).** B2 adds no package to ui's release build: math and
-  strconv already come in through fmt.
-- **Looks (K10).** Chart's plot, Skeleton's pulse, Scrollbar's bar and
-  Avatar's image are on blitz-gaps.md's list for the looks pass.
+  inbox and user, from the same lucide-react release (0.474.0).
+- **Size (K13).** B2 adds no package to ui's release build.
+- **`surf.Autofocus(ctx, "")` is a fault** (K19). Until now it silently
+  cancelled the frame's ask.
+
+**For cells (L3).** cells reads classes and inline styles, not the
+stylesheet, so it must learn:
+
+- that `.breadcrumb > ol` is a row and a separator `li` draws as `›`;
+- that `role=progressbar` draws as a bar from `aria-valuenow`;
+- that a Chart's bars draw as rows of `█`, from each bar's `data-value`;
+- that an Avatar's `img` draws as `[alt]`.
+
+**Looks (K10).** blitz-gaps.md lists Chart's plot, Skeleton's pulse, the
+scrollbar classes and Avatar's image for the looks pass.
 
 ### Carried to B3 (overlays)
 
-- **A blur, an open question for the reviewer** (p-653, 2026-11-17). surf
-  can't ask for the keyboard to leave an element: Autofocus asks for
-  one. toast.js blurs a closing toast's button, so a ui Toast keeps the
-  keyboard on its hidden Dismiss button until it leaves (toastLeave)
-  and the host drops it with the element; a popover closing from a
-  click inside it may want the same. The two shapes: Autofocus(ctx, "")
-  means nothing focused (a change of meaning for a locked name), or a
-  new surf.Blur(ctx). Nothing is added until the reviewer decides.
+- **The blur, settled** (the B2 review, §5). surf gets no blur API, and
+  `Autofocus(ctx, "")` means nothing (it is a fault). A leaving toast
+  writes its buttons `disabled` from the frame it closes in, and a
+  popover hides with `invisible`: an element that stops taking focus
+  drops it.
+- **For SPEC (the maintainer's call, through p-653): focus fixup, as
+  HTML's.** SPEC doesn't say what happens when the focused element
+  leaves the document or stops taking focus. The proposal for §10.1:
+  "When the focused element leaves the document, or stops taking focus
+  (disabled, hidden, not rendered, inert), it loses focus. The surface
+  keeps the keyboard with nothing focused, and the host sends no
+  `blur`. Keys then reach the program (§10.2)." cells already does
+  this. `surf.Blur(ctx)`, SPEC's `a=blur`, is added only when a
+  component must give the keyboard to the terminal.

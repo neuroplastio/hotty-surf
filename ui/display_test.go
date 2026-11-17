@@ -22,8 +22,8 @@ func TestDisplayFaults(t *testing.T) {
 		ui.Alert(ui.AlertProps{Variant: ui.Ghost}),
 		ui.Card(ui.CardProps{Size: ui.Large}),
 		ui.Progress(ui.ProgressProps{Value: 120}),
-		ui.Chart(ui.ChartProps{Kind: "area"}),
-		ui.Chart(ui.ChartProps{Kind: "pie", Labels: []string{"a"}, Series: []ui.ChartSeries{{Label: "s", Values: []float64{-1}}}}),
+		ui.Chart(ui.ChartProps{Type: "area"}),
+		ui.Chart(ui.ChartProps{Type: "pie", Labels: []string{"a"}, Series: []ui.ChartSeries{{Label: "s", Values: []float64{-1}}}}),
 		ui.Chart(ui.ChartProps{Labels: []string{"a", "b"}, Series: []ui.ChartSeries{{Label: "s", Values: []float64{1}}}}),
 		ui.Chart(ui.ChartProps{Labels: []string{"a"}, Series: []ui.ChartSeries{{Label: "n", Values: []float64{math.NaN()}}}}),
 		ui.Progress(ui.ProgressProps{Attrs: templ.Attributes{"aria-valuenow": "3"}}),
@@ -31,7 +31,7 @@ func TestDisplayFaults(t *testing.T) {
 	all := strings.Join(f.got, "\n")
 	for _, w := range []string{
 		"ui.Item: Muted with Variant Outline", `ui.Item: no size "lg"`, `ui.Alert: no variant "ghost"`,
-		`ui.Card: no size "lg"`, "ui.Progress: Value 120 is outside 0 to 100", `ui.Chart: no Kind "area"`,
+		`ui.Card: no size "lg"`, "ui.Progress: Value 120 is outside 0 to 100", `ui.Chart: no Type "area"`,
 		"ui.Chart: a pie's slice is -1", `ui.Chart: series "s" has 1 values for 2 labels`, `ui.Chart: series "n" has NaN`,
 		"ui.Progress: Attrs has aria-valuenow, which the component writes itself (use Value)",
 	} {
@@ -42,8 +42,9 @@ func TestDisplayFaults(t *testing.T) {
 }
 
 // What B2's components write: Item's Muted as its variant, a Progress'
-// fill and value, a breadcrumb whose last step is the page and whose
-// steps with a handler are stops.
+// fill and value, a breadcrumb whose last step is the page, and an Item
+// or a step that is a link by its click handler or href, a stop unless
+// its Attrs give a tabindex or it has an href (kit rule K15).
 func TestDisplayMarkup(t *testing.T) {
 	r := surftest.Start(t, surf.New("t", templ.Join(
 		ui.Item(ui.ItemProps{Muted: true, Size: ui.XSmall, Attrs: templ.Attributes{"id": "it"}}),
@@ -53,7 +54,13 @@ func TestDisplayMarkup(t *testing.T) {
 			{Label: "Docs"},
 			{Label: "Here", Attrs: templ.Attributes{"id": "here"}},
 		}}),
-		ui.Scrollbar(ui.ScrollbarProps{Size: ui.Small, Attrs: templ.Attributes{"id": "sb"}}),
+		ui.Item(ui.ItemProps{Attrs: templ.Attributes{"id": "click", "data-on": "click"}}),
+		ui.Item(ui.ItemProps{Attrs: templ.Attributes{"id": "own", "data-on": "click", "tabindex": "-1"}}),
+		ui.Item(ui.ItemProps{Attrs: templ.Attributes{"id": "web", "href": "https://example.com", "target": "_blank"}}),
+		ui.Breadcrumb(ui.BreadcrumbProps{Items: []ui.BreadcrumbItem{
+			{Label: "Only an id", Attrs: templ.Attributes{"id": "idonly"}},
+			{Label: "Clicks", Attrs: templ.Attributes{"id": "step", "data-on": "click"}}, {Label: "Last"},
+		}}),
 	), ui.Stylesheet()))
 	it := r.One("#it")
 	if attr(it, "data-variant") != "muted" || attr(it, "data-size") != "xs" {
@@ -66,14 +73,21 @@ func TestDisplayMarkup(t *testing.T) {
 	if st := attr(pr.FirstChild, "style"); !strings.Contains(st, "width: 37.5%") {
 		t.Errorf("progress fill style %q", st)
 	}
-	if h := r.One("#home"); h.Data != "a" || attr(h, "tabindex") != "0" {
-		t.Errorf("a step with a handler is <%s tabindex=%q>, want a stop", h.Data, attr(h, "tabindex"))
+	if h := r.One("#home"); h.Data != "span" {
+		t.Errorf("a step with only an id is <%s>, want text", h.Data)
 	}
 	if h := r.One("#here"); h.Data != "span" || attr(h, "aria-current") != "page" {
 		t.Errorf("the last step is <%s aria-current=%q>, want the page", h.Data, attr(h, "aria-current"))
 	}
-	if c := attr(r.One("#sb"), "class"); c != "scrollbar-sm" {
-		t.Errorf("a small scrollbar has class %q", c)
+	for id, want := range map[string]string{"it": "div", "click": "a", "own": "a", "web": "a", "idonly": "span", "step": "a"} {
+		if n := r.One("#" + id); n.Data != want {
+			t.Errorf("#%s is <%s>, want <%s> (kit rule K15)", id, n.Data, want)
+		}
+	}
+	for id, want := range map[string]string{"click": "0", "own": "-1", "web": "", "step": "0"} {
+		if got := attr(r.One("#"+id), "tabindex"); got != want {
+			t.Errorf("#%s has tabindex %q, want %q", id, got, want)
+		}
 	}
 }
 
@@ -88,16 +102,16 @@ func TestChartPlot(t *testing.T) {
 		want int
 	}{
 		{ui.ChartProps{Labels: labels, Series: two}, "rect", 6},
-		{ui.ChartProps{Kind: "line", Labels: labels, Series: two}, "polyline", 2},
-		{ui.ChartProps{Kind: "pie", Labels: labels, Series: two[:1], Legend: true}, "path", 3},
+		{ui.ChartProps{Type: "line", Labels: labels, Series: two}, "polyline", 2},
+		{ui.ChartProps{Type: "pie", Labels: labels, Series: two[:1]}, "path", 3},
 	} {
 		r := surftest.Start(t, surf.New("t", ui.Chart(c.p), ui.Stylesheet()))
 		if n := len(r.Find(c.tag)); n != c.want {
-			t.Errorf("%q chart: %d <%s>, want %d", c.p.Kind, n, c.tag, c.want)
+			t.Errorf("%q chart: %d <%s>, want %d", c.p.Type, n, c.tag, c.want)
 		}
-		if c.p.Legend {
+		if c.p.Type == "pie" {
 			if n := len(r.Find("span[class=chart-legend-item]")); n != 3 {
-				t.Errorf("pie legend: %d items, want 3", n)
+				t.Errorf("a pie without Legend writes %d labels, want 3", n)
 			}
 		}
 	}

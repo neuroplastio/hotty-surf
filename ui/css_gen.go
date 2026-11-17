@@ -380,13 +380,13 @@ type AvatarProps struct {
 }
 
 // Avatar is Basecoat's avatar: a round picture of someone. Its parts are
-// plain elements in its children, as Basecoat's markup has them: an <img>
-// (which the host loads as it loads any image, SPEC §7), a <span> with
-// what shows until it has (initials, an icon), and a <span
-// class="avatar-badge"> for a status dot:
+// plain elements in its children, as Basecoat's markup has them: an <img>,
+// whose src is a cid: resource or a data: URL (SPEC §7, nothing else is
+// fetched), a <span> with what shows until it has (initials, an icon), and
+// a <span class="avatar-badge"> for a status dot:
 //
 //	@ui.Avatar(ui.AvatarProps{}) {
-//		<img src={ u.Photo } alt={ u.Name }/>
+//		<img src={ "cid:" + u.ID } alt={ u.Name }/>
 //		<span>{ u.Initials }</span>
 //	}
 func Avatar(p AvatarProps) templ.Component {
@@ -427,32 +427,6 @@ type EmptyProps struct {
 // <p>), then a <section> or a <footer> for its buttons.
 func Empty(p EmptyProps) templ.Component {
 	return scoped(cssEmpty(p), false)
-}
-
-// ItemProps are an Item's attributes.
-type ItemProps struct {
-	// Variant is Primary (no border, Basecoat's default) or Outline (a
-	// border).
-	Variant Variant
-	// Muted draws it on the muted background (data-variant="muted"); with
-	// Outline it is a fault.
-	Muted bool
-	// Size is Medium, Small or XSmall (data-size): its padding and gaps.
-	Size Size
-	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other but those the component writes itself
-	// (class, data-slot, data-variant or data-size), which are a fault
-	// here.
-	Attrs templ.Attributes
-	// Class is more classes for the element, after its own.
-	Class string
-}
-
-// Item is Basecoat's item: one row of a list, with a <figure> (an icon or
-// an image), a <section> (an <h3> and a <p>) and an <aside> (its buttons)
-// as plain elements in its children. ItemGroup holds several.
-func Item(p ItemProps) templ.Component {
-	return scoped(cssItem(p), false)
 }
 
 // ItemGroupProps are an ItemGroup's attributes.

@@ -1,21 +1,34 @@
 package stories
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
 
 // The stories of B2's display components: Alert, Avatar, Breadcrumb,
-// Card's sizes, Chart, Empty, Item, Progress, Scrollbar, Skeleton and
-// Table. Their data is made up.
+// Card's sizes, Chart, Empty, Item, Progress, Skeleton and Table, and
+// Basecoat's scrollbar classes. Their data is made up.
 
 type displayState struct {
 	page string
 }
 
 func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
+
+// named is the aria-label that names a chart (kit rule K18).
+func named(l string) templ.Attributes { return templ.Attributes{"aria-label": l} }
+
+func logText() string {
+	var b strings.Builder
+	for i := range 20 {
+		fmt.Fprintf(&b, "Line %d of the log\n", i+1)
+	}
+	return b.String()
+}
 
 func init() {
 	show := func(f func(*displayState) templ.Component) func() templ.Component {
@@ -32,18 +45,19 @@ func init() {
 	add(Story{ID: "card/small", Doc: "A small card (CardProps.Size)", View: show(cardSmall)})
 	add(Story{ID: "chart/bar", Doc: "A bar chart of two series", View: show(chartBar)})
 	add(Story{ID: "chart/line", Doc: "A line chart of two series", View: show(chartLine)})
-	add(Story{ID: "chart/pie", Doc: "A pie of five slices", View: show(chartPie)})
-	add(Story{ID: "chart/legend", Doc: "A bar chart and a pie with their legends", View: show(chartLegend)})
+	add(Story{ID: "chart/pie", Doc: "A pie of five slices, its labels beside their colours", View: show(chartPie)})
+	add(Story{ID: "chart/legend", Doc: "Bar charts of two series and of one, with their legends", View: show(chartLegend)})
 	add(Story{ID: "empty/default", Doc: "An empty state with a title, a description and a button", View: show(emptyDefault)})
 	add(Story{ID: "empty/with-icon", Doc: "An empty state with an icon", View: show(emptyWithIcon)})
 	add(Story{ID: "item/default", Doc: "An item with an icon, a title, a description and a button", View: show(itemDefault)})
 	add(Story{ID: "item/variants", Doc: "An item of each variant: default, Outline and Muted", View: show(itemVariants)})
 	add(Story{ID: "item/sizes", Doc: "An outline item of each size", View: show(itemSizes)})
-	add(Story{ID: "item/group", Doc: "Three items in a group, a line between two", View: show(itemGroup)})
+	add(Story{ID: "item/group", Doc: "Three items in a group, a line between two; each a link, and Enter on the first opens it",
+		View: show(itemGroup), Keys: []string{"tab", "enter"}, Want: "page: Ada Lovelace"})
 	add(Story{ID: "progress/default", Doc: "A progress bar at 60%", View: show(progressDefault)})
 	add(Story{ID: "progress/values", Doc: "Progress at 0, 25, 50, 75 and 100%", View: show(progressValues)})
-	add(Story{ID: "scrollbar/default", Doc: "A box of twenty lines that scrolls, with Basecoat's scroll bar", View: show(scrollbarDefault)})
-	add(Story{ID: "scrollbar/small", Doc: "The same with the small scroll bar", View: show(scrollbarSmall)})
+	add(Story{ID: "scrollbar/default", Doc: "A plain box of twenty lines that scrolls, with Basecoat's scrollbar class", View: show(scrollbarDefault)})
+	add(Story{ID: "scrollbar/small", Doc: "A Textarea of twenty lines with the scrollbar-sm class", View: show(scrollbarSmall)})
 	add(Story{ID: "skeleton/default", Doc: "A skeleton of a round picture and two lines", View: show(skeletonDefault)})
 	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault)})
 }
@@ -148,19 +162,20 @@ templ cardSmall(s *displayState) {
 var (
 	months  = []string{"Jan", "Feb", "Mar", "Apr", "May", "Jun"}
 	visits  = []ui.ChartSeries{{Label: "Desktop", Values: []float64{186, 305, 237, 73, 209, 214}}, {Label: "Mobile", Values: []float64{80, 200, 120, 190, 130, 140}}}
-	browser = ui.ChartProps{Kind: "pie", Label: "Visitors by browser", Labels: []string{"Arc", "Firefox", "Safari", "Edge", "Other"},
-		Series: []ui.ChartSeries{{Label: "Visitors", Values: []float64{275, 200, 187, 173, 90}}}}
+	browser = ui.ChartProps{Type: "pie", Labels: []string{"Arc", "Firefox", "Safari", "Edge", "Other"},
+		Series: []ui.ChartSeries{{Label: "Visitors", Values: []float64{275, 200, 187, 173, 90}}},
+		Attrs:  named("Visitors by browser")}
 )
 
 templ chartBar(s *displayState) {
 	<div class="p-4 max-w-md">
-		@ui.Chart(ui.ChartProps{Label: "Visitors by month", Labels: months, Series: visits})
+		@ui.Chart(ui.ChartProps{Labels: months, Series: visits, Attrs: named("Visitors by month")})
 	</div>
 }
 
 templ chartLine(s *displayState) {
 	<div class="p-4 max-w-md">
-		@ui.Chart(ui.ChartProps{Kind: "line", Label: "Visitors by month", Labels: months, Series: visits})
+		@ui.Chart(ui.ChartProps{Type: "line", Labels: months, Series: visits, Attrs: named("Visitors by month")})
 	</div>
 }
 
@@ -172,8 +187,8 @@ templ chartPie(s *displayState) {
 
 templ chartLegend(s *displayState) {
 	<div class="p-4 max-w-md grid gap-4">
-		@ui.Chart(ui.ChartProps{Label: "Visitors by month", Labels: months, Series: visits, Legend: true})
-		@ui.Chart(ui.ChartProps{Kind: browser.Kind, Label: browser.Label, Labels: browser.Labels, Series: browser.Series, Legend: true})
+		@ui.Chart(ui.ChartProps{Labels: months, Series: visits, Legend: true, Attrs: named("Visitors by month")})
+		@ui.Chart(ui.ChartProps{Type: "bar", Labels: months, Series: visits[:1], Legend: true, Attrs: named("Desktop visitors by month")})
 	</div>
 }
 
@@ -255,20 +270,18 @@ templ itemSizes(s *displayState) {
 }
 
 templ itemGroup(s *displayState) {
-	<div class="p-4 max-w-md">
+	<div class="p-4 max-w-md grid gap-2">
 		@ui.ItemGroup(ui.ItemGroupProps{}) {
-			@ui.Item(ui.ItemProps{}) {
-				@itemBody("user", "Ada Lovelace", "ada@example.com")
-			}
-			<hr/>
-			@ui.Item(ui.ItemProps{}) {
-				@itemBody("user", "Grace Hopper", "grace@example.com")
-			}
-			<hr/>
-			@ui.Item(ui.ItemProps{}) {
-				@itemBody("user", "Mary Kenneth Keller", "mary@example.com")
+			for i, n := range []string{"Ada Lovelace", "Grace Hopper", "Mary Kenneth Keller"} {
+				if i > 0 {
+					<hr/>
+				}
+				@ui.Item(ui.ItemProps{Attrs: surf.On(ctx, "person-"+strconv.Itoa(i), surf.Click(s.goTo(n)))}) {
+					@itemBody("user", n, "Opens their page.")
+				}
 			}
 		}
+		<p class="text-sm text-muted-foreground">page: { s.page }</p>
 	</div>
 }
 
@@ -294,17 +307,15 @@ templ lines() {
 
 templ scrollbarDefault(s *displayState) {
 	<div class="p-4 max-w-sm">
-		@ui.Scrollbar(ui.ScrollbarProps{Class: "p-2", Attrs: templ.Attributes{"style": "height: 12rem; overflow-y: auto;"}}) {
+		<div class="scrollbar p-2" style="height: 12rem; overflow-y: auto;">
 			@lines()
-		}
+		</div>
 	</div>
 }
 
 templ scrollbarSmall(s *displayState) {
 	<div class="p-4 max-w-sm">
-		@ui.Scrollbar(ui.ScrollbarProps{Size: ui.Small, Class: "p-2", Attrs: templ.Attributes{"style": "height: 12rem; overflow-y: auto;"}}) {
-			@lines()
-		}
+		@ui.Textarea(ui.TextareaProps{Value: logText(), Class: "scrollbar-sm", Attrs: templ.Attributes{"style": "height: 12rem;"}})
 	</div>
 }
 

@@ -287,27 +287,6 @@ templ cssEmpty(p EmptyProps) {
 	</div>
 }
 
-// cssItem is Item's markup (Basecoat's item.css).
-templ cssItem(p ItemProps) {
-	{{ checkVariant(ctx, "Item", p.Variant, itemVariants) }}
-	{{ checkSize(ctx, "Item", p.Size, itemSizes) }}
-	{{ checkItem(ctx, p) }}
-	{{ checkAttrs(ctx, "Item", p.Attrs, "class", "data-slot", "data-variant", "data-size=Size") }}
-	<div
-		data-slot="item"
-		if s := itemVariant(p); s != "" {
-			data-variant={ s }
-		}
-		if p.Size != "" {
-			data-size={ string(p.Size) }
-		}
-		class={ join("item", p.Class) }
-		{ p.Attrs... }
-	>
-		{ children... }
-	</div>
-}
-
 // cssItemGroup is ItemGroup's markup (Basecoat's item.css).
 templ cssItemGroup(p ItemGroupProps) {
 	{{ checkAttrs(ctx, "ItemGroup", p.Attrs, "class", "data-slot") }}

@@ -41,9 +41,8 @@ type Attr struct {
 // A Check faults a value the component doesn't take.
 type Check struct {
 	Field string
-	Kind  string // variant, size, enum or call
-	List  string // the Go list of the values it takes (check.go); for call, the Go call that checks
-
+	Kind  string // variant, size or enum
+	List  string // the Go list of the values it takes (check.go)
 }
 
 var table = []Comp{
@@ -261,10 +260,10 @@ var table = []Comp{
 	},
 	{
 		Name: "Avatar", File: "avatar", Tag: "span", Slot: "avatar", Class: "avatar",
-		Doc: `is Basecoat's avatar: a round picture of someone. Its parts are plain elements in its children, as Basecoat's markup has them: an <img> (which the host loads as it loads any image, SPEC §7), a <span> with what shows until it has (initials, an icon), and a <span class="avatar-badge"> for a status dot:
+		Doc: `is Basecoat's avatar: a round picture of someone. Its parts are plain elements in its children, as Basecoat's markup has them: an <img>, whose src is a cid: resource or a data: URL (SPEC §7, nothing else is fetched), a <span> with what shows until it has (initials, an icon), and a <span class="avatar-badge"> for a status dot:
 
 	@ui.Avatar(ui.AvatarProps{}) {
-		<img src={ u.Photo } alt={ u.Name }/>
+		<img src={ "cid:" + u.ID } alt={ u.Name }/>
 		<span>{ u.Initials }</span>
 	}`,
 		Fields: []Field{
@@ -280,20 +279,6 @@ var table = []Comp{
 	{
 		Name: "Empty", File: "empty", Tag: "div", Slot: "empty", Class: "empty",
 		Doc: `is Basecoat's empty state: what a view shows with nothing in it. Its parts are plain elements in its children, as Basecoat's markup has them: a <header> (a <figure> with an icon or an image, an <h3> and a <p>), then a <section> or a <footer> for its buttons.`,
-	},
-	{
-		Name: "Item", File: "item", Tag: "div", Slot: "item", Class: "item",
-		Doc: `is Basecoat's item: one row of a list, with a <figure> (an icon or an image), a <section> (an <h3> and a <p>) and an <aside> (its buttons) as plain elements in its children. ItemGroup holds several.`,
-		Fields: []Field{
-			{"Variant", "Variant", "Variant is Primary (no border, Basecoat's default) or Outline (a border)."},
-			{"Muted", "bool", "Muted draws it on the muted background (data-variant=\"muted\"); with Outline it is a fault."},
-			{"Size", "Size", "Size is Medium, Small or XSmall (data-size): its padding and gaps."},
-		},
-		Attrs: []Attr{
-			{Name: "data-variant", Expr: "itemVariant(p)"},
-			{Name: "data-size", Field: "Size"},
-		},
-		Checks: []Check{{"Variant", "variant", "itemVariants"}, {"Size", "size", "itemSizes"}, {"", "call", `checkItem(ctx, p)`}},
 	},
 	{
 		Name: "ItemGroup", File: "item", Tag: "div", Slot: "item-group", Class: "item-group", Doc: `is Basecoat's item group: Items in a column, in its children, with a plain <hr> between two where a line parts them.`,

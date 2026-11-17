@@ -15,10 +15,14 @@ templ breadcrumb(p BreadcrumbProps) {
 				<li>
 					if i == len(p.Items)-1 {
 						<span aria-current="page" { it.Attrs... }>{ it.Label }</span>
-					} else if len(it.Attrs) > 0 {
-						// A link without an href, which no host takes as one:
-						// tabindex makes it a stop, as a link is.
-						<a role="link" tabindex="0" { it.Attrs... }>{ it.Label }</a>
+					} else if linked(it.Attrs) {
+						<a
+							role="link"
+							if stop(it.Attrs) {
+								tabindex="0"
+							}
+							{ it.Attrs... }
+						>{ it.Label }</a>
 					} else {
 						<span { it.Attrs... }>{ it.Label }</span>
 					}
@@ -53,10 +57,41 @@ templ table(p TableProps) {
 	</div>
 }
 
-templ scrollbar(p ScrollbarProps) {
-	{{ checkSize(ctx, "Scrollbar", p.Size, scrollbarSizes) }}
-	{{ checkAttrs(ctx, "Scrollbar", p.Attrs, "class", "data-slot") }}
-	<div data-slot="scrollbar" class={ join(scrollbarClass(p.Size), p.Class) } { p.Attrs... }>
-		{ children... }
-	</div>
+templ item(p ItemProps) {
+	{{ checkVariant(ctx, "Item", p.Variant, itemVariants) }}
+	{{ checkSize(ctx, "Item", p.Size, itemSizes) }}
+	{{ checkItem(ctx, p) }}
+	{{ checkAttrs(ctx, "Item", p.Attrs, "class", "data-slot", "data-variant=Variant", "data-size=Size") }}
+	if linked(p.Attrs) {
+		<a
+			data-slot="item"
+			if v := itemVariant(p); v != "" {
+				data-variant={ v }
+			}
+			if p.Size != "" {
+				data-size={ string(p.Size) }
+			}
+			if stop(p.Attrs) {
+				tabindex="0"
+			}
+			class={ join("item", p.Class) }
+			{ p.Attrs... }
+		>
+			{ children... }
+		</a>
+	} else {
+		<div
+			data-slot="item"
+			if v := itemVariant(p); v != "" {
+				data-variant={ v }
+			}
+			if p.Size != "" {
+				data-size={ string(p.Size) }
+			}
+			class={ join("item", p.Class) }
+			{ p.Attrs... }
+		>
+			{ children... }
+		</div>
+	}
 }

@@ -113,7 +113,6 @@ pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Progress(ProgressProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Radio(RadioProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Scrollbar(ScrollbarProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Skeleton(SkeletonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Stylesheet() string
@@ -160,11 +159,10 @@ pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Kind string
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Labels []string
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Legend bool
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Series []ChartSeries
+pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Type string
 pkg neuroplast.io/hotty-surf/ui, type ChartSeries struct
 pkg neuroplast.io/hotty-surf/ui, type ChartSeries struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type ChartSeries struct, Values []float64
@@ -258,10 +256,6 @@ pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type ScrollbarProps struct
-pkg neuroplast.io/hotty-surf/ui, type ScrollbarProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ScrollbarProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ScrollbarProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Group string

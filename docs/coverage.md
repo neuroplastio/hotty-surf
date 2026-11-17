@@ -92,7 +92,7 @@ Of 39 components:
 - **markup:** 9 jinja, 29 css, 1 hand.
 - **behaviour:** 11 scripts translated (`accordion.js`, `combobox.js`, `command.js`, `drawer.js`, `dropdown-menu.js`, `popover.js`, `range.js`, `select.js`, `sidebar.js`, `tabs.js`, `toast.js`); 2 components by hand (chart, dialog); 26 with none.
 - **browser:** 18 components rely on a browser feature.
-- **status:** 12 done, 13 port, 13 new, 1 waits.
+- **status:** 13 done, 13 port, 12 new, 1 waits.
 - **tests:** render 9, spec 28, differential 11, keys-cells 21.
 
 ## The components
@@ -107,7 +107,7 @@ Of 39 components:
 | button | css | - | - | `ui.Button`, `ui.ButtonProps` | `button/default`, `button/destructive`, `button/ghost-with-icon`, `button/disabled`, `button/every-variant-and-size` | `spec`, `keys-cells` | done | sizes: ui.Size (XSmall…Large) and IconOnly give all 8; storybook css.go |
 | button-group | css | - | - | `ui.ButtonGroup`, `ui.ButtonGroupProps`, `ui.ButtonGroupSeparator` | `button-group/default`, `button-group/vertical`, `button-group/with-menu` | `spec`, `keys-cells` | new | data-orientation vertical: no shared enum |
 | card | css | - | - | `ui.Card`, `ui.CardProps` | `card/default`, `card/small` | `spec` | port | size sm; header, section, footer are plain elements (ui/doc.go); storybook css.go |
-| chart | hand | hand | `<canvas>`, `Chart.js` | `ui.Chart`, `ui.ChartProps`, `ui.ChartSeries` | `chart/bar`, `chart/line`, `chart/pie`, `chart/legend` | `spec` | new | chart.js drives Chart.js on a canvas, and a surface runs no script: an SVG plot in Go, still, without the tooltip (no ChartState); its strokes scale with the plot, as Blitz lacks vector-effect; no keys, no differential |
+| chart | hand | hand | `<canvas>`, `Chart.js` | `ui.Chart`, `ui.ChartProps`, `ui.ChartSeries` | `chart/bar`, `chart/line`, `chart/pie`, `chart/legend` | `spec` | new | chart.js drives Chart.js on a canvas, and a surface runs no script: an SVG plot in Go, still, without the tooltip (no ChartState until a later pack); Type as chart.js's; its strokes scale with the plot, as Blitz lacks vector-effect; no keys, no differential |
 | checkbox | css | - | `<input type=checkbox>` | `ui.Checkbox`, `ui.CheckboxProps` | `checkbox/default`, `checkbox/disabled` | `spec`, `keys-cells` | done | the host toggles it and sends change (SPEC §9); no mixed look in any host, so no Mixed (B1 review) |
 | collapsible | css | - | `<details>` | `ui.Collapsible`, `ui.CollapsibleProps` | `collapsible/default`, `collapsible/open` | `spec`, `keys-cells` | new | the host toggles it (SPEC §9); ::details-content and calc-size() unchecked in Blitz |
 | combobox | jinja | `combobox.js` | - | `ui.Combobox`, `ui.ComboboxProps`, `ui.ComboboxState`, `ui.ComboboxItem` | `combobox/default`, `combobox/multiple`, `combobox/clear`, `combobox/grouped` | `render`, `differential`, `keys-cells` | port | markup generated, behaviour not begun; selected's type open (RUNTIME.md); outside click needs selectjs's backdrop |
@@ -128,7 +128,7 @@ Of 39 components:
 | progress | css | - | - | `ui.Progress`, `ui.ProgressProps` | `progress/default`, `progress/values` | `spec` | new | a span's width in a div, not `<progress>` (which Blitz lacks) |
 | radio | css | - | `<input type=radio>` | `ui.Radio`, `ui.RadioProps` | `radio/default`, `radio/disabled` | `spec`, `keys-cells` | done | the host checks it and sends change (SPEC §9) |
 | range | css | `range.js` | `<input type=range>` | - | - | - | waits | waits for SPEC (range keys and change): §10.2 gives a range no keys and §9 no change; Blitz draws no range (css-subset); proposal in api/notes.md (K10) |
-| scrollbar | css | - | `::-webkit-scrollbar` | `ui.Scrollbar`, `ui.ScrollbarProps` | `scrollbar/default`, `scrollbar/small` | `spec` | new | no scrollbar shows in a still render; whether Blitz reads ::-webkit-scrollbar is unchecked |
+| scrollbar | css | - | `::-webkit-scrollbar` | - | `scrollbar/default`, `scrollbar/small` | `spec` | done | a class, not a component: Class: "scrollbar" or "scrollbar-sm" on the element that scrolls (kit rule K16); whether Blitz draws ::-webkit-scrollbar is the looks pass's |
 | select | jinja | `select.js` | - | `ui.Select`, `ui.SelectProps`, `ui.SelectState`, `ui.SelectItem` | `select/default`, `select/multiple`, `select/grouped` | `render`, `differential`, `keys-cells` | port | the macro's markup in templ, single only; select.js in Go: the keys, the pointer, a click outside, the trigger taking the keyboard back; Value "" is none where select.js shows the first option; 1.1.0 has no search box or typeahead |
 | sidebar | jinja | `sidebar.js` | `<details>`, `inert` | `ui.Sidebar`, `ui.SidebarProps`, `ui.SidebarState`, `ui.SidebarItem` | `sidebar/default`, `sidebar/submenu`, `sidebar/right`, `sidebar/closed` | `render`, `differential`, `keys-cells` | port | markup generated; its breakpoint reads the window's width; inert unchecked in Blitz |
 | skeleton | css | - | `@keyframes` | `ui.Skeleton`, `ui.SkeletonProps` | `skeleton/default` | `spec` | new | animate-pulse; Blitz runs @keyframes (css-subset) |

@@ -1,23 +1,23 @@
 package ui
 
 templ chart(p ChartProps) {
-	{{ checkEnum(ctx, "Chart", "Kind", p.Kind, chartKinds) }}
+	{{ checkEnum(ctx, "Chart", "Type", p.Type, chartTypes) }}
 	{{ checkChart(ctx, p) }}
-	{{ checkAttrs(ctx, "Chart", p.Attrs, "class", "data-slot") }}
-	<div data-slot="chart" class={ join("grid gap-2", p.Class) } { p.Attrs... }>
+	{{ checkAttrs(ctx, "Chart", p.Attrs, "class", "data-slot", "role") }}
+	<div data-slot="chart" role="figure" class={ join("grid gap-2", p.Class) } { p.Attrs... }>
 		<div class="chart">
-			<svg class="size-full" viewBox="0 0 640 360" role="img" aria-label={ p.Label }>
+			<svg class="size-full" viewBox="0 0 640 360" aria-hidden="true">
 				@chartPlot(p)
 			</svg>
 		</div>
-		if p.Kind != "pie" && len(p.Labels) > 0 {
+		if p.Type != "pie" && len(p.Labels) > 0 {
 			<div class="flex text-xs text-muted-foreground" aria-hidden="true">
 				for _, l := range p.Labels {
 					<span class="flex-1 text-center">{ l }</span>
 				}
 			</div>
 		}
-		if p.Legend {
+		if p.Legend || p.Type == "pie" {
 			<div class="chart-legend">
 				for _, k := range chartKeys(p) {
 					<span class="chart-legend-item">

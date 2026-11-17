@@ -3,16 +3,18 @@ package ui
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/a-h/templ"
 
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// B2's display components with parts of their own: a
-// breadcrumb's items and separators, a progress bar's fill, a table's
-// container, a scrolling box's class. The one-element ones are in the
+// B2's display components with parts of their own: an item that is a
+// link by its handler, a breadcrumb's items and separators, a progress
+// bar's fill, a table's container. The one-element ones are in the
 // generator's table (css_gen.go).
 
 // A BreadcrumbItem is one step of a Breadcrumb's trail.
@@ -20,10 +22,13 @@ type BreadcrumbItem struct {
 	Label string
 	// Attrs are more attributes for the item's element: its id and its
 	// click handler, through surf.On, for a step the app takes itself
-	// (another page of its own). An item with them, but the last, is a
-	// link the pointer and the keyboard reach (Enter and Space click it,
-	// SPEC §10.2); one without is text. A surface never navigates (SPEC
-	// §9), so a step is always the app's.
+	// (another page of its own). An item with a click handler or an href,
+	// but the last, is a link the pointer and the keyboard reach (Enter
+	// and Space click it, SPEC §10.2); one without is text. A step that
+	// opens a page outside the app is a hyperlink, the terminal's: href
+	// and target="_blank" in Attrs (SPEC §9). The last item is the page
+	// shown: its Attrs go on its <span>, which is no stop. A link without
+	// an href writes tabindex="0", which a tabindex here replaces.
 	Attrs templ.Attributes
 }
 
@@ -86,34 +91,45 @@ func Table(p TableProps) templ.Component {
 	return scoped(table(p), false)
 }
 
-// ScrollbarProps are a Scrollbar's attributes.
-type ScrollbarProps struct {
-	// Size is Medium or Small: the bar's width, Basecoat's scrollbar or
-	// scrollbar-sm.
+// ItemProps are an Item's attributes.
+type ItemProps struct {
+	// Variant is Primary (no border, Basecoat's default) or Outline (a
+	// border).
+	Variant Variant
+	// Muted draws it on the muted background (data-variant="muted"); with
+	// Outline it is a fault.
+	Muted bool
+	// Size is Medium, Small or XSmall (data-size): its padding and gaps.
 	Size Size
-	// Attrs are more attributes for the div element: its id and handlers,
+	// Attrs are more attributes for the element: its id and handlers,
 	// through surf.On, and any other but those the component writes itself
-	// (class or data-slot), which are a fault here.
+	// (class, data-slot, data-variant or data-size), which are a fault
+	// here. A click handler or an href makes it a link (below); its
+	// tabindex="0" is a default a tabindex here replaces, and its role is
+	// the app's (a list's option).
 	Attrs templ.Attributes
-	// Class is more classes for the element, after its own: its height,
-	// and its overflow ("h-64 overflow-y-auto"), since what scrolls and
-	// how far is the app's.
+	// Class is more classes for the element, after its own.
 	Class string
 }
 
-// Scrollbar is a box whose scroll bar Basecoat draws thin, in the theme's
-// colours, around its children.
-func Scrollbar(p ScrollbarProps) templ.Component {
-	return scoped(scrollbar(p), false)
+// Item is Basecoat's item: one row of a list, with a <figure> (an icon or
+// an image), a <section> (an <h3> and a <p>) and an <aside> (its buttons)
+// as plain elements in its children. ItemGroup holds several.
+//
+// An Item whose Attrs has a click handler (surf.Click) or an href is an
+// <a>, which Basecoat draws with a hover (a.item) and SPEC gives Enter and
+// Space (§10.2). It writes tabindex="0" unless Attrs has a tabindex. Its
+// role is the app's, in Attrs (a list's option).
+func Item(p ItemProps) templ.Component {
+	return scoped(item(p), false)
 }
 
 var (
-	alertVariants  = []Variant{Primary, Destructive}
-	cardSizes      = []Size{Medium, Small}
-	itemVariants   = []Variant{Primary, Outline}
-	itemSizes      = []Size{Medium, Small, XSmall}
-	avatarSizes    = []Size{Medium, Small, Large}
-	scrollbarSizes = []Size{Medium, Small}
+	alertVariants = []Variant{Primary, Destructive}
+	cardSizes     = []Size{Medium, Small}
+	itemVariants  = []Variant{Primary, Outline}
+	itemSizes     = []Size{Medium, Small, XSmall}
+	avatarSizes   = []Size{Medium, Small, Large}
 )
 
 // itemVariant is an Item's data-variant: Muted's, or Variant's.
@@ -146,9 +162,20 @@ func progressWidth(v float64) templ.SafeCSS {
 	return templ.SafeCSS("width: " + strconv.FormatFloat(min(max(v, 0), 100), 'f', -1, 64) + "%;")
 }
 
-func scrollbarClass(s Size) string {
-	if s == Small {
-		return "scrollbar-sm"
+// linked says whether attrs make an element a link (kit rule K15): a
+// click handler, or an href.
+func linked(attrs templ.Attributes) bool {
+	if _, ok := attrs["href"]; ok {
+		return true
 	}
-	return "scrollbar"
+	on, _ := attrs["data-on"].(string)
+	return slices.Contains(strings.Fields(on), "click")
+}
+
+// stop says whether a link writes tabindex="0": one with no href, which
+// no host takes as a stop, and whose Attrs give it no tabindex (K3).
+func stop(attrs templ.Attributes) bool {
+	_, href := attrs["href"]
+	_, tab := attrs["tabindex"]
+	return !href && !tab
 }
