@@ -711,4 +711,4 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 
 ## L5: the focused element's own keys (plx's G-keys-decl, the Own half)
 
-- `Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.
+- `surf.Surface.OwnKeys`: plx decides where a key goes before the surface hears it: in cells, and on a host for the keys the kit gives the program (a list's arrows come to plx as `=program`). It must offer the focused element's own keys to the surface ahead of its keymap, or its bindings take a list's arrow_down. v0.6.3 said this as `KeyUse.Own` in `Surface.Keys`. Chars says the characters, and ui.Bindings the KeyScope bindings; nothing says the rest.
