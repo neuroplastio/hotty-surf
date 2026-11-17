@@ -117,7 +117,8 @@ The Screen never resolves a colour value.
 | `kbd`, `.kbd` | | `muted` |
 | `[role=progressbar]` | `primary` | |
 | a `.tabs` tab list (not `line`) | | `muted` |
-| the selected band: a selected tab, `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `selected`: no variable; the kit's `accent`, named apart for a program's own selection |
+| the selected band: `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `selected`: no variable; the kit's `accent` (`sidebar-accent` for the nav item), named apart for a program's own selection; with the keyboard, also Reverse |
+| a selected tab: of a tab list, of the line variant | `foreground` | `background` (`input/30` under `.dark`); none |
 
 ## Controls
 

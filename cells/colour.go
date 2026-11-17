@@ -28,11 +28,15 @@ import (
 // ground. A literal colour is not read, and is "".
 //
 // One role names no variable: "selected", the fill of the selected band
-// (a list's or a tree's selected row, a nav list's current item, a
-// selected tab), whether or not it has the keyboard. The kit fills it
-// with "accent", which other fills use too, so a program that draws a
-// selection of its own tells it apart by this name; one that has none
-// paints it as "accent".
+// (a list's or a tree's selected row, a nav list's current item),
+// whether or not it has the keyboard. The kit fills it with "accent",
+// which other fills use too, so a program that draws a selection of its
+// own tells it apart by this name; one that has none paints it as the
+// kit does: "accent", or "sidebar-accent" for a nav list's current
+// item. The band with the keyboard also has Reverse: a program that has
+// a fill of its own for a focused selection paints "selected" with
+// Reverse as that fill, not in reverse video; one that has none lets
+// Reverse draw it.
 type Role string
 
 // Attr is a cell's text attributes, as SGR draws them.
@@ -218,8 +222,17 @@ func kitColours(n *html.Node, dark bool) (fg, bg Role) {
 		return "primary", ""
 	case attr(n, "role") == "tablist" && variant != "line" && n.Parent != nil && tokens(n.Parent, "class", "tabs"):
 		return "", "muted"
-	case attr(n, "role") == "tab" && attr(n, "aria-selected") == "true",
-		tokens(n, "class", "nav-item") && attr(n, "aria-current") == "true",
+	case attr(n, "role") == "tab" && attr(n, "aria-selected") == "true":
+		// Basecoat's selected tab is a raised segment of its list, not the
+		// selected band: on the line variant, the text and its underline.
+		if n.Parent != nil && attr(n.Parent, "data-variant") == "line" {
+			return "foreground", ""
+		}
+		if dark {
+			return "foreground", "input/30"
+		}
+		return "foreground", "background"
+	case tokens(n, "class", "nav-item") && attr(n, "aria-current") == "true",
 		selectedRow(n):
 		return "accent-foreground", "selected"
 	case isTextField(n) || n.DataAtom == atom.Select || cls("select") && n.DataAtom == atom.Button:
