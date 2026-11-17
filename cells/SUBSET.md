@@ -130,6 +130,22 @@ What ui's stylesheet lays out, the Screen knows (`kit.go`):
 | a Command's menu, a Combobox's list | an item its filter hid (`aria-hidden=true`) and a group with none left aren't drawn; with none left, its `data-empty` (or "No results found") is |
 | `.popover` | its popover after its trigger; before it with `data-side` `top` or `inline-start`, and beside it (a row) with `inline-start` or `inline-end`. `data-align` is not read |
 
+## The pointer
+
+Handed the terminal's mouse (`Press`, `Move`, `Release`, `Wheel`), the
+Screen sends what a host sends (SPEC §9): a press with its mods; a click
+on the release over what was pressed, counted in a run on one element
+(500 ms) for a double click; a secondary press (button 2) to the nearest
+`data-on~=secondary`, unless Shift or Alt is held; a drag from a
+`data-on~=drag` handle with an id (not with Alt), its `drag` events where
+the element (`drag` or `drop`, with an id) or a step changes, measured
+from the middle of the pointer's cell; and a hover, with no button down,
+where the nearest element with an id under the pointer changes, Out off
+the Screen. A drag ends short (a dragend with no target) on
+`Focus(false)`, a new document, the dragged element leaving, or a Press
+before its Release. Escape doesn't end a drag. `At` names the innermost
+element with an id of the app's.
+
 ## The gate
 
 `TestEveryStoryByKeyboard` holds every story of the kit to this: Tab goes
