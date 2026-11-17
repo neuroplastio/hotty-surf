@@ -8,6 +8,7 @@ package ui
 import "neuroplast.io/hotty-surf"
 
 templ selectBox(v *selectView) {
+	{{ v.n = frameN(ctx) }}
 	<div
 		class={ join("select", v.p.Class) }
 		if v.p.Placeholder != "" {
@@ -28,7 +29,7 @@ templ selectBox(v *selectView) {
 				data-keys="enter=program"
 			}
 			disabled?={ v.p.Disabled }
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key), surf.Focus(moved))... }
+			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key))... }
 		>
 			{{ label, muted := v.label() }}
 			<span

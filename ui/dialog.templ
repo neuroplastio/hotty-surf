@@ -22,9 +22,9 @@ templ dialog(p DialogProps, children templ.Component) {
 				aria-describedby={ d.id + "-description" }
 			}
 			open
-			{ surf.On(ctx, d.id, surf.Key(d.key), surf.Focus(d.focus))... }
+			{ surf.On(ctx, d.id, surf.Key(d.key))... }
 		>
-			<div { surf.On(ctx, d.id+"-content", surf.Outside(d.outside))... }>
+			<div { surf.On(ctx, d.id+"-content", surf.Focus(d.focus), surf.Outside(d.outside))... }>
 				if p.Title != "" || p.Description != "" {
 					<header>
 						if p.Title != "" {
@@ -41,7 +41,5 @@ templ dialog(p DialogProps, children templ.Component) {
 				</button>
 			</div>
 		</dialog>
-	} else {
-		{{ d.closed(ctx) }}
 	}
 }

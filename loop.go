@@ -194,12 +194,15 @@ func (s *Surface) event(e hotty.Event) error {
 	case hotty.EventPress:
 		ran = s.outside(e.Target)
 	case hotty.EventFocus:
-		ran = s.focus(e.Target)
+		// Every move of the keyboard renders, handlers or not: a view
+		// that asks for an element on every render (Autofocus) then
+		// asks again once the user moved the keyboard off it.
+		s.focus(e.Target)
+		ran = true
 	case hotty.EventBlur:
-		ran = s.focus("")
-		if s.outside("") {
-			ran = true
-		}
+		s.focus("")
+		s.outside("")
+		ran = true
 	case hotty.EventHover:
 		t := e.Target
 		if e.Hover != nil && e.Hover.Out {

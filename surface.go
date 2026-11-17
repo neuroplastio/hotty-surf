@@ -46,6 +46,7 @@ type Surface struct {
 	nextID int
 	faults []string
 	memo   map[string]any // the frames' Memo, kept from render to render
+	n      uint64         // the renders so far: the last frame's N
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).

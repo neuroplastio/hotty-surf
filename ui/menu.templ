@@ -8,6 +8,7 @@ import "neuroplast.io/hotty-surf"
 
 templ dropdownMenu(v *menuView) {
 	{{ v.check(ctx) }}
+	{{ v.n = frameN(ctx) }}
 	<div class={ join("dropdown-menu", v.p.Class) } data-dropdown-menu-initialized="true" { v.rootAttrs(ctx)... }>
 		<button
 			type="button"
@@ -22,7 +23,7 @@ templ dropdownMenu(v *menuView) {
 			}
 			class="btn"
 			data-variant="outline"
-			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Focus(moved))... }
+			{ surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle))... }
 		>
 			if v.p.Trigger != nil {
 				@v.p.Trigger

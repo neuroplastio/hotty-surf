@@ -44,6 +44,14 @@ type Frame struct {
 	// component that has no State remembers, by a key it makes from its
 	// id (a Dialog: that it is open, and where the keyboard was).
 	Memo map[string]any
+	// N is the surface's render count: 1 for its first render, one more
+	// for each after. A component's ask made in an event is for the frame
+	// after the one whose handler ran (N+1), and expires with it.
+	N uint64
+	// After are run in order once the view has rendered, before the
+	// frame is read: a component's last word on what the frame asks
+	// (Focus), given what the whole view asked. A hook may add hooks.
+	After []func()
 }
 
 type key struct{}

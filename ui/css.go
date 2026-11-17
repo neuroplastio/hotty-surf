@@ -5,7 +5,8 @@ import "github.com/a-h/templ"
 // The components Basecoat makes with CSS alone: typed from a table of their
 // classes and variants (docs/coverage.md, markup css). Each is one element
 // the app may give any attribute through Attrs: handlers with surf.On, a
-// type, aria-*.
+// type, aria-*. A class goes in Class, not Attrs: the element's own class
+// comes first, and of two the first wins.
 
 // ButtonProps are a Button's attributes.
 type ButtonProps struct {

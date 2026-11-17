@@ -73,13 +73,17 @@ var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Bo
 // for byte: then the tree is the last one, ids and all, and needs no parse
 // and no diff.
 func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
-	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s, Focused: s.focused, Memo: s.memo}
+	s.n++
+	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s, Focused: s.focused, Memo: s.memo, N: s.n}
 	s.r.buf.Reset()
 	err = s.view.Render(rt.With(context.Background(), f), &s.r.buf)
 	// When it ended: templ's dev mode read its strings before then.
 	s.r.at.Store(time.Now().UnixNano())
 	if err != nil {
 		return nil, false, err
+	}
+	for i := 0; i < len(f.After); i++ {
+		f.After[i]()
 	}
 	s.fault(f.Faults...)
 	return f, s.r.valid && bytes.Equal(s.r.buf.Bytes(), s.r.last), nil

@@ -49,9 +49,9 @@ func Stylesheet() string {
 //go:embed kit.css
 var kitCSS string
 
-// Icon is the icon named name in the Lucide set that shadcn and Basecoat
-// draw with ("plus", "chevron-down"), as an inline SVG sized by class
-// ("size-4").
+// Icon is the icon named name, one of the kit's Lucide icons (a subset
+// until L2 ships the set) that shadcn and Basecoat draw with ("plus",
+// "chevron-down"), as an inline SVG sized by class ("size-4").
 func Icon(name, class string) templ.Component {
 	return icon(name, class)
 }

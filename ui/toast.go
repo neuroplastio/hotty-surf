@@ -139,7 +139,10 @@ func (st *ToasterState) hover(over bool) {
 		case over && t.timer != nil:
 			t.timer.Stop()
 			t.timer = nil
-			t.left -= time.Since(t.since)
+			// Paused past its deadline (the timer late), the toast has
+			// 0 left and closes on resume: any negative left would read
+			// as -1, "until dismissed".
+			t.left = max(t.left-time.Since(t.since), 0)
 		case !over && t.left >= 0 && t.timer == nil && t.s != nil:
 			if t.left > 0 {
 				st.arm(t)

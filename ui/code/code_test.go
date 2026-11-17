@@ -62,7 +62,7 @@ func TestBlockLangs(t *testing.T) {
 }
 
 // The lines reach the host as they were written: no line break or
-// indentation is lost to the runtime's whitespace rule.
+// indentation is lost on the way.
 func TestBlockOnSurface(t *testing.T) {
 	r := surftest.Start(t, surf.New("code", code.Block(goSrc, "go", 1), ui.Stylesheet()))
 	html := r.HTML()
@@ -73,5 +73,19 @@ func TestBlockOnSurface(t *testing.T) {
 	}
 	if n := len(r.Find("div")) - 1; n != 6 { // and #root
 		t.Errorf("%d lines on the host, not 6", n)
+	}
+}
+
+// A CRLF ends a line on the plain path as on Chroma's: no CR stays in the
+// block's text, where the host would show it as a line break of its own.
+func TestBlockCRLF(t *testing.T) {
+	for _, lang := range []string{"go", ""} {
+		out := render(t, "a := 1\r\nb := 2\r\n", lang, 0)
+		if strings.Contains(out, "\r") {
+			t.Errorf("lang %q: a CR stays in the block's text: %q", lang, out)
+		}
+		if n := strings.Count(out, "<div>"); n != 2 {
+			t.Errorf("lang %q: %d lines, not 2: %q", lang, n, out)
+		}
 	}
 }

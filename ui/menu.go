@@ -13,6 +13,8 @@ import (
 
 // DropdownMenuProps are a DropdownMenu's attributes.
 type DropdownMenuProps struct {
+	// ID names its elements; "" is "dropdown-menu". Two on one surface
+	// need IDs of their own.
 	ID string
 	// Trigger is what opens the menu: Basecoat's button, holding it.
 	Trigger templ.Component
@@ -49,9 +51,10 @@ type DropdownMenuState struct {
 	// pick is open()'s initialSelection, which the next render applies
 	// once it knows the items: pickNone, pickFirst or pickLast.
 	pick uint8
-	// focus is trigger.focus(): the next render asks for the keyboard on
-	// the trigger.
-	focus bool
+	// focus is trigger.focus(): render focusAt (0 for the next) asks for
+	// the keyboard on the trigger, and the ask goes with it (oneShot).
+	focus   bool
+	focusAt uint64
 }
 
 const (
@@ -64,8 +67,9 @@ const (
 // opens it does.
 func (st *DropdownMenuState) Open() {
 	st.open, st.active, st.pick = true, -1, pickFirst
-	// The menu's keys are heard where the keyboard is: on its trigger.
-	st.focus = true
+	// The menu's keys are heard where the keyboard is: on its trigger,
+	// at whichever render comes next, since the app asks.
+	st.focus, st.focusAt = true, 0
 }
 
 // DropdownMenu is Basecoat's dropdown menu: its markup generated from
@@ -89,6 +93,7 @@ type menuView struct {
 	opts    []listOpt // every item, in order; value is its index into p.Items
 	items   []int     // the items' indexes into p.Items, as opts
 	enabled []int     // the items not disabled, as indexes into opts (getItems)
+	n       uint64    // the frame rendering it (rt.Frame.N), its handlers'
 }
 
 func newMenuView(st *DropdownMenuState, p DropdownMenuProps) *menuView {
@@ -171,7 +176,7 @@ func (v *menuView) close(focus bool) {
 	}
 	v.st.open, v.st.active = false, -1
 	if focus {
-		v.st.focus = true
+		v.ask()
 	}
 }
 
@@ -199,8 +204,12 @@ func (v *menuView) choose(o int) {
 	v.close(true)
 	// As a Select's option: the click blurred the surface, and the blur
 	// closed the menu before the click came.
-	v.st.focus = true
+	v.ask()
 }
+
+// ask is trigger.focus(), from a handler of this view's frame: for the
+// frame after it.
+func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
 // key is handleKeydown, on the menu's root.
 func (v *menuView) key(k string) bool {
@@ -277,9 +286,7 @@ func (v *menuView) leave(over bool) {
 }
 
 func (v *menuView) refocus() bool {
-	f := v.st.focus
-	v.st.focus = false
-	return f
+	return oneShot(&v.st.focus, v.st.focusAt, v.n)
 }
 
 // rootAttrs are the root's: its keys, and while open the click outside.

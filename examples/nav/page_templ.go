@@ -17,7 +17,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"neuroplast.io/hotty-surf"
-	ui "neuroplast.io/hotty-surf/internal/spikeui"
+	"neuroplast.io/hotty-surf/internal/spikeui"
 )
 
 func Page(a *App) templ.Component {
@@ -65,7 +65,7 @@ func Page(a *App) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.List("Sessions").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.List("Sessions").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -101,7 +101,7 @@ func header() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.Symbol(ui.ShapeAccountTree, "size-3").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.Symbol(spikeui.ShapeAccountTree, "size-3").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -109,23 +109,23 @@ func header() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.IconButton("Hosts", ui.ShapePublic, "text-sidebar-primary", nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.IconButton("Hosts", spikeui.ShapePublic, "text-sidebar-primary", nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.IconButton("Screens", ui.ShapeDesktopWindows, "", nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.IconButton("Screens", spikeui.ShapeDesktopWindows, "", nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.IconButton("Layout", ui.ShapeGridView, "", nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.IconButton("Layout", spikeui.ShapeGridView, "", nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.IconButton("More", ui.ShapeMoreHoriz, "", nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.IconButton("More", spikeui.ShapeMoreHoriz, "", nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.IconButton("Collapse", ui.ShapeRemove, "", nil).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.IconButton("Collapse", spikeui.ShapeRemove, "", nil).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -189,7 +189,7 @@ func sessionRow(a *App, s Session) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = ui.ItemTitle().Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = spikeui.ItemTitle().Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -216,7 +216,7 @@ func sessionRow(a *App, s Session) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = ui.ItemSubtitle().Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = spikeui.ItemSubtitle().Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -244,21 +244,21 @@ func sessionRow(a *App, s Session) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = ui.ItemDetail().Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = spikeui.ItemDetail().Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.ListItem(ui.ListItemProps{
+		templ_7745c5c3_Err = spikeui.ListItem(spikeui.ListItemProps{
 			ID:       rowID(s),
 			Selected: a.selected == s.ID,
 			Active:   a.active == s.ID,
 			OnClick:  func() { a.Pick(s.ID) },
 			Keys:     a.Keys,
 			Leading:  sessionIcon(s),
-			Trailing: ui.LayoutThumb(s.Layout),
+			Trailing: spikeui.LayoutThumb(s.Layout),
 		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -289,12 +289,12 @@ func sessionIcon(s Session) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ui.Symbol(ui.ShapeTerminal, "size-4").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = spikeui.Symbol(spikeui.ShapeTerminal, "size-4").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if isBusy(s) {
-			templ_7745c5c3_Err = ui.BusyBadge("absolute -right-1 -bottom-1 size-3").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = spikeui.BusyBadge("absolute -right-1 -bottom-1 size-3").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

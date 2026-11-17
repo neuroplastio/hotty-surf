@@ -186,3 +186,48 @@ func TestDropdownMenuFaults(t *testing.T) {
 		}
 	}
 }
+
+// An item's ask for the trigger is for the next frame only. A menu in a
+// sidebar its own item hides, shown again later by a shortcut while the
+// user types in the editor, doesn't take the keyboard out of the editor.
+func TestDropdownMenuAskExpires(t *testing.T) {
+	var st ui.DropdownMenuState
+	sidebar, typed := true, ""
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		a := surf.On(ctx, "app", surf.Key(func(k string) bool {
+			if k == "mod+b" {
+				sidebar = true
+				return true
+			}
+			return false
+		}))
+		io.WriteString(w, `<main id="`+a["id"].(string)+`">`)
+		if sidebar {
+			if err := ui.DropdownMenu(&st, ui.DropdownMenuProps{ID: "m", Trigger: templ.Raw("Go"),
+				Items: []ui.MenuItem{{Label: "Hide sidebar", OnSelect: func() { sidebar = false }}}}).Render(ctx, w); err != nil {
+				return err
+			}
+		}
+		if err := field("editor", typed, func(v string) { typed = v }).Render(ctx, w); err != nil {
+			return err
+		}
+		_, err := io.WriteString(w, `</main>`)
+		return err
+	})
+	r := start(t, view)
+	r.Click("#m-trigger")
+	r.Click("#m-items-1") // hides the sidebar, menu and all
+	r.Type("#editor", "ab")
+	r.Key("ctrl+b") // the sidebar comes back
+	if !sidebar {
+		t.Fatal("the shortcut didn't show the sidebar")
+	}
+	r.Key("c")
+	r.Key("enter") // on the trigger, Enter would open the menu
+	if typed != "abc" {
+		t.Errorf("the editor holds %q: the sidebar's return took the keyboard to the menu's trigger", typed)
+	}
+	if got := attr(r.One("#m-popover"), "aria-hidden"); got != "true" {
+		t.Errorf("the menu opened: aria-hidden=%s", got)
+	}
+}

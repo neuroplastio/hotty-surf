@@ -20,7 +20,9 @@ templ button(p ButtonProps) {
 	{{ checkSize(ctx, "Button", p.Size) }}
 	<button
 		data-slot="button"
-		type="button"
+		if _, ok := p.Attrs["type"]; !ok {
+			type="button"
+		}
 		disabled?={ p.Disabled }
 		if p.Variant != "" {
 			data-variant={ string(p.Variant) }
