@@ -13,6 +13,252 @@ const (
 )
 
 // DecodeMsg implements msgp.Decodable
+func (z *Area) DecodeMsg(dc *msgp.Reader) (err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, err = dc.ReadMapHeader()
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z5817a858limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, err = dc.ReadMapKeyPtr()
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "name":
+			z.Name, err = dc.ReadString()
+			if err != nil {
+				err = msgp.WrapError(err, "Name")
+				return
+			}
+		case "cols":
+			z.Cols, err = dc.ReadInt()
+			if err != nil {
+				err = msgp.WrapError(err, "Cols")
+				return
+			}
+		case "rows":
+			z.Rows, err = dc.ReadInt()
+			if err != nil {
+				err = msgp.WrapError(err, "Rows")
+				return
+			}
+		default:
+			err = dc.Skip()
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	return
+}
+
+// EncodeMsg implements msgp.Encodable
+func (z Area) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 3
+	// write "name"
+	err = en.Append(0x83, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+	if err != nil {
+		return
+	}
+	err = en.WriteString(z.Name)
+	if err != nil {
+		err = msgp.WrapError(err, "Name")
+		return
+	}
+	// write "cols"
+	err = en.Append(0xa4, 0x63, 0x6f, 0x6c, 0x73)
+	if err != nil {
+		return
+	}
+	err = en.WriteInt(z.Cols)
+	if err != nil {
+		err = msgp.WrapError(err, "Cols")
+		return
+	}
+	// write "rows"
+	err = en.Append(0xa4, 0x72, 0x6f, 0x77, 0x73)
+	if err != nil {
+		return
+	}
+	err = en.WriteInt(z.Rows)
+	if err != nil {
+		err = msgp.WrapError(err, "Rows")
+		return
+	}
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z Area) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 5 + msgp.IntSize + 5 + msgp.IntSize
+	return
+}
+
+// DecodeMsg implements msgp.Decodable
+func (z *Areas) DecodeMsg(dc *msgp.Reader) (err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, err = dc.ReadMapHeader()
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z5817a858limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, err = dc.ReadMapKeyPtr()
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "surfaces":
+			var zb0002 uint32
+			zb0002, err = dc.ReadArrayHeader()
+			if err != nil {
+				err = msgp.WrapError(err, "Surfaces")
+				return
+			}
+			if zb0002 > z5817a858limitArrays {
+				err = msgp.ErrLimitExceeded
+				return
+			}
+			if cap(z.Surfaces) >= int(zb0002) {
+				z.Surfaces = (z.Surfaces)[:zb0002]
+			} else {
+				z.Surfaces = make([]Area, zb0002)
+			}
+			for za0001 := range z.Surfaces {
+				var zb0003 uint32
+				zb0003, err = dc.ReadMapHeader()
+				if err != nil {
+					err = msgp.WrapError(err, "Surfaces", za0001)
+					return
+				}
+				if zb0003 > z5817a858limitMaps {
+					err = msgp.ErrLimitExceeded
+					return
+				}
+				for zb0003 > 0 {
+					zb0003--
+					field, err = dc.ReadMapKeyPtr()
+					if err != nil {
+						err = msgp.WrapError(err, "Surfaces", za0001)
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "name":
+						z.Surfaces[za0001].Name, err = dc.ReadString()
+						if err != nil {
+							err = msgp.WrapError(err, "Surfaces", za0001, "Name")
+							return
+						}
+					case "cols":
+						z.Surfaces[za0001].Cols, err = dc.ReadInt()
+						if err != nil {
+							err = msgp.WrapError(err, "Surfaces", za0001, "Cols")
+							return
+						}
+					case "rows":
+						z.Surfaces[za0001].Rows, err = dc.ReadInt()
+						if err != nil {
+							err = msgp.WrapError(err, "Surfaces", za0001, "Rows")
+							return
+						}
+					default:
+						err = dc.Skip()
+						if err != nil {
+							err = msgp.WrapError(err, "Surfaces", za0001)
+							return
+						}
+					}
+				}
+			}
+		default:
+			err = dc.Skip()
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	return
+}
+
+// EncodeMsg implements msgp.Encodable
+func (z *Areas) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 1
+	// write "surfaces"
+	err = en.Append(0x81, 0xa8, 0x73, 0x75, 0x72, 0x66, 0x61, 0x63, 0x65, 0x73)
+	if err != nil {
+		return
+	}
+	err = en.WriteArrayHeader(uint32(len(z.Surfaces)))
+	if err != nil {
+		err = msgp.WrapError(err, "Surfaces")
+		return
+	}
+	for za0001 := range z.Surfaces {
+		// map header, size 3
+		// write "name"
+		err = en.Append(0x83, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+		if err != nil {
+			return
+		}
+		err = en.WriteString(z.Surfaces[za0001].Name)
+		if err != nil {
+			err = msgp.WrapError(err, "Surfaces", za0001, "Name")
+			return
+		}
+		// write "cols"
+		err = en.Append(0xa4, 0x63, 0x6f, 0x6c, 0x73)
+		if err != nil {
+			return
+		}
+		err = en.WriteInt(z.Surfaces[za0001].Cols)
+		if err != nil {
+			err = msgp.WrapError(err, "Surfaces", za0001, "Cols")
+			return
+		}
+		// write "rows"
+		err = en.Append(0xa4, 0x72, 0x6f, 0x77, 0x73)
+		if err != nil {
+			return
+		}
+		err = en.WriteInt(z.Surfaces[za0001].Rows)
+		if err != nil {
+			err = msgp.WrapError(err, "Surfaces", za0001, "Rows")
+			return
+		}
+	}
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *Areas) Msgsize() (s int) {
+	s = 1 + 9 + msgp.ArrayHeaderSize
+	for za0001 := range z.Surfaces {
+		s += 1 + 5 + msgp.StringPrefixSize + len(z.Surfaces[za0001].Name) + 5 + msgp.IntSize + 5 + msgp.IntSize
+	}
+	return
+}
+
+// DecodeMsg implements msgp.Decodable
 func (z *Doc) DecodeMsg(dc *msgp.Reader) (err error) {
 	var field []byte
 	_ = field
@@ -1024,6 +1270,83 @@ func (z Restyled) EncodeMsg(en *msgp.Writer) (err error) {
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z Restyled) Msgsize() (s int) {
 	s = 1 + 9 + msgp.IntSize
+	return
+}
+
+// DecodeMsg implements msgp.Decodable
+func (z *Shot) DecodeMsg(dc *msgp.Reader) (err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, err = dc.ReadMapHeader()
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	if zb0001 > z5817a858limitMaps {
+		err = msgp.ErrLimitExceeded
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, err = dc.ReadMapKeyPtr()
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "key":
+			z.Key, err = dc.ReadString()
+			if err != nil {
+				err = msgp.WrapError(err, "Key")
+				return
+			}
+		case "surface":
+			z.Surface, err = dc.ReadString()
+			if err != nil {
+				err = msgp.WrapError(err, "Surface")
+				return
+			}
+		default:
+			err = dc.Skip()
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	return
+}
+
+// EncodeMsg implements msgp.Encodable
+func (z Shot) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 2
+	// write "key"
+	err = en.Append(0x82, 0xa3, 0x6b, 0x65, 0x79)
+	if err != nil {
+		return
+	}
+	err = en.WriteString(z.Key)
+	if err != nil {
+		err = msgp.WrapError(err, "Key")
+		return
+	}
+	// write "surface"
+	err = en.Append(0xa7, 0x73, 0x75, 0x72, 0x66, 0x61, 0x63, 0x65)
+	if err != nil {
+		return
+	}
+	err = en.WriteString(z.Surface)
+	if err != nil {
+		err = msgp.WrapError(err, "Surface")
+		return
+	}
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z Shot) Msgsize() (s int) {
+	s = 1 + 4 + msgp.StringPrefixSize + len(z.Key) + 8 + msgp.StringPrefixSize + len(z.Surface)
 	return
 }
 

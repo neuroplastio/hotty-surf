@@ -3,11 +3,14 @@ package reloader
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"neuroplast.io/hotty-surf/internal/devwire"
 )
 
 // TestBigSnapshot: an app whose page is a long list (3000 rows, about
@@ -168,4 +171,29 @@ func TestDocument(t *testing.T) {
 	if _, err := h.r.Document(ctx, "app", "none"); err == nil {
 		t.Fatal("a surface the process hasn't answered")
 	}
+}
+
+// TestInstancesOfAnApp: a real process lists its surface as soon as it
+// serves, 0 by 0, and with its size once hotty-surf run says where it
+// placed it; Instances is that snapshot.
+func TestInstancesOfAnApp(t *testing.T) {
+	h, stop := begin(t)
+	defer stop()
+	p1 := h.proc(1)
+	h.shown(p1)
+	until := func(want map[string][]Placed) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for !reflect.DeepEqual(h.r.Instances(), want) {
+			if time.Now().After(deadline) {
+				t.Fatalf("Instances %+v, want %+v", h.r.Instances(), want)
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+	until(map[string][]Placed{"app": {{Name: "t"}}})
+	if err := p1.term.Notify("placed", &devwire.Area{Name: "t", Cols: 80, Rows: 24}); err != nil {
+		t.Fatal(err)
+	}
+	until(map[string][]Placed{"app": {{Name: "t", Cols: 80, Rows: 24}}})
 }

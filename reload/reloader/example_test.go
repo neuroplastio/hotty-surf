@@ -50,3 +50,20 @@ func ExampleReloader_Document() {
 	}
 	_ = doc // `<style id="hotty-css">…</style><div id="root">…</div>`
 }
+
+func ExampleReloader_Instances() {
+	ctx := context.Background()
+	var r *reloader.Reloader // the program's, as in New's example
+	for key, surfaces := range r.Instances() {
+		for _, s := range surfaces {
+			if s.Cols == 0 {
+				continue // its program hasn't said where it is
+			}
+			doc, err := r.Document(ctx, key, s.Name)
+			if err != nil {
+				continue
+			}
+			_ = doc // rendered at s.Cols by s.Rows
+		}
+	}
+}

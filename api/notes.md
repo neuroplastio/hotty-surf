@@ -1202,3 +1202,63 @@ hotty-surf book                (L3)
   the element is gone (`ENOTARGET`): a host that refuses every a=focus (a
   backdrop's `EINVAL`, a detached surface's `EDETACHED`) gets no new one,
   and the keyboard stays with the program until its next Focus.
+
+## L4: who is attached (a pack of its own)
+
+plx's `plugin dev ctl shot` relays a tool's surface it doesn't place, so it
+has neither the surface's name nor its size; `Reloader.Document`'s reason
+assumed the caller had both. plx asked for a snapshot of who is attached,
+with each surface's last size (p-653, 2026-11-17).
+
+### As drafted (c5125aa)
+
+`Reloader.Instances() []Instance`, with `Instance{Key; Surfaces []Placed}`
+and `Placed{Name; Cols, Rows}`, 8 names: the sizes reported by run and
+`hotty-surf run` only, so a surface its program places itself (pane,
+surftea's Host, plx's surfdk) was 0 by 0, and whether plx needed a way to
+say so was left open. `Report.Attached` was the alternative not taken: a
+report is true as of a save, and a shot asks about now.
+
+### As reviewed (p-767, 2026-11-17): six names
+
+plx answered that its SDK places every surface itself (a tool's main
+surface on every Resize, and overlays: a list, a context menu). The review
+approved with changes, applied as written:
+
+- **`reload.Placed(s *surf.Surface, cols, rows int)`,** the process's half:
+  a program says where it placed a surface, and 0, 0 when it hides or
+  drops it. Package reload, beside Keep and Serve, a no-op outside a dev
+  build (off.go), so surf.Surface's release API is unchanged. run.App and
+  surftea's Host report through it, and examples/pane, which places its
+  surface itself, calls it: one way for every driver.
+- **`Instances() map[string][]Placed`,** keyed by instance key as
+  Report.Failed is; `Instance` and its fields are cut. Each key lists every
+  surface its process made, a controller's views included (plx checked it:
+  a daemon-tool's views live in the controller), sorted by name; a process
+  with no surface is there with none.
+- **`Placed`'s doc** says where its size comes from, and that 0 by 0 is also
+  "not on screen": a caller renders it at a size of its own, or not at all.
+- **Document's reason:** the caller has the surface's name from placing
+  it, or from Instances.
+- **`ExampleReloader_Instances`** shoots each surface whose size is known.
+- **`hotty-surf ctl shot`** takes `-key` and `-surface`, either optional:
+  it shoots the only surface on screen that matches, at its last size, and
+  refuses with the list (key, name, size) when there are several or none.
+  run and serve answer it alike (Instances), so serve's own record of the
+  pages' sizes (`dev/page`) is gone: each page's app says its size on its
+  own wire, as any process does.
+
+### What is still open
+
+- **A dropped surface stays listed** for the life of its process: a
+  dev build holds every surface it made (devhook's registry and the
+  reload wire's child), so none is collected. A program that says
+  `reload.Placed(s, 0, 0)` when it hides or drops an overlay keeps it
+  out of a shot. One that makes a surface per opening (a menu) gains
+  one entry each time, and should reuse its overlay surfaces until
+  L0's open `Surface.Close` lands.
+- **Overlays have a size but no position,** so a shot of a tool and its open
+  menu together isn't possible yet. X and Y on Placed would be an addition,
+  not a break, once a shot needs them.
+- **Rows the host chose** (a placement with Rows 0) are what the program
+  says: one that reads the place reply's Rows says those.

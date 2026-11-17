@@ -3,7 +3,9 @@
 package devcmd
 
 import (
+	"cmp"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -54,7 +56,7 @@ func listen(sock string) (net.Listener, error) {
 // ctlTarget is what ctl's requests reach in `hotty-surf run` or serve.
 type ctlTarget struct {
 	reload func(ctx context.Context) (reloader.Report, error)
-	shot   func(ctx context.Context) (devwire.Doc, error)
+	shot   func(ctx context.Context, key, surface string) (devwire.Doc, error)
 }
 
 // serveCtl answers ctl on ln until it closes.
@@ -81,7 +83,12 @@ func serveCtl(ctx context.Context, ln net.Listener, t ctlTarget) {
 					}
 					continue
 				}
-				if devwire.Skip(r) != nil { // reload and shot take nothing
+				var at devwire.Shot
+				if h.Method == "shot" {
+					if devwire.Decode(r, &at) != nil {
+						return
+					}
+				} else if devwire.Skip(r) != nil { // reload takes nothing
 					return
 				}
 				switch h.Method {
@@ -97,7 +104,7 @@ func serveCtl(ctx context.Context, ln net.Listener, t ctlTarget) {
 						return
 					}
 				case "shot":
-					doc, err := t.shot(ctx)
+					doc, err := t.shot(ctx, at.Key, at.Surface)
 					if err != nil {
 						err = conn.Respond(h.ID, err.Error(), nil)
 					} else {
@@ -116,6 +123,58 @@ func serveCtl(ctx context.Context, ln net.Listener, t ctlTarget) {
 	}
 }
 
+// shotOf is ctl shot's, for run and serve alike: the document of the
+// surface key and surface name, at the size its program last placed it
+// at (Reloader.Instances). Either may be "": it takes the only surface on
+// screen that matches, and refuses with the list where there are several,
+// or none.
+func shotOf(ctx context.Context, r *reloader.Reloader, key, surface string) (devwire.Doc, error) {
+	type one struct {
+		key string
+		p   reloader.Placed
+	}
+	var all []one
+	for k, ss := range r.Instances() {
+		for _, p := range ss {
+			if (key == "" || k == key) && (surface == "" || p.Name == surface) {
+				all = append(all, one{k, p})
+			}
+		}
+	}
+	slices.SortFunc(all, func(a, b one) int {
+		return cmp.Or(strings.Compare(a.key, b.key), strings.Compare(a.p.Name, b.p.Name))
+	})
+	var on []one
+	for _, o := range all {
+		if o.p.Cols > 0 && o.p.Rows > 0 {
+			on = append(on, o)
+		}
+	}
+	list := func() string {
+		var b strings.Builder
+		for _, o := range all {
+			fmt.Fprintf(&b, "\n  -key %s -surface %s  (%dx%d)", o.key, o.p.Name, o.p.Cols, o.p.Rows)
+		}
+		return b.String()
+	}
+	switch {
+	case len(all) == 0 && key == "" && surface == "":
+		return devwire.Doc{}, errors.New("no surface is attached")
+	case len(all) == 0:
+		return devwire.Doc{}, fmt.Errorf("no surface matches -key %q -surface %q", key, surface)
+	case len(on) == 0:
+		return devwire.Doc{}, errors.New("no surface that matches is on screen (0x0: its program hasn't said where it is):" + list())
+	case len(on) > 1:
+		return devwire.Doc{}, fmt.Errorf("%d surfaces are on screen; name one:%s", len(on), list())
+	}
+	o := on[0]
+	html, err := r.Document(ctx, o.key, o.p.Name)
+	if err != nil {
+		return devwire.Doc{}, err
+	}
+	return devwire.Doc{Surface: o.p.Name, HTML: html, Cols: o.p.Cols, Rows: o.p.Rows}, nil
+}
+
 // wireReport is r as the ctl wire carries it.
 func wireReport(r reloader.Report) devwire.Report {
 	w := devwire.Report{Tier: r.Tier, Took: int64(r.Took), Build: r.Build, Failed: r.Failed}
@@ -125,7 +184,7 @@ func wireReport(r reloader.Report) devwire.Report {
 	return w
 }
 
-const ctlUsage = "usage: hotty-surf ctl reload | shot [-html] [-o out.png]\n"
+const ctlUsage = "usage: hotty-surf ctl reload | shot [-html] [-o out.png] [-key key] [-surface name]\n"
 
 // Ctl is `hotty-surf ctl <reload|shot …>`, at sock: it asks the running
 // hotty-surf run or serve, prints what it got to out and returns the exit
@@ -136,7 +195,7 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 		return 2
 	}
 	var fs *flag.FlagSet
-	html, path := new(bool), new(string)
+	html, path, key, surface := new(bool), new(string), new(string), new(string)
 	switch args[0] {
 	case "-h", "-help", "--help", "help":
 		fmt.Fprint(out, ctlUsage)
@@ -144,9 +203,11 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 	case "reload":
 		fs = Flags("ctl reload", "ctl reload")
 	case "shot":
-		fs = Flags("ctl shot", "ctl shot [-html] [-o out.png]")
+		fs = Flags("ctl shot", "ctl shot [-html] [-o out.png] [-key key] [-surface name]")
 		html = fs.Bool("html", false, "write the document as HTML, not a PNG")
 		path = fs.String("o", "", "where to write it (shot.png, or shot.html with -html)")
+		key = fs.String("key", "", "the process's instance key (app, page:…); the only one when \"\"")
+		surface = fs.String("surface", "", "the surface's name; the only one on screen when \"\"")
 	default:
 		fmt.Fprintf(errOut, "hotty-surf ctl: no command %q (reload, shot)\n", args[0])
 		return 2
@@ -172,8 +233,8 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 	conn := devwire.NewConn(c)
 	defer conn.Close()
 	var calls devwire.Calls
-	ask := func(method string, into msgp.Decodable) error {
-		done := conn.Call(&calls, method, &devwire.Empty{}, into)
+	ask := func(method string, params msgp.Encodable, into msgp.Decodable) error {
+		done := conn.Call(&calls, method, params, into)
 		r := devwire.NewReader(c)
 		defer devwire.PutReader(r)
 		for {
@@ -197,7 +258,7 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 	switch args[0] {
 	case "reload":
 		var rep devwire.Report
-		if err := ask("reload", &rep); err != nil {
+		if err := ask("reload", &devwire.Empty{}, &rep); err != nil {
 			fmt.Fprintln(errOut, "hotty-surf ctl reload:", err)
 			return 1
 		}
@@ -208,7 +269,7 @@ func Ctl(ctx context.Context, sock string, args []string, out, errOut io.Writer)
 		return 0
 	}
 	var doc devwire.Doc
-	if err := ask("shot", &doc); err != nil {
+	if err := ask("shot", &devwire.Shot{Key: *key, Surface: *surface}, &doc); err != nil {
 		fmt.Fprintln(errOut, "hotty-surf ctl shot:", err)
 		return 1
 	}

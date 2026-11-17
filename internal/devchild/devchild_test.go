@@ -23,11 +23,13 @@ import (
 )
 
 // reloader is the reloader's end of a child's wire, scripted by a test:
-// it reads all the child sends, as a reloader does, into msgs.
+// it reads all the child sends, as a reloader does, into msgs, but its
+// "areas", which go to areas.
 type reloader struct {
-	t    *testing.T
-	conn *devwire.Conn
-	msgs chan msg
+	t     *testing.T
+	conn  *devwire.Conn
+	msgs  chan msg
+	areas chan devwire.Areas
 }
 
 // msg is one message from the child: its head, and its params or result
@@ -43,7 +45,7 @@ func serve(t *testing.T, ctx context.Context, key string, w *devwire.Welcome) (*
 	t.Helper()
 	child, parent := net.Pipe()
 	t.Cleanup(func() { parent.Close() })
-	r := &reloader{t: t, conn: devwire.NewConn(parent), msgs: make(chan msg, 64)}
+	r := &reloader{t: t, conn: devwire.NewConn(parent), msgs: make(chan msg, 64), areas: make(chan devwire.Areas, 64)}
 	go func() {
 		rd := devwire.NewReader(parent)
 		defer devwire.PutReader(rd)
@@ -59,6 +61,14 @@ func serve(t *testing.T, ctx context.Context, key string, w *devwire.Welcome) (*
 			h, err := devwire.ReadHead(rd)
 			if err != nil {
 				return
+			}
+			if h.Type == devwire.Notification && h.Method == "areas" {
+				var a devwire.Areas
+				if devwire.Decode(rd, &a) != nil {
+					return
+				}
+				r.areas <- a
+				continue
 			}
 			var b bytes.Buffer
 			if _, err := rd.CopyNext(&b); err != nil {
@@ -347,4 +357,31 @@ func TestStateDeepSkip(t *testing.T) {
 	if count != 7 {
 		t.Errorf("count %d, want 7", count)
 	}
+}
+
+// TestAreas: the child says which surfaces it has after its welcome, then
+// again when one is placed at another size (package run, through devhook)
+// or made, and not when one is placed at the size it had.
+func TestAreas(t *testing.T) {
+	fresh()
+	rows := 0
+	a := surf.New("a", clicker(func() {}, &rows), "")
+	r, _ := serve(t, context.Background(), "tool:a", &devwire.Welcome{})
+	next := func(want ...devwire.Area) {
+		t.Helper()
+		select {
+		case got := <-r.areas:
+			if fmt.Sprint(got.Surfaces) != fmt.Sprint(want) {
+				t.Fatalf("areas %v, want %v", got.Surfaces, want)
+			}
+		case <-time.After(10 * time.Second):
+			t.Fatalf("no areas, want %v", want)
+		}
+	}
+	next(devwire.Area{Name: "a"})
+	devhook.Placed(a, 80, 24)
+	next(devwire.Area{Name: "a", Cols: 80, Rows: 24})
+	devhook.Placed(a, 80, 24) // the same size: nothing
+	surf.New("b", clicker(func() {}, &rows), "")
+	next(devwire.Area{Name: "a", Cols: 80, Rows: 24}, devwire.Area{Name: "b"})
 }

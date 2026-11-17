@@ -91,12 +91,18 @@ type child struct {
 	// leaving is set once ctx ended and the reloader was told: from then
 	// on the process serves nothing, and a handover never ends it.
 	leaving atomic.Bool
+
+	// poke wakes sendAreas' goroutine, which sends the surfaces' areas as
+	// they are then: a placement never waits on the wire, and the last
+	// list sent is the latest. areas is the message, reused there.
+	poke  chan struct{}
+	areas devwire.Areas
 }
 
 // Serve is reload.Serve's. done is closed when it is done serving: when it
 // has told the reloader the process is leaving (ctx ended), or rw closed.
 func Serve(ctx context.Context, rw io.ReadWriter, key string) (done <-chan struct{}, err error) {
-	c := &child{key: key, conn: devwire.NewConn(rw), r: devwire.NewReader(rw)}
+	c := &child{key: key, conn: devwire.NewConn(rw), r: devwire.NewReader(rw), poke: make(chan struct{}, 1)}
 	var w devwire.Welcome
 	if err := c.hello(&w); err != nil {
 		c.close()
@@ -137,6 +143,8 @@ func Serve(ctx context.Context, rw io.ReadWriter, key string) (done <-chan struc
 		c.take(s.(*surf.Surface))
 	}
 	c.mu.Unlock()
+	devhook.ListenPlaced(func(any, int, int) { c.areasChanged() })
+	c.areasChanged()
 
 	end := make(chan struct{})
 	var once sync.Once
@@ -147,6 +155,7 @@ func Serve(ctx context.Context, rw io.ReadWriter, key string) (done <-chan struc
 		defer close(stop)
 		c.serve()
 	}()
+	go c.sendAreas(stop)
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -199,8 +208,43 @@ func (c *child) close() {
 // surf.New, before anything drives it.
 func (c *child) added(s any) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.take(s.(*surf.Surface))
+	c.mu.Unlock()
+	c.areasChanged()
+}
+
+// areasChanged says a surface was made or placed at another size.
+func (c *child) areasChanged() {
+	select {
+	case c.poke <- struct{}{}:
+	default: // a send is due already, and reads the areas when it runs
+	}
+}
+
+// sendAreas tells the reloader each surface's name and the area it was
+// last placed at (Reloader.Instances), each time areasChanged pokes it,
+// until stop.
+func (c *child) sendAreas(stop <-chan struct{}) {
+	for {
+		select {
+		case <-stop:
+			return
+		case <-c.poke:
+		}
+		if c.leaving.Load() {
+			return
+		}
+		c.mu.Lock()
+		c.areas.Surfaces = c.areas.Surfaces[:0]
+		for _, s := range c.surfaces {
+			cols, rows := devhook.Area(s)
+			c.areas.Surfaces = append(c.areas.Surfaces, devwire.Area{Name: s.Name(), Cols: cols, Rows: rows})
+		}
+		c.mu.Unlock()
+		if c.conn.Notify("areas", &c.areas) != nil {
+			return // the wire is gone, and its reloader with it
+		}
+	}
 }
 
 // take makes s one of the process's: it adopts the snapshot of its name

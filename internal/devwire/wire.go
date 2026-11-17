@@ -84,6 +84,22 @@ type Dropped struct {
 	Text string `msg:"text"`
 }
 
+// Areas is a process's notification ("areas"): each of its surfaces, and
+// the area it was last placed at, sent after its welcome and again when a
+// surface is made or placed at another size.
+type Areas struct {
+	Surfaces []Area `msg:"surfaces"`
+}
+
+// Area is a surface's name and the cells it was last placed at, 0 by 0
+// before it was. It is also `hotty-surf run`'s notification ("placed") on
+// the term wire: where it placed the app's surface, or drew it in cells.
+type Area struct {
+	Name string `msg:"name"`
+	Cols int    `msg:"cols"`
+	Rows int    `msg:"rows"`
+}
+
 // Empty is the params or result of a message that carries nothing:
 // "render", "handover" and "leave" on the reload wire, "bye" on the
 // term wire, "reload" and "shot" on the ctl wire.
@@ -127,6 +143,13 @@ type Doc struct {
 }
 
 // The ctl wire: `hotty-surf ctl` and `hotty-surf run`.
+
+// Shot is "shot"'s params: which surface, by its process's key and its
+// name, either "" to take the only one on screen.
+type Shot struct {
+	Key     string `msg:"key"`
+	Surface string `msg:"surface"`
+}
 
 // Report mirrors reloader.Report, which has no codec of its own (it is
 // API): the answer to "reload".

@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/reload"
 )
 
 // App runs s until ctx is done or the user quits, and returns nil then. The
@@ -46,6 +47,12 @@ func App(ctx context.Context, s *surf.Surface) error {
 // (dev.go): served says whether this process is one `hotty-surf run`
 // started. It is nil in any other build.
 var dev func(ctx context.Context, s *surf.Surface) (served bool, err error)
+
+// didPlace tells live reload the cells run placed s at, or draws it in
+// (reload.Placed: nothing outside a dev build).
+func didPlace(s *surf.Surface, cols, rows int) {
+	reload.Placed(s, cols, rows)
+}
 
 // quits says whether k, a key the surface didn't take, quits the app.
 func quits(k string) bool { return k == "ctrl+c" || k == "ctrl+q" }

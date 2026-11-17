@@ -40,6 +40,7 @@ pkg neuroplast.io/hotty-surf/lint, type Finding struct, Line int
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Rule string
 pkg neuroplast.io/hotty-surf/lint, type Finding struct, Text string
 pkg neuroplast.io/hotty-surf/reload, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](func() P, func(P))
+pkg neuroplast.io/hotty-surf/reload, func Placed(*surf.Surface, int, int)
 pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, io.ReadWriter, string) error
 pkg neuroplast.io/hotty-surf/reload/reloader, func Env(...string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) error, func(Report), ...Option) *Reloader
@@ -47,10 +48,15 @@ pkg neuroplast.io/hotty-surf/reload/reloader, func Output(string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func Tags(...string) Option
 pkg neuroplast.io/hotty-surf/reload/reloader, func View(*Report) templ.Component
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Document(context.Context, string, string) (string, error)
+pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Instances() map[string][]Placed
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Reload(context.Context) (Report, error)
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
 pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
 pkg neuroplast.io/hotty-surf/reload/reloader, type Option struct
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Cols int
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Name string
+pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Rows int
 pkg neuroplast.io/hotty-surf/reload/reloader, type Reloader struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct
 pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Build string

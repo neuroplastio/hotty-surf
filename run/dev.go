@@ -184,6 +184,17 @@ func drive(ctx context.Context, s *surf.Surface, term *devwire.Conn, tr *msgp.Re
 					devwire.PutInput(m.in)
 					return
 				}
+			case h.Type == devwire.Notification && h.Method == "placed":
+				// Where hotty-surf run placed the surface, for the
+				// reloader's Instances.
+				var a devwire.Area
+				if devwire.Decode(tr, &a) != nil {
+					return
+				}
+				if a.Name == name {
+					didPlace(s, a.Cols, a.Rows)
+				}
+				continue
 			default:
 				if devwire.Skip(tr) != nil {
 					return
