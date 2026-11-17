@@ -35,11 +35,27 @@ fixed before the audit is complete.
   in addition to Basecoat's background chevron. The CSS retains the spike
   markup and Basecoat chevron; the host issue is under investigation.
   `alert-props-arrow-fixed.png` shows the double arrow on hottyterm 0.8.7.
-- [ ] Compare Source, Props, Events, HTML, header, list, navigation keys and
-  empty states on the same stories in both windows; record each difference.
-  Alert empty Events had non-italic text; the italic style is restored.
-- [ ] Finish porting all spike story props and live handlers, including the
-  spike's story variants and kit-component demonstrations.
+- [ ] Complete the comparison across every story and populated Events.
+  `audit-alert-source.png`, `alert-props-side-by-side.png`,
+  `audit-alert-events-empty.png`, `audit-alert-html.png`, and
+  `audit-button-filter.png` compare the same stories in both windows.
+  Alert empty Events lacked the spike's italic style; it is restored.
+  The Button preview had an extra count; it is removed, while Clicks remains
+  editable and shared across renditions. State changes were not logged in
+  Events; the spike's prop observation is restored. The model's filter also
+  matched opaque IDs in addition to group and title; it now matches only
+  group and title, like the spike.
+- [x] `audit-icons.png` showed the gallery missing tile borders and icon
+  sizing. The tile borders and size are restored. The kit has a different
+  set of Lucide names, so each gallery shows the icons its kit ships.
+- [ ] Finish porting all spike story props and live handlers. Alert, Button,
+  Badge, Field, Area, Check, Card, Table, Tabs and Kbd have their spike
+  fields and control kinds. Code, NavList, Controls, EventLog and Tabs kit
+  demonstrations and variants have been added. Check's mixed visual state
+  is an existing kit limitation and is recorded in coverage.
+- [ ] The spike's shell demonstrations (List, icon buttons, thumbnails,
+  busy badge and symbols) depend on components absent from v0.7's public
+  kit; determine their port path without adding unreviewed public API.
 - [ ] The dropdown and popover stories wait for B3's public API. If that API
   does not expose Open/Active, omit those fields and record that decision
   rather than accessing private state.
