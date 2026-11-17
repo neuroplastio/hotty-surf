@@ -18,13 +18,8 @@ import (
 func walk(root string) ([]Finding, error) {
 	type src struct{ rel, text string }
 	var srcs []src
-	// The classes the app's own CSS defines, a Tailwind build's included;
-	// nil (the class rule off) for an app that builds its own Tailwind
-	// (style/build.sh), whose stylesheet is written after a save is linted.
+	// The classes the app's own CSS defines, a Tailwind build's included.
 	defined := map[string]bool{}
-	if _, err := os.Stat(filepath.Join(root, "style", "build.sh")); err == nil {
-		defined = nil
-	}
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err

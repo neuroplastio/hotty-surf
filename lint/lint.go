@@ -12,8 +12,7 @@
 // other classes go in its own CSS), button-type (a <button> in a <form>
 // with no type, which submits it). colour and px read the app's .css files
 // too, but for a theme file (theme*.css) and, for colour, a custom
-// property (--name: value). Dir checks class only for an app with no
-// Tailwind build of its own (style/build.sh).
+// property (--name: value).
 // An exception is written where it is made, with its reason, on the line
 // before: // lint:allow px: <why>. An allow without a reason is a finding.
 package lint

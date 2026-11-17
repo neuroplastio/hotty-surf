@@ -125,14 +125,6 @@ func TestClasses(t *testing.T) {
 	if want := []string{`class "line-through-ish"`, `class "hover:bg-cosmic"`}; !slices.Equal(got, want) {
 		t.Errorf("got %q, want %q", got, want)
 	}
-	// An app that builds its own Tailwind is its build's to check.
-	write("style/build.sh", "true\n")
-	fs, _ = Dir(dir)
-	for _, f := range fs {
-		if f.Rule == "class" {
-			t.Errorf("with style/build.sh: %v", f)
-		}
-	}
 }
 
 func TestUnescape(t *testing.T) {
