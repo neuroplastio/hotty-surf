@@ -75,17 +75,23 @@ type Case struct {
 	Known []Known `json:"known,omitempty"`
 }
 
-// A Step is one act of the user's: a click on an element (by id) or a
-// key (hotty's name).
+// A Step is one act of the user's: a click on an element by id (Click)
+// or by a selector both a browser and surftest read (Select:
+// tag#id[attr=value], for an element with no id), or a key (hotty's
+// name).
 type Step struct {
-	Click string `json:"click,omitempty"`
-	Key   string `json:"key,omitempty"`
+	Click  string `json:"click,omitempty"`
+	Select string `json:"select,omitempty"`
+	Key    string `json:"key,omitempty"`
 }
 
 // Name is the step as the snapshots name it.
 func Name(s Step) string {
-	if s.Click != "" {
+	switch {
+	case s.Click != "":
 		return "click " + s.Click
+	case s.Select != "":
+		return "click " + s.Select
 	}
 	return "key " + s.Key
 }

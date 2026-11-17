@@ -78,14 +78,24 @@ async function key(name) {
   await send('Input.dispatchKeyEvent', { type: 'keyUp', ...k, text: undefined });
 }
 
-async function click(id) {
+// settle waits for the page's finite animations (a toast sliding in), so
+// that a click lands where the element was measured, at most a second.
+const settle = () => evaluate(`Promise.race([
+  Promise.all(document.getAnimations()
+    .filter(a => a.effect && a.effect.getComputedTiming().iterations !== Infinity)
+    .map(a => a.finished.catch(() => {}))),
+  new Promise(r => setTimeout(r, 1000)),
+]).then(() => true)`);
+
+async function click(id, sel) {
+  await settle();
   const box = await evaluate(`(() => {
-    const el = document.getElementById(${JSON.stringify(id)});
+    const el = ${sel ? `document.querySelector(${JSON.stringify(sel)})` : `document.getElementById(${JSON.stringify(id)})`};
     if (!el) return null;
     const r = el.getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
   })()`);
-  if (!box || box.w === 0 || box.h === 0) return `not shown: ${id}`;
+  if (!box || box.w === 0 || box.h === 0) return `not shown: ${id || sel}`;
   const at = { x: box.x, y: box.y };
   await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...at });
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...at, button: 'left', buttons: 1, clickCount: 1 });
@@ -111,13 +121,14 @@ for (const c of spec.cases) {
   if (spec.ready) {
     for (let i = 0; i < 50 && !(await evaluate(`!!document.querySelector(${JSON.stringify(spec.ready)})`)); i++) await sleep(20);
   }
+  await settle();
   const snaps = [{ step: 'load', ...(await evaluate(SNAP(c.root))) }];
   for (const s of c.steps) {
     let note = '';
-    if (s.click) note = await click(s.click);
+    if (s.click || s.select) note = await click(s.click, s.select);
     else await key(s.key);
     await sleep(20);
-    snaps.push({ step: s.click ? `click ${s.click}` : `key ${s.key}`, note, ...(await evaluate(SNAP(c.root))) });
+    snaps.push({ step: s.click || s.select ? `click ${s.click || s.select}` : `key ${s.key}`, note, ...(await evaluate(SNAP(c.root))) });
   }
   out[c.name] = snaps;
 }

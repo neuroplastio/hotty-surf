@@ -41,6 +41,7 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"select":        selectSubject,
 	"dropdown-menu": menuSubject,
 	"tabs":          tabsSubject,
+	"toast":         toastSubject,
 }
 
 func init() {
@@ -85,9 +86,17 @@ func runDifferential(t *testing.T, sp differential.Spec, cs differential.Case, w
 	for i, w := range want {
 		if i > 0 {
 			st := cs.Steps[i-1]
-			if st.Click != "" {
+			switch {
+			case st.Click != "":
 				r.Click("#" + st.Click)
-			} else {
+			case st.Select != "":
+				// The first match, as the browser's querySelector takes.
+				ns := r.Find(st.Select)
+				if len(ns) == 0 {
+					t.Fatalf("step %d: nothing matches %s", i, st.Select)
+				}
+				r.Click("#" + attr(ns[0], "id"))
+			default:
 				r.Key(st.Key)
 			}
 		}
@@ -306,6 +315,28 @@ func tabsSubject(t *testing.T, args map[string]any) subject {
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Tabs(p).Render(templ.WithChildren(ctx, templ.Raw("<p>"+p.Value+"</p>")), w)
 		}),
+		events: func() []map[string]any { return nil },
+	}
+}
+
+// toastSubject is a Toaster for toaster's macro arguments: toasts, each
+// a category, title, description and duration (-1 to stay open, with a
+// cancel button). toast.js tells the page nothing, so it reports nothing.
+func toastSubject(t *testing.T, args map[string]any) subject {
+	var st ui.ToasterState
+	for _, x := range args["toasts"].([]any) {
+		m := x.(map[string]any)
+		ts := ui.Toast{}
+		ts.Category, _ = m["category"].(string)
+		ts.Title, _ = m["title"].(string)
+		ts.Description, _ = m["description"].(string)
+		if d, ok := m["duration"].(float64); ok && d < 0 {
+			ts.Duration = -1
+		}
+		st.Show(ts)
+	}
+	return subject{
+		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Toaster(&st).Render(ctx, w) }),
 		events: func() []map[string]any { return nil },
 	}
 }
