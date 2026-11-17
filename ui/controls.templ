@@ -24,7 +24,7 @@ templ control(id string, c Control, set func(name, value string)) {
 	switch c.Kind {
 		case "bool":
 			<div>
-				<input type="checkbox" role="switch" class="input" checked?={ c.Value == "true" } { surf.On(ctx, controlID(id, c.Name), surf.Check(func(v bool) { set(c.Name, strconv.FormatBool(v)) }))... }/>
+				<input type="checkbox" role="switch" checked?={ c.Value == "true" } { surf.On(ctx, controlID(id, c.Name), surf.Check(func(v bool) { set(c.Name, strconv.FormatBool(v)) }))... }/>
 			</div>
 		case "enum":
 			<select class="select h-8 w-full max-w-60 text-sm" { surf.On(ctx, controlID(id, c.Name), surf.Input(func(v string) { set(c.Name, v) }))... }>
