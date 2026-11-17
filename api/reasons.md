@@ -658,8 +658,11 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.ToasterState.Remove`: G-toast: the app takes a toast off when its own clock or event says so, not only by Duration or a click.
 - `ui.Toast.Actions`: G-toast: plx's toasts carry more than one action. Basecoat's macro has one action and one cancel; a list in order covers both, the cancel being an Outline action.
 - `ui.ToastAction.Variant`: K2(a): picks the button's data-variant: the default action, or Outline for Basecoat's cancel, as the macro draws them.
-- `ui.Toast.OnPress`: K2 exception: G-toast: a press on a toast's body is an action of the app's (plx opens what the toast is about).
+- `ui.Toast.OnClick`: K2 exception: G-toast: a click on a toast's body is an action of the app's (plx opens what the toast is about). Named for surf.Click, which it is; OnSelect would collide with ToastAction's.
 - `ui.Toast.Focused`: G-toast: plx keeps the keyboard and moves through its toasts with its own keys; the toast draws the one it is on (its first button ringed, its bar and timer still) without taking the host's keyboard.
-- `ui.Toast.Left`: G-toast: the countdown bar shows how long is left of the app's own clock; the host runs it down, so no render runs it.
-- `ui.Toast.Total`: G-toast: the bar's full length, against which Left is drawn; zero draws no bar.
-- `ui.ToasterState.OnLeave`: G-toast: plx hears the pointer leaving its toasts as "away" (a focus by the pointer ends). The toaster's own Hover is on the toaster's element, so the app can't add one there.
+- `ui.Toast.Countdown`: G-toast, K30: the countdown bar runs down to the app's deadline (plx's Stack.Leaves); the kit keeps the run, so the same deadline shown again never restarts it, and the host runs it with no render.
+- `ui.ToasterProps`: K30: a component's callbacks go in its Props, and every State stays opaque.
+- `ui.ToasterProps.OnLeave`: G-toast: plx hears the pointer leaving its toasts as "away" (a focus by the pointer ends). The toaster's own Hover is on the toaster's element, so the app can't add one there.
+- `ui.ToasterProps.Class`: K1: a behavioural component's class, for the app's own; plx's way out if the fixed toaster doesn't fit its surface.
+- `ui.Toaster`: its signature takes ToasterProps (K30).
+- `ui.Toast.OnClose`: plx parity (p-653): plx's toasts have a corner x; it asks the app, which owns the toast and removes it.

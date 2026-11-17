@@ -2084,3 +2084,36 @@ Open, for review:
    draws as before, without the bar; plx draws its cells toasts itself.
 4. **Action and Cancel go.** v0.7 is untagged. The examples, the story and
    the tests moved to Actions.
+
+### As reviewed (p-796, review-toast.md): applied
+
+- Kept: Toast.ID with the review's ownership contract in its doc,
+  ToasterState.Remove, Toast.Actions, ToastAction.Variant (now checked as
+  a Button's), Toast.Focused (its doc: a key's OnSelect doesn't close the
+  toast; Remove does; the keyboard model's row says so too).
+- **Countdown time.Time replaces Left and Total** (K30). The kit keeps
+  the run on the shown toast: a run's start fraction, length and start,
+  read from the clock (`toastNow`, a test hook) only when a run starts or
+  a focus starts, so a render prints stored values. The same Countdown
+  keeps the run; another starts it full; a focus holds it where it stands
+  (the bar's id grows, its style only its cut); the focus's end runs it on
+  from there to the Countdown given then. Steps are ten a second, capped
+  at 1200. TestToastCountdown walks it on a fixed clock.
+- **OnPress → OnClick.** A body with OnClick gets `cursor: pointer` and
+  the accent hover fill (toast.css).
+- **ToasterProps{OnLeave, Class}; Toaster(st, p).** ToasterState has no
+  exported field. Examples, stories and tests moved.
+- The focused ring mirrors `.btn:focus-visible`, the destructive one with
+  Basecoat's light and dark values, and toast.css says to keep them
+  together. toast.css also says the bar runs under reduced motion.
+- `"time"` sits with the standard library in example_test.go.
+- The stale-timer guard has its test (TestToastStaleTimer), which fails
+  without the guard.
+- Q1: the toast/owned story shows a focused toast with its still bar, so
+  the gate draws it. The running bar's css-subset.md row comes from a live
+  hottyterm check (below, when done).
+- **Added (p-653, plx parity): `Toast.OnClose func()`.** It draws a
+  corner x: a ghost icon-sm button with Lucide's x, `aria-label`
+  "Dismiss", absolute at the top right, the content padded clear of it.
+  A click runs OnClose and closes nothing. TestToastOnClose; the story
+  uses it. Sent to p-796 for a look at its name and doc.
