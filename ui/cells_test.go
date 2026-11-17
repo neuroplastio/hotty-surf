@@ -30,6 +30,7 @@ func TestKeysCells(t *testing.T) {
 			if text := strings.Join(lines, "\n"); !strings.Contains(text, st.Want) {
 				// An open list is drawn over what is under it, as a host
 				// draws it: the user closes it to read what it covers.
+				t.Logf("%s: %q not shown with the keys alone; read again after escape", st.ID, st.Want)
 				lines = inCells(t, st, 80, 24, append(st.Keys[:len(st.Keys):len(st.Keys)], "escape"))
 			}
 			if text := strings.Join(lines, "\n"); !strings.Contains(text, st.Want) {
