@@ -79,3 +79,19 @@ func TestOnePopupOpen(t *testing.T) {
 		t.Error("the popover stayed open when the menu opened")
 	}
 }
+
+func TestPopupOpenedDuringRenderClosesEarlierNextFrame(t *testing.T) {
+	var a, b ui.PopoverState
+	a.Open()
+	b.Open()
+	s := surf.New("t", templ.Join(ui.Popover(&a, ui.PopoverProps{ID: "a", Trigger: templ.Raw("A")}), ui.Popover(&b, ui.PopoverProps{ID: "b", Trigger: templ.Raw("B")})), ui.Stylesheet())
+	r := surftest.Start(t, s)
+	if !popoverOpen(r, "a") || !popoverOpen(r, "b") {
+		t.Fatal("expected earlier popup to remain drawn in the opening frame")
+	}
+	s.Do(func() {})
+	r.Update()
+	if popoverOpen(r, "a") || !popoverOpen(r, "b") {
+		t.Fatal("earlier popup did not close on next frame")
+	}
+}

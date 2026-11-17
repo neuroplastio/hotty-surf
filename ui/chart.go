@@ -36,7 +36,8 @@ type ChartProps struct {
 	// Aspect is the plot's width over its height: 0 is Basecoat's 16:9
 	// (aspect-video), 3 a short, wide plot for a dashboard's row. The plot
 	// takes its width from its box and its height from that, so a chart
-	// in a narrow column is short. surftest fails one below 0.
+	// in a narrow column is short. A negative, NaN or infinite value is a
+	// fault.
 	Aspect float64
 	// Attrs are more attributes for the div element: its id and handlers,
 	// through surf.On, and any other but those the component writes itself

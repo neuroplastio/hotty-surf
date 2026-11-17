@@ -26,8 +26,9 @@ type DialogProps struct {
 	Open        bool
 	Title       string
 	Description string
-	// HideCloseButton omits the close button. Escape and backdrop dismissal
-	// still call OnClose; the children provide any visible actions.
+	// HideCloseButton omits the built-in close button. Escape and a backdrop
+	// press still call OnClose; provide a visible action in the children if
+	// needed.
 	HideCloseButton bool
 	// OnClose hears that the user dismissed the dialog: Escape, the close
 	// button, or a click on the backdrop.

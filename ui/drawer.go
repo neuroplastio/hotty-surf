@@ -12,7 +12,7 @@ import (
 // DrawerProps are a Drawer's attributes.
 type DrawerProps struct {
 	// ID names its elements; "" is "drawer". It is unique among the
-	// surface's Dialogs, CommandDialogs and Drawers.
+	// surface's Dialogs, AlertDialogs, CommandDialogs and Drawers.
 	ID string
 	// Open asks the drawer to show. The app keeps it and sets it false in
 	// OnClose; the drawer remains during its closing transition.
@@ -20,8 +20,8 @@ type DrawerProps struct {
 	// Side places it at "bottom" (the default, also ""), "top", "left"
 	// or "right" (data-side). Other values are faults.
 	Side string
-	// OnClose hears Escape or a press on the backdrop. The app closes the
-	// drawer by setting Open false.
+	// OnClose requests closing; it is called before the closing animation,
+	// not when that animation completes. The app sets Open false.
 	OnClose func()
 	// Class is more classes for the dialog element, after its own.
 	Class string

@@ -30,7 +30,8 @@ type CommandProps struct {
 }
 
 // CommandState is what a Command remembers between renders: the search
-// and the item highlighted. The zero value searches for nothing, which
+// and the item highlighted. Keep one state per command instance. The zero
+// value searches for nothing, which
 // shows every item, and highlights the first.
 type CommandState struct {
 	query string
@@ -74,8 +75,8 @@ type CommandDialogProps struct {
 	Items       []MenuItem
 	Placeholder string
 	Empty       string
-	// OnClose hears that the dialog closes: an item chosen (after its
-	// OnSelect), Escape, or a click on the backdrop.
+	// OnClose requests closing: an item chosen (after its OnSelect), Escape,
+	// or a click on the backdrop. The app sets Open false.
 	OnClose func()
 	// Class is more classes for the dialog element, after its own.
 	Class string

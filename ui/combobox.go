@@ -2,12 +2,15 @@ package ui
 
 import (
 	"context"
+	"fmt"
 	"github.com/a-h/templ"
 	"io"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/rt"
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // ComboboxProps are a Combobox's attributes. Selection is by item value.
@@ -15,10 +18,13 @@ type ComboboxProps struct {
 	// ID names the elements; "" is "combobox". Two on one surface need IDs.
 	ID string
 	// Items are the options; consecutive items with one Group share a heading.
+	// Values must uniquely identify options; duplicate labels are fine.
 	Items []SelectItem
 	// Value is the selected item's value, or "" for none, in single mode.
 	Value string
-	// Values are the selected item values in multiple mode, in selection order.
+	// Values are selected item values in multiple mode, in selection order;
+	// nil or empty means none. The callback receives a fresh slice in that
+	// order, unlike Select's item order.
 	Values []string
 	// Multiple permits more than one selected item.
 	Multiple bool
@@ -32,15 +38,25 @@ type ComboboxProps struct {
 	AutoHighlight bool
 	// CloseOnSelect closes a multiple combobox when an item is selected.
 	CloseOnSelect bool
-	// OnChange reports a single selection; "" means no selection.
+	// OnChange reports a changed single selection; "" means no selection.
+	// Choosing the already-selected value does not report a change.
 	OnChange func(string)
 	// OnValuesChange reports multiple selections as item values.
 	OnValuesChange func([]string)
+	// InputAttrs are additional attributes for the search input, for
+	// example templ.Attributes{"aria-label": "Choose a country"} or
+	// aria-labelledby. The component owns id, class, type, value,
+	// placeholder, disabled, role, autocomplete, autocorrect, spellcheck,
+	// aria-autocomplete, aria-expanded, aria-controls,
+	// aria-activedescendant, data-on, data-keys and its handlers;
+	// repeating them is a fault.
+	InputAttrs templ.Attributes
 	// Class adds classes to the root.
 	Class string
 }
 
 // ComboboxState holds the search, the open list and its highlighted item.
+// Keep one state per combobox instance.
 type ComboboxState struct {
 	open            bool
 	text            string
@@ -57,10 +73,13 @@ type ComboboxState struct {
 }
 
 // Combobox is Basecoat's searchable selection field. Typing filters its
-// items by label, without case; arrows, Home and End move the highlight,
+// items by label or keyword, without case; arrows, Home and End move the highlight,
 // Enter chooses it, Escape closes the list, and a click chooses an item.
 // In multiple mode selected items become removable chips. The app keeps
-// the chosen value or values and applies the OnChange callback.
+// the chosen value or values. Single mode uses Value/OnChange; typing after
+// a selection first reports "". Multiple mode uses Values/OnValuesChange;
+// selecting or removing a chip reports the resulting values. Each mode
+// ignores the other's fields. A nil callback changes no app-owned value.
 func Combobox(st *ComboboxState, p ComboboxProps) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		return combobox(newComboboxView(st, p)).Render(ctx, w)
@@ -97,6 +116,14 @@ func newComboboxView(st *ComboboxState, p ComboboxProps) *comboboxView {
 	v.shown = make([]bool, len(v.opts))
 	for i, o := range v.opts {
 		v.shown[i] = search == "" || strings.Contains(strings.ToLower(strings.TrimSpace(o.label)), search)
+		if !v.shown[i] {
+			for _, word := range strings.FieldsFunc(strings.ToLower(p.Items[i].Keywords), func(r rune) bool { return r == ',' || unicode.IsSpace(r) }) {
+				if strings.Contains(word, search) {
+					v.shown[i] = true
+					break
+				}
+			}
+		}
 		if v.shown[i] && !o.disabled {
 			v.visible = append(v.visible, i)
 		}
@@ -106,7 +133,37 @@ func newComboboxView(st *ComboboxState, p ComboboxProps) *comboboxView {
 	}
 	return v
 }
+
+func (v *comboboxView) inputAttrs(ctx context.Context) templ.Attributes {
+	owned := []string{"id", "class", "type", "value", "placeholder", "disabled", "role", "autocomplete", "autocorrect", "spellcheck", "aria-autocomplete", "aria-expanded", "aria-controls", "aria-activedescendant", "data-on", "data-keys"}
+	checkAttrs(ctx, "Combobox", v.p.InputAttrs, owned...)
+	a := make(templ.Attributes, len(v.p.InputAttrs)+4)
+	for k, value := range v.p.InputAttrs {
+		if strings.HasPrefix(strings.ToLower(k), "on") {
+			rt.Fault(ctx, fmt.Sprintf("ui.Combobox: InputAttrs cannot install handler %q", k))
+			continue
+		}
+		if strings.HasPrefix(k, "data-hotty-") {
+			rt.Fault(ctx, fmt.Sprintf("ui.Combobox: InputAttrs cannot replace internal attribute %q", k))
+			continue
+		}
+		if !slices.Contains(owned, k) {
+			a[k] = value
+		}
+	}
+	for k, value := range scopeCommandAttrs(ctx, surf.On(ctx, v.id+"-input", surf.Input(v.input), surf.Focus(v.focus), surf.Click(v.open)), v.fieldKeys()) {
+		a[k] = value
+	}
+	return a
+}
 func (v *comboboxView) join(ctx context.Context) string {
+	seen := map[string]bool{}
+	for _, item := range v.p.Items {
+		if seen[item.Value] {
+			rt.Fault(ctx, fmt.Sprintf("ui.Combobox: duplicate item value %q", item.Value))
+		}
+		seen[item.Value] = true
+	}
 	v.n = frameN(ctx)
 	v.popups = popups(ctx)
 	v.popups.track(v.st, v.st.open, v.shut)

@@ -113,3 +113,64 @@ func TestComboboxProgrammaticValue(t *testing.T) {
 		t.Fatalf("programmatic value shows %q, want Banana", got)
 	}
 }
+
+func TestComboboxKeywordsAndInputAttrs(t *testing.T) {
+	var st ui.ComboboxState
+	value := ""
+	attrs := templ.Attributes{"aria-label": "Choose fruit"}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		child := ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", Items: []ui.SelectItem{
+			{Value: "a", Label: "Same", Keywords: "orchard, crimson"}, {Value: "b", Label: "Same", Keywords: "tropical"},
+		}, InputAttrs: attrs, OnChange: func(v string) { value = v }})
+		return with(ui.KeyScope([]string{"arrow_down"}, func(string) bool { return false }), child).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("combobox", view, ui.Stylesheet()))
+	r.One(`#fruit-input[aria-label="Choose fruit"][data-hotty-keyscope]`)
+	r.Type("#fruit-input", "TROP")
+	r.One("#fruit-items-1[aria-hidden=true]")
+	r.One("#fruit-items-2[aria-hidden=false]")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if value != "b" {
+		t.Fatalf("selected %q", value)
+	}
+	if len(attrs) != 1 || attrs["aria-label"] != "Choose fruit" {
+		t.Fatalf("mutated attrs: %v", attrs)
+	}
+}
+
+func TestComboboxInputAttrsCollision(t *testing.T) {
+	f := &faults{T: t}
+	var st ui.ComboboxState
+	attrs := templ.Attributes{"id": "wrong", "data-keys": "home=field", "aria-label": "Choose"}
+	r := surftest.Start(f, surf.New("combobox", ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", InputAttrs: attrs}), ui.Stylesheet()))
+	r.One(`#fruit-input[aria-label="Choose"]`)
+	if len(f.got) < 2 {
+		t.Fatalf("expected collisions, got %v", f.got)
+	}
+	if attrs["id"] != "wrong" || attrs["data-keys"] != "home=field" {
+		t.Fatalf("mutated attrs: %v", attrs)
+	}
+}
+
+func TestComboboxKeepsDisabledSelectionAndOwnsCallbackSlices(t *testing.T) {
+	var st ui.ComboboxState
+	values := []string{"d"}
+	var reports [][]string
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", Items: comboboxItems, Multiple: true, Values: values, InputAttrs: templ.Attributes{"aria-label": "Fruit"}, OnValuesChange: func(v []string) { values = v; reports = append(reports, v) }}).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("combobox", view, ui.Stylesheet()))
+	r.One("#fruit-items-4-2[aria-selected=true][aria-disabled=true]")
+	r.Click("#fruit-input")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"d", "a"}) {
+		t.Fatalf("selection %v", values)
+	}
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"d", "a", "b"}) || len(reports) < 2 || !slices.Equal(reports[0], []string{"d", "a"}) {
+		t.Fatalf("selection %v reports %v", values, reports)
+	}
+}

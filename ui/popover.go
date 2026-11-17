@@ -38,7 +38,8 @@ type PopoverState struct {
 	focusAt uint64
 }
 
-// Open opens the popover.
+// Open opens the popover. If it is opened while an earlier popup has already
+// rendered in the same frame, that popup remains drawn until the next frame.
 func (st *PopoverState) Open() { st.open = true }
 
 // Close closes the popover and gives its trigger the keyboard, as Escape
@@ -53,8 +54,8 @@ func (st *PopoverState) Close() {
 // popover.html.jinja, its behaviour popover.js's, translated to Go. The
 // trigger opens and closes it; Escape closes it and gives the trigger the
 // keyboard; a click outside closes it and leaves the keyboard where the
-// click put it; and it closes when another
-// popup (a Popover, a DropdownMenu, a Select) opens. Its children are its
+// click put it (popover.js instead focuses the trigger); and it closes when
+// another popup (Popover, DropdownMenu, Select or Combobox) opens. Its children are its
 // content, with Basecoat's <header> (an <h2> or <h4> and a <p>) as plain
 // elements. To give an element in it the keyboard as it opens, as
 // popover.js does for one with autofocus, the view calls surf.Autofocus

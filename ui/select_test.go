@@ -283,3 +283,64 @@ func TestSelectAlignEnd(t *testing.T) {
 	r := start(t, ui.Select(&st, ui.SelectProps{ID: "edge", Items: sizes, Placeholder: "Pick", Align: "end"}))
 	r.One("#edge-popover[data-align=end]")
 }
+
+func TestSelectMultipleKeepsDisabledSelection(t *testing.T) {
+	var st ui.SelectState
+	values := []string{"x"}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Select(&st, ui.SelectProps{ID: "sizes", Items: sizes, Multiple: true, Values: values, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { values = v }}).Render(ctx, w)
+	})
+	r := start(t, view)
+	r.One("#sizes-items-3[aria-selected=true][aria-disabled=true]")
+	r.One("span:text(Huge)")
+	want(t, r, "input[type=hidden]", "value", `["x"]`)
+	r.Click("#sizes-trigger")
+	r.Key("arrow_down")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"s", "x"}) {
+		t.Fatalf("values after choosing enabled option: %v", values)
+	}
+	r.One("#sizes-items-3[aria-selected=true][aria-disabled=true]")
+	r.One("span:text(Small, Huge)")
+	want(t, r, "input[type=hidden]", "value", `["s","x"]`)
+}
+
+func TestSelectMultipleValuesAreInItemOrderAndFresh(t *testing.T) {
+	var st ui.SelectState
+	values := []string{}
+	var reports [][]string
+	items := []ui.SelectItem{{Value: "a", Label: "Same"}, {Value: "b", Label: "Same", Group: "Other"}}
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.Select(&st, ui.SelectProps{ID: "select", Items: items, Multiple: true, Values: values, Placeholder: "Pick", OnValuesChange: func(v []string) { values = v; reports = append(reports, v) }}).Render(ctx, w)
+	})
+	r := start(t, view)
+	r.Click("#select-trigger")
+	r.Key("end")
+	r.Key("enter")
+	r.Key("home")
+	r.Key("enter")
+	if !slices.Equal(values, []string{"a", "b"}) || len(reports) != 2 || !slices.Equal(reports[0], []string{"b"}) {
+		t.Fatalf("values %v reports %v", values, reports)
+	}
+	r.Key("enter")
+	if !slices.Equal(values, []string{"b"}) || !slices.Equal(reports[1], []string{"a", "b"}) {
+		t.Fatalf("toggle values %v reports %v", values, reports)
+	}
+}
+
+func TestSelectRejectsAmbiguousValues(t *testing.T) {
+	f := &faults{T: t}
+	var st ui.SelectState
+	p := ui.SelectProps{ID: "select", Items: []ui.SelectItem{{Value: "a", Label: "One"}, {Value: "a", Label: "Two"}}, Multiple: true, Values: []string{"missing"}}
+	surftest.Start(f, surf.New("select", ui.Select(&st, p), ui.Stylesheet()))
+	if len(f.got) < 2 {
+		t.Fatalf("expected duplicate and absent value faults: %v", f.got)
+	}
+}
+
+func TestSelectMultipleEscapesHiddenValues(t *testing.T) {
+	var st ui.SelectState
+	value := "a\"b\n"
+	r := start(t, ui.Select(&st, ui.SelectProps{ID: "select", Items: []ui.SelectItem{{Value: value, Label: "A"}}, Multiple: true, Values: []string{value}}))
+	want(t, r, "input[type=hidden]", "value", `["a\"b\n"]`)
+}

@@ -14,15 +14,29 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// KeyScope applies a keyboard override to kit controls in its children.
-// keys names the keys to offer fn, using surf.Key notation. When fn takes
-// one, the default does not run; otherwise enclosing scopes are tried,
-// nearest first, and then the kit default. Unnamed keys keep their defaults.
-// The scope adds no wrapper and does not apply to plain HTML elements.
-// Empty keys or a nil fn adds no override. Duplicate, invalid, tab and
-// shift+tab keys are faults and are ignored. Tab stays focus traversal.
-// fn runs on the surface driver's goroutine. A host's open native select
-// list can keep keys until it closes.
+// KeyScope applies an application keyboard override to the kit controls
+// in its children. keys names the keys the override wants; fn is offered
+// only those keys while one of those controls has the keyboard. A true
+// result takes the key. A false result tries the next enclosing KeyScope
+// that names it, then the focused control's kit default. Keys no scope
+// names keep their native or kit defaults.
+//
+// Scopes nest: the scope nearest the focused control is asked first.
+// A scope may contain several controls, including a component's internal
+// controls. A scope around one component overrides that instance. Scopes
+// never affect another surface. Plain HTML elements are not kit controls;
+// use surf.On and surf.Key for their program-side handlers.
+//
+// Names use surf.Key's notation, including mod ("arrow_down", "mod+s").
+// keys are exact key names, not patterns or action names. An empty list or
+// nil fn adds no override. Invalid names, duplicate names, and tab or
+// shift+tab are faults; those entries are ignored. Tab and Shift+Tab are
+// reserved for the host's focus traversal, including within a modal.
+//
+// fn runs on the surface driver's goroutine, as other handlers do. Its
+// children are rendered without adding an HTML wrapper. A KeyScope only
+// handles keys while one of its kit controls has focus. A host's open
+// native select list can keep keys until it closes (SPEC §10.2).
 func KeyScope(keys []string, fn func(string) bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		children := templ.GetChildren(ctx)

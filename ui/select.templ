@@ -87,7 +87,7 @@ templ selectOption(v *selectView, i int) {
 	<div
 		role="option"
 		data-value={ o.value }
-		if v.selected(i) && !o.disabled {
+		if v.selected(i) {
 			aria-selected="true"
 		}
 		if o.disabled {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -13,16 +14,23 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// SliderProps are a Slider's attributes. Max must be greater than Min.
+// SliderProps are a Slider's attributes. Bounds must be finite with Max
+// greater than Min, Step must be finite and nonnegative, and Value must be
+// finite and within the bounds. Invalid values are faults; outside tests
+// invalid bounds become 0 and 100, invalid Step becomes zero, non-finite
+// Value becomes Min, and an out-of-range Value is clamped. Rendering never
+// calls OnChange.
 type SliderProps struct {
-	// ID names its elements and is unique on the surface.
+	// ID is required and names its elements; it is unique on the surface.
 	ID string
 	// Attrs names the thumb, for example with aria-label or
-	// aria-labelledby. ID, role, value attributes, style and handlers are
-	// owned by the component and cannot be supplied here.
+	// aria-labelledby. id, class, type, role, aria-valuemin, aria-valuemax,
+	// aria-valuenow, disabled, style, data-on and data-keys are owned by the
+	// component; repeating them is a fault. Attrs cannot install handlers.
 	Attrs templ.Attributes
 	// Min and Max are the ends; Step is the increment (zero uses a twentieth
-	// of the range for keys and a hundredth for snapping).
+	// of the range for keys and a hundredth for snapping). Page keys move
+	// ten key increments, clamped to the bounds.
 	Min, Max, Step float64
 	// Value is the current value, controlled by the app.
 	Value float64
@@ -40,15 +48,24 @@ func Slider(p SliderProps) templ.Component {
 	return slider(sliderView{p: p, lo: p.Min, hi: p.Value})
 }
 
-// RangeSliderProps are a RangeSlider's attributes. Max must exceed Min.
+// RangeSliderProps are a RangeSlider's attributes. Bounds must be finite
+// with Max greater than Min, Step must be finite and nonnegative, and
+// Start and End must be finite, in bounds and in order. Invalid values are
+// faults; outside tests invalid bounds become 0 and 100, invalid Step
+// becomes zero, non-finite Start becomes Min and non-finite End becomes
+// Max. Values are clamped to the bounds and End up to Start. Rendering
+// never calls OnChange.
 type RangeSliderProps struct {
-	// ID names its elements and is unique on the surface.
+	// ID is required and names its elements; it is unique on the surface.
 	ID string
 	// StartAttrs and EndAttrs name the individual thumbs, for example
-	// with aria-label or aria-labelledby. The component owns their ID,
-	// role, value attributes, style and handlers.
+	// with aria-label or aria-labelledby. id, class, type, role,
+	// aria-valuemin, aria-valuemax, aria-valuenow, disabled, style, data-on
+	// and data-keys are owned by the component; repeating them is a fault.
+	// They cannot install handlers.
 	StartAttrs, EndAttrs templ.Attributes
-	// Min and Max are the ends; Step is as in SliderProps.
+	// Min and Max are the ends; Step is as in SliderProps. Page keys move
+	// ten key increments, clamped to each thumb's permitted bounds.
 	Min, Max, Step float64
 	// Start and End are the current values. Start cannot exceed End.
 	Start, End float64
@@ -90,6 +107,23 @@ func (v *sliderView) init(ctx context.Context) {
 	}
 	if v.p.Step < 0 || math.IsNaN(v.p.Step) || math.IsInf(v.p.Step, 0) {
 		v.p.Step = 0
+	}
+	finite := func(x float64) bool { return !math.IsNaN(x) && !math.IsInf(x, 0) }
+	if !v.ranged {
+		v.lo = v.p.Min
+	}
+	if !finite(v.lo) || !finite(v.hi) || v.lo < v.p.Min || v.lo > v.p.Max || v.hi < v.p.Min || v.hi > v.p.Max || v.lo > v.hi {
+		rt.Fault(ctx, "ui.Slider: values must be finite, in bounds and in order")
+	}
+	if !finite(v.lo) {
+		v.lo = v.p.Min
+	}
+	if !finite(v.hi) {
+		if v.ranged {
+			v.hi = v.p.Max
+		} else {
+			v.hi = v.p.Min
+		}
 	}
 	v.lo = math.Max(v.p.Min, math.Min(v.p.Max, v.lo))
 	v.hi = math.Max(v.lo, math.Min(v.p.Max, v.hi))
@@ -282,7 +316,8 @@ func (v *sliderView) thumb(ctx context.Context, k int) templ.Attributes {
 	if v.ranged && k == 0 {
 		attrs = v.startAttrs
 	}
-	checkAttrs(ctx, "Slider", attrs, "id", "class", "type", "role", "aria-valuemin", "aria-valuemax", "aria-valuenow", "disabled", "style", "data-on", "data-keys")
+	owned := []string{"id", "class", "type", "role", "aria-valuemin", "aria-valuemax", "aria-valuenow", "disabled", "style", "data-on", "data-keys"}
+	checkAttrs(ctx, "Slider", attrs, owned...)
 	var on templ.Attributes
 	if v.p.Disabled {
 		on = templ.Attributes{"id": v.thumbID(k)}
@@ -290,7 +325,17 @@ func (v *sliderView) thumb(ctx context.Context, k int) templ.Attributes {
 		on = scopeWithKeys(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) })), "arrow_left=program arrow_right=program arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program")
 	}
 	for key, value := range attrs {
-		on[key] = value
+		if strings.HasPrefix(strings.ToLower(key), "on") {
+			rt.Fault(ctx, fmt.Sprintf("ui.Slider: thumb Attrs cannot install handler %q", key))
+			continue
+		}
+		if strings.HasPrefix(key, "data-hotty-") {
+			rt.Fault(ctx, fmt.Sprintf("ui.Slider: thumb Attrs cannot replace internal attribute %q", key))
+			continue
+		}
+		if !slices.Contains(owned, key) {
+			on[key] = value
+		}
 	}
 	return on
 }

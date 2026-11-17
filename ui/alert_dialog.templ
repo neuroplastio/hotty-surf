@@ -3,7 +3,8 @@ package ui
 import "neuroplast.io/hotty-surf"
 
 templ alertDialog(p AlertDialogProps, children templ.Component) {
- {{ checkEnum(ctx, "AlertDialog", "Size", p.Size, []string{"", "sm"}) }}
+ {{ checkAlertDialog(ctx,p) }}
+ {{ checkSize(ctx, "AlertDialog", p.Size, cardSizes) }}
  {{ d := newDialogView(ctx, DialogProps{ID:or(p.ID,"alert-dialog"), Open:p.Open, OnClose:p.OnClose}) }}
  if p.Open {
   {{ body, err := d.body(ctx, children) }}
@@ -12,7 +13,7 @@ templ alertDialog(p AlertDialogProps, children templ.Component) {
   }
   <dialog class={ join("alert-dialog",p.Class) } role="alertdialog" open
    if p.Size != "" {
-    data-size={ p.Size }
+    data-size={ string(p.Size) }
    }
    if p.Title != "" {
     aria-labelledby={ d.id+"-title" }

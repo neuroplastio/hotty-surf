@@ -1002,24 +1002,19 @@ scrollbar classes and Avatar's image for the looks pass.
     raw / 749,785 gzip with it: +88,590 raw / +21,078 gzip when used.
     The editing fallback is referenced by the scope instance, so it is
     not linked just because a surface exists.
-- **Combobox selection: open for review.** Basecoat's combobox supports
-  both single and multiple selection. The single case follows Select:
-  `Items`, `Value`, `Placeholder`, `Disabled` and `OnChange`, selecting
-  by item value rather than label. Labels can repeat or change. The
-  multiple case uses `Values []string` and `OnValuesChange func([]string)`.
-  Two possible shapes are one component with a mode and separate single
-  and multiple value fields and callbacks, or separate Props and component
-  names for the two modes. The reviewer should decide the shape. Selection
-  labels come from the items, not from a second object-valued selection.
-  The lean is one Combobox with both modes, as in the draft: the interaction
-  is shared and Basecoat has one combobox.
-  The current draft reuses SelectItem and searches labels. combobox.js can
-  also search `data-keywords`; SelectItem has no such field. Adding
-  Keywords to SelectItem or introducing ComboboxItem are alternatives for
-  the reviewer, as is leaving that script option out. The lean is Keywords
-  on SelectItem, following MenuItem and K12; Select and NativeSelect would
-  ignore it.
-- **Combobox implementation in progress.** Its markup follows the generated
+  - **Total hello wasm delta:** TinyGo `-no-debug -target wasm` builds of
+    the same hello example were 2,218,914 bytes raw / 714,937 gzip at the
+    pre-B3 merge `897c796`, and 2,273,254 raw / 732,806 gzip with the
+    reviewed B3 changes: +54,340 raw / +17,869 gzip. The example uses
+    Select and Toaster, so this measures the shipped app and its linked ui,
+    not every component in isolation. Select uses the existing small JSON
+    string writer rather than linking the general encoding/json package.
+- **Combobox selection: reviewed (K22–K23).** One component supports
+  single Value/OnChange and multiple Values/OnValuesChange; the latter
+  follows selection order. SelectItem.Keywords supplies additional search
+  words and InputAttrs names the search input. Item values are unique;
+  labels may repeat. Disabled selected values remain selected.
+- **Combobox implementation.** Its markup follows the generated
   macro and its selection, filtering, keyboard and pointer behavior follows
   combobox.js; there was no behavior port in the spike. Four stories cover
   single, multiple, clear and grouped cases, and the cells keyboard gate
@@ -1029,35 +1024,35 @@ scrollbar classes and Avatar's image for the looks pass.
   The four initial stories were rendered with the current live hotty-blitz and
   Chromium from the same documents; the image comparison reported
   0.07–0.13% differing pixels, concentrated on text and control edges.
-- **Drawer: draft for review.** Drawer reuses the Dialog modal behavior and
+- **Drawer: reviewed (K24).** Drawer reuses the Dialog modal behavior and
   translates drawer.js's closing state and reopening cancellation; neither
   the spike nor hotty-a2ui supplies this component. Its state holds it open
   for the 500 ms transition and the script's 50 ms allowance. Escape and
   backdrop call OnClose immediately to ask the application to set Open
   false; the script's native close event instead arrives after the
-  transition. Should OnClose report the request or the completed close?
-  The lean is the request, consistent with Dialog's controlled Open prop.
+  transition. The reviewer chose the immediate request, consistent with
+  Dialog's controlled Open prop.
   Four side stories, cells keys and a Chromium Escape differential cover it.
   An open bottom drawer rendered in Blitz and Chromium differs by 0.21% of
   pixels.
-- **AlertDialog: draft for review.** Basecoat supplies CSS but no macro or
+- **AlertDialog: reviewed (K24).** Basecoat supplies CSS but no macro or
   script, and neither existing port has this component. The draft composes
   the existing Dialog modal behavior with alert-dialog markup and an
   explicit alertdialog role; it has no automatic close button. Title and
   Description provide its accessible name and description, while children
-  supply its actions. The small CSS variant is exposed as Size. A story,
+  supply its actions. The small CSS variant uses the shared ui.Size. A story,
   cells keys and a Chromium Escape differential cover it.
   An open alert's Blitz/Chromium comparison differs by 0.33% of pixels.
-- **Tooltip: draft for review.** The spike has no tooltip component; this
+- **Tooltip: reviewed (K24).** The spike has no tooltip component; this
   wraps children in Basecoat's data-tooltip markup and uses its CSS. Its
   popup is hover-only, and cells does not yet show it. hotty-a2ui instead
   puts hovered descriptions in a separate key-hints status line; that
   presentation requires an app-owned hints area. A forced-visible hover
   render shows attr() text in both Blitz and Chromium; the current live
   renderer and Chromium place the wrapper row at the same height.
-  The wrapper changes the DOM around its child; exposing an attribute helper
-  instead is an alternative for the reviewer.
-- **Slider and RangeSlider: draft for review.** These adapt hotty-a2ui's
+  It adds a span and is not an accessible description; apps name or
+  describe the control separately.
+- **Slider and RangeSlider: reviewed (K24).** These adapt hotty-a2ui's
   stepped values, nearest-thumb selection, notches, drag steps, and cells
   track. Their buttons carry role=slider and the relevant ARIA bounds; the
   native range input is not needed. Keys and pointer updates run in the
@@ -1065,21 +1060,22 @@ scrollbar classes and Avatar's image for the looks pass.
   keys. Page Up/Down moves ten steps: this addition was written here because
   the earlier port had no Page key behavior. The draft requires explicit
   Min and Max, names its thumbs through Attrs (K18), and exposes one- and
-  two-thumb components separately;
-  the reviewer should decide those shapes and the Page increment. Each
+  two-thumb components separately. The review accepts those shapes and
+  ten key increments for Page. Each
   track has at most 40 drag steps, following hotty-a2ui. Chromium and Blitz
   renders of the two stories differ in 0.06% and 0.10% of pixels, mainly
   text and control edges.
-- **Select multiple: draft for review.** Basecoat's select.js supports
+- **Select multiple: reviewed (K23).** Basecoat's select.js supports
   multiple values and keeps the list open on selection unless configured
   otherwise. The draft adds Multiple, Values, OnValuesChange and
   CloseOnSelect to the existing SelectProps, with values in item order and
   selection by value. The single Value and OnChange stay as locked. The
-  reviewer should decide whether one component with both modes or a
-  separate multiple-select API is preferable. A Chromium differential
+  reviewer kept one component with both modes. A Chromium differential
   covers keyboard selection and pointer toggling; the story runs in cells.
+  A regression test preserves a selected disabled item in the label,
+  ARIA state, hidden value and callback when another item is chosen.
   Its initial live Blitz/Chromium rendering differs in 0.07% of pixels.
-- **Select alignment: draft for review.** Align exposes the same start,
+- **Select alignment: reviewed.** Align exposes the same start,
   center and end placement as DropdownMenu. End lets the application keep
   a list at a right-edge trigger inside the surface. This is a manual
   choice: the surface does not know the trigger's and viewport's pixel
@@ -1091,31 +1087,30 @@ scrollbar classes and Avatar's image for the looks pass.
   remains a known gap for a future design, as agreed for B3. A forced-open
   right-edge story stays inside the surface in live Blitz and Chromium;
   their comparison differs by 0.19% of pixels.
-- **DropdownMenu checkbox and radio items: draft for review.** The spike's
+- **DropdownMenu checkbox and radio items: reviewed (K23).** The spike's
   MenuCheck and MenuRadio supply the indicator markup; dropdown-menu.js
   supplies toggling and radio grouping. The draft extends the shared
   MenuItem with Role, Checked and OnCheckedChange; Command ignores them.
   Selecting a radio reports changes to the enabled radios in its nearest
   rendered group, or the menu when ungrouped, as the script does. The
-  reviewer should decide this shared item shape and callbacks versus
-  separate checkbox and radio item types. Its initial story render differs
+  reviewer kept the shared item shape and callbacks. Its initial story render differs
   by 0.10% of pixels between live Blitz and Chromium; a Chromium differential
   exercises both roles.
-- **Toast actions: draft for review.** Action and Cancel point to a shared
+- **Toast actions: reviewed.** Action and Cancel point to a shared
   ToastAction containing a label and Go callback; either closes the toast
   after calling the callback. A persistent toast without an explicit
   cancel keeps its existing Dismiss button. Buttons are disabled during the
   exit transition to honor K19 and participate in KeyScope. The reviewer
-  should decide this shape and whether links belong in the API. The macro
+  kept this shape and deferred links until there is a caller. The macro
   and toast.js supply the button markup and closing behavior. An open toast
   with its entry animation disabled in both renderers differs by 0.16% of
   pixels; the still Blitz renderer otherwise captures the start of the
   animation while Chromium's screenshot captures its end.
-- **Dialog close button: draft for review.** HideCloseButton exposes the
+- **Dialog close button: reviewed (K24).** HideCloseButton exposes the
   macro's close_button switch while retaining the existing zero-value
   default. Escape and backdrop dismissal still call OnClose. A dialog with
-  no focusable child falls back to its focus guard. The reviewer should
-  decide the field name.
+  no focusable child falls back to its focus guard. The reviewer kept
+  the field name.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup
@@ -1130,7 +1125,7 @@ scrollbar classes and Avatar's image for the looks pass.
   through a document event (`basecoat:popover`). A surface has no such
   event, so a record in the surface's memo plays that part: the popup
   that opens closes the one that was open. Popover, DropdownMenu and
-  Select take part, and Combobox will. A popup opened by its State's
+  Select and Combobox take part. A popup opened by its State's
   Open joins at its next render, so one drawn earlier in that frame
   stays drawn open until the next frame.
 - **Command and CommandDialog** (18 names, MenuItem.Keywords among
@@ -1142,12 +1137,8 @@ scrollbar classes and Avatar's image for the looks pass.
   to the field otherwise; Enter is always bound. The differential
   matches command.js in Chromium for the keys, a search and the pointer.
   It needed two new step kinds, `type` and `hover`.
-  - **Open question:** should the field's value come back to the app
-    (CommandState.Query) for a list the app filters itself
-    (command.js's data-filter="manual")? It isn't ported.
-  - **Open question:** Keywords on MenuItem, which a DropdownMenu
-    ignores, or a CommandItem with MenuItem's fields and Keywords. The
-    lean is Keywords, by K12.
+  The reviewer deferred a query getter, search callback and manual filter
+  until a caller needs them, and kept Keywords on MenuItem.
 - **Icons: a set, not one at a time.** L5's apps asked for trash, and
   will ask for file, folder, pencil, copy, calendar, sun, moon and more.
   So the kit takes a fixed set of 59 common icons from the same
@@ -1189,15 +1180,9 @@ scrollbar classes and Avatar's image for the looks pass.
   rendered many times read its state as it was when made, so a menu
   opened by its State's Open highlighted nothing. Each is now made at
   every render.
-- **Open question: the keyboard after a click outside.** popover.js
-  gives the trigger the keyboard after any click outside, even one on
-  another control. On a surface, an Outside handler hears the press
-  before the host moves the keyboard (SPEC §10.1). It also hears a
-  click off the surface, and can't tell the two apart. So the popover
-  leaves the keyboard where the click put it, and the differential
-  lists this as known. To match Basecoat, Outside would have to say
-  whether the click landed on the surface: a change to surf's API,
-  not ui's.
+- **Outside click: decided.** popover.js focuses its trigger after an
+  outside click; the kit closes and leaves focus where the user put it.
+  The reviewer accepted this intentional difference without a new API.
 
 ## L4: the build tools and embedding (the pack)
 

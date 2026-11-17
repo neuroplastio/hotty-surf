@@ -272,3 +272,22 @@ func TestMenuCheckboxAndRadio(t *testing.T) {
 	}
 	r.One("#menu-items-3-2[role=menuitemradio][aria-checked=true]")
 }
+
+func TestMenuRadioCallbacksRunInItemOrderBeforeSelect(t *testing.T) {
+	var st ui.DropdownMenuState
+	first, second := true, false
+	var calls []string
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.DropdownMenu(&st, ui.DropdownMenuProps{ID: "menu", Trigger: templ.Raw("Choices"), Items: []ui.MenuItem{
+			{Label: "First", Role: "menuitemradio", Checked: first, OnCheckedChange: func(v bool) { first = v; calls = append(calls, "first=false") }},
+			{Label: "Second", Role: "menuitemradio", Checked: second, OnCheckedChange: func(v bool) { second = v; calls = append(calls, "second=true") }, OnSelect: func() { calls = append(calls, "select") }},
+		}}).Render(ctx, w)
+	})
+	r := start(t, view)
+	r.Click("#menu-trigger")
+	r.Key("end")
+	r.Key("enter")
+	if got := strings.Join(calls, ","); got != "first=false,second=true,select" {
+		t.Fatalf("callbacks %s", got)
+	}
+}

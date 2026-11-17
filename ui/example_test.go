@@ -1,7 +1,9 @@
 package ui_test
 
 import (
+	"context"
 	"github.com/a-h/templ"
+	"io"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
@@ -45,7 +47,12 @@ func Example() {
 //	}
 func ExampleKeyScope() {
 	moveLog := func(key string) bool { return key == "arrow_down" }
-	_ = ui.KeyScope([]string{"arrow_down"}, moveLog)
+	var state ui.SelectState
+	child := ui.Select(&state, ui.SelectProps{Items: []ui.SelectItem{{Value: "a", Label: "A"}}, Placeholder: "Choose"})
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return ui.KeyScope([]string{"arrow_down"}, moveLog).Render(templ.WithChildren(ctx, child), w)
+	})
+	_ = surf.New("scoped", view, ui.Stylesheet())
 }
 
 func ExampleCombobox() {
@@ -55,6 +62,7 @@ func ExampleCombobox() {
 		Items:       []ui.SelectItem{{Value: "apple", Label: "Apple"}},
 		Value:       value,
 		Placeholder: "Choose fruit",
+		InputAttrs:  templ.Attributes{"aria-label": "Choose fruit"},
 		OnChange:    func(v string) { value = v },
 	})
 }

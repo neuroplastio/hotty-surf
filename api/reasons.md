@@ -290,7 +290,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.PopoverState.Close`: the app closes it, as Escape does, giving the trigger the keyboard (closePopover's default), for a form inside that is done.
 - `ui.Command`: Basecoat's command menu: command.html.jinja's markup with command.js translated; replaces the spike's hand CommandBox. K1's first kind (a script that hears events, a State).
 - `ui.CommandProps`: a command menu's attributes.
-- `ui.CommandProps.ID`: names its elements (K14): `-input`, `-menu`, `-items-…`.
+- `ui.CommandProps.ID`: names the command's input, menu and items (K14).
 - `ui.CommandProps.Items`: K2 (c), what it lists. MenuItem's shape (Label, Icon, Keys, Group, Variant, Disabled, OnSelect) fits a command, so it is reused (K12), with Keywords added to it.
 - `ui.CommandProps.Placeholder`: K2 (e), the field's placeholder, the macro's `placeholder`; "" is the macro's default.
 - `ui.CommandProps.Empty`: the macro's `empty_text` (data-empty), which Basecoat's CSS shows when nothing matches: K2 (a), an attribute its CSS reads. "" is the macro's default.
@@ -301,7 +301,6 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.CommandDialogProps`: a command dialog's attributes.
 - `ui.CommandDialogProps.ID`: as DialogProps.ID: unique among the surface's dialogs, which share the memo where each remembers the keyboard.
 - `ui.CommandDialogProps.Open`: K2 (b), as DialogProps.Open: the app keeps it.
-- `ui.CommandDialogProps.Items`, `.Placeholder`, `.Empty`: as CommandProps'.
 - `ui.CommandDialogProps.OnClose`: as DialogProps.OnClose, and a choice closes it too (command.js's handleMenuClick).
 - `ui.CommandDialogProps.Class`: as every Props.
 - `ui.KeyScope`: a lexical Go handler for named keys, shared by native and
@@ -314,67 +313,31 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.ComboboxProps`: a combobox's attributes.
 - `ui.ComboboxProps.ID`: names the input, list, options and controls (K14).
 - `ui.ComboboxProps.Items`: K2(c), the options the component renders.
-- `ui.ComboboxProps.Value`, `.Values`, `.Multiple`: K2(b), the selected
-  value or ordered values, controlled by the app; the combined shape is a
-  B3 review question.
 - `ui.ComboboxProps.Placeholder`: K2(e), the search field's placeholder.
 - `ui.ComboboxProps.Disabled`: K2(a), the input's disabled attribute.
-- `ui.ComboboxProps.Clear`, `.AutoHighlight`, `.CloseOnSelect`: the macro's
-  clear button and behavior configuration; auto-highlight and close-on-select
-  write data attributes read by combobox.js. These are script configuration,
-  outside K2's listed cases, and are for the B3 reviewer to assess.
-- `ui.ComboboxProps.OnChange`, `.OnValuesChange`: callbacks reporting the
-  app-owned single or multiple selection (K1).
 - `ui.ComboboxProps.Class`: as every Props.
 - `ui.ComboboxState`: the component's search, popup and highlight (K2(b)).
-- `ui.Drawer`, `ui.DrawerProps`, `ui.DrawerState`: Basecoat's modal drawer
-  and its transition state, shared across host and cells.
 - `ui.DrawerProps.ID`: names the dialog and its content (K14).
 - `ui.DrawerProps.Open`: the controlled open state (K2(b)).
 - `ui.DrawerProps.Side`: the drawer's side (K2(a)).
 - `ui.DrawerProps.OnClose`: asks the application to close the drawer.
 - `ui.DrawerProps.Class`: as every Props.
-- `ui.AlertDialog`, `ui.AlertDialogProps`: Basecoat's confirmation dialog,
-  with the same modal behavior as Dialog and no automatic close button.
 - `ui.AlertDialogProps.ID`: names the dialog and labels (K14).
 - `ui.AlertDialogProps.Open`: the controlled open state (K2(b)).
-- `ui.AlertDialogProps.Title`, `.Description`: accessible heading and text.
 - `ui.AlertDialogProps.Size`: Basecoat's small variant (K2(a)).
 - `ui.AlertDialogProps.OnClose`: asks the application to close the dialog.
 - `ui.AlertDialogProps.Class`: as every Props.
-- `ui.Tooltip`, `ui.TooltipProps`: Basecoat's hover tooltip around children.
 - `ui.TooltipProps.Text`: the text used by Basecoat's data-tooltip.
-- `ui.TooltipProps.Side`, `.Align`, `.Arrow`: Basecoat's placement and arrow
-  attributes (K2(a)).
 - `ui.TooltipProps.Class`: as every Props.
 - `ui.TooltipProps.Attrs`: K1's attributes for the CSS-only wrapper.
-- `ui.Slider`, `ui.SliderProps`: a single-thumb slider with Go-owned keys,
-  stepping and pointer drag.
-- `ui.RangeSlider`, `ui.RangeSliderProps`: a two-thumb slider, each thumb
-  separately focusable and constrained by the other.
-- `ui.SliderProps.ID`, `ui.RangeSliderProps.ID`: name their parts (K14).
-- `ui.SliderProps.Attrs`, `ui.RangeSliderProps.StartAttrs`, `.EndAttrs`:
-  name the respective thumbs through ARIA attributes (K18).
-- `ui.SliderProps.Min`, `.Max`, `.Step`, `ui.RangeSliderProps.Min`, `.Max`,
-  `.Step`: numeric bounds and step (K2(a)).
-- `ui.SliderProps.Value`, `ui.RangeSliderProps.Start`, `.End`: controlled
-  values (K2(b)).
-- `ui.SliderProps.Disabled`, `ui.RangeSliderProps.Disabled`: disable keys
-  and pointer interaction (K2(a)).
-- `ui.SliderProps.OnChange`, `ui.RangeSliderProps.OnChange`: callbacks
-  reporting values to the application.
-- `ui.SliderProps.Class`, `ui.RangeSliderProps.Class`: as every Props.
-- `ui.SelectProps.Multiple`, `.Values`, `.OnValuesChange`: select.js's
-  multiple mode with controlled values (K2(b)).
+- `ui.ComboboxProps.InputAttrs`: K22's narrow K1 exception, naming the
+  search input without exposing the component's owned bindings.
+- `ui.SelectItem.Keywords`: additional Combobox search words shared by the
+  item type (K12, K23); Select and NativeSelect ignore them.
 - `ui.SelectProps.CloseOnSelect`: select.js's multiple-mode configuration
   (data-close-on-select).
 - `ui.SelectProps.Align`: the popover's data-align placement (K2(a)), so an
   app can align a Select's list to the right edge of its trigger.
-- `ui.MenuItem.Role`, `.Checked`, `.OnCheckedChange`: checkbox and radio
-  items and their controlled state (K2(a), K2(b)); Command ignores them.
-- `ui.ToastAction`, `.Label`, `.OnSelect`: a footer action or cancel
-  button's text and Go callback, replacing the macro's onclick (K2(e)).
-- `ui.Toast.Action`, `.Cancel`: the macro's optional footer buttons (K2(c)).
 - `ui.DialogProps.HideCloseButton`: the macro's close_button option with a
   zero value that preserves the existing close button (K2(a)).
 - `ui.AlertDialog`: A modal confirmation with Basecoat's alert-dialog CSS and shared Dialog behavior (K1).
@@ -382,10 +345,10 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.AlertDialogProps.Title`: Visible heading, which names the dialog (K2(c)).
 - `ui.AlertDialogProps.Description`: Visible description of the confirmation (K2(c)).
 - `ui.ChartProps.Aspect`: The plot's width-to-height ratio, needed to render the SVG (K2(c)).
-- `ui.ComboboxProps.AutoHighlight`: combobox.js's auto-highlight configuration, outside K2's listed cases and for review.
+- `ui.ComboboxProps.AutoHighlight`: combobox.js's auto-highlight configuration, accepted script configuration (K22).
 - `ui.ComboboxProps.Clear`: The macro's optional clear button, part of its rendered content (K2(c)).
-- `ui.ComboboxProps.CloseOnSelect`: combobox.js's close-on-select configuration, outside K2's listed cases and for review.
-- `ui.ComboboxProps.Multiple`: Selects the script's single or multiple mode; the combined shape is for review (K2(b)).
+- `ui.ComboboxProps.CloseOnSelect`: combobox.js's close-on-select configuration, accepted script configuration (K22).
+- `ui.ComboboxProps.Multiple`: Selects the script's single or multiple mode; the combined shape is accepted (K23) (K2(b)).
 - `ui.ComboboxProps.Value`: The app-controlled single selection by item value (K2(b)).
 - `ui.ComboboxProps.Values`: The app-controlled multiple selection by item values (K2(b)).
 - `ui.ComboboxProps.OnChange`: Reports the single selected value to the application (K1).
@@ -402,8 +365,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.RangeSlider`: A two-thumb slider with shared Go keyboard and drag behavior (K1).
 - `ui.RangeSliderProps`: The two-thumb slider's attributes (K1).
 - `ui.RangeSliderProps.ID`: Names the track, notches and thumbs (K14).
-- `ui.RangeSliderProps.StartAttrs`: Names the start thumb using ARIA attributes (K18); this exception to K1 is for review.
-- `ui.RangeSliderProps.EndAttrs`: Names the end thumb using ARIA attributes (K18); this exception to K1 is for review.
+- `ui.RangeSliderProps.StartAttrs`: Names the start thumb using ARIA attributes (K18); the reviewed exception to K1 (K22).
+- `ui.RangeSliderProps.EndAttrs`: Names the end thumb using ARIA attributes (K18); the reviewed exception to K1 (K22).
 - `ui.RangeSliderProps.Min`: The lower numeric bound used for rendering and interaction (K2(c)).
 - `ui.RangeSliderProps.Max`: The upper numeric bound used for rendering and interaction (K2(c)).
 - `ui.RangeSliderProps.Step`: The increment and snap interval used for interaction (K2(c)).
@@ -412,13 +375,13 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.RangeSliderProps.Disabled`: Disables pointer and keyboard interaction (K2(a)).
 - `ui.RangeSliderProps.OnChange`: Reports both controlled values to the application (K1).
 - `ui.RangeSliderProps.Class`: Additional classes on the track, as every Props.
-- `ui.SelectProps.Multiple`: Selects select.js's multiple-selection mode; the shape is for review (K2(b)).
+- `ui.SelectProps.Multiple`: Selects select.js's multiple-selection mode; the shape is accepted (K23) (K2(b)).
 - `ui.SelectProps.Values`: The app-controlled multiple values (K2(b)).
 - `ui.SelectProps.OnValuesChange`: Reports selected values in item order (K1).
 - `ui.Slider`: A single-thumb slider with shared Go keyboard and drag behavior (K1).
 - `ui.SliderProps`: The single-thumb slider's attributes (K1).
 - `ui.SliderProps.ID`: Names its track, notches and thumb (K14).
-- `ui.SliderProps.Attrs`: Names its thumb using ARIA attributes (K18); this exception to K1 is for review.
+- `ui.SliderProps.Attrs`: Names its thumb using ARIA attributes (K18); the reviewed exception to K1 (K22).
 - `ui.SliderProps.Min`: The lower numeric bound used for rendering and interaction (K2(c)).
 - `ui.SliderProps.Max`: The upper numeric bound used for rendering and interaction (K2(c)).
 - `ui.SliderProps.Step`: The increment and snap interval used for interaction (K2(c)).
@@ -436,9 +399,7 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.TooltipProps.Side`: Basecoat's data-side placement attribute (K2(a)).
 - `ui.TooltipProps.Align`: Basecoat's data-align placement attribute (K2(a)).
 - `ui.TooltipProps.Arrow`: Basecoat's data-arrow attribute (K2(a)).
-- `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
-
 ## ui/code
 
 - `ui/code.Block`: highlighted code in Basecoat's pre, in a package of its own so an app without code doesn't link Chroma (a large share of a wasm build). One function: the spike's View, Highlight and CSS fold into it, the token colours going into the kit's stylesheet.

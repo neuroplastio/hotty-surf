@@ -155,7 +155,7 @@ pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Description strin
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, ID string
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, OnClose func()
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Open bool
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Size string
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Title string
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Attrs templ.Attributes
@@ -214,6 +214,7 @@ pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Clear bool
 pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, CloseOnSelect bool
 pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, InputAttrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Items []SelectItem
 pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Multiple bool
 pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, OnChange func(string)
@@ -355,6 +356,7 @@ pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Step float64
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Group string
+pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Keywords string
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type SelectProps struct

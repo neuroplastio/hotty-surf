@@ -121,3 +121,13 @@ func TestToastActionAndCancel(t *testing.T) {
 		t.Fatalf("action=%d cancel=%d", acted, canceled)
 	}
 }
+
+func TestToastActionRequiresLabel(t *testing.T) {
+	f := &faults{T: t}
+	var st ui.ToasterState
+	st.Show(ui.Toast{Title: "Saved", Action: &ui.ToastAction{}})
+	surftest.Start(f, surf.New("toast", ui.Toaster(&st), ui.Stylesheet()))
+	if len(f.got) == 0 {
+		t.Fatal("empty action label did not fault")
+	}
+}

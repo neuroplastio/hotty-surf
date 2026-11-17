@@ -34,3 +34,16 @@ func TestAlertDialogModal(t *testing.T) {
 		t.Fatalf("closed focus %q", got)
 	}
 }
+
+func TestAlertDialogTitleAndSize(t *testing.T) {
+	f := &faults{T: t}
+	surftest.Start(f, surf.New("alert", ui.AlertDialog(ui.AlertDialogProps{ID: "a", Open: true, Size: ui.Large}), ui.Stylesheet()))
+	if len(f.got) < 2 {
+		t.Fatalf("expected title and size faults: %v", f.got)
+	}
+	r := surftest.Start(t, surf.New("alert", ui.AlertDialog(ui.AlertDialogProps{ID: "a", Open: true, Title: "Sure?", Size: ui.Small}), ui.Stylesheet()))
+	r.One(`#a[data-size=sm][aria-labelledby=a-title]`)
+	if len(r.Find("#a[aria-describedby]")) != 0 {
+		t.Fatal("description reference without a description")
+	}
+}

@@ -2,7 +2,7 @@ package ui
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"io"
 	"slices"
 	"strconv"
@@ -23,15 +23,20 @@ type SelectProps struct {
 	// Value is the value of the item shown as chosen; "" is none, and the
 	// trigger shows Placeholder. With neither, the trigger is blank, which
 	// is a fault: a Select with nothing chosen takes a Placeholder.
+	// Value and OnChange are used in single mode; Values and OnValuesChange
+	// are used in multiple mode. The other pair is ignored.
 	Value string
 	// Multiple selects more than one value, reported through OnValuesChange.
 	Multiple bool
-	// Values are the selected item values when Multiple is true.
+	// Values are the selected item values when Multiple is true; nil or empty
+	// means none. The callback receives a fresh slice in item order, unlike
+	// Combobox's selection order. Disabled selected items stay selected.
 	Values []string
 	// CloseOnSelect closes a multiple-select list after each choice.
 	CloseOnSelect bool
-	// Align places the list along its trigger: "" or "start" (the
-	// default), "center" or "end". End fits a trigger at the right edge.
+	// Align places the list along its trigger: "" or "start" (the default),
+	// "center" or "end". surftest fails any other. It does not automatically
+	// flip or clamp the list to the surface.
 	Align       string
 	Placeholder string
 	Disabled    bool
@@ -44,11 +49,16 @@ type SelectProps struct {
 
 // A SelectItem is an option of a Select, NativeSelect or Combobox.
 // Consecutive items with the same Group are shown under its label, the
-// groups apart.
+// groups apart. Values uniquely identify items; a duplicate value is a
+// fault, but labels may repeat. A selected value absent from Items, or
+// repeated in Values, is a fault and is omitted outside tests.
 type SelectItem struct {
 	Value, Label string
 	Group        string
 	Disabled     bool
+	// Keywords are additional search words for Combobox, separated by
+	// spaces or commas. Select and NativeSelect ignore them.
+	Keywords string
 }
 
 // SelectState is what a Select remembers between renders: whether its list
@@ -98,6 +108,27 @@ func (v *selectView) triggerKeys() string {
 
 // join reads the frame: its number, and the surface's popups.
 func (v *selectView) join(ctx context.Context) string {
+	values := map[string]bool{}
+	for _, item := range v.p.Items {
+		if values[item.Value] {
+			rt.Fault(ctx, fmt.Sprintf("ui.Select: duplicate item value %q", item.Value))
+		}
+		values[item.Value] = true
+	}
+	selected := v.p.Values
+	if !v.p.Multiple && v.p.Value != "" {
+		selected = []string{v.p.Value}
+	}
+	if !v.p.Multiple && v.p.Value == "" {
+		selected = nil
+	}
+	seen := map[string]bool{}
+	for _, value := range selected {
+		if !values[value] || seen[value] {
+			rt.Fault(ctx, fmt.Sprintf("ui.Select: selected value %q is absent or repeated", value))
+		}
+		seen[value] = true
+	}
 	v.n = frameN(ctx)
 	v.popups = popups(ctx)
 	v.popups.track(v.st, v.st.open, v.shut)
@@ -176,6 +207,9 @@ func newSelectView(st *SelectState, p SelectProps) *selectView {
 			return listOpt{id: id, value: it.Value, label: it.Label, disabled: it.Disabled}
 		})
 	for i, o := range v.opts {
+		if v.chosen < 0 && v.selected(i) {
+			v.chosen = i
+		}
 		if o.disabled {
 			continue
 		}
@@ -183,9 +217,6 @@ func newSelectView(st *SelectState, p SelectProps) *selectView {
 		// select.js finds the chosen among the options not disabled. ""
 		// is none, as the Props say, where select.js would show the
 		// first option when there is no placeholder.
-		if v.chosen < 0 && v.selected(i) {
-			v.chosen = i
-		}
 	}
 	if !st.open || st.active >= len(v.enabled) {
 		// refreshSelect: an active option that went away is none.
@@ -221,7 +252,7 @@ func (v *selectView) activeOpt() int {
 func (v *selectView) label() (string, bool) {
 	if v.p.Multiple {
 		var labels []string
-		for _, i := range v.enabled {
+		for i := range v.opts {
 			if v.selected(i) {
 				labels = append(labels, v.opts[i].label)
 			}
@@ -240,14 +271,20 @@ func (v *selectView) label() (string, bool) {
 // value is the hidden input's: the chosen value, or "".
 func (v *selectView) value() string {
 	if v.p.Multiple {
-		values := make([]string, 0)
-		for _, i := range v.enabled {
+		var values strings.Builder
+		values.WriteByte('[')
+		first := true
+		for i := range v.opts {
 			if v.selected(i) {
-				values = append(values, v.opts[i].value)
+				if !first {
+					values.WriteByte(',')
+				}
+				writeJSONText(&values, v.opts[i].value)
+				first = false
 			}
 		}
-		data, _ := json.Marshal(values)
-		return string(data)
+		values.WriteByte(']')
+		return values.String()
 	}
 	if v.chosen >= 0 {
 		return v.opts[v.chosen].value
@@ -310,7 +347,7 @@ func (v *selectView) choose(i int) {
 	o := v.opts[i]
 	if v.p.Multiple {
 		values := make([]string, 0)
-		for _, j := range v.enabled {
+		for j := range v.opts {
 			selected := v.selected(j)
 			if j == i {
 				selected = !selected

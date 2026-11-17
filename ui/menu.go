@@ -39,8 +39,9 @@ type MenuItem struct {
 	Keys  string
 	Group string
 	// Keywords are more words a Command's search finds the item by,
-	// separated by spaces or commas (data-keywords). A DropdownMenu has no
-	// search, and doesn't use them.
+	// separated by spaces or commas (data-keywords), case-insensitively, in
+	// addition to Label. Keys is display text, not a search keyword.
+	// A DropdownMenu has no search, and doesn't use Keywords.
 	Keywords string
 	Variant  Variant // Destructive, or Primary
 	Disabled bool
@@ -49,7 +50,9 @@ type MenuItem struct {
 	Role string
 	// Checked and OnCheckedChange control a checkbox or radio item. Radio
 	// items in the same rendered group are exclusive; selecting one calls
-	// the changed items' callbacks. Command ignores these fields.
+	// changed, enabled items' callbacks in item order. Choosing an item calls
+	// these callbacks before OnSelect, then closes the menu. Command ignores
+	// these fields.
 	Checked         bool
 	OnCheckedChange func(bool)
 	// OnSelect runs when the user chooses the item; the menu closes.

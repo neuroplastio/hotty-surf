@@ -3,6 +3,7 @@ package ui_test
 import (
 	"context"
 	"io"
+	"math"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -133,5 +134,39 @@ func TestModalBlocksBackgroundSliderDrag(t *testing.T) {
 	r.Update()
 	if value != 20 {
 		t.Fatalf("background drag changed value to %v", value)
+	}
+}
+
+func TestSliderInvalidNumbersAndAttrs(t *testing.T) {
+	f := &faults{T: t}
+	attrs := templ.Attributes{"aria-label": "Value", "id": "wrong", "data-keys": "home=field"}
+	slider := ui.Slider(ui.SliderProps{ID: "number", Min: 0, Max: 10, Value: math.NaN(), Attrs: attrs})
+	r := surftest.Start(f, surf.New("slider", slider, ui.Stylesheet()))
+	r.One(`#number-thumb[aria-valuenow="0"][aria-label="Value"]`)
+	if len(f.got) < 3 {
+		t.Fatalf("expected value and attribute faults: %v", f.got)
+	}
+	if attrs["id"] != "wrong" || attrs["data-keys"] != "home=field" {
+		t.Fatalf("mutated attrs: %v", attrs)
+	}
+	f2 := &faults{T: t}
+	ranged := ui.RangeSlider(ui.RangeSliderProps{ID: "range", Min: 0, Max: 10, Start: math.Inf(1), End: math.NaN(), StartAttrs: templ.Attributes{"aria-label": "Start"}, EndAttrs: templ.Attributes{"aria-label": "End"}})
+	r2 := surftest.Start(f2, surf.New("range", ranged, ui.Stylesheet()))
+	r2.One(`#range-start[aria-valuenow="0"]`)
+	r2.One(`#range-end[aria-valuenow="10"]`)
+	if len(f2.got) == 0 {
+		t.Fatal("nonfinite range did not fault")
+	}
+}
+
+func TestRangeSliderClampsInvalidValuesWithoutCallback(t *testing.T) {
+	f := &faults{T: t}
+	called := false
+	p := ui.RangeSliderProps{ID: "range", Min: 0, Max: 10, Start: 8, End: 2, StartAttrs: templ.Attributes{"aria-label": "Start"}, EndAttrs: templ.Attributes{"aria-label": "End"}, OnChange: func(float64, float64) { called = true }}
+	r := surftest.Start(f, surf.New("range", ui.RangeSlider(p), ui.Stylesheet()))
+	r.One(`#range-start[aria-valuenow="8"]`)
+	r.One(`#range-end[aria-valuenow="8"]`)
+	if len(f.got) == 0 || called {
+		t.Fatalf("faults=%v called=%v", f.got, called)
 	}
 }

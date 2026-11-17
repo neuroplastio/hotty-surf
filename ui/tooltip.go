@@ -20,7 +20,8 @@ type TooltipProps struct {
 	Class string
 }
 
-// Tooltip wraps its children with Basecoat's CSS tooltip. The tooltip is
-// shown on pointer hover; Basecoat hides it on keyboard focus alone, and
-// the cells rendition does not show it.
+// Tooltip wraps its children in a span with Basecoat's CSS tooltip. It is
+// shown on pointer hover, not keyboard focus, and cells does not show it.
+// It does not supply an accessible description: name or describe the
+// control separately. The wrapper can affect selectors and layout.
 func Tooltip(p TooltipProps) templ.Component { return tooltip(p) }

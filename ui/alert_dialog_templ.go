@@ -28,7 +28,8 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		checkEnum(ctx, "AlertDialog", "Size", p.Size, []string{"", "sm"})
+		checkAlertDialog(ctx, p)
+		checkSize(ctx, "AlertDialog", p.Size, cardSizes)
 		d := newDialogView(ctx, DialogProps{ID: or(p.ID, "alert-dialog"), Open: p.Open, OnClose: p.OnClose})
 		if p.Open {
 			body, err := d.body(ctx, children)
@@ -71,9 +72,9 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var4 string
-					templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.NewAttributeExpression(p.Size).Resolve(ctx)
+					templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Size)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 15, Col: 22}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 16, Col: 30}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 					if templ_7745c5c3_Err != nil {
@@ -92,7 +93,7 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.NewAttributeExpression(d.id + "-title").Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 18, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 19, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 					if templ_7745c5c3_Err != nil {
@@ -111,7 +112,7 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.NewAttributeExpression(d.id + "-description").Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 21, Col: 42}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 22, Col: 42}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 					if templ_7745c5c3_Err != nil {
@@ -179,7 +180,7 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templruntime.NewAttributeExpression(d.id + "-title").Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 28, Col: 29}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 29, Col: 29}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 					if templ_7745c5c3_Err != nil {
@@ -192,7 +193,7 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 28, Col: 41}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 29, Col: 41}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -211,7 +212,7 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.NewAttributeExpression(d.id + "-description").Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 31, Col: 34}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 32, Col: 34}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 					if templ_7745c5c3_Err != nil {
@@ -224,7 +225,7 @@ func alertDialog(p AlertDialogProps, children templ.Component) templ.Component {
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Description)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 31, Col: 52}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `alert_dialog.templ`, Line: 32, Col: 52}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
