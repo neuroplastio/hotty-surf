@@ -20,6 +20,13 @@ type kitState struct {
 	toasts ui.ToasterState
 }
 
+// labelled names an icon-only button, which has no text of its own: its
+// handlers' attributes, with its aria-label (kit rule K18).
+func labelled(a templ.Attributes, name string) templ.Attributes {
+	a["aria-label"] = name
+	return a
+}
+
 func (s *kitState) click()           { s.clicks++ }
 func (s *kitState) choose(v string)  { s.value = v }
 func (s *kitState) run(v string) func() { return func() { s.ran = v } }
@@ -103,7 +110,7 @@ templ buttonGhostWithIcon(s *kitState) {
 				@ui.Icon("plus", "")
 				New
 			}
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: surf.On(ctx, "settings", surf.Click(s.click), ) }) {
+			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: labelled(surf.On(ctx, "settings", surf.Click(s.click)), "Settings")}) {
 				@ui.Icon("settings-2", "")
 			}
 		</div>
@@ -155,7 +162,7 @@ templ buttonEvery(s *kitState) {
 				@ui.Button(ui.ButtonProps{Size: z, Variant: ui.Outline, Attrs: surf.On(ctx, "s-"+sizeName(z), surf.Click(s.click))}) {
 					{ sizeName(z) }
 				}
-				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click))}) {
+				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: labelled(surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click)), "Add ("+sizeName(z)+")")}) {
 					@ui.Icon("plus", "")
 				}
 			}
