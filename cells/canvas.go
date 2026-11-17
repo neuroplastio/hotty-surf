@@ -124,7 +124,7 @@ func sgr(l look) string {
 	if l&lBold != 0 {
 		s += ";1"
 	}
-	if l&lDim != 0 {
+	if l&(lDim|lMuted|lRule) != 0 {
 		s += ";2"
 	}
 	if l&lItalic != 0 {

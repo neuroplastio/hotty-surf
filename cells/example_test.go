@@ -2,6 +2,8 @@ package cells_test
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
@@ -40,13 +42,22 @@ func ExampleNew() {
 func ExampleScreen_Cells() {
 	c := cells.New(80, 24, nil)
 	theme := map[cells.Role]string{"primary": "#7aa2f7", "destructive": "#f7768e"}
+	paint := func(r cells.Role) (colour string, pct int) {
+		name, p, tinted := strings.Cut(string(r), "/")
+		pct = 100
+		if tinted {
+			pct, _ = strconv.Atoi(p)
+		}
+		return theme[cells.Role(name)], pct // "" for the terminal's own
+	}
 	for y, row := range c.Cells() {
 		for x, cell := range row {
 			if cell.Text == "" {
 				continue // a wide character's second cell
 			}
-			fg, bg := theme[cell.Fg], theme[cell.Bg] // "" for the terminal's own
-			_, _, _, _ = x, y, fg, bg
+			fg, _ := paint(cell.Fg)
+			bg, alpha := paint(cell.Bg) // a tint: alpha percent over the ground
+			_, _, _, _, _ = x, y, fg, bg, alpha
 		}
 	}
 }

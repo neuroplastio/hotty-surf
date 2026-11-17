@@ -208,7 +208,7 @@ func (l *layout) figure(n *html.Node, x, y, w int, in inh) (h, used int, ok bool
 		rh := max(pxRows(styleValue(n, "height")), 1)
 		for r := range rh {
 			for c := range cw {
-				l.put(x+c, y+r, "░", in.look|lDim, n)
+				l.put(x+c, y+r, "░", in.look|lMuted, n)
 			}
 		}
 		return rh, cw, true
@@ -217,7 +217,7 @@ func (l *layout) figure(n *html.Node, x, y, w int, in inh) (h, used int, ok bool
 	case n.DataAtom == atom.Li && attr(n, "role") == "presentation" &&
 		closest(n, func(a *html.Node) bool { return tokens(a, "class", "breadcrumb") }) != nil &&
 		textOf(n) == "":
-		l.put(x, y, "›", in.look|lDim, n)
+		l.put(x, y, "›", in.look|lMuted, n)
 		return 1, 1, true
 	}
 	return 0, 0, false
@@ -319,7 +319,7 @@ func (l *layout) bar(n *html.Node, x, y, w int, in inh) int {
 		if i < full {
 			l.put(x+i, y, "█", in.look, n)
 		} else {
-			l.put(x+i, y, "░", in.look|lDim, n)
+			l.put(x+i, y, "░", in.look|lMuted, n)
 		}
 	}
 	return 1
@@ -371,7 +371,7 @@ func (l *layout) chart(n *html.Node, x, y, w int, in inh) (h, used int, ok bool)
 				cx := x
 				if si == 0 {
 					for _, ch := range charsOf(label) {
-						l.put(cx, y+h, ch.s, in.look|lDim, n)
+						l.put(cx, y+h, ch.s, in.look|lMuted, n)
 						cx += ch.w
 					}
 				}
@@ -385,7 +385,7 @@ func (l *layout) chart(n *html.Node, x, y, w int, in inh) (h, used int, ok bool)
 					cx++
 				}
 				for _, r := range " " + strconv.FormatFloat(m.vs[0], 'f', -1, 64) {
-					l.put(cx, y+h, string(r), in.look|lDim, n)
+					l.put(cx, y+h, string(r), in.look|lMuted, n)
 					cx++
 				}
 				used = max(used, cx-x)
@@ -412,7 +412,7 @@ func (l *layout) chart(n *html.Node, x, y, w int, in inh) (h, used int, ok bool)
 				cx++
 			}
 			for _, r := range " " + strconv.FormatFloat(m.vs[0], 'f', -1, 64) {
-				l.put(cx, y+h, string(r), in.look|lDim, n)
+				l.put(cx, y+h, string(r), in.look|lMuted, n)
 				cx++
 			}
 			used = max(used, cx-x)
