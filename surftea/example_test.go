@@ -65,7 +65,9 @@ func (m *model) View() tea.View {
 
 func ExampleNew() {
 	sess := hottytea.New()
-	m := &model{sess: sess, files: surftea.New(surf.New("files", page, ui.Stylesheet()), sess)}
+	s := surf.New("files", page, "")
+	s.Link(ui.Sheet()) // the kit's sheet, sent once rather than in every document
+	m := &model{sess: sess, files: surftea.New(s, sess)}
 	p := tea.NewProgram(m, tea.WithOutput(sess.WatchFile(os.Stdout)))
 	sess.Attach(p.Send)
 	p.Run()

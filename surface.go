@@ -150,9 +150,9 @@ type Sheet struct {
 // a=res, once per Attach: before the next document Document returns, so a
 // program that sends that document on the same writer has the sheet
 // there first; after the host drops its resources, Attach again. When the
-// host's caps leave no room for it (limits.message or limits.resources
-// smaller than the CSS), the surface writes the CSS into the document as
-// it does New's css, and records a fault. A sheet without CSS is the
+// host's caps leave no room for it (limits.resources, limits.message), the
+// surface writes the CSS into the document as New's css, and records a
+// fault. A sheet without CSS is the
 // program's to send. Each Link replaces the sheets an earlier one gave;
 // Link() with none links none. Link before the first Document; a later
 // Link takes effect at the next Document.
@@ -162,8 +162,8 @@ func (s *Surface) Link(sheets ...Sheet) {
 
 // Document renders the view and returns the whole document, its stylesheet
 // and its body, for the program to send as the surface's document. When
-// the surface links a sheet with CSS it hasn't sent since Attach (Link),
-// Document first writes it (a=res) to Attach's writer. The
+// the surface links a sheet with CSS it hasn't sent since Attach, Document
+// first writes it (a=res) to Attach's writer. The
 // deltas that follow are written against it, so the program sends every
 // Document it takes. It takes one again whenever the host may not hold the
 // document as it was sent: it lost it, or it refused a delta (an error reply

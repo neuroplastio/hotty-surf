@@ -1,9 +1,5 @@
 package main
 
-import (
-	"neuroplast.io/hotty-surf/ui"
-)
-
 // File is one of the made-up files the program lists.
 type File struct {
 	Name, Kind, Size string
@@ -33,5 +29,7 @@ func (a *App) file() *File { return &a.Files[a.Sel] }
 func (a *App) SetNote(v string) { a.file().Note = v }
 func (a *App) Star()            { a.file().Stars++ }
 
-// CSS is the surface's stylesheet: the kit's.
-var CSS = ui.Stylesheet()
+// CSS is the surface's own stylesheet: none. The kit's is linked, not
+// carried (newModel's s.Link(ui.Sheet())): sent once rather than in every
+// document.
+var CSS = ""

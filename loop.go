@@ -712,6 +712,8 @@ func (s *Surface) sendSheets() error {
 			continue
 		}
 		if limit, n := s.overLimit(sh); limit != "" {
+			// Not sent: the document carries it. Marked all the same, so
+			// that the fault is recorded once per Attach.
 			s.fault(fmt.Sprintf("surf: the sheet %q (%d bytes) is past the host's limits.%s (%d): the document carries it", sh.ID, len(sh.CSS), limit, n))
 			continue
 		}
@@ -733,17 +735,24 @@ func (s *Surface) sendSheets() error {
 
 // overLimit names the host's limit a sheet with CSS is past, and the
 // limit: a resource is one message (SPEC §7.1, §13), within the quota.
+// limits.message counts the whole decoded message, the command's keys
+// with the CSS, so the sheet must leave resMargin under it.
 func (s *Surface) overLimit(sh Sheet) (string, int) {
 	if sh.CSS == "" {
 		return "", 0
 	}
-	for _, k := range []string{"message", "resources"} {
-		if n := s.limits[k]; n > 0 && len(sh.CSS) > n {
-			return k, n
-		}
+	if n := s.limits["message"]; n > 0 && len(sh.CSS)+resMargin > n {
+		return "message", n
+	}
+	if n := s.limits["resources"]; n > 0 && len(sh.CSS) > n {
+		return "resources", n
 	}
 	return "", 0
 }
+
+// resMargin is room for an a=res command's keys (a, id, type) beside its
+// payload: more than an ID of a few hundred bytes needs.
+const resMargin = 1024
 
 // firstFocusable is the id of the first element under n, in tree order,
 // that a click gives the keyboard to and that is drawn; "" if none is.

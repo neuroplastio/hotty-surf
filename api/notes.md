@@ -1953,8 +1953,12 @@ Measured on examples/hello (bytes written, hotty-go's encoding):
 | kit linked | 32,907 | 1,279 |
 
 1 surface, 3 full sends: 101,721 → 36,744. 10 surfaces, 3 full sends
-each: 1,017,210 → 71,277. TinyGo release wasm of hello (crypto/sha256
-is new): 2,258,207 → 2,264,552 raw, 724,217 → 725,272 gzip -9n.
+each: 1,017,210 → 71,277. TinyGo release wasm of hello, on v07
+cf1cb8f: 2,267,015 → 2,274,821 raw (+7,806), 726,158 → 728,008 gzip -9n
+(+1,850). The ID's hash is little of that: with crypto/sha256 in place of
+FNV-1a the same build is 2,275,330 raw, 728,195 gzip, so FNV-1a saves 509
+bytes raw, 187 gzip; the rest is Link and Sheet themselves. (The draft's
++6,345 was all of Link, not sha256's.)
 
 Questions for the review:
 
@@ -1985,4 +1989,14 @@ on Link. Applied:
 - **TinyGo.** FNV-1a inline in place of crypto/sha256 (ui.Sheet's test
   checks it against hash/fnv).
 - **Examples.** Every one, the scaffold and the book link the kit through
-  `newSurface` in its css.go.
+  `newSurface` in its css.go; surftea's commits and files examples and its
+  Example link it where they make the surface.
+
+Verified (verify-sheet.md, p-801), fixes applied: v07 merged in (notes
+and reasons a union); the scaffold's css.go imports in gofmt's order,
+kept so by TestScaffoldIsFormatted over every rendered Go template;
+Document's and Link's sentences word for word as the review wrote them;
+surftea's examples on Link. Also: limits.message counts the whole
+decoded message, so a sheet must leave resMargin (1 KiB) under it for
+the command's keys; the over-limit sheet is marked sent so that its
+fault is recorded once per Attach (commented).
