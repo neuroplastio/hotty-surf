@@ -1025,6 +1025,34 @@ scrollbar classes and Avatar's image for the looks pass.
   paths to the source (icons_gen.go, 4.7 KB to 15.8 KB), and so to every
   binary that links ui (K13: no import, but the size is noted here).
   `line-through` joined the kit's utilities, for a done task.
+- **Chart, from L5** (a dashboard; one name, the rest docs and a fix).
+  Chart is approved (B2), so this asks the reviewer:
+  - **`ChartProps.Aspect float64`** (new): the plot's width over its
+    height, 0 for 16:9. The plot was always 16:9 of its width,
+    undocumented, so a chart across two thirds of a screen was 650 px
+    tall. The svg's box and the .chart box's aspect-ratio follow it. A
+    class can't do it, since the svg would letterbox. Below 0 is a fault.
+    The other way would be a Height in rows or px. The plot's height
+    follows its width, as Basecoat's does, so an aspect keeps that.
+  - **Sparse labels: docs, no name.** A label may be "": nothing is
+    written under its point, as a month by day labels every fifth day.
+    L5 found this works, but it was undocumented. A step field
+    (`LabelEvery`) would be the alternative. The lean is the doc, since
+    the app chooses its own labels and keeps them for its text.
+  - **A narrow chart: fixed, no name.** The plot box was as wide as the
+    svg's own width at least, and each label as wide as the longest, so
+    a bar chart in a narrow card spilled past it. The box is now
+    `min-width: 0`, and each label is cut with "…" in its share
+    (`overflow: hidden; text-overflow: ellipsis`, proven CSS). chart/narrow
+    matches in Blitz and Chromium.
+  - **Docs:** Chart's doc says how a test reads its values (each bar's
+    and slice's `data-value`, each line's `data-values`, e.g.
+    `rect[data-value=676]`). Aspect's doc says the plot is 16:9 by
+    default and that its height follows its width.
+  - **A stat (KPI) card: a story, no component.** Neither Basecoat nor
+    shadcn has one (shadcn's dashboard writes Card, Badge and an icon).
+    card/stat shows a label, a number and a change badge with
+    trending-up or trending-down, both added to the icon set.
 - **Fixed on the way:** DropdownMenu, Select and Popover made their
   view when called, not when rendered. A component made once and
   rendered many times read its state as it was when made, so a menu

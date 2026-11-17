@@ -5,15 +5,15 @@ templ chart(p ChartProps) {
 	{{ checkChart(ctx, p) }}
 	{{ checkAttrs(ctx, "Chart", p.Attrs, "class", "data-slot", "role") }}
 	<div data-slot="chart" role="figure" class={ join("grid gap-2", p.Class) } { p.Attrs... }>
-		<div class="chart">
-			<svg class="size-full" viewBox="0 0 640 360" aria-hidden="true">
+		<div class="chart" style={ chartRatio(p) }>
+			<svg class="size-full" viewBox={ chartBox(p) } aria-hidden="true">
 				@chartPlot(p)
 			</svg>
 		</div>
 		if p.Type != "pie" && len(p.Labels) > 0 {
-			<div class="flex text-xs text-muted-foreground" aria-hidden="true">
+			<div class="flex text-xs text-muted-foreground" style="min-width: 0; overflow: hidden;" aria-hidden="true">
 				for _, l := range p.Labels {
-					<span class="flex-1 text-center">{ l }</span>
+					<span class="flex-1 text-center" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{ l }</span>
 				}
 			</div>
 		}

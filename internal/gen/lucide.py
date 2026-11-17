@@ -20,8 +20,8 @@ folder-open folder-plus git-branch globe hand heart house image inbox
 info layout-grid link list lock lock-open log-in log-out mail menu
 message-square minus moon panel-left paperclip pause pencil play plus
 refresh-cw save search send settings settings-2 share-2 sparkles square
-star sun tag terminal timer trash trash-2 triangle-alert upload user
-user-plus users x
+star sun tag terminal timer trash trash-2 trending-down trending-up
+triangle-alert upload user user-plus users x
 """.split()
 
 src, out, names = sys.argv[1], sys.argv[2], ICONS + sys.argv[3:]

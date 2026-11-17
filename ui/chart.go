@@ -18,7 +18,10 @@ type ChartProps struct {
 	// fails any other.
 	Type string
 	// Labels are the categories, one per value of each series, written
-	// under the bars or the line's points; a pie's slices.
+	// under the bars or the line's points; a pie's slices. A label may be
+	// "": nothing is written under its point, as a month of days labels
+	// every fifth. Each has an equal share of the width, and one wider is
+	// cut with "…".
 	Labels []string
 	// Series are the data: one or more for bars and lines, one for a pie
 	// (its slices, one per label). Each has as many values as Labels;
@@ -30,6 +33,11 @@ type ChartProps struct {
 	// they are its categories, as bars write theirs under the plot. Legend
 	// changes nothing there.
 	Legend bool
+	// Aspect is the plot's width over its height: 0 is Basecoat's 16:9
+	// (aspect-video), 3 a short, wide plot for a dashboard's row. The plot
+	// takes its width from its box and its height from that, so a chart
+	// in a narrow column is short. surftest fails one below 0.
+	Aspect float64
 	// Attrs are more attributes for the div element: its id and handlers,
 	// through surf.On, and any other but those the component writes itself
 	// (class, data-slot or role), which are a fault here. A chart is named
@@ -54,7 +62,11 @@ type ChartSeries struct {
 //
 // It shows no values: Basecoat's y axis has no ticks and gives values by
 // its tooltip, which a still plot hasn't. A tooltip comes back as
-// ChartState, Chart(st, p), a MINOR break as Tabs' would be.
+// ChartState, Chart(st, p), a MINOR break as Tabs' would be. The values
+// are in the markup, for a host that draws no SVG and for a test: each
+// bar's <rect> and each slice has data-value, and each line's <polyline>
+// data-values, its values in order, space-separated (surftest:
+// "rect[data-value=676]").
 //
 //	@ui.Chart(ui.ChartProps{Labels: []string{"Jan", "Feb", "Mar"},
 //		Series: []ui.ChartSeries{{Label: "Desktop", Values: []float64{186, 305, 237}}},
@@ -65,13 +77,38 @@ func Chart(p ChartProps) templ.Component {
 
 var chartTypes = []string{"", "bar", "line", "pie"}
 
-// The plot's box: Basecoat's .chart is 16:9 (aspect-video). Its strokes
-// scale with it, as Blitz applies no vector-effect (vault/knowledge/
-// blitz-gaps.md), so none is a hairline.
-const chartW, chartH = 640.0, 360.0
+// The plot's box is chartW wide and chartW/Aspect high: Basecoat's .chart
+// is 16:9 (aspect-video). Its strokes scale with it, as Blitz applies no
+// vector-effect (vault/knowledge/blitz-gaps.md), so none is a hairline.
+const chartW = 640.0
+
+// chartH is the plot's height in its box.
+func chartH(p ChartProps) float64 {
+	if p.Aspect > 0 && !math.IsInf(p.Aspect, 0) {
+		return chartW / p.Aspect
+	}
+	return 360
+}
+
+// chartBox is the svg's viewBox.
+func chartBox(p ChartProps) string { return "0 0 " + num(chartW) + " " + num(chartH(p)) }
+
+// chartRatio is the .chart box's style: its aspect-ratio, when Aspect
+// isn't the default's.
+func chartRatio(p ChartProps) templ.SafeCSS {
+	// min-width 0: the plot takes the width it is given, never the svg's
+	// own, so a narrow column cuts the labels, not the card.
+	if p.Aspect <= 0 || math.IsInf(p.Aspect, 0) || math.IsNaN(p.Aspect) {
+		return "min-width: 0;"
+	}
+	return templ.SafeCSS("min-width: 0; aspect-ratio: " + num(chartW) + " / " + num(chartH(p)) + ";")
+}
 
 // checkChart faults data the plot can't draw.
 func checkChart(ctx context.Context, p ChartProps) string {
+	if p.Aspect < 0 || math.IsNaN(p.Aspect) || math.IsInf(p.Aspect, 0) {
+		rt.Fault(ctx, fmt.Sprintf("ui.Chart: Aspect %v (a width over a height, or 0 for 16:9)", p.Aspect))
+	}
 	if p.Type == "pie" && len(p.Series) != 1 {
 		rt.Fault(ctx, fmt.Sprintf("ui.Chart: a pie has one series, not %d", len(p.Series)))
 	}
@@ -136,7 +173,7 @@ func chartPlot(p ChartProps) templ.Component {
 		switch p.Type {
 		case "pie":
 			if len(p.Series) > 0 {
-				piePlot(&b, p.Series[0].Values)
+				piePlot(&b, p.Series[0].Values, chartH(p))
 			}
 		default:
 			barPlot(&b, p)
@@ -159,7 +196,7 @@ func barPlot(b *strings.Builder, p ChartProps) {
 	if hi == lo {
 		hi = lo + 1
 	}
-	const top, bottom = 8.0, chartH - 2
+	top, bottom := 8.0, chartH(p)-2
 	y := func(v float64) float64 { return bottom - (v-lo)/(hi-lo)*(bottom-top) }
 	for i := range 5 {
 		gy := top + float64(i)*(bottom-top)/4
@@ -191,7 +228,7 @@ func barPlot(b *strings.Builder, p ChartProps) {
 }
 
 // piePlot draws a pie's slices, from the top, clockwise.
-func piePlot(b *strings.Builder, vs []float64) {
+func piePlot(b *strings.Builder, vs []float64, h float64) {
 	sum := 0.0
 	for _, v := range vs {
 		sum += v
@@ -199,7 +236,7 @@ func piePlot(b *strings.Builder, vs []float64) {
 	if sum <= 0 {
 		return
 	}
-	const cx, cy, r = chartW / 2, chartH / 2, chartH/2 - 4
+	cx, cy, r := chartW/2, h/2, min(chartW, h)/2-4
 	a := -math.Pi / 2
 	for i, v := range vs {
 		if v <= 0 {

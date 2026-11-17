@@ -66,9 +66,9 @@ var kitCSS string
 // message-square, minus, moon, panel-left, paperclip, pause, pencil, play,
 // plus, refresh-cw, save, search, send, settings, settings-2, share-2,
 // sparkles, square, star, sun, tag, terminal, timer, trash, trash-2,
-// triangle-alert, upload, user, user-plus, users and x. Another name is a
-// fault. In a button or a badge the kit sizes it; class is for the app's own
-// (one its stylesheet has), or "".
+// trending-down, trending-up, triangle-alert, upload, user, user-plus, users
+// and x. Another name is a fault. In a button or a badge the kit sizes it;
+// class is for the app's own (one its stylesheet has), or "".
 func Icon(name, class string) templ.Component {
 	return icon(name, class)
 }

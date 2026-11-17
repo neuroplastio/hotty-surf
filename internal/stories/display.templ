@@ -47,6 +47,9 @@ func init() {
 	add(Story{ID: "chart/line", Doc: "A line chart of two series", View: show(chartLine)})
 	add(Story{ID: "chart/pie", Doc: "A pie of five slices, its labels beside their colours", View: show(chartPie)})
 	add(Story{ID: "chart/legend", Doc: "Bar charts of two series and of one, with their legends", View: show(chartLegend)})
+	add(Story{ID: "chart/wide", Doc: "A short, wide line chart of a month by day (Aspect 3), labelled every fifth day", View: show(chartWide)})
+	add(Story{ID: "chart/narrow", Doc: "A bar chart in a narrow card: its long labels are cut, not widening it", View: show(chartNarrow)})
+	add(Story{ID: "card/stat", Doc: "Cards as a dashboard's stats: a label, a number and its change (Card, Badge and Icon)", View: show(cardStat)})
 	add(Story{ID: "empty/default", Doc: "An empty state with a title, a description and a button", View: show(emptyDefault)})
 	add(Story{ID: "empty/with-icon", Doc: "An empty state with an icon", View: show(emptyWithIcon)})
 	add(Story{ID: "item/default", Doc: "An item with an icon, a title, a description and a button", View: show(itemDefault)})
@@ -189,6 +192,73 @@ templ chartLegend(s *displayState) {
 	<div class="p-4 max-w-md grid gap-4">
 		@ui.Chart(ui.ChartProps{Labels: months, Series: visits, Legend: true, Attrs: named("Visitors by month")})
 		@ui.Chart(ui.ChartProps{Type: "bar", Labels: months, Series: visits[:1], Legend: true, Attrs: named("Desktop visitors by month")})
+	</div>
+}
+
+// days are a month by day, labelled every fifth: "" writes no label.
+var days, sales = func() ([]string, []float64) {
+	var ls []string
+	var vs []float64
+	for d := 1; d <= 30; d++ {
+		l := ""
+		if d == 1 || d%5 == 0 {
+			l = fmt.Sprint(d)
+		}
+		ls = append(ls, l)
+		vs = append(vs, float64(40+(d*37)%55+d))
+	}
+	return ls, vs
+}()
+
+templ chartWide(s *displayState) {
+	<div class="p-4">
+		@ui.Chart(ui.ChartProps{Type: "line", Aspect: 3, Labels: days,
+			Series: []ui.ChartSeries{{Label: "Orders", Values: sales}}, Attrs: named("Orders by day")})
+	</div>
+}
+
+templ chartNarrow(s *displayState) {
+	<div class="p-4" style="width: 16rem;">
+		@ui.Card(ui.CardProps{Size: ui.Small}) {
+			<header>
+				<h2>By channel</h2>
+			</header>
+			<section>
+				@ui.Chart(ui.ChartProps{Labels: []string{"Shop", "Marketplace", "Wholesale", "Fairs"},
+					Series: []ui.ChartSeries{{Label: "Orders", Values: []float64{412, 676, 233, 98}}}, Attrs: named("Orders by channel")})
+			</section>
+		}
+	</div>
+}
+
+// stat is one of card/stat's cards.
+templ stat(label, value, change string, up bool) {
+	<div style="flex: 1 1 12rem;">
+		@ui.Card(ui.CardProps{Size: ui.Small}) {
+			<header>
+				<p>{ label }</p>
+				<h2 class="text-xl font-semibold">{ value }</h2>
+			</header>
+			<footer class="flex flex-row items-center gap-2 text-sm">
+				@ui.Badge(ui.BadgeProps{Variant: ui.Outline}) {
+					if up {
+						@ui.Icon("trending-up", "")
+					} else {
+						@ui.Icon("trending-down", "")
+					}
+					{ change }
+				}
+				<span class="text-muted-foreground">from last month</span>
+			</footer>
+		}
+	</div>
+}
+
+templ cardStat(s *displayState) {
+	<div class="p-4 flex flex-row flex-wrap gap-4">
+		@stat("Revenue", "$12,480", "+12.5%", true)
+		@stat("Orders", "1,419", "+4.1%", true)
+		@stat("Returns", "23", "-8.0%", false)
 	</div>
 }
 

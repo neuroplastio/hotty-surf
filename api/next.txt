@@ -176,6 +176,7 @@ pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct
+pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Aspect float64
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Labels []string
