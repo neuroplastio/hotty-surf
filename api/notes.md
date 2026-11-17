@@ -2525,3 +2525,145 @@ Open, for review:
   "Dismiss", absolute at the top right, the content padded clear of it.
   A click runs OnClose and closes nothing. TestToastOnClose; the story
   uses it. Sent to p-796 for a look at its name and doc.
+
+## L5: Clicks and Refocus (plx's G-click-count and G-focus-now)
+
+plx's palette slice has two root-package gaps.
+
+**G-click-count.** A palette row selects on a click and runs on a double
+click. `hotty.Event.Count` exists, and hosts and cells.Screen send it
+(cells counts clicks on one element within 500 ms), but `surf.Click`
+takes `func()`. The pack:
+
+- `surf.Clicks(fn func(count int)) Handler`: Click with the count, 1 for
+  a click or for Enter or space, 2 for a double click's second, and so
+  on. A double click arrives as a click, then a click with count 2, so a
+  row hears both (select, then run).
+- It is stored as the element's Click, reading the count the surface puts
+  on the frame while the click's handler runs. Kit components that wrap
+  an element's Click (ListItem's selection) keep working with Clicks.
+- Click and Clicks on one element are a fault.
+
+**G-focus-now.** The palette's query asks for the keyboard on every
+frame (Autofocus), which moves it only when the asked element changes.
+Tab leaves the query for an invisible stop whose Focus handler gives Tab
+to plx's keymap; the query must have the keyboard back in that same
+frame. plx's stand-in renders once without Autofocus, then once with it,
+through Do.
+
+- `surf.Refocus(ctx, id)`: Autofocus that moves the keyboard though the
+  frame before asked for the same element, unless the element has it
+  already. Asked in the render after the stop's Focus, it goes out in the
+  same event's frame. Asked on every render it would trap the keyboard;
+  its doc says to ask only in the render that should move it.
+
+Questions for the review:
+
+1. The gap row's other route is Tab on the field itself: a KeyScope
+   or data-keys taking `tab=program` on a text field, so no stops are
+   needed. B3 reserved Tab and Shift+Tab from KeyScope (focus traversal
+   is the host's). Refocus keeps that reservation; is it the one to take,
+   or does the maintainer want Tab takeable on a field instead?
+2. `Clicks(func(n int))` or a `Click` taking an event struct (count,
+   mods)? Mods aren't asked for; the narrow shape reads as Click does.
+3. surftest's Rig has no DoubleClick (the tests feed the count as events).
+   Add `Rig.DoubleClick(sel)`, a new name, now or when an app's test
+   needs it?
+
+Reviewed (p-796, ~/.cache/hotty-surf-l5/review-clicks.md): both names
+approved. The questions were settled as: keep Tab reserved (Refocus is
+the route); keep the narrow `func(count int)`; add `Rig.DoubleClick(sel)`
+now. Applied:
+
+- `surftest.Rig.DoubleClick(sel)`, on the test host's DoubleClick (count
+  1, then 2, each a press and a release). TestClicks uses it.
+- Refocus's doc gives the pattern (a handler sets a flag, the view asks
+  once and clears it) and what asking on every render does.
+- Clicks' doc says each click of a double click has its own press and
+  release, so a Drag on the element hears them as usual.
+- The fault reads "(Click or Clicks)": two Clicks fault too.
+
+The caret risk, recorded (not a surf change). Where a text field's caret
+goes when the program focuses it (SPEC §10.1 doesn't say):
+
+- The test host and cells.Screen: at the end on the first focus, and
+  where it was after Tab and Refocus (TestRefocusCaretVector: "query",
+  x, Tab, y gives "queryxy").
+- hotty-blitz v0.8.9 (a probe on its Host, not committed there): a=focus
+  keeps the caret and the selection, as a browser's focus() does. On a
+  first focus the caret is at the end. A caret at 2 stays at 2 through
+  Tab and a=focus, and a typed x gives "quxery". A selection 1..4 stays
+  selected, and a typed x replaces it ("qxy").
+- So no host selects all or moves the caret to the start. A SPEC note
+  ("a=focus keeps a field's selection") would make it a rule; that is
+  the maintainer's.
+
+A cells gap found on the way: cells.Screen's Tab order takes only the
+elements its layout drew, so an empty `<span tabindex="0">` (plx's
+invisible stops) is skipped, and Tab from the query blurs. A browser
+and the hosts tab to it. plx draws its cells palette itself, so it
+doesn't block plx now; it goes to cells' owner.
+
+## plx: which overlays are open (the menu lease, a pack of its own)
+
+plx's SDK hands the keyboard to a tool while the tool's menu is open (its
+"menu lease"). It does so today for its own overlay menu. It needs the
+same for the kit's popups, which only the kit opens and closes: a
+ContextMenu's press, a Select's trigger, Escape, a click outside, one
+popup closing another.
+
+**Shape: `func (s *Surface) Overlays() []string`,** a query like Focused and
+Chars. It gives the ids of the kit's overlays open in the last frame
+rendered (by any call that renders: Document, Update, Event, Key, Focus,
+Blur): the modals outermost first (`rt.Frame.Modal`, as the runtime
+already keeps them), then the one popup.
+
+Inside:
+- A kit popup's render already joins the surface's popup record (one open
+  at a time). The record now keeps the open popup's ID and the frame that
+  drew it.
+- Once the view has rendered, the frame lists the popup the record holds,
+  if this frame drew it (`rt.Frame.Popups`). A popup dropped from the view
+  while open is open nowhere.
+- No new state for modals: Dialog, AlertDialog, Drawer and CommandDialog
+  already list themselves.
+
+Tests:
+- `ui.TestSurfaceOverlays`: each kind, one closing another, Escape, a click
+  outside, a popup dropped from the view, a menu in a dialog.
+- `TestSurfaceOverlaysFirstDocument`: a popover its State opened.
+- `cells.TestOverlaysInCells`.
+- `ExampleSurface_Overlays`: the driver's read between Update and its write.
+
+Open questions, with a lean:
+1. **A query, not an event (lean).** plx's frame loop collects a frame's
+   hotty commands in its own buffer, sends the lease (a Call, acknowledged
+   before the menu reaches the host), then writes. A query read after
+   Update is therefore early enough. A hook run between render and write
+   (`OnOpen(func([]string))`) would serve a driver that writes straight
+   to the pty, but it would be a second name for the same fact, and a
+   callback the Surface runs mid-send. Add one only if a driver needs it.
+2. **Modals included (lean).** Command's list is a CommandDialog, which
+   is a modal, and plx's SDK can't see a tool's Open props. If the kit's
+   modal should not take the lease, `Open` could keep popups only, and
+   modals would wait for an ask of their own.
+3. **What isn't an overlay here:**
+   - `ui.Menu`: the app's own panel, which the app shows itself.
+   - Tooltip: takes no keys.
+   - Toaster: not modal, and takes the keyboard only as any element
+     does.
+   - A native `<select>`'s open list: the host's, which never reaches
+     the program. Not to be added.
+4. **Ids are the components' IDs** (their defaults when ID is ""), the
+   names the app gave, not element ids.
+5. **The name.** `Open` was plx's ask.
+
+As reviewed (p-796, review-open.md):
+- **The name is `Overlays`.** On Surface, a bare verb acts (Focus, Blur,
+  Update, Do), and a query is a noun or a participle (Focused, Chars,
+  Name, Pending), so `Open()` read as "open it".
+- **The doc** names every call that renders. It adds that an overlay
+  opened in its State but not rendered is not open. It drops "gives the
+  keyboard to the surface", which is the driver's policy.
+- **Q1–Q4 as leaned.** plx's port: `if len(s.Overlays()) > 0 { name =
+  s.Name() }`.

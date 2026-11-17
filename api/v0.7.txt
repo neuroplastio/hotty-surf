@@ -9,6 +9,7 @@ pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
+pkg neuroplast.io/hotty-surf, func Clicks(func(int)) Handler
 pkg neuroplast.io/hotty-surf, func Drag(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Drop(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Focus(func(bool)) Handler
@@ -20,6 +21,7 @@ pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
+pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
@@ -32,6 +34,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Focus() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Focused() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
+pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
 pkg neuroplast.io/hotty-surf, type Chars uint8
@@ -129,6 +132,7 @@ pkg neuroplast.io/hotty-surf/surftest, func Size(int, int) Option
 pkg neuroplast.io/hotty-surf/surftest, func Start(testing.TB, *surf.Surface, ...Option) *Rig
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Checked(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Click(string)
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DoubleClick(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Drag(string, string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DragStep(string, string, int, int)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Find(string) []*html.Node
