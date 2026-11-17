@@ -63,9 +63,8 @@ func TestListByKeyboard(t *testing.T) {
 	if a.ID != visible[len(visible)-1].ID() {
 		t.Fatalf("end showed %q", a.ID)
 	}
-	pane := r.One("section#book-cells")
-	if c := attrOf(pane.Attr, "class"); !strings.Contains(" "+c+" ", " hidden ") {
-		t.Fatalf("the pane isn't hidden from cells: class %q", c)
+	if len(r.Find("#book-cells")) != 0 {
+		t.Fatal("cells rendition is visible before it is selected")
 	}
 }
 
@@ -103,6 +102,21 @@ func TestBookInspection(t *testing.T) {
 	}
 	if html := a.storyHTML(); !strings.Contains(html, "Apply") {
 		t.Fatalf("HTML tab has no current label: %s", html)
+	}
+}
+
+func TestRenditionsShareStoryState(t *testing.T) {
+	a := New()
+	a.show("button/default")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#save")
+	r.Key("r")
+	if !a.Cells || !strings.Contains(paneText(a), "clicks: 1") {
+		t.Fatalf("cells=%v; pane=%q", a.Cells, paneText(a))
+	}
+	r.Key("r")
+	if a.Cells || !strings.Contains(r.HTML(), "clicks: 1") {
+		t.Fatal("hotty rendition did not retain the story state")
 	}
 }
 
@@ -215,6 +229,7 @@ func TestTabPastThePaneGoesToTheList(t *testing.T) {
 func TestNoControlsNoTab(t *testing.T) {
 	a := New()
 	a.show("chart/bar")
+	a.setRendition(true)
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
 	if a.cur.controls {
 		t.Fatal("chart/bar has controls")

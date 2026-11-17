@@ -63,15 +63,26 @@
 .book-reset {
   margin-left: auto;
 }
-.book-previews {
+.book-preview-area {
   flex: 1 1 auto;
   min-height: 12rem;
-  flex-wrap: wrap;
-  padding: 1.5rem;
 }
-.book-html {
-  flex: 1 1 0;
-  min-width: 20rem;
+.book-renditions {
+  border-bottom: var(--hotty-px) solid var(--border);
+  padding: 0.25rem 0.75rem;
+}
+.book-renditions button {
+  background: transparent;
+  border: 0;
+  padding: 0.25rem 0.5rem;
+  color: var(--muted-foreground);
+}
+.book-renditions button[aria-selected="true"] {
+  color: var(--foreground);
+  border-bottom: calc(2 * var(--hotty-px)) solid var(--foreground);
+}
+.book-preview {
+  padding: 1.5rem;
 }
 .book-panel {
   padding: 0.75rem;
@@ -132,17 +143,12 @@
   gap: 0.5rem;
   align-items: center;
 }
-/* cells reads the hidden class and leaves the pane out; a host shows it. */
-.book-cells.hidden {
-  display: flex;
-  flex: 0 0 auto;
-}
 .book-pane {
   font-family: var(--hotty-font);
   font-size: 1rem;
   line-height: var(--hotty-cell-h);
   white-space: pre;
-  width: calc(56 * var(--hotty-cell-w));
+  width: 100%;
   box-shadow: inset 0 0 0 var(--hotty-px) var(--border);
   outline: 0;
 }

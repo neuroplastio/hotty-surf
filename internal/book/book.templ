@@ -9,7 +9,7 @@ import (
 
 // View is the storybook's list, live preview, and inspection tabs.
 templ View(a *App) {
-	<div id="book" class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book-shell", surf.Key(a.bookKey))... }>
+	<div class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book", surf.Key(a.bookKey))... }>
 		{{ from, sts, below := a.window() }}
 		<aside class="book-list flex flex-col">
 			<div class="book-brand flex items-center gap-2">
@@ -47,7 +47,7 @@ templ View(a *App) {
 			if below > 0 {
 				<p class="text-sm text-muted-foreground">↓ { itoa(below) } more</p>
 			}
-			<p class="book-hints text-muted-foreground">↑↓ story · / filter · Enter preview · n pane · Esc list · t theme</p>
+			<p class="book-hints text-muted-foreground">↑↓ story · / filter · Enter preview · n pane · r rendition · Esc list · t theme</p>
 		</aside>
 		if a.cur != nil {
 			<main class="book-main flex flex-col">
@@ -60,11 +60,17 @@ templ View(a *App) {
 				if k := keysLine(a.cur.st); k != "" {
 					<p class="book-keys text-sm text-muted-foreground">{ k }</p>
 				}
-				<div class="book-previews flex gap-4">
-					<section class="book-html" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
+				<div class="book-preview-area flex flex-col">
+					<nav class="book-renditions" role="tablist" aria-label="Rendition">
+						<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(!a.Cells) } { surf.On(ctx, "book-render-hotty", surf.Click(func() { a.setRendition(false) }), surf.Key(a.renditionKey))... }>hotty</button>
+						<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(a.Cells) } { surf.On(ctx, "book-render-cells", surf.Click(func() { a.setRendition(true) }), surf.Key(a.renditionKey))... }>cells</button>
+					</nav>
+					<section class="book-preview" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
+					if !a.Cells {
 						@a.cur.view
-					</section>
-					<section id="book-cells" class="book-cells hidden flex-col gap-2" aria-label="the story in cells">
+						{{ _ = a.inert(ctx) }}
+					} else {
+					<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label="the story in cells">
 						{{ ls := a.lines() }}
 						{{ inert := a.inert(ctx) }}
 						{{ tab := a.cur.controls && !inert }}
@@ -86,6 +92,8 @@ templ View(a *App) {
 						if e := a.paneErr(); e != "" {
 							<p class="text-sm text-destructive">{ e }</p>
 						}
+					</div>
+					}
 					</section>
 				</div>
 				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {

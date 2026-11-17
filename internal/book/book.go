@@ -1,8 +1,6 @@
 // Package book is the storybook, `hotty-surf book`: every story of the
-// kit (package stories) in a list, the chosen one drawn by the host, and
-// beside it the same story drawn in cells, as a terminal that is no hotty
-// host draws it. Both are one view with one state, so what is done in
-// one shows in the other.
+// kit (package stories) in a list, with hotty and cells rendition tabs for
+// the chosen story. Both share one view and state.
 //
 // On a hotty host the cells pane is a Screen in the book's own process,
 // its lines drawn in the book's surface. The pane takes the keyboard as
@@ -13,10 +11,7 @@
 // Screen's last control, where it stays on the empty element and the
 // next Tab leaves. Shift+Tab is the same, backwards.
 //
-// On a terminal that is no host, the whole book is drawn in cells (run's
-// fallback), the preview is already the cells rendition, and the pane is
-// left out: it has the hidden class, which cells reads, and the book's
-// stylesheet shows it to a host.
+// On a terminal that is no host, run draws the whole book in cells.
 package book
 
 //go:generate msgp -marshal=false -tests=false
@@ -67,8 +62,9 @@ const (
 
 // State is what the book keeps across a live reload.
 type State struct {
-	ID   string             `msg:"id"` // the story shown
-	Book storybook.DevState `msg:"book"`
+	ID    string             `msg:"id"` // the story shown
+	Book  storybook.DevState `msg:"book"`
+	Cells bool               `msg:"cells"`
 }
 
 // App is the book.
@@ -158,6 +154,7 @@ func (a *App) Save() *State {
 }
 
 func (a *App) Restore(s *State) {
+	a.Cells = s.Cells
 	a.model.Load(&s.Book)
 	if s.ID != "" {
 		a.show(s.ID)
@@ -297,7 +294,7 @@ func (a *App) ListKey(k string) bool {
 	if k == "escape" && a.modalOpen {
 		return false
 	}
-	if k == "/" || k == "enter" || k == "escape" || k == "t" || k == "n" || k == "N" || k == "shift+n" {
+	if k == "/" || k == "enter" || k == "escape" || k == "t" || k == "n" || k == "N" || k == "shift+n" || k == "r" {
 		return a.bookKey(k)
 	}
 	visible := a.model.Visible()
@@ -375,6 +372,10 @@ func (a *App) startingList(ctx context.Context) bool {
 }
 
 func (a *App) bookKey(k string) bool {
+	if k == "r" {
+		a.setRendition(!a.Cells)
+		return true
+	}
 	if k == "escape" && a.modalOpen {
 		return false
 	}
@@ -403,6 +404,28 @@ func (a *App) bookKey(k string) bool {
 		a.wantFocus = "book-panel"
 	}
 	return true
+}
+
+func (a *App) setRendition(cells bool) {
+	if a.Cells != cells && a.inPane {
+		a.PaneOutside()
+	}
+	a.Cells = cells
+}
+
+func (a *App) renditionKey(k string) bool {
+	switch k {
+	case "arrow_left", "arrow_right":
+		a.setRendition(!a.Cells)
+		return true
+	case "home":
+		a.setRendition(false)
+		return true
+	case "end":
+		a.setRendition(true)
+		return true
+	}
+	return false
 }
 
 func (a *App) focusRequest(ctx context.Context) string {
