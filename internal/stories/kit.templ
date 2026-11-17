@@ -36,6 +36,23 @@ type BadgeProps struct {
 	Label string
 }
 
+// Card is the editable state of a card story.
+type Card struct {
+	Title string
+	Description string
+	Size string `enum:"default,sm"`
+	Footer bool
+}
+
+// Tabs is the editable state of a tabs story.
+type Tabs struct {
+	Tab string `enum:"account,password,team"`
+	Line bool
+}
+
+// Kbd is the editable state of a keyboard-shortcut story.
+type Kbd struct { Keys string }
+
 func (s *kitState) click()           { s.clicks++ }
 func (s *kitState) choose(v string)  { s.value = v }
 func (s *kitState) run(v string) func() { return func() { s.ran = v } }
@@ -83,8 +100,14 @@ func init() {
 		p := &BadgeProps{}
 		return p, badgeEvery(&kitState{})
 	}})
-	add(Story{ID: "card/default", Doc: "A card with a header, a section and a footer", View: kit(cardDefault, nil)})
-	add(Story{ID: "kbd/default", Doc: "Shortcuts as the host's platform writes them", View: kit(kbdDefault, nil)})
+	add(Story{ID: "card/default", Doc: "A card with a header, a section and a footer", View: kit(cardDefault, nil), Props: func() (any, templ.Component) {
+		p := &Card{Title: "Sign up", Description: "Enter your email below.", Size: "default", Footer: true}
+		return p, bookCard(p)
+	}})
+	add(Story{ID: "kbd/default", Doc: "Shortcuts as the host's platform writes them", View: kit(kbdDefault, nil), Props: func() (any, templ.Component) {
+		p := &Kbd{Keys: "ctrl+k"}
+		return p, bookKbd(p)
+	}})
 	add(Story{ID: "select/default", Doc: "A select with a placeholder",
 		View: kit(selectDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
 	add(Story{ID: "select/grouped", Doc: "A select with groups and a disabled option",
@@ -98,7 +121,16 @@ func init() {
 	add(Story{ID: "dialog/open", Doc: "A dialog open from the start",
 		View: kit(dialogOpen, func(s *kitState) { s.open = true }), Keys: []string{"tab", "tab", "enter"}, Want: "open: off"})
 	add(Story{ID: "tabs/default", Doc: "Three tabs, the shown one's panel below",
-		View: kit(tabsDefault, func(s *kitState) { s.value = "account" }), Keys: []string{"tab", "arrow_right"}, Want: "tab: password"})
+		View: kit(tabsDefault, func(s *kitState) { s.value = "account" }), Props: func() (any, templ.Component) {
+			p := &Tabs{Tab: "account"}
+			return p, bookTabs(p)
+		}, Keys: []string{"tab", "arrow_right"}, Want: "tab: password"})
+	add(Story{ID: "tabs/line", Doc: "Tabs in the line style", View: func() templ.Component {
+		return bookTabs(&Tabs{Tab: "password", Line: true})
+	}, Props: func() (any, templ.Component) {
+		p := &Tabs{Tab: "password", Line: true}
+		return p, bookTabs(p)
+	}})
 	add(Story{ID: "tabs/many", Doc: "More tabs than fit, one disabled",
 		View: kit(tabsMany, func(s *kitState) { s.value = "t1" }), Keys: []string{"tab", "end"}, Want: "tab: t8"})
 	add(Story{ID: "toast/default", Doc: "A button that shows a toast",
@@ -150,6 +182,38 @@ templ bookBadge(p *BadgeProps) {
 	<div class="p-4">
 		@ui.Badge(ui.BadgeProps{Variant: bookVariant(p.Variant)}) { { p.Label } }
 	</div>
+}
+
+templ bookCard(p *Card) {
+	@ui.Card(ui.CardProps{Size: bookSize(p.Size), Class: "max-w-sm"}) {
+		<header><h2>{ p.Title }</h2><p>{ p.Description }</p></header>
+		<section>
+			@ui.Label(ui.LabelProps{For: "card-email"}) { Email }
+			@ui.Input(ui.InputProps{Type: "email", Placeholder: "m@example.com", Attrs: surf.On(ctx, "card-email")})
+		</section>
+		if p.Footer {
+			<footer class="flex gap-2">
+				@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "card-cancel", surf.Click(func() {}))}) { Cancel }
+				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "card-ok", surf.Click(func() {}))}) { Sign up }
+			</footer>
+		}
+	}
+}
+
+templ bookKbd(p *Kbd) {
+	<p class="text-muted-foreground flex items-center gap-1 text-sm">
+		Press
+		@ui.Kbd(p.Keys)
+		to open the palette.
+	</p>
+}
+
+templ bookTabs(p *Tabs) {
+	@ui.Tabs(ui.TabsProps{ID: "story-tabs", Label: "Example", Line: p.Line, Value: p.Tab, Tabs: []ui.Tab{{Value: "account", Label: "account"}, {Value: "password", Label: "password"}, {Value: "team", Label: "team"}}, OnChange: func(v string) { p.Tab = v }}) {
+		@ui.Card(ui.CardProps{}) {
+			<section class="text-sm">The { p.Tab } panel.</section>
+		}
+	}
 }
 
 templ buttonDestructive(s *kitState) {
