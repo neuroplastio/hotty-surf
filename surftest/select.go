@@ -120,8 +120,8 @@ func text(n *html.Node) string {
 func norm(s string) string { return strings.Join(strings.Fields(s), " ") }
 
 // canon is a document as text with each element's attributes sorted, and
-// without a live field's value and checked state, or a select's chosen
-// option: they are the host's, set by a=field, not attributes.
+// without a live field's value and checked state, a textarea's text, or a
+// select's chosen option: they are the host's, set by a=field, not markup.
 func canon(t testing.TB, doc string) string {
 	t.Helper()
 	n, err := html.Parse(strings.NewReader(doc))
@@ -140,6 +140,12 @@ func canon(t testing.TB, doc string) string {
 			}
 			slices.SortFunc(keep, func(a, b html.Attribute) int { return strings.Compare(a.Key, b.Key) })
 			x.Attr = keep
+			if x.Data == "textarea" {
+				// Its text is its value, which the surface sets as a
+				// field's (a=field), not in the document: an input's
+				// value attribute, above.
+				x.FirstChild, x.LastChild = nil, nil
+			}
 		}
 		for c := x.FirstChild; c != nil; c = c.NextSibling {
 			visit(c)
