@@ -26,9 +26,9 @@ var bookShellButtons = []struct { label string; shape ui.Shape }{
 
 templ rowsDemo(p *Rows) {
 	<div class="bg-sidebar text-sidebar-foreground w-72 rounded-md py-2">
-		@ui.List("Sessions") {
+		@ui.List(ui.ListProps{Attrs: templ.Attributes{"aria-label": "Sessions"}, OnChange: func(i int) { p.Selected = i }}) {
 			for i, name := range bookRowNames {
-				@ui.ListItem(ui.ListItemProps{ID: "row-" + strconv.Itoa(i), Selected: p.Selected == i, Active: p.Active == i, OnClick: func() { p.Selected = i }, Leading: bookRowIcon()}) {
+				@ui.ListItem(ui.ListItemProps{Selected: p.Selected == i, Active: p.Active == i, Leading: bookRowIcon(), Attrs: surf.On(ctx, "row-"+strconv.Itoa(i))}) {
 					@ui.ItemTitle(ui.ItemTitleProps{}) { { name } }
 					@ui.ItemSubtitle(ui.ItemSubtitleProps{}) { p-70{ strconv.Itoa(i) } }
 				}

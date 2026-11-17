@@ -163,7 +163,7 @@ pkg neuroplast.io/hotty-surf/ui, func ItemTitle(ItemTitleProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func KeyScope([]string, func(string) bool) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func List(string) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func List(ListProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ListItem(ListItemProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
@@ -378,11 +378,15 @@ pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, For string
 pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct
 pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Active bool
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Leading templ.Component
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, OnClick func()
 pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Selected bool
 pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Trailing templ.Component
+pkg neuroplast.io/hotty-surf/ui, type ListProps struct
+pkg neuroplast.io/hotty-surf/ui, type ListProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type ListProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type ListProps struct, OnChange func(int)
 pkg neuroplast.io/hotty-surf/ui, type LogEntry struct
 pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, At time.Time
 pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, Kind string

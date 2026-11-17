@@ -142,14 +142,14 @@ func rowsDemo(p *Rows) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = ui.ListItem(ui.ListItemProps{ID: "row-" + strconv.Itoa(i), Selected: p.Selected == i, Active: p.Active == i, OnClick: func() { p.Selected = i }, Leading: bookRowIcon()}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = ui.ListItem(ui.ListItemProps{Selected: p.Selected == i, Active: p.Active == i, Leading: bookRowIcon(), Attrs: surf.On(ctx, "row-"+strconv.Itoa(i))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.List("Sessions").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ui.List(ui.ListProps{Attrs: templ.Attributes{"aria-label": "Sessions"}, OnChange: func(i int) { p.Selected = i }}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

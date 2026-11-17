@@ -572,15 +572,19 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 
 ## List, icon button and symbols spike port (draft)
 
-- `ui.List`: The spike list gives ListItem rows a named listbox.
+- `ui.List`: The spike list gives ListItem rows a named listbox, with the kit's listbox keys (review: a listbox is behavioral, K-default keys).
+- `ui.ListProps`: The list's options follow the kit's Props pattern (K7).
+- `ui.ListProps.OnChange`: K2 exception: the app owns selection; the list requests a change by index.
+- `ui.ListProps.Attrs`: K1/K18: the listbox's accessible name and handlers, without a Label field.
+- `ui.ListProps.Class`: K3: classes after the list's own.
 - `ui.ListItem`: Apps need the spike's selectable row with leading and trailing slots.
-- `ui.ListItemProps`: The row needs its state, slots and activation callback.
-- `ui.ListItemProps.ID`: K2(d): the callback-bearing button needs a distinct ID.
+- `ui.ListItemProps`: The row's state and slots follow the Props pattern; its id and click are Attrs (K1/K3).
 - `ui.ListItemProps.Selected`: K2(b): the selected state is shown by the row and its accent bar.
 - `ui.ListItemProps.Active`: K2(b): the active state is shown as a tint.
-- `ui.ListItemProps.OnClick`: K2 exception: the spike row reports activation to the app.
 - `ui.ListItemProps.Leading`: K2(c): the optional leading component is read to render the row.
 - `ui.ListItemProps.Trailing`: K2(c): the optional trailing component is read to render the row.
+- `ui.ListItemProps.Attrs`: K1/K3: the button's id, handlers through surf.On, and disabled.
+- `ui.ListItemProps.Class`: K3: classes after the row's own.
 - `ui.ItemTitle`: A row needs the spike's truncated bold title slot.
 - `ui.ItemSubtitle`: A row needs the spike's truncated muted subtitle slot.
 - `ui.ItemDetail`: A row needs the spike's truncated detail slot.

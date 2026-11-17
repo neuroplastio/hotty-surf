@@ -1634,6 +1634,43 @@ a decorative filled Material Symbol from a Shape; Symbols enumerates the
 seven paths the spike shipped. None of these names include thumbnails or
 busy badges.
 
+### As reviewed (review-shell-components.md), applied
+
+The review's shapes are applied as written: ListItemProps loses ID and
+OnClick for Attrs (the id and surf.On handlers) and Class; List takes
+ListProps (OnChange by item index, Attrs for its name, Class); the
+text lines, IconButton and the Symbol names were applied earlier.
+
+List now has the listbox keys. Tab enters at the item the keyboard or a
+click last reached, else the selected enabled one, else the first
+enabled; ↑ ↓ move one enabled item, Home and End to the ends, stopping
+there (an end is taken with no request). A move asks OnChange and moves
+the keyboard; it never runs the row's click. A click asks OnChange (if
+the row isn't selected already) and then runs the row's own click once.
+Disabled rows are skipped, not renumbered. Without OnChange the keyboard
+still moves. The keyboard is kept by item id across renders, so a row
+removed or reordered doesn't hand it to another.
+
+How: List renders its children with a registry in the context; each
+ListItem joins it and adds the list's click, focus and keys to the
+handlers the app registered for its id (a row without an id gets one
+from the list's). The roving tabindex is only known once every item has
+rendered, so the items write a placeholder the List fills. The keys are
+marked as the kit's default, so a KeyScope takes a named key first and a
+declined one keeps the default (TestListKeyScope). Faults: a List with
+no accessible name, more than one Selected item, an owned attribute in
+Attrs, and a ListItem outside a List.
+
+Tests: ui/list_test.go (click selects and activates once, arrows select
+without activating, ends, disabled and none enabled, empty, no
+OnChange, removal, KeyScope take and decline, faults) and the host and
+cells key vectors (TestNativeKeyVectors/list).
+
+Open for the reviewer: an app's own surf.Key on a ListItem's id runs
+after the list's keys, and then the list's are not marked as the kit's
+default (they would hide the app's from a KeyScope's interception); a
+KeyScope can't override the list's keys on such a row.
+
 ## L5: plx's asks for a Report on its wire (a pack of its own)
 
 plx's plugins agent asked for three things (via p-653, 2026-11-17), in

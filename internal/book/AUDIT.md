@@ -69,6 +69,20 @@ fixed before the audit is complete.
   `vault/knowledge/blitz-gaps.md`), for hotty-blitz. Found by the full
   side-by-side run (below).
 
+## Parked (2026-11-17)
+
+Parked for plx's integration (the maintainer, via p-653). Where it stands:
+
+- The side-by-side audit's fixes are in; what is left is listed below:
+  Blitz gaps 11 and 12 for hotty-blitz, List item's trailing thumbnails,
+  and the spike stories with no v0.7 story.
+- The shell review is applied, List included (ListProps, ids in Attrs,
+  listbox keys with KeyScope; `api/notes.md` "As reviewed"). The pack
+  isn't regenerated and nothing is approved: next is `make pack` for the
+  verifier, then `make api-approve`.
+- The dropdown and popover stories on B3's public API aren't started.
+- The branch isn't merged into v07.
+
 ## In progress
 
 - [x] The host drew a native select arrow despite Basecoat `appearance:none`,
@@ -102,8 +116,8 @@ fixed before the audit is complete.
   is an existing kit limitation and is recorded in coverage.
 - [ ] ListItem, icon buttons and Symbols have been ported to ui with their
   book stories. The review requires Props/Attrs and controlled list keyboard
-  behavior; the icon and text-slot decisions are applied, while List awaits
-  B3 KeyScope. The new API is not approved yet. LayoutThumb and BusyBadge
+  behavior; the icon and text-slot decisions are applied, and so is List's
+  (ListProps, Attrs ids, listbox keys with KeyScope, on B3). The new API is not approved yet. LayoutThumb and BusyBadge
   belong with plx in L6 and are intentionally omitted from this kit and book.
 - [ ] The dropdown and popover stories wait for B3's public API. If that API
   does not expose Open/Active, omit those fields and record that decision
