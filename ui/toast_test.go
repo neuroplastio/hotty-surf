@@ -163,6 +163,12 @@ func TestToastOwnedByTheApp(t *testing.T) {
 	if pressed != 1 {
 		t.Fatalf("body presses %d, want 1", pressed)
 	}
+	// The keyboard reaches it too: Enter on it clicks it.
+	r.Key("enter")
+	if pressed != 2 {
+		t.Fatalf("Enter on the body: presses %d, want 2", pressed)
+	}
+	pressed = 1
 	if got := attr(r.One("#toast-1"), "aria-hidden"); got != "false" {
 		t.Fatalf("a body press closed the toast: aria-hidden=%s", got)
 	}
@@ -286,6 +292,9 @@ func TestToastOnClose(t *testing.T) {
 	if got := attr(r.One("#toast-1-close"), "aria-label"); got != "Dismiss" {
 		t.Fatalf("the x is named %q", got)
 	}
+	if n := strings.Count(r.HTML(), `aria-label="Dismiss"`) + strings.Count(r.HTML(), `>Dismiss</button>`); n != 1 {
+		t.Fatalf("%d controls named Dismiss, want the x alone", n)
+	}
 	r.Click("#toast-1-close")
 	if asked != 1 {
 		t.Fatalf("OnClose ran %d times", asked)
@@ -302,5 +311,16 @@ func TestToastStylesInStylesheet(t *testing.T) {
 		if !strings.Contains(css, want) {
 			t.Errorf("Stylesheet lacks %q", want)
 		}
+	}
+}
+
+// OnClose without an ID is a fault: only Remove(id) takes the toast off.
+func TestToastOnCloseNeedsID(t *testing.T) {
+	f := &faults{T: t}
+	var st ui.ToasterState
+	st.Show(ui.Toast{Title: "Hi", OnClose: func() {}})
+	surftest.Start(f, surf.New("toast", ui.Toaster(&st, ui.ToasterProps{}), ui.Stylesheet()))
+	if !strings.Contains(strings.Join(f.got, "\n"), "OnClose needs an ID") {
+		t.Fatalf("faults %q", f.got)
 	}
 }

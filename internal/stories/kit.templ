@@ -108,7 +108,7 @@ func init() {
 	add(Story{ID: "toast/action", Doc: "A toast with an undo action",
 		View: kit(toastAction, nil), Keys: []string{"tab", "enter", "tab", "enter"}, Want: "action: undone"})
 	add(Story{ID: "toast/owned", Doc: "A toast the app owns: focused by its keys, its countdown bar still, a corner x",
-		View: kit(toastOwned, showOwnedToast), Keys: []string{"tab", "enter"}, Want: "ran: opened"})
+		View: kit(toastOwned, showOwnedToast), Keys: []string{"tab", "tab", "enter"}, Want: "ran: opened"})
 }
 
 templ count(s *kitState) {

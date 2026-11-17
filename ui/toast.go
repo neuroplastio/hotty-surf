@@ -29,9 +29,8 @@ type Toast struct {
 	//
 	// A toast a button or its timer closed is gone: Show with its ID adds
 	// a new one. An app that keeps its toasts by ID drops one from its own
-	// list in each action's OnSelect, and gives a lasting toast an Outline
-	// action (Basecoat's cancel, whose OnSelect it hears) in place of the
-	// kit's Dismiss, which tells no one.
+	// list in each action's OnSelect, and sets OnClose, so that a dismiss
+	// is its to hear.
 	ID                 string
 	Title, Description string
 	// Category is Basecoat's toast category: "success" (the default, as
@@ -47,7 +46,8 @@ type Toast struct {
 	Actions []ToastAction
 	// OnClick runs when the toast's body, outside its buttons, is clicked.
 	// The toast stays: OnClick may Remove it. The body then answers the
-	// pointer as a button does (the kit's hover fill).
+	// pointer as a button does (the kit's hover fill), and the keyboard
+	// too: Tab reaches it, and Enter or Space on it clicks it.
 	OnClick func()
 	// Focused draws the toast as the one the app's keyboard is on: its
 	// first button ringed, its bar still, its timer paused. A toast never
@@ -67,8 +67,9 @@ type Toast struct {
 	// app removes it.
 	Countdown time.Time
 	// OnClose, when set, draws a close control in the toast's corner (an
-	// x, named Dismiss). Clicking it runs OnClose and doesn't close the
-	// toast: the app removes it (see ID).
+	// x, named Dismiss) in place of the footer's Dismiss. Clicking it
+	// runs OnClose and doesn't close the toast: the app removes it, so a
+	// toast with OnClose has an ID.
 	OnClose func()
 }
 
@@ -307,12 +308,23 @@ func (st *ToasterState) choose(t *shownToast, action *ToastAction) {
 // dismiss is whether t has the Dismiss button: it lasts, and no action is
 // its cancel.
 func (t *shownToast) dismiss() bool {
-	return t.Duration < 0 && !slices.ContainsFunc(t.Actions, func(a ToastAction) bool { return a.Variant == Outline })
+	return t.Duration < 0 && t.OnClose == nil && !slices.ContainsFunc(t.Actions, func(a ToastAction) bool { return a.Variant == Outline })
 }
 
 func (st *ToasterState) closeAsked(t *shownToast) {
 	if !t.hidden && t.OnClose != nil {
 		t.OnClose()
+	}
+}
+
+// bodyKey is a clickable body's: Enter or Space clicks it, as a button's.
+func (st *ToasterState) bodyKey(t *shownToast) func(string) bool {
+	return func(k string) bool {
+		if k != "enter" && k != "space" || t.hidden || t.OnClick == nil {
+			return false
+		}
+		t.OnClick()
+		return true
 	}
 }
 
@@ -418,6 +430,9 @@ func checkToast(ctx context.Context, t *shownToast) string {
 	}
 	for _, action := range t.Actions {
 		checkVariant(ctx, "ToastAction", action.Variant, buttonVariants)
+	}
+	if t.OnClose != nil && t.ID == "" {
+		rt.Fault(ctx, "ui.Toast: OnClose needs an ID: the app removes the toast")
 	}
 	if !slices.Contains(toastCategories, t.Category) {
 		rt.Fault(ctx, fmt.Sprintf("ui.Toast: no category %q (it takes %s)", t.Category, list(toastCategories[1:])))

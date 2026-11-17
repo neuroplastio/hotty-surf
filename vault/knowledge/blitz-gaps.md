@@ -897,3 +897,25 @@ hotty-blitz binary at `70c6d38`, its bundled fonts, 80 columns, 12 rows,
 136 (68 CSS px); the reported 73 px row was not reproduced. The comparison
 still scores 0.81% different, with text and antialiasing differences in the
 sheet; this result closes the wrapper-height report, not every pixel difference.
+
+## Toasts don't draw on hottyterm 0.8 (2026-11-17)
+
+Found by the toast bar's live check (l2-toast). On headless hottyterm 0.8
+(hotty-blitz v0.8.0, 22ee077), with `run` serving a full-height surface
+and two toasts shown at start:
+- neither toast draws for the first two seconds;
+- after a delta (a toast focused at +2 s) both appear as a partial paint,
+  one box empty, the other cut where its footer button is;
+- the next delta (+3 s) takes them away again, and they stay gone.
+
+hottyterm logged no hotty warning or error. Not yet told apart:
+- Basecoat's own enter animation on `.toaster .toast` (`animation: .3s
+  ease-in-out toast-up`, first keyframe `opacity: 0;
+  transform: translateY(100%)`): Blitz holding an element present at load
+  at the first keyframe, or not filling to the end state;
+- or a damage/repaint problem for the fixed toaster.
+
+The next probe overrides `animation: none` on `.toast` alone. It affects
+every kit toast on hottyterm, not only the bar. The gate can't show it: it
+renders still documents. It is fixed in hotty-blitz as a mod, not worked
+around in the kit. The probe and its shots are local cache artifacts.

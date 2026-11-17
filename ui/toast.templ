@@ -51,7 +51,8 @@ templ toast(st *ToasterState, t *shownToast) {
 		<div
 			class="toast-content"
 			if t.OnClick != nil {
-				{ surf.On(ctx, t.id()+"-body", surf.Click(func() { st.click(t) }))... }
+				tabindex="0"
+				{ surf.On(ctx, t.id()+"-body", surf.Click(func() { st.click(t) }), surf.Key(st.bodyKey(t)))... }
 			}
 		>
 			if svg, ok := toastIcons[t.category()]; ok {
