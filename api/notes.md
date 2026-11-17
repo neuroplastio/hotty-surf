@@ -1794,3 +1794,35 @@ hints merging keys by label is the app's to do from `Bindings`.
    it sits beside `MenuItem`, DropdownMenu's item, which it doesn't use.
    `KeyMenu` or `HostMenu` would say it's the host's. The draft keeps
    `Menu`, after hotty-go's `hotty.Menu`, which it feeds.
+
+### As reviewed (p-796, 2026-11-17): applied
+
+Approved with changes (`review-keys-labels.md`, K27 added and K20's reach
+amended):
+- **KeyScope(bindings []KeyBinding)**, with each binding's `Run func()
+  bool` in place of the scope's fn, as MenuItem carries OnSelect. A nil
+  Run is a fault. Question 1 is moot: the draft's fn got the same binding
+  for a key and a pick.
+- **Reach extended (question 3).** The keyboard is inside a scope on its
+  kit controls, on an element whose surf.On ran in it, or inside one of
+  those, and the outermost scopes have it while nothing is focused. The
+  order is scopes, then kit defaults, then surf.Key, then the program. On a
+  plain element a scope hears only the keys the host gives the program
+  anyway, so it takes no native key. surf.On records the scope from ctx
+  (rt.Handlers.Scope), and one function, the surface's `reached`, is the
+  reach for both dispatch and Bindings (rt.Peek.Scopes). New vectors cover
+  a plain element (its key, and its native Enter kept) and nothing
+  focused, on a host and in cells.
+- **Bindings** in a stable render order. **One Name is one action**: it is
+  listed once, at its first rendered place, as the binding nearest the
+  keyboard, and Pick runs that binding.
+- **Menu renamed HostMenu** (question 5). One level is kept (question 4):
+  groups would come later as an additive `KeyBinding.Group`.
+- Question 2 kept as drafted.
+- The examples render a scope. ExampleBindings builds a Command palette
+  whose items Pick.
+- rt.Peek's doc says production code reads it.
+
+Still the L4 builder's (p-795): run.App resends `hotty.Menu(ui.HostMenu(…))`
+when it changes (after a render or a focus move, compared with what it
+last sent), and turns a command event's name into `ui.Pick`.

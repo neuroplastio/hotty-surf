@@ -144,6 +144,7 @@ pkg neuroplast.io/hotty-surf/ui, func Field(FieldProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func FieldSeparator(FieldSeparatorProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func FieldSet(FieldSetProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Fuzzy(string, string) bool
+pkg neuroplast.io/hotty-surf/ui, func HostMenu(*surf.Surface, string) *hotty.MenuTree
 pkg neuroplast.io/hotty-surf/ui, func Icon(string, string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Input(InputProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func InputGroup(InputGroupProps) templ.Component
@@ -151,9 +152,8 @@ pkg neuroplast.io/hotty-surf/ui, func InputGroupAddon(InputGroupAddonProps) temp
 pkg neuroplast.io/hotty-surf/ui, func Item(ItemProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func KeyScope([]KeyBinding, func(KeyBinding) bool) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func KeyScope([]KeyBinding) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Menu(*surf.Surface, string) *hotty.MenuTree
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Pick(*surf.Surface, string) bool
 pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
@@ -352,6 +352,7 @@ pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Key string
 pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Name string
+pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Run func() bool
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Class string

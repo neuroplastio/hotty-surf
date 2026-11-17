@@ -13,11 +13,14 @@ import (
 
 // Handlers are one element's, as surf.On registered them for this render.
 type Handlers struct {
-	Click   func()
-	Input   func(string)
-	Check   func(bool)
-	Key     []func(string) bool
-	KitKey  bool // Key is a kit component default, rather than an app handler
+	Click  func()
+	Input  func(string)
+	Check  func(bool)
+	Key    []func(string) bool
+	KitKey bool // Key is a kit component default, rather than an app handler
+	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
+	// the element, or inside it, is inside the scope.
+	Scope   *KeyScope
 	Focus   func(bool)
 	Outside func()
 	Hover   func(bool)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -488,8 +489,8 @@ func (s *Surface) key(k string) (bool, error) {
 		return false, errNoDocument
 	}
 	physical := k
-	if len(s.frame.KeyScopes) > 0 && s.frame.KeyScopes[0].Canonical != nil {
-		physical, _ = s.frame.KeyScopes[0].Canonical(s.platform, k)
+	if len(s.frame.Scopes) > 0 && s.frame.Scopes[0].Canonical != nil {
+		physical, _ = s.frame.Scopes[0].Canonical(s.platform, k)
 	}
 	k = modName(s.platform, k)
 	intercepted := false
@@ -523,6 +524,16 @@ func (s *Surface) key(k string) (bool, error) {
 		}
 	} else if len(ids) == 0 {
 		ids = s.tops()
+	}
+	if !intercepted {
+		// A scope around a plain element, or the outermost scopes with
+		// nothing focused, hear the keys the host gave the program,
+		// before the elements' own Key handlers.
+		for _, sc := range s.reached() {
+			if sc.Keys[physical] && sc.Handle(physical) {
+				return true, s.send()
+			}
+		}
 	}
 	if intercepted {
 		for _, id := range ids {
@@ -568,6 +579,45 @@ func (s *Surface) key(k string) (bool, error) {
 // the outermost elements with Key handlers, in tree order, found through
 // any elements without one (a layout's wrappers around the page). They are
 // where a page's shortcuts are.
+// reached is the ui.KeyScopes a key is offered to now, in the order it is
+// offered: around a kit control, its marker's; around another element,
+// the scope its surf.On (or its nearest ancestor's with one) ran in; each
+// with its enclosing ones, nearest first. With nothing focused, and no
+// modal open, the outermost scopes, in render order.
+func (s *Surface) reached() []*rt.KeyScope {
+	if s.frame == nil || len(s.frame.Scopes) == 0 {
+		return nil
+	}
+	var out []*rt.KeyScope
+	if n := s.byID[s.focused]; n != nil {
+		var sc *rt.KeyScope
+		if i, err := strconv.Atoi(attr(n, "data-hotty-keyscope")); err == nil && i > 0 && i <= len(s.frame.KeyScopes) {
+			sc = s.frame.KeyScopes[i-1]
+		}
+		for _, id := range s.chain(s.focused) {
+			if sc != nil {
+				break
+			}
+			if h := s.frame.On[id]; h != nil {
+				sc = h.Scope
+			}
+		}
+		for ; sc != nil; sc = sc.Parent {
+			out = append(out, sc)
+		}
+		return out
+	}
+	if activeModal(s.frame) != "" {
+		return nil
+	}
+	for _, sc := range s.frame.Scopes {
+		if sc.Parent == nil {
+			out = append(out, sc)
+		}
+	}
+	return out
+}
+
 func (s *Surface) tops() []string {
 	var out []string
 	var walk func(*html.Node)

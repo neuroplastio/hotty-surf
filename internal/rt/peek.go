@@ -7,12 +7,13 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Peek is what a test rig and the reload child read of a surface that no
-// exported method gives: package surf fills it in its init, so that the
-// packages that read it need not import surf's insides (and surf need not
-// export them). Snapshot, Adopt, Restyle and Document run on the surface's
-// driver goroutine: reload calls them through the surface's Do, or before
-// its driver starts.
+// Peek is what a test rig, the reload child and ui's Bindings read of a
+// surface that no exported method gives: package surf fills it in its
+// init, so that the packages that read it need not import surf's insides
+// (and surf need not export them). Production code reads Frame and Scopes
+// (ui.Bindings, ui.HostMenu, ui.Pick). Snapshot, Adopt, Restyle, Document,
+// Frame and Scopes run on the surface's driver goroutine: reload calls
+// them through the surface's Do, or before its driver starts.
 var Peek struct {
 	// Tree is the tree the host was last sent, under its #root; nil before
 	// the first Document.
@@ -21,9 +22,12 @@ var Peek struct {
 	// keyboard, "" for none: ui's differential tests compare it with a
 	// browser's document.activeElement.
 	Focused func(s any) string
-	// Frame is the last frame rendered, nil before the first. It runs on
-	// the surface's driver goroutine.
+	// Frame is the last frame rendered, nil before the first.
 	Frame func(s any) *Frame
+	// Scopes are the KeyScopes a key is offered to now, in the order it is
+	// offered: those around the keyboard, nearest first, or with nothing
+	// focused the outermost ones in render order.
+	Scopes func(s any) []*KeyScope
 	// Faults are the faults of the renders since the last call, which it
 	// forgets.
 	Faults func(s any) []string
