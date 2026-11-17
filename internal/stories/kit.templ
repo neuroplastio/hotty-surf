@@ -53,6 +53,7 @@ func init() {
 		View: kit(buttonEvery, nil), Keys: []string{"tab", "enter"}, Want: "clicks: 1"})
 	add(Story{ID: "badge/default", Doc: "A badge", View: kit(badgeDefault, nil)})
 	add(Story{ID: "badge/every-variant", Doc: "A badge of each variant", View: kit(badgeEvery, nil)})
+	add(Story{ID: "badge/warning", Doc: "A warning: Basecoat has no such variant, so an Outline badge in amber, by class", View: kit(badgeWarning, nil)})
 	add(Story{ID: "card/default", Doc: "A card with a header, a section and a footer", View: kit(cardDefault, nil)})
 	add(Story{ID: "kbd/default", Doc: "Shortcuts as the host's platform writes them", View: kit(kbdDefault, nil)})
 	add(Story{ID: "select/default", Doc: "A select with a placeholder",
@@ -186,6 +187,16 @@ templ badgeEvery(s *kitState) {
 				{ variantName(v) }
 			}
 		}
+	</div>
+}
+
+templ badgeWarning(s *kitState) {
+	<div class="flex flex-row flex-wrap items-center gap-2 p-4">
+		@ui.Badge(ui.BadgeProps{Variant: ui.Outline, Class: "border-amber-500/50 text-amber-600 dark:text-amber-400"}) {
+			@ui.Icon("triangle-alert", "")
+			Low stock
+		}
+		<span class="text-sm text-muted-foreground">3 left</span>
 	</div>
 }
 

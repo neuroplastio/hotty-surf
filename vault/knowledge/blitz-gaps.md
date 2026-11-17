@@ -830,7 +830,12 @@ B1's and B2's stories, Dialog's and the Toaster's, in the dark and the
 light theme, with hotty-blitz 0.8.5 (2a491b5). Its repros are cut down
 with `-files`. Table, Switch, Checkbox, Radio and Input ran again with
 hotty-blitz 0.8.6 and two commits of the looks fixes on top (b7f4f81),
-and so did B3's Popover and Command. Command's empty state
+and so did B3's Popover and Command. The kit's utilities added for
+L5's apps are proven in a repro of kit.css (`looks/repro/utilities.html`):
+`grid-cols-*` (`repeat(n, minmax(0, 1fr))`), `h-*`, `max-h-*` with
+`overflow-auto` (the clip; the scroll bar, as ever, unseen), `min-w-0`,
+`truncate`, `font-mono` (the host's `--hotty-font`), `line-through`, and
+an amber Outline badge (badge/warning, both themes). Command's empty state
 (`data-empty`, drawn by `::after`) and its dialog are proven.
 
 **Proven** (no difference but the text's place, above): Chart's plot,
