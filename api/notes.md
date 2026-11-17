@@ -1342,3 +1342,58 @@ None of these is a name, but each changes what an app's author sees:
 - **The tools and their versions** (Go, templ, msgp, TinyGo, hotty) are in
   the README, `help` and `new`'s output, and build's and shot's errors
   name the one missing.
+
+## L4: the second trial (no names)
+
+A second fresh agent took the five tasks in 12 minutes. What it hit, and
+what changed, with no exported name:
+1. **A stale build failure stuck** after a broken Go expression in a
+   .templ was put back: the revert matched the running build's .templ,
+   so it took the text tier and left the broken Go on disk. While the
+   last build failed, a .templ save takes the go tier
+   (TestRevertAfterAFailedBuild).
+2. **templ's and msgp's install lines** are in the README and help.
+3. **The classes are the kit's,** not Tailwind's: the docs say so, and
+   `hotty-surf classes` lists them from ui.Stylesheet (internal/cssclass
+   reads a stylesheet's selectors, for it and for lint).
+4. **lint's class rule reads templ's class expressions:** templ.KV's key,
+   templ.Classes, a class={ … } and a component's Class field.
+5. **A button with no text and no label** is a surf fault at render time
+   (surftest fails on it), and lint's button-label rule names the static
+   cases: a raw <button> of icons, a ui.Button with IconOnly and no
+   Attrs.
+6. **An attribute beside surf.On** is shown in the README.
+7. **ui.Icon's doc lists the icons,** held to the set by a test, and
+   surftest says a fault once rather than at every render.
+
+Not ours: ui.Checkbox drawn as Blitz's native box is hotty-blitz's gap 6.
+
+### As verified (p-769, 2026-11-17)
+
+- **F1:** the class rule reads a string as classes only inside its own
+  `class={ … }` or `templ.Classes( … )`, which `classesAt` walks to its
+  close: a `title={ "Hello world" }` after one is no longer classes.
+- **F2:** the render fault follows HTML's name for a button. An image's
+  alt is text, and a `<label for>` it or a `<label>` around it names it.
+  Its message offers text (beside an icon, a `<span class="sr-only">`),
+  an aria-label or a `<label for>`, and says a ui.Select with nothing
+  chosen takes a Placeholder. SelectProps.Value's and
+  DropdownMenuProps.Trigger's docs say the same.
+- **L1–L3:** `classes -h` says what it lists. The list leaves out the
+  kit's own `kit-*` classes, which lint still accepts. The fault names
+  where to find a button with no id of its own: the nearest app id ("in
+  #todo-list"), else its first class.
+
+### What the second trial left
+
+- **Open:** Autofocus's templ form (`{{ surf.Autofocus(ctx, id) }}`) in its
+  doc, and the scaffold's field autofocused.
+- **Open:** One's failure listing the nearest candidates' texts.
+- **Open:** `help` saying that under serve a text save is a Go reload (the
+  page runs Go's wasm, which reads no strings file).
+- **Open:** the served page's `<title>`, which is "hotty-surf", not the
+  app's.
+- **Open:** cells draws no gap between a check box and its label.
+- **Open:** `shot -h` saying it draws the starting state.
+- **Not ours:** `hotty version`, which is hotty-blitz's; ui.Checkbox drawn
+  as Blitz's native box, hotty-blitz's gap 6.

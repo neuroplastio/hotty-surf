@@ -9,8 +9,9 @@
 //     Basecoat names it: Button, DropdownMenu, Select. Content goes in
 //     templ's children block: @ui.Button(ui.ButtonProps{…}) { Save }.
 //   - Its attributes are one struct, <Name>Props, whose zero value is
-//     Basecoat's default. Every Props has Class, for Tailwind classes added
-//     to the component's outermost element.
+//     Basecoat's default. Every Props has Class, for classes added to the
+//     component's outermost element: the kit's (`hotty-surf classes` lists
+//     them), or the app's own CSS's.
 //   - A component made from CSS alone is one element, and its Props has
 //     Attrs for any attribute of it that it doesn't write itself (one it
 //     writes is a fault): its handlers, through surf.On, as on any
