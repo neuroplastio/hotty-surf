@@ -141,7 +141,7 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	done := make(chan error, 1)
-	go func() { done <- serve(ctx, term, dir, ln) }()
+	go func() { done <- serve(ctx, term, true, dir, ln) }()
 	ctl := func(wantCode int, want string) {
 		t.Helper()
 		var o, e bytes.Buffer

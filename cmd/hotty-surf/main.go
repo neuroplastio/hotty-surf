@@ -2,6 +2,7 @@
 //
 //	hotty-surf run [dir]                   the app in dir (default .) in this
 //	                                       terminal, reloading as its files are saved
+//	                                       (in cells where it is no hotty host)
 //	hotty-surf ctl reload                  the running hotty-surf run reloads now,
 //	                                       and prints the report (1: a failed build or process)
 //	hotty-surf ctl shot [-html] [out.png]  the app as the terminal has it, rendered

@@ -79,7 +79,7 @@ func runOn(t *testing.T, dir string) *running {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	t.Cleanup(cancel)
 	r := &running{in: inW, out: out, sock: sock, ctx: ctx, done: make(chan error, 1)}
-	go func() { r.done <- serve(ctx, term, dir, ln) }()
+	go func() { r.done <- serve(ctx, term, true, dir, ln) }()
 	return r
 }
 

@@ -45,9 +45,7 @@ func Run(ctx context.Context, dir, sock string) error {
 		return err
 	}
 	defer restore()
-	if !t.Detect(ctx) {
-		return errors.New("this terminal is no hotty host: hotty-surf run needs one (go run draws the app in cells)")
-	}
+	native := t.Detect(ctx)
 	ln, err := listen(sock)
 	if err != nil {
 		return err
@@ -59,15 +57,31 @@ func Run(ctx context.Context, dir, sock string) error {
 		return err
 	}
 	defer t.Send(ansi.ShowCursor, ansi.ResetModeAltScreenSaveCursor)
-	return serve(ctx, t, dir, ln)
+	if !native {
+		// The app in cells: clicks, the wheel and pastes are run's to
+		// read.
+		if err := t.Send(ansi.SetModeMouseButtonEvent, ansi.SetModeMouseExtSgr, ansi.SetModeBracketedPaste); err != nil {
+			return err
+		}
+		defer t.Send(ansi.ResetModeBracketedPaste, ansi.ResetModeMouseExtSgr, ansi.ResetModeMouseButtonEvent)
+	}
+	return serve(ctx, t, native, dir, ln)
 }
 
-// serve is run on a terminal that is a hotty host, with ctl's listener.
-func serve(ctx context.Context, t *hottyterm.Term, dir string, ln net.Listener, opts ...reloader.Option) error {
+// serve is run on the terminal, a hotty host or not (native), with ctl's
+// listener.
+func serve(ctx context.Context, t *hottyterm.Term, native bool, dir string, ln net.Listener, opts ...reloader.Option) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	h := &host{t: t, caps: t.Caps(), devName: t.Surface("report"),
-		shows: make(chan string, 4), exits: make(chan *app, 4)}
+		shows: make(chan string, 4), exits: make(chan *app, 4), gone: make(chan struct{})}
+	if !native {
+		// A cells.Screen is a host of hotty's version on the zero
+		// platform (surf.Surface.Attach's zero Caps).
+		h.caps = hotty.Caps{}
+		z := t.Size()
+		h.c = newCellsView(h, z.Cols, z.Rows)
+	}
 	h.dev = surf.New(h.devName, reloader.View(&h.last), ui.Stylesheet())
 	h.r = reloader.New(dir, h.restart, h.report, opts...)
 	go serveCtl(ctx, ln, ctlTarget{reload: h.r.Reload, shot: h.shot})
@@ -107,6 +121,10 @@ type host struct {
 	dev     *surf.Surface
 	last    reloader.Report // what dev shows; its driver's (run's loop)
 	placed  bool            // dev is placed
+	// c is the app and dev in cells, where the terminal is no host; nil
+	// where it is one.
+	c      *cellsView
+	devErr error // the first error an event dev's Screen sent led to
 
 	mu      sync.Mutex
 	app     *app             // the process started last
@@ -115,6 +133,7 @@ type host struct {
 
 	shows chan string
 	exits chan *app
+	gone  chan struct{} // closed when run's loop returns
 }
 
 // app is one process of the app.
@@ -129,12 +148,22 @@ type app struct {
 }
 
 func (h *host) run(ctx context.Context, ran <-chan error) error {
-	h.dev.Attach(commands{h.t}, h.caps)
+	var outs chan []byte // the app's commands, for its Screen
+	if h.c != nil {
+		h.dev.Attach(devWriter{h.c}, h.caps)
+		outs = h.c.outs
+	} else {
+		h.dev.Attach(commands{h.t}, h.caps)
+	}
+	defer close(h.gone)
 	if err := h.showDev(); err != nil {
 		return err
 	}
 	defer func() {
 		h.stop()
+		if h.c != nil {
+			return
+		}
 		h.mu.Lock()
 		name := h.surface
 		h.mu.Unlock()
@@ -169,8 +198,14 @@ func (h *host) run(ctx context.Context, ran <-chan error) error {
 				return nil
 			}
 		case <-winch:
+			if h.c != nil {
+				z := h.t.Size()
+				h.c.resize(z.Cols, z.Rows)
+			}
 			h.placeApp()
 			h.placeDev()
+		case p := <-outs:
+			h.c.out(p)
 		case ev, ok := <-events:
 			if !ok {
 				return nil
@@ -179,12 +214,42 @@ func (h *host) run(ctx context.Context, ran <-chan error) error {
 				return err
 			}
 		}
+		if h.c != nil {
+			if err := h.drawCells(); err != nil {
+				return err
+			}
+		}
 	}
+}
+
+// drawCells draws the cells, after whatever the loop did: dev's document
+// again if its Screen refused a delta, then the frame.
+func (h *host) drawCells() error {
+	if h.devErr != nil {
+		return h.devErr
+	}
+	if h.c.devStale {
+		h.c.devStale = false
+		if err := h.showDev(); err != nil {
+			return err
+		}
+	}
+	return h.t.Send(h.c.frame())
+}
+
+// appName is the app's surface, as it named it ("" before it did).
+func (h *host) appName() string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.surface
 }
 
 // input takes one thing the terminal sent: dev's own events, and the rest
 // for the app. quit says the user quit while no app runs.
 func (h *host) input(ev hottyterm.Event) (quit bool, err error) {
+	if h.c != nil {
+		return h.c.input(ev), nil
+	}
 	switch ev := ev.(type) {
 	case hottyterm.Message:
 		if e, ok := hotty.EventOf(ev.Message); ok && e.Surface == h.devName {
@@ -264,6 +329,9 @@ func (h *host) size() (cols, rows int) {
 }
 
 func (h *host) placeApp() {
+	if h.c != nil {
+		return // the Screen covers the terminal
+	}
 	h.mu.Lock()
 	name := h.surface
 	h.mu.Unlock()
@@ -280,7 +348,10 @@ func (h *host) showDev() error {
 	if err != nil {
 		return err
 	}
-	if err := h.t.Send(hotty.Doc(h.devName, doc, hotty.Scroll(hotty.ScrollVertical))); err != nil {
+	cmd := hotty.Doc(h.devName, doc, hotty.Scroll(hotty.ScrollVertical))
+	if h.c != nil {
+		h.c.dev.Write([]byte(cmd))
+	} else if err := h.t.Send(cmd); err != nil {
 		return err
 	}
 	h.placed = false
@@ -293,6 +364,10 @@ func (h *host) showDev() error {
 func (h *host) placeDev() {
 	r := &h.last
 	if r.Build == "" && len(r.Failed) == 0 && len(r.Lint) == 0 {
+		if h.c != nil {
+			h.c.placeDev(0)
+			return
+		}
 		if h.placed {
 			h.t.Send(hotty.Hide(h.devName))
 			h.placed = false
@@ -311,6 +386,10 @@ func (h *host) placeDev() {
 	}
 	z := h.t.Size()
 	rows := min(n+1, max(z.Rows/2, 6), z.Rows)
+	if h.c != nil {
+		h.c.placeDev(rows)
+		return
+	}
 	h.t.Send(hotty.PlaceAt(h.devName, 0, z.Rows-rows, hotty.Placement{Cols: z.Cols, Rows: rows, Z: 100}))
 	h.placed = true
 }
@@ -416,7 +495,14 @@ func (h *host) read(a *app, c net.Conn) {
 			switch {
 			case hd.Type == devwire.Notification && hd.Method == "out":
 				if err = devwire.Decode(r, &o); err == nil {
-					h.t.Send(string(o.Data))
+					if h.c != nil {
+						select {
+						case h.c.outs <- append([]byte(nil), o.Data...):
+						case <-h.gone:
+						}
+					} else {
+						h.t.Send(string(o.Data))
+					}
 				}
 			case hd.Type == devwire.Notification && hd.Method == "show":
 				var s devwire.Show
