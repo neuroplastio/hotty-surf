@@ -1,0 +1,91 @@
+From 177b906410299a5c03c6fe00252bd146511c8ca5 Mon Sep 17 00:00:00 2001
+From: hotty Agent <hotty@neuroplast.io>
+Date: Tue, 17 Nov 2026 02:50:27 +0100
+Subject: [PATCH] feat(runtime): read _templ.txt files again on demand
+
+In development mode a StringLoader reuses a .txt file's strings for
+devModeCheckInterval before it checks the file again. templ generate's
+watch mode waits that long before it reloads the browser, so the
+interval never shows there. A program that writes the .txt files
+itself and renders again in the same process, such as a live reload
+that keeps the process running, has to sleep out the interval after
+any render, or the render can use the old strings.
+
+Add StringLoader.Reload, which drops the strings a loader has read, and
+ReloadWatchedStrings, which does so for the loader WriteString uses.
+The next use of each file reads it again. Nothing changes for a program
+that doesn't call them.
+---
+ runtime/watchmode.go      | 16 ++++++++++++++++
+ runtime/watchmode_test.go | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+)
+
+diff --git a/runtime/watchmode.go b/runtime/watchmode.go
+index 155541c..fa32f10 100644
+--- a/runtime/watchmode.go
++++ b/runtime/watchmode.go
+@@ -122,6 +122,22 @@ func NewStringLoader(devModeWatchRootPath string) (sl *StringLoader) {
+ 	return sl
+ }
+ 
++// ReloadWatchedStrings makes development mode read each _templ.txt file again
++// the next time a component uses its strings, instead of reusing them until
++// devModeCheckInterval has passed. A program that writes the .txt files itself
++// and then renders, without restarting, calls it in between.
++func ReloadWatchedStrings() {
++	stringLoaderOnce().Reload()
++}
++
++// Reload drops the strings sl has read, so that each .txt file is read again on
++// its next use.
++func (sl *StringLoader) Reload() {
++	sl.cacheMutex.Lock()
++	defer sl.cacheMutex.Unlock()
++	clear(sl.cache)
++}
++
+ func (sl *StringLoader) GetWatchedString(templFilePath string, index int, defaultValue string) (string, error) {
+ 	if sl.watchModeRootErr != nil {
+ 		return "", sl.watchModeRootErr
+diff --git a/runtime/watchmode_test.go b/runtime/watchmode_test.go
+index bbda135..3df4d8e 100644
+--- a/runtime/watchmode_test.go
++++ b/runtime/watchmode_test.go
+@@ -197,6 +197,34 @@ func TestGetWatchedStringThrottle(t *testing.T) {
+ 	}
+ }
+ 
++func TestStringLoaderReload(t *testing.T) {
++	// Arrange.
++	tmpDir := t.TempDir()
++	t.Setenv("TEMPL_DEV_MODE_ROOT", tmpDir)
++	templFile, txtFile := writeWatchFiles(t, tmpDir, "first")
++	start := time.Now()
++	loader := NewStringLoader(tmpDir)
++	loader.Now = func() time.Time { return start }
++	if _, err := loader.GetWatchedString(templFile, 1, "templ_file_value"); err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if err := os.WriteFile(txtFile, []byte("second"), 0644); err != nil {
++		t.Fatalf("failed to write txt file: %v", err)
++	}
++
++	// Act: within the check interval, so only Reload makes it read the file.
++	loader.Reload()
++	actual, err := loader.GetWatchedString(templFile, 1, "templ_file_value")
++
++	// Assert.
++	if err != nil {
++		t.Fatalf("unexpected error: %v", err)
++	}
++	if actual != "second" {
++		t.Errorf("expected %q, got %q", "second", actual)
++	}
++}
++
+ func TestGetWatchedStringRetriesMissingFile(t *testing.T) {
+ 	// Arrange.
+ 	tmpDir := t.TempDir()
+-- 
+2.56.0
+
