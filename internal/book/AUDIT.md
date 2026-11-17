@@ -54,9 +54,10 @@ fixed before the audit is complete.
   demonstrations and variants have been added. Check's mixed visual state
   is an existing kit limitation and is recorded in coverage.
 - [ ] ListItem, icon buttons and Symbols have been ported to ui with their
-  book stories; the new API is in a separate review pack and is not approved
-  yet. LayoutThumb and BusyBadge belong with plx in L6 and are intentionally
-  omitted from this kit and book.
+  book stories. The review requires Props/Attrs and controlled list keyboard
+  behavior; the icon and text-slot decisions are applied, while List awaits
+  B3 KeyScope. The new API is not approved yet. LayoutThumb and BusyBadge
+  belong with plx in L6 and are intentionally omitted from this kit and book.
 - [ ] The dropdown and popover stories wait for B3's public API. If that API
   does not expose Open/Active, omit those fields and record that decision
   rather than accessing private state.
