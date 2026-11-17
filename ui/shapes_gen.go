@@ -2,9 +2,8 @@
 
 package ui
 
-// A Shape is an icon: the path of a filled glyph on a 24-unit grid, drawn
-// with the text's colour (Symbol). The shapes are Material Symbols, Sharp; the
-// comment on each is its Iconify name.
+// Shape is SVG path data for a filled glyph on a 24-unit grid. The shipped
+// constants are Material Symbols, Sharp; an app may supply another path.
 type Shape string
 
 const (
@@ -32,7 +31,8 @@ type NamedShape struct {
 	Shape Shape
 }
 
-// Symbols is every Shape, by its Go name, sorted.
+// Symbols returns the kit's named Material shapes in ascending Go-name
+// order. The returned slice is the caller's.
 func Symbols() []NamedShape {
 	return []NamedShape{
 		{"ShapeAccountTree", ShapeAccountTree},

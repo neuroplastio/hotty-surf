@@ -56,17 +56,20 @@ templ List(label string) {
 	</div>
 }
 
-// ItemTitle is the bold title line of a ListItem, truncated when long.
-templ ItemTitle() {
-	<span class="truncate text-base leading-4 font-bold text-sidebar-foreground">{ children... }</span>
+// ItemTitle is the truncated bold title line of a ListItem.
+templ ItemTitle(p ItemTitleProps) {
+	{{ checkAttrs(ctx, "ItemTitle", p.Attrs, "class") }}
+	<span class={ join("truncate text-base leading-4 font-bold text-sidebar-foreground", p.Class) } { p.Attrs... }>{ children... }</span>
 }
 
-// ItemSubtitle is the muted subtitle line of a ListItem, truncated when long.
-templ ItemSubtitle() {
-	<span class="truncate text-xs leading-5">{ children... }</span>
+// ItemSubtitle is the truncated muted subtitle line of a ListItem.
+templ ItemSubtitle(p ItemSubtitleProps) {
+	{{ checkAttrs(ctx, "ItemSubtitle", p.Attrs, "class") }}
+	<span class={ join("truncate text-xs leading-5", p.Class) } { p.Attrs... }>{ children... }</span>
 }
 
-// ItemDetail is the plain detail line of a ListItem, truncated when long.
-templ ItemDetail() {
-	<span class="truncate text-xs leading-5 text-sidebar-foreground">{ children... }</span>
+// ItemDetail is the truncated plain detail line of a ListItem.
+templ ItemDetail(p ItemDetailProps) {
+	{{ checkAttrs(ctx, "ItemDetail", p.Attrs, "class") }}
+	<span class={ join("truncate text-xs leading-5 text-sidebar-foreground", p.Class) } { p.Attrs... }>{ children... }</span>
 }

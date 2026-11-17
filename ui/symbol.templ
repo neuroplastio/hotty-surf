@@ -1,19 +1,21 @@
 package ui
 
-// Symbol draws a shape in the text's colour at the size class gives
-// (a Tailwind size-* class). It is decoration: the control that holds it
-// carries the name.
+// Symbol draws s as a filled 24-unit SVG path in the text's color; class
+// sizes or styles it. It is decorative: its containing control supplies
+// the accessible name. The caller supplies a size class.
 templ Symbol(s Shape, class string) {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" class={ class }>
 		<path d={ string(s) }></path>
 	</svg>
 }
 
-// IconButton is a button that shows an icon: label names it for assistive
-// technology and tooltips, class adds to the button's own, and attrs are its
-// other attributes, such as surf.On's.
-templ IconButton(label string, s Shape, class string, attrs templ.Attributes) {
-	<button type="button" aria-label={ label } title={ label } class={ iconButtonClass(class) } { attrs... }>
-		@Symbol(s, "size-3.5")
+// IconButton is the spike's compact icon-only button. Its Symbol is
+// decorative; Attrs must give the button an accessible name, for
+// example aria-label. Set title in Attrs when a native tooltip is wanted.
+templ IconButton(p IconButtonProps) {
+	{{ checkAttrs(ctx, "IconButton", p.Attrs, "type", "class") }}
+	{{ checkIconButtonName(ctx, p.Attrs) }}
+	<button type="button" class={ iconButtonClass(p.Class) } { p.Attrs... }>
+		@Symbol(p.Shape, "size-3.5")
 	</button>
 }

@@ -2,6 +2,7 @@ package stories
 
 import (
 	"strconv"
+	"context"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -28,8 +29,8 @@ templ rowsDemo(p *Rows) {
 		@ui.List("Sessions") {
 			for i, name := range bookRowNames {
 				@ui.ListItem(ui.ListItemProps{ID: "row-" + strconv.Itoa(i), Selected: p.Selected == i, Active: p.Active == i, OnClick: func() { p.Selected = i }, Leading: ui.Symbol(ui.ShapeTerminal, "size-4")}) {
-					@ui.ItemTitle() { { name } }
-					@ui.ItemSubtitle() { p-70{ strconv.Itoa(i) } }
+					@ui.ItemTitle(ui.ItemTitleProps{}) { { name } }
+					@ui.ItemSubtitle(ui.ItemSubtitleProps{}) { p-70{ strconv.Itoa(i) } }
 				}
 			}
 		}
@@ -39,9 +40,15 @@ templ rowsDemo(p *Rows) {
 templ iconButtonsDemo(p *Buttons) {
 	<div class="bg-sidebar text-sidebar-foreground flex h-7 w-fit items-stretch rounded-md px-1">
 		for _, button := range bookShellButtons {
-			@ui.IconButton(button.label, button.shape, shellAccent(p, button.label), surf.On(ctx, "ib-"+button.label, surf.Click(func() { p.Accent = button.label })))
+			@ui.IconButton(ui.IconButtonProps{Shape: button.shape, Class: shellAccent(p, button.label), Attrs: iconButtonAttrs(ctx, p, button.label)})
 		}
 	</div>
+}
+
+func iconButtonAttrs(ctx context.Context, p *Buttons, label string) templ.Attributes {
+	a := surf.On(ctx, "ib-"+label, surf.Click(func() { p.Accent = label }))
+	a["aria-label"], a["title"] = label, label
+	return a
 }
 
 func shellAccent(p *Buttons, label string) string {

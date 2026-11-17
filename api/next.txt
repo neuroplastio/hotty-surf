@@ -127,15 +127,15 @@ pkg neuroplast.io/hotty-surf/ui, func FieldSeparator(FieldSeparatorProps) templ.
 pkg neuroplast.io/hotty-surf/ui, func FieldSet(FieldSetProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Fuzzy(string, string) bool
 pkg neuroplast.io/hotty-surf/ui, func Icon(string, string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func IconButton(string, Shape, string, templ.Attributes) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func IconButton(IconButtonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Input(InputProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func InputGroup(InputGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func InputGroupAddon(InputGroupAddonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Item(ItemProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemDetail() templ.Component
+pkg neuroplast.io/hotty-surf/ui, func ItemDetail(ItemDetailProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemSubtitle() templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemTitle() templ.Component
+pkg neuroplast.io/hotty-surf/ui, func ItemSubtitle(ItemSubtitleProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func ItemTitle(ItemTitleProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func List(string) templ.Component
@@ -255,6 +255,10 @@ pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct
 pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct
+pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct, Shape Shape
 pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct
 pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct, Align string
 pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct, Attrs templ.Attributes
@@ -270,6 +274,9 @@ pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Placeholder string
 pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Type string
 pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Value string
+pkg neuroplast.io/hotty-surf/ui, type ItemDetailProps struct
+pkg neuroplast.io/hotty-surf/ui, type ItemDetailProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type ItemDetailProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type ItemGroupProps struct
 pkg neuroplast.io/hotty-surf/ui, type ItemGroupProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type ItemGroupProps struct, Class string
@@ -279,6 +286,12 @@ pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Muted bool
 pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Variant Variant
+pkg neuroplast.io/hotty-surf/ui, type ItemSubtitleProps struct
+pkg neuroplast.io/hotty-surf/ui, type ItemSubtitleProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type ItemSubtitleProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type ItemTitleProps struct
+pkg neuroplast.io/hotty-surf/ui, type ItemTitleProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type ItemTitleProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Class string

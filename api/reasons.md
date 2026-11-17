@@ -455,3 +455,16 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 - `ui.ShapePublic`: The spike uses the public symbol in chrome.
 - `ui.ShapeRemove`: The spike uses the remove symbol in chrome.
 - `ui.ShapeTerminal`: The spike uses the terminal symbol in list rows.
+- `ui.IconButtonProps`: K7: the compact button takes Props like the other kit components.
+- `ui.IconButtonProps.Shape`: K2(c): the filled symbol is read to render the button.
+- `ui.IconButtonProps.Attrs`: K1/K18: the caller supplies the accessible name, optional title and handlers.
+- `ui.IconButtonProps.Class`: K1: the caller can add classes to the compact button.
+- `ui.ItemTitleProps`: K7: the title line takes Props like the other CSS-only parts.
+- `ui.ItemTitleProps.Attrs`: K1: the caller may add span attributes except class.
+- `ui.ItemTitleProps.Class`: K1: the caller may add title classes.
+- `ui.ItemSubtitleProps`: K7: the subtitle line takes Props like the other CSS-only parts.
+- `ui.ItemSubtitleProps.Attrs`: K1: the caller may add span attributes except class.
+- `ui.ItemSubtitleProps.Class`: K1: the caller may add subtitle classes.
+- `ui.ItemDetailProps`: K7: the detail line takes Props like the other CSS-only parts.
+- `ui.ItemDetailProps.Attrs`: K1: the caller may add span attributes except class.
+- `ui.ItemDetailProps.Class`: K1: the caller may add detail classes.

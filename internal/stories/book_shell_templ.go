@@ -10,6 +10,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"context"
 	"strconv"
 
 	"neuroplast.io/hotty-surf"
@@ -96,7 +97,7 @@ func rowsDemo(p *Rows) templ.Component {
 						var templ_7745c5c3_Var5 string
 						templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_shell.templ`, Line: 31, Col: 29}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_shell.templ`, Line: 32, Col: 48}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 						if templ_7745c5c3_Err != nil {
@@ -104,7 +105,7 @@ func rowsDemo(p *Rows) templ.Component {
 						}
 						return nil
 					})
-					templ_7745c5c3_Err = ui.ItemTitle().Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = ui.ItemTitle(ui.ItemTitleProps{}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -127,7 +128,7 @@ func rowsDemo(p *Rows) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(i))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_shell.templ`, Line: 32, Col: 47}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_shell.templ`, Line: 33, Col: 69}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -135,7 +136,7 @@ func rowsDemo(p *Rows) templ.Component {
 						}
 						return nil
 					})
-					templ_7745c5c3_Err = ui.ItemSubtitle().Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = ui.ItemSubtitle(ui.ItemSubtitleProps{}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -182,7 +183,7 @@ func iconButtonsDemo(p *Buttons) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, button := range bookShellButtons {
-			templ_7745c5c3_Err = ui.IconButton(button.label, button.shape, shellAccent(p, button.label), surf.On(ctx, "ib-"+button.label, surf.Click(func() { p.Accent = button.label }))).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ui.IconButton(ui.IconButtonProps{Shape: button.shape, Class: shellAccent(p, button.label), Attrs: iconButtonAttrs(ctx, p, button.label)}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -193,6 +194,12 @@ func iconButtonsDemo(p *Buttons) templ.Component {
 		}
 		return nil
 	})
+}
+
+func iconButtonAttrs(ctx context.Context, p *Buttons, label string) templ.Attributes {
+	a := surf.On(ctx, "ib-"+label, surf.Click(func() { p.Accent = label }))
+	a["aria-label"], a["title"] = label, label
+	return a
 }
 
 func shellAccent(p *Buttons, label string) string {
@@ -239,7 +246,7 @@ func symbolsDemo(p *Icons) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(symbol.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_shell.templ`, Line: 57, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_shell.templ`, Line: 64, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {

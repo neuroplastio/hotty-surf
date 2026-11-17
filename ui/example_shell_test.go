@@ -1,7 +1,9 @@
 package ui_test
 
 import (
-	"github.com/a-h/templ"
+	"context"
+
+	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
 
@@ -14,13 +16,23 @@ func ExampleListItem() {
 		OnClick: func() { selected = 0 },
 		Leading: ui.Symbol(ui.ShapeTerminal, "size-4"),
 	})
-	_ = ui.ItemTitle()
-	_ = ui.ItemSubtitle()
-	_ = ui.ItemDetail()
+	_ = ui.ItemTitle(ui.ItemTitleProps{})
+	_ = ui.ItemSubtitle(ui.ItemSubtitleProps{})
+	_ = ui.ItemDetail(ui.ItemDetailProps{})
 }
 
 // A symbol is decorative; the button carries its accessible name.
 func ExampleIconButton() {
-	_ = ui.IconButton("Hosts", ui.ShapePublic, "", templ.Attributes{"id": "hosts"})
+	attrs := surf.On(context.Background(), "hosts", surf.Click(func() {}))
+	attrs["aria-label"], attrs["title"] = "Hosts", "Hosts"
+	_ = ui.IconButton(ui.IconButtonProps{Shape: ui.ShapePublic, Attrs: attrs})
 	_ = ui.Symbols()
+}
+
+// A named button may omit its click handler or use aria-labelledby.
+func ExampleIconButton_labelledBy() {
+	_ = ui.IconButton(ui.IconButtonProps{
+		Shape: ui.ShapeTerminal,
+		Attrs: map[string]any{"aria-labelledby": "terminal-label"},
+	})
 }
