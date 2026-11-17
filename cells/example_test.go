@@ -36,6 +36,29 @@ func ExampleNew() {
 	}
 }
 
+// The terminal's mouse in cells: the program hands the Screen each
+// press, motion and release at its own cells, and the surface's Click,
+// Drag, Drop, Secondary and Hover handlers hear them as on a host.
+func ExampleScreen_Press() {
+	s := surf.New("list", page, ui.Stylesheet())
+	c := cells.New(80, 24, func(e hotty.Event) { s.Event(e) })
+	s.Attach(c, hotty.Caps{})
+
+	c.Press(4, 2, 0, 0)              // a row's drag handle: dragstart
+	c.Move(4, 7, 0)                  // over another row: drag
+	c.Release(4, 7, 0)               // dragend, and that row's Drop
+	c.Press(4, 3, 0, 2)              // a secondary press: surf.Secondary
+	c.Move(10, 5, 0)                 // no button down: a hover
+	c.Press(4, 3, hotty.ModShift, 0) // a shift-click …
+	c.Release(4, 3, hotty.ModShift)
+
+	// A carry that began outside the surface: which row, and which half.
+	if id, a := c.At(4, 6); id != "" {
+		lower := 6 >= a.Row+a.H/2
+		_ = lower
+	}
+}
+
 // A program with a theme of its own paints the cells itself: each role is
 // a colour of the kit's, named as its CSS variable, which the program
 // already maps to its theme when it writes the kit's variables.
