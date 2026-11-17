@@ -45,7 +45,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.Small`: Basecoat's sm size.
 - `ui.Large`: Basecoat's lg size.
 - `ui.Stylesheet`: a surface with no build of its own needs the kit's look: the reloader's error surface in plx, a host's own dialogs. A function, not a const, so that the stylesheet's contents don't sit in the API file.
-- `ui.Icon`: shadcn and Basecoat draw Lucide's icons; one icon set, by the name an agent guesses: `ui.Icon("plus", "size-4")`. The spike's second set (Material Symbols, ui.Symbol) is left out.
+- `ui.Icon`: shadcn and Basecoat draw Lucide's icons; one icon set, by the name an agent guesses: `ui.Icon("plus", "")`. The spike's second set (Material Symbols, ui.Symbol) is left out.
 - `ui.Kbd`: Basecoat's kbd, showing a shortcut as the host's platform writes it (mod as Ctrl or ⌘): the spike's Keycap and MenuKeys in one.
 - `ui.Button`: Basecoat's button (CSS only): the most used component.
 - `ui.ButtonProps`: a button's attributes, one struct per the pattern.
