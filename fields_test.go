@@ -289,3 +289,19 @@ func TestSelectWithoutSelectedIsTheHosts(t *testing.T) {
 		t.Errorf("after a render elsewhere (n=%d) the host's select has %q, not the user's b", n, got)
 	}
 }
+
+// A check box's or radio's value is an attribute like any other (what it
+// submits), not its field, which is checked: a change to it reaches the
+// host.
+func TestCheckValueIsAnAttribute(t *testing.T) {
+	plan := "basic"
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div><input type="radio" name="p" value="%s"%s/><input type="checkbox" value="%s"%s/><button%s>next</button></div>`,
+			plan, on("r"), plan, on("c"), on("b", surf.Click(func() { plan = "pro" })))
+	})
+	r := startHost(t, surf.New("t", v, ""))
+	r.click("b")
+	if doc := r.h.Surface(r.s.Name()).HTML(); strings.Count(doc, `value="pro"`) != 2 {
+		t.Fatalf("the boxes' values didn't reach the host:\n%s", doc)
+	}
+}
