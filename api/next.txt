@@ -430,15 +430,18 @@ pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, KindClass string
 pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, Text string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Checked bool
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Content templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Group string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Icon string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keys string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keywords string
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Label string
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Leading templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnCheckedChange func(bool)
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Role string
+pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Trailing templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type MenuProps struct
 pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Class string
