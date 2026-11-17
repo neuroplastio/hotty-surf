@@ -1734,7 +1734,9 @@ plx's integration list (l4c) has two gaps in the root package:
   `Keys() ([]KeyUse, Chars)`; v0.7 has neither.
 - **G-lend.** plx lends the host's keyboard to its own menus with a=blur.
   The host doesn't report a program's blur, so the surface kept
-  `focused`, and a later `Focus()` sent nothing.
+  `focused`, and a later `Focus()` sent nothing. (That premise was
+  wrong: SPEC §10.1 has the host send `blur` after a program's a=blur,
+  and plx confirms every host does; see the review below.)
 
 The pack: `Surface.Focused() string`, `Surface.Chars() Chars` with
 `CharsBound`, `CharsPick`, `CharsText`, and `Surface.Blur() (bool, error)`,
@@ -1767,3 +1769,22 @@ Questions for the review:
    methods keep each answer readable at its call site.
 2. A readonly text field is CharsText (the host keeps the key, which moves
    nothing): right, or CharsBound?
+
+Reviewed (review-focus.md): approved as named, Q1 two methods, Q2
+readonly is CharsText. Applied:
+
+- **The echo.** Blur runs the blur itself first, so the surface knows at
+  once, then sends a=blur and sets a flag; the host's `blur` that follows
+  (SPEC §10.1) is swallowed as its echo: nothing runs twice. A focus
+  event, Focus() or an Autofocus taking effect clears the flag, so a host
+  that sent none never loses a later real blur. A cells.Screen echoes
+  while it is written to; the surface defers that event past the write
+  and swallows it the same way. Tests: TestBlurEcho (echo, no echo, Focus
+  in between) and TestBlurInCells, each failing without the swallow.
+- **Chars.** contenteditable (not "false") is CharsText; a readonly field
+  is CharsText, locked by TestReadonlyKeepsCharsVector. Its host half is
+  skipped: hotty-go v0.8's test host types into a readonly field, a bug
+  of that host's (SPEC §6.4) to fix in hotty-go; cells keeps the keys.
+- **Docs.** Focused and Chars run on the driver's goroutine; Focused is
+  the surface's view; Chars names its limits (the kit's Select and
+  DropdownMenu, select multiple, composition).

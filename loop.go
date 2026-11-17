@@ -155,6 +155,7 @@ func (s *Surface) send() error {
 		// §10.1): the surface knows it from here.
 		s.focused, s.focusIn = f.Focus, s.chain(f.Focus)
 		s.lastFocus = f.Focus
+		s.blurAsked = false
 	}
 	s.asked, s.askDue = f.Focus, false
 	return s.write(cmds)
@@ -204,6 +205,17 @@ func (s *Surface) event(e hotty.Event) error {
 	}
 	if s.frame == nil {
 		return errNoDocument
+	}
+	if s.blurAsked {
+		// The blur after Blur's a=blur is its echo (SPEC §10.1), which Blur
+		// ran already; a focus first means the host sent none.
+		switch e.Kind {
+		case hotty.EventBlur:
+			s.blurAsked = false
+			return nil
+		case hotty.EventFocus:
+			s.blurAsked = false
+		}
 	}
 	on := s.frame.On
 	ran := false
@@ -639,32 +651,39 @@ func (s *Surface) takeFocus() (bool, error) {
 	if id == "" {
 		return false, nil
 	}
+	s.blurAsked = false
 	if err := s.write([]string{hotty.Focus(s.name, id)}); err != nil {
 		return false, err
 	}
 	return true, s.event(hotty.Event{Kind: hotty.EventFocus, Surface: s.name, Target: id})
 }
 
-// blur is Blur: a=blur, then the blur the host won't report. The press
-// that may have come before was the user's, not this blur's, so Outside
-// runs for every element.
+// blur is Blur: the blur first, so the surface knows at once, then a=blur,
+// whose echo (which a cells.Screen sends while it is written to) the
+// event loop swallows. The press that may have come before was the
+// user's, not this blur's, so Outside runs for every element.
 func (s *Surface) blur() (bool, error) {
 	if s.focused == "" {
 		return false, nil
 	}
-	if s.out != nil {
-		if err := s.write([]string{hotty.Blur(s.name)}); err != nil {
-			return false, err
-		}
-	}
 	s.pressed = false
-	return true, s.event(hotty.Event{Kind: hotty.EventBlur, Surface: s.name})
+	if err := s.event(hotty.Event{Kind: hotty.EventBlur, Surface: s.name}); err != nil {
+		return true, err
+	}
+	if s.out == nil {
+		return true, nil
+	}
+	s.blurAsked = true
+	return true, s.write([]string{hotty.Blur(s.name)})
 }
 
 // charsOf is what n, focused, does with a character key.
 func charsOf(n *html.Node) Chars {
 	if n == nil || hasAttr(n, "disabled") {
 		return CharsBound
+	}
+	if hasAttr(n, "contenteditable") && !strings.EqualFold(attr(n, "contenteditable"), "false") {
+		return CharsText
 	}
 	switch n.Data {
 	case "textarea":

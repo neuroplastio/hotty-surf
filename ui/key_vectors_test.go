@@ -131,3 +131,64 @@ func TestNativeKeyVectors(t *testing.T) {
 		})
 	}
 }
+
+// A readonly text field keeps a typed character, on a host and in cells:
+// it changes nothing, and the program never hears it (surf.CharsText).
+func TestReadonlyKeepsCharsVector(t *testing.T) {
+	for _, mode := range []string{"host", "cells"} {
+		t.Run(mode, func(t *testing.T) {
+			value, heard := "", 0
+			view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				attrs := surf.On(ctx, "control", surf.Input(func(v string) { value = v }))
+				attrs["readonly"] = true
+				in := ui.Input(ui.InputProps{Value: value, Attrs: attrs})
+				return templ.Join(templ.Raw(`<p id="vector-outside" tabindex="0">Outside</p>`), in).Render(ctx, w)
+			})
+			s := surf.New("vector", view, ui.Stylesheet())
+			var press func(string)
+			if mode == "host" {
+				// hotty-go v0.8's test host types into a readonly field,
+				// which SPEC §6.4 says the user cannot change: its bug, to
+				// be fixed there; until then only cells runs the vector.
+				t.Skip("hottytest v0.8 edits a readonly field (hotty-go bug)")
+				r := surftest.Start(t, s)
+				r.Click("#control")
+				press = func(k string) {
+					if !r.Key(k) {
+						heard++
+					}
+				}
+			} else {
+				c := cells.New(80, 24, func(e hotty.Event) {
+					if err := s.Event(e); err != nil {
+						t.Fatal(err)
+					}
+				})
+				s.Attach(c, hotty.Caps{})
+				doc, err := s.Document()
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := c.Write([]byte(hotty.Doc(s.Name(), doc))); err != nil {
+					t.Fatal(err)
+				}
+				c.Key("tab")
+				c.Key("tab")
+				press = func(k string) {
+					if !c.Key(k) {
+						heard++
+					}
+				}
+			}
+			if s.Focused() != "control" || s.Chars() != surf.CharsText {
+				t.Fatalf("focused %q, chars %v", s.Focused(), s.Chars())
+			}
+			for _, k := range []string{"a", "shift+b", "1"} {
+				press(k)
+			}
+			if value != "" || heard != 0 {
+				t.Fatalf("value %q, the program heard %d keys", value, heard)
+			}
+		})
+	}
+}
