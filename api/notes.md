@@ -510,6 +510,14 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   keyboard with the selection; Dialog needs both, since it keeps no
   State: the surface remembers, by the dialog's id, that it is open and
   where the keyboard was when it opened. No exported name changes.
+- **A frame has its number and after-render hooks** (`rt.Frame`'s `N`
+  and `After`, the review's fixes 8-10). Dialog asks for the keyboard in
+  a hook, so its ask wins over the others of the frame and the one it
+  replaces (a menu's for its trigger) is where the keyboard goes back.
+  A one-shot ask from an event is for frame N+1 of the handler's frame
+  N, and expires with it: a menu hidden by its own item doesn't take
+  the keyboard when it is shown again later. The hooks run only when the
+  render succeeded, and a hook may add hooks.
 - **An item's click survives the blur.** An option or a menu item takes
   no focus, so a click on one blurs the surface first (SPEC §10.1), and
   the blur is Outside, which closes the list before the click arrives.
@@ -520,8 +528,11 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
 - **The keyboard comes back by a one-shot ask.** Where a script calls
   `trigger.focus()` (Escape, a choice, `DropdownMenuState.Open`), the
   state asks `surf.Autofocus` for the trigger in the next frame only.
-  The trigger has spikeui's empty Focus handler, so a frame that asks
-  for nothing comes between two that ask.
+  `Open()` is the app's own ask, so it is for whichever render comes
+  next. Every focus and blur now renders (recommendation 6, loop.go),
+  so a frame that asks for nothing comes between two asks; ui's `moved`
+  and spikeui's `Popup.Moved`, the empty Focus handlers that forced it,
+  are gone.
 - **Enter (and a menu's space) go to the program while open**
   (`data-keys` on the trigger), where the script picks the active item;
   closed, they are the button's own click, as in a browser.
@@ -545,9 +556,27 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   as a Card's parts). The backdrop's click is Outside on the box, and a
   blur while the keyboard is in the dialog isn't one (a Focus handler
   marks it in the same event): a click on the dialog's text, or on
-  another surface, leaves it open. Not done, and not doable here: a
-  focus trap (Tab leaves the dialog; the page under it isn't `inert`,
-  and the dialog can't mark it) and a top layer. A click on the
+  another surface, leaves it open. With the keyboard in the dialog, a
+  press on the backdrop only arms it, and the blur that press causes
+  dismisses it (recommendation 7, the ui-only fix): the keyboard then
+  goes back after the press's blur, so the surface and the host agree
+  on where it is. The keyboard counts as in when the dialog opened (its
+  own ask, which calls no Focus handler) until its box's Focus(false),
+  or a render that knows nothing is focused (a blur, a new document). A
+  second press while armed dismisses it, should no blur have come.
+- **Dialog's memo is per frame** (fix 9): a dialog opens on a render
+  when it wasn't open in the frame before, and the first Dialog of a
+  frame adds the hook that gives the keyboard back for each dialog open
+  in the frame before and not in this one, unless the frame asks
+  elsewhere (of two that closed at once, the one opened first). An ID
+  that changes on close (`"confirm-"+row`) gives the keyboard back.
+  Two Dialogs with one ID in a frame are a fault, open or closed; the
+  second takes no part in the keyboard's moves. A Dialog left out of the
+  render, rather than rendered closed, gives the keyboard back only if
+  another Dialog renders in that frame.
+- **Dialog, not done, and not doable here:** a focus trap (Tab leaves
+  the dialog; the page under it isn't `inert`, and the dialog can't mark
+  it) and a top layer. A click on the
   dialog's own text takes the keyboard to the terminal, so Escape
   reaches it again only after a click on one of its controls.
 - **Tabs:** the shown tab's panel only (the children), with the roving
@@ -561,14 +590,17 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   (`surf.Of(ctx).Do`), for Basecoat's 3 s (5 s for an error); it goes
   `aria-hidden`, and is removed 300 ms later, toast.css's transition,
   whose end toast.js waits for. The pointer over the toaster pauses the
-  timers (surf.Hover); surftest can't hover, so that is untested.
+  timers (surf.Hover), tested with a hover event sent to the Surface
+  and then `Rig.Update`, as Select's highlight is. A toast paused past
+  its deadline (its timer late) has 0 left, and closes on resume.
   Toast has no action or cancel: one that stays (a negative Duration)
   gets the macro's cancel button, Dismiss, or it could never go.
 - **code.Block links Chroma's lexers package**, every lexer, since its
   doc names "json" and "sh"; the spike embedded five XML lexers. Each
-  line is a `<div>` in the `<pre>`: the runtime drops whitespace-only
-  text beside elements even inside a `<pre>` (render.go's number), so a
-  line break as text would be lost. A token's class is one kit.css has:
+  line is a `<div>` in the `<pre>`, a box of its own. (That began as a
+  way round the runtime dropping whitespace-only text in a `<pre>`,
+  which it no longer does since ab10c85.) A CRLF or a CR ends a line on
+  the plain path as on Chroma's. A token's class is one kit.css has:
   comments `text-muted-foreground`, keywords `font-semibold`, types and
   functions `font-medium`, errors `text-destructive`; strings and
   literals are plain, since the kit has no class for another theme
@@ -579,4 +611,17 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   classes; the stylesheet's rebuild is the kit's, not worked round here.
 - **surftest.Type types a capital as shift and its key** (SPEC §10.4):
   `Type("Ada")` typed "ada", which hello's test caught.
-- **The kit's icons gain lucide's `hand`**, which hello's Wave draws.
+- **The kit's icons gain lucide's `hand`**, which hello's Wave draws,
+  and `plus`, Icon's doc example (fix 11). The kit's names are now a
+  list in internal/gen/lucide.py, so a regeneration needs only the
+  lucide-react directory; an unknown name's fault lists them. hello's
+  icon has no class, so the button's rule sizes it (`size-4` is in no
+  stylesheet).
+- **A Button's Attrs may give its type** (fix 12): `type="button"` is
+  written only when Attrs has none. A class still goes in Class, as
+  css.go's doc now says, since of two `class` attributes the first wins.
+- **The ID fields are documented**: the default and that two on one
+  surface need their own. Select, menu and Tabs fail on the duplicate
+  ids surf.On sees; Dialog has its own fault.
+- **nav imports spikeui as `spikeui`**, as tasks does, so `ui.` in it is
+  only the kit.
