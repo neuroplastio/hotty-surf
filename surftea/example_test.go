@@ -41,10 +41,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.w, m.h = msg.Width, msg.Height
-		m.sess.Layout([]hottytea.Surface{
-			m.files.Place(hottytea.Rect{X: m.w / 2, Y: 0, W: m.w - m.w/2, H: m.h}),
-		})
 	}
+	// every frame says where the surface goes; the Session sends what changed
+	m.sess.Layout([]hottytea.Surface{
+		m.files.Place(hottytea.Rect{X: m.w / 2, Y: 0, W: m.w - m.w/2, H: m.h}),
+	})
 	return m, tea.Batch(cmd, cmd2, m.sess.Flush())
 }
 

@@ -10,13 +10,16 @@ replace neuroplast.io/hotty-surf => ../
 
 require (
 	charm.land/bubbletea/v2 v2.0.8
+	charm.land/lipgloss/v2 v2.1.1
 	github.com/a-h/templ v0.3.1118
+	golang.org/x/net v0.62.0
+	neuroplast.io/hotty-go v0.8.0
 	neuroplast.io/hotty-go/hottytea v0.8.0
+	neuroplast.io/hotty-go/hottytest v0.8.0
 	neuroplast.io/hotty-surf v0.0.0-00010101000000-000000000000
 )
 
 require (
-	charm.land/lipgloss/v2 v2.1.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886 // indirect
 	github.com/charmbracelet/x/ansi v0.11.8 // indirect
@@ -32,10 +35,9 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
-	neuroplast.io/hotty-go v0.8.0 // indirect
+	neuroplast.io/hotty-go/hottyedit v0.8.0 // indirect
 	neuroplast.io/hotty-go/hottyterm v0.8.0 // indirect
 	neuroplast.io/myelin/myelinkey v0.2.0 // indirect
 )
