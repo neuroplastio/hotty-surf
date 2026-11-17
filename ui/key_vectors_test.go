@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -49,6 +50,18 @@ func (a *nativeKeyApp) view() templ.Component {
 			c = ui.Input(ui.InputProps{Disabled: a.disabled, Value: a.value, Attrs: surf.On(ctx, "control", surf.Input(input))})
 		case "textarea":
 			c = ui.Textarea(ui.TextareaProps{Disabled: a.disabled, Value: a.value, Attrs: surf.On(ctx, "control", surf.Input(input))})
+		case "list":
+			items := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				for i := range 3 {
+					row := ui.ListItem(ui.ListItemProps{Selected: a.value == strconv.Itoa(i),
+						Attrs: surf.On(ctx, "row-"+strconv.Itoa(i), surf.Click(func() { a.clicks++ }))})
+					if err := with(row, templ.Raw("Row")).Render(ctx, w); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+			c = with(ui.List(ui.ListProps{Attrs: templ.Attributes{"aria-label": "Rows"}, OnChange: func(i int) { a.value = strconv.Itoa(i) }}), items)
 		case "native-select":
 			c = ui.NativeSelect(ui.NativeSelectProps{Disabled: a.disabled, Value: a.value, Items: []ui.SelectItem{{Value: "a", Label: "Alpha"}, {Value: "b", Label: "Beta"}}, Attrs: surf.On(ctx, "control", surf.Input(input))})
 		}
@@ -79,6 +92,7 @@ func TestNativeKeyVectors(t *testing.T) {
 		{"input", true, "", []string{"tab", "a"}, []string{"/false/0", "/false/0"}},
 		{"textarea", false, "", []string{"tab", "a", "enter", "b"}, []string{"/false/0", "a/false/0", "a\n/false/0", "a\nb/false/0"}},
 		{"textarea", true, "", []string{"tab", "a"}, []string{"/false/0", "/false/0"}},
+		{"list", false, "", []string{"tab", "arrow_down", "arrow_down", "arrow_down", "home", "enter"}, []string{"/false/0", "1/false/0", "2/false/0", "2/false/0", "0/false/0", "0/false/1"}},
 		{"native-select", false, "a", []string{"tab", "arrow_down", "home"}, []string{"a/false/0", "b/false/0", "a/false/0"}},
 		{"native-select", true, "a", []string{"tab", "arrow_down"}, []string{"a/false/0", "a/false/0"}},
 	}

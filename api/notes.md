@@ -1723,6 +1723,200 @@ them. Kit rule K26 (pointer gestures are root handlers; Outside before
 Secondary). hotty.Drag must stay method-free, or embedding it promotes its
 methods into surf's API.
 
+## plx: key labels (a pack of its own)
+
+plx's move to v0.7 (its ask (c)) needs every scoped key labelled, with an
+enabled state, enumerable from Go as `{key, label, enabled}`, as its
+surfui `bind label=…` is today. Its which-key overlay and its command
+palette read it, the palette with the keyless actions too. In hotty 0.8 a
+host's which-key level and palette come from the program's menu (SPEC
+§10.7, `a=menu`), not from `data-key` attributes, which 0.2's host-side
+sequence engine read and 0.3 dropped. hotty-go has the menu as
+`hotty.MenuTree` and `hotty.Menu`, so the kit gives the tree and writes no
+escape sequence.
+
+Nothing to port: hotty-a2ui's `Shortcut{Key, Label}` and `KeyHints` have
+labels but no enabled state and no menu, and the spike has none. hotty-a2ui's
+hints merging keys by label is the app's to do from `Bindings`.
+
+### As drafted
+
+- `KeyScope(bindings []KeyBinding, fn func(KeyBinding) bool)`, where
+  `KeyBinding` is `{Key, Label, Name string; Disabled bool}`. A keyless
+  binding with a Name is an action only a pick reaches; one with neither
+  is a fault. A disabled binding's key goes on as if the scope did not
+  name it, its pick runs nothing, and the menu shows it disabled. fn gets
+  the binding as given, so it switches on Name or Key.
+- `Bindings(s *surf.Surface) []KeyBinding`: what s offers now, from its
+  last render. The scopes around the focused kit control first, nearest
+  first, then every other scope in render order. A key belongs to the
+  nearest enabled binding of it in that chain (else the nearest disabled
+  one); any other keyed binding is listed with Key empty when it has a
+  Name, and left out when it has none.
+- `Menu(s, label) *hotty.MenuTree`: Bindings as one flat level of hotty
+  menu items; nil when there are none, which `hotty.Menu` sends as no
+  menu.
+- `Pick(s, name) bool`: runs the binding a menu's pick or a palette names.
+- All three run on the driver's goroutine (a handler, or `Surface.Do`).
+- Behaviour, no names: run.App sends `hotty.Menu(ui.Menu(s, …))` where the
+  host has the `menu` feature, whenever it changes, and turns a command
+  event's name into `ui.Pick`. An app that places its surfaces itself
+  (plx) builds and sends its own menu, adding its key sequences. run is
+  the L4 builder's, so that part goes to them once this is decided.
+
+### The other shape, and the lean
+
+- **Lean (p-653's, taken in the draft): change KeyScope.** v0.7 is
+  untagged and the maintainer prefers the better architecture to keeping
+  a reviewed signature: one way to scope keys. Its cost: every caller
+  writes `[]ui.KeyBinding{{Key: "enter"}}` for what was `[]string{"enter"}`.
+- **Other: keep KeyScope, add a sibling** `ui.Keys([]KeyBinding, fn)`. No
+  break, but two ways to scope keys, one of which can't be listed.
+
+### Open for the reviewer
+
+1. **fn's argument.** The draft passes the KeyBinding. The alternative is
+   `func(string) bool` getting the Name, or the Key when there is no Name.
+   That's shorter, but a handler then can't tell a key from a pick.
+2. **A keyed binding the key doesn't reach.** The draft lists it without
+   its key when it has a name. The other choice lists it with its key,
+   marked as not reachable now, which needs a field that KeyBinding (an
+   input) would then carry as output.
+3. **Reach.** A scope handles keys only while one of its kit controls has
+   the keyboard, as reviewed for B3. plx's `bind` is surface-wide. Should a
+   scope also take its keys while the focus is anywhere inside it (plain
+   HTML), or while nothing in the surface is focused? The draft keeps
+   B3's reach, so Bindings lists only what a key really reaches.
+4. **One level.** Menu gives no groups (SPEC §10.7 allows eight levels).
+   Grouping by scope would need a label per scope, which KeyScope doesn't
+   take. An app that wants groups builds its tree from Bindings.
+5. **The name `Menu`.** It returns hotty's menu (SPEC §10.7), but in `ui`
+   it sits beside `MenuItem`, DropdownMenu's item, which it doesn't use.
+   `KeyMenu` or `HostMenu` would say it's the host's. The draft keeps
+   `Menu`, after hotty-go's `hotty.Menu`, which it feeds.
+
+### As reviewed (p-796, 2026-11-17): applied
+
+Approved with changes (`review-keys-labels.md`, K27 added and K20's reach
+amended):
+- **KeyScope(bindings []KeyBinding)**, with each binding's `Run func()
+  bool` in place of the scope's fn, as MenuItem carries OnSelect. A nil
+  Run is a fault. Question 1 is moot: the draft's fn got the same binding
+  for a key and a pick.
+- **Reach extended (question 3).** The keyboard is inside a scope on its
+  kit controls, on an element whose surf.On ran in it, or inside one of
+  those, and the outermost scopes have it while nothing is focused. The
+  order is scopes, then kit defaults, then surf.Key, then the program. On a
+  plain element a scope hears only the keys the host gives the program
+  anyway, so it takes no native key. surf.On records the scope from ctx
+  (rt.Handlers.Scope), and one function, the surface's `reached`, is the
+  reach for both dispatch and Bindings (rt.Peek.Scopes). New vectors cover
+  a plain element (its key, and its native Enter kept) and nothing
+  focused, on a host and in cells.
+- **Bindings** in a stable render order. **One Name is one action**: it is
+  listed once, at its first rendered place, as the binding nearest the
+  keyboard, and Pick runs that binding.
+- **Menu renamed HostMenu** (question 5). One level is kept (question 4):
+  groups would come later as an additive `KeyBinding.Group`.
+- Question 2 kept as drafted.
+- The examples render a scope. ExampleBindings builds a Command palette
+  whose items Pick.
+- rt.Peek's doc says production code reads it.
+
+Still the L4 builder's (p-795): run.App resends `hotty.Menu(ui.HostMenu(…))`
+when it changes (after a render or a focus move, compared with what it
+last sent), and turns a command event's name into `ui.Pick`.
+
+### As verified (p-797, 2026-11-17): fixes applied
+
+FIX FIRST (`verify-keys-labels.md`), applied:
+- The keyboard model's known-gaps paragraph is restored after "Menus and
+  palettes", verbatim.
+- Bindings' doc says the listed bindings' Run is nil: call Pick.
+- `tops`' doc is back above `func tops`.
+
+And p-653's addition, since plx relies on it (the review's promise that a
+scope never steals letters from a field): **an element that types keeps
+its printable keys.** A kit Input, Textarea or Combobox/Command input, or
+a plain text input, textarea or editing host, keeps every printable key
+(one character or space, with or without shift). No scope takes one from
+it:
+- the kit forwards none of them from a text-kind control (attachScope);
+- the surface offers none to a scope while such an element has the
+  keyboard (`rt.Types`, `rt.Printable` in key());
+- Bindings lists such a binding without its key while the field has the
+  keyboard.
+
+A modified key (ctrl+s) still reaches the scope from a field. KeyScope's
+doc and the keyboard model say so. TestKeyScopeFieldKeepsLetters (host and
+cells) covers `x` and `shift+x` typed in a scoped kit Input, the field's
+data-keys forwarding only ctrl+s, and ctrl+s running the scope. B3's three
+text vectors bound a bare `b` to exercise the scope's editing fallback.
+They now bind `backspace`, which the field uses and the scope declines,
+so the fallback is still exercised.
+
+## Draft: spike list rows, icon buttons and symbols
+
+The maintainer asked to port the spike's ListItem, IconButton and Symbols
+into `ui`, with their book stories, and to review these new names as one
+small pack. LayoutThumb and BusyBadge belong with plx and are not in this
+port. The code follows the spike's public shape and markup for review; no
+lock has been approved for these names.
+
+The spike's List is a named listbox of button rows. ListItem carries the
+selection and active visuals, slots and a click callback; the app owns the
+selected index. The spike's list has no default arrow-key handling. Review
+whether the kit's keyboard-default rule calls for that behavior here and
+how it is overridden, and whether the spike's ID, callback and accessible
+label need adaptation to the v0.7 kit conventions. IconButton is the
+spike's icon-only button with a name and caller attributes. Symbol renders
+a decorative filled Material Symbol from a Shape; Symbols enumerates the
+seven paths the spike shipped. None of these names include thumbnails or
+busy badges.
+
+### As reviewed (review-shell-components.md), applied
+
+The review's shapes are applied as written: ListItemProps loses ID and
+OnClick for Attrs (the id and surf.On handlers) and Class; List takes
+ListProps (OnChange by item index, Attrs for its name, Class); the
+text lines, IconButton and the Symbol names were applied earlier.
+
+List now has the listbox keys. Tab enters at the selected enabled item
+when the app changes selection, else where the keyboard or a click last
+was, else the first enabled; ↑ ↓ move one enabled item, Home and End to the ends, stopping
+there (an end is taken with no request). A move asks OnChange and moves
+the keyboard; it never runs the row's click. A click asks OnChange (if
+the row isn't selected already) and then runs the row's own click once.
+Disabled rows are skipped, not renumbered. Without OnChange the keyboard
+still moves. The keyboard is kept by item id across renders, so a row
+removed or reordered doesn't hand it to another.
+
+How: List renders its children with a registry in the context; each
+ListItem joins it and adds the list's click, focus and keys to the
+handlers the app registered for its id (a row without an id gets one
+from the list's). The roving tabindex is only known once every item has
+rendered, so the items write a placeholder the List fills. The keys are
+marked as the kit's default, so a KeyScope takes a named key first and a
+declined one keeps the default (TestListKeyScope). Faults: a List with
+no accessible name, more than one Selected item, an owned attribute in
+Attrs, and a ListItem outside a List.
+
+Tests: ui/list_test.go (click selects and activates once, arrows select
+without activating, ends, disabled and none enabled, empty, no
+OnChange, removal, KeyScope take and decline, faults) and the host and
+cells key vectors (TestNativeKeyVectors/list).
+
+An app's own surf.Key on a ListItem's id runs after the list's keys. A
+KeyScope still takes a named key first (the row is a kit control to it);
+only a declined key's path differs: the list's navigation then runs
+among the ordinary Key handlers (first of them) rather than as the kit's
+default, with the same result.
+
+Verified (verify-shell-components.md), with three fixes applied: two
+Lists with one id (none given) are a fault, and ListProps.Attrs says two
+need their own; a selection the app changes moves the Tab stop to it;
+IconButton is a kit button to a KeyScope (scopeNativeAttrs, as Button).
+
 ## L5: Focused, Chars and Blur (plx's G-keys-decl and G-lend)
 
 plx's integration list (l4c) has two gaps in the root package:
