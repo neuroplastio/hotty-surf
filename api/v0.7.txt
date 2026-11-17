@@ -36,7 +36,14 @@ pkg neuroplast.io/hotty-surf, type DragEvent struct, Start bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, embedded hotty.Drag
 pkg neuroplast.io/hotty-surf, type Handler struct
 pkg neuroplast.io/hotty-surf, type Surface struct
+pkg neuroplast.io/hotty-surf/cells, const Bold Attr = 1
+pkg neuroplast.io/hotty-surf/cells, const Dim Attr = 2
+pkg neuroplast.io/hotty-surf/cells, const Italic Attr = 4
+pkg neuroplast.io/hotty-surf/cells, const Reverse Attr = 16
+pkg neuroplast.io/hotty-surf/cells, const Strike Attr = 32
+pkg neuroplast.io/hotty-surf/cells, const Underline Attr = 8
 pkg neuroplast.io/hotty-surf/cells, func New(int, int, func(hotty.Event)) *Screen
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cells() [][]Cell
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cursor() (int, int, bool)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Focus(bool)
@@ -46,6 +53,13 @@ pkg neuroplast.io/hotty-surf/cells, method (*Screen) Paste(string) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Resize(int, int)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Write([]byte) (int, error)
+pkg neuroplast.io/hotty-surf/cells, type Attr uint8
+pkg neuroplast.io/hotty-surf/cells, type Cell struct
+pkg neuroplast.io/hotty-surf/cells, type Cell struct, Attr Attr
+pkg neuroplast.io/hotty-surf/cells, type Cell struct, Bg Role
+pkg neuroplast.io/hotty-surf/cells, type Cell struct, Fg Role
+pkg neuroplast.io/hotty-surf/cells, type Cell struct, Text string
+pkg neuroplast.io/hotty-surf/cells, type Role string
 pkg neuroplast.io/hotty-surf/cells, type Screen struct
 pkg neuroplast.io/hotty-surf/lint, func Dir(string) ([]Finding, error)
 pkg neuroplast.io/hotty-surf/lint, method (*Finding) DecodeMsg(*msgp.Reader) error
