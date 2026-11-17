@@ -1,8 +1,8 @@
 # The approved API of hotty-surf v0.7, in Go's api/ format. It changes only
 # by make api-approve, on the maintainer's approval of a pack, named in the
-# commit. Approved: the v0 pack, 2026-11-16 (L0), with the blind review
-# (p-754) and plx's review (p-751) applied; Toast.Category for Q2's lean,
-# as the verifier (p-756) found it.
+# commit. Approved: the v0 pack, 2026-11-16 (L0), with the blind
+# reviewer's review and plx's plugins agent's review applied;
+# Toast.Category for Q2's lean, as the verifier found it.
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler

@@ -7,8 +7,8 @@ as written; a change goes through another pack.
 
 The maintainer approved the shape on 2026-11-16 and delegated the calls:
 "I see that review agent made some corrections, let's trust it. Let's
-apply the leans." This pack is the first one with the blind review
-(p-754) and plx's review (p-751) applied, every lean of the open
+apply the leans." This pack is the first one with the blind reviewer's
+review and plx's plugins agent's review applied, every lean of the open
 questions taken; `api/v0.7.txt` holds it.
 
 ```
@@ -153,7 +153,7 @@ versioned require before any tag. Still open, for later packs: a
 drops a surface; harmless, one name when someone needs it), and a link
 between `MenuItem.Keys` and the handler that binds it.
 
-### Notes for L1 (the verifier's, p-756)
+### Notes for L1 (the verifier's)
 
 - **The handover reads documents directly.** In a dev build the reload
   registry holds surfaces the program may have dropped, which nobody
@@ -169,7 +169,8 @@ between `MenuItem.Keys` and the handler that binds it.
   `lint.Finding` gain msgp codecs and limits (P-3), additively.
 - **The command is `hotty-surf`** (`cmd/hotty-surf`): new, run, ctl,
   lint, shot, build --wasm, serve, book; the project's own name, the
-  review's call under the maintainer's delegation (p-756, 2026-11-16).
+  review's call under the maintainer's delegation (the verifier,
+  2026-11-16).
   Its environment variables and files take the same name
   (`HOTTY_SURF_…`).
 - **NOTICE** still names the Material Design Icons' data, which v0.7
