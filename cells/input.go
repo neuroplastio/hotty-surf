@@ -25,6 +25,27 @@ type field struct {
 	committed string // the value the last change said, or the markup's
 	off       int    // an input's first column shown
 	top       int    // a textarea's first row shown
+	def       string // the markup's default when last read (defaultOf)
+}
+
+// defaultOf is what n's markup sets a control to: a box's checked, a
+// select's selected option, a field's value (SPEC §6.2).
+func defaultOf(n *html.Node) string {
+	switch {
+	case isCheck(n):
+		return strconv.FormatBool(has(n, "checked"))
+	case n.DataAtom == atom.Select:
+		return selected(n)
+	case n.DataAtom == atom.Textarea:
+		var b strings.Builder
+		for k := n.FirstChild; k != nil; k = k.NextSibling {
+			if k.Type == html.TextNode {
+				b.WriteString(k.Data)
+			}
+		}
+		return b.String()
+	}
+	return strings.NewReplacer("\r", "", "\n", "").Replace(attr(n, "value"))
 }
 
 // field is n's state, made from its markup the first time it is asked for.
@@ -53,6 +74,7 @@ func (c *Screen) field(n *html.Node) *field {
 	}
 	f.ed.Caret = len(graphemesOf(f.ed.Value))
 	f.committed = f.ed.Value
+	f.def = defaultOf(n)
 	c.fields[n] = f
 	return f
 }
@@ -707,11 +729,12 @@ func (c *Screen) click(col, row int) bool {
 		}
 	}
 	if f != nil {
-		c.active = true
-		c.focusTo(f, true)
 		if isTextField(f) && target == hit {
+			// Against the cells clicked: focus scrolls an input to its caret.
 			c.caretAt(f, col, y)
 		}
+		c.active = true
+		c.focusTo(f, true)
 	} else {
 		c.blur()
 	}

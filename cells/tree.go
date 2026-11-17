@@ -85,9 +85,24 @@ func (c *Screen) delta(ops []hotty.Op) error {
 // focus of an element that is gone.
 func (c *Screen) settle() {
 	c.changed()
-	for n := range c.fields {
+	for n, f := range c.fields {
 		if !c.attached(n) {
 			delete(c.fields, n)
+			continue
+		}
+		// A default the markup changed sets the control, unless it has
+		// the keyboard (SPEC §6.2); its rev stays.
+		if d := defaultOf(n); d != f.def {
+			f.def = d
+			if n == c.focused {
+				continue
+			}
+			if isCheck(n) {
+				c.check(n, d == "true")
+			} else {
+				f.ed.Value, f.committed = d, d
+				f.ed.Select(len(graphemesOf(d)), len(graphemesOf(d)))
+			}
 		}
 	}
 	if c.focused != nil && !c.attached(c.focused) {
@@ -132,10 +147,17 @@ func (c *Screen) op(o hotty.Op) error {
 		t.AppendChild(&html.Node{Type: html.TextNode, Data: v})
 		c.ids = nil
 	case "inner":
+		old := map[string]*html.Node{}
+		walk(t, func(n *html.Node) {
+			if id, ok := get(n, "id"); ok && n != t && n.Type == html.ElementNode {
+				old[id] = n
+			}
+		})
 		clear(t)
 		for _, n := range fragment(v, t) {
 			t.AppendChild(n)
 		}
+		c.adopt(t, old)
 		c.ids = nil
 	case "replace", "before", "after":
 		p := t.Parent
@@ -175,6 +197,32 @@ func (c *Screen) op(o hotty.Op) error {
 		return fmt.Errorf("unknown op %q (%s)", o.Op, hotty.EINVAL)
 	}
 	return nil
+}
+
+// adopt gives each element under t that has an old one's id and tag the
+// old one's field and focus, as inner's morph keeps the element (SPEC
+// §6.1, §6.2).
+func (c *Screen) adopt(t *html.Node, old map[string]*html.Node) {
+	walk(t, func(n *html.Node) {
+		if n == t || n.Type != html.ElementNode {
+			return
+		}
+		id, _ := get(n, "id")
+		o := old[id]
+		if o == nil || o.DataAtom != n.DataAtom {
+			return
+		}
+		if f := c.fields[o]; f != nil {
+			c.fields[n] = f
+			delete(c.fields, o)
+		}
+		if c.focused == o {
+			c.focused = n
+		}
+		if c.remembered == o {
+			c.remembered = n
+		}
+	})
 }
 
 // fragment parses HTML as the children of ctx, so that rows and items
