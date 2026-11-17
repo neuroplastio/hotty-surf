@@ -26,10 +26,11 @@ type Report struct {
 	// the compiler's output. The old processes still run. It is "" when
 	// the build succeeded.
 	Build string `msg:"build"`
-	// Failed is what went wrong for a process, by its key: restart's
-	// error, a key that didn't come back in time, a process that "exited
-	// before handover", a handover's own error, or a new process that
-	// started without the state handed over, which no longer decoded.
+	// Failed is what went wrong for a process, by the key it gave
+	// reload.Serve: restart's error, a key that didn't come back in time, a
+	// process that "exited before handover", a handover's own error, or a
+	// new process that started without the state handed over, which no
+	// longer decoded.
 	Failed map[string]string `msg:"failed"`
 	Lint   []lint.Finding    `msg:"lint"`
 }

@@ -1,15 +1,14 @@
 package reloader_test
 
 import (
-	"fmt"
-	"time"
-
 	"context"
+	"fmt"
 	"io"
 	"net"
-	"neuroplast.io/hotty-surf/lint"
+	"time"
 
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/lint"
 	"neuroplast.io/hotty-surf/reload/reloader"
 	"neuroplast.io/hotty-surf/ui"
 )

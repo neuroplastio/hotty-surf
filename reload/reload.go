@@ -68,10 +68,12 @@ func Keep[T any, P interface {
 // name the program's host gives it that stays the same across builds, so
 // that the reloader pairs the old process with the new one (run.App's is
 // the one its starter names, "app" under hotty-surf run; plx's are
-// "controller" and "tool:<viewer>"). A key is an opaque string that the dev
-// parent chooses: neither Serve nor the reloader reads anything into it,
-// except that it names one process at a time and is the key of
-// Report.Failed. It is called inline,
+// "controller" and "tool:<viewer>"). A key is an opaque, non-empty string
+// that the dev parent chooses: nothing in Serve or the reloader parses
+// it. It names one process at a time (the next build's process takes the
+// same key), and the reloader uses it as is: the keys of Report.Failed and
+// of Reloader.Instances, and Document's key (`hotty-surf ctl shot -key`).
+// It is called inline,
 // after Keep and before the program's surfaces first render.
 //
 // In a process that a reload started, Serve takes over from the build

@@ -27,24 +27,21 @@ func TestReportCodec(t *testing.T) {
 	if err := w.Flush(); err != nil {
 		t.Fatal(err)
 	}
-	var keys []string
-	m, rest, err := msgp.ReadMapHeaderBytes(buf.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
-	for range m {
-		var k string
-		k, rest, err = msgp.ReadStringBytes(rest)
-		if err != nil {
-			t.Fatal(err)
-		}
-		keys = append(keys, k)
-		if rest, err = msgp.Skip(rest); err != nil {
-			t.Fatal(err)
-		}
-	}
+	// The tags are plx's wire, which api-check doesn't see: lock them,
+	// and took's type (a plain int of nanoseconds, not an extension).
+	keys, vals := mapKeys(t, buf.Bytes())
 	if want := []string{"tier", "took", "build", "failed", "lint"}; !reflect.DeepEqual(keys, want) {
 		t.Fatalf("keys %v, want %v", keys, want)
+	}
+	if typ := msgp.NextType(vals["took"]); typ != msgp.IntType {
+		t.Fatalf("took is %v, want %v", typ, msgp.IntType)
+	}
+	n, first, err := msgp.ReadArrayHeaderBytes(vals["lint"])
+	if err != nil || n != 1 {
+		t.Fatalf("lint: %d elements, %v", n, err)
+	}
+	if fkeys, _ := mapKeys(t, first); !reflect.DeepEqual(fkeys, []string{"file", "line", "col", "rule", "text"}) {
+		t.Fatalf("a finding's keys %v", fkeys)
 	}
 	var out Report
 	if err := out.DecodeMsg(msgp.NewReader(&buf)); err != nil {
@@ -70,4 +67,30 @@ func TestText(t *testing.T) {
 			t.Errorf("Text(%+v) = %q, want %q", c.r, got, c.want)
 		}
 	}
+}
+
+// mapKeys reads the msgpack map at the start of b: its keys in order, and
+// each key's encoded value.
+func mapKeys(t *testing.T, b []byte) ([]string, map[string][]byte) {
+	t.Helper()
+	m, rest, err := msgp.ReadMapHeaderBytes(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var keys []string
+	vals := map[string][]byte{}
+	for range m {
+		var k string
+		if k, rest, err = msgp.ReadStringBytes(rest); err != nil {
+			t.Fatal(err)
+		}
+		after, err := msgp.Skip(rest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		keys = append(keys, k)
+		vals[k] = rest[:len(rest)-len(after)]
+		rest = after
+	}
+	return keys, vals
 }

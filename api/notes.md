@@ -1439,3 +1439,18 @@ one pack:
    keys Report.Failed. No name changes.
 
 7 new names, all in `lint` and `reload/reloader`; none changed or removed.
+
+### As reviewed (p-796, 2026-11-17): all 7, two docs and two tests changed
+
+All 7 names approved as named, with no cuts. The ctl wire's bytes are
+unchanged (msgp 1.6.5's `WriteDuration` is `WriteInt64`), and the release
+wasm gains nothing (`./reload`'s release deps include neither reloader nor
+lint). Applied:
+`reload.Serve`'s key doc says the key is non-empty and also keys
+`Instances`, `Document` and `ctl shot -key`; `Report.Failed` is "by the key
+it gave reload.Serve"; ExampleText's imports are grouped as goimports
+groups them; `TestReportCodec` locks Finding's keys and that took is a
+plain int, since the `msg` tags are plx's wire and api-check doesn't see
+them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
+Left for plx: decode within its capped frame (msgp:limit doesn't cap
+strings), and drop any mirror of its own.
