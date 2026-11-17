@@ -194,28 +194,20 @@ func TestDisabledRangeThumbsRejectCaseInsensitiveAttrs(t *testing.T) {
 	}
 }
 
-func TestSliderStylesheetOnlyWhileRendered(t *testing.T) {
-	if strings.Contains(ui.Stylesheet(), "data-hotty-slider") {
-		t.Fatal("base stylesheet contains slider styles")
+// The slider's styles are the kit stylesheet's, so a page has them once,
+// however many sliders it draws, and no slider writes a <style>.
+func TestSliderStylesInStylesheet(t *testing.T) {
+	if !strings.Contains(ui.Stylesheet(), "[data-hotty-slider-thumb]") {
+		t.Fatal("the kit stylesheet has no slider styles")
 	}
-	shown := false
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		var child templ.Component = templ.Raw("")
-		if shown {
-			child = ui.Slider(ui.SliderProps{ID: "slider", Min: 0, Max: 10, Value: 5, Attrs: templ.Attributes{"aria-label": "Value"}})
-		}
-		return page(button("toggle", "Toggle", func() { shown = !shown }), child).Render(ctx, w)
+		return page(
+			ui.Slider(ui.SliderProps{ID: "a", Min: 0, Max: 10, Value: 5, Attrs: templ.Attributes{"aria-label": "A"}}),
+			ui.Slider(ui.SliderProps{ID: "b", Min: 0, Max: 10, Value: 2, Attrs: templ.Attributes{"aria-label": "B"}}),
+		).Render(ctx, w)
 	})
 	r := surftest.Start(t, surf.New("slider", view, ui.Stylesheet()))
-	if len(r.Find("style")) != 0 {
-		t.Fatalf("styles before slider: %d", len(r.Find("style")))
-	}
-	r.Click("#toggle")
-	if len(r.Find("style")) != 1 || !strings.Contains(r.HTML(), "[data-hotty-slider-thumb]") {
-		t.Fatal("slider stylesheet was not inserted")
-	}
-	r.Click("#toggle")
-	if len(r.Find("style")) != 0 {
-		t.Fatalf("styles after slider removed: %d", len(r.Find("style")))
+	if n := len(r.Find("style")); n != 0 {
+		t.Fatalf("two sliders wrote %d <style> elements, want none", n)
 	}
 }
