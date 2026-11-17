@@ -24,7 +24,7 @@ templ control(id string, c Control, set func(name, value string)) {
 	switch c.Kind {
 		case "bool":
 			<div>
-				<input type="checkbox" role="switch" class="input" checked?={ c.Value == "true" } { surf.On(ctx, controlID(id, c.Name), surf.Check(func(v bool) { set(c.Name, strconv.FormatBool(v)) }))... }/>
+				<input type="checkbox" role="switch" checked?={ c.Value == "true" } { surf.On(ctx, controlID(id, c.Name), surf.Check(func(v bool) { set(c.Name, strconv.FormatBool(v)) }))... }/>
 			</div>
 		case "enum":
 			<select class="select h-8 w-full max-w-60 text-sm" { surf.On(ctx, controlID(id, c.Name), surf.Input(func(v string) { set(c.Name, v) }))... }>
@@ -44,7 +44,7 @@ templ control(id string, c Control, set func(name, value string)) {
 templ EventLog(p EventLogProps) {
 	{{ id, entries, onClear, empty := p.ID, p.Entries, p.OnClear, p.Empty }}
 	if len(entries) == 0 {
-		<p class="text-muted-foreground text-sm italic">{ empty }</p>
+		<p class="kit-event-log-empty text-muted-foreground text-sm italic">{ empty }</p>
 	} else {
 		<div class="kit-event-log-header mb-2 flex items-center">
 			<span class="text-muted-foreground text-xs">{ plural(len(entries), "event", "events") }, the newest first</span>

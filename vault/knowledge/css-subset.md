@@ -59,6 +59,7 @@ fallback, as the host does since 0.7.7
 | `align-self` | `stretch` (a Stack in a Top Row) | proven | box/scroll |
 | `box-sizing` | `border-box` | proven | every story |
 | `display: grid`, `grid-template-columns: minmax(0, auto) minmax(0, 1fr)` | the spike storybook's Props controls | proven in the spike's hotty/Chromium Props comparison | both draw the labels and fields in the same two columns; the comparison shot is the storybook Props view |
+| `grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr))` | the spike icon gallery | proven in hottyterm side-by-side | both the spike and port draw eight columns at the same full-width window |
 | `display` | `flex`, `inline-flex`, `inline-block` | proven | every story |
 | `flex`, `flex-direction`, `align-items`, `justify-content` | `1 1 0`, `0 0 auto` (`.u-keep` too); row, column; `center`; `flex-start`, `flex-end` | proven | list/selection, switch/states (the knob's side), line/runs (caps beside a cut label keep whole) |
 | `justify-content` on a Row and a Stack (`justify`) | `center`, `flex-end`, `space-between`; on a row that wraps, each line | proven once, 2026-11-10: the same layout in both at every density and scale | four fixtures since removed; the record is [`surf-gaps.md`](surf-gaps.md), "Proven once". No gate case draws it now |
