@@ -34,7 +34,8 @@ type Hello struct {
 // Welcome answers Hello: what the process takes over before it renders.
 type Welcome struct {
 	// State is what Keep's get encoded in the process before, nil in a
-	// fresh start.
+	// fresh start: the app's own msgp value, which the reloader can't
+	// decode, so it travels as bin.
 	State []byte `msg:"state,limit=67108864"`
 	// Surfaces are the surfaces the process before handed over.
 	Surfaces []Snap `msg:"surfaces"`
@@ -52,6 +53,8 @@ type Welcome struct {
 type Snap struct {
 	Name string `msg:"name"`
 	CSS  string `msg:"css"`
+	// Data is the surface's snapshot, its own msgp value (package surf),
+	// which the reloader can't decode, so it travels as bin.
 	Data []byte `msg:"data,limit=67108864"`
 }
 
@@ -70,7 +73,7 @@ type Restyled struct {
 // Handed answers "handover": the process's state and its surfaces. The
 // process exits once it has sent it.
 type Handed struct {
-	State    []byte `msg:"state,limit=67108864"`
+	State    []byte `msg:"state,limit=67108864"` // as Welcome.State
 	Surfaces []Snap `msg:"surfaces"`
 }
 

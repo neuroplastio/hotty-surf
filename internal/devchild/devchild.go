@@ -451,6 +451,7 @@ func (c *child) handover(out *devwire.Handed) error {
 		err error // get's, on the first surface
 	}
 	snap := func(i int, s *surf.Surface) snapped {
+		// One buffer a surface, once a process: the bytes are the reply.
 		var b bytes.Buffer
 		w := devwire.NewWriter(&b)
 		err := rt.Peek.Snapshot(s, w)
