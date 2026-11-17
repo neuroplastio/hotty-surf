@@ -8,7 +8,7 @@ package ui
 import "neuroplast.io/hotty-surf"
 
 templ selectBox(v *selectView) {
-	{{ v.n = frameN(ctx) }}
+	{{ v.join(ctx) }}
 	<div
 		class={ join("select", v.p.Class) }
 		if v.p.Placeholder != "" {
