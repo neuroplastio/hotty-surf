@@ -162,7 +162,7 @@ func sliderStory(s *overlayState, ranged bool) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(s.low, 'f', -1, 64))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 125, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 125, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -175,7 +175,7 @@ func sliderStory(s *overlayState, ranged bool) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(s.high, 'f', -1, 64))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 125, Col: 95}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 125, Col: 95}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -197,7 +197,7 @@ func sliderStory(s *overlayState, ranged bool) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatFloat(s.high, 'f', -1, 64))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 128, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 128, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -527,7 +527,7 @@ func alertDialogStory(s *overlayState) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(onoff(s.open))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 161, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 161, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -639,7 +639,7 @@ func drawerStory(s *overlayState, side string) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(onoff(s.open))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 175, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 175, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -688,7 +688,7 @@ func bookCombobox(p *bookComboboxProps) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fruitValue(p.Value))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 185, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 185, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -739,7 +739,7 @@ func comboboxStory(s *overlayState, multiple, clear bool) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(s.values, ", "))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 197, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 197, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
@@ -757,7 +757,7 @@ func comboboxStory(s *overlayState, multiple, clear bool) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fruitValue(s.value))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 199, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 199, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -1007,7 +1007,7 @@ func popoverSides(s *overlayState) templ.Component {
 				var templ_7745c5c3_Var40 string
 				templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(side)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 237, Col: 26}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 237, Col: 26}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 				if templ_7745c5c3_Err != nil {
@@ -1082,7 +1082,7 @@ func popoverCommand(s *overlayState) templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 248, Col: 82}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 248, Col: 82}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -1128,7 +1128,7 @@ func commandDefault(s *overlayState) templ.Component {
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 257, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 257, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
@@ -1200,7 +1200,7 @@ func commandDialog(s *overlayState) templ.Component {
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/stories/overlay.templ`, Line: 269, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `overlay.templ`, Line: 269, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 		if templ_7745c5c3_Err != nil {
