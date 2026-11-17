@@ -517,14 +517,42 @@ What took the floor from about 2 ms to under 1:
   go.work neighbour) always takes the Go tier.
 - **Two hooks in surf:** `rt.Peek.CSS` (a surface's stylesheet) and
   `rt.Peek.Rendered` (when its last render ended, readable from any
-  goroutine). The child waits until 101 ms after the latest render of
-  any of its surfaces, templ's recheck, and then renders each one.
-- **The 101 ms wait stays for now.** templ v0.3.1118 has no hook to drop
-  its check time: the StringLoader that keeps it is behind an unexported
-  `sync.OnceValue`, and only that instance's `Now` is replaceable. A
-  one-line mod would have to reach every app's build, so through a
-  replaced or vendored templ (or a build overlay): that changes what
-  apps build against, and waits for the maintainer.
+  goroutine). Without mods/templ (below) the child waits until 101 ms
+  after the latest render of any of its surfaces, templ's recheck, and
+  then renders each one.
+- **mods/templ makes a text save render at once** (gov P-7's first set
+  here): one patch on templ v0.3.1118 adds `runtime.ReloadWatchedStrings`,
+  which drops the strings development mode has read. The child calls it
+  and renders, in place of the wait. A text save right after a render,
+  the reloader's test app, 7 saves: p50 102.0 ms, p95 102.6 ms before;
+  p50 0.69 ms, p95 1.0 ms after. After a pause, p50 1.5 ms before and
+  0.77 ms after.
+- **It reaches dev builds through a go.work of the reloader's own,** not
+  an overlay: Go refuses an overlay that replaces a file under
+  GOMODCACHE. internal/templmod mirrors templ's module from the module
+  cache into the Reloader's directory (its directories symlinks, the
+  files of the directories on the patched file's path copied, since
+  go:embed takes no symlink and templ embeds its .version), with the
+  patched file. The dev build runs with GOWORK naming a go.work that is
+  the app's effective one (`go env GOWORK`) with every `use` and
+  `replace` kept, or a fresh one using the app's module, plus templ's
+  replace. The copy's paths are made absolute rather than the copy kept
+  beside the original, so nothing is written in the app's tree. The
+  app's go.mod and go.work, and release builds, never see it; `go list`
+  and lint run on the app's own setup.
+- **Without it, the wait, and a line in every report** (a `templ-mod`
+  entry in Lint, which fails nothing): when the app vendors (a vendor/
+  directory, or `-mod=vendor`), when templ is replaced already (by
+  go.work or go.mod: the app chose its templ, and a second replace
+  would undo that), when the app's templ isn't the patch's version or
+  the patch doesn't apply, or when GOFLAGS has `-mod=mod`, which a
+  workspace refuses.
+- **The call is in its own file, under the `surftemplmod` tag,** which
+  the reloader adds with the go.work: `go vet -tags surfdev`, staticcheck
+  and any build of plain templ can't compile a call to what only the
+  patch adds. The gate builds it through the reloader's tests
+  (TestModModule, TestModWorkspace), which check with `go version -m`
+  that templ is the mirror and go.work's own replaces hold.
 - **Work on a surface goes through its Do,** and the child knows it was
   sent from a second Do queued inside the first, which runs at the next
   Update. A surface that never rendered isn't waited for; one that
