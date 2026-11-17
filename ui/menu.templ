@@ -59,17 +59,17 @@ templ dropdownMenu(v *menuView) {
 }
 
 // menuItem is render_dropdown_items' item: its icon, label and shortcut,
-// or the app's Leading, Content and Trailing in their places; a Separator
-// item is a rule. Its click stays live while the menu is closed, as a
+// or the app's Leading, Content and Trailing in their places (Leading in
+// place of a checkable row's indicator too); a separator item is a rule. Its click stays live while the menu is closed, as a
 // Select's option's.
 templ menuItem(v *menuView, o int) {
 	{{ it, id := v.item(o), v.opts[o].id }}
-	if it.Separator {
+	if it.Role == "separator" {
 		<hr role="separator" id={ id }/>
 	} else {
 		<div
 			role={ or(it.Role,"menuitem") }
-			if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
+			if checkable(it) {
 				aria-checked={ bstr(it.Checked) }
 			}
 			if it.Disabled {
@@ -91,16 +91,18 @@ templ menuItem(v *menuView, o int) {
 			}
 		>
 			if it.Leading != nil {
-				@plain(it.Leading)
+				<span data-leading>
+					@menuSlot("Leading", it.Leading)
+				</span>
 			} else if it.Icon != "" {
 				@icon(it.Icon, "")
 			}
 			if it.Content != nil {
-				@plain(it.Content)
+				@menuSlot("Content", it.Content)
 			} else {
 				{ it.Label }
 			}
-			if it.Role == "menuitemcheckbox" || it.Role == "menuitemradio" {
+			if checkable(it) && it.Leading == nil {
 				<span data-indicator>
 					if it.Role == "menuitemcheckbox" {
 						@icon("check", "size-4")
@@ -111,7 +113,7 @@ templ menuItem(v *menuView, o int) {
 			}
 			if it.Trailing != nil {
 				<span data-shortcut>
-					@plain(it.Trailing)
+					@menuSlot("Trailing", it.Trailing)
 				</span>
 			} else if it.Keys != "" {
 				@kbd(it.Keys)

@@ -2150,3 +2150,33 @@ Open, for review:
    other fields mean nothing.
 3. **Content's text in cells** is whatever the markup draws. plx's caret
    (`span.cur`) is plx's CSS.
+
+### As reviewed (p-796, review-rows.md): applied
+
+- Leading, Content and Trailing kept, for all three menus.
+  - A slot set with the field it replaces (Leading with Icon, Trailing
+    with Keys) is a fault.
+  - A control in a slot is a fault (K31: slots are pictures): an input,
+    button, select, textarea, `a[href]`, `[tabindex]` or a `data-on`
+    handler. Each slot is rendered once, scanned with x/net/html's
+    tokenizer, then written (`menuSlot`).
+  - Leading sits in the icon's box: `<span data-leading>`, a 16 px
+    square, centred.
+- **Separator bool cut.** A rule is `Role: "separator"`, with the
+  review's Role doc. surftest faults on a separator first or last, next
+  to another, or at a group change.
+- Q1: no live control in a slot. The pack's Switch row is now
+  TestMenuRowFaults' first case, and the example's Wrap row is a
+  `menuitemcheckbox` with Content for its aside.
+- **p-653's addition:** on a checkable row, Leading is drawn in place of
+  the kit's check or radio indicator, not beside it. plx draws its
+  switch's look there as an aria-hidden picture, and `aria-checked` still
+  says the state. This is drawing only, with no live control. Whether
+  the kit itself should draw a checkbox item as a switch stays the
+  maintainer's call (review Q1). TestMenuRows checks that one indicator
+  is drawn and that Follow keeps aria-checked.
+- Heading maps to Group; no new name.
+- The example's dot is an escaping component (`templ.SanitizeCSS`,
+  `templ.EscapeString`), and the example says templ.Raw is for constant
+  markup only.
+- K31 is the reviewer's.

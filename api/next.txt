@@ -435,7 +435,6 @@ pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Leading templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnCheckedChange func(bool)
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Role string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Separator bool
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Trailing templ.Component
 pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
 pkg neuroplast.io/hotty-surf/ui, type MenuProps struct
