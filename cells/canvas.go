@@ -21,8 +21,9 @@ type cell struct {
 }
 
 type canvas struct {
-	w    int
-	rows [][]cell
+	w     int
+	rows  [][]cell
+	clips []rect
 }
 
 func (cv *canvas) row(y int) []cell {
@@ -40,6 +41,11 @@ func (cv *canvas) row(y int) []cell {
 func (cv *canvas) put(x, y int, ch string, w int, lk look, own *html.Node) {
 	if y < 0 || x < 0 || x+w > cv.w || w <= 0 {
 		return
+	}
+	for _, clip := range cv.clips {
+		if !clip.has(x, y) || !clip.has(x+w-1, y) {
+			return
+		}
 	}
 	r := cv.row(y)
 	// Half a wide character left behind is a space: the row stays as
@@ -61,10 +67,23 @@ func (cv *canvas) put(x, y int, ch string, w int, lk look, own *html.Node) {
 // block's to a click. Blocks are done after what is inside them, so each
 // cell is the innermost element's.
 func (cv *canvas) own(x, y, w, h int, n *html.Node) {
-	for j := y; j < y+h; j++ {
+rowLoop:
+	for j := max(y, 0); j < y+h; j++ {
+		for _, clip := range cv.clips {
+			if j < clip.y || j >= clip.y+clip.h {
+				continue rowLoop
+			}
+		}
 		r := cv.row(j)
 		for i := max(x, 0); i < x+w && i < cv.w; i++ {
-			if r[i].own == nil {
+			inside := true
+			for _, clip := range cv.clips {
+				if !clip.has(i, j) {
+					inside = false
+					break
+				}
+			}
+			if inside && r[i].own == nil {
 				r[i].own = n
 			}
 		}

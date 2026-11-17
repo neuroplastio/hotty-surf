@@ -27,6 +27,7 @@ func (c *Screen) load(name, doc string) error {
 	c.fields = map[*html.Node]*field{}
 	c.focused, c.remembered = nil, nil
 	c.scroll = 0
+	c.boxScroll = nil
 	c.changed()
 	return nil
 }
@@ -85,6 +86,11 @@ func (c *Screen) delta(ops []hotty.Op) error {
 // focus of an element that is gone.
 func (c *Screen) settle() {
 	c.changed()
+	for n := range c.boxScroll {
+		if !c.attached(n) {
+			delete(c.boxScroll, n)
+		}
+	}
 	for n, f := range c.fields {
 		if !c.attached(n) {
 			delete(c.fields, n)
@@ -194,7 +200,10 @@ func (c *Screen) op(o hotty.Op) error {
 		t.Parent.RemoveChild(t)
 		c.ids = nil
 	case "reveal":
-		c.revealAfter = t
+		if v != hotty.RevealNearest && v != hotty.RevealStart && v != hotty.RevealEnd {
+			return fmt.Errorf("unknown reveal alignment %q (%s)", v, hotty.EINVAL)
+		}
+		c.revealAfter, c.revealWhere = t, v
 	default:
 		return fmt.Errorf("unknown op %q (%s)", o.Op, hotty.EINVAL)
 	}

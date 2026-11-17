@@ -306,7 +306,7 @@ func (c *Screen) focusTo(n *html.Node, user bool) {
 	}
 	c.focused, c.remembered = n, nil
 	c.lay = nil
-	c.revealAfter = n
+	c.revealAfter, c.revealWhere = n, hotty.RevealNearest
 	if user {
 		e := hotty.Event{Kind: hotty.EventFocus}
 		if t := withID(n); t != nil {
@@ -727,18 +727,53 @@ func (c *Screen) scrollBy(a hotty.Action) {
 	c.scroll = max(min(c.scroll, h-c.rows), 0)
 }
 
-// reveal scrolls n into view.
-func (c *Screen) reveal(n *html.Node) {
-	r, ok := c.layout().boxes[n]
+// reveal scrolls n into view through each bounded scrolling ancestor,
+// from the innermost out, and then through the document.
+func (c *Screen) reveal(n *html.Node, where string) {
+	for parent := n.Parent; parent != nil; parent = parent.Parent {
+		l := c.layout()
+		box, ok := l.scrolls[parent]
+		if !ok {
+			continue
+		}
+		r, ok := l.boxes[n]
+		if !ok {
+			continue
+		}
+		old := c.boxScroll[parent]
+		to := revealOffset(r, box.view, old, box.content-box.view.h, where)
+		if to != old {
+			if c.boxScroll == nil {
+				c.boxScroll = map[*html.Node]int{}
+			}
+			c.boxScroll[parent] = to
+			c.lay = nil
+		}
+	}
+	l := c.layout()
+	r, ok := l.boxes[n]
 	if !ok {
 		return
 	}
-	if r.y+r.h > c.scroll+c.rows {
-		c.scroll = r.y + r.h - c.rows
+	c.scroll = revealOffset(r, rect{y: c.scroll, h: c.rows}, c.scroll, l.height-c.rows, where)
+}
+
+func revealOffset(target, view rect, old, limit int, where string) int {
+	to := old
+	switch where {
+	case hotty.RevealStart:
+		to += target.y - view.y
+	case hotty.RevealEnd:
+		to += target.y + target.h - (view.y + view.h)
+	default:
+		if target.y+target.h > view.y+view.h {
+			to += target.y + target.h - (view.y + view.h)
+		}
+		if target.y < view.y {
+			to += target.y - view.y
+		}
 	}
-	if r.y < c.scroll {
-		c.scroll = r.y
-	}
+	return max(0, min(to, limit))
 }
 
 // click is a press of the primary button at a cell, as a host has it
