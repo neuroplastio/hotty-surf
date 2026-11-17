@@ -1008,8 +1008,11 @@ scrollbar classes and Avatar's image for the looks pass.
     pre-B3 merge `897c796`, and 2,253,334 raw / 726,329 gzip after the
     verification fixes: +34,420 raw / +11,392 gzip. The reviewed B3 build
     was 2,273,254 raw / 732,806 gzip, so the fixes save 19,920 raw / 6,477
-    gzip. Scoped key dispatch and native fallback, modal tree preparation,
-    and slider styles are linked when those features are used. Small generic
+    gzip. Scoped key dispatch and native fallback and modal tree
+    preparation are linked when those features are used. The slider's 853
+    bytes of styles were linked with it too, until the B3 recheck moved
+    them into Stylesheet: two sliders wrote two identical `<style>`
+    elements, and a page now has them once. Small generic
     dispatch hooks remain; the example also uses Select and Toaster, which
     gained B3 behavior, and shared runtime code changed. The remaining delta
     is not an isolated measurement of any one feature. Select uses the
