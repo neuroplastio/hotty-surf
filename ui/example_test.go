@@ -46,3 +46,14 @@ func ExampleKeyScope() {
 	moveLog := func(key string) bool { return key == "arrow_down" }
 	_ = ui.KeyScope([]string{"arrow_down"}, moveLog)
 }
+
+func ExampleCombobox() {
+	var state ui.ComboboxState
+	value := ""
+	_ = ui.Combobox(&state, ui.ComboboxProps{
+		Items:       []ui.SelectItem{{Value: "apple", Label: "Apple"}},
+		Value:       value,
+		Placeholder: "Choose fruit",
+		OnChange:    func(v string) { value = v },
+	})
+}

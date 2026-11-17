@@ -28,8 +28,9 @@ type SelectProps struct {
 	Class    string
 }
 
-// A SelectItem is one of a Select's options. Consecutive items with the same
-// Group are shown under its label, the groups apart.
+// A SelectItem is an option of a Select, NativeSelect or Combobox.
+// Consecutive items with the same Group are shown under its label, the
+// groups apart.
 type SelectItem struct {
 	Value, Label string
 	Group        string

@@ -309,6 +309,24 @@ Each is one of Basecoat's components that shows something and takes no keys of i
   decline. Tab remains focus traversal. It adds no wrapper or per-component
   Props fields; its open native-select and editing limitations are in the
   keyboard model.
+- `ui.Combobox`: Basecoat's searchable selection, with the combobox.js
+  interaction translated to Go; it reuses SelectItem (K12).
+- `ui.ComboboxProps`: a combobox's attributes.
+- `ui.ComboboxProps.ID`: names the input, list, options and controls (K14).
+- `ui.ComboboxProps.Items`: K2(c), the options the component renders.
+- `ui.ComboboxProps.Value`, `.Values`, `.Multiple`: K2(b), the selected
+  value or ordered values, controlled by the app; the combined shape is a
+  B3 review question.
+- `ui.ComboboxProps.Placeholder`: K2(e), the search field's placeholder.
+- `ui.ComboboxProps.Disabled`: K2(a), the input's disabled attribute.
+- `ui.ComboboxProps.Clear`, `.AutoHighlight`, `.CloseOnSelect`: the macro's
+  clear button and behavior configuration; auto-highlight and close-on-select
+  write data attributes read by combobox.js. These are script configuration,
+  outside K2's listed cases, and are for the B3 reviewer to assess.
+- `ui.ComboboxProps.OnChange`, `.OnValuesChange`: callbacks reporting the
+  app-owned single or multiple selection (K1).
+- `ui.ComboboxProps.Class`: as every Props.
+- `ui.ComboboxState`: the component's search, popup and highlight (K2(b)).
 - `ui.ChartProps.Aspect` (Chart, from L5): K2 (c), what the plot reads to render: its width over its height. The plot is drawn in an svg box whose height follows its width, so without it a chart is always 16:9 and a dashboard's row can't be short and wide; the box's class can't change it, since the svg would letterbox. A float, as an aspect is a ratio: 0 is Basecoat's aspect-video.
 - `ui.MenuItem.Keywords`: K2 (c), what the search reads (the item's data-keywords): a command finds "Notifications" by "alerts". A DropdownMenu has no search and doesn't use it.
 

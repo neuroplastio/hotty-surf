@@ -1019,6 +1019,20 @@ scrollbar classes and Avatar's image for the looks pass.
   and multiple value fields and callbacks, or separate Props and component
   names for the two modes. The reviewer should decide the shape. Selection
   labels come from the items, not from a second object-valued selection.
+  The current draft reuses SelectItem and searches labels. combobox.js can
+  also search `data-keywords`; SelectItem has no such field. Adding
+  Keywords to SelectItem or introducing ComboboxItem are alternatives for
+  the reviewer, as is leaving that script option out.
+- **Combobox implementation in progress.** Its markup follows the generated
+  macro and its selection, filtering, keyboard and pointer behavior follows
+  combobox.js; there was no behavior port in the spike. Four stories cover
+  single, multiple, clear and grouped cases, and the cells keyboard gate
+  exercises each. Chromium differential cases cover search, single and
+  multiple selection, and removing the last chip. `CloseOnSelect` and
+  `AutoHighlight` are script configuration outside K2's listed cases.
+  The four initial stories were rendered with hotty-blitz 0.8.7 and
+  Chromium from the same documents; the image comparison reported
+  0.07–0.13% differing pixels, concentrated on text and control edges.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; that behavior still
   needs translating. The spike's popup code is the source for the popup

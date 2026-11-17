@@ -65,6 +65,7 @@ const KEYS = {
   arrow_right: { key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 },
   home: { key: 'Home', code: 'Home', windowsVirtualKeyCode: 36 },
   end: { key: 'End', code: 'End', windowsVirtualKeyCode: 35 },
+  backspace: { key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8 },
   escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
   tab: { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 },
   'shift+tab': { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers: 8 },

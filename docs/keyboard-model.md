@@ -39,7 +39,7 @@ component values and applies the changes its callbacks report.
 | Chart | None of its own. |
 | Checkbox | Space toggles it; Enter submits its form when it belongs to one. |
 | Collapsible | Planned; no kit implementation yet. |
-| Combobox | Planned; no kit implementation yet. |
+| Combobox | Typing filters its options. Up, Down, Home and End move among enabled matches; Enter chooses and Escape closes. In multiple mode Backspace removes the last chip when the field is empty. |
 | Command | Typing filters; Up, Down, Home and End move the highlight among enabled matches, and Enter selects. When there are no matches, navigation keys remain available to the field. |
 | Command dialog | Command's keys; Escape closes the dialog and choosing an item also closes it. |
 | Dialog | Escape closes; Tab and Shift+Tab cycle its controls. On close, focus returns to the opener where available. |

@@ -109,6 +109,7 @@ pkg neuroplast.io/hotty-surf/ui, func Button(ButtonProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Card(CardProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Chart(ChartProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Checkbox(CheckboxProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Combobox(*ComboboxState, ComboboxProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Command(*CommandState, CommandProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func CommandDialog(*CommandState, CommandDialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
@@ -193,6 +194,21 @@ pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Checked bool
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Invalid bool
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, AutoHighlight bool
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Clear bool
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, CloseOnSelect bool
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Disabled bool
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Items []SelectItem
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Multiple bool
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, OnChange func(string)
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, OnValuesChange func([]string)
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Placeholder string
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Value string
+pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Values []string
+pkg neuroplast.io/hotty-surf/ui, type ComboboxState struct
 pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Empty string

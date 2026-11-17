@@ -356,8 +356,23 @@ func TestRenderToast(t *testing.T) {
 	}})
 }
 
+func TestRenderCombobox(t *testing.T) {
+	var st ui.ComboboxState
+	runRender(t, "combobox", []renderCase{{
+		name: "single",
+		ui: ui.Combobox(&st, ui.ComboboxProps{ID: "fruit", Placeholder: "Choose fruit", Items: []ui.SelectItem{
+			{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"},
+		}}),
+		macro:  "combobox",
+		args:   map[string]any{"id": "fruit", "name": "fruit-value", "placeholder": "Choose fruit", "input_attrs": map[string]any{"id": "fruit-input"}},
+		caller: `<div role="option" id="fruit-items-1" data-value="a" aria-hidden="false">Apple</div><div role="option" id="fruit-items-2" data-value="b" aria-hidden="false">Banana</div>`,
+		// Initialization and the empty-state flag come from combobox.js.
+		drop: []string{"div@data-combobox-initialized", "div#fruit-popover@data-empty", "input#fruit-input@value"},
+	}})
+}
+
 func init() {
-	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast", "popover", "command"} {
+	for _, c := range []string{"select", "dropdown-menu", "dialog", "tabs", "toast", "popover", "command", "combobox"} {
 		renderTests[c] = true
 	}
 }

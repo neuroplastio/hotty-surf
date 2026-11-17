@@ -84,9 +84,9 @@ func filtered(n *html.Node) bool {
 		return attr(n, "aria-hidden") == "true" && in("combobox")
 	case "group":
 		switch {
-		case in("command"):
+		case in("command") && closest(n, func(a *html.Node) bool { return attr(a, "role") == "menu" }) != nil:
 			return !hasShown(n, "menuitem")
-		case in("combobox"):
+		case in("combobox") && closest(n, func(a *html.Node) bool { return attr(a, "role") == "listbox" }) != nil:
 			return !hasShown(n, "option")
 		}
 	}

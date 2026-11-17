@@ -46,6 +46,24 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"dialog":        dialogSubject,
 	"popover":       popoverSubject,
 	"command":       commandSubject,
+	"combobox":      comboboxSubject,
+}
+
+func comboboxSubject(_ *testing.T, args map[string]any) subject {
+	p := ui.ComboboxProps{Items: []ui.SelectItem{
+		{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"}, {Value: "c", Label: "Cherry"},
+	}}
+	p.ID, _ = args["id"].(string)
+	p.Placeholder, _ = args["placeholder"].(string)
+	p.Multiple, _ = args["multiple"].(bool)
+	var events []map[string]any
+	p.OnChange = func(v string) { p.Value = v; events = append(events, map[string]any{"value": v}) }
+	p.OnValuesChange = func(v []string) { p.Values = v; events = append(events, map[string]any{"value": v}) }
+	var st ui.ComboboxState
+	return subject{
+		view:   templ.ComponentFunc(func(ctx context.Context, w io.Writer) error { return ui.Combobox(&st, p).Render(ctx, w) }),
+		events: func() []map[string]any { result := events; events = nil; return result },
+	}
 }
 
 func init() {
