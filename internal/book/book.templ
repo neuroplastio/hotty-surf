@@ -82,6 +82,7 @@ templ header(a *App) {
 }
 
 templ preview(a *App) {
+	{{ a.model.Observe(a.model.Sel) }}
 	<div class="book-preview-area flex flex-col">
 		<nav class="book-renditions" role="tablist" aria-label="Rendition">
 			<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(!a.Cells) } { surf.On(ctx, "book-render-hotty", surf.Click(func() { a.setRendition(false) }), surf.Key(a.renditionKey))... }>hotty</button>

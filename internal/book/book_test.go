@@ -105,6 +105,19 @@ func TestBookInspection(t *testing.T) {
 	}
 }
 
+func TestBookLogsStoryStateChanges(t *testing.T) {
+	a := New()
+	a.show("button/default")
+	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
+	r.Click("#save")
+	for _, event := range a.model.Events(a.model.Sel) {
+		if event.Kind == "state" && strings.Contains(event.Text, "Clicks") {
+			return
+		}
+	}
+	t.Fatalf("button state change was not logged: %+v", a.model.Events(a.model.Sel))
+}
+
 func TestStoryHTMLIsComponentOnly(t *testing.T) {
 	a := New()
 	a.show("alert/default")
@@ -125,12 +138,21 @@ func TestRenditionsShareStoryState(t *testing.T) {
 	r := surftest.Start(t, surf.New("book", View(a), CSS), surftest.Size(120, 40))
 	r.Click("#save")
 	r.Key("r")
-	if !a.Cells || !strings.Contains(paneText(a), "clicks: 1") {
+	if !a.Cells || !strings.Contains(paneText(a), "Button") {
 		t.Fatalf("cells=%v; pane=%q", a.Cells, paneText(a))
 	}
 	r.Key("r")
-	if a.Cells || !strings.Contains(r.HTML(), "clicks: 1") {
-		t.Fatal("hotty rendition did not retain the story state")
+	if a.Cells || !strings.Contains(r.HTML(), "Button") {
+		t.Fatal("hotty rendition did not retain the story")
+	}
+	var clicks string
+	for _, c := range a.model.Sel.Controls() {
+		if c.Path == "Clicks" {
+			clicks = c.Value
+		}
+	}
+	if clicks != "1" {
+		t.Fatalf("click count after switching renditions: %q", clicks)
 	}
 }
 
