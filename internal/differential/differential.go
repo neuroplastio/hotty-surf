@@ -41,6 +41,11 @@ type Spec struct {
 	// Events are the events whose detail the page records: what the
 	// component tells the page (select's change).
 	Events []string `json:"events"`
+	// EventsOn, when set, keeps only the events on what matches it, each
+	// recorded as {"item": id} of that element unless it is a CustomEvent
+	// with a detail of its own: a menu's chosen item, whose click is all
+	// the page hears of it.
+	EventsOn string `json:"eventsOn,omitempty"`
 	// Ready is the selector of what the script marks once it started
 	// (select.js's [data-select-initialized]): the page waits for it
 	// before the first snapshot. "" for none.
@@ -187,14 +192,19 @@ func Page(s Spec, c Case, css, jsDir string) (string, error) {
 		fmt.Fprintf(&b, "<script src=\"file://%s\"></script>\n", html.EscapeString(filepath.Join(jsDir, f)))
 	}
 	ev, _ := json.Marshal(s.Events)
+	on, _ := json.Marshal(s.EventsOn)
 	fmt.Fprintf(&b, `<script>
 window.__events = [];
+const on = %s;
 for (const name of %s) document.addEventListener(name, (e) => {
-  if (e.detail !== undefined && e.detail !== null) window.__events.push({type: e.type, detail: e.detail});
+  const t = on ? e.target.closest(on) : null;
+  if (on && !t) return;
+  const d = e instanceof CustomEvent ? e.detail : (t ? {item: t.id} : null);
+  if (d !== undefined && d !== null) window.__events.push({type: e.type, detail: d});
 }, true);
 </script>
 </head><body style="padding:16px">
-`, ev)
+`, on, ev)
 	b.WriteString(Outside + "\n")
 	b.WriteString(markup)
 	b.WriteString("\n</body></html>\n")

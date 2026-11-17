@@ -38,7 +38,8 @@ type subject struct {
 
 // subjects make each component's subject from a case's macro arguments.
 var subjects = map[string]func(t *testing.T, args map[string]any) subject{
-	"select": selectSubject,
+	"select":        selectSubject,
+	"dropdown-menu": menuSubject,
 }
 
 func init() {
@@ -234,6 +235,50 @@ func selectSubject(t *testing.T, args map[string]any) subject {
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			return ui.Select(&st, p).Render(ctx, w)
+		}),
+		events: func() []map[string]any { h := heard; heard = nil; return h },
+	}
+}
+
+// menuSubject is a DropdownMenu for dropdown_menu's macro arguments: id,
+// trigger (text), and items (groups, separators, items with aria-disabled
+// or data-variant in attrs). An item's OnSelect reports it by the id the
+// macro gives it: <id>-items-<n>, or -<n>-<m> in a group, every entry
+// counted.
+func menuSubject(t *testing.T, args map[string]any) subject {
+	p := ui.DropdownMenuProps{}
+	p.ID, _ = args["id"].(string)
+	if tr, ok := args["trigger"].(string); ok {
+		p.Trigger = templ.Raw(tr)
+	}
+	var heard []map[string]any
+	add := func(it map[string]any, group, id string) {
+		l, _ := it["label"].(string)
+		attrs, _ := it["attrs"].(map[string]any)
+		mi := ui.MenuItem{Label: l, Group: group, Disabled: attrs["aria-disabled"] == "true",
+			OnSelect: func() { heard = append(heard, map[string]any{"item": id}) }}
+		if attrs["data-variant"] == "destructive" {
+			mi.Variant = ui.Destructive
+		}
+		p.Items = append(p.Items, mi)
+	}
+	for n, x := range args["items"].([]any) {
+		it := x.(map[string]any)
+		id := fmt.Sprintf("%s-items-%d", p.ID, n+1)
+		switch it["type"] {
+		case "separator":
+		case "group":
+			for m, y := range it["items"].([]any) {
+				add(y.(map[string]any), it["label"].(string), fmt.Sprintf("%s-%d", id, m+1))
+			}
+		default:
+			add(it, "", id)
+		}
+	}
+	var st ui.DropdownMenuState
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			return ui.DropdownMenu(&st, p).Render(ctx, w)
 		}),
 		events: func() []map[string]any { h := heard; heard = nil; return h },
 	}
