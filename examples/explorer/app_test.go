@@ -111,6 +111,15 @@ func TestExplore(t *testing.T) {
 	r.Click("#" + m + "-items-3")
 	r.Click("#delete-confirm")
 	want(t, r, "themes", "cmd", "internal", "docs", "LICENSE", "Justfile", "go.mod", "README.md")
+
+	// Copy path shows the path from the project's root, to copy.
+	r.Click("button:text(docs)")
+	m = menu(t, a, r, "guide.md")
+	r.Click("#" + m + "-items-2")
+	if v := r.Value("#path"); v != "/docs/guide.md" {
+		t.Fatalf("path %q", v)
+	}
+	r.Click("#copy-done")
 }
 
 func TestLint(t *testing.T) { surftest.Lint(t, ".") }
