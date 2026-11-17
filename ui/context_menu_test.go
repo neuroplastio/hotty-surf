@@ -76,16 +76,7 @@ func TestContextMenuKeys(t *testing.T) {
 			s := surf.New("ctx", a.view(), ui.Stylesheet())
 			r := surftest.Start(t, s)
 			r.Click("#row-b")
-			// hottytest 0.8.1's host passes neither key to the program
-			// (nor f10), so the test offers it as a host that does would.
-			press := func() bool {
-				taken, err := s.Key(key)
-				if err != nil {
-					t.Fatal(err)
-				}
-				r.Update()
-				return taken
-			}
+			press := func() bool { return r.Key(key) }
 			if !press() {
 				t.Fatalf("%s was not taken", key)
 			}
@@ -140,7 +131,9 @@ func TestContextMenuCloses(t *testing.T) {
 	}
 }
 
-func popoverHidden(r *surftest.Rig, id string) string { return attr1(r, "#"+id+"-popover", "aria-hidden") }
+func popoverHidden(r *surftest.Rig, id string) string {
+	return attr1(r, "#"+id+"-popover", "aria-hidden")
+}
 
 func attr1(r *surftest.Rig, sel, key string) string {
 	for _, a := range r.One(sel).Attr {

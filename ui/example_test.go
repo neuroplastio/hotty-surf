@@ -55,6 +55,32 @@ func ExampleKeyScope() {
 	_ = surf.New("scoped", view, ui.Stylesheet())
 }
 
+// A row's context menu: a right click on the row opens it at the
+// pointer, shift+f10 or the Menu key on the row's button under the row.
+// In templ:
+//
+//	@ui.ContextMenu(&row.menu, ui.ContextMenuProps{ID: "menu-" + row.ID,
+//	    Items: []ui.MenuItem{{Label: "Rename", OnSelect: row.rename}}}) {
+//	    @ui.Item(ui.ItemProps{Attrs: surf.On(ctx, row.ID, surf.Click(row.open))}) {
+//	        { row.Name }
+//	    }
+//	}
+func ExampleContextMenu() {
+	var state ui.ContextMenuState
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		row := templ.Raw(`<p>README.md</p>`)
+		menu := ui.ContextMenu(&state, ui.ContextMenuProps{
+			ID: "menu-readme",
+			Items: []ui.MenuItem{
+				{Label: "Open", OnSelect: func() {}},
+				{Label: "Delete", Variant: ui.Destructive, OnSelect: func() {}},
+			},
+		})
+		return menu.Render(templ.WithChildren(ctx, row), w)
+	})
+	_ = surf.New("files", view, ui.Stylesheet())
+}
+
 func ExampleCombobox() {
 	var state ui.ComboboxState
 	value := ""

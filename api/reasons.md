@@ -103,6 +103,12 @@ a user can't do without the name, or why a simpler shape won't do.
 - `ui.Tab.Disabled`: a tab that can't be chosen.
 - `ui.DropdownMenu`: Basecoat's dropdown menu: Jinja markup with dropdown-menu.js translated; replaces the spike's hand-written Popup, Menu, MenuItem, MenuCheck, MenuRadio, MenuSub, MenuDanger, MenuSeparator, MenuLabel and Trigger.
 - `ui.DropdownMenuProps`: a menu's attributes.
+- `ui.ContextMenu`: plx's ask (b): a menu of actions on an area, opened at the pointer by a secondary press (surf.Secondary) or under the area by shift+f10 and the Menu key, with no trigger. hotty-surf v0.6.3's context menu's behaviour, ported onto DropdownMenu's code; neither hotty-a2ui nor the spike has one. Not a DropdownMenu option: it has no button, its children are the area, and it opens at a cell.
+- `ui.ContextMenuProps`: a context menu's attributes.
+- `ui.ContextMenuProps.ID`: names its elements, as DropdownMenuProps.ID; one per row.
+- `ui.ContextMenuProps.Items`: MenuItem, as DropdownMenu's: the same items, groups, roles and OnSelect.
+- `ui.ContextMenuProps.Class`: as every Props, on the area's wrapper.
+- `ui.ContextMenuState`: open, where, the item highlighted, and the element to give the keyboard back to (K2 (b)); no methods: only the user opens it.
 - `ui.DropdownMenuProps.ID`: names the menu's elements.
 - `ui.DropdownMenuProps.Trigger`: what the trigger button holds, a component, since it is often an icon and a label.
 - `ui.DropdownMenuProps.Items`: the items, the app's data.
