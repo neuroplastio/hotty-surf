@@ -427,7 +427,7 @@
 
 == badge/every-variant
 
-  primary secondary outline ghost destructive link
+  primary secondary destructive outline ghost link
 
 
 
@@ -793,12 +793,12 @@
 
 == button/every-variant-and-size
 
-  [ primary ] [ secondary ] [ outline ] [ ghost ] [ destructive ] [ link ]
-  [ xs ] [ + ] [ sm ] [ + ] [ medium ] [ + ] [ lg ] [ + ]
+  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
+  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
+  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
+  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
+  [ + ] [ + ] [ + ] [ + ]
   [0;2mclicks: 0[0m
-
-
-
 
 
 
@@ -1527,6 +1527,67 @@
 
   [0;2m[x][0m Accept terms and conditions
   [0;2maccepted: on[0m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+== checkbox/mixed
+[ ] Select all
+
+
 
 
 
@@ -5432,6 +5493,67 @@
   [0;1;4m Account [0m Password  Team
   The account settings.
   [0;2mtab: account[0m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+== tabs/line
+ account [0;1;4m password [0m team
+Change your password here. After saving, you'll be logged out.
+
+
 
 
 
