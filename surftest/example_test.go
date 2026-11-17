@@ -52,6 +52,14 @@ func ExampleRig_Secondary() {
 	r.Click("[role=menuitem]:text(Rename)")
 }
 
+// A list row that opens on a double click (surf.Clicks).
+func ExampleRig_DoubleClick() {
+	var t *testing.T // the test's
+
+	r := surftest.Start(t, surf.New("list", page, ui.Stylesheet()))
+	r.DoubleClick("#row-a")
+}
+
 func attr(n *html.Node, k string) string {
 	for _, a := range n.Attr {
 		if a.Key == k {

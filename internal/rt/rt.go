@@ -37,8 +37,14 @@ type Frame struct {
 	On map[string]*Handlers
 	// Order is the ids On registered, in the order of the render.
 	Order []string
-	// Focus is the element Autofocus asked for ("" for none).
+	// Focus is the element Autofocus or Refocus asked for ("" for none).
 	Focus string
+	// Refocus says Focus moves the keyboard though the frame before
+	// asked for it too (surf.Refocus).
+	Refocus bool
+	// Count is the count of the click whose handler is running (SPEC §9),
+	// for surf.Clicks; 0 outside one.
+	Count int
 	// Reveal names an element to scroll into view after this frame.
 	Reveal string
 	// Platform is the host's, for a render that shows keys.
@@ -68,6 +74,10 @@ type Frame struct {
 	// Dialog), outermost first. The last is the active modal; the runtime
 	// confines interaction and focus to it.
 	Modal []string
+	// Popups are the ids of the kit's popups open when this render ends
+	// (a DropdownMenu, ContextMenu, Select, Combobox or Popover): at most
+	// one, as one opening closes another.
+	Popups []string
 	// ModalOps is installed by a modal component, so applications without
 	// one do not link its tree preparation and focus confinement code.
 	ModalOps *ModalOps
