@@ -879,7 +879,9 @@ func (l *loop) startBuild() {
 	}
 	go func() {
 		tmp := filepath.Join(filepath.Dir(l.bin), "."+filepath.Base(l.bin)+".build")
-		cmd := exec.CommandContext(l.ctx, "go", "build", "-tags", l.tags, "-o", tmp, ".")
+		// A dev build stamps no version control: it would run git status
+		// on every save, and fails where git does (a directory git refuses).
+		cmd := exec.CommandContext(l.ctx, "go", "build", "-buildvcs=false", "-tags", l.tags, "-o", tmp, ".")
 		cmd.Dir, cmd.Env = l.dir, l.env
 		out, err := cmd.CombinedOutput()
 		if err == nil {

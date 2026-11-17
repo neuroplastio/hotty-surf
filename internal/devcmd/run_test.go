@@ -43,7 +43,9 @@ func (c *cmdLog) Write(p []byte) (int, error) {
 // wait is the next command that holds every one of want.
 func (c *cmdLog) wait(t *testing.T, want ...string) string {
 	t.Helper()
-	timeout := time.After(30 * time.Second)
+	// Long: the first wait is the app's first build, which a loaded
+	// machine (the gate's -race -count=20) can take well past 30 s over.
+	timeout := time.After(2 * time.Minute)
 	for {
 		select {
 		case s := <-c.ch:

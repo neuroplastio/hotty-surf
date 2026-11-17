@@ -614,6 +614,12 @@ What took the floor from about 2 ms to under 1:
   _templ.go files with this version's header.
 - **fsnotify** is a direct dependency, at templ's version (v1.10.1).
 
+- **Dev builds pass `-buildvcs=false`:** stamping version control runs
+  git on every save, and it failed now and then in the gate's `-race
+  -count=20` (git's exit 128 on a test's temporary module). TestRun's
+  waits are two minutes, since a loaded machine takes its first build
+  past 30 s.
+
 ### ui's behaviour components
 
 Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
