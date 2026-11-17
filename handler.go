@@ -142,8 +142,8 @@ func Click(fn func()) Handler {
 // space. A double click is a click then a click with count 2, each with
 // its own press and release, so a Drag on the same element hears them as
 // it hears any click, and fn hears both: a row that selects on a click
-// and opens on a double click does each in turn. An element takes Click or Clicks, not both: two are a
-// fault.
+// and opens on a double click does each in turn. An element takes Click
+// or Clicks, not both: two are a fault.
 func Clicks(fn func(count int)) Handler {
 	return handler(kindClicks, fn, fn == nil)
 }
