@@ -79,12 +79,20 @@ func approved(t *testing.T) map[string]bool {
 // TestCoverage holds ui to ui/coverage.tsv, Basecoat's components one by
 // one: a row that is done has its names in the approved API, exactly the
 // stories it lists, and each test it lists. A row not done yet is logged
-// with what it lacks.
+// with what it lacks; a row that waits has nothing.
 func TestCoverage(t *testing.T) {
 	api := approved(t)
 	listed := map[string]bool{}
 	for _, row := range readCoverage(t) {
 		listed[row.component] = true
+		if row.status == "waits" {
+			// It waits for a decision outside the kit (a SPEC change, kit
+			// rule K10) with none of its names locked and no stories.
+			if len(row.api)+len(row.stories)+len(stories.Of(row.component)) > 0 {
+				t.Errorf("%s waits, but has names or stories", row.component)
+			}
+			continue
+		}
 		var lacks []string
 		for _, n := range row.api {
 			if !api[n] {

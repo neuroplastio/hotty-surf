@@ -203,7 +203,7 @@ func (d *dialogView) outside() {
 // trigger, when an item opened the dialog) is where the keyboard goes back.
 func (d *dialogView) body(ctx context.Context, children templ.Component) (string, error) {
 	var b bytes.Buffer
-	if err := children.Render(ctx, &b); err != nil {
+	if err := children.Render(outOfGroup(ctx), &b); err != nil {
 		return "", err
 	}
 	if d.opening {

@@ -15,7 +15,8 @@ type ButtonProps struct {
 	Disabled bool
 	// Attrs are more attributes for the button element: its handlers,
 	// surf.On(ctx, "save", surf.Click(a.Save)), and any other. A type here
-	// replaces type="button".
+	// replaces type="button"; any other attribute it writes is a fault
+	// here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -27,7 +28,7 @@ type ButtonProps struct {
 //		Save
 //	}
 func Button(p ButtonProps) templ.Component {
-	return cssButton(p)
+	return scoped(cssButton(p), false)
 }
 
 // BadgeProps are a Badge's attributes.
@@ -35,7 +36,8 @@ type BadgeProps struct {
 	// Variant is Primary, Secondary, Outline, Ghost, Destructive or Link.
 	Variant Variant
 	// Attrs are more attributes for the span element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -43,13 +45,14 @@ type BadgeProps struct {
 
 // Badge is Basecoat's badge, holding its children.
 func Badge(p BadgeProps) templ.Component {
-	return cssBadge(p)
+	return scoped(cssBadge(p), false)
 }
 
 // CardProps are a Card's attributes.
 type CardProps struct {
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -59,23 +62,21 @@ type CardProps struct {
 // Basecoat's markup has them: <header> (an <h2> and a <p>), <section> and
 // <footer>.
 func Card(p CardProps) templ.Component {
-	return cssCard(p)
+	return scoped(cssCard(p), false)
 }
 
 // CheckboxProps are a Checkbox's attributes.
 type CheckboxProps struct {
 	// Checked is whether it is checked, which the surface sets on the host
 	// when it differs from what the host last reported.
-	Checked bool
-	// Mixed says it is neither (aria-checked="mixed"): a check box for a
-	// set of which some are checked. Basecoat draws it as not checked.
-	Mixed    bool
+	Checked  bool
 	Disabled bool
 	// Invalid marks it as failing its form's check (aria-invalid), in the
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -99,8 +100,6 @@ type RadioProps struct {
 	// Name makes it one of the radios of that name, of which one at a time
 	// is checked.
 	Name string
-	// Value is the group's value while it is the one checked.
-	Value string
 	// Checked is whether it is the one checked, which the surface sets on
 	// the host when it differs from what the host last reported.
 	Checked  bool
@@ -109,7 +108,8 @@ type RadioProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -118,7 +118,8 @@ type RadioProps struct {
 // Radio is Basecoat's radio button, a native one: the host checks it,
 // unchecking the others of its Name, and a surf.Check handler in Attrs
 // hears it. A group of them goes in an element with role="radiogroup",
-// which Basecoat lays out as a column.
+// which Basecoat lays out as a column. Each has its own surf.On id, and its
+// handler knows the value it stands for.
 func Radio(p RadioProps) templ.Component {
 	return cssRadio(p)
 }
@@ -135,7 +136,8 @@ type SwitchProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -148,11 +150,12 @@ func Switch(p SwitchProps) templ.Component {
 	return cssSwitch(p)
 }
 
-// InputProps are a Input's attributes.
+// InputProps are an Input's attributes.
 type InputProps struct {
-	// Type is "" (text), "email", "password", "number", "file", "tel",
-	// "url", "search", "date", "datetime-local", "month", "week" or "time".
-	// A check box, a radio and a range are components of their own.
+	// Type is "" or "text", "email", "password", "number", "tel", "url",
+	// "search", "date", "datetime-local", "month", "week" or "time" (its
+	// type attribute, none for ""). A check box and a radio are components
+	// of their own.
 	Type string
 	// Value is its text. The input always writes it, so the surface sets
 	// the host's field whenever Value differs from what the host last
@@ -166,7 +169,8 @@ type InputProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the input element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -192,7 +196,8 @@ type TextareaProps struct {
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the textarea element: its id and
-	// handlers, through surf.On, and any other.
+	// handlers, through surf.On, and any other. An attribute the component
+	// writes itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -208,27 +213,29 @@ func Textarea(p TextareaProps) templ.Component {
 
 // LabelProps are a Label's attributes.
 type LabelProps struct {
-	// For is the id of the control it labels, when that isn't inside it.
+	// For is the id of the control it labels when that isn't inside it: the
+	// id the control's surf.On gave it.
 	For string
 	// Attrs are more attributes for the label element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
 }
 
 // Label is Basecoat's label, holding its children: its text, and the
-// control it labels when that is inside it. It dims while that control is
-// disabled.
+// control it labels when that is inside it. It dims in a disabled Field
+// (FieldProps.Disabled).
 func Label(p LabelProps) templ.Component {
-	return cssLabel(p)
+	return scoped(cssLabel(p), false)
 }
 
 // FieldProps are a Field's attributes.
 type FieldProps struct {
-	// Orientation is "" (the label above the control), "horizontal" (beside
-	// it) or "responsive" (beside it where the field's group is wide
-	// enough).
+	// Orientation is "" or "vertical" (the label above the control),
+	// "horizontal" (beside it) or "responsive" (beside it where the field's
+	// group is wide enough): its data-orientation, none for "".
 	Orientation string
 	// Invalid writes the field's text in the destructive colour
 	// (data-invalid); the control takes its own Invalid.
@@ -237,7 +244,8 @@ type FieldProps struct {
 	// its own Disabled.
 	Disabled bool
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -257,13 +265,14 @@ type FieldProps struct {
 //		<p role="alert">{ a.emailErr }</p>
 //	}
 func Field(p FieldProps) templ.Component {
-	return cssField(p)
+	return scoped(cssField(p), false)
 }
 
 // FieldSetProps are a FieldSet's attributes.
 type FieldSetProps struct {
 	// Attrs are more attributes for the fieldset element: its id and
-	// handlers, through surf.On, and any other.
+	// handlers, through surf.On, and any other. An attribute the component
+	// writes itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -274,13 +283,14 @@ type FieldSetProps struct {
 // it as a label is, rather than as a heading), a <p> describing the set,
 // and its Fields, or a <div role="group"> of them.
 func FieldSet(p FieldSetProps) templ.Component {
-	return cssFieldSet(p)
+	return scoped(cssFieldSet(p), false)
 }
 
-// InputGroupProps are a InputGroup's attributes.
+// InputGroupProps are an InputGroup's attributes.
 type InputGroupProps struct {
 	// Attrs are more attributes for the div element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -288,27 +298,29 @@ type InputGroupProps struct {
 
 // InputGroup is Basecoat's input group: one control with addons beside it,
 // InputGroupAddons, in its children. The group draws the control's border,
-// so the control is a plain <input>, <textarea> or <select>, without the
-// kit's own class:
+// so an Input, a Textarea or a NativeSelect in it writes no class of its
+// own, as Basecoat's markup has it:
 //
 //	@ui.InputGroup(ui.InputGroupProps{}) {
-//		<input type="search" placeholder="Search" { surf.On(ctx, "q", surf.Input(a.search))... }/>
+//		@ui.Input(ui.InputProps{Type: "search", Value: a.q, Placeholder: "Search",
+//			Attrs: surf.On(ctx, "q", surf.Input(a.search))})
 //		@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-start"}) {
 //			@ui.Icon("search", "")
 //		}
 //	}
 func InputGroup(p InputGroupProps) templ.Component {
-	return cssInputGroup(p)
+	return scoped(cssInputGroup(p), true)
 }
 
-// InputGroupAddonProps are a InputGroupAddon's attributes.
+// InputGroupAddonProps are an InputGroupAddon's attributes.
 type InputGroupAddonProps struct {
-	// Align is where it goes: "" (where it is written), "inline-start" or
-	// "inline-end" (before or after the control, on its line),
-	// "block-start" or "block-end" (above or below it, the group's width).
+	// Align is where it goes: "" or "inline-start" (before the control, on
+	// its line), "inline-end" (after it), "block-start" or "block-end"
+	// (above or below it, the group's width). surftest fails any other.
 	Align string
 	// Attrs are more attributes for the span element: its id and handlers,
-	// through surf.On, and any other.
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -317,5 +329,5 @@ type InputGroupAddonProps struct {
 // InputGroupAddon is one of an InputGroup's addons, holding its children:
 // an icon, text, a Kbd or a small Button.
 func InputGroupAddon(p InputGroupAddonProps) templ.Component {
-	return cssInputGroupAddon(p)
+	return scoped(cssInputGroupAddon(p), false)
 }

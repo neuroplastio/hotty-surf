@@ -853,8 +853,12 @@ navigation.
 
 ### Batch B1: forms
 
-- **A control's value is a Props field, always written.** InputProps.Value,
-  TextareaProps.Value, RangeProps.Value and NativeSelectProps.Value are
+Reviewed by the blind API reviewer (2026-11-17): approved with changes,
+85 names to 78, applied as given. The rules it set for B2–B4 are kit
+rules K1–K14.
+
+- **A control's value is a Props field, always written** (K6).
+  InputProps.Value, TextareaProps.Value and NativeSelectProps.Value are
   what the surface sets on the host (a=field) when they differ from what
   the host last reported, and Checked is the same for the check box,
   radio and switch. The change comes back through a handler in Attrs
@@ -862,24 +866,61 @@ navigation.
   keeps no On… callbacks. L1 made an input with no value attribute the
   host's. A typed Input can't say "no value" apart from "", so it
   always writes one; an app that wants the host's own field writes a
-  plain `<input>`.
-- **Input's Type is one of the 13 types Basecoat's input.css draws.** A
-  check box, radio and range are components of their own, so another
-  type is a fault. Field's Orientation and an addon's Align are strings
-  with their values in the doc, by Q2's rule.
+  plain `<input>`. A NativeSelect always chooses one of its Items, and
+  "no choice" is an item whose Value is "": a Value no item has is a
+  fault, since leaving the choice out would make the select the host's
+  and an app's reset would send nothing.
+- **Attrs never repeats what the component writes** (K3). templ writes
+  both copies and the parser keeps the first, so the copy in Attrs would
+  be silently ignored; the generator writes one lookup per attribute
+  the component writes, and Button's `type` is the one Attrs replaces.
+- **Input's Type** is "" or "text" and the types Basecoat's input.css
+  draws that SPEC makes a control: `file` is cut (SPEC §6.4: no field,
+  no change). Field's Orientation and an addon's Align are strings with
+  their values in the doc, by Q2's rule, and the default's name is taken
+  too (K4): Orientation "vertical", Align "inline-start", which an
+  addon's "" writes, since an addon without data-align is drawn
+  cramped where it was written.
 - **Invalid is aria-invalid** on the controls, which Basecoat draws in the
   destructive colour, and data-invalid on a Field, which colours its own
   text.
-- **Checkbox's Mixed is aria-checked="mixed".** Basecoat has no look for
-  it, so it draws as not checked; it is there for Tasks' select-all,
-  which the spike's kit had.
+- **No Mixed, no Radio Value.** No host draws a mixed check box (Basecoat
+  has no look for it, and a native box's mixed state is an IDL
+  attribute markup can't write), and a radio's handler is a
+  `func(bool)` that closes over the value it stands for; `value` only
+  matters to a form's submit, which surf doesn't hear. Each comes back
+  additively, with a look or a submit handler. Attrs carries either
+  attribute meanwhile.
 - **Field and FieldSet hold plain elements,** as Card does: Basecoat
   styles a field's parts by tag (`> label`, `> p`, `[role=alert]`,
-  `> section`), so parts as components would only rename them.
-- **An InputGroup's control is a plain element.** The group draws its
-  border, and `.input`'s own rules outrank the group's resets, so
-  ui.Input inside a group would draw two borders.
-- **Range has no State:** range.js only fills the track from the value
-  (--slider-value), which the markup writes from Props at every render.
-- **NativeSelect takes SelectItem,** Select's item, with Group as an
-  optgroup.
+  `> section`), so parts as components would only rename them (K8).
+- **An InputGroup's control is a ui component, bare** (K9). The group
+  draws its border, and `.input`'s own rules outrank the group's
+  resets, so the group marks the ctx its children render in, and an
+  Input, Textarea or NativeSelect under the mark leaves its class out.
+  Every ui component that holds children clears the mark (the generated
+  ones through `scoped`, Tabs, Dialog's body and a menu's trigger), so
+  only the group's own control is bare. The mark is set around the
+  component, not in it, because templ clears the children at a
+  component's top.
+- **FieldSeparator takes Props and children** (K7): its word is content,
+  in a span, and a bare separator writes no span, which would cut a gap
+  in the line.
+- **NativeSelect takes SelectItem** (K12), Select's item, with Group as an
+  optgroup, and the shared Size (vega's `data-size=sm`).
+- **Range waits for SPEC** (K10). SPEC §10.2 gives a range no keys and §9
+  no change, Blitz draws no range, and cells has no row for one, so no
+  host can draw or move it. The proposal for hotty's spec, passed to
+  the maintainer: a focused range takes arrow_left and arrow_down (a
+  step down), arrow_right and arrow_up (a step up), home and end (its
+  ends), page_up and page_down (a larger step), unmodified or with
+  shift; a move by key or pointer is heard at once, as a select's pick
+  is (`input`, then `change` with its value); Blitz draws the track and
+  thumb, cells a bar. When it returns, Min and Max both 0 mean HTML's 0
+  to 100 and are otherwise written as given, and its handler stays
+  surf.Input, parsed with strconv.ParseFloat.
+- **For cells (L3):** cells reads classes, not the stylesheet, so an
+  `.input-group` stacks its addons, its bare control is 20 cells wide,
+  and a horizontal Field stacks. cells must take `.input-group` as a row
+  whose control grows, ordered by data-align, and a horizontal Field as
+  a row. A Switch draws as a check box.

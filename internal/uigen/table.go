@@ -13,6 +13,8 @@ type Comp struct {
 	Text     string // the field that is its text, not children (a textarea's Value)
 	Slot     string // its data-slot
 	Class    string // its own class, before Props.Class
+	Bare     bool   // in an InputGroup, it leaves its own class out (the group draws it)
+	Group    bool   // its children are an InputGroup's: a ui control among them is bare
 	Fields   []Field
 	Attrs    []Attr // in the markup's order, after data-slot
 	Checks   []Check
@@ -32,6 +34,7 @@ type Attr struct {
 	Value   string // a constant's value; for a bool field, what true writes ("" is a boolean attribute)
 	Expr    string // a Go expression for its value, written when not ""
 	IfUnset bool   // a constant written only when Attrs has no attribute of this name
+	Default string // a string field's value written for ""
 	Always  bool   // a string field's, written even when ""
 }
 
@@ -50,7 +53,7 @@ var table = []Comp{
 	@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(a.Save))}) {
 		Save
 	}`,
-		AttrsDoc: `Attrs are more attributes for the button element: its handlers, surf.On(ctx, "save", surf.Click(a.Save)), and any other. A type here replaces type="button".`,
+		AttrsDoc: `Attrs are more attributes for the button element: its handlers, surf.On(ctx, "save", surf.Click(a.Save)), and any other. A type here replaces type="button"; any other attribute it writes is a fault here.`,
 		Fields: []Field{
 			{"Variant", "Variant", "Variant is Primary, Secondary, Outline, Ghost, Destructive or Link."},
 			{"Size", "Size", "Size is Medium, XSmall, Small or Large."},
@@ -91,24 +94,21 @@ var table = []Comp{
 	}`,
 		Fields: []Field{
 			{"Checked", "bool", "Checked is whether it is checked, which the surface sets on the host when it differs from what the host last reported."},
-			{"Mixed", "bool", `Mixed says it is neither (aria-checked="mixed"): a check box for a set of which some are checked. Basecoat draws it as not checked.`},
 			{"Disabled", "bool", ""},
 			{"Invalid", "bool", "Invalid marks it as failing its form's check (aria-invalid), in the destructive colour."},
 		},
 		Attrs: []Attr{
 			{Name: "type", Value: "checkbox"},
 			{Name: "checked", Field: "Checked"},
-			{Name: "aria-checked", Field: "Mixed", Value: "mixed"},
 			{Name: "disabled", Field: "Disabled"},
 			{Name: "aria-invalid", Field: "Invalid", Value: "true"},
 		},
 	},
 	{
 		Name: "Radio", File: "radio", Tag: "input", Void: true, Slot: "radio", Class: "input",
-		Doc: `is Basecoat's radio button, a native one: the host checks it, unchecking the others of its Name, and a surf.Check handler in Attrs hears it. A group of them goes in an element with role="radiogroup", which Basecoat lays out as a column.`,
+		Doc: `is Basecoat's radio button, a native one: the host checks it, unchecking the others of its Name, and a surf.Check handler in Attrs hears it. A group of them goes in an element with role="radiogroup", which Basecoat lays out as a column. Each has its own surf.On id, and its handler knows the value it stands for.`,
 		Fields: []Field{
 			{"Name", "string", "Name makes it one of the radios of that name, of which one at a time is checked."},
-			{"Value", "string", "Value is the group's value while it is the one checked."},
 			{"Checked", "bool", "Checked is whether it is the one checked, which the surface sets on the host when it differs from what the host last reported."},
 			{"Disabled", "bool", ""},
 			{"Invalid", "bool", "Invalid marks it as failing its form's check (aria-invalid), in the destructive colour."},
@@ -116,7 +116,6 @@ var table = []Comp{
 		Attrs: []Attr{
 			{Name: "type", Value: "radio"},
 			{Name: "name", Field: "Name"},
-			{Name: "value", Field: "Value"},
 			{Name: "checked", Field: "Checked"},
 			{Name: "disabled", Field: "Disabled"},
 			{Name: "aria-invalid", Field: "Invalid", Value: "true"},
@@ -142,13 +141,13 @@ var table = []Comp{
 		Checks: []Check{{"Size", "size", "switchSizes"}},
 	},
 	{
-		Name: "Input", File: "input", Tag: "input", Void: true, Slot: "input", Class: "input",
+		Name: "Input", File: "input", Tag: "input", Void: true, Slot: "input", Class: "input", Bare: true,
 		Doc: `is Basecoat's text input, a native one: the host edits it, and a surf.Input handler in Attrs hears each edit:
 
 	@ui.Input(ui.InputProps{Value: a.name, Placeholder: "Name",
 		Attrs: surf.On(ctx, "name", surf.Input(a.setName))})`,
 		Fields: []Field{
-			{"Type", "string", `Type is "" (text), "email", "password", "number", "file", "tel", "url", "search", "date", "datetime-local", "month", "week" or "time". A check box, a radio and a range are components of their own.`},
+			{"Type", "string", `Type is "" or "text", "email", "password", "number", "tel", "url", "search", "date", "datetime-local", "month", "week" or "time" (its type attribute, none for ""). A check box and a radio are components of their own.`},
 			{"Value", "string", `Value is its text. The input always writes it, so the surface sets the host's field whenever Value differs from what the host last reported: an app that keeps the text in its state and passes it back stays in step with the user's typing, and one that sets it to "" clears the field.`},
 			{"Placeholder", "string", ""},
 			{"Disabled", "bool", ""},
@@ -164,7 +163,7 @@ var table = []Comp{
 		Checks: []Check{{"Type", "enum", "inputTypes"}},
 	},
 	{
-		Name: "Textarea", File: "textarea", Tag: "textarea", Text: "Value", Slot: "textarea", Class: "textarea",
+		Name: "Textarea", File: "textarea", Tag: "textarea", Text: "Value", Slot: "textarea", Class: "textarea", Bare: true,
 		Doc: `is Basecoat's textarea, a native one holding Value as its text: the host edits it, and a surf.Input handler in Attrs hears each edit. It is at least four lines high, and grows with its text where the host sizes a field to its content.`,
 		Fields: []Field{
 			{"Value", "string", "Value is its text, which the surface sets on the host whenever it differs from what the host last reported, as an Input's."},
@@ -180,9 +179,9 @@ var table = []Comp{
 	},
 	{
 		Name: "Label", File: "label", Tag: "label", Slot: "label", Class: "label",
-		Doc: `is Basecoat's label, holding its children: its text, and the control it labels when that is inside it. It dims while that control is disabled.`,
+		Doc: `is Basecoat's label, holding its children: its text, and the control it labels when that is inside it. It dims in a disabled Field (FieldProps.Disabled).`,
 		Fields: []Field{
-			{"For", "string", "For is the id of the control it labels, when that isn't inside it."},
+			{"For", "string", "For is the id of the control it labels when that isn't inside it: the id the control's surf.On gave it."},
 		},
 		Attrs: []Attr{{Name: "for", Field: "For"}},
 	},
@@ -198,7 +197,7 @@ var table = []Comp{
 		<p role="alert">{ a.emailErr }</p>
 	}`,
 		Fields: []Field{
-			{"Orientation", "string", `Orientation is "" (the label above the control), "horizontal" (beside it) or "responsive" (beside it where the field's group is wide enough).`},
+			{"Orientation", "string", `Orientation is "" or "vertical" (the label above the control), "horizontal" (beside it) or "responsive" (beside it where the field's group is wide enough): its data-orientation, none for "".`},
 			{"Invalid", "bool", "Invalid writes the field's text in the destructive colour (data-invalid); the control takes its own Invalid."},
 			{"Disabled", "bool", "Disabled dims its label and title (data-disabled); the control takes its own Disabled."},
 		},
@@ -214,11 +213,12 @@ var table = []Comp{
 		Doc: `is Basecoat's fieldset: fields under a heading, all plain elements or Fields in its children. A <legend> (data-variant="label" sets it as a label is, rather than as a heading), a <p> describing the set, and its Fields, or a <div role="group"> of them.`,
 	},
 	{
-		Name: "InputGroup", File: "input-group", Tag: "div", Slot: "input-group", Class: "input-group",
-		Doc: `is Basecoat's input group: one control with addons beside it, InputGroupAddons, in its children. The group draws the control's border, so the control is a plain <input>, <textarea> or <select>, without the kit's own class:
+		Name: "InputGroup", File: "input-group", Tag: "div", Slot: "input-group", Class: "input-group", Group: true,
+		Doc: `is Basecoat's input group: one control with addons beside it, InputGroupAddons, in its children. The group draws the control's border, so an Input, a Textarea or a NativeSelect in it writes no class of its own, as Basecoat's markup has it:
 
 	@ui.InputGroup(ui.InputGroupProps{}) {
-		<input type="search" placeholder="Search" { surf.On(ctx, "q", surf.Input(a.search))... }/>
+		@ui.Input(ui.InputProps{Type: "search", Value: a.q, Placeholder: "Search",
+			Attrs: surf.On(ctx, "q", surf.Input(a.search))})
 		@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-start"}) {
 			@ui.Icon("search", "")
 		}
@@ -228,9 +228,9 @@ var table = []Comp{
 		Name: "InputGroupAddon", File: "input-group", Tag: "span", Slot: "input-group-addon",
 		Doc: `is one of an InputGroup's addons, holding its children: an icon, text, a Kbd or a small Button.`,
 		Fields: []Field{
-			{"Align", "string", `Align is where it goes: "" (where it is written), "inline-start" or "inline-end" (before or after the control, on its line), "block-start" or "block-end" (above or below it, the group's width).`},
+			{"Align", "string", `Align is where it goes: "" or "inline-start" (before the control, on its line), "inline-end" (after it), "block-start" or "block-end" (above or below it, the group's width). surftest fails any other.`},
 		},
-		Attrs:  []Attr{{Name: "data-align", Field: "Align"}},
+		Attrs:  []Attr{{Name: "data-align", Field: "Align", Default: "inline-start"}},
 		Checks: []Check{{"Align", "enum", "addonAligns"}},
 	},
 }

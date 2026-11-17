@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/a-h/templ"
+
 	"neuroplast.io/hotty-surf/internal/spikeui"
 )
 
@@ -437,3 +439,10 @@ func when(ok bool, class string) string {
 
 // slug is a value as an id's part: "in progress" → "in-progress".
 func slug(v string) string { return strings.ReplaceAll(v, " ", "-") }
+
+// labelled is a control's attributes with its accessible name, for a check
+// box with no label of its own.
+func labelled(a templ.Attributes, name string) templ.Attributes {
+	a["aria-label"] = name
+	return a
+}

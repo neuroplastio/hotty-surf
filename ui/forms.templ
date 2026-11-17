@@ -1,16 +1,24 @@
 package ui
 
+import "strings"
+
 // The form components with parts of their own (css.go): a native select's
-// options, a range's filled track, a field separator's label.
+// options, a field separator's word.
 
 templ nativeSelect(p NativeSelectProps) {
+	{{ checkSize(ctx, "NativeSelect", p.Size, nativeSelectSizes) }}
+	{{ checkAttrs(ctx, "NativeSelect", p.Attrs, "class", "data-slot", "data-size", "disabled", "aria-invalid") }}
+	{{ checkChoice(ctx, p) }}
 	<select
 		data-slot="native-select"
+		if p.Size != "" {
+			data-size={ string(p.Size) }
+		}
 		disabled?={ p.Disabled }
 		if p.Invalid {
 			aria-invalid="true"
 		}
-		class={ join("select", p.Class) }
+		class={ join(bare(ctx, "select"), p.Class) }
 		{ p.Attrs... }
 	>
 		for _, g := range optionGroups(p.Items) {
@@ -33,35 +41,16 @@ templ nativeOption(it SelectItem, value string) {
 	<option value={ it.Value } selected?={ it.Value == value } disabled?={ it.Disabled }>{ it.Label }</option>
 }
 
-// rangeInput is range.js's input: --slider-value is how far Value is from
-// Min to Max, as updateRange computes it.
-templ rangeInput(p RangeProps) {
-	<input
-		data-slot="range"
-		type="range"
-		if p.Min != 0 {
-			min={ num(p.Min) }
-		}
-		if p.Max != 0 {
-			max={ num(p.Max) }
-		}
-		if p.Step != 0 {
-			step={ num(p.Step) }
-		}
-		value={ num(p.Value) }
-		disabled?={ p.Disabled }
-		style={ rangeStyle(p) }
-		data-range-initialized="true"
-		class={ join("input", p.Class) }
-		{ p.Attrs... }
-	/>
-}
-
-templ fieldSeparator(label string) {
-	<div data-slot="field-separator" class="field-separator">
+// fieldSeparator writes the separator, with its children (rendered) in a
+// span, or none: an empty span would cut a gap in the line.
+templ fieldSeparator(p FieldSeparatorProps, word string) {
+	{{ checkAttrs(ctx, "FieldSeparator", p.Attrs, "class", "data-slot") }}
+	<div data-slot="field-separator" class={ join("field-separator", p.Class) } { p.Attrs... }>
 		<hr role="separator"/>
-		if label != "" {
-			<span>{ label }</span>
+		if strings.TrimSpace(word) != "" {
+			<span>
+				@templ.Raw(word)
+			</span>
 		}
 	</div>
 }

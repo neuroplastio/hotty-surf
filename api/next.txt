@@ -94,7 +94,7 @@ pkg neuroplast.io/hotty-surf/ui, func Checkbox(CheckboxProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func DropdownMenu(*DropdownMenuState, DropdownMenuProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Field(FieldProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func FieldSeparator(string) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func FieldSeparator(FieldSeparatorProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func FieldSet(FieldSetProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Icon(string, string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Input(InputProps) templ.Component
@@ -104,7 +104,6 @@ pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Radio(RadioProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Range(RangeProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Stylesheet() string
 pkg neuroplast.io/hotty-surf/ui, func Switch(SwitchProps) templ.Component
@@ -133,7 +132,6 @@ pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Checked bool
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Mixed bool
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Description string
@@ -154,6 +152,9 @@ pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Orientation string
+pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct
+pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct
 pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct, Class string
@@ -190,6 +191,7 @@ pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Items []SelectItem
+pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Size Size
 pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Attrs templ.Attributes
@@ -198,15 +200,6 @@ pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Class string
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Max float64
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Min float64
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Step float64
-pkg neuroplast.io/hotty-surf/ui, type RangeProps struct, Value float64
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Disabled bool
 pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Group string

@@ -75,7 +75,8 @@ Edit the tsv, then run the script; don't edit this page.
 - **status**: `done`, its names approved and every story and test it
   lists there, which the coverage test (ui/coverage_test.go) holds it
   to; `port`, code exists to finish or move (markup, a behaviour, a
-  story); `new`, nothing yet.
+  story); `new`, nothing yet; `waits`, nothing until a decision outside
+  the kit (a SPEC change), named in its notes.
 - **notes**: why a hand port, a Blitz gap, a hotty limit, variants that
   don't fit the shared enums.
 
@@ -155,7 +156,7 @@ EOF
 		print "- **browser:** " plural(browser, "component relies", "components rely") \
 			" on a browser feature."
 		print "- **status:** " (status["done"] + 0) " done, " (status["port"] + 0) \
-			" port, " (status["new"] + 0) " new."
+			" port, " (status["new"] + 0) " new, " (status["waits"] + 0) " waits."
 		print "- **tests:** render " (tests["render"] + 0) ", spec " (tests["spec"] + 0) \
 			", differential " (tests["differential"] + 0) ", keys-cells " \
 			(tests["keys-cells"] + 0) "."

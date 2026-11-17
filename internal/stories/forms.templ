@@ -1,8 +1,6 @@
 package stories
 
 import (
-	"strconv"
-
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
@@ -10,20 +8,14 @@ import (
 // B1's stories: the form components.
 
 type formState struct {
-	on, mixed bool
-	text      string
-	choice    string
-	level     float64
+	on     bool
+	text   string
+	choice string
 }
 
-func (s *formState) set(b bool)     { s.on, s.mixed = b, false }
+func (s *formState) set(b bool)     { s.on = b }
 func (s *formState) typed(v string) { s.text = v }
 func (s *formState) chose(v string) { s.choice = v }
-func (s *formState) moved(v string) {
-	if f, err := strconv.ParseFloat(v, 64); err == nil {
-		s.level = f
-	}
-}
 
 func init() {
 	form := func(f func(*formState) templ.Component, init formState) func() templ.Component {
@@ -31,8 +23,6 @@ func init() {
 	}
 	add(Story{ID: "checkbox/default", Doc: "A check box with its label",
 		View: form(checkboxDefault, formState{}), Keys: []string{"tab", "space"}, Want: "accepted: on"})
-	add(Story{ID: "checkbox/mixed", Doc: "A check box for a set, some of it checked (aria-checked=mixed)",
-		View: form(checkboxMixed, formState{mixed: true}), Keys: []string{"tab", "space"}, Want: "all: on"})
 	add(Story{ID: "checkbox/disabled", Doc: "A check box that can't change",
 		View: form(checkboxDisabled, formState{on: true}), Keys: []string{"tab", "space"}, Want: "accepted: on"})
 	add(Story{ID: "radio/default", Doc: "A group of three radios",
@@ -47,6 +37,10 @@ func init() {
 		View: form(switchDisabled, formState{}), Keys: []string{"tab", "space"}, Want: "airplane mode: off"})
 	add(Story{ID: "input/default", Doc: "A text input with a placeholder",
 		View: form(inputDefault, formState{}), Keys: []string{"tab", "a", "d", "a"}, Want: "name: ada"})
+	add(Story{ID: "input/date", Doc: "A date input (Type date), its value the app's",
+		View: form(inputDate, formState{text: "2026-11-17"}), Keys: []string{"tab"}, Want: "date: 2026-11-17"})
+	add(Story{ID: "input/time", Doc: "A time input (Type time), its value the app's",
+		View: form(inputTime, formState{text: "09:30"}), Keys: []string{"tab"}, Want: "time: 09:30"})
 	add(Story{ID: "input/invalid", Doc: "An input failing its check (Invalid), in a Field with its error",
 		View: form(inputInvalid, formState{text: "ada@"}), Keys: []string{"tab", "x"}, Want: "email: ada@x"})
 	add(Story{ID: "input/disabled", Doc: "An input that can't be edited",
@@ -75,13 +69,10 @@ func init() {
 		View: form(inputGroupTextarea, formState{}), Keys: []string{"tab", "o", "k"}, Want: "comment: ok"})
 	add(Story{ID: "native-select/default", Doc: "A native select with an option group",
 		View: form(nativeSelectDefault, formState{choice: "apple"}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: banana"})
+	add(Story{ID: "native-select/small", Doc: "A small native select (Size Small) with no choice yet: its first item's Value is \"\"",
+		View: form(nativeSelectSmall, formState{}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: apple"})
 	add(Story{ID: "native-select/disabled", Doc: "A native select that can't change",
 		View: form(nativeSelectDisabled, formState{choice: "apple"}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: apple"})
-	add(Story{ID: "range/default", Doc: "A range from 0 to 100, its track filled to the value",
-		View: form(rangeDefault, formState{level: 40}), Keys: []string{"tab", "arrow_right"}, Want: "volume: 41",
-		Gap: "SPEC §10.2 gives a range no keys, so a host leaves the arrows to the program: a proposal for hotty's spec"})
-	add(Story{ID: "range/disabled", Doc: "A range that can't move",
-		View: form(rangeDisabled, formState{level: 40}), Keys: []string{"tab", "arrow_right"}, Want: "volume: 40"})
 }
 
 templ status(label, value string) {
@@ -95,20 +86,6 @@ templ checkboxDefault(s *formState) {
 			Accept terms and conditions
 		}
 		@status("accepted", onoff(s.on))
-	</div>
-}
-
-templ checkboxMixed(s *formState) {
-	<div class="flex flex-col gap-3 p-4">
-		@ui.Label(ui.LabelProps{}) {
-			@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Mixed: s.mixed, Attrs: surf.On(ctx, "all", surf.Check(s.set))})
-			Select all
-		}
-		if s.mixed {
-			@status("all", "some")
-		} else {
-			@status("all", onoff(s.on))
-		}
 	</div>
 }
 
@@ -126,7 +103,7 @@ templ radios(s *formState, disabled string) {
 	<div role="radiogroup" class="flex flex-col gap-3 p-4">
 		for _, d := range []string{"default", "comfortable", "compact"} {
 			@ui.Label(ui.LabelProps{}) {
-				@ui.Radio(ui.RadioProps{Name: "density", Value: d, Checked: s.choice == d, Disabled: d == disabled,
+				@ui.Radio(ui.RadioProps{Name: "density", Checked: s.choice == d, Disabled: d == disabled,
 					Attrs: surf.On(ctx, "density-"+d, surf.Check(func(on bool) {
 						if on {
 							s.chose(d)
@@ -181,6 +158,20 @@ templ inputDefault(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.Input(ui.InputProps{Value: s.text, Placeholder: "Name", Attrs: surf.On(ctx, "name", surf.Input(s.typed))})
 		@status("name", s.text)
+	</div>
+}
+
+templ inputDate(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Type: "date", Value: s.text, Attrs: surf.On(ctx, "date", surf.Input(s.typed))})
+		@status("date", s.text)
+	</div>
+}
+
+templ inputTime(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.Input(ui.InputProps{Type: "time", Value: s.text, Attrs: surf.On(ctx, "time", surf.Input(s.typed))})
+		@status("time", s.text)
 	</div>
 }
 
@@ -290,7 +281,9 @@ templ fieldSeparator(s *formState) {
 			<label for="email">Email</label>
 			@ui.Input(ui.InputProps{Type: "email", Value: s.text, Attrs: surf.On(ctx, "email", surf.Input(s.typed))})
 		}
-		@ui.FieldSeparator("Or")
+		@ui.FieldSeparator(ui.FieldSeparatorProps{}) {
+			Or
+		}
 		@ui.Field(ui.FieldProps{}) {
 			<label for="phone">Phone</label>
 			@ui.Input(ui.InputProps{Type: "tel", Value: s.choice, Attrs: surf.On(ctx, "phone", surf.Input(s.chose))})
@@ -301,7 +294,7 @@ templ fieldSeparator(s *formState) {
 templ inputGroupInline(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.InputGroup(ui.InputGroupProps{}) {
-			<input type="search" placeholder="Search" value={ s.text } { surf.On(ctx, "q", surf.Input(s.typed))... }/>
+			@ui.Input(ui.InputProps{Type: "search", Value: s.text, Placeholder: "Search", Attrs: surf.On(ctx, "q", surf.Input(s.typed))})
 			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-start"}) {
 				@ui.Icon("search", "")
 			}
@@ -316,7 +309,7 @@ templ inputGroupInline(s *formState) {
 templ inputGroupBlock(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.InputGroup(ui.InputGroupProps{}) {
-			<input type="number" placeholder="0" value={ s.text } { surf.On(ctx, "amount", surf.Input(s.typed))... }/>
+			@ui.Input(ui.InputProps{Type: "number", Value: s.text, Placeholder: "0", Attrs: surf.On(ctx, "amount", surf.Input(s.typed))})
 			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "block-start"}) {
 				Amount
 			}
@@ -328,7 +321,7 @@ templ inputGroupBlock(s *formState) {
 templ inputGroupTextarea(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.InputGroup(ui.InputGroupProps{}) {
-			<textarea placeholder="Add a comment" { surf.On(ctx, "comment", surf.Input(s.typed))... }>{ s.text }</textarea>
+			@ui.Textarea(ui.TextareaProps{Value: s.text, Placeholder: "Add a comment", Attrs: surf.On(ctx, "comment", surf.Input(s.typed))})
 			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "block-end"}) {
 				@ui.Button(ui.ButtonProps{Size: ui.Small, Attrs: surf.On(ctx, "post", surf.Click(func() { s.text = "" }))}) {
 					Post
@@ -354,6 +347,15 @@ templ nativeSelectDefault(s *formState) {
 	</div>
 }
 
+var fruitsOrNone = append([]ui.SelectItem{{Label: "Choose…"}}, fruits...)
+
+templ nativeSelectSmall(s *formState) {
+	<div class="flex flex-col gap-3 p-4 max-w-sm">
+		@ui.NativeSelect(ui.NativeSelectProps{Items: fruitsOrNone, Value: s.choice, Size: ui.Small, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
+		@status("fruit", s.choice)
+	</div>
+}
+
 templ nativeSelectDisabled(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.NativeSelect(ui.NativeSelectProps{Items: fruits, Value: s.choice, Disabled: true, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
@@ -361,16 +363,3 @@ templ nativeSelectDisabled(s *formState) {
 	</div>
 }
 
-templ rangeDefault(s *formState) {
-	<div class="flex flex-col gap-3 p-4 max-w-sm">
-		@ui.Range(ui.RangeProps{Value: s.level, Attrs: surf.On(ctx, "volume", surf.Input(s.moved))})
-		@status("volume", strconv.FormatFloat(s.level, 'f', -1, 64))
-	</div>
-}
-
-templ rangeDisabled(s *formState) {
-	<div class="flex flex-col gap-3 p-4 max-w-sm">
-		@ui.Range(ui.RangeProps{Value: s.level, Disabled: true, Attrs: surf.On(ctx, "volume", surf.Input(s.moved))})
-		@status("volume", strconv.FormatFloat(s.level, 'f', -1, 64))
-	</div>
-}

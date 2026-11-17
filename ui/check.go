@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/a-h/templ"
+
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
@@ -16,8 +18,9 @@ var (
 	badgeVariants     = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
 	buttonSizes       = []Size{Medium, XSmall, Small, Large}
 	switchSizes       = []Size{Medium, Small}
-	inputTypes        = []string{"", "email", "password", "number", "file", "tel", "url", "search", "date", "datetime-local", "month", "week", "time"}
-	fieldOrientations = []string{"", "horizontal", "responsive"}
+	nativeSelectSizes = []Size{Medium, Small}
+	inputTypes        = []string{"", "text", "email", "password", "number", "tel", "url", "search", "date", "datetime-local", "month", "week", "time"}
+	fieldOrientations = []string{"", "vertical", "horizontal", "responsive"}
 	addonAligns       = []string{"", "inline-start", "inline-end", "block-start", "block-end"}
 )
 
@@ -46,6 +49,27 @@ func checkEnum(ctx context.Context, comp, field, v string, ok []string) string {
 func checkIcon(ctx context.Context, name string) string {
 	if _, ok := icons[name]; !ok {
 		rt.Fault(ctx, fmt.Sprintf("ui.Icon: no icon %q (the kit has %s)", name, strings.Join(iconNames(), ", ")))
+	}
+	return ""
+}
+
+// checkAttrs faults an attribute in attrs that the component writes
+// itself: templ would write both, and the first wins (kit rule K3).
+func checkAttrs(ctx context.Context, comp string, attrs templ.Attributes, written ...string) string {
+	if len(attrs) == 0 {
+		return ""
+	}
+	for _, n := range written {
+		if _, ok := attrs[n]; ok {
+			what := "a field of its Props"
+			switch n {
+			case "class":
+				what = "Class"
+			case "data-slot":
+				what = "nothing: the component's own"
+			}
+			rt.Fault(ctx, fmt.Sprintf("ui.%s: Attrs has %s, which the component writes itself (use %s)", comp, n, what))
+		}
 	}
 	return ""
 }

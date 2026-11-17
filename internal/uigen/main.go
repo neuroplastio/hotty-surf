@@ -50,7 +50,7 @@ func genGo() []byte {
 	b.WriteString(header)
 	b.WriteString("package ui\n\nimport \"github.com/a-h/templ\"\n")
 	for _, c := range table {
-		fmt.Fprintf(&b, "\n// %sProps are a %s's attributes.\n", c.Name, c.Name)
+		fmt.Fprintf(&b, "\n// %sProps are %s %s's attributes.\n", c.Name, article(c.Name), c.Name)
 		if c.PropsDoc != "" {
 			b.WriteString("//\n")
 			comment(&b, "", c.PropsDoc)
@@ -64,7 +64,7 @@ func genGo() []byte {
 		}
 		attrsDoc := c.AttrsDoc
 		if attrsDoc == "" {
-			attrsDoc = fmt.Sprintf("Attrs are more attributes for the %s element: its id and handlers, through surf.On, and any other.", c.Tag)
+			attrsDoc = fmt.Sprintf("Attrs are more attributes for the %s element: its id and handlers, through surf.On, and any other. An attribute the component writes itself (its class, data-slot, or a field's) is a fault here.", c.Tag)
 		}
 		comment(&b, "\t", attrsDoc)
 		b.WriteString("\tAttrs templ.Attributes\n")
@@ -72,7 +72,12 @@ func genGo() []byte {
 		b.WriteString("\tClass string\n}\n\n")
 		comment(&b, "", c.Name+" "+c.Doc)
 		lower := lowerName(c.Name)
-		fmt.Fprintf(&b, "func %s(p %sProps) templ.Component {\n\treturn %s(p)\n}\n", c.Name, c.Name, lower)
+		switch {
+		case c.Void || c.Text != "":
+			fmt.Fprintf(&b, "func %s(p %sProps) templ.Component {\n\treturn %s(p)\n}\n", c.Name, c.Name, lower)
+		default:
+			fmt.Fprintf(&b, "func %s(p %sProps) templ.Component {\n\treturn scoped(%s(p), %v)\n}\n", c.Name, c.Name, lower, c.Group)
+		}
 	}
 	return b.Bytes()
 }
@@ -88,6 +93,7 @@ func genTempl() []byte {
 		for _, ck := range c.Checks {
 			fmt.Fprintf(&b, "\t{{ %s }}\n", check(c, ck))
 		}
+		fmt.Fprintf(&b, "\t{{ checkAttrs(ctx, %q, p.Attrs, %s) }}\n", c.Name, written(c))
 		fmt.Fprintf(&b, "\t<%s\n", c.Tag)
 		if c.Slot != "" {
 			fmt.Fprintf(&b, "\t\tdata-slot=%q\n", c.Slot)
@@ -95,7 +101,9 @@ func genTempl() []byte {
 		for _, a := range c.Attrs {
 			attr(&b, c, a)
 		}
-		if c.Class != "" {
+		if c.Class != "" && c.Bare {
+			fmt.Fprintf(&b, "\t\tclass={ join(bare(ctx, %q), p.Class) }\n", c.Class)
+		} else if c.Class != "" {
 			fmt.Fprintf(&b, "\t\tclass={ join(%q, p.Class) }\n", c.Class)
 		} else {
 			b.WriteString("\t\tif p.Class != \"\" {\n\t\t\tclass={ p.Class }\n\t\t}\n")
@@ -138,11 +146,41 @@ func attr(b *bytes.Buffer, c Comp, a Attr) {
 		fmt.Fprintf(b, "\t\t%s?={ p.%s }\n", a.Name, a.Field)
 	case f.Type == "bool":
 		fmt.Fprintf(b, "\t\tif p.%s {\n\t\t\t%s=%q\n\t\t}\n", a.Field, a.Name, a.Value)
+	case a.Default != "":
+		fmt.Fprintf(b, "\t\t%s={ or(%s, %q) }\n", a.Name, str(f), a.Default)
 	case a.Always:
 		fmt.Fprintf(b, "\t\t%s={ %s }\n", a.Name, str(f))
 	default:
 		fmt.Fprintf(b, "\t\tif p.%s != \"\" {\n\t\t\t%s={ %s }\n\t\t}\n", a.Field, a.Name, str(f))
 	}
+}
+
+// written is the Go list of the attributes the component writes itself,
+// which its Attrs may not repeat (Button's type, which Attrs replaces,
+// aside).
+func written(c Comp) string {
+	names := []string{"class"}
+	if c.Slot != "" {
+		names = append(names, "data-slot")
+	}
+	for _, a := range c.Attrs {
+		if !a.IfUnset {
+			names = append(names, a.Name)
+		}
+	}
+	var q []string
+	for _, n := range names {
+		q = append(q, fmt.Sprintf("%q", n))
+	}
+	return strings.Join(q, ", ")
+}
+
+// article is "an" before a name that starts with a vowel, else "a".
+func article(name string) string {
+	if strings.ContainsRune("AEIOU", rune(name[0])) {
+		return "an"
+	}
+	return "a"
 }
 
 // str is the field's value as a string.

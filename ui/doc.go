@@ -17,8 +17,10 @@
 //     its inner elements, and reports its own events through On…
 //     callbacks.
 //   - The app's data stays the app's: the value a component shows comes in
-//     through Props, and a change goes out through an On… callback in Props,
-//     which the app applies to its own state.
+//     through Props, and a change goes out through an On… callback in Props
+//     (a component with behaviour of its own), or through surf.Input or
+//     surf.Check in Attrs (a native control: Input, Textarea, NativeSelect,
+//     Checkbox, Radio, Switch), which the app applies to its own state.
 //   - What only the component needs to remember (whether a menu is open, the
 //     item the arrows highlighted) is in <Name>State. The
 //     app keeps one per component in its state, zero value ready, and passes

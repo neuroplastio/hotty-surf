@@ -1,6 +1,12 @@
 package ui
 
-import "github.com/a-h/templ"
+import (
+	"bytes"
+	"context"
+	"io"
+
+	"github.com/a-h/templ"
+)
 
 // The components Basecoat makes with CSS alone. Those that are one element
 // holding their children are generated from a table of their classes and
@@ -17,18 +23,22 @@ type NativeSelectProps struct {
 	// Items are its options. Consecutive items with one Group are an
 	// <optgroup> of that label.
 	Items []SelectItem
-	// Value is the Value of the option it shows chosen, which the surface
-	// sets on the host whenever it differs from what the host last
-	// reported. A Value no item has chooses none, and leaves the choice to
-	// the host: it shows its first option.
-	Value    string
+	// Value is the Value of the option shown chosen, one of Items'
+	// Values; surftest fails any other. A select that starts with no
+	// choice has an item whose Value is "" ({Label: "Choose…"}), as an
+	// HTML select does. The surface sets it on the host whenever it
+	// differs from what the host last reported.
+	Value string
+	// Size is Medium or Small (data-size).
+	Size     Size
 	Disabled bool
 	// Invalid marks it as failing its form's check (aria-invalid), in the
 	// destructive colour.
 	Invalid bool
 	// Attrs are more attributes for the select element: its id and
 	// handlers, through surf.On, and any other. A surf.Input handler hears
-	// the user's choice, its option's Value.
+	// the user's choice, its option's Value. An attribute the component
+	// writes itself (its class, data-slot, or a field's) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
@@ -41,32 +51,31 @@ func NativeSelect(p NativeSelectProps) templ.Component {
 	return nativeSelect(p)
 }
 
-// RangeProps are a Range's attributes.
-type RangeProps struct {
-	// Value is where it is set, which the surface sets on the host
-	// whenever it differs from what the host last reported.
-	Value float64
-	// Min and Max are its ends; a Max of 0 is 100, as HTML's default.
-	Min, Max float64
-	// Step is how far a step moves it; 0 is 1, as HTML's default.
-	Step     float64
-	Disabled bool
-	// Attrs are more attributes for the input element: its id and
-	// handlers, through surf.On, and any other. A surf.Input handler hears
-	// each move, its value as text.
+// FieldSeparatorProps are a FieldSeparator's attributes.
+type FieldSeparatorProps struct {
+	// Attrs are more attributes for the div element: its id and handlers,
+	// through surf.On, and any other. An attribute the component writes
+	// itself (its class or data-slot) is a fault here.
 	Attrs templ.Attributes
 	// Class is more classes for the element, after its own.
 	Class string
 }
 
-// Range is Basecoat's range slider, a native one the host moves, with its
-// track filled up to Value as range.js fills it.
-func Range(p RangeProps) templ.Component {
-	return rangeInput(p)
-}
-
 // FieldSeparator is Basecoat's field separator: a line between two Fields
-// or FieldSets, with label ("Or") in its middle, or none for "".
-func FieldSeparator(label string) templ.Component {
-	return fieldSeparator(label)
+// or FieldSets, with its children in the middle ("Or"), or a bare line
+// without them:
+//
+//	@ui.FieldSeparator(ui.FieldSeparatorProps{}) {
+//		Or
+//	}
+func FieldSeparator(p FieldSeparatorProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		var b bytes.Buffer
+		if kids := templ.GetChildren(ctx); kids != nil {
+			if err := kids.Render(outOfGroup(ctx), &b); err != nil {
+				return err
+			}
+		}
+		return fieldSeparator(p, b.String()).Render(templ.ClearChildren(ctx), w)
+	})
 }
