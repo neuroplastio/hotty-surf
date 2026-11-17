@@ -28,7 +28,7 @@ templ rowsDemo(p *Rows) {
 	<div class="bg-sidebar text-sidebar-foreground w-72 rounded-md py-2">
 		@ui.List("Sessions") {
 			for i, name := range bookRowNames {
-				@ui.ListItem(ui.ListItemProps{ID: "row-" + strconv.Itoa(i), Selected: p.Selected == i, Active: p.Active == i, OnClick: func() { p.Selected = i }, Leading: ui.Symbol(ui.ShapeTerminal, "size-4")}) {
+				@ui.ListItem(ui.ListItemProps{ID: "row-" + strconv.Itoa(i), Selected: p.Selected == i, Active: p.Active == i, OnClick: func() { p.Selected = i }, Leading: bookRowIcon()}) {
 					@ui.ItemTitle(ui.ItemTitleProps{}) { { name } }
 					@ui.ItemSubtitle(ui.ItemSubtitleProps{}) { p-70{ strconv.Itoa(i) } }
 				}
@@ -76,4 +76,12 @@ func init() {
 		Story{ID: "icon-button/default", Doc: "Shell icon buttons", View: func() templ.Component { _, c := buttons(); return c }, Props: buttons},
 		Story{ID: "symbols/default", Doc: "Material Symbols, as the kit draws them", View: func() templ.Component { _, c := symbols(); return c }, Props: symbols},
 	)
+}
+
+// bookRowIcon is a row's leading symbol, set off from its title as the
+// spike's rowIcon.
+templ bookRowIcon() {
+	<span class="relative mr-2 flex self-center">
+		@ui.Symbol(ui.ShapeTerminal, "size-4")
+	</span>
 }

@@ -208,11 +208,24 @@ templ bookKbd(p *Kbd) {
 }
 
 templ bookTabs(p *Tabs) {
-	@ui.Tabs(ui.TabsProps{ID: "story-tabs", Label: "Example", Line: p.Line, Value: p.Tab, Tabs: []ui.Tab{{Value: "account", Label: "account"}, {Value: "password", Label: "password"}, {Value: "team", Label: "team"}}, OnChange: func(v string) { p.Tab = v }}) {
-		@ui.Card(ui.CardProps{}) {
-			<section class="text-sm">The { p.Tab } panel.</section>
+	<div class="w-full max-w-md">
+		@ui.Tabs(ui.TabsProps{ID: "story-tabs", Label: "Example", Line: p.Line, Value: p.Tab, ListClass: "w-full", Tabs: []ui.Tab{{Value: "account", Label: "account"}, {Value: "password", Label: "password"}, {Value: "team", Label: "team"}}, OnChange: func(v string) { p.Tab = v }}) {
+			@ui.Card(ui.CardProps{}) {
+				<section class="text-sm">{ bookTabText(p.Tab) }</section>
+			}
 		}
+	</div>
+}
+
+// bookTabText is the spike's panel text for each tab.
+func bookTabText(tab string) string {
+	switch tab {
+	case "account":
+		return "Make changes to your account here. Click save when you're done."
+	case "password":
+		return "Change your password here. After saving, you'll be logged out."
 	}
+	return "Invite your team and pick what they can see."
 }
 
 templ buttonDestructive(s *kitState) {
@@ -253,7 +266,7 @@ templ buttonDisabled(s *kitState) {
 }
 
 var (
-	allVariants = []ui.Variant{ui.Primary, ui.Secondary, ui.Outline, ui.Ghost, ui.Destructive, ui.Link}
+	allVariants = []ui.Variant{ui.Primary, ui.Secondary, ui.Destructive, ui.Outline, ui.Ghost, ui.Link}
 	allSizes    = []ui.Size{ui.XSmall, ui.Small, ui.Medium, ui.Large}
 )
 
@@ -273,18 +286,19 @@ func sizeName(z ui.Size) string {
 
 templ buttonEvery(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
-		<div class="flex flex-row flex-wrap gap-2">
-			for _, v := range allVariants {
-				@ui.Button(ui.ButtonProps{Variant: v, Attrs: surf.On(ctx, "v-"+variantName(v), surf.Click(s.click))}) {
-					{ variantName(v) }
+		// As the spike's: a row of every variant for each size; then, for
+		// IconOnly, an icon button of each size.
+		for _, z := range allSizes {
+			<div class="flex flex-row flex-wrap items-center gap-2">
+				for _, v := range allVariants {
+					@ui.Button(ui.ButtonProps{Size: z, Variant: v, Attrs: surf.On(ctx, "v-"+variantName(v)+"-"+sizeName(z), surf.Click(s.click))}) {
+						{ variantName(v) }
+					}
 				}
-			}
-		</div>
+			</div>
+		}
 		<div class="flex flex-row flex-wrap items-center gap-2">
 			for _, z := range allSizes {
-				@ui.Button(ui.ButtonProps{Size: z, Variant: ui.Outline, Attrs: surf.On(ctx, "s-"+sizeName(z), surf.Click(s.click))}) {
-					{ sizeName(z) }
-				}
 				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click))}) {
 					@ui.Icon("plus", "")
 				}

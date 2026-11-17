@@ -36,6 +36,34 @@ fixed before the audit is complete.
   (`TestVariantOrder`); groups and components stay sorted by name, as the
   category groups have no spike order.
 
+- [x] The full side-by-side run (every spike story, the spike opened by
+  `-story`, v0.7 by its exact title, both at 2400×1500 in the same
+  headless sway; pairs reviewed by two agents and rechecked by eye):
+  - The stories used Tailwind utilities that neither the kit's stylesheet
+    nor the book's defines (`size-4`, `h-6`, `h-7`, `w-60`, `w-72`,
+    `bg-sidebar`, `text-sidebar-primary`, `border`, `items-stretch`,
+    `mr-2`, `max-w-xl`, `max-w-2xl`, `max-h-80`), so List item's symbols
+    drew at their natural size and overflowed into the inspector, the
+    icon buttons lost their bar and accent, and Code, Event log and the
+    tabs demos ran the pane's width. The book defines them, scoped to the
+    preview, as an app does in its style/app.css.
+  - The separators didn't draw: a `--hotty-px` width rounds to none in
+    Blitz's layout (gap 9). They are one CSS px, as the spike's `w-px`.
+  - The kit stories' root `p-4` padded a story twice inside the preview's
+    own padding; the book's preview takes it off.
+  - Code and the tabs demos are wrapped at the spike's widths; Basecoat
+    Tabs has its box, a full-width list and its panel texts; Button /
+    every variant and size has a row of each variant per size (plus its
+    IconOnly row), in the spike's variant order; List item's symbol has
+    the spike's spacing; the book's parts have the spike's descriptions.
+  - Kept as they are: Kbd writes one chip as the host's platform writes
+    the shortcut (`ui.Kbd`'s contract); Button / every variant keeps its
+    IconOnly row and click count (its key test); the spike's Popover +
+    command, Select (deprecated), Select / multiple, Layout thumbnails
+    and Busy badge have no v0.7 story.
+- [ ] Badge / every variant, opened from the filter, cuts the third
+  badge's word at its left until the next render: Blitz keeps a box's
+  old width after a delta (gap 12), for hotty-blitz.
 - [ ] The story list goes blank when a filter shortens it while it is
   scrolled down: Blitz keeps the old scroll offset (gap 11 in
   `vault/knowledge/blitz-gaps.md`), for hotty-blitz. Found by the full

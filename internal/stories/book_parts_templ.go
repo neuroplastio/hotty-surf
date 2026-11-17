@@ -50,6 +50,10 @@ func tabsDemo(p *TabsDemo) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full max-w-xl\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -62,26 +66,30 @@ func tabsDemo(p *TabsDemo) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p>The ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p>The ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Tabs.Active)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_parts.templ`, Line: 29, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_parts.templ`, Line: 30, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " panel. Click a tab, or Tab to the tabs and use ← → Home End.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " panel. Click a tab, or Tab to the tabs and use ← → Home End.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
 		templ_7745c5c3_Err = ui.Tabs(ui.TabsProps{ID: p.Tabs.ID, Label: p.Tabs.Label, Tabs: p.Tabs.Tabs, Value: p.Tabs.Active, Line: p.Tabs.Variant == "line", ListClass: p.Tabs.ListClass, PanelClass: p.Tabs.PanelClass, OnChange: func(v string) { p.Tabs.Active = v }}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -138,7 +146,7 @@ func navDemo(p *NavDemo) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"bg-sidebar text-sidebar-foreground flex w-64 flex-col rounded-md border p-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"bg-sidebar text-sidebar-foreground flex w-64 flex-col rounded-md border p-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -146,11 +154,11 @@ func navDemo(p *NavDemo) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = p.Nav.List("max-h-[40vh] overflow-y-auto pt-1").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = p.Nav.List("max-h-80 overflow-y-auto pt-1").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -213,7 +221,7 @@ func logDemo(p *LogDemo) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"flex w-full max-w-xl flex-col gap-3\"><div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"flex w-full max-w-xl flex-col gap-3\"><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -229,7 +237,7 @@ func logDemo(p *LogDemo) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Add an event ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "Add an event ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -241,7 +249,7 @@ func logDemo(p *LogDemo) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -249,7 +257,7 @@ func logDemo(p *LogDemo) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -265,13 +273,13 @@ func init() {
 	}{{"tabs-demo/default", false, 3}, {"tabs-demo/line", true, 3}, {"tabs-demo/many", true, 7}} {
 		x := x
 		makeView := func() (any, templ.Component) { p := bookTabsDemo(x.line, x.count); return p, tabsDemo(p) }
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
 
 	for _, x := range []struct{ id, filter string }{{"nav-list/default", ""}, {"nav-list/filtered", "an"}, {"nav-list/nothing-matches", "zzz"}} {
 		x := x
 		makeView := func() (any, templ.Component) { p := &NavDemo{Nav: bookNav(x.filter)}; return p, navDemo(p) }
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
 	for _, x := range []struct {
 		id       string
@@ -285,7 +293,7 @@ func init() {
 			p := &ControlsDemo{Controls: append([]ui.Control(nil), x.controls...)}
 			return p, controlsDemo(p)
 		}
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
 	at := time.Date(2026, 11, 16, 19, 8, 2, 285e6, time.Local)
 	entries := []ui.LogEntry{{At: at, Kind: "state", Text: "Popup.Open: false → true", KindClass: "tok-string"}, {At: at.Add(330 * time.Millisecond), Kind: "state", Text: "Popup.Active: -1 → 0", KindClass: "tok-string"}, {At: at.Add(572 * time.Millisecond), Kind: "act", Text: "Profile", KindClass: "tok-keyword"}, {At: at.Add(574 * time.Millisecond), Kind: "control", Text: "Size = large", KindClass: "tok-literal"}}
@@ -301,8 +309,17 @@ func init() {
 			}
 			return p, logDemo(p)
 		}
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
+}
+
+// bookPartsDoc is the spike's line for each of the book's parts it described.
+var bookPartsDoc = map[string]string{
+	"tabs-demo/default": "Basecoat's tabs: click, or ← → Home End on a tab; the keyboard follows",
+	"tabs-demo/line":    "as the book's own",
+	"nav-list/default":  "grouped links with a filter: ↑ ↓ PgUp PgDn Home End from either, Escape clears it",
+	"controls/default":  "a switch, a select, text fields: what the Props tab is made of",
+	"event-log/default": "the newest first, with Clear: what the Events tab is made of",
 }
 
 var _ = templruntime.GeneratedTemplate

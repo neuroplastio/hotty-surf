@@ -25,9 +25,11 @@ type TabsDemoState struct {
 }
 
 templ tabsDemo(p *TabsDemo) {
-	@ui.Tabs(ui.TabsProps{ID: p.Tabs.ID, Label: p.Tabs.Label, Tabs: p.Tabs.Tabs, Value: p.Tabs.Active, Line: p.Tabs.Variant == "line", ListClass: p.Tabs.ListClass, PanelClass: p.Tabs.PanelClass, OnChange: func(v string) { p.Tabs.Active = v }}) {
-		<p>The { p.Tabs.Active } panel. Click a tab, or Tab to the tabs and use ← → Home End.</p>
-	}
+	<div class="w-full max-w-xl">
+		@ui.Tabs(ui.TabsProps{ID: p.Tabs.ID, Label: p.Tabs.Label, Tabs: p.Tabs.Tabs, Value: p.Tabs.Active, Line: p.Tabs.Variant == "line", ListClass: p.Tabs.ListClass, PanelClass: p.Tabs.PanelClass, OnChange: func(v string) { p.Tabs.Active = v }}) {
+			<p>The { p.Tabs.Active } panel. Click a tab, or Tab to the tabs and use ← → Home End.</p>
+		}
+	</div>
 }
 
 func bookTabsDemo(line bool, n int) *TabsDemo {
@@ -63,7 +65,7 @@ func bookNav(filter string) ui.NavList {
 templ navDemo(p *NavDemo) {
 	<div class="bg-sidebar text-sidebar-foreground flex w-64 flex-col rounded-md border p-2">
 		@p.Nav.FilterInput("h-8 text-sm")
-		@p.Nav.List("max-h-[40vh] overflow-y-auto pt-1")
+		@p.Nav.List("max-h-80 overflow-y-auto pt-1")
 	</div>
 }
 
@@ -95,13 +97,13 @@ func init() {
 	for _, x := range []struct { id string; line bool; count int }{{"tabs-demo/default", false, 3}, {"tabs-demo/line", true, 3}, {"tabs-demo/many", true, 7}} {
 		x := x
 		makeView := func() (any, templ.Component) { p := bookTabsDemo(x.line, x.count); return p, tabsDemo(p) }
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
 
 	for _, x := range []struct { id, filter string }{{"nav-list/default", ""}, {"nav-list/filtered", "an"}, {"nav-list/nothing-matches", "zzz"}} {
 		x := x
 		makeView := func() (any, templ.Component) { p := &NavDemo{Nav: bookNav(x.filter)}; return p, navDemo(p) }
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
 	for _, x := range []struct { id string; controls []ui.Control }{
 		{"controls/default", []ui.Control{{Name: "Open", Kind: "bool", Value: "true"}, {Name: "Size", Kind: "enum", Value: "md", Options: []string{"sm", "md", "lg"}}, {Name: "Label", Kind: "string", Value: "Save"}, {Name: "Popup.Active", Kind: "int", Value: "-1"}}},
@@ -109,7 +111,7 @@ func init() {
 	} {
 		x := x
 		makeView := func() (any, templ.Component) { p := &ControlsDemo{Controls: append([]ui.Control(nil), x.controls...)}; return p, controlsDemo(p) }
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
 	at := time.Date(2026, 11, 16, 19, 8, 2, 285e6, time.Local)
 	entries := []ui.LogEntry{{At: at, Kind: "state", Text: "Popup.Open: false → true", KindClass: "tok-string"}, {At: at.Add(330*time.Millisecond), Kind: "state", Text: "Popup.Active: -1 → 0", KindClass: "tok-string"}, {At: at.Add(572*time.Millisecond), Kind: "act", Text: "Profile", KindClass: "tok-keyword"}, {At: at.Add(574*time.Millisecond), Kind: "control", Text: "Size = large", KindClass: "tok-literal"}}
@@ -120,6 +122,15 @@ func init() {
 			if x.hasEntries { p.Entries = append([]ui.LogEntry(nil), entries...) }
 			return p, logDemo(p)
 		}
-		bookStories = append(bookStories, Story{ID: x.id, View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
+		bookStories = append(bookStories, Story{ID: x.id, Doc: bookPartsDoc[x.id], View: func() templ.Component { _, c := makeView(); return c }, Props: makeView})
 	}
+}
+
+// bookPartsDoc is the spike's line for each of the book's parts it described.
+var bookPartsDoc = map[string]string{
+	"tabs-demo/default": "Basecoat's tabs: click, or ← → Home End on a tab; the keyboard follows",
+	"tabs-demo/line": "as the book's own",
+	"nav-list/default": "grouped links with a filter: ↑ ↓ PgUp PgDn Home End from either, Escape clears it",
+	"controls/default": "a switch, a select, text fields: what the Props tab is made of",
+	"event-log/default": "the newest first, with Clear: what the Events tab is made of",
 }

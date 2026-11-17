@@ -899,3 +899,14 @@ was never changed for it.
 
 For hotty-blitz: clamp each element's scroll offset to its scrollable
 overflow after layout, as CSSOM View does. The kit keeps its markup.
+
+## A box a delta changes keeps its old width until the next layout (2026-11-17)
+
+| Gap | Where it shows in the kit | How bad |
+| --- | --- | --- |
+| 12. After a delta that swaps a preview's content, a shrink-wrapped inline box (a Badge, `display:inline-flex`, `rounded-full`) can keep the width of what it held before: its new text is laid out in the old, narrower box and cut at its left. The next render that touches the document (any focus move) lays it out right. A static `hotty render` of the same page draws it right at 1×, 1.25×, 1.5×, 1.6× and 2×, so it is incremental layout, not the CSS. | The book's Badge / every variant, opened from the filter: the third badge reads "structive" (on an earlier run, with another order, "tline"), and is whole after Tab (`gap12-before.png`, `gap12-after.png` in the audit captures, hottyterm on 0.8.7) | Looks: a word cut until the next change |
+
+For hotty-blitz: find which node keeps its old measure (likely the
+inline box whose text node a delta replaced isn't marked for a layout
+of its own; see mod 0041 for the transform and overflow side). The kit
+keeps its markup.

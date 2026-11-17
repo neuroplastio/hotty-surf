@@ -43,7 +43,15 @@ const bookLongSample = `func main() { fmt.Println("a line long enough that a nar
 
 func codeDemo(p *CodeDemo) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return code.View(p.Src, p.Lang, p.First).Render(ctx, w)
+		// As the spike's: the block as wide as a page of code, not the pane.
+		if _, err := io.WriteString(w, `<div class="w-full max-w-2xl">`); err != nil {
+			return err
+		}
+		if err := code.View(p.Src, p.Lang, p.First).Render(ctx, w); err != nil {
+			return err
+		}
+		_, err := io.WriteString(w, `</div>`)
+		return err
 	})
 }
 
@@ -52,13 +60,13 @@ func init() {
 		id, doc string
 		props   CodeDemo
 	}{
-		{"code/go", "Highlighted Go with line numbers", CodeDemo{"go", 1, bookGoSample}},
+		{"code/go", "code.View: highlighted with chroma's lexers, numbered, wrapping where narrow", CodeDemo{"go", 1, bookGoSample}},
 		{"code/templ", "Highlighted templ", CodeDemo{"templ", 1, bookTemplSample}},
 		{"code/html", "Highlighted HTML", CodeDemo{"html", 1, bookHTMLSample}},
 		{"code/from-line-120", "Code starting at line 120", CodeDemo{"go", 120, bookGoSample}},
 		{"code/no-numbers", "Code without line numbers", CodeDemo{"go", 0, bookGoSample}},
 		{"code/plain-text", "A language without a lexer", CodeDemo{"text", 1, "No lexer: one colour.\n    Its indentation kept."}},
-		{"code/a-long-line", "A line that wraps in a narrow pane", CodeDemo{"go", 1, bookLongSample}},
+		{"code/a-long-line", "wraps at the pane's edge; its number stays at its first row", CodeDemo{"go", 1, bookLongSample}},
 	} {
 		item := item
 		makeView := func() (any, templ.Component) {
