@@ -265,3 +265,53 @@ func TestModalBlocksBackgroundDrop(t *testing.T) {
 		t.Fatal("a Drop behind the open dialog ran")
 	}
 }
+
+// A drag that began before a Dialog opened isn't lifted once it is open:
+// no handler runs for it, so it doesn't take the dragging class either.
+func TestModalBackgroundDragNotLifted(t *testing.T) {
+	heard, open := 0, false
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		bg := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			if _, err := io.WriteString(w, "<div"); err != nil {
+				return err
+			}
+			for _, kv := range surf.On(ctx, "bg", surf.Drag(func(surf.DragEvent) { heard++ })).Items() {
+				if _, err := io.WriteString(w, " "+kv.Key+`="`+templ.EscapeString(kv.Value.(string))+`"`); err != nil {
+					return err
+				}
+			}
+			_, err := io.WriteString(w, ">Card</div>")
+			return err
+		})
+		modal := with(ui.Dialog(ui.DialogProps{ID: "dialog", Open: open, Title: "Move"}), button("inside", "OK", func() {}))
+		return page(bg, modal).Render(ctx, w)
+	})
+	s := surf.New("modal-lift", view, ui.Stylesheet())
+	r := surftest.Start(t, s)
+	if err := s.Event(hotty.Event{Kind: hotty.EventDragStart, Target: "bg", Drag: &hotty.Drag{}}); err != nil {
+		t.Fatal(err)
+	}
+	r.Update()
+	if heard != 1 {
+		t.Fatalf("the drag's start: %d calls", heard)
+	}
+	open = true
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	r.Update()
+	if err := s.Event(hotty.Event{Kind: hotty.EventDrag, Target: "bg", Drag: &hotty.Drag{}}); err != nil {
+		t.Fatal(err)
+	}
+	r.Update()
+	doc, err := s.Document()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(doc, "dragging") {
+		t.Fatal("a drag behind the open dialog took the dragging class")
+	}
+	if heard != 1 {
+		t.Fatalf("a Drag behind the open dialog ran: %d calls", heard)
+	}
+}

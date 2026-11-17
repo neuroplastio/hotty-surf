@@ -342,6 +342,14 @@ func (s *Surface) dragged(e hotty.Event) bool {
 	on := s.frame.On
 	ran := false
 	d := DragEvent{Over: e.Target}
+	// An active modal confines the pointer as it does the keyboard: a drag
+	// of an element behind it (one that began before it opened) ends
+	// without a word and isn't lifted (no dragging class), and a Drop
+	// behind it hears nothing.
+	modal := activeModal(s.frame)
+	behind := func(id string) bool {
+		return modal != "" && id != "" && s.modalApplies(s.frame, modal, id) && !contains(s.chain(id), modal)
+	}
 	if e.Drag != nil {
 		d.Drag = *e.Drag
 	}
@@ -350,7 +358,7 @@ func (s *Surface) dragged(e hotty.Event) bool {
 		s.drag, s.lifted = e.Target, false
 		d.Start = true
 	case hotty.EventDrag:
-		if s.drag != "" && !s.lifted {
+		if s.drag != "" && !s.lifted && !behind(s.drag) {
 			s.lifted, s.r.valid, ran = true, false, true
 		}
 	case hotty.EventDragEnd:
@@ -360,13 +368,6 @@ func (s *Surface) dragged(e hotty.Event) bool {
 		}
 	}
 	d.ID = s.drag
-	// An active modal confines the pointer as it does the keyboard: a drag
-	// of an element behind it (one that began before it opened) ends
-	// without a word, and a Drop behind it hears nothing.
-	modal := activeModal(s.frame)
-	behind := func(id string) bool {
-		return modal != "" && id != "" && s.modalApplies(s.frame, modal, id) && !contains(s.chain(id), modal)
-	}
 	if e.Kind != hotty.EventDragStart && behind(s.drag) {
 		if d.End {
 			s.drag, s.lifted = "", false
