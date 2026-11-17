@@ -1046,6 +1046,13 @@ scrollbar classes and Avatar's image for the looks pass.
   transition. Should OnClose report the request or the completed close?
   The lean is the request, consistent with Dialog's controlled Open prop.
   Four side stories, cells keys and a Chromium Escape differential cover it.
+- **AlertDialog: draft for review.** Basecoat supplies CSS but no macro or
+  script, and neither existing port has this component. The draft composes
+  the existing Dialog modal behavior with alert-dialog markup and an
+  explicit alertdialog role; it has no automatic close button. Title and
+  Description provide its accessible name and description, while children
+  supply its actions. The small CSS variant is exposed as Size. A story,
+  cells keys and a Chromium Escape differential cover it.
 - **Port sources for the remaining work.** The spike has generated
   Combobox markup but no combobox.js behavior port; the draft above
   translates it. The spike's popup code is the source for the popup

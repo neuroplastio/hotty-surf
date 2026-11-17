@@ -65,3 +65,10 @@ func ExampleDrawer() {
 		Open: open, Side: "left", OnClose: func() { open = false },
 	})
 }
+
+func ExampleAlertDialog() {
+	_ = ui.AlertDialog(ui.AlertDialogProps{
+		ID: "confirm", Open: true, Title: "Delete item?",
+		Description: "This cannot be undone.", OnClose: func() {},
+	})
+}

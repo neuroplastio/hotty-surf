@@ -30,6 +30,7 @@ component values and applies the changes its callbacks report.
 | --- | --- |
 | Accordion | Planned; no kit implementation yet. |
 | Alert | None of its own. |
+| Alert dialog | As Dialog: Escape requests a close and Tab cycles its controls. |
 | Avatar | None of its own. |
 | Badge | None of its own. |
 | Breadcrumb | A step with a click handler or `href` is a link: Enter or Space activates it. Other steps have no keys of their own. |

@@ -101,6 +101,7 @@ pkg neuroplast.io/hotty-surf/ui, const Secondary Variant = "secondary"
 pkg neuroplast.io/hotty-surf/ui, const Small Size = "sm"
 pkg neuroplast.io/hotty-surf/ui, const XSmall Size = "xs"
 pkg neuroplast.io/hotty-surf/ui, func Alert(AlertProps) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func AlertDialog(AlertDialogProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Avatar(AvatarProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func AvatarGroup(AvatarGroupProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Badge(BadgeProps) templ.Component
@@ -145,6 +146,14 @@ pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Open()
 pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Show(Toast)
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Description string
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, OnClose func()
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Open bool
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Size string
+pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Title string
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Attrs templ.Attributes
 pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Class string

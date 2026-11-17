@@ -48,6 +48,22 @@ var subjects = map[string]func(t *testing.T, args map[string]any) subject{
 	"command":       commandSubject,
 	"combobox":      comboboxSubject,
 	"drawer":        drawerSubject,
+	"alert-dialog":  alertDialogSubject,
+}
+
+func alertDialogSubject(_ *testing.T, _ map[string]any) subject {
+	p := ui.AlertDialogProps{ID: "alert", Title: "Delete?", Description: "Cannot undo."}
+	p.OnClose = func() { p.Open = false }
+	return subject{
+		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "alert-open", surf.Click(func() { p.Open = true }))})
+			if err := open.Render(templ.WithChildren(ctx, templ.Raw("Open")), w); err != nil {
+				return err
+			}
+			return ui.AlertDialog(p).Render(templ.WithChildren(ctx, templ.Raw(`<footer><button id="alert-cancel" type="button">Cancel</button></footer>`)), w)
+		}),
+		events: func() []map[string]any { return nil },
+	}
 }
 
 func drawerSubject(_ *testing.T, args map[string]any) subject {

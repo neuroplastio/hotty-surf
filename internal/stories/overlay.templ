@@ -104,6 +104,21 @@ func init() {
 			View: show(func(s *overlayState) templ.Component { return drawerStory(s, side) }),
 			Keys: []string{"tab", "enter", "escape"}, Want: "drawer: off"})
 	}
+	add(Story{ID: "dialog/with-alert", Doc: "A modal confirmation with two actions",
+		View: show(alertDialogStory), Keys: []string{"tab", "enter", "escape"}, Want: "alert: off"})
+}
+
+templ alertDialogStory(s *overlayState) {
+	<div class="flex flex-col gap-3 p-4">
+		@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "open-alert", surf.Click(func() { s.open = true }))}) { Delete }
+		@ui.AlertDialog(ui.AlertDialogProps{ID: "alert", Open: s.open, Title: "Delete item?", Description: "This cannot be undone.", OnClose: func() { s.open = false }}) {
+			<footer>
+				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "cancel-alert", surf.Click(func() { s.open = false }))}) { Cancel }
+				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "confirm-alert", surf.Click(func() { s.open = false }))}) { Delete }
+			</footer>
+		}
+		<p>alert: { onoff(s.open) }</p>
+	</div>
 }
 
 templ drawerStory(s *overlayState, side string) {
