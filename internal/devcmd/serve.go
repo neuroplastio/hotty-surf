@@ -1,6 +1,7 @@
 package devcmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/websocket"
@@ -334,28 +336,55 @@ func writeEvent(w io.Writer, name, data string) {
 	io.WriteString(w, b.String())
 }
 
-// pageWire is a page's reload wire, its messages a WebSocket's frames, up
-// to devwire.MaxBytes each (gov P-3: a capped reassembly). A page that goes
-// can't say so on the wire (it is closing), so serve says it for it: leave
-// hands the reloader a "leave" after the last whole message, then the end.
+// pageWire is a page's reload wire, its messages a WebSocket's frames,
+// each a whole message (both ends' Conns frame, devwire.Framer) of at most
+// devwire.MaxBytes (gov P-3: a capped reassembly). A page that goes can't
+// say so on the wire (it is closing), so serve says it for it: leave hands
+// the reloader a "leave" after the last frame, then the end.
+//
+// Each frame read is a new []byte: x/net's websocket reads a frame with
+// io.ReadAll, which a Codec can't give a pooled buffer to. A frame goes to
+// the pipe whole and is dropped there.
 type pageWire struct {
 	ws *websocket.Conn
 	pr *io.PipeReader
 	pw *io.PipeWriter
 
-	mu   sync.Mutex // one whole message into pw at a time
-	gone bool
+	mu       sync.Mutex // one whole frame into pw at a time
+	gone     bool
+	left     chan struct{} // closed by leave
+	leftOnce sync.Once
+
+	// done is set once the page's app handed over or said it leaves on
+	// the wire: its socket closing then is no crash, and the reloader
+	// waits for it to close, so it closes at once. handover is the id of
+	// the handover request serve sent it, 0 before.
+	handover atomic.Uint32
+	done     atomic.Bool
 }
+
+// leaveWait is how long a closed socket waits for its page's dev/leave,
+// which the browser may send after it closed the socket.
+const leaveWait = time.Second
 
 func newPageWire(ws *websocket.Conn) *pageWire {
 	ws.PayloadType = websocket.BinaryFrame
 	ws.MaxPayloadBytes = devwire.MaxBytes
 	pr, pw := io.Pipe()
-	w := &pageWire{ws: ws, pr: pr, pw: pw}
+	w := &pageWire{ws: ws, pr: pr, pw: pw, left: make(chan struct{})}
 	go func() {
 		for {
 			var msg []byte
 			if err := websocket.Message.Receive(ws, &msg); err != nil {
+				// A tab closing closes its socket and beacons its leave,
+				// in either order: a leave that comes in time is no crash.
+				if !w.done.Load() {
+					select {
+					case <-w.left:
+						return
+					case <-time.After(leaveWait):
+					}
+				}
 				w.mu.Lock()
 				if !w.gone {
 					w.gone = true
@@ -364,6 +393,7 @@ func newPageWire(ws *websocket.Conn) *pageWire {
 				w.mu.Unlock()
 				return
 			}
+			w.watch(msg, false)
 			w.mu.Lock()
 			if w.gone {
 				w.mu.Unlock()
@@ -381,14 +411,38 @@ func newPageWire(ws *websocket.Conn) *pageWire {
 
 func (w *pageWire) Read(p []byte) (int, error) { return w.pr.Read(p) }
 
-// Write sends p as one frame: the reload wire's writer flushes once a
-// message (devwire), so each is one msgpack-RPC message.
+// Write sends p as one frame: the Conn on a Framer writes a whole message
+// in one Write.
 func (w *pageWire) Write(p []byte) (int, error) {
+	w.watch(p, true)
 	if err := websocket.Message.Send(w.ws, p); err != nil {
 		return 0, err
 	}
 	return len(p), nil
 }
+
+// watch reads a frame's envelope, a whole message's: what serve asks of the
+// page (out), and what the page answers or says, for done.
+func (w *pageWire) watch(frame []byte, out bool) {
+	if w.done.Load() || len(frame) == 0 {
+		return
+	}
+	r := devwire.NewReader(bytes.NewReader(frame))
+	h, err := devwire.ReadHead(r)
+	devwire.PutReader(r)
+	switch {
+	case err != nil:
+	case out && h.Type == devwire.Request && h.Method == "handover":
+		w.handover.Store(h.ID)
+	case !out && h.Type == devwire.Response && h.ID != 0 && h.ID == w.handover.Load():
+		w.done.Store(true)
+	case !out && h.Type == devwire.Notification && h.Method == "leave":
+		w.done.Store(true)
+	}
+}
+
+// Frames says each Write is a frame of its own (devwire.Framer).
+func (w *pageWire) Frames() {}
 
 func (w *pageWire) Close() error {
 	w.pr.Close()
@@ -400,12 +454,16 @@ func (w *pageWire) leave() {
 	w.mu.Lock()
 	if !w.gone {
 		w.gone = true
-		// The pipe hands the reader the notification whole, then EOF.
+		// After the last whole frame, the pipe hands the reader the
+		// notification, then EOF.
 		go func() {
-			devwire.NewConn(w.pw).Notify("leave", &devwire.Empty{})
+			c := devwire.NewConn(w.pw)
+			c.Notify("leave", &devwire.Empty{})
+			c.Close()
 			w.pw.Close()
 		}()
 	}
 	w.mu.Unlock()
+	w.leftOnce.Do(func() { close(w.left) })
 	w.ws.Close()
 }

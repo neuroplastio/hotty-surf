@@ -146,11 +146,13 @@ func (s *Surface) Event(e hotty.Event) error {
 // event for focus the program gives, so the surface takes the move as that
 // event itself: its Focus handlers hear it, as they hear a Tab inside the
 // surface, and the keys the host passes on reach that element's Key
-// handlers. It does nothing while the surface has the keyboard, or when
-// nothing in it takes focus. In cells the program gives the Screen the
-// keyboard first (cells.Screen.Focus), which may already have restored
-// the element. It runs on the driver's goroutine, as Event does.
-func (s *Surface) Focus() error {
+// handlers. focused says whether the surface has the keyboard after it:
+// true when it had it already, and false, with nothing sent, when nothing
+// in it takes focus or it hasn't rendered and been attached yet. In cells
+// the program gives the Screen the keyboard first (cells.Screen.Focus),
+// which may already have restored the element. It runs on the driver's
+// goroutine, as Event does.
+func (s *Surface) Focus() (focused bool, err error) {
 	return s.takeFocus()
 }
 

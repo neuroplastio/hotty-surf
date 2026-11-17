@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"strings"
 
 	"neuroplast.io/hotty-surf/internal/templgen"
@@ -49,6 +50,7 @@ func New(dir string, out io.Writer) error {
 	gomod, _ := cmd.Output()
 	inModule := strings.TrimSpace(string(gomod)) != "" && strings.TrimSpace(string(gomod)) != os.DevNull
 
+	var made []string // what it writes, as it prints them
 	err = fs.WalkDir(scaffold, "scaffold", func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -58,6 +60,7 @@ func New(dir string, out io.Writer) error {
 			return err
 		}
 		rel := strings.TrimSuffix(strings.TrimPrefix(path, "scaffold/"), ".tmpl")
+		made = append(made, rel)
 		f := filepath.Join(abs, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(f), 0o755); err != nil {
 			return err
@@ -71,6 +74,7 @@ func New(dir string, out io.Writer) error {
 	if err := os.WriteFile(filepath.Join(abs, ".gitignore"), []byte("dist/\n"), 0o644); err != nil {
 		return err
 	}
+	made = append(made, ".gitignore")
 	// The view's Go, so that go build and go test need no templ binary.
 	page := filepath.Join(abs, "page.templ")
 	_, raw, err := templgen.Gen(page)
@@ -80,6 +84,7 @@ func New(dir string, out io.Writer) error {
 	if err := templgen.WriteGo(page, raw); err != nil {
 		return err
 	}
+	made = append(made, "page_templ.go")
 	next := "go mod tidy"
 	if !inModule {
 		mod := "module " + name + "\n\ngo 1.26.0\n"
@@ -91,9 +96,11 @@ func New(dir string, out io.Writer) error {
 		if err := os.WriteFile(filepath.Join(abs, "go.mod"), []byte(mod), 0o644); err != nil {
 			return err
 		}
+		made = append(made, "go.mod")
 	}
-	fmt.Fprintf(out, `made %s: main.go app.go page.templ css.go app_test.go style/app.css .gitignore
-  cd %[1]s && %s       its requirements
+	slices.Sort(made)
+	fmt.Fprintf(out, `made %s: %s
+  cd %[1]s && %[3]s       its requirements
   go test .                 its tests, the lint among them
   hotty-surf run .          the app in this terminal, reloading as you save
   hotty-surf ctl reload     from another shell: wait for a save to show
@@ -103,7 +110,7 @@ func New(dir string, out io.Writer) error {
 To show its surface in a program of your own, see hotty-surf's examples:
   examples/pane             a raw-mode program (surf, cells, hottyterm)
   surftea/examples/files    a Bubble Tea program (surftea)
-`, dir, next)
+`, dir, strings.Join(made, " "), next)
 	return nil
 }
 

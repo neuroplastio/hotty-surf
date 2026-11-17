@@ -129,9 +129,14 @@ func (h *Host) Update(msg tea.Msg) (tea.Msg, tea.Cmd) {
 			// The host refused a delta: what it has is no longer what
 			// the surface thinks, so it gets the document again.
 			h.sess.Send(hotty.Doc(h.name, h.document(), hotty.Scroll(scroll)))
-		} else if m.Re == "focus" {
-			// The element Focus named is gone: the host picks.
-			h.sess.Send(hotty.Focus(h.name, ""))
+		} else if m.Re == "focus" && h.focused {
+			// The element Focus named is gone. The surface took the move
+			// already, so it hears that it didn't happen, then picks again
+			// from its tree as it is now: the host never holds a keyboard
+			// the surface doesn't know of.
+			h.check(h.s.Event(hotty.Event{Kind: hotty.EventBlur, Surface: h.name}))
+			h.focused = false
+			h.Focus()
 		}
 		return nil, nil
 	case tea.KeyPressMsg:
@@ -319,21 +324,27 @@ func (h *Host) check(err error) bool {
 // onto it (Tab between panes): the surface's Focus (surf.Surface.Focus)
 // picks the element and sends it, through the Session where the terminal
 // is a hotty host, and to its cells otherwise, which get the keyboard too.
-// Focused is true from then on.
+// Focused is true from then on, unless nothing in the surface takes focus
+// (or it isn't shown yet): then the program keeps the keyboard.
 func (h *Host) Focus() {
 	switch {
 	case h.scr != nil:
 		// The Screen's keyboard first, and the element it kept, if any: the
-		// surface hears that as the user's focus, and its Focus then does
-		// nothing. Otherwise (Tab went past the last element) the surface
-		// picks one, as on a host.
+		// surface hears that as the user's focus, and its Focus then says
+		// it has the keyboard. Otherwise (Tab went past the last element)
+		// the surface picks one, as on a host.
 		h.scr.Focus(true)
-		h.check(h.s.Focus())
-		h.focused = true
+		got, err := h.s.Focus()
+		h.check(err)
+		if !got {
+			h.scr.Focus(false)
+		}
+		h.focused = got
 		h.settle()
 	case h.mode == hottytea.Native:
-		h.check(h.s.Focus())
-		h.focused = true
+		got, err := h.s.Focus()
+		h.check(err)
+		h.focused = got
 	}
 }
 

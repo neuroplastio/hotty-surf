@@ -303,17 +303,21 @@ func (c *child) serve() {
 			}
 		case "doc":
 			var of devwire.Doc
-			if of.DecodeMsg(c.r) != nil {
+			if devwire.Decode(c.r, &of) != nil {
 				return
 			}
-			doc, err := c.document(of.Surface)
-			errText := ""
-			if err != nil {
-				errText = err.Error()
-			}
-			if c.conn.Respond(h.ID, errText, &doc) != nil {
-				return
-			}
+			// Off the read loop: a busy driver holds a shot up to docWait,
+			// and a save's render mustn't wait behind it. The Conn writes
+			// a message whole, from any goroutine.
+			id := h.ID
+			go func() {
+				doc, err := c.document(of.Surface)
+				errText := ""
+				if err != nil {
+					errText = err.Error()
+				}
+				c.conn.Respond(id, errText, &doc)
+			}()
 		case "handover":
 			if devwire.Skip(c.r) != nil {
 				return

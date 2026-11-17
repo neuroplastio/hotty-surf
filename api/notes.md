@@ -825,10 +825,10 @@ shape. Nothing else in the lock moves.
 
 ### The names
 
-- **`reloader.(*Reloader).Document(ctx, key) (string, error)`:** L0's
+- **`reloader.(*Reloader).Document(ctx, key, surface) (string, error)`:** L0's
   deferral for `plx plugin dev ctl shot`. The process of key answers over
   its reload wire (a `doc` request beside render, restyle and handover)
-  with the document of its surface that rendered last, read on the
+  with the document of the surface it names, read on the
   surface's driver through Do, never directly (a handover reads a
   dropped surface directly only because the process exits after it). 3 s
   at most. `ctl shot` takes its size from the terminal hotty-surf run
@@ -918,13 +918,15 @@ hotty-surf book                (L3)
 - **`surftea.(*Host).Cursor() *tea.Cursor`:** Bubble Tea's shape (bubbles'
   textinput and textarea), nil where there is none, in the screen's cells
   (the Host adds its rectangle), a bar.
-- **`surf.(*Surface).Focus() error`, added:** the program gives the
-  surface the keyboard. It sends a=focus for the element that had it last
-  (while it is in the document), else the first that takes focus, and
-  takes the move as the host's focus event, which the host doesn't echo
-  (SPEC §10.1): Focus handlers hear it, and passed keys reach that
-  element's Key handlers. It does nothing while the surface has the
-  keyboard. surftea's Focus calls it and imports nothing of surf's
+- **`surf.(*Surface).Focus() (focused bool, err error)`, added:** the
+  program gives the surface the keyboard. It sends a=focus for the
+  element that had it last (while it is drawn), else the first drawn that
+  takes focus, and takes the move as the host's focus event, which the
+  host doesn't echo (SPEC §10.1): Focus handlers hear it, and passed keys
+  reach that element's Key handlers. focused says whether the surface has
+  the keyboard after it, as Key says taken: true when it had it already,
+  false with nothing sent when nothing in it takes focus or it isn't shown
+  yet (the verifier's F2), so the program keeps the keyboard then. surftea's Focus calls it and imports nothing of surf's
   internals; examples/pane calls it in a raw-mode program. `surf.Focus`'s
   doc says its handlers hear it.
 - **surftea's docs:** Update takes an ErrorMsg naming its surface (a
@@ -987,3 +989,40 @@ hotty-surf book                (L3)
   (the browser's reload is behind `surfdev && js`).
 - **Not promised:** reload in the browser takes a Go js/wasm link, about
   0.3 s for hello and seconds for a large app; Report.Took says.
+
+### As verified (p-769, 2026-11-17): the fixes and leans, applied
+
+- **F2:** `Surface.Focus() (focused bool, err error)`, above. surftea's
+  `Host.Focus` and examples/pane set where the keyboard is from it, and
+  a Screen given the keyboard for nothing is blurred again. surftea's
+  Focus doc: Focused is true from then on unless nothing in the surface
+  takes focus.
+- **F1, F3:** the pane test waits for its list; `build -wasm` ships
+  xterm-addon-hotty's licence (`hotty-xterm.LICENSE`) with the others.
+- **L1:** a transport that frames messages itself is a `devwire.Framer`,
+  and a Conn on one encodes each message into a pooled buffer and writes
+  it in one Write (gov P-3's exception, said in the comment). serve's
+  page wire and the page's wasm end are Framers, so a WebSocket frame is a
+  whole message: the 64 MiB frame cap is a message cap, and serve's leave
+  goes between two messages.
+- **L2:** Focus picks only what is drawn: not under `hidden`, `inert`, a
+  closed dialog, a closed details past its summary, or a closed popover,
+  as cells lays them out; the last element counts only while drawn.
+- **L3:** a refused a=focus (the element is gone) makes the surface hear
+  a blur and pick again, in surftea and in examples/pane, rather than the
+  host picking where the surface can't see.
+- **L4:** a socket that closes waits up to 1 s for its page's
+  `dev/leave`, which the browser may send after, before it counts as a
+  crash; not when the page's app handed over or said it leaves on the
+  wire (serve reads each frame's envelope), since the reloader waits for
+  those wires to close and a Go save would take a second longer.
+- **The page:** Go's wasm_exec.js leaves an exited app's timers
+  scheduled, and one firing resumes the exited instance, which throws (a
+  handover exits with a `time.After` pending). The page clears them as
+  the app exits, and calls into an app only while it hasn't exited.
+- **L5:** the child answers `doc` off its read loop, so a save's render
+  doesn't wait behind a shot; its params decode nil-safe.
+- **L6:** the page's wasm end pools the frames it copies from JS. serve's
+  end can't: x/net's websocket reads a frame with io.ReadAll, which a
+  Codec can't hand a buffer; its comment says so.
+- **L7:** `new` prints every file it writes.

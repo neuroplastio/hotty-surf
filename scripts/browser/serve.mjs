@@ -46,7 +46,7 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1000, height: 600 } });
   const errors = [];
-  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("pageerror", (e) => errors.push(String(e.stack ?? e)));
   await page.goto(url);
   let f = await surface(page, "Hello, world!", 180000); // the first build
   await f.getByPlaceholder("Your name").click();

@@ -198,8 +198,20 @@ func (p *program) input(ev hottyterm.Event) (quit bool, err error) {
 			p.track(e)
 			return false, p.s.Event(e)
 		}
-		if r, ok := hotty.ReplyOf(ev.Message); ok && !r.OK && r.Surface == name && r.Re == "delta" {
-			return false, p.show() // what the host has is no longer the surface's
+		if r, ok := hotty.ReplyOf(ev.Message); ok && !r.OK && r.Surface == name {
+			switch {
+			case r.Re == "delta":
+				return false, p.show() // what the host has is no longer the surface's
+			case r.Re == "focus" && p.inPane:
+				// The element focus named is gone. The surface took the
+				// move already: it hears that it didn't happen, then picks
+				// again from its tree as it is now.
+				p.inPane = false
+				if err := p.s.Event(hotty.Event{Kind: hotty.EventBlur, Surface: name}); err != nil {
+					return false, err
+				}
+				return false, p.focus()
+			}
 		}
 	case uv.KeyPressEvent:
 		k := hottyterm.KeyName(uv.Key(ev))
@@ -285,15 +297,20 @@ func (p *program) pick(i int) {
 // element, which leaves the Screen active with nothing focused) the
 // surface's Focus picks one and sends its a=focus to the Screen. On a host
 // Focus sends a=focus to the host, which echoes nothing (SPEC §10.1): the
-// surface takes the move as its focus event itself.
+// surface takes the move as its focus event itself. Where nothing in the
+// surface takes focus, the list keeps the keyboard.
 func (p *program) focus() error {
 	if p.scr != nil {
 		p.scr.Focus(true)
 	}
-	if err := p.s.Focus(); err != nil {
+	got, err := p.s.Focus()
+	if err != nil {
 		return err
 	}
-	p.inPane = true
+	if !got && p.scr != nil {
+		p.scr.Focus(false)
+	}
+	p.inPane = got
 	return nil
 }
 

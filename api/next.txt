@@ -14,7 +14,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Do(func())
 pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Event(hotty.Event) error
-pkg neuroplast.io/hotty-surf, method (*Surface) Focus() error
+pkg neuroplast.io/hotty-surf, method (*Surface) Focus() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}

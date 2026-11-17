@@ -83,12 +83,29 @@ let exits = 0; // how many apps exited
 // start runs the app's wasm; the promise ends when the app does.
 async function start(build) {
   running = build;
-  const me = (alive = { ok: true });
   const go = new Go();
+  // Both wasm_exec.js set go.exited the moment the app exits, a microtask
+  // before go.run's promise settles: a frame or a key in between would
+  // call into the exited instance.
+  let ended = false;
+  // Go's wasm_exec.js leaves the timers the app scheduled (a time.After
+  // still waiting) when it exits, and one firing later resumes the exited
+  // instance, which throws. TinyGo's checks; Go's needs them cleared.
+  const exit = go.exit;
+  go.exit = (code) => {
+    go._scheduledTimeouts?.forEach((t) => clearTimeout(t));
+    go._scheduledTimeouts?.clear();
+    exit.call(go, code);
+  };
+  const me = (alive = {
+    get ok() {
+      return !ended && !go.exited;
+    },
+  });
   const url = dev ? `app.wasm?build=${build}` : "app.wasm";
   const { instance } = await WebAssembly.instantiateStreaming(fetch(url), go.importObject);
   await go.run(instance);
-  me.ok = false;
+  ended = true;
   exits++;
   glue.input = glue.resize = glue.quit = undefined;
   if (glue.dev?.socket) {
@@ -141,7 +158,7 @@ if (!dev) {
   // closing, so serve says it on the wire for it.
   addEventListener("pagehide", () => {
     navigator.sendBeacon("dev/leave", key);
-    glue.quit?.();
+    if (alive.ok) glue.quit?.();
   });
 }
 

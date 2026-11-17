@@ -201,7 +201,8 @@ func TestWhitespaceInPreStays(t *testing.T) {
 func TestSurfaceFocusGivesTheKeyboardBack(t *testing.T) {
 	var log []string
 	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
-		fmt.Fprintf(w, `<div%s><button%s>a</button><button%s>b</button><p>text</p></div>`,
+		fmt.Fprintf(w, `<div%s><div hidden><button id="h">h</button></div><dialog><button id="d">d</button></dialog>`+
+			`<button%s>a</button><button%s>b</button><p>text</p></div>`,
 			on("page", surf.Key(func(k string) bool { log = append(log, "page:"+k); return false })),
 			on("a", surf.Click(func() {}), surf.Focus(func(in bool) { log = append(log, fmt.Sprint("a ", in)) })),
 			on("b", surf.Click(func() {}), surf.Focus(func(in bool) { log = append(log, fmt.Sprint("b ", in)) }),
@@ -209,22 +210,28 @@ func TestSurfaceFocusGivesTheKeyboardBack(t *testing.T) {
 	})
 	s := surf.New("t", v, "")
 	r := surftest.Start(t, s)
-
-	// Nothing had the keyboard: the first element that takes it.
-	if err := s.Focus(); err != nil {
-		t.Fatal(err)
+	focus := func(want bool) {
+		t.Helper()
+		got, err := s.Focus()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Fatalf("Focus said focused=%v, want %v", got, want)
+		}
+		r.Update()
 	}
-	r.Update()
+
+	// Nothing had the keyboard: the first element that takes it and is
+	// drawn (not the hidden one, or the closed dialog's).
+	focus(true)
 	if strings.Join(log, ",") != "a true" {
 		t.Fatalf("first focus: %v", log)
 	}
 	r.Click("button:text(b)")
 	r.Click("p:text(text)") // the keyboard leaves the surface
 	log = nil
-	if err := s.Focus(); err != nil {
-		t.Fatal(err)
-	}
-	r.Update()
+	focus(true)
 	if strings.Join(log, ",") != "b true" {
 		t.Fatalf("focus back: %v", log)
 	}
@@ -234,11 +241,44 @@ func TestSurfaceFocusGivesTheKeyboardBack(t *testing.T) {
 		t.Fatalf("a key after Focus: %v", log)
 	}
 	log = nil
-	if err := s.Focus(); err != nil { // it has the keyboard: nothing
-		t.Fatal(err)
-	}
-	r.Update()
+	focus(true) // it has the keyboard: nothing sent, still focused
 	if len(log) != 0 {
 		t.Fatalf("focus while focused: %v", log)
+	}
+}
+
+func TestSurfaceFocusWithNothingToFocus(t *testing.T) {
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprint(w, `<div><p>a preview</p><div hidden><button id="h">h</button></div></div>`)
+	})
+	s := surf.New("t", v, "")
+	if got, err := s.Focus(); got || err != nil {
+		t.Fatalf("before a render: %v %v", got, err)
+	}
+	surftest.Start(t, s)
+	if got, err := s.Focus(); got || err != nil {
+		t.Fatalf("nothing drawn takes focus: %v %v", got, err)
+	}
+}
+
+// A closed details draws its summary only: Focus takes the summary, not
+// the button inside.
+func TestSurfaceFocusSkipsAClosedDetails(t *testing.T) {
+	var log []string
+	hear := func(id string) surf.Handler {
+		return surf.Focus(func(in bool) { log = append(log, fmt.Sprint(id, " ", in)) })
+	}
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div><details><summary%s>more</summary><button%s>in</button></details></div>`,
+			on("sum", hear("sum")), on("in", surf.Click(func() {}), hear("in")))
+	})
+	s := surf.New("t", v, "")
+	r := surftest.Start(t, s)
+	if got, err := s.Focus(); !got || err != nil {
+		t.Fatalf("Focus: %v %v", got, err)
+	}
+	r.Update()
+	if strings.Join(log, ",") != "sum true" {
+		t.Fatalf("focused: %v", log)
 	}
 }

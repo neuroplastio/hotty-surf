@@ -62,24 +62,37 @@ func inPage(ctx context.Context, s *surf.Surface) (bool, error) {
 	return true, nil
 }
 
-// wire is the reload wire over the page's WebSocket.
+// wire is the reload wire over the page's WebSocket: each frame a whole
+// message, both ways (devwire.Framer).
 type wire struct {
 	ws    js.Value
 	funcs []js.Func
 
 	mu     sync.Mutex
-	queue  [][]byte
+	queue  []*[]byte // frames come in, each a pooled buffer
 	closed bool
 	wake   chan struct{}
-	part   []byte // what Read has not handed out of the message it took
+	took   *[]byte // the frame Read is handing out, back to the pool once read
+	part   []byte  // what Read has not handed out of it
 }
+
+// frames are the buffers a frame is copied into from JS. One that held a
+// state or a snapshot is let go rather than kept.
+var frames = sync.Pool{New: func() any { b := make([]byte, 0, 4<<10); return &b }}
+
+const keepFrame = 1 << 20
 
 // openWire opens the wire, and waits for it to be open.
 func openWire(d js.Value) (*wire, error) {
 	w := &wire{wake: make(chan struct{}, 1)}
 	onData := js.FuncOf(func(_ js.Value, a []js.Value) any {
-		p := make([]byte, a[0].Get("length").Int())
-		js.CopyBytesToGo(p, a[0])
+		n := a[0].Get("length").Int()
+		p := frames.Get().(*[]byte)
+		if cap(*p) < n {
+			*p = make([]byte, n)
+		}
+		*p = (*p)[:n]
+		js.CopyBytesToGo(*p, a[0])
 		w.mu.Lock()
 		w.queue = append(w.queue, p)
 		w.mu.Unlock()
@@ -123,14 +136,22 @@ func (w *wire) ping() {
 	}
 }
 
-// Read hands out the bytes of the messages that came, in order.
+// Read hands out the bytes of the frames that came, in order.
 func (w *wire) Read(p []byte) (int, error) {
 	for len(w.part) == 0 {
+		if w.took != nil {
+			if cap(*w.took) <= keepFrame {
+				*w.took = (*w.took)[:0]
+				frames.Put(w.took)
+			}
+			w.took = nil
+		}
 		w.mu.Lock()
 		if len(w.queue) > 0 {
-			w.part, w.queue = w.queue[0], w.queue[1:]
+			w.took, w.queue = w.queue[0], w.queue[1:]
+			w.part = *w.took
 			w.mu.Unlock()
-			break
+			continue
 		}
 		closed := w.closed
 		w.mu.Unlock()
@@ -144,8 +165,8 @@ func (w *wire) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-// Write sends p as one message: the wire's writer flushes once a message
-// (devwire), so each is one msgpack-RPC message.
+// Write sends p as one frame: the Conn on a Framer writes a whole message
+// in one Write.
 func (w *wire) Write(p []byte) (int, error) {
 	w.mu.Lock()
 	closed := w.closed
@@ -158,6 +179,9 @@ func (w *wire) Write(p []byte) (int, error) {
 	w.ws.Call("send", u)
 	return len(p), nil
 }
+
+// Frames says each Write is a frame of its own (devwire.Framer).
+func (w *wire) Frames() {}
 
 // Close closes the WebSocket.
 func (w *wire) Close() error {

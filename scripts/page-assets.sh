@@ -43,6 +43,7 @@ cp "$tmp/xterm/package/LICENSE" "$out/xterm.LICENSE"
 cp "$tmp/addon-fit/package/lib/addon-fit.mjs" "$out/"
 cp "$tmp/addon-fit/package/LICENSE" "$out/addon-fit.LICENSE"
 cp "$tmp/xterm-addon-hotty/package/dist/hotty-xterm.js" "$out/"
+cp "$tmp/xterm-addon-hotty/package/LICENSE" "$out/hotty-xterm.LICENSE"
 # Source maps point at files that aren't shipped.
 sed -i '/^\/\/# sourceMappingURL=/d' "$out/xterm.mjs" "$out/addon-fit.mjs" "$out/hotty-xterm.js"
 {

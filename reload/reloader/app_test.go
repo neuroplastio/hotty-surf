@@ -145,7 +145,7 @@ func TestTextRightAfterRender(t *testing.T) {
 }
 
 // TestDocument: Document asks the process of a key for its surface's
-// document as the host has it now, after the deltas; an unknown key fails.
+// document as the surface last sent it, after the deltas; an unknown key fails.
 func TestDocument(t *testing.T) {
 	h, stop := begin(t)
 	defer stop()

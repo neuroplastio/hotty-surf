@@ -82,9 +82,7 @@ func TestOnAHost(t *testing.T) {
 	if got := text(h, name, "name"); got != "notes.md" {
 		t.Fatalf("name %q", got)
 	}
-	if !strings.Contains(h.Screen(), "> notes.md") {
-		t.Fatalf("the list isn't drawn:\n%s", h.Screen())
-	}
+	eventually(t, "the list drawn", func() bool { return strings.Contains(h.Screen(), "> notes.md") })
 
 	h.Key("arrow_down")
 	eventually(t, "the surface shows budget.csv", func() bool { return text(h, name, "name") == "budget.csv" })

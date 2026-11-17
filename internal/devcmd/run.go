@@ -561,7 +561,7 @@ func (h *host) stop() {
 	}
 }
 
-// shot is the app's document as the host has it, for ctl shot, at the
+// shot is the app's document as its surface last sent it, for ctl shot, at the
 // terminal's size.
 func (h *host) shot(ctx context.Context) (devwire.Doc, error) {
 	if !h.running() {
