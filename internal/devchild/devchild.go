@@ -377,9 +377,20 @@ func (c *child) each(fn func(s *surf.Surface) bool) (answered, held int) {
 	return answered, held
 }
 
+// reread makes templ read its strings again at once: mods/templ's, set
+// in a build that carries it (templmod.go). Without it, render waits out
+// templ's recheck.
+var reread func()
+
 // render renders every surface again, for strings templ's dev mode reads
-// anew: once templ will have checked the strings file again.
+// anew: at once when templ can be told to (reread), and otherwise once
+// templ will have checked the strings file again.
 func (c *child) render() {
+	if reread != nil {
+		reread()
+		c.each(func(*surf.Surface) bool { return true })
+		return
+	}
 	var last time.Time
 	for _, s := range c.live() {
 		if t := rt.Peek.Rendered(s); t.After(last) {

@@ -91,6 +91,7 @@ type harness struct {
 	t       *testing.T
 	ctx     context.Context
 	dir     string
+	bin     string // where the builds go
 	r       *Reloader
 	reports chan Report
 	// keys are the instances each restart starts, one process each, as
@@ -276,7 +277,12 @@ func (h *harness) click(p *appProc, id string) {
 // this one.
 func copyApp(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
+	return copyAppTo(t, t.TempDir())
+}
+
+// copyAppTo is copyApp into dir.
+func copyAppTo(t *testing.T, dir string) string {
+	t.Helper()
 	root, err := filepath.Abs("../..")
 	if err != nil {
 		t.Fatal(err)
@@ -323,15 +329,28 @@ func copyApp(t *testing.T) string {
 // it.
 func begin(t *testing.T, keys ...string) (h *harness, stop func()) {
 	t.Helper()
+	needGo(t)
+	return beginIn(t, copyApp(t), keys...)
+}
+
+// needGo skips a test that builds an app where it can't.
+func needGo(t *testing.T) {
+	t.Helper()
 	if testing.Short() {
 		t.Skip("builds an app")
 	}
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skip("no go command")
 	}
+}
+
+// beginIn is begin on the app in dir.
+func beginIn(t *testing.T, dir string, keys ...string) (h *harness, stop func()) {
+	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
-	h = &harness{t: t, ctx: ctx, dir: copyApp(t), reports: make(chan Report, 64), keys: keys}
-	opts := []Option{Output(filepath.Join(t.TempDir(), "app"))}
+	h = &harness{t: t, ctx: ctx, dir: dir, reports: make(chan Report, 64), keys: keys,
+		bin: filepath.Join(t.TempDir(), "app")}
+	opts := []Option{Output(h.bin)}
 	if env := os.Getenv("RELOADER_TEST_ENV"); env != "" {
 		// RELOADER_TEST_ENV=GOFLAGS=-race builds the app with the race
 		// detector, which checks the child's side.

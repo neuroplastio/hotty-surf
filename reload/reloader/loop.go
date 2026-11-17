@@ -22,6 +22,7 @@ import (
 
 	"neuroplast.io/hotty-surf/internal/devwire"
 	"neuroplast.io/hotty-surf/internal/templgen"
+	"neuroplast.io/hotty-surf/internal/templmod"
 	"neuroplast.io/hotty-surf/lint"
 )
 
@@ -97,6 +98,12 @@ type loop struct {
 	cssLater        bool // the stylesheet changed during a build
 
 	findings []lint.Finding
+	// notices are the reloader's own lines in every report's Lint: mods/
+	// templ not carried.
+	notices []lint.Finding
+	// buildEnv is the build's environment: env, and GOWORK naming the
+	// go.work that carries mods/templ when it is carried.
+	buildEnv []string
 	last     Report
 	broken   string // the output of the last build, while it failed
 	waiters  []chan Report
@@ -155,6 +162,18 @@ func (r *Reloader) run(ctx context.Context) error {
 		return err
 	}
 	defer os.RemoveAll(l.state)
+	// mods/templ, in the dev build's own go.work: a text save renders at
+	// once. Without it (a vendoring app, another templ), the processes
+	// wait out templ's recheck, and each report says why.
+	l.buildEnv = l.env
+	if gw, err := templmod.Workspace(ctx, dir, l.env, filepath.Join(l.state, "templmod")); err != nil {
+		file, _ := filepath.Rel(dir, l.modFile)
+		l.notices = append(l.notices, lint.Finding{File: file, Line: 1, Col: 1, Rule: "templ-mod",
+			Text: "a text save waits out templ's 100 ms recheck: " + err.Error()})
+	} else {
+		l.buildEnv = append(slices.Clip(l.env), "GOWORK="+gw)
+		l.tags += "," + templmod.Tag
+	}
 	templRoot := filepath.Join(l.state, "templ")
 	if err := os.MkdirAll(templRoot, 0o755); err != nil {
 		return err
@@ -830,7 +849,7 @@ func (l *loop) emit(rep Report) {
 	if len(rep.Failed) == 0 {
 		rep.Failed = nil
 	}
-	rep.Lint = l.findings
+	rep.Lint = append(slices.Clone(l.notices), l.findings...)
 	l.last = rep
 	if l.r.report != nil {
 		l.r.report(rep)
@@ -882,7 +901,7 @@ func (l *loop) startBuild() {
 		// A dev build stamps no version control: it would run git status
 		// on every save, and fails where git does (a directory git refuses).
 		cmd := exec.CommandContext(l.ctx, "go", "build", "-buildvcs=false", "-tags", l.tags, "-o", tmp, ".")
-		cmd.Dir, cmd.Env = l.dir, l.env
+		cmd.Dir, cmd.Env = l.dir, l.buildEnv
 		out, err := cmd.CombinedOutput()
 		if err == nil {
 			err = os.Rename(tmp, l.bin)

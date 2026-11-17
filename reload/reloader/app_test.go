@@ -1,6 +1,9 @@
 package reloader
 
 import (
+	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -88,5 +91,54 @@ func failAt(n int) templ.Component {
 		}
 	case <-time.After(3 * time.Second):
 		t.Errorf("no report: the app's failure isn't heard; its stderr: %q", p2.errors())
+	}
+}
+
+// TestTextRightAfterRender: a text save that lands right after a render
+// reaches the process as fast as one after a pause. The dev build carries
+// mods/templ, so the process has templ read the strings at once rather
+// than wait out its 100 ms recheck from the render.
+func TestTextRightAfterRender(t *testing.T) {
+	h, stop := begin(t)
+	defer stop()
+	p1 := h.proc(1)
+	h.shown(p1)
+	h.out(p1, "a=doc")
+	const n = 7
+	var after, idle []time.Duration
+	word := "Hello"
+	save := func(i int) Report {
+		next := fmt.Sprintf("Hello%d", i)
+		h.edit("page.templ", "<p>"+word+"</p>", "<p>"+next+"</p>")
+		word = next
+		rep := h.reload()
+		if rep.Tier != tierText || len(rep.Failed) > 0 || rep.Build != "" {
+			t.Fatalf("save %d: %+v", i, rep)
+		}
+		for _, f := range rep.Lint {
+			if f.Rule == "templ-mod" {
+				t.Fatalf("the build doesn't carry mods/templ: %s", f.Text)
+			}
+		}
+		h.out(p1, next)
+		return rep
+	}
+	for i := range n {
+		// Right after a render: the click's frame is out.
+		h.click(p1, "add")
+		h.out(p1, "Count "+strconv.Itoa(i+1))
+		after = append(after, save(2*i).Took)
+		// After a pause longer than templ's recheck.
+		time.Sleep(150 * time.Millisecond)
+		idle = append(idle, save(2*i+1).Took)
+	}
+	slices.Sort(after)
+	slices.Sort(idle)
+	t.Logf("text save to shown, %d each: right after a render p50 %v p95 %v; after a pause p50 %v p95 %v",
+		n, after[n/2], after[n-1], idle[n/2], idle[n-1])
+	// The wait would be about 100 ms, less the few ms from the render to
+	// the save's render.
+	if d := after[n/2] - idle[n/2]; d > 50*time.Millisecond {
+		t.Errorf("a save right after a render takes %v longer than one after a pause", d)
 	}
 }
