@@ -38,6 +38,9 @@ const (
 	// both dim, and Cells as their roles (colour.go).
 	lMuted
 	lRule
+	// lFaint is text-muted-foreground's Dim in Lines, kept under a colour
+	// of its own, which clears lMuted (Lines as before Cells).
+	lFaint
 )
 
 // box is what the layout reads of an element.
@@ -216,7 +219,7 @@ func (b *box) class(c string) {
 	case "font-normal", "font-light":
 		b.look &^= lBold
 	case "text-muted-foreground":
-		b.look |= lMuted
+		b.look |= lMuted | lFaint
 	case "opacity-50", "opacity-60", "opacity-70":
 		b.look |= lDim
 	case "line-through":

@@ -68,3 +68,20 @@ shape (roles per cell, program paints) is v0.6.3's.
 4. **A `Paint(func(Role) (RGB, bool)) []string`** convenience for run and
    surftea. **Lean: not now** (one way per thing; nobody asks for it yet;
    run's cells stay in the terminal's colours via Lines).
+
+### Size (K13-like)
+
+A stripped native `examples/hello` (`go build -trimpath -ldflags='-s -w'`,
+which links cells through run) grows from 6,881,545 to 6,897,929 bytes:
+**+16,384 raw**, +5,547 with `gzip -9` (the verifier measured +7,406
+with gzip's default). The wasm build doesn't link cells (`GOOS=js
+GOARCH=wasm go list -deps` has no `cells`), so web builds don't change.
+
+### Lines stays as it was
+
+`Lines` is byte-identical to v07 `69dcd99`'s, over every story and a
+probe document the stories don't reach (coloured and struck text inside
+muted text, a rule, a placeholder, an opacity), both generated with the
+base's code (`TestLinesGolden`). Lines has its own view of a look
+(`lineLook`): muted text, a rule and text-muted-foreground stay Dim
+under a colour of its own, and Strike isn't drawn.
