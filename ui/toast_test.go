@@ -237,8 +237,8 @@ func TestToastCountdown(t *testing.T) {
 	r.Click("#show") // the same deadline: the same run
 	bar("1", "toast-bar", "--toast-bar-life:10000ms;--toast-bar-steps:100;--toast-bar-cut:0.0000;")
 	now = t0.Add(4 * time.Second)
-	toast.Focused = true
-	r.Click("#show") // 60% left: still there
+	toast.Focused, toast.Countdown = true, time.Time{}
+	r.Click("#show") // 60% left: still there, though focus came with no deadline (plx's)
 	bar("2", "toast-bar still", "--toast-bar-cut:0.2000;")
 	now = t0.Add(9 * time.Second)
 	toast.Countdown = t0.Add(20 * time.Second)

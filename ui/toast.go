@@ -50,11 +50,12 @@ type Toast struct {
 	// too: Tab reaches it, and Enter or Space on it clicks it.
 	OnClick func()
 	// Focused draws the toast as the one the app's keyboard is on: its
-	// first button ringed, its bar still, its timer paused. A toast never
-	// takes the host's keyboard; the app moves Focused with its own keys
-	// and runs the button's OnSelect itself. Running the button's OnSelect
-	// from the app's key doesn't close the toast as a click does; Remove
-	// does.
+	// first button ringed, its bar still, its timer paused. The host's
+	// keyboard reaches a toast only as it reaches any element (a click on
+	// a button or on a clickable body, or Tab); Focused is the app's own,
+	// which it moves with its own keys, running the button's OnSelect
+	// itself. Running the button's OnSelect from the app's key doesn't
+	// close the toast as a click does; Remove does.
 	Focused bool
 	// Countdown draws a bar along the toast's top edge that runs down to
 	// nothing at this time; zero draws none. It runs from full when it
@@ -182,9 +183,10 @@ func (st *ToasterState) update(old *shownToast, t Toast) {
 	}
 	switch {
 	case t.Focused && !old.Focused:
-		// The bar stands where it is.
+		// The bar stands where it is, whatever Countdown says.
 		old.barFrom = old.barNow()
 		old.bar++
+		t.Countdown = old.Countdown
 	case t.Focused:
 		// Still, whatever Countdown says.
 		t.Countdown = old.Countdown
