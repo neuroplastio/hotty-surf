@@ -57,7 +57,10 @@ type Screen struct {
 	drag     *dragging
 	hoverID  string
 	hoverOut bool
-	clicks   clickRun
+	// tip is the element with a tooltip (data-tooltip) the pointer is
+	// over, whose tooltip the layout draws beside it (drawTip).
+	tip    *html.Node
+	clicks clickRun
 
 	// active is whether the Screen has the program's keyboard (Focus);
 	// focused is the element that has the keyboard, and remembered the

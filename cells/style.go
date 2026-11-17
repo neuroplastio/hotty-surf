@@ -41,6 +41,9 @@ const (
 	// lFaint is text-muted-foreground's Dim in Lines, kept under a colour
 	// of its own, which clears lMuted (Lines as before Cells).
 	lFaint
+	// lTip is a tooltip's text (drawTip): Lines draws it reversed, and
+	// Cells in the kit's tooltip colours.
+	lTip
 )
 
 // box is what the layout reads of an element.

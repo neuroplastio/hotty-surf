@@ -93,6 +93,8 @@ func (c *Screen) Cells() [][]Cell {
 			}
 			fg, bg := rolesAt(k.own, memo)
 			switch {
+			case k.look&lTip != 0:
+				fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
 			case k.look&lRule != 0:
 				fg = "border"
 			case k.look&lMuted != 0:

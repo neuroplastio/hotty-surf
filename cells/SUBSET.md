@@ -148,6 +148,7 @@ What ui's stylesheet lays out, the Screen knows (`kit.go`):
 | `.avatar-group` | a row, a cell apart |
 | a Command's menu, a Combobox's list | an item its filter hid (`aria-hidden=true`) and a group with none left aren't drawn; with none left, its `data-empty` (or "No results found") is |
 | `.popover` | an open popover (`[data-popover]`, a select's, a combobox's or a dropdown menu's too) below its trigger is drawn over what follows, as wide as its content, and takes no rows; before its trigger, in the flow, with `data-side` `top` or `inline-start`, and beside it (a row) with `inline-start` or `inline-end`. `data-align` is not read |
+| `[data-tooltip]` (ui.Tooltip) | with the pointer over the element (`Move`, no button down; whether or not the surface hears hovers, as `:hover`), its text on one row beside it, a cell in from each end: above, or `data-side` `bottom`, `left`/`inline-start`, `right`/`inline-end`, on the other side where the screen has no room; over everything, inside the screen, cut with `…`. Reversed in Lines; `primary-foreground` on `primary` in Cells. Not on focus; `data-align` and `data-arrow` are not read |
 
 ## The pointer
 
