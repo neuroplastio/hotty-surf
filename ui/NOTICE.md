@@ -21,3 +21,6 @@ code.View uses the embedded XML lexers in internal/highlight/lexers. The
 CSS, HTML, JavaScript and templ lexers are from Chroma (MIT; their license
 is in that directory's COPYING). The Go lexer is from hotty-a2ui
 (Apache-2.0, neuroplastio).
+
+shapes_gen.go contains Material Symbols paths (Copyright Google, Apache
+License 2.0), from @iconify-json/material-symbols 1.2.93.

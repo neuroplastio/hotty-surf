@@ -106,9 +106,9 @@ func (cv *canvas) line(y int, cols int) string {
 		if c.s == "" {
 			continue // the second cell of a wide character
 		}
-		if c.look != cur {
-			b.WriteString(sgr(c.look))
-			cur = c.look
+		if lk := lineLook(c.look); lk != cur {
+			b.WriteString(sgr(lk))
+			cur = lk
 		}
 		b.WriteString(c.s)
 	}
@@ -116,6 +116,17 @@ func (cv *canvas) line(y int, cols int) string {
 		b.WriteString("\x1b[0m")
 	}
 	return b.String()
+}
+
+// lineLook is a look as Lines draws it: muted text, a rule and
+// text-muted-foreground's faint are Dim, and Strike isn't drawn.
+func lineLook(l look) look {
+	dim := l&(lDim|lMuted|lRule|lFaint) != 0
+	l &= lBold | lItalic | lUnderline | lReverse
+	if dim {
+		l |= lDim
+	}
+	return l
 }
 
 // sgr is the sequence that sets a look, from the default.
