@@ -39,8 +39,26 @@ does for a few of its components. This is the subset (v0.7, L1 and L3).
   with a bounded `max-height` or `height` in px, rem or viewport-height
   units. `max-h-[40vh]` is read as well. The box clips and scrolls its
   content independently; wheel and reveal walk out through its ancestors.
-- Not done: margins, widths and heights beyond those above and `w-full`,
-  alignment of text, `position`, horizontal overflow.
+- **Widths**: `w-*` (Tailwind's steps), `w-[…]` and the inline `width`
+  in px, rem, em or ch make an element that wide, as far as its
+  container has room; `max-w-*` (the steps, `xs`…`7xl`, `[…]`) and the
+  inline `max-width` the widest it gets.
+- **Heights**: a flex column with a height (`h-screen`, `h-dvh`; `h-full`,
+  its parent's, the document's root the window's; `h-[…]`, the inline
+  `height`) is that high, and gives its growing items (`flex-1`, `grow`)
+  the rows its other items and gaps leave: a list that fills the screen
+  above a pinned footer. A growing item that scrolls (`overflow-y-auto`)
+  scrolls in those rows; one that doesn't is as high as its content
+  when that is more.
+- **Truncate**: `truncate` keeps its content on one line and ends it in
+  `…` where it runs out of room. In a flex row, `shrink-0` (`flex-none`)
+  keeps an item as wide as its content when there is too little room.
+- **Margins**: `mt-*`, `mb-*`, `my-*` and the inline `margin-top`,
+  `margin-bottom`, in rows as padding is. Margins don't collapse.
+- **Rules**: `hr` and an empty `role=separator` are a row of `─`; a
+  vertical one (`aria-orientation` or `data-orientation`) a `│`.
+- Not done: other margins, alignment of text, `position`, horizontal
+  overflow.
 
 ## Looks (SGR)
 
@@ -99,7 +117,8 @@ The Screen never resolves a colour value.
 | `kbd`, `.kbd` | | `muted` |
 | `[role=progressbar]` | `primary` | |
 | a `.tabs` tab list (not `line`) | | `muted` |
-| the selected band: a selected tab, `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `accent` |
+| the selected band: `.nav-item[aria-current=true]`, a `row`, `option`, `treeitem` or `gridcell` with `aria-selected=true` (not a select's or a combobox's option) | `accent-foreground` | `selected`: no variable; the kit's `accent` (`sidebar-accent` for the nav item), named apart for a program's own selection; with the keyboard, also Reverse |
+| a selected tab: of a tab list, of the line variant | `foreground` | `background` (`input/30` under `.dark`); none |
 
 ## Controls
 
@@ -128,7 +147,7 @@ What ui's stylesheet lays out, the Screen knows (`kit.go`):
 | `.chart-legend` | a row; its swatch (`.chart-legend-indicator`) is `■` |
 | `.avatar-group` | a row, a cell apart |
 | a Command's menu, a Combobox's list | an item its filter hid (`aria-hidden=true`) and a group with none left aren't drawn; with none left, its `data-empty` (or "No results found") is |
-| `.popover` | its popover after its trigger; before it with `data-side` `top` or `inline-start`, and beside it (a row) with `inline-start` or `inline-end`. `data-align` is not read |
+| `.popover` | an open popover (`[data-popover]`, a select's, a combobox's or a dropdown menu's too) below its trigger is drawn over what follows, as wide as its content, and takes no rows; before its trigger, in the flow, with `data-side` `top` or `inline-start`, and beside it (a row) with `inline-start` or `inline-end`. `data-align` is not read |
 
 ## The pointer
 

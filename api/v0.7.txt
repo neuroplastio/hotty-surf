@@ -217,7 +217,7 @@ pkg neuroplast.io/hotty-surf/ui, func Symbols() []NamedShape
 pkg neuroplast.io/hotty-surf/ui, func Table(TableProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Textarea(TextareaProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState) templ.Component
+pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState, ToasterProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, func Tooltip(TooltipProps) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*CommandState) Search(string)
 pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
@@ -230,6 +230,7 @@ pkg neuroplast.io/hotty-surf/ui, method (*NavList) Keys(string) bool
 pkg neuroplast.io/hotty-surf/ui, method (*NavList) List(string) templ.Component
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
 pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Open()
+pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Remove(string)
 pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Show(Toast)
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct
 pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Class string
@@ -586,15 +587,23 @@ pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Invalid bool
 pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Placeholder string
 pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Value string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Action *ToastAction
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Cancel *ToastAction
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Actions []ToastAction
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Category string
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Countdown time.Time
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, Focused bool
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, ID string
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, OnClick func()
+pkg neuroplast.io/hotty-surf/ui, type Toast struct, OnClose func()
 pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
 pkg neuroplast.io/hotty-surf/ui, type ToastAction struct
 pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Label string
 pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, OnSelect func()
+pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Variant Variant
+pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct
+pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct, Class string
+pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct, OnLeave func()
 pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct
 pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Align string
