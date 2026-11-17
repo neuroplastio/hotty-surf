@@ -68,6 +68,8 @@ v0.6's board follows below as the record; main keeps v0.6.3.
   popup by keyboard leaves another open. L2's translated scripts.
 - A toast's pause on hover is written but untested: surftest has no
   hover.
+- A Select at the right edge opens its list past the window's edge
+  (hello, in hottyterm): Basecoat's popover alignment, L2.
 
 ## v0.1.0, the first public tag
 

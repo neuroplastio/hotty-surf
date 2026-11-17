@@ -1,10 +1,15 @@
 package main
 
-import _ "embed"
+import (
+	_ "embed"
 
-// CSS is the app's stylesheet: the kit's and the app's classes, in
-// style/app.css. Until `hotty-surf build` writes it (a later leg), it is
-// edited by hand, and `hotty-surf run` takes an edit as a css reload.
-//
+	"neuroplast.io/hotty-surf/ui"
+)
+
 //go:embed style/app.css
-var CSS string
+var appCSS string
+
+// CSS is the kit's stylesheet, then the app's own, style/app.css. Until
+// `hotty-surf build` writes that (a later leg), it is edited by hand, and
+// `hotty-surf run` takes an edit as a css reload.
+var CSS = ui.Stylesheet() + "\n" + appCSS
