@@ -92,18 +92,18 @@ func (v *tabsView) choose(i int) {
 func (v *tabsView) handlers(i int) []surf.Handler {
 	hs := []surf.Handler{surf.Click(func() { v.choose(i) })}
 	if i == v.sel {
-		hs = append(hs, surf.Key(v.key(i)))
+		hs = append(hs, surf.Key(v.key(i), v.keys(i)...))
 	}
 	return hs
 }
 
-// keys are what tab i's Key handler takes, declared on it (K32): only the
-// selected tab hears them.
-func (v *tabsView) keys(i int) string {
+// keys are what tab i's Key handler takes, declared with it (K32): only
+// the selected tab hears them.
+func (v *tabsView) keys(i int) []string {
 	if i == v.sel {
-		return "arrow_left=program arrow_right=program home=program end=program"
+		return []string{"arrow_left", "arrow_right", "home", "end"}
 	}
-	return ""
+	return nil
 }
 
 // key is handleKeydown on the tablist (horizontal): the keys move from the

@@ -77,9 +77,9 @@ The same surface handlers run when a host or cells sends the event or
 passes a key to the application. Cells also implements native control
 editing, activation and navigation. Text fields resolve their keymap with
 `hotty.Resolve`; a host and cells must agree on the platform and on the
-ordered keymap. An application can opt into readline-style editing with
-`hotty.TerminalKeys`; application bindings must win for the keys they
-reserve.
+ordered keymap. Readline-style editing (`hotty.TerminalKeys`) has no Go
+declaration yet: it went with the authored `data-keys` (see Declared
+keys).
 
 ## B1 and B2 audit
 
@@ -105,15 +105,59 @@ been fixed:
   framework's markup follows the approved link shape; this is reported for
   the test host rather than worked around here. The vectors also pass with
   the local hottytest fix; they remain marked until its release.
-- Attrs on native wrappers can carry a `surf.Key` handler and keymap
-  attributes, but that handler only receives keys made available to the
-  program. There is not yet one uniform application override for native
-  and behavior components. For non-text controls cells parses the keymap
-  separately, and its Tab path must match the host's: the host owns Tab
-  outside a text field, while `tab=program` can reserve it in a text field.
+- Attrs on native wrappers can carry a `surf.Key` handler, which hears
+  the keys it declares and those the control doesn't use. There is not
+  yet one uniform application override for native and behavior
+  components. For non-text controls cells parses the keymap separately,
+  and its Tab path must match the host's: the host owns Tab outside a
+  text field, while a text field's own handler can declare `tab`.
 - The remaining B1/B2 components are containers or display wrappers with
   no component-owned keyboard default. Their interactive children retain
   their own behavior. Chart and Progress have no keyboard navigation.
+
+## Declared keys
+
+A key is declared in Go, by the code that takes it: no template carries
+a key bind (the maintainer, 2026-11-18). `surf.Key(fn, keys...)` names
+the keys fn takes ahead of the element:
+
+```templ
+<ul { surf.On(ctx, "rows", surf.Key(a.rowKey, "arrow_up", "arrow_down"))... }>
+```
+
+- While the keyboard is on the element or inside it, the host gives each
+  declared key to the program, so fn hears it before the element uses it
+  (a button's Space, a field's arrows, the surface's scroll). Without
+  keys, fn hears only what reaches the program anyway.
+- The surface writes SPEC §10.2's `data-keys` from the declarations,
+  after each render, sorted: `key=program` for each. A `data-keys` a
+  template or an Attrs map writes is a fault and is dropped, and the
+  lint rule `data-keys` finds it in an app's sources. The kit's private
+  markers under a KeyScope stay in the surface and don't reach the wire.
+- A declared key fn declines goes to the enclosing handlers, then to the
+  element's own use, which the surface does as the host would have: a
+  button's activation, a field's edit, a check box's toggle, a select's
+  pick. That is what `key=default` did in markup. A use the surface can't
+  do (the host's scrolling, a date field's) is lost, and a declined `tab`
+  on a field doesn't move focus.
+- A declared printable key is never taken from an element inside that
+  types: the surface writes `key=default` on it (K27).
+- `escape` reaches the program anyway and isn't written; it is declared
+  for OwnKeys. `tab` is a text field's own to declare (a completion), a
+  fault elsewhere.
+- A kit control declares its keys on the element that takes focus (K32).
+  Where its handler sits on the root (Command, Combobox), the same
+  handler is registered with the keys on the field too; a key the field's
+  declines, the root's hears again and declines too.
+
+`surf.Key` is for a control's own keyboard: a list's arrows, a grid, a
+field's completion. Shortcuts that a menu or a palette lists are
+`ui.KeyScope`'s, below.
+
+`data-keys` carried more than `program` once: `prefix`, the scroll
+actions (`j=scroll-down`) and a field's edit actions (readline's
+`hotty.TerminalKeys`). Those have no Go declaration yet; a later pack
+adds them if the maintainer wants them.
 
 ## Scoped overrides
 
@@ -155,7 +199,7 @@ handlers of the focused element and its ancestors, then the program.
   with or without Shift: no scope takes one from it, so a scope may bind a
   bare letter and fields still type it.
 - On a plain element, a scope hears only the keys the element doesn't use
-  itself, as `surf.Key` does. A scope's `enter` doesn't take Enter from a
+  itself, as a `surf.Key` that declares no keys does. A scope's `enter` doesn't take Enter from a
   plain button, and its `j` doesn't take a letter from a plain field.
 - Static HTML with no `surf.On` on it or above it inside the scope isn't
   reached.
@@ -183,9 +227,11 @@ taken), and an untaken key goes back to the program's keymap.
 
 The three don't overlap: characters are Chars', the focused element's
 other keys OwnKeys', and the scopes' bindings Bindings'. Tab and
-Shift+Tab are the host's, in none of them. OwnKeys reads the focused
-element alone, so a kit control declares its keys on the element that
-takes focus (K32).
+Shift+Tab are the host's, in none of them. OwnKeys reads the
+declarations of the focused element and of every element around it,
+each key with its shift variant (the host gives that too), so a key an
+app declares on its `<main>` reaches its handler through a multiplexer.
+A declared character is OwnKeys' too, except on an element that types.
 
 ## Menus and palettes
 

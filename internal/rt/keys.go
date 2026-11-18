@@ -2,6 +2,7 @@ package rt
 
 import (
 	"context"
+	"slices"
 
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
@@ -36,7 +37,13 @@ type Binding struct {
 // KeyEnvironment exposes only the frame and field state a scoped native
 // fallback needs. The fallback itself is linked by a KeyScope instance.
 type KeyEnvironment struct {
-	Node                          *html.Node
+	Node *html.Node
+	// Kind is the focused kit control's, as ui marked it ("button",
+	// "text", …), or the native element's kind for a declared key.
+	Kind string
+	// Declined says every Key handler that declared the key declined it:
+	// the field's keymap is its default, the declarations left out.
+	Declined                      bool
 	Focused                       string
 	On                            map[string]*Handlers
 	Platform                      hotty.Platform
@@ -79,4 +86,22 @@ func WithKeyScope(ctx context.Context, scope *KeyScope) context.Context {
 func KeyScopeFrom(ctx context.Context) *KeyScope {
 	s, _ := ctx.Value(keyScopeContext{}).(*KeyScope)
 	return s
+}
+
+// Forwarded are the keys the scopes from s outward give the program on a
+// kit control of kind (ui's kinds: "text" and "compound-text" type), so
+// that their bindings hear them: every enabled key they bind, sorted,
+// but a printable one on a control that types, which keeps it (K27).
+func Forwarded(s *KeyScope, kind string) []string {
+	text := kind == "text" || kind == "compound-text"
+	var out []string
+	for ; s != nil; s = s.Parent {
+		for k := range s.Keys {
+			if (!text || !Printable(k)) && !slices.Contains(out, k) {
+				out = append(out, k)
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
 }

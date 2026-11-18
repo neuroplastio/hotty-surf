@@ -49,8 +49,8 @@ type ComboboxProps struct {
 	// aria-labelledby. The component owns id, class, type, value,
 	// placeholder, disabled, role, autocomplete, autocorrect, spellcheck,
 	// aria-autocomplete, aria-expanded, aria-controls,
-	// aria-activedescendant, data-on, data-keys and its handlers;
-	// repeating them is a fault.
+	// aria-activedescendant, data-on and its handlers; repeating them is
+	// a fault (data-keys is the runtime's on every element).
 	InputAttrs templ.Attributes
 	// Class adds classes to the root.
 	Class string
@@ -136,7 +136,7 @@ func newComboboxView(st *ComboboxState, p ComboboxProps) *comboboxView {
 }
 
 func (v *comboboxView) inputAttrs(ctx context.Context) templ.Attributes {
-	owned := []string{"id", "class", "type", "value", "placeholder", "disabled", "role", "autocomplete", "autocorrect", "spellcheck", "aria-autocomplete", "aria-expanded", "aria-controls", "aria-activedescendant", "data-on", "data-keys"}
+	owned := []string{"id", "class", "type", "value", "placeholder", "disabled", "role", "autocomplete", "autocorrect", "spellcheck", "aria-autocomplete", "aria-expanded", "aria-controls", "aria-activedescendant", "data-on"}
 	checkAttrs(ctx, "Combobox", v.p.InputAttrs, owned...)
 	a := make(templ.Attributes, len(v.p.InputAttrs)+4)
 	for k, value := range v.p.InputAttrs {
@@ -153,7 +153,7 @@ func (v *comboboxView) inputAttrs(ctx context.Context) templ.Attributes {
 			a[k] = value
 		}
 	}
-	for k, value := range scopeCommandAttrs(ctx, surf.On(ctx, v.id+"-input", surf.Input(v.input), surf.Focus(v.focus), surf.Click(v.open)), v.fieldKeys()) {
+	for k, value := range scopeCompoundAttrs(ctx, kitOn(ctx, v.id+"-input", surf.Input(v.input), surf.Focus(v.focus), surf.Click(v.open), surf.Key(v.key, v.fieldKeys()...))) {
 		a[k] = value
 	}
 	return a
@@ -362,13 +362,19 @@ func (v *comboboxView) key(k string) bool {
 	v.st.moved = true
 	return true
 }
-func (v *comboboxView) fieldKeys() string {
-	keys := "enter=program"
+
+// fieldKeys are the keys the field gives key (K32): Enter always, the
+// arrows, Home and End while a match is shown, and Backspace while it
+// removes the last chip. The root keeps key for the keys that reach it
+// from its buttons, and hears again one the field's declined, which it
+// declines too.
+func (v *comboboxView) fieldKeys() []string {
+	keys := []string{"enter"}
 	if len(v.visible) > 0 {
-		keys += " arrow_down=program arrow_up=program home=program end=program"
+		keys = append(keys, "arrow_down", "arrow_up", "home", "end")
 	}
 	if v.p.Multiple && v.st.text == "" && len(v.p.Values) > 0 {
-		keys += " backspace=program"
+		keys = append(keys, "backspace")
 	}
 	return keys
 }

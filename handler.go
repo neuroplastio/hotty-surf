@@ -2,6 +2,8 @@ package surf
 
 import (
 	"context"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -74,6 +76,16 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Check = h.fn.(func(bool))
 		case kindKey:
 			e.Key = append(e.Key, h.fn.(func(string) bool))
+			for _, k := range h.keys {
+				c, ok := f.Platform.ReadKey(k)
+				if !ok || c == "shift+tab" {
+					f.Faults = append(f.Faults, "surf.Key: the id "+id+" declares the key "+strconv.Quote(k)+", which doesn't parse or isn't the program's to take")
+					continue
+				}
+				if !slices.Contains(e.Keys, c) {
+					e.Keys = append(e.Keys, c)
+				}
+			}
 		case kindFocus:
 			e.Focus = h.fn.(func(bool))
 		case kindOutside:
@@ -100,7 +112,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 // Secondary make them.
 type Handler struct {
 	kind kind
-	fn   any // the func the kind takes; nil is no handler
+	fn   any      // the func the kind takes; nil is no handler
+	keys []string // Key's keys, as the app wrote them
 }
 
 type kind uint8
@@ -183,15 +196,45 @@ func Check(fn func(checked bool)) Handler {
 // Key offers fn the keys the surface hears while the keyboard is on the
 // element or inside it; fn says whether it took the key. An element's
 // handler is asked before its ancestors', so an open menu hears the arrows
-// before the page does. Shortcuts for the whole page go on its outermost
-// element.
+// before the page does. Key is for a control's own keyboard (a list's
+// arrows, a grid, a field's completion); a shortcut for the whole page,
+// which a menu and a palette list, is a ui.KeyScope's binding.
+//
+// keys are the keys fn takes ahead of the element: while the keyboard is
+// on the element or inside it, the host gives each to the program rather
+// than using it itself (a field's edit, a button's Space, the surface's
+// scroll), so fn hears it. Without keys, fn hears only the keys that
+// reach the program anyway: those the element doesn't use. The keys of
+// every Key handler on one element are its declaration together. A view
+// whose handler takes keys on a condition (a menu open or closed) passes
+// that condition's keys, render by render.
+//   - They are in fn's notation ("arrow_down", "mod+s"), read for the
+//     host's platform, and arrive as fn hears every key: a declared
+//     "ctrl+n" arrives as "mod+n" where ctrl is the mod.
+//   - A key fn declines goes to the enclosing handlers, those that
+//     declared it among them, then to the element's own use, which the
+//     surface does as the host would have: a button's activation, a
+//     field's edit, a check box's toggle, a select's pick. A use it can't
+//     do (the host's scrolling, a date field's) is lost; so is a declined
+//     tab on a field, which doesn't move focus.
+//   - A printable key ("j", "shift+g") is never taken from an element
+//     inside that types: it types there, as under a ui.KeyScope.
+//   - escape reaches the program anyway, so a host ignores it in the
+//     declaration; it is declared for Surface.OwnKeys, which lists it.
+//   - tab is only a text field's own to declare (a completion): on any
+//     other element, it would take Tab from every field inside, and it
+//     is a fault. shift+tab, and a key that doesn't parse, are faults.
+//
+// The surface writes the declaration as the element's data-keys (SPEC
+// §10.2, key=program): a template that writes data-keys itself is a
+// fault, and the attribute is dropped.
 //
 // A ui.KeyScope naming a key is offered it before the focused kit
 // control's default and ordinary Key handlers. A declined key then goes
 // to the kit default before it reaches enclosing Key handlers.
 //
-// Without a scoped override, a text field keeps the keys it edits with,
-// Enter among them: Enter
+// Without a scoped override or a declaration, a text field keeps the keys
+// it edits with, Enter among them: Enter
 // commits the field and submits its form, which the form's [Submit] hears,
 // so no Key handler hears it.
 //
@@ -200,8 +243,12 @@ func Check(fn func(checked bool)) Handler {
 // on macOS) arrives as "mod+…". So an app matches "mod+s", and is the same
 // on every platform; one that compares "ctrl+s" misses it where ctrl is the
 // mod. It is the notation ui.Kbd and ui.MenuItem.Keys show.
-func Key(fn func(key string) bool) Handler {
-	return handler(kindKey, fn, fn == nil)
+func Key(fn func(key string) bool, keys ...string) Handler {
+	h := handler(kindKey, fn, fn == nil)
+	if fn != nil {
+		h.keys = keys
+	}
+	return h
 }
 
 // Focus calls fn with true when the user moves the keyboard onto the

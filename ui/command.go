@@ -190,11 +190,15 @@ func (v *commandView) empty() string { return or(v.p.Empty, "No results found.")
 // fieldKeys are the keys the field gives the program: Enter always
 // (handleKeyNavigation prevents it), and the arrows, Home and End while
 // an item is shown, which otherwise are the field's.
-func (v *commandView) fieldKeys() string {
+//
+// The field's handler is key, with these keys (K32); the root keeps key
+// for the keys that reach it from elsewhere, and hears again one the
+// field's declined, which it declines too.
+func (v *commandView) fieldKeys() []string {
 	if len(v.visible) == 0 {
-		return "enter=program"
+		return []string{"enter"}
 	}
-	return "arrow_down=program arrow_up=program home=program end=program enter=program"
+	return []string{"arrow_down", "arrow_up", "home", "end", "enter"}
 }
 
 // input is handleInput: a new search, which highlights its first item.

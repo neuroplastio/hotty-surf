@@ -28,14 +28,18 @@ func DispatchKeyScope(scopes []*KeyScope, marker, physical, key string) (interce
 	return
 }
 
-// nativeKeyDefault prepares the focused control for the fallback carried
-// by a KeyScope. The surface does not link its editing implementation.
+// NativeKeyDefault does the focused control's own use of key: a button's
+// or a link's activation itself, and the rest (a field's edit, a check
+// box's toggle, a select's pick) through fallback, the kit's, which the
+// surface does not link itself; with none, only activation is done. It
+// runs for a key a KeyScope's binding declined, and for a declared key
+// every Key handler declined (surf.Key).
 func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) KeyResult) bool {
 	n := e.Node
-	if n == nil || hasAttr(n, "disabled") || fallback == nil {
+	if n == nil || hasAttr(n, "disabled") {
 		return false
 	}
-	kind := attr(n, "data-hotty-keykind")
+	kind := e.Kind
 	name := key
 	if i := strings.LastIndexByte(key, '+'); i >= 0 {
 		name = key[i+1:]
@@ -53,6 +57,9 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 			e.submitKey(n)
 		}
 		return true
+	}
+	if fallback == nil {
+		return false
 	}
 	in := KeyDefault{Kind: kind, Key: key, Value: e.Values[e.Focused], Checked: e.Checked[e.Focused],
 		Type: attr(n, "type"), Readonly: hasAttr(n, "readonly"), Platform: e.Platform}
@@ -84,18 +91,14 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		}
 		visit(n)
 	}
-	if kind == "text" || kind == "compound-text" {
-		// A scope's own keymap, not its merged data-keys: a field's key
-		// a binding declines stays the field's. surf's keymapsOf
-		// (OwnKeys) reads data-keys as written, as a host does; keep the
-		// two apart.
+	if (kind == "text" || kind == "compound-text") && !e.Declined {
+		// The fields' and its ancestors' own keymaps: their Key handlers'
+		// keys, not the scopes' forwarded ones, so a field's key a
+		// binding declines stays the field's. surf's keymapsOf (OwnKeys)
+		// reads data-keys as written, as a host does; keep the two apart.
 		for p := n; p != nil; p = p.Parent {
-			v := attr(p, "data-keys")
-			if hasAttr(p, "data-hotty-keyscope") {
-				v = attr(p, "data-hotty-default-keys")
-			}
-			if v != "" {
-				in.Keymaps = append(in.Keymaps, v)
+			if h := e.On[attr(p, "id")]; h != nil && len(h.Keys) > 0 {
+				in.Keymaps = append(in.Keymaps, ProgramKeys(h.Keys))
 			}
 		}
 		slices.Reverse(in.Keymaps)
@@ -177,3 +180,21 @@ func textOf(n *html.Node) string {
 	}
 	return b.String()
 }
+
+// ProgramKeys is keys as a keymap that gives each to the program.
+func ProgramKeys(keys []string) string {
+	var b strings.Builder
+	for i, k := range keys {
+		if i > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(k)
+		b.WriteString("=program")
+	}
+	return b.String()
+}
+
+// KitDefault is the kit's fallback for NativeKeyDefault, which ui sets
+// when it is linked: what does a declared key's own use once every Key
+// handler declined it. Without ui, only activation is done.
+var KitDefault func(KeyDefault) KeyResult

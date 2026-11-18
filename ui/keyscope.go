@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -53,7 +53,8 @@ type KeyBinding struct {
 // the keyboard is asked first, before the kit control's default and any
 // surf.Key handler. On a kit control, a scope takes its named keys from
 // the control's native editing; on a plain element, it hears only keys
-// the element doesn't use itself, as surf.Key does. An element that types
+// the element doesn't use itself, as a surf.Key that declares no keys
+// does. An element that types
 // (a kit Input, Textarea or Combobox input, a plain text input, textarea
 // or editing host) keeps its printable keys, with or without shift: no
 // scope takes one from it. A scope around one component overrides that
@@ -162,62 +163,26 @@ func scopeAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
 
 // attachScope is referenced by KeyScope itself, so unscoped controls do not
 // link the map, sorting and attribute construction used for interception.
+// It marks a kit control with the scope it is in, under the frame's
+// secret, and keeps its kind in the frame; the surface takes the marker
+// off and writes the keys the scopes forward to it (its data-keys).
 func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
 	scope, f := rt.KeyScopeFrom(ctx), rt.From(ctx)
-	if scope == nil || f == nil {
-		return attrs
-	}
-	keys := map[string]bool{}
-	// A control that types keeps its printable keys: no scope takes one
-	// from it (K27), so none is forwarded.
-	text := kind == "text" || kind == "compound-text"
-	for s := scope; s != nil; s = s.Parent {
-		for k := range s.Keys {
-			if !text || !rt.Printable(k) {
-				keys[k] = true
-			}
-		}
-	}
-	if len(keys) == 0 {
+	if scope == nil || f == nil || len(rt.Forwarded(scope, kind)) == 0 {
 		return attrs
 	}
 	f.KeyScopes = append(f.KeyScopes, scope)
-	out := make(templ.Attributes, len(attrs)+2)
+	f.KeyKinds = append(f.KeyKinds, kind)
+	out := make(templ.Attributes, len(attrs)+1)
 	for k, v := range attrs {
 		out[k] = v
 	}
-	if old, ok := out["data-keys"].(string); ok {
-		out["data-hotty-default-keys"] = old
-	}
-	list := make([]string, 0, len(keys))
-	for k := range keys {
-		list = append(list, k)
-	}
-	sort.Strings(list)
-	var bindings []string
-	if old, ok := out["data-keys"].(string); ok && old != "" {
-		bindings = append(bindings, old)
-	}
-	for _, key := range list {
-		bindings = append(bindings, key+"=program")
-	}
-	out["data-keys"] = strings.Join(bindings, " ")
-	out["data-hotty-keyscope"] = strconv.Itoa(len(f.KeyScopes))
-	if kind != "" {
-		out["data-hotty-keykind"] = kind
-	}
+	out["data-hotty-keyscope"] = f.KeyMark + strconv.Itoa(len(f.KeyScopes))
 	if kind == "text" || kind == "compound-text" {
 		on, _ := out["data-on"].(string)
 		parts := strings.Fields(on)
 		for _, name := range []string{"input", "caret"} {
-			found := false
-			for _, part := range parts {
-				if part == name {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !slices.Contains(parts, name) {
 				parts = append(parts, name)
 			}
 		}
@@ -234,26 +199,8 @@ func scopeNativeAttrs(ctx context.Context, attrs templ.Attributes, kind string) 
 	return applyScope(ctx, attrs, kind)
 }
 
-func scopeWithKeys(ctx context.Context, attrs templ.Attributes, keys string) templ.Attributes {
-	if keys != "" {
-		out := make(templ.Attributes, len(attrs)+1)
-		for k, v := range attrs {
-			out[k] = v
-		}
-		out["data-keys"] = keys
-		attrs = out
-	}
-	return scopeAttrs(ctx, attrs)
-}
-
-func scopeCommandAttrs(ctx context.Context, attrs templ.Attributes, keys string) templ.Attributes {
-	if keys != "" {
-		out := make(templ.Attributes, len(attrs)+1)
-		for k, v := range attrs {
-			out[k] = v
-		}
-		out["data-keys"] = keys
-		attrs = out
-	}
+// scopeCompoundAttrs are a compound field's (a Command's or a
+// Combobox's input): it types, and its kit default is its component's.
+func scopeCompoundAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
 	return applyScope(ctx, attrs, "compound-text")
 }

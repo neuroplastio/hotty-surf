@@ -135,7 +135,7 @@ templ CommandBox(id string, c *Command, placeholder string) {
 	<div data-slot="command" class="command flex h-full w-full flex-col overflow-hidden p-0">
 		<header data-slot="command-input-wrapper" class="m-0 flex h-9 items-center gap-2 rounded-none border-0 border-b border-border bg-transparent px-3">
 			@ui.Icon("search", "size-4 shrink-0 opacity-50")
-			<input data-slot="command-input" type="text" placeholder={ placeholder } aria-label={ placeholder } data-keys="arrow_up=program arrow_down=program enter=program" class="w-full bg-transparent px-0 outline-hidden" value={ c.Search } { surf.On(ctx, id+"-search", surf.Input(c.SetSearch))... }/>
+			<input data-slot="command-input" type="text" placeholder={ placeholder } aria-label={ placeholder } class="w-full bg-transparent px-0 outline-hidden" value={ c.Search } { surf.On(ctx, id+"-search", surf.Input(c.SetSearch), surf.Key(c.Keys, "arrow_up", "arrow_down", "enter"))... }/>
 		</header>
 		<div data-slot="command-list" role="menu" class="max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto p-1">
 			{ children... }

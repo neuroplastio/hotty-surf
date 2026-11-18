@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -256,8 +257,9 @@ func (v *listView) key(i int) func(string) bool {
 	}
 }
 
-// listItemKeys are the keys a List's item sends to the program.
-const listItemKeys = "arrow_up=program arrow_down=program home=program end=program"
+// listItemKeys are the keys a List's item takes ahead of the host, added
+// to its handlers' (key's, joined to the app's for the id).
+var listItemKeys = []string{"arrow_up", "arrow_down", "home", "end"}
 
 // listItemAttrs are a ListItem's button attributes: the app's, with the
 // item's id (one of its own when the app gives none), its tabindex
@@ -321,12 +323,13 @@ func listItemAttrs(ctx context.Context, p ListItemProps) templ.Attributes {
 		h.KitKey = true
 	}
 	h.Key = append([]func(string) bool{v.key(i)}, h.Key...)
-	a["data-on"] = addWord(attrString(a, "data-on"), "click")
-	keys := listItemKeys
-	if old := attrString(a, "data-keys"); old != "" {
-		keys = old + " " + keys
+	for _, k := range listItemKeys {
+		if !slices.Contains(h.Keys, k) {
+			h.Keys = append(h.Keys, k)
+		}
 	}
-	return scopeWithKeys(ctx, a, keys)
+	a["data-on"] = addWord(attrString(a, "data-on"), "click")
+	return scopeAttrs(ctx, a)
 }
 
 // attrString is attrs' value for name, whatever its case ("" for none).

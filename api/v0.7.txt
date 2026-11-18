@@ -15,7 +15,7 @@ pkg neuroplast.io/hotty-surf, func Drop(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Focus(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Hover(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Input(func(string)) Handler
-pkg neuroplast.io/hotty-surf, func Key(func(string) bool) Handler
+pkg neuroplast.io/hotty-surf, func Key(func(string) bool, ...string) Handler
 pkg neuroplast.io/hotty-surf, func New(string, templ.Component, string) *Surface
 pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes

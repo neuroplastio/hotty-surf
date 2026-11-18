@@ -345,9 +345,9 @@ func TestFieldSetBySurface(t *testing.T) {
 func TestKeysTheScreenDoesntUse(t *testing.T) {
 	var keys []string
 	v := view(func(ctx context.Context, w io.Writer, on on) {
-		fmt.Fprintf(w, `<div%s><button%s>b</button><input%s data-keys="enter=program arrow_up=program"/></div>`,
+		fmt.Fprintf(w, `<div%s><button%s>b</button><input%s/></div>`,
 			on("page", surf.Key(func(k string) bool { keys = append(keys, k); return true })),
-			on("b", surf.Click(func() {})), on("f", surf.Input(func(string) {})))
+			on("b", surf.Click(func() {})), on("f", surf.Input(func(string) {}), surf.Key(func(string) bool { return false }, "enter", "arrow_up")))
 	})
 	r := start(t, 40, 2, v)
 	for _, k := range []string{"ctrl+s", "x", "enter", "arrow_down"} {

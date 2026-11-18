@@ -2921,3 +2921,139 @@ Tests: `TestDirty` covers these cases:
   through one helper (cellsOf) that Cells and Dirty share. TestDirtyRoles
   covers both, plus a data-x change that stays clean. The fast path is
   unchanged: such changes come by Write, which drops the layout.
+
+## No key binds in templates (the maintainer, 2026-11-18)
+
+"I don't want templates to carry key binds." `data-keys` came from
+hotty-a2ui, where A2UI's code-free model forced it. In hotty-surf a key
+is declared in Go, by the code that handles it. SPEC §10.2's `data-keys`
+still reaches the wire, because a host needs the list, but only as the
+runtime's output, derived from the registered handlers. No template,
+component or app writes it.
+
+Proposed:
+
+```go
+// before
+func Key(fn func(key string) bool) Handler
+// after
+func Key(fn func(key string) bool, keys ...string) Handler
+```
+
+- **keys are what fn takes ahead of the element.** While the keyboard is
+  on the element or inside it, the host gives each of them to the
+  program (SPEC §10.2 `key=program`) rather than using it itself: a
+  field's edit, a button's Space, the surface's scroll. Keys use fn's
+  notation ("arrow_down", "mod+s", "ctrl+n"), read for the host's
+  platform. Without keys, fn hears only the keys that reach the program
+  anyway, as today.
+- **The runtime writes `data-keys`.** After a render it writes each
+  element's attribute from the keys its Key handlers declare and the
+  ui.KeyScopes around a kit control. A `data-keys` that a template or an
+  Attrs map writes is a fault and is dropped, as a runtime id is. So are
+  the internal `data-hotty-default-keys`, `data-hotty-keyscope` and
+  `data-hotty-keykind` attributes.
+- **A key that doesn't parse, and `shift+tab`, are faults.** `tab` is
+  allowed: SPEC lets a text field give it to the program (completion),
+  and a host ignores it elsewhere.
+- **ui.KeyScope is unchanged.** Its `[]KeyBinding` already names its
+  keys. Only where its bindings are written moves into the runtime.
+- **OwnKeys' doc** reads "the keys the focused element's Key handlers
+  declare" in place of "the k=program entries on the focused element"
+  and "an app's Key handler's keys, which declare none".
+- **No other name changes.** `Surface.Program` and `surfui.Node.Give`,
+  which the brief names, are not in v0.7.
+
+Why a variadic on Key: the brief's rule is that the keys sit with the
+code that takes them. A separate `surf.Keys(...)` handler would let them
+drift apart again, and a `[]string` costs every call a literal. A Key
+handler that takes keys conditionally (a menu open or closed) passes the
+condition's list, as the string builders did, and the runtime rewrites
+the attribute when the list changes.
+
+The kit follows K32 (keys are declared where the keyboard is). A kit
+control whose handler sits on its root but whose keyboard sits on a
+descendant (DropdownMenu's trigger, Command's and Combobox's input)
+registers the same handler, with the keys, on that descendant. Its root
+keeps the handler without keys, for keys that reach the program from
+elsewhere inside (Escape on a chip's button). A key the first one
+declines goes to the root's, which declines it too: the handlers act
+only on what they take.
+
+Questions for the review:
+
+1. **Keys that aren't the program's.** `data-keys` also carried
+   `prefix`, `default`, the scroll actions (`j=scroll-down`) and a
+   field's edit actions (`hotty.TerminalKeys`). No component in this
+   repository uses them, but an app could. Lean: they go with this
+   change, and a later pack offers a Go declaration if the maintainer
+   wants one. The maintainer's rule is about templates, but a `surf.Keymap`
+   handler would be a new API this brief doesn't ask for.
+2. **OwnKeys and an app's declared keys.** An app's `data-keys` on the
+   focused element counted before. A Key handler's keys are the same
+   declaration. Lean: count them, kit's and app's alike.
+3. **cells.Screen reads `data-keys` from the document.** The brief asks
+   that it read the handler registry. But the Screen is a host rendition:
+   it takes the document a host takes, and the key vectors check that
+   both read the same wire. Lean: keep it reading the wire, as
+   hotty-xterm.js does.
+4. **Variadic `keys ...string`, `[]string`, or a separate handler.**
+   Lean: variadic, as above.
+
+### As reviewed (p-819, ~/.cache/hotty-surf-nodatakeys/review.md)
+
+Accepted with changes; every lean applied:
+
+- **The surface strips, then writes.** After each render it takes every
+  `data-keys` and every kit key marker off the parsed document (any
+  case, any way in: a literal, an Attrs map, templ.Raw) and writes
+  `data-keys` by id from the registry, its bindings sorted. Without
+  `data-hotty-default-keys`, the kit's `data-hotty-keyscope` and
+  `data-hotty-keykind` stay in the surface's tree by id and no longer
+  reach the wire. The cells still read `data-keys` from the document, as
+  a host does (Q3).
+- **No key literal in a .templ.** NavList's and the spike popup's keys
+  are Go lists beside their handlers. Slider's and Combobox's owned lists
+  and List's merge of an app's `data-keys` are gone. The lint rule
+  `data-keys` finds one in an app's .templ or .go.
+- **Key's contract** adds: the keys of several handlers on one id are
+  their union; a declared `ctrl+n` arrives as `mod+n` where ctrl is the
+  mod; `escape` is allowed and not written (a host ignores it), but
+  OwnKeys lists it; `tab` is a fault outside a text field's own handler;
+  a declared printable key is written back as `key=default` on every
+  typing element inside the declaring one (K27). Page shortcuts point at
+  ui.KeyScope.
+- **Q1.** `prefix`, the scroll actions and a field's edit actions
+  (`hotty.TerminalKeys`) are cut. They are the follow-up pack's scope:
+  - `prefix` (a leader the host holds for the program);
+  - `scroll-up`, `scroll-down`, `scroll-left`, `scroll-right`,
+    `scroll-page-up`, `scroll-page-down`, `scroll-half-page-up`,
+    `scroll-half-page-down`, `scroll-start`, `scroll-end`;
+  - a field's edit actions, `hotty.TerminalKeys` among them;
+  - `default` given explicitly, if declining turns out not to be enough.
+
+  `default` itself is replaced by declining: a declared key every
+  handler declines is the focused element's own use, which the surface
+  does through rt.NativeKeyDefault (activation itself; a field's edit, a
+  toggle and a pick through the kit's fallback, which ui now links at
+  init). A use it can't do (the host's scrolling, a date field's) is
+  lost.
+- **Q2.** OwnKeys counts the declared keys of the focused element and of
+  every element around it, KeyScope bindings excluded, each with shift
+  where it isn't a character (SPEC §10.2 looks a shifted key up again
+  without shift), and a declared character except on an element that
+  types.
+- **Q4.** Variadic.
+- **K32** kept. DropdownMenu's handler moved to its trigger, the only
+  element in it that takes focus, so it has no double ask. Command's
+  and Combobox's root keep the handler for keys from elsewhere inside;
+  TestComboboxDoubleAsk pins that a key the field's declines, the
+  root's declines too with nothing done.
+- **Docs.** KeyScope's "as surf.Key does" reads "as a surf.Key that
+  declares no keys does"; OwnKeys' doc is rewritten;
+  docs/keyboard-model.md has "Declared keys" and a new Routing
+  paragraph; vault/knowledge/field-keys.md has the v0.7 model; Key's
+  reason quotes the maintainer's rule.
+- **The API.** `api/next.txt` has the one changed line,
+  `func Key(func(string) bool, ...string) Handler`. `api/v0.7.txt` waits
+  for the maintainer's `make api-approve`.

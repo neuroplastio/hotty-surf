@@ -11,9 +11,8 @@ templ (l *NavList) FilterInput(class string) {
 		class={ join("input", class) }
 		placeholder={ l.Placeholder }
 		aria-label={ l.FilterLabel }
-		data-keys="arrow_up=program arrow_down=program page_up=program page_down=program ctrl+n=program ctrl+p=program enter=program"
 		value={ l.Filter }
-		{ surf.On(ctx, l.FilterID(), surf.Input(l.setFilter), surf.Key(l.Keys), surf.Focus(func(in bool) { if in { l.in = "filter" } else { l.in = "" } }))... }
+		{ surf.On(ctx, l.FilterID(), surf.Input(l.setFilter), surf.Key(l.Keys, navFilterKeys...), surf.Focus(func(in bool) { if in { l.in = "filter" } else { l.in = "" } }))... }
 	/>
 }
 
@@ -43,9 +42,8 @@ templ (l *NavList) item(it NavItem) {
 		type="button"
 		tabindex={ roving(it.ID == l.Current) }
 		aria-current={ bstr(it.ID == l.Current) }
-		data-keys="arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program enter=program"
 		class={ join("nav-item flex w-full items-center rounded-md px-2 py-1 text-left text-sm", navItemClass(it.ID == l.Current)) }
-		{ surf.On(ctx, l.ItemID(it.ID), surf.Click(func() { l.selectItem(it.ID) }), surf.Key(l.Keys), surf.Focus(func(in bool) { if in { l.in = "list" } else { l.in = "" } }))... }
+		{ surf.On(ctx, l.ItemID(it.ID), surf.Click(func() { l.selectItem(it.ID) }), surf.Key(l.Keys, navItemKeys...), surf.Focus(func(in bool) { if in { l.in = "list" } else { l.in = "" } }))... }
 	>
 		<span class="truncate">{ it.Label }</span>
 	</button>

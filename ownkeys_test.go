@@ -2,6 +2,7 @@ package surf_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"slices"
 	"strings"
@@ -12,20 +13,23 @@ import (
 	"neuroplast.io/hotty-surf/cells"
 )
 
+// ownKeysPage's g is in an element whose Key handler takes arrow_up and
+// ctrl+a, and l's own handler takes the arrows and Escape.
 const ownKeysPage = `<button id="b">Go</button>
 <input id="f">
-<div data-keys="arrow_up=program ctrl+a=program"><input id="g"></div>
+<div%s><input id="g"></div>
 <select id="s"><option>a</option><option>b</option></select>
 <input id="d" type="date">
 <input id="c" type="checkbox">
-<div id="l" tabindex="0" data-keys="arrow_up=program arrow_down=program">list</div>
+<div%s tabindex="0">list</div>
 <div id="plain" tabindex="0">plain</div>
 <button id="off" disabled>Off</button>
 <input id="r" type="range">`
 
 func ownKeysSurface() *surf.Surface {
+	decline := func(string) bool { return false }
 	return surf.New("t", view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
-		io.WriteString(w, ownKeysPage)
+		fmt.Fprintf(w, ownKeysPage, on("gp", surf.Key(decline, "arrow_up", "ctrl+a")), on("l", surf.Key(decline, "arrow_up", "arrow_down", "escape")))
 	}), "")
 }
 
@@ -96,11 +100,13 @@ func TestOwnKeys(t *testing.T) {
 				{"b", []string{"enter", "space", "shift+enter", "shift+space"}, []string{"tab", "arrow_down", "escape"}},
 				{"f", []string{"arrow_left", "shift+arrow_left", "home", "shift+end", "backspace", "delete", "enter", "ctrl+a", "ctrl+z"},
 					[]string{"a", "shift+a", "tab", "shift+tab", "escape"}},
-				{"g", []string{"arrow_left", "enter"}, []string{"arrow_up", "ctrl+a"}},
+				// Its parent's declared keys are the program's there, for
+				// the parent's handler: OwnKeys counts them, with shift.
+				{"g", []string{"arrow_left", "enter", "arrow_up", "shift+arrow_up", "ctrl+a"}, []string{"a"}},
 				{"s", []string{"arrow_up", "arrow_down", "home", "end", "page_down", "space", "enter", "shift+arrow_down"}, []string{"arrow_left", "tab"}},
 				{"d", []string{"arrow_left", "backspace", "enter"}, []string{"tab"}},
 				{"c", []string{"space", "enter"}, []string{"arrow_down"}},
-				{"l", []string{"arrow_up", "arrow_down"}, []string{"enter", "space", "home"}},
+				{"l", []string{"arrow_up", "arrow_down", "escape"}, []string{"enter", "space", "home", "shift+escape"}},
 				{"plain", nil, []string{"enter", "space"}},
 				{"r", nil, []string{"arrow_left"}},
 			} {

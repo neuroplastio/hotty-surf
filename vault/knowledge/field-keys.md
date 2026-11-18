@@ -60,3 +60,25 @@ the vertical arrows, Enter, function keys. A letter or Backspace stays the
 field's.
 
 See `docs/surf.md`, "Field keys".
+
+## v0.7: keys are declared in Go (2026-11-18)
+
+The maintainer: "I don't want templates to carry key binds." The chain
+above still holds on the wire, since hosts and the cells resolve a
+field's keymap from the `data-keys` from the root down. But in v0.7 no
+template, component or app writes `data-keys`: the surface does, after
+each render, from what the code declares.
+
+- **`surf.Key(fn, keys...)`** declares the keys fn takes ahead of the
+  element, written as `key=program` on it. A field that gives the program
+  `ctrl+b` declares it on its own handler, and that is still written on
+  the field, after anything around it, so it still wins.
+- **Giving a key back** (`key=default`) is declining: a declared key every
+  handler declines is the element's own use, done by the surface. A
+  declared printable key is written back as `key=default` on the fields
+  inside (K27), so a field types it.
+- **Readline (`hotty.TerminalKeys`), `prefix` and the scroll actions**
+  have no Go declaration yet. The `.surf` `readline` and `program`
+  attributes above went with v0.6. A later pack adds a declaration if the
+  maintainer wants one (api/notes.md, "No key binds in templates").
+- The cells still read the same chain from the document, as a host does.

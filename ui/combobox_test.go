@@ -126,7 +126,11 @@ func TestComboboxKeywordsAndInputAttrs(t *testing.T) {
 		return with(ui.KeyScope([]ui.KeyBinding{{Key: "arrow_down", Run: func() bool { return false }}}), child).Render(ctx, w)
 	})
 	r := surftest.Start(t, surf.New("combobox", view, ui.Stylesheet()))
-	r.One(`#fruit-input[aria-label="Choose fruit"][data-hotty-keyscope]`)
+	r.One(`#fruit-input[aria-label="Choose fruit"]`)
+	// The scope's marker is the runtime's: it doesn't reach the wire.
+	if n := append(r.Find(`[data-hotty-keyscope]`), r.Find(`[data-hotty-keykind]`)...); len(n) > 0 {
+		t.Fatalf("%d markers on the wire", len(n))
+	}
 	r.Type("#fruit-input", "TROP")
 	r.One("#fruit-items-1[aria-hidden=true]")
 	r.One("#fruit-items-2[aria-hidden=false]")
@@ -151,7 +155,7 @@ func TestComboboxInputAttrsCollision(t *testing.T) {
 	if got := attr(r.One("#fruit-input"), "data-keys"); !strings.Contains(got, "arrow_down=program") || strings.Contains(got, "home=field") {
 		t.Fatalf("key bindings %q", got)
 	}
-	if got := attr(r.One("#fruit-input"), "data-hotty-keyscope"); got == "" || got == "999" {
+	if got := attr(r.One("#fruit-input"), "data-hotty-keyscope"); got != "" {
 		t.Fatalf("scope marker %q", got)
 	}
 	if len(f.got) < 4 {

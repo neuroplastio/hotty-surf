@@ -13,10 +13,14 @@ import (
 
 // Handlers are one element's, as surf.On registered them for this render.
 type Handlers struct {
-	Click  func()
-	Input  func(string)
-	Check  func(bool)
-	Key    []func(string) bool
+	Click func()
+	Input func(string)
+	Check func(bool)
+	Key   []func(string) bool
+	// Keys are the keys the Key handlers declare, canonical for the
+	// frame's platform, in the order declared: what the runtime writes
+	// as the element's data-keys, each bound to program.
+	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
@@ -82,8 +86,13 @@ type Frame struct {
 	// one do not link its tree preparation and focus confinement code.
 	ModalOps *ModalOps
 	// KeyScopes are this frame's lexical kit overrides, indexed by the
-	// private marker on each focused kit control (one-based).
+	// private marker on each focused kit control (one-based), and
+	// KeyKinds the kind of each such control ("button", "text", …).
 	KeyScopes []*KeyScope
+	KeyKinds  []string
+	// KeyMark starts every such marker: the surface's secret, which a
+	// template can't know, so a marker it writes is told from the kit's.
+	KeyMark string
 	// Scopes are every KeyScope the render made, in the order of the
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.
