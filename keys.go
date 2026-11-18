@@ -21,10 +21,14 @@ import (
 // keysAttr is SPEC §10.2's attribute, which only writeKeys writes.
 const keysAttr = "data-keys"
 
-// The kit's private markers on a control under a ui.KeyScope: which of
-// the frame's KeyScopes it is in (one-based) and what kind of control it
-// is. ui writes them; writeKeys takes them off the document into the
-// tree, by id, so no host sees them, and checks each names a scope once.
+// scopeAttr is the kit's private marker on a control under a
+// ui.KeyScope: the frame's secret (rt.Frame.KeyMark), then which of the
+// frame's KeyScopes it is in (one-based); its kind is the frame's
+// (KeyKinds). writeKeys takes it off the document into the tree, by id,
+// so no host sees it. One without the secret, or naming a scope a
+// marker named already, is a template's: a fault, and dropped. kindAttr
+// and data-hotty-default-keys, which v0.7's first kit wrote, are always
+// a template's.
 const (
 	scopeAttr = "data-hotty-keyscope"
 	kindAttr  = "data-hotty-keykind"
@@ -48,18 +52,25 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 		switch a.Key {
 		case keysAttr, "data-hotty-default-keys":
 			s.fault("surf: " + a.Key + " on " + strconv.Quote(id) + " is the runtime's: declare keys in Go, with surf.Key(fn, keys...) or a ui.KeyScope")
+		case kindAttr:
+			s.fault("surf: " + kindAttr + " on " + strconv.Quote(id) + " is the kit's")
 		case scopeAttr:
-			k, err := strconv.Atoi(a.Val)
-			if err != nil || t.f == nil || k <= 0 || k > len(t.f.KeyScopes) || t.marks[k] {
+			k := -1
+			if t.f != nil && t.f.KeyMark != "" {
+				if rest, ok := strings.CutPrefix(a.Val, t.f.KeyMark); ok {
+					if v, err := strconv.Atoi(rest); err == nil {
+						k = v
+					}
+				}
+			}
+			if k <= 0 || k > len(t.f.KeyScopes) || t.marks[k] {
 				s.fault("surf: " + scopeAttr + " on " + strconv.Quote(id) + " is the kit's")
 				break
 			}
 			if t.marks == nil {
 				t.marks = map[int]bool{}
 			}
-			t.marks[k], scope = true, k
-		case kindAttr:
-			kind = a.Val
+			t.marks[k], scope, kind = true, k, t.f.KeyKinds[k-1]
 		default:
 			continue
 		}
@@ -71,8 +82,6 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 			t.scopes = map[string]keyMark{}
 		}
 		t.scopes[id] = keyMark{scope: scope, kind: kind}
-	} else if kind != "" {
-		s.fault("surf: " + kindAttr + " on " + strconv.Quote(id) + " is the kit's")
 	}
 	if t.f == nil {
 		return 0

@@ -14,7 +14,7 @@ import (
 )
 
 // ownKeysPage's g is in an element whose Key handler takes arrow_up and
-// ctrl+a, and l's own handler takes the arrows.
+// ctrl+a, and l's own handler takes the arrows and Escape.
 const ownKeysPage = `<button id="b">Go</button>
 <input id="f">
 <div%s><input id="g"></div>
@@ -29,7 +29,7 @@ const ownKeysPage = `<button id="b">Go</button>
 func ownKeysSurface() *surf.Surface {
 	decline := func(string) bool { return false }
 	return surf.New("t", view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
-		fmt.Fprintf(w, ownKeysPage, on("gp", surf.Key(decline, "arrow_up", "ctrl+a")), on("l", surf.Key(decline, "arrow_up", "arrow_down")))
+		fmt.Fprintf(w, ownKeysPage, on("gp", surf.Key(decline, "arrow_up", "ctrl+a")), on("l", surf.Key(decline, "arrow_up", "arrow_down", "escape")))
 	}), "")
 }
 
@@ -106,7 +106,7 @@ func TestOwnKeys(t *testing.T) {
 				{"s", []string{"arrow_up", "arrow_down", "home", "end", "page_down", "space", "enter", "shift+arrow_down"}, []string{"arrow_left", "tab"}},
 				{"d", []string{"arrow_left", "backspace", "enter"}, []string{"tab"}},
 				{"c", []string{"space", "enter"}, []string{"arrow_down"}},
-				{"l", []string{"arrow_up", "arrow_down"}, []string{"enter", "space", "home"}},
+				{"l", []string{"arrow_up", "arrow_down", "escape"}, []string{"enter", "space", "home", "shift+escape"}},
 				{"plain", nil, []string{"enter", "space"}},
 				{"r", nil, []string{"arrow_left"}},
 			} {

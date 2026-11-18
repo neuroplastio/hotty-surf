@@ -138,7 +138,8 @@ the keys fn takes ahead of the element:
   element's own use, which the surface does as the host would have: a
   button's activation, a field's edit, a check box's toggle, a select's
   pick. That is what `key=default` did in markup. A use the surface can't
-  do (the host's scrolling, a date field's) is lost.
+  do (the host's scrolling, a date field's) is lost, and a declined `tab`
+  on a field doesn't move focus.
 - A declared printable key is never taken from an element inside that
   types: the surface writes `key=default` on it (K27).
 - `escape` reaches the program anyway and isn't written; it is declared

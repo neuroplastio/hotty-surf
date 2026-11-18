@@ -3,7 +3,9 @@ package surf
 import (
 	"context"
 	"io"
+	"math/rand/v2"
 	"slices"
+	"strconv"
 	"sync"
 
 	"github.com/a-h/templ"
@@ -44,12 +46,15 @@ type Surface struct {
 	byID  map[string]*html.Node
 	// keyMarks are the kit controls under a KeyScope, by id (writeKeys).
 	keyMarks map[string]keyMark
-	fields   []string // the live fields' ids in prev
-	ids      map[string]string
-	nextID   int
-	faults   []string
-	memo     map[string]any // the frames' Memo, kept from render to render
-	n        uint64         // the renders so far: the last frame's N
+	// keyMark is the secret the kit's KeyScope markers start with
+	// (rt.Frame.KeyMark), new for each surface.
+	keyMark string
+	fields  []string // the live fields' ids in prev
+	ids     map[string]string
+	nextID  int
+	faults  []string
+	memo    map[string]any // the frames' Memo, kept from render to render
+	n       uint64         // the renders so far: the last frame's N
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).
@@ -97,7 +102,8 @@ type Surface struct {
 // reload, so that a live reload reaches it wherever it was made, a dialog
 // opened late included. A release build has none of that.
 func New(name string, view templ.Component, css string) *Surface {
-	s := &Surface{name: name, view: view, css: css, pending: make(chan struct{}, 1), memo: map[string]any{}}
+	s := &Surface{name: name, view: view, css: css, pending: make(chan struct{}, 1), memo: map[string]any{},
+		keyMark: strconv.FormatUint(rand.Uint64(), 36) + "-"}
 	s.reset()
 	register(s)
 	return s

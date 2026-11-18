@@ -86,8 +86,13 @@ type Frame struct {
 	// one do not link its tree preparation and focus confinement code.
 	ModalOps *ModalOps
 	// KeyScopes are this frame's lexical kit overrides, indexed by the
-	// private marker on each focused kit control (one-based).
+	// private marker on each focused kit control (one-based), and
+	// KeyKinds the kind of each such control ("button", "text", …).
 	KeyScopes []*KeyScope
+	KeyKinds  []string
+	// KeyMark starts every such marker: the surface's secret, which a
+	// template can't know, so a marker it writes is told from the kit's.
+	KeyMark string
 	// Scopes are every KeyScope the render made, in the order of the
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.

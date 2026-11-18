@@ -163,22 +163,21 @@ func scopeAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
 
 // attachScope is referenced by KeyScope itself, so unscoped controls do not
 // link the map, sorting and attribute construction used for interception.
-// It marks a kit control with the scope it is in and its kind; the
-// surface writes the keys the scopes forward to it (its data-keys).
+// It marks a kit control with the scope it is in, under the frame's
+// secret, and keeps its kind in the frame; the surface takes the marker
+// off and writes the keys the scopes forward to it (its data-keys).
 func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
 	scope, f := rt.KeyScopeFrom(ctx), rt.From(ctx)
 	if scope == nil || f == nil || len(rt.Forwarded(scope, kind)) == 0 {
 		return attrs
 	}
 	f.KeyScopes = append(f.KeyScopes, scope)
-	out := make(templ.Attributes, len(attrs)+2)
+	f.KeyKinds = append(f.KeyKinds, kind)
+	out := make(templ.Attributes, len(attrs)+1)
 	for k, v := range attrs {
 		out[k] = v
 	}
-	out["data-hotty-keyscope"] = strconv.Itoa(len(f.KeyScopes))
-	if kind != "" {
-		out["data-hotty-keykind"] = kind
-	}
+	out["data-hotty-keyscope"] = f.KeyMark + strconv.Itoa(len(f.KeyScopes))
 	if kind == "text" || kind == "compound-text" {
 		on, _ := out["data-on"].(string)
 		parts := strings.Fields(on)

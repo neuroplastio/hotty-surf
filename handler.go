@@ -215,7 +215,8 @@ func Check(fn func(checked bool)) Handler {
 //     declared it among them, then to the element's own use, which the
 //     surface does as the host would have: a button's activation, a
 //     field's edit, a check box's toggle, a select's pick. A use it can't
-//     do (the host's scrolling, a date field's) is lost.
+//     do (the host's scrolling, a date field's) is lost; so is a declined
+//     tab on a field, which doesn't move focus.
 //   - A printable key ("j", "shift+g") is never taken from an element
 //     inside that types: it types there, as under a ui.KeyScope.
 //   - escape reaches the program anyway, so a host ignores it in the

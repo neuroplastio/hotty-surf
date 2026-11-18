@@ -91,7 +91,8 @@ func ownKeys(n *html.Node, on map[string]*rt.Handlers, p hotty.Platform) []strin
 				continue
 			}
 			add(k)
-			if !strings.Contains(k, "shift+") {
+			// Escape reaches the program anyway: its shift is noise.
+			if k != "escape" && !strings.Contains(k, "shift+") {
 				add("shift+" + k)
 			}
 		}
