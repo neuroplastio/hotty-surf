@@ -283,7 +283,7 @@ func commandBody(v *commandView) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "input", scopeCommandAttrs(ctx, surf.On(ctx, v.id+"-input", surf.Input(v.input)), v.fieldKeys()))
+			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "input", scopeCompoundAttrs(ctx, kitOn(ctx, v.id+"-input", surf.Input(v.input), surf.Key(v.key, v.fieldKeys()...))))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

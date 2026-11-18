@@ -1099,14 +1099,14 @@ func CommandBox(id string, c *Command, placeholder string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" data-keys=\"arrow_up=program arrow_down=program enter=program\" class=\"w-full bg-transparent px-0 outline-hidden\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" class=\"w-full bg-transparent px-0 outline-hidden\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templruntime.NewAttributeExpression(c.Search).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `popup.templ`, Line: 138, Col: 231}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `popup.templ`, Line: 138, Col: 169}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var44)
 			if templ_7745c5c3_Err != nil {
@@ -1116,7 +1116,7 @@ func CommandBox(id string, c *Command, placeholder string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "input", surf.On(ctx, id+"-search", surf.Input(c.SetSearch)))
+			templ_7745c5c3_Err = templruntime.RenderAttributes(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_ElementWriter, "input", surf.On(ctx, id+"-search", surf.Input(c.SetSearch), surf.Key(c.Keys, "arrow_up", "arrow_down", "enter")))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

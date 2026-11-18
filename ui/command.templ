@@ -42,7 +42,7 @@ templ commandBody(v *commandView) {
 				aria-activedescendant={ v.opts[o].id }
 			}
 			value={ v.st.query }
-			{ scopeCommandAttrs(ctx, surf.On(ctx, v.id+"-input", surf.Input(v.input)), v.fieldKeys())... }
+			{ scopeCompoundAttrs(ctx, kitOn(ctx, v.id+"-input", surf.Input(v.input), surf.Key(v.key, v.fieldKeys()...)))... }
 		/>
 	</header>
 	<div role="menu" id={ v.id + "-menu" } aria-orientation="vertical" data-empty={ v.empty() } class="">

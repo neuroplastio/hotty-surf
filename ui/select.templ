@@ -30,7 +30,7 @@ templ selectBox(v *selectView) {
 				aria-activedescendant={ v.opts[i].id }
 			}
 			disabled?={ v.p.Disabled }
-			{ scopeWithKeys(ctx, kitOn(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key)), v.triggerKeys())... }
+			{ scopeAttrs(ctx, kitOn(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key, v.triggerKeys()...)))... }
 		>
 			{{ label, muted := v.label() }}
 			<span

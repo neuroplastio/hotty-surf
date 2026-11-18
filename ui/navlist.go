@@ -144,6 +144,14 @@ func (l *NavList) move(step int) {
 	l.selectItem(items[i].ID)
 }
 
+// navFilterKeys are what Keys takes ahead of the filter field; Home and
+// End stay the field's. navItemKeys are what it takes ahead of an item.
+// Enter is in both, for the app's handler after it.
+var (
+	navFilterKeys = []string{"arrow_up", "arrow_down", "page_up", "page_down", "ctrl+n", "ctrl+p", "enter"}
+	navItemKeys   = []string{"arrow_up", "arrow_down", "page_up", "page_down", "home", "end", "enter"}
+)
+
 // Keys offers k to the navigation list while its filter or an item has
 // the keyboard. It reports whether the list took it. Enter is left to
 // the app. FilterInput and List already register the list's handler;

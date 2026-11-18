@@ -149,14 +149,17 @@ func (p *Popup) Keys(k string) bool {
 // which closes p). So while p is open they go to the program, where
 // Popup.Keys picks the active item, as the arrows already do.
 func Trigger(ctx context.Context, id, haspopup string, p *Popup) templ.Attributes {
-	a := surf.On(ctx, id, surf.Click(p.Toggle), surf.Key(p.Keys))
+	var keys []string
+	if p.Open {
+		keys = []string{"enter", "space"}
+	}
+	a := surf.On(ctx, id, surf.Click(p.Toggle), surf.Key(p.Keys, keys...))
 	p.home = id
 	a["aria-haspopup"] = haspopup
 	a["aria-expanded"] = bstr(p.Open)
 	a["data-state"] = state(p.Open, "open", "closed")
 	if p.Open {
 		a["aria-controls"] = id + "-content"
-		a["data-keys"] = "enter=program space=program"
 	}
 	return a
 }

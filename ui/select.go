@@ -102,11 +102,13 @@ type selectView struct {
 	popups  *popup      // the surface's open popup
 }
 
-func (v *selectView) triggerKeys() string {
+// triggerKeys are the keys key takes ahead of the trigger: Enter while
+// open, which the button would otherwise press.
+func (v *selectView) triggerKeys() []string {
 	if v.st.open {
-		return "enter=program"
+		return []string{"enter"}
 	}
-	return ""
+	return nil
 }
 
 // join reads the frame: its number, and the surface's popups.

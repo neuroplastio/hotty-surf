@@ -147,7 +147,7 @@ func TestSliderInvalidNumbersAndAttrs(t *testing.T) {
 	if got := attr(r.One("#number-thumb"), "data-keys"); !strings.Contains(got, "home=program") || strings.Contains(got, "home=field") {
 		t.Fatalf("key bindings %q", got)
 	}
-	if got := attr(r.One("#number-thumb"), "data-hotty-keyscope"); got == "" || got == "999" {
+	if got := attr(r.One("#number-thumb"), "data-hotty-keyscope"); got != "" {
 		t.Fatalf("scope marker %q", got)
 	}
 	if len(f.got) < 4 {

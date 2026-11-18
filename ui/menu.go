@@ -326,14 +326,19 @@ func (v *menuView) checkRadio(chosen int) {
 // frame after it.
 func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
 
-// triggerKeys are the keys key takes, declared on the trigger, which
-// keeps the keyboard while the menu is open (K32: where the keyboard is,
-// though the handler is on the root).
-func (v *menuView) triggerKeys() string {
+// triggerKeys are the keys key takes, declared with it on the trigger,
+// which keeps the keyboard while the menu is open (K32).
+func (v *menuView) triggerKeys() []string {
 	if v.st.open {
-		return "arrow_down=program arrow_up=program home=program end=program enter=program space=program escape=program"
+		return []string{"arrow_down", "arrow_up", "home", "end", "enter", "space", "escape"}
 	}
-	return "arrow_down=program arrow_up=program"
+	return []string{"arrow_down", "arrow_up"}
+}
+
+// triggerAttrs are the trigger's: its click, and the menu's keys, where
+// the keyboard is.
+func (v *menuView) triggerAttrs(ctx context.Context) templ.Attributes {
+	return scopeAttrs(ctx, kitOn(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key, v.triggerKeys()...)))
 }
 
 func (v *menuView) key(k string) bool {
@@ -419,12 +424,13 @@ func (v *menuView) refocus() bool {
 	return oneShot(&v.st.focus, v.st.focusAt, v.n)
 }
 
-// rootAttrs are the root's: its keys, and while open the click outside.
+// rootAttrs are the root's: while open, the click outside. Its keys are
+// the trigger's, which has the keyboard (triggerAttrs).
 func (v *menuView) rootAttrs(ctx context.Context) templ.Attributes {
 	if !v.st.open {
-		return kitOn(ctx, v.id, surf.Key(v.key))
+		return kitOn(ctx, v.id)
 	}
-	return kitOn(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
+	return kitOn(ctx, v.id, surf.Outside(v.outside))
 }
 
 var menuItemRoles = []string{"", "menuitem", "menuitemcheckbox", "menuitemradio", "separator"}

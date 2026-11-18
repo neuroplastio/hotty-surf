@@ -20,7 +20,7 @@ templ dropdownMenu(v *menuView) {
 			}
 			class="btn"
 			data-variant="outline"
-			{ scopeWithKeys(ctx, surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle)), v.triggerKeys())... }
+			{ v.triggerAttrs(ctx)... }
 		>
 			if v.p.Trigger != nil {
 				@plain(v.p.Trigger)

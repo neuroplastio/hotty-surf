@@ -35,7 +35,7 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 	if n == nil || hasAttr(n, "disabled") || fallback == nil {
 		return false
 	}
-	kind := attr(n, "data-hotty-keykind")
+	kind := e.Kind
 	name := key
 	if i := strings.LastIndexByte(key, '+'); i >= 0 {
 		name = key[i+1:]
@@ -85,17 +85,13 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		visit(n)
 	}
 	if kind == "text" || kind == "compound-text" {
-		// A scope's own keymap, not its merged data-keys: a field's key
-		// a binding declines stays the field's. surf's keymapsOf
-		// (OwnKeys) reads data-keys as written, as a host does; keep the
-		// two apart.
+		// The fields' and its ancestors' own keymaps: their Key handlers'
+		// keys, not the scopes' forwarded ones, so a field's key a
+		// binding declines stays the field's. surf's keymapsOf (OwnKeys)
+		// reads data-keys as written, as a host does; keep the two apart.
 		for p := n; p != nil; p = p.Parent {
-			v := attr(p, "data-keys")
-			if hasAttr(p, "data-hotty-keyscope") {
-				v = attr(p, "data-hotty-default-keys")
-			}
-			if v != "" {
-				in.Keymaps = append(in.Keymaps, v)
+			if h := e.On[attr(p, "id")]; h != nil && len(h.Keys) > 0 {
+				in.Keymaps = append(in.Keymaps, ProgramKeys(h.Keys))
 			}
 		}
 		slices.Reverse(in.Keymaps)
@@ -174,6 +170,19 @@ func textOf(n *html.Node) string {
 	var b strings.Builder
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		b.WriteString(textOf(c))
+	}
+	return b.String()
+}
+
+// ProgramKeys is keys as a keymap that gives each to the program.
+func ProgramKeys(keys []string) string {
+	var b strings.Builder
+	for i, k := range keys {
+		if i > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(k)
+		b.WriteString("=program")
 	}
 	return b.String()
 }

@@ -18,8 +18,9 @@ var (
 		"home", "end", "page_up", "page_down", "enter"}
 )
 
-// ownKeys is what OwnKeys says of n, focused, on platform p.
-func ownKeys(n *html.Node, p hotty.Platform) []string {
+// ownKeys is what OwnKeys says of n, focused, on platform p, with on the
+// frame's handlers.
+func ownKeys(n *html.Node, on map[string]*rt.Handlers, p hotty.Platform) []string {
 	if n == nil || hasAttr(n, "disabled") {
 		return nil
 	}
@@ -68,16 +69,31 @@ func ownKeys(n *html.Node, p hotty.Platform) []string {
 	case "activate":
 		addShifted(activateKeys)
 	}
-	// A kit control's own keys: those it gives the program on itself,
-	// which its Key handler takes (a list's arrows, a combobox's Enter).
-	// Under a KeyScope its own are kept apart from the scope's bindings.
-	decl, ok := get(n, "data-hotty-default-keys")
-	if !ok && !hasAttr(n, "data-hotty-keyscope") {
-		decl = attr(n, "data-keys")
-	}
-	for _, b := range strings.Fields(decl) {
-		if k, a, _ := strings.Cut(b, "="); a == "program" {
+	// The keys the Key handlers of it and the elements around it declare:
+	// those the host gives the program there, for them to take (a list's
+	// arrows, a combobox's Enter, an app's mod+s on its main), with shift
+	// too where it isn't a character (SPEC §10.2 looks a key with shift up
+	// again without it). A declared character is listed, but not on an
+	// element that types, which keeps it (K27). Escape a host ignores in
+	// data-keys, but a handler that declares it takes it. A KeyScope's
+	// bindings are Bindings', not these.
+	types := rt.Types(n)
+	for e := n; e != nil; e = e.Parent {
+		h := on[attr(e, "id")]
+		if h == nil || e.Type != html.ElementNode {
+			continue
+		}
+		for _, k := range h.Keys {
+			if rt.Printable(k) {
+				if !types {
+					set[k] = true
+				}
+				continue
+			}
 			add(k)
+			if !strings.Contains(k, "shift+") {
+				add("shift+" + k)
+			}
 		}
 	}
 	if len(set) == 0 {
@@ -127,17 +143,17 @@ func nativeKind(n *html.Node) (kind string, multiline bool) {
 }
 
 // keymapsOf are the data-keys values from the root down to n (SPEC §10.2)
-// as written, as a host reads them: a KeyScope's bindings are the
-// program's. It is not rt.NativeKeyDefault's walk, which reads a scope's
-// data-hotty-default-keys so that a field's own key stays the field's
-// when the scope's binding declines; keep the two apart.
+// as writeKeys wrote them and a host reads them: a KeyScope's bindings
+// are the program's. It is not rt.NativeKeyDefault's walk, which reads
+// the Key handlers' keys alone, so that a field's own key stays the
+// field's when the scope's binding declines; keep the two apart.
 func keymapsOf(n *html.Node) []string {
 	var vs []string
 	for e := n; e != nil; e = e.Parent {
 		if e.Type != html.ElementNode {
 			continue
 		}
-		if v, ok := get(e, "data-keys"); ok {
+		if v, ok := get(e, keysAttr); ok {
 			vs = append(vs, v)
 		}
 	}

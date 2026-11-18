@@ -27,7 +27,10 @@ type renderer struct {
 	p     parser
 	last  []byte // the HTML the tree the host has was parsed from
 	valid bool   // last is that tree's: false before one, and after a snapshot is adopted
-	modal string // modal whose guards and background restrictions are in last
+	// sig and lastSig are the keys this render and the last tree's
+	// declare (keysig): the HTML doesn't carry them.
+	sig, lastSig []byte
+	modal        string // modal whose guards and background restrictions are in last
 	// at is when the view last rendered, in Unix nanoseconds (Peek's
 	// Rendered reads it from another goroutine).
 	at atomic.Int64
@@ -93,7 +96,8 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 		f.After[i]()
 	}
 	s.fault(f.Faults...)
-	return f, s.r.valid && activeModal(f) == s.r.modal && bytes.Equal(s.r.buf.Bytes(), s.r.last), nil
+	s.r.sig = keysig(s.r.sig, f)
+	return f, s.r.valid && activeModal(f) == s.r.modal && bytes.Equal(s.r.buf.Bytes(), s.r.last) && bytes.Equal(s.r.sig, s.r.lastSig), nil
 }
 
 // tree parses what paint rendered into a fresh tree under a root, with an
@@ -101,6 +105,7 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 // caller swaps the tree in with keep.
 func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 	t := &tree{
+		f:    f,
 		root: newRoot(),
 		ids:  make(map[string]string, len(s.ids)),
 		byID: make(map[string]*html.Node, len(s.byID)),
@@ -144,13 +149,22 @@ type tree struct {
 	ids    map[string]string     // an element's place → its id, for those without their own
 	byID   map[string]*html.Node // every element by id
 	fields []string              // the live fields' ids, in order
+	f      *rt.Frame             // the render's frame, whose keys writeKeys writes
+	marks  map[int]bool          // the KeyScope markers seen (writeKeys)
+	// scopes are the kit controls under a KeyScope, by id, as their
+	// markers said before writeKeys took them off.
+	scopes map[string]keyMark
+	// printable are the printable keys the elements around the one being
+	// numbered declare (writeKeys).
+	printable []string
 }
 
 // keep takes t as what the host has, and the HTML paint rendered as its
 // source.
 func (s *Surface) keep(t *tree, f *rt.Frame) {
-	s.prev, s.ids, s.byID, s.fields = t.root, t.ids, t.byID, t.fields
+	s.prev, s.ids, s.byID, s.fields, s.keyMarks = t.root, t.ids, t.byID, t.fields, t.scopes
 	s.r.last = append(s.r.last[:0], s.r.buf.Bytes()...)
+	s.r.lastSig = append(s.r.lastSig[:0], s.r.sig...)
 	s.r.valid = true
 	s.r.modal = activeModal(f)
 }
@@ -201,6 +215,7 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			c.Attr = withID(c.Attr, id)
 		}
 		t.byID[id] = c
+		pushed := s.writeKeys(c, id, t)
 		if s.lifted && id == s.drag {
 			addClass(c, "dragging")
 		}
@@ -208,6 +223,7 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			t.fields = append(t.fields, id)
 		}
 		s.number(c, id, t, pre || c.Data == "pre" || c.Data == "textarea" || c.Data == "listing")
+		t.printable = t.printable[:len(t.printable)-pushed]
 		c = next
 	}
 }

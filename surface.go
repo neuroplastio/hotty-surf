@@ -39,15 +39,17 @@ type Surface struct {
 
 	// The last frame sent: its tree under #root, the handlers its render
 	// registered, every element by its id, and the ids given by place.
-	prev   *html.Node
-	frame  *rt.Frame
-	byID   map[string]*html.Node
-	fields []string // the live fields' ids in prev
-	ids    map[string]string
-	nextID int
-	faults []string
-	memo   map[string]any // the frames' Memo, kept from render to render
-	n      uint64         // the renders so far: the last frame's N
+	prev  *html.Node
+	frame *rt.Frame
+	byID  map[string]*html.Node
+	// keyMarks are the kit controls under a KeyScope, by id (writeKeys).
+	keyMarks map[string]keyMark
+	fields   []string // the live fields' ids in prev
+	ids      map[string]string
+	nextID   int
+	faults   []string
+	memo     map[string]any // the frames' Memo, kept from render to render
+	n        uint64         // the renders so far: the last frame's N
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).
@@ -288,10 +290,10 @@ func (s *Surface) Chars() Chars {
 // the surface sent and its focus, as Chars does, and runs on the
 // driver's goroutine.
 func (s *Surface) OwnKeys() []string {
-	if s.out == nil {
+	if s.out == nil || s.frame == nil {
 		return nil
 	}
-	return ownKeys(s.byID[s.focused], s.platform)
+	return ownKeys(s.byID[s.focused], s.frame.On, s.platform)
 }
 
 // Chars is what a focused element does with a key that types a character.

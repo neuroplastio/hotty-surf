@@ -315,18 +315,21 @@ func (v *sliderView) notch(ctx context.Context, i int) templ.Attributes {
 		v.press(v.at(i))
 	}))
 }
+// sliderKeys are what a thumb's key takes ahead of the host.
+var sliderKeys = []string{"arrow_left", "arrow_right", "arrow_up", "arrow_down", "page_up", "page_down", "home", "end"}
+
 func (v *sliderView) thumb(ctx context.Context, k int) templ.Attributes {
 	attrs := v.p.Attrs
 	if v.ranged && k == 0 {
 		attrs = v.startAttrs
 	}
-	owned := []string{"id", "class", "type", "role", "aria-valuemin", "aria-valuemax", "aria-valuenow", "disabled", "style", "data-on", "data-keys"}
+	owned := []string{"id", "class", "type", "role", "aria-valuemin", "aria-valuemax", "aria-valuenow", "disabled", "style", "data-on"}
 	checkAttrs(ctx, "Slider", attrs, owned...)
 	var on templ.Attributes
 	if v.p.Disabled {
 		on = templ.Attributes{"id": v.thumbID(k)}
 	} else {
-		on = scopeWithKeys(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) })), "arrow_left=program arrow_right=program arrow_up=program arrow_down=program page_up=program page_down=program home=program end=program")
+		on = scopeAttrs(ctx, kitOn(ctx, v.thumbID(k), surf.Key(func(s string) bool { return v.key(k, s) }, sliderKeys...)))
 	}
 	for key, value := range attrs {
 		lower := strings.ToLower(key)

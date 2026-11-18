@@ -520,7 +520,7 @@ func (s *Surface) key(k string) (bool, error) {
 	if n := s.byID[s.focused]; !typing && len(s.frame.KeyScopes) > 0 && n != nil && !hasAttr(n, "disabled") {
 		if dispatch := s.frame.KeyScopes[0].Dispatch; dispatch != nil {
 			var taken bool
-			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, attr(n, "data-hotty-keyscope"), physical, k)
+			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, strconv.Itoa(s.keyMarks[s.focused].scope), physical, k)
 			if taken {
 				return true, s.send()
 			}
@@ -528,11 +528,11 @@ func (s *Surface) key(k string) (bool, error) {
 	}
 	var env rt.KeyEnvironment
 	if intercepted {
-		env = rt.KeyEnvironment{Node: s.byID[s.focused], Focused: s.focused, On: s.frame.On, Platform: s.platform,
+		env = rt.KeyEnvironment{Node: s.byID[s.focused], Kind: s.keyMarks[s.focused].kind, Focused: s.focused, On: s.frame.On, Platform: s.platform,
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
 	}
-	if n := s.byID[s.focused]; intercepted && n != nil && attr(n, "data-hotty-keykind") != "compound-text" && native != nil && native(&env, physical, fallback) {
+	if n := s.byID[s.focused]; intercepted && n != nil && s.keyMarks[s.focused].kind != "compound-text" && native != nil && native(&env, physical, fallback) {
 		return true, s.send()
 	}
 	ids := s.chain(s.focused)
@@ -608,7 +608,7 @@ func (s *Surface) reached() []*rt.KeyScope {
 	var out []*rt.KeyScope
 	if n := s.byID[s.focused]; n != nil {
 		var sc *rt.KeyScope
-		if i, err := strconv.Atoi(attr(n, "data-hotty-keyscope")); err == nil && i > 0 && i <= len(s.frame.KeyScopes) {
+		if i := s.keyMarks[s.focused].scope; i > 0 && i <= len(s.frame.KeyScopes) {
 			sc = s.frame.KeyScopes[i-1]
 		}
 		for _, id := range s.chain(s.focused) {
