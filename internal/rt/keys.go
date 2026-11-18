@@ -40,7 +40,10 @@ type KeyEnvironment struct {
 	Node *html.Node
 	// Kind is the focused kit control's, as ui marked it ("button",
 	// "text", …), or the native element's kind for a declared key.
-	Kind                          string
+	Kind string
+	// Declined says every Key handler that declared the key declined it:
+	// the field's keymap is its default, the declarations left out.
+	Declined                      bool
 	Focused                       string
 	On                            map[string]*Handlers
 	Platform                      hotty.Platform

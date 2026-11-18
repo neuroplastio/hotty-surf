@@ -10,8 +10,12 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// keyScopeDefault is referenced by a KeyScope instance, not registered at
-// init, so a program that uses no scopes does not link the editing fallback.
+// keyScopeDefault is a control's own use of a key a KeyScope's binding,
+// or every Key handler that declared it, declined. ui links it for both
+// (rt.KitDefault).
+func init() { rt.KitDefault = keyScopeDefault }
+
+// keyScopeDefault does the focused control's own use of in.Key.
 func keyScopeDefault(in rt.KeyDefault) rt.KeyResult {
 	name := in.Key
 	if i := strings.LastIndexByte(name, '+'); i >= 0 {

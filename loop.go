@@ -593,7 +593,57 @@ func (s *Surface) key(k string) (bool, error) {
 	if intercepted {
 		return false, s.send()
 	}
+	// A declared key every handler declined is the element's own use
+	// (surf.Key), as a binding's under a KeyScope is: the host gave it
+	// the program, so the surface does what the host would have.
+	if n := s.byID[s.focused]; n != nil && s.declared(physical) {
+		env := rt.KeyEnvironment{Node: n, Kind: useKind(n), Declined: true, Focused: s.focused, On: s.frame.On, Platform: s.platform,
+			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
+			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
+		if env.Kind != "" && rt.NativeKeyDefault(&env, physical, rt.KitDefault) {
+			return true, s.send()
+		}
+	}
 	return false, nil
+}
+
+// declared says whether a Key handler of the focused element or of one
+// around it declared key, or key without shift where it isn't a
+// character (SPEC §10.2 looks it up again without shift).
+func (s *Surface) declared(key string) bool {
+	plain, shifted := strings.CutPrefix(key, "shift+")
+	for _, id := range s.chain(s.focused) {
+		if h := s.frame.On[id]; h != nil {
+			if slices.Contains(h.Keys, key) || shifted && !rt.Printable(key) && slices.Contains(h.Keys, plain) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// useKind is n's kind as rt.NativeKeyDefault does its own use of a key
+// ("button", "link", "checkbox", "radio", "select", "text"), "" for an
+// element whose use the surface can't do (a date field's, the host's
+// scrolling): that key is lost, as a host's would be.
+func useKind(n *html.Node) string {
+	kind, _ := nativeKind(n)
+	switch kind {
+	case "text", "select":
+		return kind
+	case "activate":
+		switch n.Data {
+		case "a":
+			return "link"
+		case "input":
+			switch t := strings.ToLower(attr(n, "type")); t {
+			case "checkbox", "radio":
+				return t
+			}
+		}
+		return "button"
+	}
+	return ""
 }
 
 // reached is the ui.KeyScopes a key is offered to now, in the order it is

@@ -94,4 +94,3 @@ func TestKeysAloneChange(t *testing.T) {
 		t.Fatalf("open: data-keys %q", got)
 	}
 }
-

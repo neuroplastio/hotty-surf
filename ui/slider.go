@@ -315,6 +315,7 @@ func (v *sliderView) notch(ctx context.Context, i int) templ.Attributes {
 		v.press(v.at(i))
 	}))
 }
+
 // sliderKeys are what a thumb's key takes ahead of the host.
 var sliderKeys = []string{"arrow_left", "arrow_right", "arrow_up", "arrow_down", "page_up", "page_down", "home", "end"}
 

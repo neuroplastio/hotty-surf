@@ -28,11 +28,15 @@ func DispatchKeyScope(scopes []*KeyScope, marker, physical, key string) (interce
 	return
 }
 
-// nativeKeyDefault prepares the focused control for the fallback carried
-// by a KeyScope. The surface does not link its editing implementation.
+// NativeKeyDefault does the focused control's own use of key: a button's
+// or a link's activation itself, and the rest (a field's edit, a check
+// box's toggle, a select's pick) through fallback, the kit's, which the
+// surface does not link itself; with none, only activation is done. It
+// runs for a key a KeyScope's binding declined, and for a declared key
+// every Key handler declined (surf.Key).
 func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) KeyResult) bool {
 	n := e.Node
-	if n == nil || hasAttr(n, "disabled") || fallback == nil {
+	if n == nil || hasAttr(n, "disabled") {
 		return false
 	}
 	kind := e.Kind
@@ -53,6 +57,9 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 			e.submitKey(n)
 		}
 		return true
+	}
+	if fallback == nil {
+		return false
 	}
 	in := KeyDefault{Kind: kind, Key: key, Value: e.Values[e.Focused], Checked: e.Checked[e.Focused],
 		Type: attr(n, "type"), Readonly: hasAttr(n, "readonly"), Platform: e.Platform}
@@ -84,7 +91,7 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		}
 		visit(n)
 	}
-	if kind == "text" || kind == "compound-text" {
+	if (kind == "text" || kind == "compound-text") && !e.Declined {
 		// The fields' and its ancestors' own keymaps: their Key handlers'
 		// keys, not the scopes' forwarded ones, so a field's key a
 		// binding declines stays the field's. surf's keymapsOf (OwnKeys)
@@ -186,3 +193,8 @@ func ProgramKeys(keys []string) string {
 	}
 	return b.String()
 }
+
+// KitDefault is the kit's fallback for NativeKeyDefault, which ui sets
+// when it is linked: what does a declared key's own use once every Key
+// handler declined it. Without ui, only activation is done.
+var KitDefault func(KeyDefault) KeyResult

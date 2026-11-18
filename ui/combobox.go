@@ -362,6 +362,7 @@ func (v *comboboxView) key(k string) bool {
 	v.st.moved = true
 	return true
 }
+
 // fieldKeys are the keys the field gives key (K32): Enter always, the
 // arrows, Home and End while a match is shown, and Backspace while it
 // removes the last chip. The root keeps key for the keys that reach it
