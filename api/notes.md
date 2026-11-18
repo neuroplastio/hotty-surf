@@ -2921,3 +2921,81 @@ Tests: `TestDirty` covers these cases:
   through one helper (cellsOf) that Cells and Dirty share. TestDirtyRoles
   covers both, plus a data-x change that stays clean. The fast path is
   unchanged: such changes come by Write, which drops the layout.
+
+## No key binds in templates (the maintainer, 2026-11-18)
+
+"I don't want templates to carry key binds." `data-keys` came from
+hotty-a2ui, where A2UI's code-free model forced it. In hotty-surf a key
+is declared in Go, by the code that handles it. SPEC §10.2's `data-keys`
+still reaches the wire, because a host needs the list, but only as the
+runtime's output, derived from the registered handlers. No template,
+component or app writes it.
+
+Proposed:
+
+```go
+// before
+func Key(fn func(key string) bool) Handler
+// after
+func Key(fn func(key string) bool, keys ...string) Handler
+```
+
+- **keys are what fn takes ahead of the element.** While the keyboard is
+  on the element or inside it, the host gives each of them to the
+  program (SPEC §10.2 `key=program`) rather than using it itself: a
+  field's edit, a button's Space, the surface's scroll. Keys use fn's
+  notation ("arrow_down", "mod+s", "ctrl+n"), read for the host's
+  platform. Without keys, fn hears only the keys that reach the program
+  anyway, as today.
+- **The runtime writes `data-keys`.** After a render it writes each
+  element's attribute from the keys its Key handlers declare and the
+  ui.KeyScopes around a kit control. A `data-keys` that a template or an
+  Attrs map writes is a fault and is dropped, as a runtime id is. So are
+  the internal `data-hotty-default-keys`, `data-hotty-keyscope` and
+  `data-hotty-keykind` attributes.
+- **A key that doesn't parse, and `shift+tab`, are faults.** `tab` is
+  allowed: SPEC lets a text field give it to the program (completion),
+  and a host ignores it elsewhere.
+- **ui.KeyScope is unchanged.** Its `[]KeyBinding` already names its
+  keys. Only where its bindings are written moves into the runtime.
+- **OwnKeys' doc** reads "the keys the focused element's Key handlers
+  declare" in place of "the k=program entries on the focused element"
+  and "an app's Key handler's keys, which declare none".
+- **No other name changes.** `Surface.Program` and `surfui.Node.Give`,
+  which the brief names, are not in v0.7.
+
+Why a variadic on Key: the brief's rule is that the keys sit with the
+code that takes them. A separate `surf.Keys(...)` handler would let them
+drift apart again, and a `[]string` costs every call a literal. A Key
+handler that takes keys conditionally (a menu open or closed) passes the
+condition's list, as the string builders did, and the runtime rewrites
+the attribute when the list changes.
+
+The kit follows K32 (keys are declared where the keyboard is). A kit
+control whose handler sits on its root but whose keyboard sits on a
+descendant (DropdownMenu's trigger, Command's and Combobox's input)
+registers the same handler, with the keys, on that descendant. Its root
+keeps the handler without keys, for keys that reach the program from
+elsewhere inside (Escape on a chip's button). A key the first one
+declines goes to the root's, which declines it too: the handlers act
+only on what they take.
+
+Questions for the review:
+
+1. **Keys that aren't the program's.** `data-keys` also carried
+   `prefix`, `default`, the scroll actions (`j=scroll-down`) and a
+   field's edit actions (`hotty.TerminalKeys`). No component in this
+   repository uses them, but an app could. Lean: they go with this
+   change, and a later pack offers a Go declaration if the maintainer
+   wants one. The maintainer's rule is about templates, but a `surf.Keymap`
+   handler would be a new API this brief doesn't ask for.
+2. **OwnKeys and an app's declared keys.** An app's `data-keys` on the
+   focused element counted before. A Key handler's keys are the same
+   declaration. Lean: count them, kit's and app's alike.
+3. **cells.Screen reads `data-keys` from the document.** The brief asks
+   that it read the handler registry. But the Screen is a host rendition:
+   it takes the document a host takes, and the key vectors check that
+   both read the same wire. Lean: keep it reading the wire, as
+   hotty-xterm.js does.
+4. **Variadic `keys ...string`, `[]string`, or a separate handler.**
+   Lean: variadic, as above.
