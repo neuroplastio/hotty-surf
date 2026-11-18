@@ -25,7 +25,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.Click`: activation: a click, or Enter or space on the element.
 - `surf.Input`: a text field's edits, all it holds after each.
 - `surf.Check`: a check box's or a radio's state.
-- `surf.Key`: keys scoped to an element and its insides, innermost first: the spike's keys went to every handler (the open bug that made a closed select hear arrows meant for a list). A key on the host's mod arrives as mod+…, the notation Kbd and MenuItem.Keys show, so an app is the same on every platform.
+- `surf.Key`: keys scoped to an element and its insides, innermost first: the spike's keys went to every handler (the open bug that made a closed select hear arrows meant for a list). A key on the host's mod arrives as mod+…, the notation Kbd and MenuItem.Keys show, so an app is the same on every platform. Its keys (v0.7, 2026-11-18): the maintainer's rule, "I don't want templates to carry key binds". A host still needs to know which keys go to the program (SPEC §10.2's data-keys), so the handler that takes them names them, and the surface writes the attribute; a separate handler or a markup attribute would let the keys drift from the code that takes them.
 - `surf.Focus`: the keyboard coming onto an element or leaving it: what roving focus (tabs, a list) and a field's commit on blur need.
 - `surf.Outside`: a click outside an element, or the surface losing the keyboard (a click on the program's cells or on another surface gives only a blur): how Basecoat's popover, dropdown menu, select and combobox close; the spike had no way to hear it.
 - `surf.Hover`: the pointer onto an element and off it (SPEC §9.4): Basecoat's menus move their highlighted item with the pointer, which CSS's :hover can't do.

@@ -267,23 +267,25 @@ func (s *Surface) Chars() Chars {
 }
 
 // OwnKeys are the keys the focused element takes itself, ahead of the
-// program's bindings, other than characters (Chars says those; space is
-// one only in a text field, which types it), as hotty names them, sorted.
-// They are a native control's (SPEC §10.2) and a kit control's own:
+// program's bindings, as hotty names them, sorted. Characters are Chars'
+// to say (space is one only in a text field, which types it), but for
+// those a Key handler declares. They are a native control's (SPEC
+// §10.2) and those Key handlers declare:
 //   - a text field's keymap as the host resolves it: the platform's
-//     default, then the data-keys from the root down as written, so a
-//     KeyScope's bindings are the program's. A move is listed with shift
-//     too; a key the keymap gives the program, a prefix or a scroll is
-//     not listed.
+//     default, then the data-keys the surface writes from the root down.
+//     A move is listed with shift too; a key the keymap gives the
+//     program is not listed here (the next item lists it).
 //   - a select's, a date or time field's, and a button's, link's, check
 //     box's or radio button's keys, as SPEC lists them, each with shift.
-//   - a kit control's own: those it gives the program on the focused
-//     element itself (a list's arrows, a combobox's Enter), for its Key
-//     handler to take.
+//   - the keys the Key handlers of the focused element and of the
+//     elements around it declare (surf.Key's keys: a list's arrows, a
+//     combobox's Enter, an app's own), for those handlers to take: each
+//     with shift where it isn't a character, as the host gives that too
+//     (SPEC §10.2), and Escape when declared. A declared character is
+//     listed, but not on an element that types, which keeps it.
 //
-// Tab and Shift+Tab are never in it, nor an app's Key handler's keys,
-// which declare none: an app that wants a key ahead of the program's
-// bindings binds it in a KeyScope. A disabled element, nothing focused
+// Tab and Shift+Tab are never in it, nor a KeyScope's bindings, which
+// ui.Bindings lists. A disabled element, nothing focused
 // and a surface not attached (no platform yet) have none. How a program
 // routes a key with OwnKeys, Chars and ui.Bindings is the keyboard
 // model's (docs/keyboard-model.md, Routing). It reads the last document

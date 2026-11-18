@@ -49,8 +49,8 @@ type ComboboxProps struct {
 	// aria-labelledby. The component owns id, class, type, value,
 	// placeholder, disabled, role, autocomplete, autocorrect, spellcheck,
 	// aria-autocomplete, aria-expanded, aria-controls,
-	// aria-activedescendant, data-on, data-keys and its handlers;
-	// repeating them is a fault.
+	// aria-activedescendant, data-on and its handlers; repeating them is
+	// a fault (data-keys is the runtime's on every element).
 	InputAttrs templ.Attributes
 	// Class adds classes to the root.
 	Class string

@@ -31,7 +31,7 @@ type SliderProps struct {
 	ID string
 	// Attrs names the thumb, for example with aria-label or
 	// aria-labelledby. id, class, type, role, aria-valuemin, aria-valuemax,
-	// aria-valuenow, disabled, style, data-on and data-keys are owned by the
+	// aria-valuenow, disabled, style and data-on are owned by the
 	// component; repeating them is a fault. Attrs cannot install handlers.
 	Attrs templ.Attributes
 	// Min and Max are the ends; a positive Step is both the key increment
@@ -67,8 +67,8 @@ type RangeSliderProps struct {
 	ID string
 	// StartAttrs and EndAttrs name the individual thumbs, for example
 	// with aria-label or aria-labelledby. id, class, type, role,
-	// aria-valuemin, aria-valuemax, aria-valuenow, disabled, style, data-on
-	// and data-keys are owned by the component; repeating them is a fault.
+	// aria-valuemin, aria-valuemax, aria-valuenow, disabled, style and
+	// data-on are owned by the component; repeating them is a fault.
 	// They cannot install handlers.
 	StartAttrs, EndAttrs templ.Attributes
 	// Min and Max are the ends; Step is as in SliderProps. Page keys move

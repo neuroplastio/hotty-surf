@@ -53,7 +53,8 @@ type KeyBinding struct {
 // the keyboard is asked first, before the kit control's default and any
 // surf.Key handler. On a kit control, a scope takes its named keys from
 // the control's native editing; on a plain element, it hears only keys
-// the element doesn't use itself, as surf.Key does. An element that types
+// the element doesn't use itself, as a surf.Key that declares no keys
+// does. An element that types
 // (a kit Input, Textarea or Combobox input, a plain text input, textarea
 // or editing host) keeps its printable keys, with or without shift: no
 // scope takes one from it. A scope around one component overrides that

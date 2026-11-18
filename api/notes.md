@@ -2999,3 +2999,61 @@ Questions for the review:
    hotty-xterm.js does.
 4. **Variadic `keys ...string`, `[]string`, or a separate handler.**
    Lean: variadic, as above.
+
+### As reviewed (p-819, ~/.cache/hotty-surf-nodatakeys/review.md)
+
+Accepted with changes; every lean applied:
+
+- **The surface strips, then writes.** After each render it takes every
+  `data-keys` and every kit key marker off the parsed document (any
+  case, any way in: a literal, an Attrs map, templ.Raw) and writes
+  `data-keys` by id from the registry, its bindings sorted. Without
+  `data-hotty-default-keys`, the kit's `data-hotty-keyscope` and
+  `data-hotty-keykind` stay in the surface's tree by id and no longer
+  reach the wire. The cells still read `data-keys` from the document, as
+  a host does (Q3).
+- **No key literal in a .templ.** NavList's and the spike popup's keys
+  are Go lists beside their handlers. Slider's and Combobox's owned lists
+  and List's merge of an app's `data-keys` are gone. The lint rule
+  `data-keys` finds one in an app's .templ or .go.
+- **Key's contract** adds: the keys of several handlers on one id are
+  their union; a declared `ctrl+n` arrives as `mod+n` where ctrl is the
+  mod; `escape` is allowed and not written (a host ignores it), but
+  OwnKeys lists it; `tab` is a fault outside a text field's own handler;
+  a declared printable key is written back as `key=default` on every
+  typing element inside the declaring one (K27). Page shortcuts point at
+  ui.KeyScope.
+- **Q1.** `prefix`, the scroll actions and a field's edit actions
+  (`hotty.TerminalKeys`) are cut. They are the follow-up pack's scope:
+  - `prefix` (a leader the host holds for the program);
+  - `scroll-up`, `scroll-down`, `scroll-left`, `scroll-right`,
+    `scroll-page-up`, `scroll-page-down`, `scroll-half-page-up`,
+    `scroll-half-page-down`, `scroll-start`, `scroll-end`;
+  - a field's edit actions, `hotty.TerminalKeys` among them;
+  - `default` given explicitly, if declining turns out not to be enough.
+
+  `default` itself is replaced by declining: a declared key every
+  handler declines is the focused element's own use, which the surface
+  does through rt.NativeKeyDefault (activation itself; a field's edit, a
+  toggle and a pick through the kit's fallback, which ui now links at
+  init). A use it can't do (the host's scrolling, a date field's) is
+  lost.
+- **Q2.** OwnKeys counts the declared keys of the focused element and of
+  every element around it, KeyScope bindings excluded, each with shift
+  where it isn't a character (SPEC §10.2 looks a shifted key up again
+  without shift), and a declared character except on an element that
+  types.
+- **Q4.** Variadic.
+- **K32** kept. DropdownMenu's handler moved to its trigger, the only
+  element in it that takes focus, so it has no double ask. Command's
+  and Combobox's root keep the handler for keys from elsewhere inside;
+  TestComboboxDoubleAsk pins that a key the field's declines, the
+  root's declines too with nothing done.
+- **Docs.** KeyScope's "as surf.Key does" reads "as a surf.Key that
+  declares no keys does"; OwnKeys' doc is rewritten;
+  docs/keyboard-model.md has "Declared keys" and a new Routing
+  paragraph; vault/knowledge/field-keys.md has the v0.7 model; Key's
+  reason quotes the maintainer's rule.
+- **The API.** `api/next.txt` has the one changed line,
+  `func Key(func(string) bool, ...string) Handler`. `api/v0.7.txt` waits
+  for the maintainer's `make api-approve`.
