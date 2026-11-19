@@ -145,13 +145,13 @@ func horizontal(field *html.Node) bool {
 // kids are n's children in the order they show: an input group's by
 // their data-align (block-start, inline-start, the control, inline-end,
 // block-end), anything else's as written.
-func kids(n *html.Node) []*html.Node {
+func kids(n *html.Node, st box) []*html.Node {
 	var ks []*html.Node
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
 		ks = append(ks, k)
 	}
 	if n.Type == html.ElementNode {
-		if st := styleOf(n); st.reverse && st.display == dFlex {
+		if st.reverse && st.display == dFlex {
 			// flex-col-reverse, flex-row-reverse: the items the other way.
 			slices.Reverse(ks)
 		}
@@ -550,7 +550,7 @@ func num(s string, def float64) float64 {
 // styleValue is the value of the inline style's declaration k, "" for
 // none.
 func styleValue(n *html.Node, k string) string {
-	for _, d := range strings.Split(attr(n, "style"), ";") {
+	for d := range strings.SplitSeq(attr(n, "style"), ";") {
 		if dk, v, ok := strings.Cut(d, ":"); ok && strings.TrimSpace(dk) == k {
 			return strings.TrimSpace(v)
 		}

@@ -78,7 +78,28 @@ type Cell struct {
 func (c *Screen) Cells() [][]Cell {
 	l := c.layout()
 	out := c.cellsOf(l)
-	c.drew(l)
+	if c.shown.raw != nil && l == c.shownLay && c.scroll == c.shownScroll {
+		return out
+	}
+	// Dirty's snapshot is a copy of the grid, which is the caller's to
+	// keep and change: cheaper than making it again.
+	c.shown, c.shownLay, c.shownScroll = snapshot{raw: c.rawOf(l), cells: copyGrid(out)}, l, c.scroll
+	return out
+}
+
+// copyGrid is a copy of g, in one array.
+func copyGrid(g [][]Cell) [][]Cell {
+	n := 0
+	for _, r := range g {
+		n += len(r)
+	}
+	all := make([]Cell, n)
+	out := make([][]Cell, len(g))
+	for i, r := range g {
+		out[i] = all[:len(r):len(r)]
+		copy(out[i], r)
+		all = all[len(r):]
+	}
 	return out
 }
 
@@ -88,8 +109,9 @@ func (c *Screen) Cells() [][]Cell {
 func (c *Screen) cellsOf(l *layout) [][]Cell {
 	memo := map[*html.Node][2]Role{}
 	out := make([][]Cell, c.rows)
+	all := make([]Cell, c.rows*c.cols) // the grid in one array
 	for i := range out {
-		row := make([]Cell, c.cols)
+		row := all[i*c.cols : (i+1)*c.cols : (i+1)*c.cols]
 		y := c.scroll + i
 		var src []cell
 		if y >= 0 && y < len(l.cv.rows) {
@@ -100,7 +122,7 @@ func (c *Screen) cellsOf(l *layout) [][]Cell {
 			if x < len(src) {
 				k = src[x]
 			}
-			fg, bg := rolesAt(k.own, memo)
+			fg, bg := rolesAt(l, k.own, memo)
 			switch {
 			case k.look&lTip != 0:
 				fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
@@ -133,16 +155,16 @@ func attrOf(l look) Attr {
 // rolesAt are the roles of a cell drawn for n: its text's, its nearest
 // own or inherited colour, and its fill's, the nearest fill of n or an
 // element around it, as CSS paints a box's ground under what it holds.
-func rolesAt(n *html.Node, memo map[*html.Node][2]Role) (fg, bg Role) {
+func rolesAt(l *layout, n *html.Node, memo map[*html.Node][2]Role) (fg, bg Role) {
 	if n == nil {
 		return "", ""
 	}
 	if r, ok := memo[n]; ok {
 		return r[0], r[1]
 	}
-	fg, bg = coloursOf(n)
+	fg, bg = l.colour(n)
 	if n.Parent != nil && (fg == "" || bg == "") {
-		pf, pb := rolesAt(n.Parent, memo)
+		pf, pb := rolesAt(l, n.Parent, memo)
 		if fg == "" {
 			fg = pf
 		}
@@ -164,7 +186,7 @@ func coloursOf(n *html.Node) (fg, bg Role) {
 	}
 	dark := darkScheme(n)
 	fg, bg = kitColours(n, dark)
-	for _, c := range strings.Fields(attr(n, "class")) {
+	for c := range strings.FieldsSeq(attr(n, "class")) {
 		if v, ok := strings.CutPrefix(c, "dark:"); ok && dark {
 			c = v // the scheme's variant, under .dark
 		}
@@ -177,7 +199,7 @@ func coloursOf(n *html.Node) (fg, bg Role) {
 			bg = r
 		}
 	}
-	for _, d := range strings.Split(attr(n, "style"), ";") {
+	for d := range strings.SplitSeq(attr(n, "style"), ";") {
 		k, v, ok := strings.Cut(d, ":")
 		if !ok {
 			continue

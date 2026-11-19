@@ -142,7 +142,7 @@ func styleOf(n *html.Node) box {
 			b.full = true
 		}
 	}
-	for _, c := range strings.Fields(attr(n, "class")) {
+	for c := range strings.FieldsSeq(attr(n, "class")) {
 		b.class(c)
 	}
 	if b.display != dNone {
@@ -171,7 +171,7 @@ func isAtom(n *html.Node) bool {
 
 // isButtonLook is a link drawn as a button: Basecoat's btn classes.
 func isButtonLook(n *html.Node) bool {
-	for _, c := range strings.Fields(attr(n, "class")) {
+	for c := range strings.FieldsSeq(attr(n, "class")) {
 		if c == "btn" || strings.HasPrefix(c, "btn-") {
 			return true
 		}
@@ -339,7 +339,7 @@ func length(s string) (float64, bool) {
 
 // inline reads an inline style's declarations that the Screen knows.
 func (b *box) inline(style string) {
-	for _, d := range strings.Split(style, ";") {
+	for d := range strings.SplitSeq(style, ";") {
 		k, v, ok := strings.Cut(d, ":")
 		if !ok {
 			continue
