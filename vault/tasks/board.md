@@ -1,130 +1,170 @@
 # Board
 
-Last updated: 2026-11-17
+Last updated: 2026-11-19
 
-**Phase:** hotty-surf v0.7 (branch `v07`): Go, templ and Basecoat, by the
-plan of 2026-11-16. Each leg starts with its API as signatures, which a
-blind reviewer settles and `api/v0.7.txt` locks; the leg then fills it.
-v0.6's board follows below as the record; main keeps v0.6.3.
+**Phase:** hotty-surf v0.7 on main, untagged: Go, templ and Basecoat, by
+the plan of 2026-11-16. main fast-forwarded to v0.7 on 2026-11-19, and
+work happens on main from then on. Each leg starts with its API as
+signatures, which a blind reviewer settles and `api/v0.7.txt` locks; the
+leg then fills it. v0.6's board follows below as the record; v0.6.3 is
+the last release.
+
+**Decided (the maintainer, 2026-11-19):**
+
+- main carries v0.7 untagged. The merge isn't a release.
+- v0.7.0 is tagged when every row of `ui/coverage.tsv` is done; a
+  `waits` row counts as done. "Before v0.7.0", below, is the list.
+- The review trail (pack drafts, reviews, verifications) is kept
+  privately. `api/notes.md` keeps the shapes and the decisions.
 
 ## v0.7.0
 
 - [x] **L0, the shape** (journal 2026-11-16): the API as signatures, the
   lock and its tooling, the coverage table of Basecoat's 39 components,
   TinyGo checked.
-- [x] **L1, the runtime** (journal 2026-11-17, `api/notes.md` › L1 notes):
-  - [x] the spike's runtime as the root package: render, number, diff,
-    fields, focus; keys scoped to the focused element's chain, outside
-    press and blur, hover, focus and blur handlers;
-  - [x] the 2 ms floor gone: an unchanged render skips the parse and the
-    diff, a fast parser for templ's markup (x/net/html behind it, held
-    equal by a fuzz test and the `surfparsecheck` tag), Tasks' acts at
-    0.7–1.1 ms on 1k rows;
-  - [x] Tasks and nav byte-identical to the spike's streams, tested
-    through surftest, linted clean;
-  - [x] run: a hotty host, cells on a plain terminal, js/wasm;
-  - [x] TinyGo: Tasks' release wasm builds with no mods, its stream
-    Go's byte for byte (`make tinygo`, `scripts/wasm-stream.sh`);
-  - [x] reload and reload/reloader (text, css and go tiers, msgpack-RPC);
-    `hotty-surf` run, ctl reload, ctl shot, lint, new;
-  - [x] cells, first cut (L3 completes it);
-  - [x] ui's components the API names: Button, Badge, Card, Icon, Kbd,
-    Select, DropdownMenu, Dialog, Tabs, Toaster, code.Block, each tested
-    through surftest; hello's tests run;
-  - [x] ARCHITECTURE.md.
-- [ ] **L2, every Basecoat component:** the jinja ones generated, the
-  CSS-only ones typed, the behaviour scripts translated with a Chromium
-  differential test each; the spike's popups (`internal/spikeui`)
-  retired. `ui/coverage.tsv` is the list.
-- [ ] **L3, the storybook, in cells too:** `hotty-surf book`, a story per
-  component and variant, every story usable by keyboard in cells.
-  - [x] cells knows the kit's layouts (`cells/kit.go`, SUBSET.md): field
-    rows, input-group order, breadcrumb, progress, skeleton, charts,
-    Command's empty text, popover side; merged into v07 e83925f;
-  - [x] the gate as a test: cells' `TestEveryStoryByKeyboard`, over every
-    story;
-  - [x] `hotty-surf book`: the list, the story drawn by the host and in
-    cells beside it, live reload from a checkout, cells alone on a plain
-    terminal; merged into v07 16d6956;
-  - [x] shots in hottyterm and tmux (`vault/journal/2026-11-17-v07-l3.md`);
-  - [ ] the maintainer's try, in hottyterm and in a plain terminal.
-- [ ] **L4, the build tools:** `hotty-surf build --wasm` and `serve`,
-  `shot`'s headless run, the embedding proven in Bubble Tea (surftea)
-  and in plx. Merged into v07 through c2d0349
-  (`vault/journal/2026-11-17-v07-l4.md`):
-  - [x] `build -wasm` (TinyGo), `serve` (Go's wasm, reloading in the
-    browser), `shot` (headless), `ctl shot` naming a surface;
-  - [x] the embedding in a raw-mode program (examples/pane) and in
-    Bubble Tea (surftea), proven in hottyterm;
-  - [x] the reloader's Instances and reload.Placed, which plx asked for;
-  - [x] two fresh-agent trials, and what they tripped on fixed;
-  - [ ] in plx: plx's own proof, on v07's reloader.
-- [ ] **L5, the example apps:** settings, a file browser, a log viewer,
-  a dashboard, a command palette, the embed demo; each in hottyterm, the
-  browser and cells, tested and linted, its authoring time recorded.
-- [ ] **L6, the consumers and the release:** margin first, then plx;
-  v0.7.0 on the maintainer's go-ahead.
+- [x] **L1, the runtime** (journal 2026-11-17, `api/notes.md` › L1
+  notes): render, number, diff, fields, focus; the 2 ms floor gone; Tasks
+  and nav byte-identical to the spike's streams; run on a hotty host, in
+  cells and in js/wasm; TinyGo's release wasm; reload and the command;
+  cells' first cut; the first ui components; ARCHITECTURE.md. Every name
+  has its body.
+- [ ] **L2, every Basecoat component.** Done: B1 forms (6ad01ad), B2
+  display (9aa1a3c), B3 overlays (a89f431, de86735), then key labels
+  (cf1cb8f), ContextMenu and Menu (08d82c1), menu rows (738a3d3), toasts
+  the app owns (68444e6), Overlays (1fbf3b8). Coverage: 23 done, 13 port,
+  3 new. Left:
+  - B4, disclosure and navigation (accordion, button-group,
+    collapsible), not started;
+  - sidebar: its API pack, stories, render and differential tests;
+  - tabs' `tabs/vertical` story, and toast's row listing `toast/owned`;
+  - the ten port rows that TestCoverage already finds complete
+    (combobox, command, dialog, drawer, dropdown-menu, input, popover,
+    range, select, tooltip): read each note's condition (input's date
+    and time in the looks pass, select's flipping), then flip the
+    status;
+  - `internal/spikeui` retired: examples/tasks and examples/nav still
+    import it.
+- [ ] **L3, the storybook, in cells too.** Done: cells' kit layouts
+  (e83925f), the keyboard gate (`TestEveryStoryByKeyboard`), `hotty-surf
+  book` (16d6956), shots in hottyterm and tmux (journal l3), the book's
+  port (6175df4, efbc893) and its side-by-side audit (e2b8466). Left:
+  - the maintainer's try, in hottyterm and in a plain terminal;
+  - from the side-by-side audit: the rest of the comparison across every
+    story, the spike's story props and live handlers not yet ported, the
+    dropdown and popover stories on B3's API, and the spike stories the
+    audit found with no v0.7 story; Layout thumbnails and Busy badge
+    stay plx's;
+  - Blitz gaps 11 (a list scrolled past its new end goes blank) and 12
+    (a box keeps its old width after a delta), for hotty-blitz.
+- [ ] **L4, the build tools.** Done: `build -wasm`, `serve`, `shot`,
+  `ctl shot`, the embedding in a raw-mode program (examples/pane) and in
+  Bubble Tea (surftea), Instances and reload.Placed, two fresh-agent
+  trials (b41180d, 241b2c7, 4751f3a, c2d0349; journal l4). Left: plx's
+  own proof on v0.7's reloader, under way in plx.
+- [ ] **L5, the example apps.** Done: settings (00f26fb), todo (4444e8e),
+  commits in surftea (5361242), dashboard (c9a22a9), logs (9d39062), a
+  file browser (explorer, da981f5), the embed demos (examples/pane,
+  surftea/examples/files); all but pane in `make tinygo`. Left: a
+  command palette, each app's authoring time, and each shown in
+  hottyterm, the browser and cells.
+- [ ] **L6, the consumers and the release.** Done for plx, in cells: the
+  pointer (15a7e96), copy and cut (f98148d), colour as roles (e57bf07),
+  the selected band (d6813ab), the stand-ins (9a0aaf5), Tab stops
+  (9e4f696), tooltips (be531b5), Screen.Dirty (c325fc3). Left: margin,
+  plx's move to v0.7, and the tag when "Before v0.7.0" is empty.
 
-### Found in L1, for later legs
+### Landed after 2026-11-17
 
-- L2: Keep's get takes a driver busy past 3 s for dropped, and runs get
-  off the driver (fix 24, by design). L2's longer handlers should stay
-  under it, or the wait should grow.
-- A later pack: surftest can't say where the keyboard is. A test can't
-  tell "on X" from "nothing focused" when X holds the outermost Key;
-  `Rig.Focused()` would be an API change.
-- mods/templ's canary is weekly in CI (`make canary`); a red run goes
-  here.
-- ~~`ctl shot` renders through hotty-blitz's `hotty render`; the spike's
-  headless shot (build, run, render, exit) is L4's.~~ Done in L4:
-  `hotty-surf shot`.
+- **The L5 asks for plx** (11-17): Report and Finding on a wire (71b68d9),
+  drags and the secondary press (69dcd99), Focused, Chars and Blur
+  (0aa1f9d), Clicks and Refocus (463488b), OwnKeys (e4b39dc), the kit's
+  sheet as a resource (0517aec); an element moved to another parent is
+  taken out first (5bc0ee9).
+- **No key binds in templates** (89f9fe0, 11-18; the maintainer's rule):
+  keys are declared by `surf.Key` in Go, and `data-keys` is the runtime's
+  output.
+- **cells' speed** (51d4539, 11-19): nine internal fixes, and a same-shape
+  document refills the kept tree as a load would.
+- **Field keys, prefix and scroll in Go** (42e9d4a, 11-19): `surf.Bind`
+  with Action, Unbind, Group, Readline, Yield and Override (API
+  fa14556); the text fallback linked only where text is edited.
+- **List's tabindex in one pass** (1788f5e), and **the id fault**
+  (77c0189): `On` faults an id a hotty value can't carry.
+- **Screen memos** (aa229e8): a Screen keeps more of a pass, a delta
+  forgets only what its ops reach, and a colour-only delta repaints
+  without layout.
+- **hotty-go v0.8.2** in go.mod and surftea/go.mod (48fe24a), in place
+  of the pseudo-versions.
+- **Before main took v0.7** (2026-11-19, branch premerge): CI's timeout
+  back to 60 minutes; the README for an untagged main; surftea said to
+  be checkout-only; the review trail out of api/notes.md; reasons,
+  comments and the board without pane ids, plx's gap ids or private
+  files.
+
+### Before v0.7.0
+
+The single list of what the tag needs.
+
+- [ ] **Every coverage row done** (L2 above): B4's three, sidebar,
+  tabs' and toast's one each, the ten to read and flip. A row that
+  needs a SPEC change (accordion's toggle event, collapsible's state)
+  may be `waits` instead, which counts as done.
+- [ ] **`internal/spikeui` retired:** tasks and nav on ui's components.
+- [ ] **L5's command palette and authoring times.**
+- [ ] **The second trial's leftovers:** Autofocus's templ form in its
+  doc and the scaffold's field autofocused; One's failure listing the
+  nearest texts; `help` saying a text save under serve is a Go reload;
+  the served page's `<title>`; cells' gap between a check box and its
+  label; `shot -h` saying it draws the starting state.
+- [ ] **The ctl socket's fallback directory:** `/tmp/hotty-surf-<uid>`
+  checked for its owner and mode 0700 when it already exists
+  (internal/devcmd/ctl.go).
+- [ ] **An importer check in CI:** hotty-surf and surftea built from a
+  module outside the tree, as v0.6's CI did.
+- [ ] **surftea's require:** a pseudo-version of hotty-surf on main in
+  place of the placeholder, right after main has v0.7; a tagged
+  hotty-surf at the tag (gov P-5).
+
+### Found along the way, for later legs
+
 - **Open question: an app's own CSS build** (a hook the reloader runs,
-  or a `hotty-surf build` step). L4 removed the reloader's `style/build.sh`
-  hook, which nothing used or documented. An app that wants its own
-  Tailwind build runs a watcher beside the reloader that writes
-  `style/app.css` (`tailwindcss --watch -o style/app.css`): the reloader
-  takes that write as a css save, and lint's class rule reads app.css.
-  Tasks' and nav's app.css are edited by hand.
-- ~~`hotty-surf run` needs a hotty host; it has no cells fallback yet.~~
-  Done: run draws in cells where the terminal is no hotty host (the L4
-  trials used it in tmux).
+  or a `hotty-surf build` step). An app that wants its own Tailwind build
+  runs a watcher beside the reloader that writes `style/app.css`; the
+  reloader takes that write as a css save, and lint's class rule reads
+  app.css.
+- Keep's get takes a driver busy past 3 s for dropped, and runs get off
+  the driver (by design). Long handlers should stay under it.
+- surftest can't say where the keyboard is (`Rig.Focused()` would be an
+  API change, for a pack).
 - A process that dies before its hello makes a reload wait its 10 s.
-- kit.css has no `.dialog`, `.toaster` or `.toast` rules (the spike's
-  build left out what its pages didn't use): Dialog and Toaster draw
-  unstyled until L2 builds the kit's CSS whole and Blitz is shown to draw
-  it (F5). No text class for `--color-primary` or the chart colours, so
-  ui/code leaves strings and literals plain.
-- Dialog has no focus trap and can't make the page behind it inert; a
-  click on its own text gives the keyboard away, so Escape waits for a
-  click on one of its controls. Whether hotty needs a modal region is a
-  question for the spec (the maintainer's), not one to work around.
-- No cross-component close (Basecoat's `basecoat:popover`): opening one
-  popup by keyboard leaves another open. L2's translated scripts.
-- A Select at the right edge opens its list past the window's edge
-  (hello, in hottyterm): Basecoat's popover alignment, L2.
 - A vendoring app's text tier still waits out templ's 100 ms recheck
-  after a render: mods/templ reaches dev builds through the module
-  cache's templ, which vendor/ replaces (internal/templmod).
-- hotty-go's test host moves a focused select when an option's
-  `selected` changes (it checks the option for focus, not the select),
-  which SPEC §6.2 doesn't allow: a hotty-go fix.
-- From L4's second trial, open (api/notes.md, "What the second trial
-  left"): Autofocus's templ form in its doc and the scaffold's field
-  autofocused; One's failure listing the nearest texts; help saying a
-  text save under serve is a Go reload; the served page's `<title>`;
-  cells' gap between a check box and its label; `shot -h` saying it
-  draws the starting state.
-- The blind review's "What L2–L4 should know" (in its report) is the
-  next legs' list: two components asking for the keyboard in one frame,
-  a ToasterState on one surface only, the rest of §6.2's morph in cells,
-  release builds linking the snapshot code, the ctl socket's fallback
-  directory's owner and mode.
-- [ ] **SPEC proposal, deferred:** an area on focus; host-placed
-  popovers (`review-ctx.md`, ContextMenu's Q2 and Q3). To p-653 for the
-  maintainer after plx's cutover.
-- [ ] **Before v0.7.0:** hotty-go/hottytest v0.8.2 replaces the
-  pseudo-versions (`e31f778`) in go.mod and surftea/go.mod. p-653 tags,
-  on the maintainer's go.
+  after a render (mods/templ reaches dev builds through the module
+  cache's templ, which vendor/ replaces).
+- A Select at the right edge opens past the window: `Align: end` by hand,
+  no automatic flip yet.
+- Dialog: its focus guards wrap Tab and the background is inert (B3);
+  whether hotty needs a modal region is a question for the spec, the
+  maintainer's.
+- The blind review's list for the later legs: two components asking for
+  the keyboard in one frame, a ToasterState on one surface only, the rest
+  of §6.2's morph in cells, release builds linking the snapshot code.
+- The kit rules (K1 to K32) are cited by number in code and docs, but
+  only stated where api/notes.md applies them: a list of them belongs in
+  the repository.
+- hotty-go's test host moved a focused select when an option's
+  `selected` changed (SPEC §6.2 doesn't allow it): a hotty-go fix, to
+  check against v0.8.2.
+- mods/templ's canary runs weekly in CI from main (`make canary`); a red
+  run goes here. Green on templ 9a0eb3c (2026-11-19).
+- [ ] **SPEC proposals, deferred to the maintainer:** an area on focus,
+  and host-placed popovers (ContextMenu's key-opened placement and its
+  flip at the edges); a note that a=focus keeps a field's caret and
+  selection; focus fixup as HTML's (B3's notes).
+- ~~kit.css has no `.dialog`, `.toaster` or `.toast` rules~~: L2 builds
+  kit.css whole. ~~No cross-component close~~: one popup open per
+  surface (ui/popup.go). ~~`ctl shot` through `hotty render`~~ and
+  ~~`run` with no cells fallback~~: done in L4. ~~hotty-go/hottytest
+  v0.8.2~~: 48fe24a.
 
 ## v0.1.0, the first public tag
 
@@ -476,7 +516,7 @@ The order is the maintainer's, via gov (2026-10-30):
   `:hover` rules light items, nav items, clickable lines, rows and
   text, buttons, switches, selects, pills and the search. In the cells
   only an open menu's row lights, and no tooltip shows, since a host's
-  tool hears no bare motion there (plx's `sdk/surfdk/tip.go`). One leg
+  tool hears no bare motion there (plx's own tip code). One leg
   at a time, in this order:
   1. Design Agent: the cells' hover look, apart from the focus and
      selection bands. Designed (2026-11-06):
@@ -513,7 +553,7 @@ The order is the maintainer's, via gov (2026-10-30):
   host draws a `name`d icon by the font's glyph, not by MDI's SVG.
 - [x] **Drag and drop** (for plx-agents' roster, which reorders agents
   by dragging a row before or after another, through a shim of plx's
-  own until now, `sdk/surfdk/drag.go`). `drag` makes a widget a drag
+  own until now). `drag` makes a widget a drag
   handle and `drop` a place to drop on: bare the whole of it, `halves`
   before or after it, `thirds` before, into or after it (`data-on`,
   `data-steps`, hotty SPEC §9.1). `@drop` on the target, `@dragstart`
@@ -527,18 +567,13 @@ The order is the maintainer's, via gov (2026-10-30):
   `@drop`, no click). The cells: `cells.Renderer.Move`, a press on a
   handle holding its click for the release (a port of plx's
   `sdk/internal/events/drag.go`), and the indicator as an accent
-  underline where plx's `dropLine` draws one (`Run.Ul`, `Overline`).
+  underline where plx's own drop line drew one (`Run.Ul`, `Overline`).
   Both modes, surflua, the conformance cases `drag-*` on a host and in
   the cells, the gallery's `list/drop` story, docs/surf.md ("Drag") and
-  the spec ("Drags"). **What plx can delete:** `sdk/surfdk/drag.go`
-  whole (`MarkDrag`, `MarkDrop`, `dropLine`, `hitAbove`, `OnDrag`,
-  `Pointer`, the Escape `dragKeys`), its cells `Pointer` plumbing from
-  `sdk/tool`'s `OnDrag` where nothing else uses it (the renderer takes
-  `Move`), and the roster's `marked` wrapper and `Carry`/`Drop`
-  wiring: `agents.surf`'s `<item>` gets `drag drop="halves"
-  @drop="move($drag.from, e.address, $drag.where)"`, with
-  `@dragend`/`@dragstart` for its carried look if it keeps one. Its
-  `DropBefore`/`DropAfter` fields go: the indicator is surf's.
+  the spec ("Drags"). **What plx can delete:** its own drag shim and the
+  cells pointer plumbing behind it, and its roster's hand-wired drag and
+  drop, which a `drag drop="halves"` item with `@drop` replaces; the
+  drop indicator is surf's.
 - [x] **Tooltips** (after drag; the maintainer, 2026-11-03: "tip ->
   title, but make it a component, not plain text, so tooltip could be
   complex. hotty-surf feature", and hotty's V7-02 withdrawn: "withdraw,
@@ -636,7 +671,7 @@ The order is the maintainer's, via gov (2026-10-30):
       picker can move onto the menu. Same pass as #2.
     - **Colours from data** (#7): a colour from the model draws only
       where the template declares it; carry it as a style value.
-    - **A tooltip in a tool's own view** (#1, for plx's `sdk/surfdk`):
+    - **A tooltip in a tool's own view** (#1, for plx's SDK):
       `surfrun.Surface.Tip` exists (b52c261), so first find what a
       tool's view lacks to use it.
     - MenuCard's `flex: 1 0 auto` clipped its shadow (#4): fixed in
