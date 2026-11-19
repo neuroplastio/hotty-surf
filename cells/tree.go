@@ -326,7 +326,7 @@ func unset(n *html.Node, k string) {
 // tokens says whether the space-separated list in n's attribute k holds
 // tok (class~=, data-on~=).
 func tokens(n *html.Node, k, tok string) bool {
-	for _, t := range strings.Fields(attr(n, k)) {
+	for t := range strings.FieldsSeq(attr(n, k)) {
 		if t == tok {
 			return true
 		}

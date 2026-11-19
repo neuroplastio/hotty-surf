@@ -164,7 +164,7 @@ func coloursOf(n *html.Node) (fg, bg Role) {
 	}
 	dark := darkScheme(n)
 	fg, bg = kitColours(n, dark)
-	for _, c := range strings.Fields(attr(n, "class")) {
+	for c := range strings.FieldsSeq(attr(n, "class")) {
 		if v, ok := strings.CutPrefix(c, "dark:"); ok && dark {
 			c = v // the scheme's variant, under .dark
 		}
