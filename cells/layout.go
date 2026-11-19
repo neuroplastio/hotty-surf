@@ -47,6 +47,16 @@ type layout struct {
 	hasCaret  bool
 	measuring bool
 	memo      map[memoKey]int
+	// styles and colours are each element's styleOf and coloursOf in this
+	// pass, shared with the measuring layouts: the tree doesn't change
+	// while it is laid out.
+	styles  map[*html.Node]box
+	colours map[*html.Node][2]Role
+	// texts are each text's pieces in this pass, in each look it is laid
+	// out in, as textPieces makes them after no pieces; kidsOf each
+	// element's children in the order they show.
+	texts  map[*html.Node][]textPass
+	kidsOf map[*html.Node][]*html.Node
 	// heights are the definite heights of the elements that have one
 	// (h-screen, h-full, h-[…]), and of a column's growing items, which
 	// it gives the rows its other items leave (flex-1).
@@ -110,6 +120,15 @@ func (c *Screen) layout() *layout {
 		scrolls: map[*html.Node]scrollBox{},
 		memo:    map[memoKey]int{},
 	}
+	if c.kept == nil {
+		c.kept = &kept{
+			styles:  map[*html.Node]box{},
+			colours: map[*html.Node][2]Role{},
+			texts:   map[*html.Node][]textPass{},
+			kidsOf:  map[*html.Node][]*html.Node{},
+		}
+	}
+	l.styles, l.colours, l.texts, l.kidsOf = c.kept.styles, c.kept.colours, c.kept.texts, c.kept.kidsOf
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
 		l.drawOverlays()
@@ -140,7 +159,7 @@ func (l *layout) measure(n *html.Node, in inh) int {
 	if w, ok := l.memo[k]; ok {
 		return w
 	}
-	m := &layout{c: l.c, measuring: true, memo: l.memo}
+	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 	_, w := m.node(n, 0, 0, infinite, in)
 	l.memo[k] = w
 	return w
@@ -157,7 +176,7 @@ func (l *layout) ext(n *html.Node, r rect) {
 // adds, reverse while it has the keyboard, dim while disabled.
 func (l *layout) lookOf(n *html.Node, in look, st box) look {
 	lk := in | st.look
-	if fg, _ := coloursOf(n); fg != "" && fg != "muted-foreground" {
+	if fg, _ := l.colour(n); fg != "" && fg != "muted-foreground" {
 		// A colour of its own: no longer the muted text around it.
 		lk &^= lMuted
 	}
@@ -203,7 +222,7 @@ func (l *layout) activeItem() *html.Node {
 	}
 	t := l.c.byID(id)
 	for a := t; a != nil && a.Type == html.ElementNode; a = a.Parent {
-		if styleOf(a).display == dNone {
+		if l.style(a).display == dNone {
 			return nil
 		}
 	}
@@ -214,7 +233,7 @@ func (l *layout) activeItem() *html.Node {
 // node lays n out as a block at x, y, w wide, and says how high it is and
 // how wide its content is.
 func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
-	st := styleOf(n)
+	st := l.style(n)
 	if n.Type != html.ElementNode || st.display == dNone && n != l.c.body {
 		return 0, 0
 	}
@@ -382,7 +401,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 		h = l.c.rows
 	case "full", "100%":
 		if p := n.Parent; p != nil && p.Type == html.ElementNode {
-			h = l.definite(p, styleOf(p))
+			h = l.definite(p, l.style(p))
 		}
 	default:
 		h, _ = scrollLimit(st.height, l.c.rows)
@@ -402,7 +421,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 	var growers []*html.Node
 	used, items := 0, 0
-	m := &layout{c: l.c, measuring: true, memo: l.memo}
+	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 	var run []*html.Node
 	flush := func() {
 		if len(run) > 0 {
@@ -412,7 +431,7 @@ func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 			run = nil
 		}
 	}
-	for _, k := range kids(n) {
+	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			if strings.TrimSpace(k.Data) != "" {
@@ -420,7 +439,7 @@ func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 				flush()
 			}
 		case html.ElementNode:
-			st := styleOf(k)
+			st := l.style(k)
 			if st.display == dNone {
 				continue
 			}
@@ -486,7 +505,7 @@ func (l *layout) drawOverlays() {
 	for len(l.overlays) > 0 {
 		o := l.overlays[0]
 		l.overlays = l.overlays[1:]
-		m := &layout{c: l.c, measuring: true, memo: l.memo}
+		m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 		h, pw := m.node(o.n, 0, 0, o.w, o.in)
 		pw = max(min(pw, o.w), 1)
 		for j := o.y; j < o.y+h; j++ {
@@ -641,16 +660,16 @@ func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int
 			run = nil
 		}
 	}
-	for _, k := range kids(n) {
+	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			run = append(run, k)
 		case html.ElementNode:
-			st := styleOf(k)
+			st := l.style(k)
 			if st.display == dNone {
 				continue
 			}
-			if !items && (st.display == dInline || st.display == dAtom) && !hasBlock(k) {
+			if !items && (st.display == dInline || st.display == dAtom) && !l.hasBlock(k) {
 				run = append(run, k)
 				continue
 			}
@@ -670,7 +689,7 @@ func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int
 
 // hasBlock says whether an inline element holds a block, which makes it
 // one.
-func hasBlock(n *html.Node) bool {
+func (l *layout) hasBlock(n *html.Node) bool {
 	if isAtom(n) {
 		return false
 	}
@@ -678,11 +697,11 @@ func hasBlock(n *html.Node) bool {
 		if k.Type != html.ElementNode {
 			continue
 		}
-		switch st := styleOf(k); st.display {
+		switch st := l.style(k); st.display {
 		case dBlock, dFlex, dTable:
 			return true
 		case dInline:
-			if hasBlock(k) {
+			if l.hasBlock(k) {
 				return true
 			}
 		}
@@ -701,18 +720,18 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		fixed bool // shrink-0: not made narrower
 	}
 	var items []item
-	for _, k := range kids(n) {
+	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			if !in.pre && strings.TrimSpace(k.Data) == "" {
 				continue
 			}
 			it := item{n: k}
-			m := &layout{c: l.c, measuring: true, memo: l.memo}
+			m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 			_, it.w = m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
 			items = append(items, it)
 		case html.ElementNode:
-			ks := styleOf(k)
+			ks := l.style(k)
 			if ks.display == dNone {
 				continue
 			}
@@ -829,12 +848,12 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 	}
 	var rows []row
 	addRow := func(tr *html.Node, head bool) {
-		if styleOf(tr).display == dNone {
+		if l.style(tr).display == dNone {
 			return
 		}
 		r := row{tr: tr, head: head}
 		for k := tr.FirstChild; k != nil; k = k.NextSibling {
-			if (k.DataAtom == atom.Td || k.DataAtom == atom.Th) && styleOf(k).display != dNone {
+			if (k.DataAtom == atom.Td || k.DataAtom == atom.Th) && l.style(k).display != dNone {
 				r.cells = append(r.cells, k)
 			}
 		}
@@ -846,7 +865,7 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 		case atom.Tr:
 			addRow(k, false)
 		case atom.Thead, atom.Tbody, atom.Tfoot:
-			if styleOf(k).display == dNone {
+			if l.style(k).display == dNone {
 				continue
 			}
 			for r := k.FirstChild; r != nil; r = r.NextSibling {
@@ -1110,12 +1129,12 @@ func (l *layout) paint(cs []char, x, y int, lk look, own, stop *html.Node) {
 func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	switch n.Type {
 	case html.TextNode:
-		return textPieces(ps, n.Data, in, n.Parent)
+		return l.textPieces(ps, n, in)
 	case html.ElementNode:
 	default:
 		return ps
 	}
-	st := styleOf(n)
+	st := l.style(n)
 	if st.display == dNone {
 		return ps
 	}
@@ -1435,4 +1454,73 @@ func iconLabel(n *html.Node) string {
 		}
 	}
 	return ""
+}
+
+// style is styleOf(n), once a pass.
+func (l *layout) style(n *html.Node) box {
+	if st, ok := l.styles[n]; ok {
+		return st
+	}
+	st := styleOf(n)
+	l.styles[n] = st
+	return st
+}
+
+// colour is coloursOf(n), once a pass.
+func (l *layout) colour(n *html.Node) (fg, bg Role) {
+	if r, ok := l.colours[n]; ok {
+		return r[0], r[1]
+	}
+	fg, bg = coloursOf(n)
+	l.colours[n] = [2]Role{fg, bg}
+	return fg, bg
+}
+
+// textPass is a text's pieces under what it inherits.
+type textPass struct {
+	in inh
+	ps []piece
+}
+
+// textPieces adds a text's pieces to ps, as textPieces does, making them
+// once for each look it is laid out in. Only its first white space depends
+// on ps: collapsed into a space ps ends with.
+func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
+	var t []piece
+	found := false
+	for _, e := range l.texts[n] {
+		if e.in == in {
+			t, found = e.ps, true
+			break
+		}
+	}
+	if !found {
+		t = textPieces(nil, n.Data, in, n.Parent)
+		l.texts[n] = append(l.texts[n], textPass{in, t})
+	}
+	if !in.pre && len(t) > 0 && t[0].kind == pSpace && len(ps) > 0 && ps[len(ps)-1].kind == pSpace {
+		t = t[1:]
+	}
+	return append(ps, t...)
+}
+
+// kids are kids(n), once a pass.
+func (l *layout) kids(n *html.Node) []*html.Node {
+	if ks, ok := l.kidsOf[n]; ok {
+		return ks
+	}
+	ks := kids(n, l.style(n))
+	l.kidsOf[n] = ks
+	return ks
+}
+
+// kept is what a layout pass knows of the tree that holds until it
+// changes (Screen.changed): each element's style, colours and children,
+// and each text's pieces. The widths (memo) are not: a field's
+// value changes them without a change to the tree.
+type kept struct {
+	styles  map[*html.Node]box
+	colours map[*html.Node][2]Role
+	texts   map[*html.Node][]textPass
+	kidsOf  map[*html.Node][]*html.Node
 }

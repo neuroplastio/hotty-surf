@@ -2,6 +2,7 @@ package cells
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -24,6 +25,33 @@ func (c *Screen) load(name, doc string) error {
 		body.AppendChild(n)
 	}
 	c.cutDrag()
+	if c.body != nil && c.name == name && c.kept != nil && sameShape(c.body, body) {
+		// The same elements with other text or attributes: the
+		// kept tree takes the new one's, and keeps what a pass knows of
+		// what didn't change. The rest is as for a new tree, where
+		// what the pointer and a reveal held is detached.
+		if c.refill(c.body, body) {
+			// An element's style reads its parent's, children's,
+			// descendants' and siblings' attributes too (kit, filtered,
+			// barLabels): any change, and none of them holds.
+			c.kept.styles = map[*html.Node]box{}
+			c.kept.kidsOf = map[*html.Node][]*html.Node{}
+		}
+		c.fields = map[*html.Node]*field{}
+		c.focused, c.remembered = nil, nil
+		c.scroll = 0
+		c.boxScroll = nil
+		if c.down != nil {
+			// Still a button down, as Move sees it, but on nothing a
+			// release clicks.
+			c.down = &pressed{}
+		}
+		c.clicks = clickRun{}
+		c.tip = nil
+		c.revealAfter, c.revealWhere = nil, ""
+		c.ids, c.lay = nil, nil
+		return nil
+	}
 	c.name, c.body = name, body
 	c.fields = map[*html.Node]*field{}
 	c.focused, c.remembered = nil, nil
@@ -38,6 +66,7 @@ func (c *Screen) load(name, doc string) error {
 func (c *Screen) changed() {
 	c.ids = nil
 	c.lay = nil
+	c.kept = nil
 }
 
 // byID is the element with the id, or nil.
@@ -326,7 +355,7 @@ func unset(n *html.Node, k string) {
 // tokens says whether the space-separated list in n's attribute k holds
 // tok (class~=, data-on~=).
 func tokens(n *html.Node, k, tok string) bool {
-	for _, t := range strings.Fields(attr(n, k)) {
+	for t := range strings.FieldsSeq(attr(n, k)) {
 		if t == tok {
 			return true
 		}
@@ -369,4 +398,51 @@ func inSVG(n *html.Node) bool {
 func idOf(n *html.Node) string {
 	id, _ := get(n, "id")
 	return id
+}
+
+// sameShape says whether two trees have the same nodes in the same places:
+// their types and tags, whatever their text and attributes.
+func sameShape(a, b *html.Node) bool {
+	if a.Type != b.Type || a.DataAtom != b.DataAtom || a.Type == html.ElementNode && a.Data != b.Data {
+		return false
+	}
+	ka, kb := a.FirstChild, b.FirstChild
+	for ; ka != nil && kb != nil; ka, kb = ka.NextSibling, kb.NextSibling {
+		if !sameShape(ka, kb) {
+			return false
+		}
+	}
+	return ka == nil && kb == nil
+}
+
+// refill gives the kept tree a the text and attributes of b, its shape,
+// and forgets what a pass knew of each text that changed and of the
+// colours under each element whose attributes changed. It says whether
+// any element's attributes changed.
+func (c *Screen) refill(a, b *html.Node) (attrs bool) {
+	k := c.kept
+	switch a.Type {
+	case html.TextNode:
+		if a.Data != b.Data {
+			a.Data = b.Data
+			delete(k.texts, a)
+		}
+	case html.ElementNode:
+		if !slices.Equal(a.Attr, b.Attr) {
+			a.Attr = b.Attr
+			attrs = true
+			// Its colours, and its descendants' (a scheme's class), and
+			// the pieces of its texts.
+			walk(a, func(n *html.Node) {
+				delete(k.colours, n)
+				delete(k.texts, n)
+			})
+		}
+	}
+	for ka, kb := a.FirstChild, b.FirstChild; ka != nil; ka, kb = ka.NextSibling, kb.NextSibling {
+		if c.refill(ka, kb) {
+			attrs = true
+		}
+	}
+	return attrs
 }

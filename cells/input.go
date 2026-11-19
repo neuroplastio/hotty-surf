@@ -461,7 +461,7 @@ func (c *Screen) activateBy(n *html.Node, count, mods int) {
 		} else {
 			set(n.Parent, "open", "")
 		}
-		c.lay = nil
+		c.lay, c.kept = nil, nil
 	}
 	e := hotty.Event{Kind: hotty.EventClick, Count: count, Mods: mods, Area: c.area(n)}
 	if v, ok := get(n, "value"); ok {

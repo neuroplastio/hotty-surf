@@ -159,3 +159,23 @@ func TestDirtyRoles(t *testing.T) {
 		})
 	}
 }
+
+// Cells' grid is the caller's to keep and change: a change to it is not
+// a change to the Screen, nor to the next grid.
+func TestDirtyAfterTheCallerChangesItsGrid(t *testing.T) {
+	c := tipScreen(t, `<p class="text-primary">word</p>`, 10, 2)
+	g := c.Cells()
+	want := g[0][0]
+	g[0][0] = Cell{Text: "x", Fg: "destructive"}
+	if c.Dirty() {
+		t.Error("dirty after the caller changed its grid")
+	}
+	// Laid out again, the same: Dirty compares what it drew.
+	c.Resize(10, 2)
+	if c.Dirty() {
+		t.Error("dirty after a resize to the same size, once the caller changed its grid")
+	}
+	if got := c.Cells()[0][0]; got != want {
+		t.Errorf("the next grid has %+v, want %+v", got, want)
+	}
+}
