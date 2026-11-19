@@ -179,19 +179,36 @@ func charsOf(s string) []char {
 		return out[:len(out):len(out)]
 	}
 	out := make([]char, 0, utf8.RuneCountInString(s))
-	for g := displaywidth.StringGraphemes(s); g.Next(); {
+	for i := 0; i < len(s); {
+		r, n := utf8.DecodeRuneInString(s[i:])
+		if oneCell(r) {
+			// A character no next one joins is a cluster of its own.
+			if r2, _ := utf8.DecodeRuneInString(s[i+n:]); i+n == len(s) || r2 < 0x300 || oneCell(r2) {
+				out = append(out, char{s[i : i+n], 1})
+				i += n
+				continue
+			}
+		}
+		g := displaywidth.StringGraphemes(s[i:])
+		g.Next()
 		v := g.Value()
+		i += len(v)
 		if v == "\t" {
 			out = append(out, char{" ", 1})
 			continue
 		}
-		w := g.Width()
-		if w <= 0 {
-			continue
+		if w := g.Width(); w > 0 {
+			out = append(out, char{v, min(w, 2)})
 		}
-		out = append(out, char{v, min(w, 2)})
 	}
 	return out[:len(out):len(out)]
+}
+
+// oneCell says whether r is a character one cell wide that begins its
+// own cluster: printable ASCII and Latin-1 (but the soft hyphen), and
+// box drawing and blocks.
+func oneCell(r rune) bool {
+	return r >= 0x20 && r < 0x7f || r >= 0xa0 && r <= 0xff && r != 0xad || r >= 0x2500 && r <= 0x259f
 }
 
 // ascii says whether s is all ASCII, whose characters are its bytes.

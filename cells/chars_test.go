@@ -39,3 +39,25 @@ func TestCharsOfIsTheReference(t *testing.T) {
 		}
 	}
 }
+
+// TestCharsOfOneCellRunes: each rune the fast path takes, alone, before
+// and after a joiner, a combining mark, a variation selector and another.
+func TestCharsOfOneCellRunes(t *testing.T) {
+	var rs []rune
+	for r := rune(0); r < 0x3000; r++ {
+		if oneCell(r) {
+			rs = append(rs, r)
+		}
+	}
+	for _, r := range rs {
+		for _, s := range []string{
+			string(r), string(r) + "\u0301", string(r) + "\u200d", string(r) + "\ufe0f",
+			string(r) + "a", "a" + string(r), string(r) + "\u00a0", string(r) + "\U0001F44D",
+			string(r) + "\u0903", "\u1100" + string(r),
+		} {
+			if got, want := charsOf(s), charsRef(s); !slices.Equal(got, want) {
+				t.Fatalf("charsOf(%q) = %v, want %v", s, got, want)
+			}
+		}
+	}
+}
