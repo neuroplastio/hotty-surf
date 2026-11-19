@@ -221,7 +221,7 @@ func TestFocusEndsAPrefix(t *testing.T) {
 // once.
 func TestDeclinedEditUnlinkedIsAFault(t *testing.T) {
 	old := rt.SwapText(nil)
-	defer rt.SwapText(old)
+	defer func() { rt.SwapText(old) }()
 	value := "ab"
 	s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		fmt.Fprintf(w, `<input%s value=%q>`, attrsOf(On(ctx, "f", Input(func(v string) { value = v }), Key(func(string) bool { return false }, "backspace"))), value)
