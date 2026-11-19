@@ -310,3 +310,38 @@ func TestScrollBindVectors(t *testing.T) {
 		})
 	}
 }
+
+// A KeyScope's binding keeps its key in Bindings only while the key
+// reaches it: a plain field under Readline takes ctrl+k (delete to the
+// line's end), so the binding is listed without it there.
+func TestBindingsUnderReadline(t *testing.T) {
+	for _, readline := range []bool{false, true} {
+		t.Run(strconv.FormatBool(readline), func(t *testing.T) {
+			s := surf.New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				var hs []surf.Handler
+				if readline {
+					hs = append(hs, surf.Readline())
+				}
+				field := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					_, err := io.WriteString(w, `<input`+attrString(surf.On(ctx, "q", hs...))+`>`)
+					return err
+				})
+				return with(ui.KeyScope([]ui.KeyBinding{{Key: "ctrl+k", Label: "Kill", Name: "kill", Run: func() bool { return true }}}), field).Render(ctx, w)
+			}), "")
+			r := surftest.Start(t, s)
+			r.Click("#q")
+			var key string
+			s.Do(func() {
+				for _, b := range ui.Bindings(s) {
+					if b.Name == "kill" {
+						key = b.Key
+					}
+				}
+			})
+			r.Update()
+			if want := map[bool]string{false: "ctrl+k", true: ""}[readline]; key != want {
+				t.Errorf("kill's key %q, want %q", key, want)
+			}
+		})
+	}
+}

@@ -41,6 +41,7 @@ func init() {
 	rt.Peek.Focused = func(s any) string { return s.(*Surface).focused }
 	rt.Peek.Frame = func(s any) *rt.Frame { return s.(*Surface).frame }
 	rt.Peek.Scopes = func(s any) []*rt.KeyScope { return s.(*Surface).reached() }
+	rt.Peek.FieldTakes = func(s any, key string) bool { return s.(*Surface).fieldTakes(key) }
 	rt.Peek.Faults = func(s any) []string {
 		x := s.(*Surface)
 		f := x.faults
