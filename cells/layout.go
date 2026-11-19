@@ -52,6 +52,9 @@ type layout struct {
 	// while it is laid out.
 	styles  map[*html.Node]box
 	colours map[*html.Node][2]Role
+	// texts are each text's pieces in this pass, as textPieces makes them
+	// after no pieces.
+	texts map[textKey][]piece
 	// heights are the definite heights of the elements that have one
 	// (h-screen, h-full, h-[…]), and of a column's growing items, which
 	// it gives the rows its other items leave (flex-1).
@@ -116,6 +119,7 @@ func (c *Screen) layout() *layout {
 		memo:    map[memoKey]int{},
 		styles:  map[*html.Node]box{},
 		colours: map[*html.Node][2]Role{},
+		texts:   map[textKey][]piece{},
 	}
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
@@ -147,7 +151,7 @@ func (l *layout) measure(n *html.Node, in inh) int {
 	if w, ok := l.memo[k]; ok {
 		return w
 	}
-	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours}
+	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
 	_, w := m.node(n, 0, 0, infinite, in)
 	l.memo[k] = w
 	return w
@@ -409,7 +413,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 	var growers []*html.Node
 	used, items := 0, 0
-	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours}
+	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
 	var run []*html.Node
 	flush := func() {
 		if len(run) > 0 {
@@ -493,7 +497,7 @@ func (l *layout) drawOverlays() {
 	for len(l.overlays) > 0 {
 		o := l.overlays[0]
 		l.overlays = l.overlays[1:]
-		m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours}
+		m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
 		h, pw := m.node(o.n, 0, 0, o.w, o.in)
 		pw = max(min(pw, o.w), 1)
 		for j := o.y; j < o.y+h; j++ {
@@ -715,7 +719,7 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 				continue
 			}
 			it := item{n: k}
-			m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours}
+			m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
 			_, it.w = m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
 			items = append(items, it)
 		case html.ElementNode:
@@ -1117,7 +1121,7 @@ func (l *layout) paint(cs []char, x, y int, lk look, own, stop *html.Node) {
 func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	switch n.Type {
 	case html.TextNode:
-		return textPieces(ps, n.Data, in, n.Parent)
+		return l.textPieces(ps, n, in)
 	case html.ElementNode:
 	default:
 		return ps
@@ -1462,4 +1466,26 @@ func (l *layout) colour(n *html.Node) (fg, bg Role) {
 	fg, bg = coloursOf(n)
 	l.colours[n] = [2]Role{fg, bg}
 	return fg, bg
+}
+
+// textKey is a text and what it inherits: what its pieces are of.
+type textKey struct {
+	n  *html.Node
+	in inh
+}
+
+// textPieces adds a text's pieces to ps, as textPieces does, making them
+// once a pass. Only its first white space depends on ps: collapsed into
+// a space ps ends with.
+func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
+	k := textKey{n, in}
+	t, ok := l.texts[k]
+	if !ok {
+		t = textPieces(nil, n.Data, in, n.Parent)
+		l.texts[k] = t
+	}
+	if !in.pre && len(t) > 0 && t[0].kind == pSpace && len(ps) > 0 && ps[len(ps)-1].kind == pSpace {
+		t = t[1:]
+	}
+	return append(ps, t...)
 }
