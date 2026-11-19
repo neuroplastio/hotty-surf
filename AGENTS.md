@@ -8,15 +8,22 @@ Apache-2.0. Its design is gov NEIO-15 as rewritten for v0.7 (2026-11-16):
 v0.7 breaks everything from v0.6, which stays tagged as v0.6.3. `.surf`
 templates, cel-lite and the interpreted mode are gone.
 
+**Work happens on main**, which carries v0.7 untagged: a leg is a branch
+off main, merged back into it. v0.7.0 is tagged when every row of
+`ui/coverage.tsv` is done, a `waits` row counting as done (the
+maintainer, 2026-11-19); the board's "Before v0.7.0" is the list.
+
 - **The API is locked.** `api/v0.7.txt` is the approved API (Go's api/
   format), and `make api-check` fails on any exported name it doesn't
   hold. A new or changed name goes through a pack first: `make api`,
   a reason in `api/reasons.md`, `make pack`, the maintainer's approval,
-  then `make api-approve`. `api/notes.md` is the shape and its decisions.
+  then `make api-approve`. `api/notes.md` is the shape and its decisions,
+  in plain words. A pack's drafts, reviews and verifications are its
+  review trail, which is kept privately, not here.
 - **Implement what the docs say.** Every exported name has a doc comment
-  that is its contract, and an example. L1 onward fills the bodies
-  (`panic("L0")`) as written; a contract that turns out wrong is a
-  question for a pack, not a change in code.
+  that is its contract, and an example, and every body does what its
+  doc says. A contract that turns out wrong is a question for a pack,
+  not a change in code.
 - **NEIO-15 is the brief.** Its decisions are the maintainer's. Don't
   settle an open question in code.
 - **The names are hotty-surf, package `surf`, and the command
@@ -44,7 +51,9 @@ templates, cel-lite and the interpreted mode are gone.
   repository comes into it: not plx's code, data, internals or commit
   hashes, nor gov's text, nor the maintainer's paths. Citing gov by
   number (NEIO-15, R-23) is fine, and plx is a product name like any
-  other. Examples draw made-up data.
+  other: say what plx needed, not plx's gap ids or plan names. No pane
+  or session ids (p-NNN) and no file that isn't in this repository
+  (a review, a brief) are cited. Examples draw made-up data.
 - **Every heavy run is capped where the machine asks for it.** Every
   Makefile step runs under CAP, which a machine sets in
   `$XDG_CONFIG_HOME/hotty-surf/make.mk` (a memory cap, the CPUs builds
@@ -75,4 +84,4 @@ templates, cel-lite and the interpreted mode are gone.
   `ui/coverage.tsv` by `scripts/coverage-md.sh`.
 - `examples/hello`: the smallest app, in the shape every app has.
 - `vault/`: feedback, questions, the journal and what was learned. Its
-  board and stories are v0.6's record until L1 brings v0.7's.
+  board (`vault/tasks/board.md`) is v0.7's, with v0.6's record below it.
