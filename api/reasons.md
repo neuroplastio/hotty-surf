@@ -733,3 +733,15 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 
 - `surf.Bind`: the maintainer's rule (2026-11-18) is that no template carries a key bind, and v0.7 lost with the authored `data-keys` the three things it carried besides `key=program`: a field's edit actions, `prefix` (SPEC §10.5) and the scroll actions. Bind declares them in Go, beside the element's other handlers, as `surf.Key(fn, keys...)` declares the program's: an action of hotty-go's `hotty.Action` (SPEC's names) in place of fn.
 - `surf.Readline`: plx's palette set `hotty.TerminalKeys` on its query, so on a host its line lost readline editing with v0.7 (ctrl+w, ctrl+u, alt+b). A named set the app asks for whole, as one handler that can't be edited in place or written into an attribute; it leaves alone the keys the program is given there, as the 2026-11-04 decision had the program's bind win over readline.
+
+## Bind, extensible (the maintainer, 2026-11-19)
+
+The maintainer: "I would make Bind API extensible so that Readline becomes just one of the options that carries a predefined group of bindings. Plus, add options to control override behavior, so callers can naturally use it." This replaces the two entries above: `surf.Bind(hotty.Action, ...string)` becomes `surf.Bind(...BindOption)`, and `surf.Readline` returns a BindOption, not a Handler.
+
+- `surf.Bind`: the one entry point for keys the host does something with (edit, scroll, prefix), beside `surf.Key` for the program's; it takes options so that single bindings, groups and override behaviour share one call.
+- `surf.BindOption`: what Bind takes; an interface with an unexported method, so the set is closed and Keys, groups and options mix in one variadic.
+- `surf.Keys`: one action on keys, the unit every other option is built from; given to Bind directly it overrides, as 4dd9b13's Bind did.
+- `surf.Group`: the maintainer's "predefined group of bindings", open to apps and the kit: a set named once (a pager's keys) and bound where needed. Its bindings yield, as Readline's did.
+- `surf.Readline`: plx's palette's readline (hotty.TerminalKeys), now the framework's first group; still one line: `surf.Bind(surf.Readline())`.
+- `surf.Yield`: the maintainer's "options to control override behavior": a binding that gives way to keys the program is given around it; a single key that should not take a page's shortcut from a field.
+- `surf.Override`: the other half: a group that wins over keys claimed around it (readline's ctrl+k in a field even where the page declares mod+k).

@@ -218,7 +218,7 @@ var textDefault atomic.Pointer[func(KeyDefault) KeyResult]
 
 // LinkText links f as the kit's text fallback, which KitDefault does a
 // text field's edit with. What edits text calls it when it renders (ui's
-// text components, ui.KeyScope) or is called (surf.Readline, surf.Bind),
+// text components, ui.KeyScope) or is called (surf.Bind),
 // so that an app that has none of them doesn't link hottyedit: that is
 // about 30 KB gzipped of every TinyGo app.
 func LinkText(f func(KeyDefault) KeyResult) {

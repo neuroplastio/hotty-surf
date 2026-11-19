@@ -3351,11 +3351,15 @@ only by `Readline()`.
   itself a Key's declared key is the program's either way, and an
   Override of it is a fault, but for prefix (4dd9b13's rule).
 - **Layering on one element.** Bindings are read in order, Bind handler
-  by handler and option by option. A binding that wins replaces a
-  yielding one of the same key. A later group's binding replaces an
-  earlier group's (groups layer, as `data-keys` values did). Two winning
-  bindings of one key to different actions are a fault, and the first
-  stays. One key bound twice to one action is one binding.
+  by handler and option by option. A direct Keys (one given to Bind, not
+  in a group) replaces a group's binding of its key, whatever either
+  yields. A later group's binding replaces an earlier group's (groups
+  layer, as `data-keys` values did). Two direct bindings of one key to
+  different actions are a fault, and the first stays. One key bound twice
+  to one action is one binding. (Written first as "a binding that wins
+  replaces a yielding one"; while building it, that made
+  `Bind(Readline(), Override(), Keys(…))` a fault, so the precedence is
+  where a binding came from, not its yield.)
 - **Faults** stand as reviewed: an action that isn't SPEC's or is
   program, default or insert; a key that doesn't parse, tab, shift+tab,
   escape; an edit action on a control that isn't a text field; a

@@ -121,11 +121,11 @@ func TestReadlineVectors(t *testing.T) {
 				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					hs := []surf.Handler{surf.Input(func(v string) { value = v })}
 					if where == "field" {
-						hs = append(hs, surf.Readline())
+						hs = append(hs, surf.Bind(surf.Readline()))
 					}
 					var around templ.Attributes
 					if where == "around" {
-						around = surf.On(ctx, "box", surf.Readline())
+						around = surf.On(ctx, "box", surf.Bind(surf.Readline()))
 					}
 					in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", hs...)})
 					return outside(wrap(around, in)).Render(ctx, w)
@@ -166,7 +166,7 @@ func TestReadlineUnderKeys(t *testing.T) {
 				return k != "mod+u"
 			}
 			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q",
-				surf.Input(func(v string) { value = v }), surf.Readline(),
+				surf.Input(func(v string) { value = v }), surf.Bind(surf.Readline()),
 				surf.Key(key, "ctrl+n", "arrow_up", "ctrl+u"))})
 			return outside(in).Render(ctx, w)
 		})
@@ -190,7 +190,7 @@ func TestReadlineUnderKeys(t *testing.T) {
 func prefixView(key func(string) bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		rows := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			_, err := io.WriteString(w, "<div"+attrString(surf.On(ctx, "rows", surf.Key(key), surf.Bind(hotty.Prefix, "g")))+
+			_, err := io.WriteString(w, "<div"+attrString(surf.On(ctx, "rows", surf.Key(key), surf.Bind(surf.Keys(hotty.Prefix, "g"))))+
 				` tabindex="0">rows</div><button id="after">After</button>`)
 			return err
 		})
@@ -263,7 +263,7 @@ func TestDeclaredAroundWinsOverReadline(t *testing.T) {
 				}
 				return false
 			}
-			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }), surf.Readline())})
+			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }), surf.Bind(surf.Readline()))})
 			return outside(wrap(surf.On(ctx, "main", surf.Key(open, "mod+k")), in)).Render(ctx, w)
 		})
 	}
@@ -288,7 +288,7 @@ func TestScrollBindVectors(t *testing.T) {
 				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					var hs []surf.Handler
 					if bound {
-						hs = append(hs, surf.Bind(hotty.ScrollDown, "j"))
+						hs = append(hs, surf.Bind(surf.Keys(hotty.ScrollDown, "j")))
 					}
 					log := templ.Raw(`<div` + attrString(surf.On(ctx, "log", hs...)) + ` tabindex="0">log</div>`)
 					rec := func(k string) bool { heard = append(heard, k); return false }
@@ -320,7 +320,7 @@ func TestBindingsUnderReadline(t *testing.T) {
 			s := surf.New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 				var hs []surf.Handler
 				if readline {
-					hs = append(hs, surf.Readline())
+					hs = append(hs, surf.Bind(surf.Readline()))
 				}
 				field := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					_, err := io.WriteString(w, `<input`+attrString(surf.On(ctx, "q", hs...))+`>`)
@@ -344,4 +344,27 @@ func TestBindingsUnderReadline(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Readline with Override binds the keys declared around the field too:
+// ctrl+k deletes to the line's end there, and main's mod+k isn't heard.
+func TestReadlineOverrideVectors(t *testing.T) {
+	value, opened := "", 0
+	view := func() templ.Component {
+		value, opened = "", 0
+		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := func(k string) bool { opened++; return true }
+			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }),
+				surf.Bind(surf.Readline(), surf.Override()))})
+			return outside(wrap(surf.On(ctx, "main", surf.Key(open, "mod+k")), in)).Render(ctx, w)
+		})
+	}
+	both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+		for _, k := range []string{"a", "b", "home", "ctrl+k"} {
+			press(k)
+		}
+		if opened != 0 || value != "" {
+			t.Errorf("opened %d, value %q: want readline's ctrl+k", opened, value)
+		}
+	})
 }

@@ -41,7 +41,7 @@ const (
 //     ignores (it reaches the program anyway), only OwnKeys lists; tab
 //     only on a text field, the one place SPEC lets it go;
 //   - the keys the KeyScopes around a kit control forward;
-//   - its surf.Bind and surf.Readline bindings, key=action, but for a key
+//   - its surf.Bind bindings, key=action, but for a key
 //     the two above give the program;
 //   - on an element that types, each printable key an element around it
 //     declares, given back (key=default), so a field types it (K27).
@@ -164,7 +164,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 // insides.
 type keyPush struct{ printable, given int }
 
-// writeBinds adds an element's surf.Bind and surf.Readline bindings to
+// writeBinds adds an element's surf.Bind bindings to
 // binds, one per key, each key=action, but where binds gives the key to
 // the program already (a Key handler's, a KeyScope's): that one wins, but
 // a prefix, which is the program's too, is written in its place. A
@@ -174,12 +174,12 @@ type keyPush struct{ printable, given int }
 // faults, a binding the element can't have (SPEC §10.2): an edit action
 // on a control that isn't a text field (kind: a button's, a select's, a
 // date field's), a multi-line one an input binds, a scroll action a text
-// field binds. A printable key bound to prefix is pushed on t's stack, so
+// field binds; a group's multi-line action on an input is harmless. A printable key bound to prefix is pushed on t's stack, so
 // the fields inside type it (K27). It returns binds, the keys it wrote,
 // and how many it pushed.
 func (s *Surface) writeBinds(id string, bs []rt.Bind, kind string, multiline bool, binds []string, t *tree) ([]string, []string, int) {
 	var bound []string
-	pushed, readlineFault := 0, false
+	pushed, groupFault := 0, false
 	for _, b := range bs {
 		a := hotty.Action(b.Action)
 		if i := slices.Index(binds, b.Key+"=program"); i >= 0 {
@@ -188,7 +188,7 @@ func (s *Surface) writeBinds(id string, bs []rt.Bind, kind string, multiline boo
 			}
 			continue
 		}
-		if b.Readline && slices.Contains(t.given, b.Key) {
+		if b.Yield && slices.Contains(t.given, b.Key) {
 			continue
 		}
 		switch {
@@ -203,14 +203,14 @@ func (s *Surface) writeBinds(id string, bs []rt.Bind, kind string, multiline boo
 				continue
 			}
 		case kind != "text" && kind != "":
-			if !b.Readline {
+			if !b.Group {
 				s.fault("surf.Bind: the id " + id + " binds " + strconv.Quote(b.Key) + " to " + b.Action + ", a text field's action, on a control that isn't one")
-			} else if !readlineFault {
-				readlineFault = true
-				s.fault("surf.Readline: the id " + id + " is a control that isn't a text field")
+			} else if !groupFault {
+				groupFault = true
+				s.fault("surf.Bind: the id " + id + " binds a group of a text field's actions (Readline's) on a control that isn't one")
 			}
 			continue
-		case !b.Readline && kind == "text" && !multiline && a.Multiline():
+		case !b.Group && kind == "text" && !multiline && a.Multiline():
 			s.fault("surf.Bind: the id " + id + " is an input, which has no " + b.Action + " (SPEC §10.2)")
 			continue
 		}

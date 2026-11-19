@@ -11,8 +11,8 @@ import (
 // Text is a text field's own use of in.Key, as its keymap (the platform's
 // default, then in.Keymaps) has it: hottyedit's edit of in.Value and its
 // selection. It is the kit's text fallback, which only what edits text
-// links (rt.LinkText): ui's text components, ui.KeyScope, surf.Readline
-// and surf.Bind; an app without them doesn't carry hottyedit.
+// links (rt.LinkText): ui's text components, ui.KeyScope and
+// surf.Bind; an app without them doesn't carry hottyedit.
 func Text(in rt.KeyDefault) rt.KeyResult {
 	km := hotty.Resolve(in.Platform, in.Type == "textarea", in.Keymaps...)
 	f := hottyedit.Field{Value: in.Value, Multiline: in.Type == "textarea", Password: in.Type == "password"}

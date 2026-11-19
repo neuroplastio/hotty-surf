@@ -2,25 +2,29 @@ pkg neuroplast.io/hotty-surf, const CharsBound Chars = 0
 pkg neuroplast.io/hotty-surf, const CharsPick Chars = 1
 pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
-pkg neuroplast.io/hotty-surf, func Bind(hotty.Action, ...string) Handler
+pkg neuroplast.io/hotty-surf, func Bind(...BindOption) Handler
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
 pkg neuroplast.io/hotty-surf, func Clicks(func(int)) Handler
 pkg neuroplast.io/hotty-surf, func Drag(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Drop(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Focus(func(bool)) Handler
+pkg neuroplast.io/hotty-surf, func Group(...BindOption) BindOption
 pkg neuroplast.io/hotty-surf, func Hover(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Input(func(string)) Handler
 pkg neuroplast.io/hotty-surf, func Key(func(string) bool, ...string) Handler
+pkg neuroplast.io/hotty-surf, func Keys(hotty.Action, ...string) BindOption
 pkg neuroplast.io/hotty-surf, func New(string, templ.Component, string) *Surface
 pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
+pkg neuroplast.io/hotty-surf, func Override() BindOption
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
-pkg neuroplast.io/hotty-surf, func Readline() Handler
+pkg neuroplast.io/hotty-surf, func Readline() BindOption
 pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
+pkg neuroplast.io/hotty-surf, func Yield() BindOption
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Blur() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Chars() Chars
@@ -36,6 +40,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) OwnKeys() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
+pkg neuroplast.io/hotty-surf, type BindOption interface {  }
 pkg neuroplast.io/hotty-surf, type Chars uint8
 pkg neuroplast.io/hotty-surf, type DragEvent struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct, End bool

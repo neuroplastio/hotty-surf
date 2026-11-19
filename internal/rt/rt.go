@@ -24,11 +24,11 @@ type Handlers struct {
 	// as the element's data-keys, each bound to program.
 	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
-	// Binds are surf.Bind's and surf.Readline's bindings, canonical for
-	// the frame's platform: Readline's first, then the Binds, a later
-	// one of a key replacing an earlier (the first stays where two Binds
-	// disagree, a fault). The runtime writes each as key=action, but
-	// where Keys declares the key.
+	// Binds are surf.Bind's bindings, canonical for the frame's
+	// platform, one per key, layered as surf.Bind says (a direct Keys's
+	// over a group's, a later group's over an earlier). The runtime
+	// writes each as key=action, but where Keys declares the key, or
+	// one yields to a key given around it.
 	Binds []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
@@ -44,11 +44,14 @@ type Handlers struct {
 }
 
 // A Bind is one key bound to an action that isn't program (SPEC §10.2):
-// a field's edit action, prefix, or a scroll action. Readline says it
-// came from surf.Readline's set, which a Bind on the element overrides.
+// a field's edit action, prefix, or a scroll action. Yield says it leaves
+// alone a key the program is given on its element or around it (a
+// group's, by default); Group says it came from a group (surf.Group,
+// surf.Readline), which a direct surf.Keys on the element replaces.
 type Bind struct {
 	Key, Action string
-	Readline    bool
+	Yield       bool
+	Group       bool
 }
 
 // EditKeys is h's bindings as a field's keymap reads them (SPEC §10.2),
@@ -56,12 +59,12 @@ type Bind struct {
 // the program's: what a host resolves on the element. Without program, a
 // key the Key handlers declare is left out, so that a declined one is
 // the binding's farther in, or the default's. A Readline binding of a
-// key in given (the keys the chain gives the program) is left out, as
-// the surface leaves it out of data-keys.
+// key in given (the keys the chain gives the program) that yields is
+// left out, as the surface leaves it out of data-keys.
 func EditKeys(h *Handlers, program bool, given []string) string {
 	var b strings.Builder
 	for _, x := range h.Binds {
-		if program && slices.Contains(h.Keys, x.Key) || x.Readline && slices.Contains(given, x.Key) {
+		if program && slices.Contains(h.Keys, x.Key) || x.Yield && slices.Contains(given, x.Key) {
 			continue
 		}
 		if b.Len() > 0 {
@@ -161,7 +164,7 @@ type Frame struct {
 	// lists and ui.Pick runs.
 	Scopes []*KeyScope
 	// Readline is hotty.TerminalKeys as Binds for Platform, made the
-	// first time an element binds it in the frame (surf.Readline).
+	// first time an element binds surf.Readline in the frame.
 	Readline []Bind
 }
 

@@ -632,7 +632,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
 		if env.Kind == "text" && rt.TextDefault() == nil && !s.textFaulted {
 			s.textFaulted = true
-			s.fault("surf: a declined " + strconv.Quote(physical) + " on the text field " + strconv.Quote(s.focused) + " is the field's own edit, which needs the kit's text editing: ui's text components (Input, Textarea, Combobox, Command, NavList), ui.KeyScope, surf.Readline and surf.Bind link it; this app has none, so the key edits nothing")
+			s.fault("surf: a declined " + strconv.Quote(physical) + " on the text field " + strconv.Quote(s.focused) + " is the field's own edit, which needs the kit's text editing: ui's text components (Input, Textarea, Combobox, Command, NavList), ui.KeyScope and surf.Bind link it; this app has none, so the key edits nothing")
 		}
 		if env.Kind != "" && rt.NativeKeyDefault(&env, physical, rt.KitDefault) {
 			return true, s.send()

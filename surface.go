@@ -207,7 +207,7 @@ func (s *Surface) Event(e hotty.Event) error {
 // surface, and the keys the host passes on reach that element's Key
 // handlers. With the keyboard on it already, Focus sends a=focus without
 // a target, which moves nothing and ends a key sequence (SPEC §10.1,
-// §10.5): how a program ends the sequence a surf.Bind(hotty.Prefix, …)
+// §10.5): how a program ends the sequence a surf.Bind(surf.Keys(hotty.Prefix, …))
 // started for its own keymap. focused says whether the surface has the
 // keyboard after it: true when it had it already, and false, with nothing sent, when nothing
 // in it takes focus or it hasn't rendered and been attached yet. In cells

@@ -78,7 +78,7 @@ passes a key to the application. Cells also implements native control
 editing, activation and navigation. Text fields resolve their keymap with
 `hotty.Resolve`; a host and cells must agree on the platform and on the
 ordered keymap. Readline-style editing (`hotty.TerminalKeys`) is
-`surf.Readline()` on the field or on what holds it (see Keys that aren't
+`surf.Bind(surf.Readline())` on the field or on what holds it (see Keys that aren't
 the program's).
 
 ## B1 and B2 audit
@@ -156,31 +156,44 @@ field's completion. Shortcuts that a menu or a palette lists are
 
 ## Keys that aren't the program's
 
-`surf.Bind(action, keys...)` is `surf.Key`'s twin, an action of SPEC
-§10.2 in place of fn: the host does it, and no handler hears the key.
-`surf.Readline()` binds readline's set (`hotty.TerminalKeys`) at once.
+`surf.Key` gives keys to the program; `surf.Bind` gives them to the host,
+which does one of SPEC §10.2's actions with them, and no handler hears
+them. Bind takes options: `surf.Keys(action, keys...)` for keys bound to
+one action, a group (`surf.Readline()`, readline's set, or an app's own
+`surf.Group`), and `surf.Yield()` or `surf.Override()` for how all of
+them meet the keys the program is given.
 
 ```go
 // a palette's query: readline's ctrl+w, ctrl+u, alt+b, …
-surf.On(ctx, "query", surf.Input(a.setQuery), surf.Readline())
+surf.On(ctx, "query", surf.Input(a.setQuery),
+    surf.Bind(surf.Readline()))
 // a pager: j and k scroll the log where the host scrolls it
-surf.On(ctx, "log", surf.Bind(hotty.ScrollDown, "j"),
-    surf.Bind(hotty.ScrollUp, "k"))
+surf.On(ctx, "log", surf.Bind(surf.Keys(hotty.ScrollDown, "j"),
+    surf.Keys(hotty.ScrollUp, "k")))
 // the app's leader: mod+k and the keys after it reach its keymap
-surf.On(ctx, "main", surf.Bind(hotty.Prefix, "mod+k"))
+surf.On(ctx, "main", surf.Bind(surf.Keys(hotty.Prefix, "mod+k")))
+// an app's own group, defined once
+var pager = surf.Group(surf.Keys(hotty.ScrollDown, "j"),
+    surf.Keys(hotty.ScrollEnd, "shift+g"))
 ```
 
 - **Edit actions** (`hotty.WordBackward`, …) go on a field or on what
   holds fields, as SPEC's keymap chain has it: the nearer binding wins.
   On a control that isn't a text field (a button, a select) they are a
   fault; a multi-line one on an `input` is too.
-- **Readline leaves the program's keys alone.** A key declared on the
-  field or around it (`surf.Key`), bound to prefix there, or forwarded by
-  a KeyScope, stays the program's: a page's `mod+k` still opens its
-  palette from a field under Readline, where Readline would delete to the
-  line's end with `ctrl+k`. A key the field's own handler declares and
-  declines is Readline's edit. A Bind on the element replaces one of
-  Readline's keys.
+- **Yield or override.** The program is given a key on an element by a
+  `surf.Key` declaration, a prefix or a KeyScope's forwarded key. A
+  binding that yields leaves such a key alone, on the element and on
+  every element around it: a page's `mod+k` still opens its palette from
+  a field under Readline, where Readline would delete to the line's end
+  with `ctrl+k`. One that overrides is written anyway, the nearer binding
+  winning. A group yields and a direct `surf.Keys` overrides;
+  `surf.Yield()` or `surf.Override()` changes it for the whole Bind or
+  Group call. A key the field's own handler declares and declines is the
+  binding's edit.
+- **Layering.** On one element a direct `surf.Keys` replaces a group's
+  binding of its key, and a later group's replaces an earlier group's;
+  two direct ones of a key to different actions are a fault.
 - **A prefix** (SPEC §10.5) gives the program its key and every key
   after it, Tab and Escape too. One a Key handler takes is the surface's
   sequence: it ends once the next key has been through the handlers. One
@@ -201,7 +214,7 @@ surf.On(ctx, "main", surf.Bind(hotty.Prefix, "mod+k"))
   does no scroll action yet: a scroll-bound key reaches the program
   there.
 - **A kit Command or Combobox** takes no handler of the app's on its
-  field: it gets Readline from a `surf.Readline()` on an element around
+  field: it gets Readline from a `surf.Bind(surf.Readline())` on an element around
   the component.
 - **Size.** The kit's own edit of a declined key on a text field
   (`hottyedit`) is linked only by what edits text: ui's text components,

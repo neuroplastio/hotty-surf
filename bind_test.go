@@ -39,8 +39,8 @@ func TestBindIsWritten(t *testing.T) {
 	take := func(string) bool { return true }
 	s := bindPage(t, `<div%s tabindex="0">log</div><ul%s tabindex="0"></ul>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
-			On(ctx, "log", Bind(hotty.ScrollDown, "j", "arrow_down"), Bind(hotty.ScrollEnd, "shift+g")),
-			On(ctx, "rows", Key(take, "arrow_up"), Bind(hotty.Prefix, "g", "mod+k")),
+			On(ctx, "log", Bind(Keys(hotty.ScrollDown, "j", "arrow_down")), Bind(Keys(hotty.ScrollEnd, "shift+g"))),
+			On(ctx, "rows", Key(take, "arrow_up"), Bind(Keys(hotty.Prefix, "g", "mod+k"))),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -60,9 +60,9 @@ func TestReadlineIsWritten(t *testing.T) {
 	take := func(string) bool { return true }
 	s := bindPage(t, `<input%s><input%s><div%s><input id="in"></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
-			On(ctx, "q", Readline()),
-			On(ctx, "p", Readline(), Key(take, "ctrl+n", "arrow_up"), Bind(hotty.LineStart, "ctrl+w")),
-			On(ctx, "box", Readline()),
+			On(ctx, "q", Bind(Readline())),
+			On(ctx, "p", Bind(Readline()), Key(take, "ctrl+n", "arrow_up"), Bind(Keys(hotty.LineStart, "ctrl+w"))),
+			On(ctx, "box", Bind(Readline())),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -97,21 +97,25 @@ func TestBindFaults(t *testing.T) {
 		h            func() []Handler
 		want         string // the data-keys left
 	}{
-		{"program", `<div%s tabindex="0"></div>`, func() []Handler { return []Handler{Bind(hotty.Program, "x"), Bind(hotty.ScrollUp, "k")} }, "k=scroll-up"},
-		{"default", `<div%s tabindex="0"></div>`, func() []Handler { return []Handler{Bind(hotty.Default, "x")} }, ""},
-		{"insert", `<input%s>`, func() []Handler { return []Handler{Bind(hotty.Insert, "x")} }, ""},
-		{"unknown", `<input%s>`, func() []Handler { return []Handler{Bind("teleport", "x")} }, ""},
-		{"bad key", `<input%s>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "nope+x", "tab", "shift+tab", "escape")} }, ""},
-		{"edit on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "ctrl+a")} }, ""},
-		{"edit on a select", `<select%s><option>a</option></select>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "ctrl+a")} }, ""},
-		{"readline on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Readline()} }, ""},
-		{"multi-line on an input", `<input%s>`, func() []Handler { return []Handler{Bind(hotty.Newline, "ctrl+j"), Bind(hotty.LineEnd, "ctrl+e")} }, "ctrl+e=line-end"},
-		{"scroll on a field", `<textarea%s></textarea>`, func() []Handler { return []Handler{Bind(hotty.ScrollDown, "ctrl+j")} }, ""},
+		{"program", `<div%s tabindex="0"></div>`, func() []Handler { return []Handler{Bind(Keys(hotty.Program, "x")), Bind(Keys(hotty.ScrollUp, "k"))} }, "k=scroll-up"},
+		{"default", `<div%s tabindex="0"></div>`, func() []Handler { return []Handler{Bind(Keys(hotty.Default, "x"))} }, ""},
+		{"insert", `<input%s>`, func() []Handler { return []Handler{Bind(Keys(hotty.Insert, "x"))} }, ""},
+		{"unknown", `<input%s>`, func() []Handler { return []Handler{Bind(Keys(hotty.Action("teleport"), "x"))} }, ""},
+		{"bad key", `<input%s>`, func() []Handler {
+			return []Handler{Bind(Keys(hotty.LineStart, "nope+x", "tab", "shift+tab", "escape"))}
+		}, ""},
+		{"edit on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(Keys(hotty.LineStart, "ctrl+a"))} }, ""},
+		{"edit on a select", `<select%s><option>a</option></select>`, func() []Handler { return []Handler{Bind(Keys(hotty.LineStart, "ctrl+a"))} }, ""},
+		{"readline on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(Readline())} }, ""},
+		{"multi-line on an input", `<input%s>`, func() []Handler {
+			return []Handler{Bind(Keys(hotty.Newline, "ctrl+j")), Bind(Keys(hotty.LineEnd, "ctrl+e"))}
+		}, "ctrl+e=line-end"},
+		{"scroll on a field", `<textarea%s></textarea>`, func() []Handler { return []Handler{Bind(Keys(hotty.ScrollDown, "ctrl+j"))} }, ""},
 		{"two uses", `<input%s>`, func() []Handler {
-			return []Handler{Bind(hotty.LineStart, "ctrl+a"), Bind(hotty.LineEnd, "ctrl+a")}
+			return []Handler{Bind(Keys(hotty.LineStart, "ctrl+a")), Bind(Keys(hotty.LineEnd, "ctrl+a"))}
 		}, "ctrl+a=line-start"},
 		{"a Key's key", `<div%s tabindex="0"></div>`, func() []Handler {
-			return []Handler{Key(take, "j"), Bind(hotty.ScrollDown, "j")}
+			return []Handler{Key(take, "j"), Bind(Keys(hotty.ScrollDown, "j"))}
 		}, "j=program"},
 	}
 	for _, c := range cases {
@@ -133,10 +137,10 @@ func TestBindFaults(t *testing.T) {
 	// it opens); a key bound twice to one action, and Readline twice.
 	s := bindPage(t, `<div%s tabindex="0"></div><input%s><div%s><textarea></textarea></div><div%s></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
-			On(ctx, "a", Key(take, "g"), Bind(hotty.Prefix, "g")),
-			On(ctx, "b", Readline(), Readline(), Bind(hotty.LineEnd, "ctrl+e", "ctrl+e"), Bind(hotty.LineEnd, "ctrl+e")),
-			On(ctx, "c", Bind(hotty.Newline, "ctrl+j")),
-			On(ctx, "d", Readline()),
+			On(ctx, "a", Key(take, "g"), Bind(Keys(hotty.Prefix, "g"))),
+			On(ctx, "b", Bind(Readline()), Bind(Readline()), Bind(Keys(hotty.LineEnd, "ctrl+e", "ctrl+e")), Bind(Keys(hotty.LineEnd, "ctrl+e"))),
+			On(ctx, "c", Bind(Keys(hotty.Newline, "ctrl+j"))),
+			On(ctx, "d", Bind(Readline())),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -151,7 +155,7 @@ func TestBindFaults(t *testing.T) {
 // it. A printable scroll binding needs no giving back.
 func TestPrintablePrefixTypes(t *testing.T) {
 	s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div%s tabindex="0"><input id="f"></div>`, attrsOf(On(ctx, "rows", Bind(hotty.Prefix, "g"), Bind(hotty.ScrollDown, "j"))))
+		fmt.Fprintf(w, `<div%s tabindex="0"><input id="f"></div>`, attrsOf(On(ctx, "rows", Bind(Keys(hotty.Prefix, "g")), Bind(Keys(hotty.ScrollDown, "j")))))
 		return nil
 	}))
 	if len(s.faults) > 0 {
@@ -170,7 +174,7 @@ func TestBindsAloneChange(t *testing.T) {
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		var hs []Handler
 		if on {
-			hs = append(hs, Bind(hotty.ScrollDown, "j"))
+			hs = append(hs, Bind(Keys(hotty.ScrollDown, "j")))
 		}
 		fmt.Fprintf(w, `<div%s tabindex="0">log</div>`, attrsOf(On(ctx, "log", hs...)))
 		return nil
@@ -194,7 +198,7 @@ func TestBindsAloneChange(t *testing.T) {
 func TestFocusEndsAPrefix(t *testing.T) {
 	var out bytes.Buffer
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div%s tabindex="0">rows</div><button id="b">b</button>`, attrsOf(On(ctx, "rows", Bind(hotty.Prefix, "g"))))
+		fmt.Fprintf(w, `<div%s tabindex="0">rows</div><button id="b">b</button>`, attrsOf(On(ctx, "rows", Bind(Keys(hotty.Prefix, "g")))))
 		return nil
 	}), "")
 	s.Attach(&out, hotty.Caps{})
@@ -250,5 +254,65 @@ func TestDeclinedEditUnlinkedIsAFault(t *testing.T) {
 	}
 	if value != "a" {
 		t.Errorf("linked, backspace left %q", value)
+	}
+}
+
+// Groups and the override options: a group yields and a direct Keys
+// overrides, unless Yield or Override says otherwise for its whole call,
+// nested groups included but for one that sets its own.
+func TestBindOptions(t *testing.T) {
+	take := func(string) bool { return true }
+	cases := []struct {
+		name  string
+		field []BindOption
+		has   []string // in the field's data-keys
+		not   []string
+		fault bool
+	}{
+		{"a group yields", []BindOption{Readline()}, []string{"ctrl+w=delete-word-backward"}, []string{"ctrl+k=delete-to-line-end", "alt+b=word-backward"}, false},
+		{"a group that overrides", []BindOption{Readline(), Override()}, []string{"ctrl+k=delete-to-line-end", "alt+b=word-backward"}, nil, false},
+		{"a direct key overrides", []BindOption{Keys(hotty.WordBackward, "alt+b")}, []string{"alt+b=word-backward"}, nil, false},
+		{"a direct key that yields", []BindOption{Keys(hotty.WordBackward, "alt+b"), Yield()}, nil, []string{"alt+b=word-backward"}, false},
+		{"a custom group", []BindOption{Group(Keys(hotty.LineStart, "ctrl+a", "alt+b"))}, []string{"ctrl+a=line-start"}, []string{"alt+b=line-start"}, false},
+		{"a nested group inherits", []BindOption{Override(), Group(Keys(hotty.WordBackward, "alt+b"))}, []string{"alt+b=word-backward"}, nil, false},
+		{"a nested group's own", []BindOption{Override(), Group(Yield(), Keys(hotty.WordBackward, "alt+b"))}, nil, []string{"alt+b=word-backward"}, false},
+		{"a key beside a group replaces its", []BindOption{Readline(), Keys(hotty.LineStart, "ctrl+w")}, []string{"ctrl+w=line-start"}, []string{"ctrl+w=delete-word-backward"}, false},
+		{"a later group layers", []BindOption{Group(Keys(hotty.LineStart, "ctrl+w")), Group(Keys(hotty.LineEnd, "ctrl+w"))}, []string{"ctrl+w=line-end"}, nil, false},
+		{"a group after a key", []BindOption{Keys(hotty.LineStart, "ctrl+w"), Readline()}, []string{"ctrl+w=line-start"}, nil, false},
+		{"yield and override: the first holds", []BindOption{Yield(), Override(), Keys(hotty.WordBackward, "alt+b"), Keys(hotty.LineStart, "ctrl+w")}, []string{"ctrl+w=line-start"}, []string{"alt+b=word-backward"}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s := bindPage(t, `<div%s><input%s></div>`, func(ctx context.Context) []templ.Attributes {
+				return []templ.Attributes{
+					On(ctx, "main", Key(take, "mod+k", "alt+b")),
+					On(ctx, "f", Bind(c.field...)),
+				}
+			})
+			if got := len(s.faults) > 0; got != c.fault {
+				t.Errorf("faults %q, want a fault %v", s.faults, c.fault)
+			}
+			got := bindings(s, "f")
+			for _, b := range c.has {
+				if !slices.Contains(got, b) {
+					t.Errorf("data-keys lack %s: %q", b, got)
+				}
+			}
+			for _, b := range c.not {
+				if slices.Contains(got, b) {
+					t.Errorf("data-keys have %s: %q", b, got)
+				}
+			}
+		})
+	}
+}
+
+// Bind with no options, and an empty Group, bind nothing.
+func TestBindNothing(t *testing.T) {
+	s := bindPage(t, `<input%s>`, func(ctx context.Context) []templ.Attributes {
+		return []templ.Attributes{On(ctx, "f", Bind(), Bind(Group()))}
+	})
+	if len(s.faults) > 0 || hasAttr(s.byID["f"], "data-keys") {
+		t.Errorf("faults %q, data-keys %q", s.faults, attr(s.byID["f"], "data-keys"))
 	}
 }
