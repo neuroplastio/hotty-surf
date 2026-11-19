@@ -1,4 +1,17 @@
-## The v0 shape, as approved
+# hotty-surf v0.7: the API's shape and its decisions
+
+What each part of v0.7's API is for, the shapes chosen and why, and the
+maintainer's decisions, leg by leg. The contract is each exported name's
+doc comment and example; `api/v0.7.txt` is the lock. The review trail
+behind these sections (drafts, open questions, reviews and their
+verifications) is kept privately, and this file keeps what it settled.
+
+Kit rules are cited as K1 to K32, numbered as the API reviews set them
+(K12: a kit item is a plain data struct, shared where Basecoat shares
+it; K32: a kit control declares its keys on the element that takes
+focus). The rule is the sentence the number follows.
+
+## The v0 shape
 
 hotty-surf v0.7 on Go, templ and Basecoat, as signatures only: every
 exported name, its doc comment and an example, with bodies that panic.
@@ -190,7 +203,7 @@ nothing from this beyond what it has: the terminal code is
 `unix`-tagged, and the reload child is behind `surfdev`. The full report
 is the last appendix.
 
-### What isn't in this pack
+### What the v0 shape left for later
 
 - The other 30-odd components. Each follows the pattern, has its row in
   docs/coverage.md (in the appendix below), and comes in a batch pack
@@ -767,14 +780,14 @@ Select, DropdownMenu, Dialog, Tabs, Toaster and code.Block.
   second takes no part in the keyboard's moves. A Dialog left out of the
   render, rather than rendered closed, gives the keyboard back only if
   another Dialog renders in that frame.
-- **Dialog modality (B3, in progress):** the runtime marks background
+- **Dialog modality (B3):** the runtime marks background
   controls out of the tab order and makes the background pointer-inert.
   Focus guards at the modal's ends wrap Tab, and a press on its text
   restores focus inside. The storybook marks its preview as the modal's
   scope, leaving the book's own controls outside it. A surface has no
   browser chrome; Chromium visits
   it once on Tab past the last control, while the surface wraps directly.
-  The application-level keyboard override is still a B3 review question.
+  The application-level keyboard override is ui.KeyScope's (B3, below).
 - **Tabs:** the shown tab's panel only (the children), with the roving
   tabindex. The keys are on each tab; while the keyboard is on one of
   them, the selected tab asks for it, so it follows a key's OnChange. A
@@ -840,7 +853,7 @@ navigation.
   tests that fail name the components to change. Generating ui's markup
   itself would bring back the macros' dynamic semantics (`jor`,
   `jget`) under closed, typed Props. This is how NEIO-15's "markup from
-  Basecoat's Jinja macros, by a translator" is met (p-653, 2026-11-17).
+  Basecoat's Jinja macros, by a translator" is met (2026-11-17).
 - **The CSS-only components that are one element are generated** from
   a table (internal/uigen: their tag, class, data-slot, fields and the
   attributes each writes), with their Props, doc and markup. ui's
@@ -976,7 +989,7 @@ scrollbar classes and Avatar's image for the looks pass.
   writes its buttons `disabled` from the frame it closes in, and a
   popover hides with `invisible`: an element that stops taking focus
   drops it.
-- **For SPEC (the maintainer's call, through p-653): focus fixup, as
+- **For SPEC (the maintainer's call): focus fixup, as
   HTML's.** SPEC doesn't say what happens when the focused element
   leaves the document or stops taking focus. The proposal for §10.1:
   "When the focused element leaves the document, or stops taking focus
@@ -986,7 +999,7 @@ scrollbar classes and Avatar's image for the looks pass.
   this. `surf.Blur(ctx)`, SPEC's `a=blur`, is added only when a
   component must give the keyboard to the terminal.
 
-### Batch B3: overlays (in progress)
+### Batch B3: overlays
 
 - **KeyScope: reviewed for B3.** The B3 keyboard review accepts
   `ui.KeyScope(keys []string, fn func(string) bool) templ.Component` for
@@ -1156,7 +1169,7 @@ scrollbar classes and Avatar's image for the looks pass.
   binary that links ui (K13: no import, but the size is noted here).
   `line-through` joined the kit's utilities, for a done task.
 - **Chart, from L5** (a dashboard; one name, the rest docs and a fix).
-  Chart is approved (B2), so this asks the reviewer:
+  Chart was approved in B2; L5's dashboard added:
   - **`ChartProps.Aspect float64`** (new): the plot's width over its
     height, 0 for 16:9. The plot was always 16:9 of its width,
     undocumented, so a chart across two thirds of a screen was 650 px
@@ -1192,551 +1205,264 @@ scrollbar classes and Avatar's image for the looks pass.
   outside click; the kit closes and leaves focus where the user put it.
   The reviewer accepted this intentional difference without a new API.
 
-## L4: the build tools and embedding (the pack)
+## L4: the build tools and embedding
 
-L4's pack: the names L4 adds, the docs it changes, and the command's
-shape. Nothing else in the lock moves.
+L4 added the build tools, the embedding in a raw-mode program and in
+Bubble Tea, and three names.
 
 ### The names
 
-- **`reloader.(*Reloader).Document(ctx, key, surface) (string, error)`:** L0's
-  deferral for `plx plugin dev ctl shot`. The process of key answers over
-  its reload wire (a `doc` request beside render, restyle and handover)
-  with the document of the surface it names, read on the
-  surface's driver through Do, never directly (a handover may read a
-  surface directly only after its driver signals it has exited). 3 s
-  at most. `ctl shot` takes its size from the terminal hotty-surf run
-  owns, as it does today. `hotty-surf ctl shot`
-  moves onto it, so the term wire's `doc` goes.
+- **`reloader.(*Reloader).Document(ctx, key, surface string) (string,
+  error)`:** `plx plugin dev ctl shot` needs the document of a surface
+  in a running process. The process of key answers over its reload wire
+  (a `doc` request beside render, restyle and handover, its params a
+  `Doc` naming the surface) with that surface's document. The document
+  is read on the surface's driver through Do, never directly: a handover
+  may read a surface directly only after its driver signals it has
+  exited. A driver busy for 2.5 s is a failure. `hotty-surf ctl shot`
+  uses it too, so the term wire's own `doc` is gone. The caller names the
+  surface because it placed it (hotty-surf run from the term wire's
+  `show`, shot likewise, serve from the page, plx from its slot) or found
+  it through Instances (below).
 - **`surftea.(*Host).Focused() bool`:** the keyboard moves without the
-  program: a click into the surface, Tab past its last element, a click
-  elsewhere. The Host hears those (focus and blur events, or the Screen's
-  in cells); the program needs them to draw its own pane's focus and to
-  know its keys are its own again.
-- **`surftea.(*Host).Cursor() (col, row int, ok bool)`:** the verifier's
-  L1 note: a field edited in cells needs the terminal's caret, and only
-  the program's `tea.View` sets it. From the rectangle's top left, as
-  `cells.Screen.Cursor`.
+  program (a click into the surface, Tab past its last element, a click
+  elsewhere). The Host hears those, as focus and blur events or the
+  Screen's in cells, and the program needs them to draw its own pane's
+  focus and to know its keys are its own again.
+- **`surftea.(*Host).Cursor() *tea.Cursor`:** a field edited in cells
+  needs the terminal's caret, and only the program's `tea.View` sets it.
+  Bubble Tea's own shape (bubbles' textinput and textarea): nil where
+  there is none, in the screen's cells (the Host adds its rectangle), a
+  bar.
+- **`surf.(*Surface).Focus() (focused bool, err error)`:** the program
+  gives the surface the keyboard. It sends a=focus for the element that
+  had it last (while it is drawn), else the first drawn element that
+  takes focus. It takes the move as the host's focus event, which the
+  host doesn't echo (SPEC §10.1), so Focus handlers hear it and passed
+  keys reach that element's Key handlers. focused says whether the
+  surface has the keyboard after it: true when it had it already, false
+  with nothing sent when nothing in it takes focus or it isn't shown yet,
+  so the program keeps the keyboard. surftea's Focus calls it, and
+  examples/pane calls it in a raw-mode program.
+  - Focus picks only what is drawn: not under `hidden`, `inert`, a closed
+    dialog, a closed details past its summary, or a closed popover, as
+    cells lays them out.
+  - A refused a=focus because the element is gone (`ENOTARGET`) makes the
+    surface hear a blur and pick again, once. A host that refuses every
+    a=focus (a backdrop's `EINVAL`, a detached surface's `EDETACHED`)
+    gets no retry, and the keyboard stays with the program.
 
-### The docs that change
+### surftea's contract
 
-- **surftea's Update doesn't take ReadyMsg or RelayoutMsg.** L0's doc said
-  it takes them; with two Hosts the first would swallow ReadyMsg and the
-  second would never attach. It reads ReadyMsg and gives it back.
-  RelayoutMsg is the program's alone (its Layout answers it).
-- **surftea's Cells is blank where the terminal is a host,** not "": a
-  View that joins the program's pane and the Host's rectangle
-  (`lipgloss.JoinHorizontal`) is then the same in both, and the Session's
-  rule that the View under a surface isn't empty holds.
-- **surftea's Place scrolls both ways,** as run.App does; a program that
-  wants otherwise sets the entry's Scroll.
-- **surftea's Focus gives the keyboard to the element that had it last,**
-  else the first that takes focus, and tells the surface where it is (the
-  host sends no focus event for focus the program gives, SPEC §10.1).
+- Update reads ReadyMsg and gives it back, so a second Host attaches too.
+  RelayoutMsg is the program's alone (its Layout answers it). Update
+  takes an ErrorMsg naming its surface (a refused delta sends the
+  document again) and the Tab that leaves the surface, and gives back a
+  click outside its rectangle in cells, which blurs it.
+- Cells is blank where the terminal is a host, not "", so a View that
+  joins the program's pane and the Host's rectangle is the same in both.
+- Place scrolls both ways, as run.App does, and is called in every
+  Update.
+- Focus gives the keyboard to the element that had it last, else the
+  first that takes focus (Surface.Focus).
+- A surftea program gets no live reload.
 
 ### The command
 
 ```
-hotty-surf new [-t app|tea|tool] <dir>
+hotty-surf new <dir>
 hotty-surf run [dir]
-hotty-surf ctl reload | shot [-html] [out.png]
+hotty-surf ctl reload | shot [-key k] [-surface s] [-html] [-o out.png]
 hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
-hotty-surf build --wasm [-o dir] [dir]
+hotty-surf build -wasm [-o dist] [dir]
 hotty-surf serve [-addr localhost:7279] [dir]
 hotty-surf lint [dir]
-hotty-surf book                (L3)
+hotty-surf classes
+hotty-surf book
+hotty-surf help | -h | --help       and <command> -h
+hotty-surf version
 ```
 
-- **new's templates.** `app` (the default, today's): a whole app on
-  run.App. `tea`: a Bubble Tea program with a list of its own and a
-  surface in a pane (surftea), tab between them. `tool`: a plx-style tool:
-  a surface with no terminal of its own, driven by a host program over a
-  writer (`surf.Surface` and `cells` only), with its main a raw-mode host
-  for trying it alone. Each passes `hotty-surf lint` and `go test` as
-  written.
-- **shot, headless.** It builds the app with surfdev, starts it on the
-  term wire as `hotty-surf run` does, but with no terminal: an in-process
-  host at `-size` (100×30 by default) answers it, so it needs none. It
-  takes the document once the app has been quiet 200 ms (its timers and
-  loads settle), renders it with hotty-blitz's `hotty render`, or writes
-  it with `-html`, and stops the app. The spike's headless shot, ported.
-- **build --wasm** writes a directory any static server serves:
-  `index.html`, `app.wasm` built by TinyGo (`-no-debug`), TinyGo's
-  `wasm_exec.js`, and the terminal (xterm.js, its fit addon and
-  xterm-addon-hotty). The page sizes the terminal to the window and runs
-  the app in it. `--wasm` is the only kind for now; a native build is `go
-  build`'s.
-- **serve** is the page with live reload: it builds the app with Go and
-  surfdev, serves it, and runs the reloader (package reloader) with each
-  page's app as an instance (`page:<n>`), its reload wire over a
-  WebSocket. A Go save loads the new build into the same terminal, which
-  still has the document, so the first frame is a delta and the state is
-  kept. A css save restyles in place. A text save is a Go save here: the
-  browser has no disk for templ's dev-mode strings. A failed build shows
-  over the page, as `hotty-surf run` shows it over the terminal.
+- **new** writes a run.App app only. The Bubble Tea and raw-mode shapes
+  are examples, tested in the gate (surftea/examples/files,
+  examples/pane), and new's next steps name them. It writes a
+  `.gitignore` with `dist/`, prints every file it writes, and, run from a
+  checkout, a go.mod that replaces hotty-surf with that checkout.
+- **run** works in cells where the terminal is no host. It hosts the
+  app's surface and the report's on cells.Screens of its own, which
+  outlive builds, so a Go reload is a delta there too.
+- **shot** builds the app with surfdev and starts it on the term wire,
+  with an in-process host at `-size` and no terminal. It takes the
+  document once the app has been quiet 200 ms, or after 3 s at most with
+  a line on stderr. It then renders it with hotty-blitz's `hotty render`,
+  or writes it with `-html`, and stops the app.
+- **build -wasm** writes a directory any static server serves: index.html,
+  app.wasm built by TinyGo (`-no-debug`, from `$HOTTY_SURF_TINYGO` or
+  PATH, with a warning off the proven 0.43.0 and the size printed raw and
+  gzipped), TinyGo's wasm_exec.js, and the terminal: xterm.js, its fit
+  addon and xterm-addon-hotty. Those are pinned in the command with their
+  licences, so neither build nor serve touches the network. Without
+  -wasm it says a native build is go build's, exit 2.
+- **serve** is the page with live reload. It builds the app with Go and
+  surfdev, serves it, and runs the reloader with each page's app as an
+  instance, its reload wire over a WebSocket. A Go save loads the new
+  build into the same terminal, so the first frame is a delta and the
+  state is kept. A css save restyles in place. A text save is a Go save
+  here, since the browser has no disk for templ's dev-mode strings. A
+  failed build shows over the page.
+  - serve answers ctl at run's socket.
+  - A page closed or reloaded is a leave: its `pagehide` beacons
+    `dev/leave`, and serve ends its wire with a `leave` for it. A socket
+    that closes waits up to 1 s for that beacon before it counts as a
+    crash, but not when the app handed over or said it leaves.
+  - The page's own channel is the site's own data, so JSON and text
+    (gov P-3): server-sent events from `dev/events`, and `dev/page` and
+    `dev/leave` from the page. The reload wire is msgpack-RPC end to
+    end, one message per WebSocket frame, capped at devwire's 64 MiB.
+  - Its builds go to a temporary directory, never the app's.
+  - Reload in the browser takes a Go js/wasm link, about 0.3 s for hello
+    and seconds for a large app; Report.Took says.
+- **help**, `-h` and `--help` print the command table to stdout, exit 0.
+  `version` prints `hotty-surf <module version> (hotty <spec>)`.
+- **lint.Dir** skips `dist` and directories that start with `_`, as the
+  reloader's walk does.
+- **The gate:** `make tinygo` fails when a release js build of an example
+  links internal/devwire, internal/devchild or reload/reloader (the
+  browser's reload is behind `surfdev && js`).
 
-### Where it stays as it was
+### Who is attached
 
-- **run.App's cells fallback is L1's** (run/cells.go); L4 adds no name
-  to it.
-- **No new cells name.** A raw-mode program hosts a surface with
-  `surf.Surface`, `cells.New` and hottyterm alone (examples/pane).
+plx's `plugin dev ctl shot` relays a tool's surface it doesn't place, so
+it has neither the surface's name nor its size. plx's SDK places every
+surface itself (a tool's main surface on every Resize, and its overlays).
 
-### As reviewed (p-767, 2026-11-17): approved with changes, applied
+- **`reload.Placed(s *surf.Surface, cols, rows int)`:** a program says
+  where it placed a surface, and 0, 0 when it hides or drops it. It is in
+  package reload, beside Keep and Serve, and a no-op outside a dev build,
+  so surf.Surface's release API is unchanged. run.App and surftea's Host
+  report through it, and examples/pane calls it: one way for every
+  driver.
+- **`(*Reloader).Instances() map[string][]Placed`:** keyed by instance
+  key, as Report.Failed is. Each key lists every surface its process
+  made, sorted by name; a process with no surface is there with none.
+  `Placed`'s doc says where its size comes from, and that 0 by 0 is also
+  "not on screen".
+- **`hotty-surf ctl shot`** takes `-key` and `-surface`, either optional.
+  It shoots the only surface on screen that matches, at its last size,
+  and refuses with the list when there are several or none. run and
+  serve answer it alike.
+- `Report.Attached` was the alternative not taken: a report is true as
+  of a save, and a shot asks about now.
 
-- **`Reloader.Document(ctx, key, surface string)`:** the surface by its
-  name, which the caller has because it places it (hotty-surf run from
-  the term wire's `show`, shot likewise, serve from the page, plx from the
-  slot). The `doc` request's params are a `Doc` naming it. Read on the
-  driver only; a driver busy for 2.5 s is a failure.
-- **`surftea.(*Host).Cursor() *tea.Cursor`:** Bubble Tea's shape (bubbles'
-  textinput and textarea), nil where there is none, in the screen's cells
-  (the Host adds its rectangle), a bar.
-- **`surf.(*Surface).Focus() (focused bool, err error)`, added:** the
-  program gives the surface the keyboard. It sends a=focus for the
-  element that had it last (while it is drawn), else the first drawn that
-  takes focus, and takes the move as the host's focus event, which the
-  host doesn't echo (SPEC §10.1): Focus handlers hear it, and passed keys
-  reach that element's Key handlers. focused says whether the surface has
-  the keyboard after it, as Key says taken: true when it had it already,
-  false with nothing sent when nothing in it takes focus or it isn't shown
-  yet (the verifier's F2), so the program keeps the keyboard then. surftea's Focus calls it and imports nothing of surf's
-  internals; examples/pane calls it in a raw-mode program. `surf.Focus`'s
-  doc says its handlers hear it.
-- **surftea's docs:** Update takes an ErrorMsg naming its surface (a
-  refused delta sends the document again) and the Tab that leaves the
-  surface, and gives back a click outside its rectangle in cells, which
-  blurs it. Place is called in every Update. The package doc says a
-  surftea program gets no live reload. The example lays out every Update
-  (once the window's size is known), sets AltScreen, and takes Cursor
-  whole.
-- **lint.Dir** skips `dist` (a build's output) and directories that start
-  with `_`, as the reloader's walk does.
-- **The command:**
+Still open:
 
-  ```
-  hotty-surf new <dir>
-  hotty-surf run [dir]
-  hotty-surf ctl reload | shot [-html] [-o out.png]
-  hotty-surf shot [-size 100x30] [-html] [-o out.png] [dir]
-  hotty-surf build -wasm [-o dist] [dir]
-  hotty-surf serve [-addr localhost:7279] [dir]
-  hotty-surf lint [dir]
-  hotty-surf book                     (L3)
-  hotty-surf help | -h | --help       and <command> -h
-  hotty-surf version
-  ```
+- **A dropped surface stays listed** for the life of its process, since a
+  dev build holds every surface it made. A program that says
+  `reload.Placed(s, 0, 0)` keeps it out of a shot, and one that makes a
+  surface per opening should reuse its overlay surfaces until a
+  `Surface.Close` lands.
+- **Overlays have a size but no position,** so a shot of a tool and its
+  open menu together isn't possible yet. X and Y on Placed would be an
+  addition.
 
-  - `new -t` is cut: run, shot, serve and build start a run.App main
-    only. The Bubble Tea and raw-mode shapes are examples, tested in the
-    gate (surftea/examples/files, examples/pane), and new's next steps
-    name them. new writes a `.gitignore` with `dist/`.
-  - `run` works in cells where the terminal is no host: it hosts the
-    app's surface and the report's on cells.Screens of its own, which
-    outlive builds, so a Go reload is a delta there too.
-  - `ctl shot` takes `-o`, as shot does.
-  - `shot` takes the document once quiet 200 ms, or after 3 s at most,
-    with a line on stderr.
-  - `build -wasm`: TinyGo only, from `$HOTTY_SURF_TINYGO` or PATH. It
-    prints the version, warns when it isn't the proven 0.43.0, and prints
-    app.wasm's size raw and gzipped. `-o` is `dist` in the working
-    directory. Without -wasm: "-wasm is the only kind; a native build is
-    go build", exit 2. The terminal's scripts (xterm.js 6.1.0-beta.304,
-    @xterm/addon-fit 0.12.0-beta.301, xterm-addon-hotty 0.8.0) are in
-    the command, pinned, with their licences, so neither build nor serve
-    touches the network.
-  - `serve` answers ctl at run's socket (one of the two listens): `ctl
-    reload`, and `ctl shot` of the newest page at its terminal's size. A
-    page closed or reloaded is a leave: its `pagehide` beacons
-    `dev/leave`, and serve ends its wire with a `leave` for it. The
-    WebSocket caps a message at devwire's 64 MiB. The page's own channel
-    is the site's own data, so JSON and text (gov P-3): server-sent
-    events from `dev/events` (restart, report), and `dev/page` (the
-    page's key, surface and size) and `dev/leave` from the page. The
-    reload wire is msgpack-RPC end to end. Its builds go to a temporary
-    directory, never the app's.
-  - `help`, `-h` and `--help` print the command table to stdout, exit
-    0; every command takes `-h`. `version` prints `hotty-surf <module
-    version> (hotty <spec>)`, `(devel)` for a checkout's build.
-- **The gate:** `make tinygo` fails when a release js build of an
-  example links internal/devwire, internal/devchild or reload/reloader
-  (the browser's reload is behind `surfdev && js`).
-- **Not promised:** reload in the browser takes a Go js/wasm link, about
-  0.3 s for hello and seconds for a large app; Report.Took says.
+### What the trials needed
 
-### As verified (p-769, 2026-11-17): the fixes and leans, applied
+Two fresh agents built apps from the README and `help` alone
+(2026-11-17).
 
-- **F2:** `Surface.Focus() (focused bool, err error)`, above. surftea's
-  `Host.Focus` and examples/pane set where the keyboard is from it, and
-  a Screen given the keyboard for nothing is blurred again. surftea's
-  Focus doc: Focused is true from then on unless nothing in the surface
-  takes focus.
-- **F1, F3:** the pane test waits for its list; `build -wasm` ships
-  xterm-addon-hotty's licence (`hotty-xterm.LICENSE`) with the others.
-- **L1:** a transport that frames messages itself is a `devwire.Framer`,
-  and a Conn on one encodes each message into a pooled buffer and writes
-  it in one Write (gov P-3's exception, said in the comment). serve's
-  page wire and the page's wasm end are Framers, so a WebSocket frame is a
-  whole message: the 64 MiB frame cap is a message cap, and serve's leave
-  goes between two messages.
-- **L2:** Focus picks only what is drawn: not under `hidden`, `inert`, a
-  closed dialog, a closed details past its summary, or a closed popover,
-  as cells lays them out; the last element counts only while drawn.
-- **L3:** a refused a=focus (the element is gone) makes the surface hear
-  a blur and pick again, in surftea and in examples/pane, rather than the
-  host picking where the surface can't see.
-- **L4:** a socket that closes waits up to 1 s for its page's
-  `dev/leave`, which the browser may send after, before it counts as a
-  crash; not when the page's app handed over or said it leaves on the
-  wire (serve reads each frame's envelope), since the reloader waits for
-  those wires to close and a Go save would take a second longer.
-- **The page:** Go's wasm_exec.js leaves an exited app's timers
-  scheduled, and one firing resumes the exited instance, which throws (a
-  handover exits with a `time.After` pending). The page clears them as
-  the app exits, and calls into an app only while it hasn't exited.
-- **L5:** the child answers `doc` off its read loop, so a save's render
-  doesn't wait behind a shot; its params decode nil-safe.
-- **L6:** the page's wasm end pools the frames it copies from JS. serve's
-  end can't: x/net's websocket reads a frame with io.ReadAll, which a
-  Codec can't hand a buffer; its comment says so.
-- **L7:** `new` prints every file it writes.
-- **D1 (the delta's verification):** L3's retry is once, and only when
-  the element is gone (`ENOTARGET`): a host that refuses every a=focus (a
-  backdrop's `EINVAL`, a detached surface's `EDETACHED`) gets no new one,
-  and the keyboard stays with the program until its next Focus.
+- **`surf.Submit(fn func())`** on a form: the host keeps Enter in a field,
+  commits it and submits its form (SPEC §9), so no key reaches the
+  program, and surf dropped `submit`. Submit hears it, and a submit
+  button's click. fn takes no fields, since surf's fields are controlled
+  and the values are the app's already. Its doc says:
+  - a field outside a form only commits on Enter;
+  - a submit button's own Click runs first, so the action goes on the
+    form alone;
+  - which buttons submit;
+  - on an element that isn't a `<form>` it is a fault.
+- **`Rig.Key` keeps its result,** named `taken`: true when the host's
+  element or a Key handler took the key, and a test reads what a handler
+  did in the document.
+- **`Rig.Value(sel) string` and `Rig.Checked(sel) bool`:** a field's value
+  and a check box's state are the host's, not attributes. A selector with
+  `[checked` or `[value` that matches nothing fails with that hint.
+- examples/hello and the scaffold put their field and button in a form
+  whose Submit acts, so the idiom is in the app `hotty-surf new` writes.
+- lint gained `button-type` (a raw `<button>` in a raw `<form>` that
+  doesn't say its type) and `button-label`, and its class rule reads
+  templ's class expressions. A button with no text and no label is a
+  render fault, named by HTML's rules (an image's alt, a `<label>`).
+- A class that neither ui.Stylesheet, the app's .css, nor a `<style>` in
+  a .templ defines is a finding. `hotty-surf classes` lists the kit's.
+  The reloader's unused `style/build.sh` hook is gone; an app's own CSS
+  build is an open question on the board.
+- msgp's codecs are regenerated on a save, through msgp's generator as a
+  library (golang.org/x/tools in the reloader only).
+- While the last build failed, a .templ save takes the go tier, so a
+  reverted broken expression doesn't stick.
 
-## L4: who is attached (a pack of its own)
-
-plx's `plugin dev ctl shot` relays a tool's surface it doesn't place, so it
-has neither the surface's name nor its size; `Reloader.Document`'s reason
-assumed the caller had both. plx asked for a snapshot of who is attached,
-with each surface's last size (p-653, 2026-11-17).
-
-### As drafted (c5125aa)
-
-`Reloader.Instances() []Instance`, with `Instance{Key; Surfaces []Placed}`
-and `Placed{Name; Cols, Rows}`, 8 names: the sizes reported by run and
-`hotty-surf run` only, so a surface its program places itself (pane,
-surftea's Host, plx's surfdk) was 0 by 0, and whether plx needed a way to
-say so was left open. `Report.Attached` was the alternative not taken: a
-report is true as of a save, and a shot asks about now.
-
-### As reviewed (p-767, 2026-11-17): six names
-
-plx answered that its SDK places every surface itself (a tool's main
-surface on every Resize, and overlays: a list, a context menu). The review
-approved with changes, applied as written:
-
-- **`reload.Placed(s *surf.Surface, cols, rows int)`,** the process's half:
-  a program says where it placed a surface, and 0, 0 when it hides or
-  drops it. Package reload, beside Keep and Serve, a no-op outside a dev
-  build (off.go), so surf.Surface's release API is unchanged. run.App and
-  surftea's Host report through it, and examples/pane, which places its
-  surface itself, calls it: one way for every driver.
-- **`Instances() map[string][]Placed`,** keyed by instance key as
-  Report.Failed is; `Instance` and its fields are cut. Each key lists every
-  surface its process made, a controller's views included (plx checked it:
-  a daemon-tool's views live in the controller), sorted by name; a process
-  with no surface is there with none.
-- **`Placed`'s doc** says where its size comes from, and that 0 by 0 is also
-  "not on screen": a caller renders it at a size of its own, or not at all.
-- **Document's reason:** the caller has the surface's name from placing
-  it, or from Instances.
-- **`ExampleReloader_Instances`** shoots each surface whose size is known.
-- **`hotty-surf ctl shot`** takes `-key` and `-surface`, either optional:
-  it shoots the only surface on screen that matches, at its last size, and
-  refuses with the list (key, name, size) when there are several or none.
-  run and serve answer it alike (Instances), so serve's own record of the
-  pages' sizes (`dev/page`) is gone: each page's app says its size on its
-  own wire, as any process does.
-
-### What is still open
-
-- **A dropped surface stays listed** for the life of its process: a
-  dev build holds every surface it made (devhook's registry and the
-  reload wire's child), so none is collected. A program that says
-  `reload.Placed(s, 0, 0)` when it hides or drops an overlay keeps it
-  out of a shot. One that makes a surface per opening (a menu) gains
-  one entry each time, and should reuse its overlay surfaces until
-  L0's open `Surface.Close` lands.
-- **Overlays have a size but no position,** so a shot of a tool and its open
-  menu together isn't possible yet. X and Y on Placed would be an addition,
-  not a break, once a shot needs them.
-- **Rows the host chose** (a placement with Rows 0) are what the program
-  says: one that reads the place reply's Rows says those.
-
-## L4: what the trial needed (a pack of its own)
-
-The L4 trial (a fresh agent with the README and `help` only, building a
-todo app, 2026-11-17) found two things no app could do.
-
-- **Enter in a text field.** The host keeps Enter in a field: it commits
-  the field (`change`) and submits the field's form (`submit`, SPEC §9),
-  and no key reaches the program. surf dropped `submit`, so nothing could
-  act on it. **`surf.Submit(fn func())`** on a form hears it, and a submit
-  button's click; fn takes no fields, since a form's values are the app's
-  already, through its fields' Input and Check (surf's fields are
-  controlled). The alternative, `func(fields [][2]string)`, would give an
-  app a second copy of its own state; it is an addition later if an
-  uncontrolled form needs it. `surf.Key`'s doc says Enter in a field is
-  Submit's. cells submits as the SPEC says already.
-- **`surftest.Rig.Key` said "the surface took it"** for Enter in a field
-  while no handler ran. It is true that the surface took it (the field
-  used it, and the program never sees it), so the result stays and its doc
-  says what true means: the host's element or a Key handler took it, and a
-  test reads what a handler did in the document. surftest's own doc and
-  example, which pressed Enter as if it added a task, now say the form's
-  Submit does.
-- **A field's value and a check box's state** are the host's, which its
-  document doesn't show: a value or checked attribute is only where the
-  field starts. **`Rig.Value(sel) string`** and **`Rig.Checked(sel)
-  bool`** read them, and fail the test on an element that isn't such a
-  field.
-
-### As reviewed (p-767, 2026-11-17): all three, docs and examples changed
-
-The reviewer approved the three names and kept Rig.Key's meaning. Applied
-exactly:
-- **Submit's doc** is the review's, with its four points: a field outside a
-  form only commits on Enter; a submit button's own Click runs first, so the
-  action goes on the form alone; which buttons submit (none or
-  type="submit"; ui.Button with `Attrs: templ.Attributes{"type":
-  "submit"}`); and on an element that isn't a form it is a fault. **The
-  fault** is surf's: a render that puts a Submit on an element that isn't a
-  `<form>` records it, and surftest fails the test naming the element, as it
-  fails a duplicate `On`.
-- **surf.Key's sentence** is the review's: Enter commits the field and
-  submits its form, which the form's Submit hears.
-- **Value's doc** says a select's is its picked option's value.
-  **surftest's package doc** says a field's value and a box's state are the
-  host's, and a selector with `[checked` or `[value` that matches nothing
-  fails with that hint.
-- **Rig.Key's result is named** `taken`, as Surface.Key's and
-  cells.Screen.Key's are. The API file lists no result names, so the lock
-  doesn't move.
-- **`ExampleSubmit`**: a form with `surf.Submit(a.Add)`, a field with Input,
-  and a ui.Button of type submit with no `surf.On`. Its doc shows the
-  .templ and the test's lines; TestExampleSubmit drives it (Enter and the
-  button both add, and the field reads "" after).
-- **examples/hello and the scaffold** put their field and their button in a
-  form whose Submit acts. hello's name field and Wave button: Enter in the
-  name waves, and TestWave presses it. The scaffold had no field, so it
-  gains a step field ("Count: N", Add adds the step, 1 when it says none),
-  and its TestApp types a step and presses Enter. That puts the idiom in
-  the app `hotty-surf new` writes.
-- **The risk lean, a lint rule:** `button-type`, a raw `<button>` in a raw
-  `<form>` that doesn't say its type. The kit's buttons say theirs.
-
-### Also from the trial
-
-None of these is a name, but each changes what an app's author sees:
-- **lint's class rule:** a class that neither ui.Stylesheet, the app's
-  .css, nor a `<style>` in a .templ defines is a finding, for every app.
-  The reloader's `style/build.sh` hook (L0's, above), which nothing used
-  or documented, is gone, and with it the rule's switch. An app's own CSS
-  build is an open question on the board. A watcher writing
-  `style/app.css` works today.
-- **msgp's codecs are regenerated on a save,** by msgp's generator as a
-  library. That adds `golang.org/x/tools` to the module graph, for the
-  reloader only: an app's own build doesn't link it.
-- **`hotty-surf new` from a checkout** writes a go.mod that replaces
-  hotty-surf with that checkout, until v0.7 is published.
-- **The tools and their versions** (Go, templ, msgp, TinyGo, hotty) are in
-  the README, `help` and `new`'s output, and build's and shot's errors
-  name the one missing.
-
-## L4: the second trial (no names)
-
-A second fresh agent took the five tasks in 12 minutes. What it hit, and
-what changed, with no exported name:
-1. **A stale build failure stuck** after a broken Go expression in a
-   .templ was put back: the revert matched the running build's .templ,
-   so it took the text tier and left the broken Go on disk. While the
-   last build failed, a .templ save takes the go tier
-   (TestRevertAfterAFailedBuild).
-2. **templ's and msgp's install lines** are in the README and help.
-3. **The classes are the kit's,** not Tailwind's: the docs say so, and
-   `hotty-surf classes` lists them from ui.Stylesheet (internal/cssclass
-   reads a stylesheet's selectors, for it and for lint).
-4. **lint's class rule reads templ's class expressions:** templ.KV's key,
-   templ.Classes, a class={ … } and a component's Class field.
-5. **A button with no text and no label** is a surf fault at render time
-   (surftest fails on it), and lint's button-label rule names the static
-   cases: a raw <button> of icons, a ui.Button with IconOnly and no
-   Attrs.
-6. **An attribute beside surf.On** is shown in the README.
-7. **ui.Icon's doc lists the icons,** held to the set by a test, and
-   surftest says a fault once rather than at every render.
-
-Not ours: ui.Checkbox drawn as Blitz's native box is hotty-blitz's gap 6.
-
-### As verified (p-769, 2026-11-17)
-
-- **F1:** the class rule reads a string as classes only inside its own
-  `class={ … }` or `templ.Classes( … )`, which `classesAt` walks to its
-  close: a `title={ "Hello world" }` after one is no longer classes.
-- **F2:** the render fault follows HTML's name for a button. An image's
-  alt is text, and a `<label for>` it or a `<label>` around it names it.
-  Its message offers text (beside an icon, a `<span class="sr-only">`),
-  an aria-label or a `<label for>`, and says a ui.Select with nothing
-  chosen takes a Placeholder. SelectProps.Value's and
-  DropdownMenuProps.Trigger's docs say the same.
-- **L1–L3:** `classes -h` says what it lists. The list leaves out the
-  kit's own `kit-*` classes, which lint still accepts. The fault names
-  where to find a button with no id of its own: the nearest app id ("in
-  #todo-list"), else its first class.
-
-### What the second trial left
-
-- **Open:** Autofocus's templ form (`{{ surf.Autofocus(ctx, id) }}`) in its
-  doc, and the scaffold's field autofocused.
-- **Open:** One's failure listing the nearest candidates' texts.
-- **Open:** `help` saying that under serve a text save is a Go reload (the
-  page runs Go's wasm, which reads no strings file).
-- **Open:** the served page's `<title>`, which is "hotty-surf", not the
-  app's.
-- **Open:** cells draws no gap between a check box and its label.
-- **Open:** `shot -h` saying it draws the starting state.
-- **Not ours:** `hotty version`, which is hotty-blitz's; ui.Checkbox drawn
-  as Blitz's native box, hotty-blitz's gap 6.
-
-
-## Draft: spike storybook components
+## The storybook's components
 
 The maintainer asked to port the spike's storybook and its reusable
-NavList, Controls, EventLog and code view. This draft carries the spike's
-component shapes, with existing v0.7 surf handlers in place of the spike
-runtime. The reviewer kept the retained NavList but made its helper
-mechanics private, changed Controls and EventLog to Props, kept distinct
-code View and Block with code.Stylesheet, and chose TabsProps.Line.
-The approved API is not changed by this draft. NavList requests reveal
-in the same delta as the changes; public reveal remains a separate pack.
+parts. NavList keeps its public shape, with its helper mechanics
+private. Controls and EventLog take Props. ui/code keeps View and Block
+apart, with code.Stylesheet. Tabs gained `TabsProps.Line`. NavList asks
+for its reveal in the same delta as its changes; a public reveal would
+be a pack of its own.
 
-Review the public shapes against the spike and v0.7's existing conventions,
-including the number of NavList methods and the string control kinds.
+## A reload's Report on plx's wire
 
-## L5: plx's asks for a Report on its wire (a pack of its own)
+plx carries a reload's outcome on its own msgpack wire, and would
+otherwise have kept a third copy of the types.
 
-plx's plugins agent asked for three things (via p-653, 2026-11-17), in
-one pack:
+- **msgp codecs on `reloader.Report` and `lint.Finding`:** generated
+  `EncodeMsg`, `DecodeMsg` and `Msgsize` (`-marshal=false`,
+  `//msgp:newtime`, `//msgp:limit` 65536). The ctl wire's internal
+  mirrors are gone, and its bytes didn't change; TestReportCodec locks
+  the keys, since the `msg` tags are a wire the API file doesn't show.
+- **`reloader.Text(r *Report) string`:** what `ctl reload` and serve's log
+  print. A free function, since P-3 keeps hand-written methods off a type
+  on a wire.
+- **`reload.Serve`'s key** is an opaque, non-empty string the dev parent
+  chooses. It names one process at a time and keys Report.Failed,
+  Instances, Document and `ctl shot -key`.
+- A peer decodes within its own capped frame: `msgp:limit` doesn't cap
+  strings.
 
-1. **msgp codecs on `reloader.Report` and `lint.Finding`.** plx carries a
-   reload's outcome on its own msgpack wire. Until now the ctl wire carried
-   internal mirrors (`devwire.Report`, `devwire.Finding`), because the API
-   types had no codec; plx would have had to write a third copy. Both types
-   now get msgp's generated `EncodeMsg`, `DecodeMsg` and `Msgsize`
-   (`-marshal=false`, `//msgp:newtime`, `//msgp:limit` 65536 as devwire's),
-   and the mirrors are gone: "reload"'s answer on the ctl wire is
-   `reloader.Report` itself. Its keys are the mirrors' (tier, took in
-   nanoseconds, build, failed, lint; file, line, col, rule, text), so the
-   ctl wire's bytes do not change. Report moves to `report.go` beside its
-   codec; its fields and docs are as they were, with `msg` tags added.
-2. **A text form: `func Text(r *Report) string`.** What `ctl reload` and
-   `hotty-surf serve`'s log printed (devcmd's `ReportText`), moved as it
-   was. A free function, since P-3 keeps hand-written methods (a `String`)
-   off a type on a wire. A pointer, as `View` takes.
-3. **`reload.Serve`'s key:** its doc now says that a key is an opaque
-   string the dev parent chooses, which names one process at a time and
-   keys Report.Failed. No name changes.
+## Drags and the secondary press
 
-7 new names, all in `lint` and `reload/reloader`; none changed or removed.
+plx's nav and machines lists reorder by drag, and its context menu opens
+on a secondary press. Both are SPEC's, hotty-go reads them, and
+hottytest drives them. Ported from hotty-a2ui's drag, adapted to
+handlers.
 
-### As reviewed (p-796, 2026-11-17): all 7, two docs and two tests changed
+- `surf.Drag(func(DragEvent)) Handler` hears Start, the moves and End;
+  `surf.Drop(func(DragEvent)) Handler` runs at the release over its
+  element. `DragEvent` is Start, End, ID (the dragged element), Over and
+  hotty.Drag embedded (cell, steps). data-steps is the app's own
+  attribute. Drop(nil) adds nothing, as every nil handler does, so a list
+  that reorders does the move in Drop's func.
+- The surface writes the class `dragging` on the dragged element from
+  its first move to its release (not at the press, so a click doesn't
+  flash it). The view never writes it, and the kit defines no style.
+- `surf.Secondary(func(at hotty.Cell, area hotty.Area)) Handler`. A
+  secondary press runs Outside first, so a right click on another row
+  moves an open menu instead of closing it. It moves no focus. at and area
+  are zero when the host doesn't say them.
+- No Mods in DragEvent yet. It is a struct, so adding them later breaks
+  no caller. Escape cancelling a drag is an app's Key handler.
+- surftest: `Rig.Drag`, `Rig.DragStep`, `Rig.Secondary`.
+- Kit rule K26: pointer gestures are root handlers, Outside before
+  Secondary. hotty.Drag must stay method-free, or embedding it promotes
+  its methods into surf's API.
 
-All 7 names approved as named, with no cuts. The ctl wire's bytes are
-unchanged (msgp 1.6.5's `WriteDuration` is `WriteInt64`), and the release
-wasm gains nothing (`./reload`'s release deps include neither reloader nor
-lint). Applied:
-`reload.Serve`'s key doc says the key is non-empty and also keys
-`Instances`, `Document` and `ctl shot -key`; `Report.Failed` is "by the key
-it gave reload.Serve"; ExampleText's imports are grouped as goimports
-groups them; `TestReportCodec` locks Finding's keys and that took is a
-plain int, since the `msg` tags are plx's wire and api-check doesn't see
-them; a devcmd test ties Text's finding line to `hotty-surf lint`'s.
-Left for plx: decode within its capped frame (msgp:limit doesn't cap
-strings), and drop any mirror of its own.
-
-## L5: drags and the secondary press for plx (a pack of its own)
-
-plx asked (via p-653, 2026-11-17) for drags in the root package, for its
-nav and machines lists, which reorder by drag, and for a secondary press,
-on which p-794 builds the kit's context menu. Both are SPEC's, and
-hotty-go already reads them (hotty.Drag; Event.Button, At, Area);
-hottytest drives them. Ported from hotty-a2ui's rendition (drag.go: the
-same events, data-steps "0 1" halves for before and after, a class on what
-was lifted, k-lifted there), adapted to handlers.
-
-- `surf.Drag(func(DragEvent)) Handler` → data-on drag; one func hears
-  Start, the moves and End. `surf.Drop(func(DragEvent)) Handler` → data-on
-  drop; its func runs at the release over it. `DragEvent` is Start, End,
-  ID (the dragged element, which the host's t no longer names after
-  dragstart), Over (the host's t), and hotty.Drag embedded (cell, steps).
-  data-steps is the app's own attribute, beside On's.
-- **The class dragging** is added by the surface to the dragged element
-  from the drag's first move to its release (not at the press, so a click
-  doesn't flash it): the render after either is parsed again and the class
-  put on in `number`. An app styles `.dragging`; the kit defines none.
-- `surf.Secondary(func(at hotty.Cell, area hotty.Area)) Handler` → data-on
-  secondary. It also tells Outside handlers, as a primary press does, so a
-  right click elsewhere closes an open popover. It no longer counts as the
-  press that a blur follows (it moves no focus).
-- surftest: `Rig.Drag(from, to)`, `Rig.DragStep(from, to, tx, ty)`,
-  `Rig.Secondary(sel)`, on hottytest's DragStart/DragOver/DragEnd and
-  SecondaryPress.
-- **cells: none of it.** cells (and `hotty-surf run` in a plain terminal)
-  has no drag and no secondary press: its pointer is Click and Wheel. An
-  app that reorders by drag also gives the keyboard a way, as the docs
-  say. A cells drag (mouse reporting's motion with the button down) and a
-  right click mapped to Secondary are a later cells change, with names of
-  its own on cells.Screen if wanted. (L6, below, gives it: Press, Move,
-  Release and At.)
-
-Open for the reviewer:
-1. Drop(nil) adds nothing, as every nil handler does, so a row that only
-   needs drop's steps (tx, ty) for the dragged row's own handler has to
-   give Drop a func. The example does the move in Drop's func, which reads
-   naturally; the alternative is Drag writing "drag drop".
-2. Mods (shift, alt…) are not in DragEvent, as Click carries none; a
-   copy-instead-of-move drag would need them.
-3. Escape cancelling a drag isn't SPEC's; the doc leaves it to a Key
-   handler.
-
-12 new names; none changed or removed.
-
-### As reviewed (p-796, 2026-11-17): all 12, one behaviour fix and docs
-
-All 12 names approved as named, with no cuts. The open questions, settled:
-1. Drop(nil) stays nothing, as every nil handler is; a list that reorders
-   does the move in Drop's func.
-2. No Mods now. DragEvent is a struct, so adding Mods later breaks no
-   caller: that is the plan when a copy-instead-of-move drag needs them.
-3. Escape stays an app's Key handler; Drag's doc says what the app then
-   ignores (the End, the Drop's) and that the class stays until release.
-
-Applied: a secondary press runs Outside before Secondary, so a right click
-on another row moves an open menu instead of closing it
-(`TestSecondaryAfterOutside`); Drop's doc says it runs only while its
-element is the drag's Over, after Drag's End, and on the dragged element
-itself when it has Drop; Drag's doc says the surface writes the class
-dragging into what it sends and the view never does, and Escape's text as
-above; Secondary's doc says at and area are zero when the host doesn't say
-them. Kit rule K26 (pointer gestures are root handlers; Outside before
-Secondary). hotty.Drag must stay method-free, or embedding it promotes its
-methods into surf's API.
-
-## L6: the pointer in cells, for plx (a pack of its own)
+## The pointer in cells
 
 plx draws its surfaces in cells where the terminal is no hotty host, and
-hands its cells host the terminal's mouse: press, held motion and
-release, each with mods, the right button, and motion with no button
-down. v0.7's `cells.Screen` took only `Click(col,row)` and `Wheel`, so
-nothing in cells could drag (surf.Drag/Drop, L5), right-click
-(surf.Secondary), double-click, shift-click or hover. plx also couldn't
-ask what is under a cell for a carry that began outside the surface
-(`l4c-gaps.md`, G-cells-hit). This includes the cells half of L5's drags
-and secondary press.
-
-### The names
+hands its cells host the terminal's mouse. `cells.Screen` took only Click
+and Wheel, so nothing in cells could drag, right-click, double-click,
+shift-click or hover. plx also asks what is under a cell, for a carry
+that began outside the surface.
 
 ```go
 func (c *Screen) Press(col, row, mods, button int) (taken bool)
@@ -1745,1657 +1471,399 @@ func (c *Screen) Release(col, row, mods int) (taken bool)
 func (c *Screen) At(col, row int) (id string, area hotty.Area)
 ```
 
-- The Screen is the host for the pointer too. It sends the surface the
-  events a host sends for the same gesture (SPEC §9, §9.1, §9.4), so the
-  existing handlers (Click, Drag, Drop, Secondary, Hover) need no new
-  names. These are:
-  - a press, with its Button (0 or 2), At, Area and Mods;
-  - a click, with its Count and Mods;
-  - dragstart, drag and dragend, with Col, Row and the steps;
-  - a hover, with Out where the pointer leaves.
-
-  Ported from v0.6.3's `pkg/cells` (input.go's Press, Release and count;
-  drag.go's start, move and end, and its steps), adapted to v0.7's tree.
-- `button` is numbered as `hotty.Event.Button` is: 0 the primary, 2 the
-  secondary. One Press covers both. `mods` comes third in all three, so
-  `ModAlt` (2) can't be taken for the secondary button.
-- `taken` has one meaning in all three: the gesture is the surface's. That
-  is a press the surface took, the moves and release of that press, and a
-  move with no button down over the Screen's cells. While a press the
-  surface didn't take is down, its moves are the program's.
-- `Click(col, row)` stays: it is Press(col, row, 0, 0), then Release(col,
-  row, 0). A drag it starts on a handle ends with it.
+- The Screen is the host for the pointer too. It sends the surface what a
+  host sends for the same gesture (SPEC §9, §9.1, §9.4): a press with
+  its Button, At, Area and Mods; a click with its Count; dragstart, drag
+  and dragend with the steps; a hover with Out. So Click, Drag, Drop,
+  Secondary and Hover need no new names. Ported from v0.6.3's
+  `pkg/cells`.
+- `button` is numbered as `hotty.Event.Button` is (0 primary, 2
+  secondary), and `mods` comes before it, so `ModAlt` can't be taken for
+  the secondary button.
+- `taken` has one meaning in all three: the gesture is the surface's. A
+  move with no button down over the Screen is a hover, and a move with a
+  non-primary button down is a hover too; there is no Hover method.
+- `Click(col, row)` is literally Press then Release.
 - `At` is the innermost element with an id of the app's (generated ids
-  skipped, by `rt.RuntimeID`, the rule surf faults an app's id with), and
-  its cells. The half plx asks for is `row < area.Row + area.H/2`.
-- A drag ends short (a dragend with no target and its last steps, no drop
-  and no click) on `Focus(false)`, a new document, a=del, the dragged
-  element leaving, or a Press before its Release. A press of any button
-  also drops a click whose release was lost. Escape doesn't end a drag,
-  as on a host.
-- `surf.Drag`'s doc no longer says cells has no pointer.
-
-### As reviewed (p-796, 2026-11-17): all four, with changes, applied
-
-The open questions were settled with the leans:
-1. At returns `(id, area)`: neither a half nor a `Hits()` list.
-2. Hover goes through Move with no button down, not a `Hover` method. A
-   move with a non-primary button down is a hover too.
-3. The double click's clock is internal: 500 ms on one element, by the
-   wall clock, tested through an internal hook.
-4. Escape during a drag does what it does without one, as on a host.
-
-The changes:
-- Press's order became `(col, row, mods, button)`.
-- At skips generated ids.
-- `taken` got one meaning.
-- The cut-short cases were added, in the docs and in behaviour.
-
-### As verified (p-801, 2026-11-17): three fixes, applied
-
-- Move's `taken` holds only with no button down, or for a press the surface
-  took (F1).
-- A press of any button resets the primary press waiting for its click
-  (F2).
-- Click is literally Press and Release (F3).
-
-Each has a test (`TestMoveOfUntakenPress`, `TestPressAfterLostRelease`,
-`TestClickOnDragHandle`). This pack's notes were folded in here (F4).
-## plx: key labels (a pack of its own)
-
-plx's move to v0.7 (its ask (c)) needs every scoped key labelled, with an
-enabled state, enumerable from Go as `{key, label, enabled}`, as its
-surfui `bind label=…` is today. Its which-key overlay and its command
-palette read it, the palette with the keyless actions too. In hotty 0.8 a
-host's which-key level and palette come from the program's menu (SPEC
-§10.7, `a=menu`), not from `data-key` attributes, which 0.2's host-side
-sequence engine read and 0.3 dropped. hotty-go has the menu as
-`hotty.MenuTree` and `hotty.Menu`, so the kit gives the tree and writes no
-escape sequence.
-
-Nothing to port: hotty-a2ui's `Shortcut{Key, Label}` and `KeyHints` have
-labels but no enabled state and no menu, and the spike has none. hotty-a2ui's
-hints merging keys by label is the app's to do from `Bindings`.
-
-### As drafted
-
-- `KeyScope(bindings []KeyBinding, fn func(KeyBinding) bool)`, where
-  `KeyBinding` is `{Key, Label, Name string; Disabled bool}`. A keyless
-  binding with a Name is an action only a pick reaches; one with neither
-  is a fault. A disabled binding's key goes on as if the scope did not
-  name it, its pick runs nothing, and the menu shows it disabled. fn gets
-  the binding as given, so it switches on Name or Key.
-- `Bindings(s *surf.Surface) []KeyBinding`: what s offers now, from its
-  last render. The scopes around the focused kit control first, nearest
-  first, then every other scope in render order. A key belongs to the
-  nearest enabled binding of it in that chain (else the nearest disabled
-  one); any other keyed binding is listed with Key empty when it has a
-  Name, and left out when it has none.
-- `Menu(s, label) *hotty.MenuTree`: Bindings as one flat level of hotty
-  menu items; nil when there are none, which `hotty.Menu` sends as no
-  menu.
-- `Pick(s, name) bool`: runs the binding a menu's pick or a palette names.
-- All three run on the driver's goroutine (a handler, or `Surface.Do`).
-- Behaviour, no names: run.App sends `hotty.Menu(ui.Menu(s, …))` where the
-  host has the `menu` feature, whenever it changes, and turns a command
-  event's name into `ui.Pick`. An app that places its surfaces itself
-  (plx) builds and sends its own menu, adding its key sequences. run is
-  the L4 builder's, so that part goes to them once this is decided.
-
-### The other shape, and the lean
-
-- **Lean (p-653's, taken in the draft): change KeyScope.** v0.7 is
-  untagged and the maintainer prefers the better architecture to keeping
-  a reviewed signature: one way to scope keys. Its cost: every caller
-  writes `[]ui.KeyBinding{{Key: "enter"}}` for what was `[]string{"enter"}`.
-- **Other: keep KeyScope, add a sibling** `ui.Keys([]KeyBinding, fn)`. No
-  break, but two ways to scope keys, one of which can't be listed.
-
-### Open for the reviewer
-
-1. **fn's argument.** The draft passes the KeyBinding. The alternative is
-   `func(string) bool` getting the Name, or the Key when there is no Name.
-   That's shorter, but a handler then can't tell a key from a pick.
-2. **A keyed binding the key doesn't reach.** The draft lists it without
-   its key when it has a name. The other choice lists it with its key,
-   marked as not reachable now, which needs a field that KeyBinding (an
-   input) would then carry as output.
-3. **Reach.** A scope handles keys only while one of its kit controls has
-   the keyboard, as reviewed for B3. plx's `bind` is surface-wide. Should a
-   scope also take its keys while the focus is anywhere inside it (plain
-   HTML), or while nothing in the surface is focused? The draft keeps
-   B3's reach, so Bindings lists only what a key really reaches.
-4. **One level.** Menu gives no groups (SPEC §10.7 allows eight levels).
-   Grouping by scope would need a label per scope, which KeyScope doesn't
-   take. An app that wants groups builds its tree from Bindings.
-5. **The name `Menu`.** It returns hotty's menu (SPEC §10.7), but in `ui`
-   it sits beside `MenuItem`, DropdownMenu's item, which it doesn't use.
-   `KeyMenu` or `HostMenu` would say it's the host's. The draft keeps
-   `Menu`, after hotty-go's `hotty.Menu`, which it feeds.
-
-### As reviewed (p-796, 2026-11-17): applied
-
-Approved with changes (`review-keys-labels.md`, K27 added and K20's reach
-amended):
-- **KeyScope(bindings []KeyBinding)**, with each binding's `Run func()
-  bool` in place of the scope's fn, as MenuItem carries OnSelect. A nil
-  Run is a fault. Question 1 is moot: the draft's fn got the same binding
-  for a key and a pick.
-- **Reach extended (question 3).** The keyboard is inside a scope on its
-  kit controls, on an element whose surf.On ran in it, or inside one of
-  those, and the outermost scopes have it while nothing is focused. The
-  order is scopes, then kit defaults, then surf.Key, then the program. On a
-  plain element a scope hears only the keys the host gives the program
-  anyway, so it takes no native key. surf.On records the scope from ctx
-  (rt.Handlers.Scope), and one function, the surface's `reached`, is the
-  reach for both dispatch and Bindings (rt.Peek.Scopes). New vectors cover
-  a plain element (its key, and its native Enter kept) and nothing
-  focused, on a host and in cells.
-- **Bindings** in a stable render order. **One Name is one action**: it is
-  listed once, at its first rendered place, as the binding nearest the
-  keyboard, and Pick runs that binding.
-- **Menu renamed HostMenu** (question 5). One level is kept (question 4):
-  groups would come later as an additive `KeyBinding.Group`.
-- Question 2 kept as drafted.
-- The examples render a scope. ExampleBindings builds a Command palette
-  whose items Pick.
-- rt.Peek's doc says production code reads it.
-
-Still the L4 builder's (p-795): run.App resends `hotty.Menu(ui.HostMenu(…))`
-when it changes (after a render or a focus move, compared with what it
-last sent), and turns a command event's name into `ui.Pick`.
-
-### As verified (p-797, 2026-11-17): fixes applied
-
-FIX FIRST (`verify-keys-labels.md`), applied:
-- The keyboard model's known-gaps paragraph is restored after "Menus and
-  palettes", verbatim.
-- Bindings' doc says the listed bindings' Run is nil: call Pick.
-- `tops`' doc is back above `func tops`.
-
-And p-653's addition, since plx relies on it (the review's promise that a
-scope never steals letters from a field): **an element that types keeps
-its printable keys.** A kit Input, Textarea or Combobox/Command input, or
-a plain text input, textarea or editing host, keeps every printable key
-(one character or space, with or without shift). No scope takes one from
-it:
-- the kit forwards none of them from a text-kind control (attachScope);
-- the surface offers none to a scope while such an element has the
-  keyboard (`rt.Types`, `rt.Printable` in key());
-- Bindings lists such a binding without its key while the field has the
-  keyboard.
-
-A modified key (ctrl+s) still reaches the scope from a field. KeyScope's
-doc and the keyboard model say so. TestKeyScopeFieldKeepsLetters (host and
-cells) covers `x` and `shift+x` typed in a scoped kit Input, the field's
-data-keys forwarding only ctrl+s, and ctrl+s running the scope. B3's three
-text vectors bound a bare `b` to exercise the scope's editing fallback.
-They now bind `backspace`, which the field uses and the scope declines,
-so the fallback is still exercised.
-
-## Draft: spike list rows, icon buttons and symbols
-
-The maintainer asked to port the spike's ListItem, IconButton and Symbols
-into `ui`, with their book stories, and to review these new names as one
-small pack. LayoutThumb and BusyBadge belong with plx and are not in this
-port. The code follows the spike's public shape and markup for review; no
-lock has been approved for these names.
-
-The spike's List is a named listbox of button rows. ListItem carries the
-selection and active visuals, slots and a click callback; the app owns the
-selected index. The spike's list has no default arrow-key handling. Review
-whether the kit's keyboard-default rule calls for that behavior here and
-how it is overridden, and whether the spike's ID, callback and accessible
-label need adaptation to the v0.7 kit conventions. IconButton is the
-spike's icon-only button with a name and caller attributes. Symbol renders
-a decorative filled Material Symbol from a Shape; Symbols enumerates the
-seven paths the spike shipped. None of these names include thumbnails or
-busy badges.
-
-### As reviewed (review-shell-components.md), applied
-
-The review's shapes are applied as written: ListItemProps loses ID and
-OnClick for Attrs (the id and surf.On handlers) and Class; List takes
-ListProps (OnChange by item index, Attrs for its name, Class); the
-text lines, IconButton and the Symbol names were applied earlier.
-
-List now has the listbox keys. Tab enters at the selected enabled item
-when the app changes selection, else where the keyboard or a click last
-was, else the first enabled; ↑ ↓ move one enabled item, Home and End to the ends, stopping
-there (an end is taken with no request). A move asks OnChange and moves
-the keyboard; it never runs the row's click. A click asks OnChange (if
-the row isn't selected already) and then runs the row's own click once.
-Disabled rows are skipped, not renumbered. Without OnChange the keyboard
-still moves. The keyboard is kept by item id across renders, so a row
-removed or reordered doesn't hand it to another.
-
-How: List renders its children with a registry in the context; each
-ListItem joins it and adds the list's click, focus and keys to the
-handlers the app registered for its id (a row without an id gets one
-from the list's). The roving tabindex is only known once every item has
-rendered, so the items write a placeholder the List fills. The keys are
-marked as the kit's default, so a KeyScope takes a named key first and a
-declined one keeps the default (TestListKeyScope). Faults: a List with
-no accessible name, more than one Selected item, an owned attribute in
-Attrs, and a ListItem outside a List.
-
-Tests: ui/list_test.go (click selects and activates once, arrows select
-without activating, ends, disabled and none enabled, empty, no
-OnChange, removal, KeyScope take and decline, faults) and the host and
-cells key vectors (TestNativeKeyVectors/list).
-
-An app's own surf.Key on a ListItem's id runs after the list's keys. A
-KeyScope still takes a named key first (the row is a kit control to it);
-only a declined key's path differs: the list's navigation then runs
-among the ordinary Key handlers (first of them) rather than as the kit's
-default, with the same result.
-
-Verified (verify-shell-components.md), with three fixes applied: two
-Lists with one id (none given) are a fault, and ListProps.Attrs says two
-need their own; a selection the app changes moves the Tab stop to it;
-IconButton is a kit button to a KeyScope (scopeNativeAttrs, as Button).
-
-## L6: colour in cells, for plx (a pack of its own)
-
-plx draws its surfaces in cells where the terminal is no hotty host, and
-paints them in its theme: accent, muted, border, error, a selected row's
-band, a card's and a field's fill mixed into the terminal's ground. v0.7's
-`cells.Screen` emits bold, dim, italic, underline and reverse only, so
-both of plx's cells hosts (surfhost, surfdk) lose every colour: the
-gap blocks plx's slices 1–6 (`l4c-gaps.md`, G-cells-colour).
-
-### The shape: roles named as the kit's CSS variables, as a grid
-
-- `cells.Role` is a theme colour named as the kit's (Basecoat's,
-  shadcn's) CSS variable: `primary`, `primary-foreground`,
-  `muted-foreground`, `destructive`, `accent`, `card`, `popover`,
-  `border`, `input`, `chart-1`…. plx already maps exactly these names to
-  its theme (`internal/theme/theme.go`, `kitVarRoles`, which writes the
-  kit's variables for v0.7 on a host), so in cells it maps the same names
-  to the same colours. No role list of hotty-surf's own to keep in step.
-- A program's own variable, named in an inline style or an arbitrary
-  class (`color: var(--plx-warn)`, `text-[var(--plx-warn)]`), passes
-  through as its name: plx's own markup keeps its own colours in cells.
-- Basecoat's tinted fills keep Tailwind's opacity in the role:
-  `destructive/10` (a destructive button's fill), `input/30` (a dark
-  field). plx mixes that much into the ground, as v0.6's host did with
-  its `mixes`.
-- `Screen.Cells() [][]Cell`, `Cell{Text, Fg, Bg, Attr}`: plx paints into
-  its own grid cell by cell (`gridOf`, `cellOf`), and its `legible` pass
-  needs the fill and the ink apart; SGR can't carry roles.
-- `Lines()` doesn't change: attributes only, `muted-foreground` still
-  dim. It is `Cells()` with the roles left out.
-- The focused element stays `Reverse`, as in Lines; plx's v0.6 drew a
-  focused list's selection as `sel`, which it can do from Reverse.
-
-What the Screen reads (SUBSET.md gets a "Colours" section with the
-implementation): `text-*`, `bg-*` (and `border-*` for a rule's role) of the
-kit's tokens; the inline `color`, `background`, `background-color` when
-they are a `var()`; and, as `kit.go` knows the kit's layout, the colours
-of its components from Basecoat's sheet (vega.css): a button's and a
-badge's variant (primary: `primary` on `primary-foreground`; secondary;
-destructive: `destructive` on `destructive/10`; link: `primary`), an
-alert's, a card's and a popover's ground, a highlighted menu or list item
-(`accent` / `accent-foreground`), a selected tab, a `kbd`'s `muted`, a
-progress bar's `primary`, a chart's `chart-N`, the rules (`hr`, a table
-head's rule) in `border`. Port: the v0.6.3 cells (`pkg/cells/colors.go`,
-`screen.go`) had roles as runs; their names were surf.css's, which v0.7
-dropped for Basecoat's, so the role names and the reading are new, the
-shape (roles per cell, program paints) is v0.6.3's.
-
-### Open questions, as drafted
-
-1. **The shape.** (a) roles as a `Cells()` grid (this pack); (b) the
-   program passes a palette (`func(Role) RGB`) and `Lines()` emits 24-bit
-   SGR; (c) the Screen computes truecolor itself from the stylesheet's
-   values. **Lean (a).** (b) loses what plx does per cell (mixing a tint
-   into the ground under a dialog, muted ink made to clear 3:1 on its
-   fill) unless the palette func grows those cases; a program that wants
-   (b) writes it over Cells in a dozen lines. (c) needs the Screen to
-   read the stylesheet, which SUBSET.md rules out, and the terminal's own
-   colours, which only the program has.
-2. **Role as a string.** A string type with the variable's name, not a
-   closed enum of constants. **Lean: string, no constants.** The set is
-   Basecoat's (and the program's own vars), which the Screen doesn't
-   own; constants would be a second list to keep in step and couldn't name
-   `plx-warn` or `destructive/10`.
-3. **Opacity inside the role** (`destructive/10`) or a separate
-   `Cell.BgMix uint8`. **Lean: inside the role**, Tailwind's own spelling,
-   one field; a program that ignores tints maps the name before `/`.
-4. **A `Paint(func(Role) (RGB, bool)) []string`** convenience for run and
-   surftea. **Lean: not now** (one way per thing; nobody asks for it yet;
-   run's cells stay in the terminal's colours via Lines).
-
-### Size (K13-like)
-
-A stripped native `examples/hello` (`go build -trimpath -ldflags='-s -w'`,
-which links cells through run) grows from 6,881,545 to 6,897,929 bytes:
-**+16,384 raw**, +5,547 with `gzip -9` (the verifier measured +7,406
-with gzip's default). The wasm build doesn't link cells (`GOOS=js
-GOARCH=wasm go list -deps` has no `cells`), so web builds don't change.
-
-### Lines stays as it was
-
-`Lines` is byte-identical to v07 `69dcd99`'s, over every story and a
-probe document the stories don't reach (coloured and struck text inside
-muted text, a rule, a placeholder, an opacity), both generated with the
-base's code (`TestLinesGolden`). Lines has its own view of a look
-(`lineLook`): muted text, a rule and text-muted-foreground stay Dim
-under a colour of its own, and Strike isn't drawn.
-
-### As reviewed (p-796, 2026-11-17): all names, five doc changes, applied
-
-Approved lean (a) and every name as named (`Role`, `Attr` with Bold…Strike,
-`Cell{Text, Fg, Bg, Attr}`, `Screen.Cells`). All four questions went with
-the leans: a grid of roles; Role a string with no constants; opacity
-inside the role; no Paint now. The docs of Role (its grammar, SPEC §8's
-`hotty-*` variables, literal colours read as ""), Cell, Cells, Reverse and
-the example were changed as written. The implementation covers the
-`dark:` scheme from the root's `.dark`/`.light`, the selected band
-(`accent`/`accent-foreground`, with focus adding Reverse), v4's
-`text-(--x)`, the size delta and a Lines golden. Kit rule K28: cells
-names colours, and the program paints them.
-
-### As verified (p-797, 2026-11-17): one fix, applied
-
-Lines was not byte-identical off the story corpus (coloured or struck text
-inside muted text). Lines now has its own view of a look (`lineLook`, with
-`lFaint` keeping text-muted-foreground's Dim), and the golden gains a
-probe document generated with 69dcd99's code. The size delta is stated
-above.
-
-## plx: the context menu (a pack of its own)
-
-plx's ask (b): a menu opened at the pointer by a right click, or by the
-keyboard's menu keys at the focused element, not from a trigger. Neither
-hotty-a2ui (its KIT-28 is unbuilt) nor the spike has one. hotty-surf
-v0.6.3 had one (surfrun's context menu, 2026-11-06's journal), and this
-ports its behaviour onto v0.7's DropdownMenu code, on L5's surf.Secondary.
-
-### As drafted
-
-- `ContextMenu(st *ContextMenuState, p ContextMenuProps)`. Its children
-  are the area; `ContextMenuProps{ID, Items []MenuItem, Class}`.
-  `ContextMenuState` is opaque, with no methods, since only the user opens
-  it.
-- **Opening.** A secondary press in the area opens it at the pointer's
-  cell, with no item highlighted (v0.6). shift+f10 or context_menu on an
-  element in the area opens it under the area, with the first item
-  highlighted (v0.6). They reach the area's surf.Key, as SPEC §10.2 gives
-  them to the program.
-- **Where.** The menu is a DropdownMenu's popover inside the area's
-  wrapper (`position: relative`), at
-  `top: calc(var(--hotty-cell-h) * (r - area.r))` and
-  `left: calc(var(--hotty-cell-w) * (c - area.c))`. That's the press's
-  cell less the area's (SPEC §9: both count from the surface), using only
-  proven CSS: `position: absolute` with top/left, `calc()`, and the
-  host's `var()`s. With no area (surftest's host lays nothing out) it
-  opens under the area, as a key does.
-- **Open.** The menu (`role=menu`, `tabindex=0`) takes the keyboard and
-  has a DropdownMenu's keys. Escape, a choice, or the opening keys again
-  close it and give the keyboard back to the element that had it (v0.6). A
-  press outside closes it (Outside runs before Secondary, so a second
-  right click moves it). It is the surface's one open popup, as a
-  DropdownMenu is.
-- **Cells.** The menu is drawn after the area in the flow, as a
-  DropdownMenu's is after its button. v0.6 drew it over the screen at the
-  cell. That needs the cells renderer to overlay a popover, which isn't
-  this leg's (cells is L3's).
-
-### Open for the reviewer
-
-1. **A wrapper.** The area is wrapped in a `div` (the dropdown-menu block)
-   that holds the menu and takes the press and the keys. A row of a table
-   can't be wrapped in a div. The other choice is an attrs helper the app
-   spreads on its own element, plus a menu component rendered beside it:
-   two calls where there is one now.
-2. **A key-opened menu goes under the area,** not under the focused
-   element. A `focus` event carries no area (SPEC §9's table), so the
-   program can't know where the element is. Exact for a ContextMenu per
-   row; for a large area it is the area's bottom edge. The fix is a SPEC
-   proposal (an area on `focus`, as on `press`), which is the
-   maintainer's call. Not worked around.
-3. **No flip at the edges.** v0.6 flipped the menu left and up near the
-   surface's edges. The kit doesn't know the surface's size in cells
-   during a render, so a menu near the right or bottom edge is cut off by
-   the surface. Same remedy class as 2: the host could place it. Noted,
-   not worked around.
-4. **No Open method.** DropdownMenuState has Open (a shortcut opens it).
-   A context menu opened by the app would have no cell to open at; an app
-   wanting a menu from a button uses DropdownMenu.
-5. **The test host.** hottytest 0.8.1 typed neither shift+f10 nor
-   context_menu. Reported with a repro and fixed in hotty-go e31f778
-   (hottytest types f1–f12 and context_menu as xterm does, and
-   hotty.DecodeKeys reads them). This branch pins that commit until
-   hottytest v0.8.2 is tagged, and the key tests type through the Rig.
-
-### As reviewed (p-796, review-ctx.md): applied
-
-- ContextMenu, ContextMenuProps{ID, Items, Class} and the opaque
-  ContextMenuState kept as approved (Q4: no Open).
-- Q1: the area paragraph replaced: the area is a block; a menu per row is
-  surf.Secondary on the rows plus a ui.Menu the app draws.
-- Q2, Q3: the doc names both host limits (a key opens it under the area;
-  no flip). The SPEC proposal is deferred (p-653), not made now.
-- Q5: the hotty-go pseudo-version stays on the branch; hottytest v0.8.2
-  is tagged in the release batch before v0.7.0 (p-653, P-5).
-- **Added `ui.Menu(MenuProps{ID, Items, Highlight, OnHighlight, Class})`**
-  with the review's texts: the `[role=menu]` panel alone, shown, its
-  highlight the app's (K25). It renders through DropdownMenu's view and
-  items (`menuView.ctl`), takes no part in the surface's one open popup,
-  and a choice closes nothing. A highlight out of range or on a disabled
-  item is none. Its panel sits in the flow (`position: static`), so a
-  surface whose view it is draws it at its top left. TestMenuControlled,
-  ExampleMenu.
-- K29 (menus: three ways in, one panel) is the reviewer's.
-- G-menu-rows (MenuItem slots for all three menus) is next after the
-  toast pack (p-653's queue).
-
-## L6: a field's selection in cells, for plx's copy and cut (a pack of its own)
-
-In cells, plx copies a field's selection to the terminal's clipboard
-(v0.6: `cr.Copy` callback → `Host.SetCopy`). v0.7's Screen has no
-clipboard and leaves the copy, cut and paste keys to the program, but
-exposes no field selection, so plx's copy and cut do nothing in cells
-(`l4c-gaps.md`, G-cells-copy; it blocks slice 2, where copying in cells
-is a tool feature).
-
-### The shape: the program asks, on its own key
-
-- `Selection() string`: the focused text field's selected text, "" for
-  none (no field, nothing selected, a password).
-- `Cut() string`: the same, deleted from the field as the user's edit
-  (rev, input where it listens, change on commit). "" and no edit in a
-  readonly or disabled field, or a password.
-- The keys stay as they are: the Screen doesn't take copy or cut
-  (`fieldKey`), so the program hears them and calls these. Paste is
-  already `Paste(text)`. One direction each way: the program owns the
-  clipboard.
-- Implemented and tested in the branch (grapheme-correct, readonly,
-  password).
-
-### Open questions, as drafted
-
-1. **Methods, or a copy callback on New** (v0.6's `Copy func(string)`).
-   **Lean: methods.** New's signature is approved, and a callback needs
-   a second option. With methods, the program, which already decides what
-   its copy key means (a pane's own selection vs the field's), asks only
-   when it's the field's.
-2. **Cut as its own method, or `Selection()` plus a `Delete()`.**
-   **Lean: Cut.** It's one act. A separate Delete is a second name and a
-   window where the two disagree.
-3. **A password's selection.** **Lean: "".** Browsers refuse to copy from
-   `type=password`, and a host does the same.
-
-### As reviewed (p-796, 2026-11-17): both names, two doc changes, applied
-
-Both names were approved as named, and the three questions went with the
-leans: methods, Cut as its own method, and "" for a password. The docs say
-"text field or textarea", and Cut and Paste each say that Lines changes
-with them, so the program draws the Screen again.
-
-### As verified (p-653's spot check, 2026-11-17): approved
-
-## plx: menu rows of the app's own (G-menu-rows, a pack of its own)
-
-plx won't build stand-in rows, so this blocks its copy's removal
-(p-653). Its rows (a host's colour dot, a switch, an aside, a note, a
-name being typed, the current workspace, an MDI icon, a bare rule) are
-three slots on MenuItem and a rule, for DropdownMenu, ContextMenu and
-Menu at once, as K29 asks:
-
-- **Leading** replaces the icon (Icon is ignored when it is set), drawn
-  first in the row.
-- **Content** replaces the label's text. The item then has
-  `aria-label` = Label, so its name stays its words.
-- **Trailing** replaces the shortcut (Keys is ignored), wrapped in
-  Basecoat's `<span data-shortcut>`, which puts it at the row's end as a
-  shortcut is.
-- **Separator** makes the item an `<hr role="separator">`, its other
-  fields ignored. It keeps its place in Items (an index in a Menu's
-  Highlight still counts it), is never highlighted, and no key or press
-  reaches it.
-
-The slots are the app's markup. The press and keys stay the row's: a click
-anywhere on it runs the item. Command ignores the slots, as it ignores Role.
-TestMenuRows covers all three menus, ExampleMenuItem_slots shows plx's
-rows.
-
-Open, for review:
-1. **A switch in Leading is an `<input>`.** A host toggles it on a click
-   before the row's click runs, so plx's OnSelect should set the state it
-   draws from, not read the input. A non-interactive switch look (a
-   `Switch` with no input, or `aria-hidden` and `pointer-events: none` on
-   one in a row) is the alternative; it adds a name, so not here.
-2. **Separator as an item vs a field on the next item.** An item keeps
-   the slices plx builds (its `Sep` rows) one to one, and a Menu's
-   Highlight index lines up with plx's own. The cost is a MenuItem whose
-   other fields mean nothing.
-3. **Content's text in cells** is whatever the markup draws. plx's caret
-   (`span.cur`) is plx's CSS.
-
-### As reviewed (p-796, review-rows.md): applied
-
-- Leading, Content and Trailing kept, for all three menus.
-  - A slot set with the field it replaces (Leading with Icon, Trailing
-    with Keys) is a fault.
-  - A control in a slot is a fault (K31: slots are pictures): an input,
-    button, select, textarea, `a[href]`, `[tabindex]` or a `data-on`
-    handler. Each slot is rendered once, scanned with x/net/html's
-    tokenizer, then written (`menuSlot`).
-  - Leading sits in the icon's box: `<span data-leading>`, a 16 px
-    square, centred.
-- **Separator bool cut.** A rule is `Role: "separator"`, with the
-  review's Role doc. surftest faults on a separator first or last, next
-  to another, or at a group change.
-- Q1: no live control in a slot. The pack's Switch row is now
-  TestMenuRowFaults' first case, and the example's Wrap row is a
-  `menuitemcheckbox` with Content for its aside.
-- **p-653's addition:** on a checkable row, Leading is drawn in place of
-  the kit's check or radio indicator, not beside it. plx draws its
-  switch's look there as an aria-hidden picture, and `aria-checked` still
-  says the state. This is drawing only, with no live control. Whether
-  the kit itself should draw a checkbox item as a switch stays the
-  maintainer's call (review Q1). TestMenuRows checks that one indicator
-  is drawn and that Follow keeps aria-checked.
-- Heading maps to Group; no new name.
-- The example's dot is an escaping component (`templ.SanitizeCSS`,
-  `templ.EscapeString`), and the example says templ.Raw is for constant
-  markup only.
-- K31 is the reviewer's.
-
-## L5: Focused, Chars and Blur (plx's G-keys-decl and G-lend)
-
-plx's integration list (l4c) has two gaps in the root package:
-
-- **G-keys-decl.** plx routes a key that types a character to its own
-  bindings only when the focused element wouldn't type or pick by it,
-  and needs to know which element is focused (an element autofocused
-  while plx held the keyboard gives it back). v0.6.3's surfrun had
-  `Keys() ([]KeyUse, Chars)`; v0.7 has neither.
-- **G-lend.** plx lends the host's keyboard to its own menus with a=blur.
-  The host doesn't report a program's blur, so the surface kept
-  `focused`, and a later `Focus()` sent nothing. (That premise was
-  wrong: SPEC §10.1 has the host send `blur` after a program's a=blur,
-  and plx confirms every host does; see the review below.)
-
-The pack: `Surface.Focused() string`, `Surface.Chars() Chars` with
-`CharsBound`, `CharsPick`, `CharsText`, and `Surface.Blur() (bool, error)`,
-the mirror of `Focus`. Blur sends a=blur and runs the blur itself, as the
-host's would: Focus handlers hear the loss, Outside runs for every element
-(a press still down doesn't spare its own), and the element stays the one
-Focus gives back.
-
-**Cells.** No Screen method: a cells.Screen feeds its focus to the surface
-as events, so `Surface.Focused` and `Chars` answer the same in cells. To
-lend the keyboard there, the program calls `cells.Screen.Focus(false)`,
-which the surface hears as the same blur (Blur's doc says so). The cells
-builder (p-800) is told.
-
-**What Chars says.** From the last document sent and the focused element:
-a text input or textarea types (CharsText); a native single select picks
-(CharsPick); anything else, a disabled element, or nothing focused is
-CharsBound. The kit's own Select and DropdownMenu don't pick by
-characters in v0.7, so an open one is CharsBound: printable keys reach the
-program, which is what their key handlers do with them now. Combobox and
-Command type into their inputs (CharsText).
-
-**Not in this pack.** The bound keys with their labels (v0.6.3's
-`[]KeyUse`) are `ui.Bindings` and KeyScope labels' (G-keyscope-labels,
-p-794's). Chars covers the other half.
-
-Questions for the review:
-
-1. `Focused() string` alone, or `(id, Chars)` as the gap row suggested? Two
-   methods keep each answer readable at its call site.
-2. A readonly text field is CharsText (the host keeps the key, which moves
-   nothing): right, or CharsBound?
-
-Reviewed (review-focus.md): approved as named, Q1 two methods, Q2
-readonly is CharsText. Applied:
-
-- **The echo.** Blur runs the blur itself first, so the surface knows at
-  once, then sends a=blur and sets a flag; the host's `blur` that follows
-  (SPEC §10.1) is swallowed as its echo: nothing runs twice. A focus
-  event, Focus() or an Autofocus taking effect clears the flag, so a host
-  that sent none never loses a later real blur. A cells.Screen echoes
-  while it is written to; the surface defers that event past the write
-  and swallows it the same way. Tests: TestBlurEcho (echo, no echo, Focus
-  in between) and TestBlurInCells, each failing without the swallow.
-- **Chars.** contenteditable (not "false") is CharsText; a readonly field
-  is CharsText, locked by TestReadonlyKeepsCharsVector on the test host
-  and in cells (the test host's readonly fix is hotty-go e1d9f68, pinned
-  as hottytest v0.8.2-0.20261117175548-e1d9f6887ae0).
-- **Docs.** Focused and Chars run on the driver's goroutine; Focused is
-  the surface's view; Chars names its limits (the kit's Select and
-  DropdownMenu, select multiple, composition).
-
-## L6: the selected band's own role in cells, for plx (a pack of its own)
-
-`Cells()` gives the selected band `accent-foreground` on `accent`, focused
-or not; the row with the keyboard adds `Reverse`. The band is:
-- a list's, a tree's or a grid's selected row (`aria-selected`, which is
-  K25's `ui.List`);
-- a nav list's current item;
-- a selected tab.
-
-But `accent` is also the fill of other things: a ghost or outline
-button's hover, a menu's highlighted item and the sidebar's accent. So
-plx can't tell its selection from them, and can't draw v0.6's band. v0.6
-painted a list's selection with its own role, `selected`
-(`--u-selected`, a quiet mix of the text into the ground), not with the
-accent.
-
-### The change (no Go name; a Role value and its doc)
-
-- **The band's fill becomes `"selected"`.** Its text stays
-  `accent-foreground`. `Lines` doesn't change: it draws no roles.
-- **`Role`'s doc gains a paragraph:**
-
-  > One role names no variable: "selected", the fill of the selected band
-  > (a list's or a tree's selected row, a nav list's current item, a
-  > selected tab), whether or not it has the keyboard. The kit fills it
-  > with "accent", which other fills use too, so a program that draws a
-  > selection of its own tells it apart by this name; one that has none
-  > paints it as "accent".
-
-- **SUBSET.md's colour table says the same.** The tests now expect
-  `selected`.
-
-### Open questions, as drafted
-
-1. **The name.** **Lean: `selected`**, v0.6.3's name for a list's
-   selection fill, which plx's palette already has a colour for (`mixes`,
-   9%). The alternative is a kit-style `selection`, but no Basecoat
-   variable has that name, and choosing one would look like a variable
-   that doesn't exist.
-2. **Text too (`selected-foreground`)?** **Lean: no.**
-   `accent-foreground` is the kit's ink on the band, and plx maps it to
-   its ink (`kitVarRoles`). A second invented name gains nothing until a
-   theme gives the band an ink of its own.
-3. **Focused and unfocused as two roles** (v0.6's `selected` and `active`, or
-   `tonal`)? **Lean: no.** The band with the keyboard is already told
-   apart by `Reverse` (K28, kit rule: cells names colours, the program
-   paints), so plx paints the focused band from `selected` plus
-   `Reverse`, as its `sel` already does.
-
-### As reviewed (p-796, 2026-11-17): approved with all three leans, three changes applied
-
-The role "selected" is approved with no Go name and no constant. The
-three changes:
-1. **A selected tab leaves the band.** Basecoat draws it as a raised
-   segment of its list: "foreground" on "background" ("input/30" under
-   dark), and "foreground" with no fill in the line variant. On "selected",
-   which plx paints at 9% on a list at 11%, the tab would vanish.
-2. **Role's paragraph says what Reverse on the band means.** A program
-   with a fill of its own for a focused selection (plx's `sel`) paints
-   "selected" with Reverse as that fill, not in reverse video.
-3. **The fallback for a nav list's current item is "sidebar-accent"**, as
-   navlist.css fills it.
-
-The tests keep a dark, unfocused band.
-## plx: toasts an app owns (G-toast, a pack of its own)
-
-plx's toasts (slice 1's G-toast, which blocks) were plx's own markup,
-because `ui.Toaster` couldn't be driven by the app. This makes it
-drivable, and keeps Basecoat's markup and behaviour for an app that
-doesn't drive it. The asks came from plx's port, read from its code by the
-coordinator (p-653): the app owns lifetimes and the keyboard, and the kit
-draws.
-
-- **`Toast.ID` and `ToasterState.Remove(id)`.** Show with the ID of a
-  toast shown changes it in place: its element (`toast-N`), its place in
-  the stack and, unless Duration changes, its timer stay. Remove closes it
-  as Dismiss does, with its leaving transition, running no OnSelect. A
-  going toast's ID is free: Show adds a new one. "" is as before.
-- **`Toast.Actions []ToastAction`, replacing Action and Cancel.** In
-  order, ids `toast-N-actions-I` (from 1). `ToastAction.Variant` is the
-  look; Outline is Basecoat's cancel (`data-toast-cancel`), any other is
-  its action (`data-toast-action`). A lasting toast without an Outline
-  action keeps the macro's Dismiss (`toast-N-dismiss`). The macro's one
-  action and one cancel are a list of two, so the differential cases are
-  unchanged but for the button ids.
-- **`Toast.OnPress`.** A press on the toast's body (its content, outside
-  its buttons) runs it. The toast stays. A button's press is its own: the
-  surface runs the target's Click only.
-- **`Toast.Focused`.** plx keeps the host's keyboard and walks its toasts
-  with its own keys. Focused draws the one it is on: `data-focused`, the
-  first button with Basecoat's own button focus look, the bar still, and
-  the kit's timer paused (as under the pointer). The toast never takes
-  the host's focus; the app runs the button's OnSelect itself from its
-  key.
-- **`Toast.Left`, `Toast.Total`: the countdown bar.** A 3px bar along the
-  top edge, inset from the corners, shrinking from both ends to the
-  middle. Left of Total is drawn by cutting (Total−Left)/2Total off each
-  end. The host runs it down over Left with a CSS animation, in steps of a
-  tenth of a second, so no render runs it. Focused stops it (animation
-  none) where Left puts it. Its id carries a run number, which grows when
-  Left or Total change or a focus ends, so the host starts a new run: the
-  app re-Shows the toast with what is left after a focus. The bar is a
-  picture: the toast goes by Duration, or when the app removes it.
-- **`ToasterState.OnLeave`.** The pointer leaving the toaster, after the
-  timers resume. plx hears it as "away". It is a field, not a handler on
-  the toaster, since the toaster's element is the kit's.
-
-Open, for review:
-1. **The bar's CSS isn't on the proven list.** `transform: scaleX` and an
-   animation with `steps()` are "known not to draw" in css-subset.md but
-   for the pulse. plx ships the same technique in hottyterm today, so it
-   draws there; it needs a row in css-subset.md with a host check (live,
-   as the pulse's was), not a new gate case. Until then it is the one
-   exception in this pack.
-2. **The focused ring** is Basecoat's `.btn:focus-visible` (a 3px outer
-   box-shadow). The outer ring isn't proven either (the Switch's outer
-   focus ring was dropped from the look). The proven alternative is the
-   kit's 1px inset focus-line.
-3. **Cells.** The bar and the focused look are a host's. In cells a toast
-   draws as before, without the bar; plx draws its cells toasts itself.
-4. **Action and Cancel go.** v0.7 is untagged. The examples, the story and
-   the tests moved to Actions.
-
-### As reviewed (p-796, review-toast.md): applied
-
-- Kept: Toast.ID with the review's ownership contract in its doc,
-  ToasterState.Remove, Toast.Actions, ToastAction.Variant (now checked as
-  a Button's), Toast.Focused (its doc: a key's OnSelect doesn't close the
-  toast; Remove does; the keyboard model's row says so too).
-- **Countdown time.Time replaces Left and Total** (K30). The kit keeps
-  the run on the shown toast: a run's start fraction, length and start,
-  read from the clock (`toastNow`, a test hook) only when a run starts or
-  a focus starts, so a render prints stored values. The same Countdown
-  keeps the run; another starts it full; a focus holds it where it stands
-  (the bar's id grows, its style only its cut); the focus's end runs it on
-  from there to the Countdown given then. Steps are ten a second, capped
-  at 1200. TestToastCountdown walks it on a fixed clock.
-- **OnPress → OnClick.** A body with OnClick gets `cursor: pointer` and
-  the accent hover fill (toast.css).
-- **ToasterProps{OnLeave, Class}; Toaster(st, p).** ToasterState has no
-  exported field. Examples, stories and tests moved.
-- The focused ring mirrors `.btn:focus-visible`, the destructive one with
-  Basecoat's light and dark values, and toast.css says to keep them
-  together. toast.css also says the bar runs under reduced motion.
-- `"time"` sits with the standard library in example_test.go.
-- The stale-timer guard has its test (TestToastStaleTimer), which fails
-  without the guard.
-- Q1: the toast/owned story shows a focused toast with its still bar, so
-  the gate draws it. The running bar's css-subset.md row comes from a live
-  hottyterm check (below, when done).
-- **Added (p-653, plx parity): `Toast.OnClose func()`.** It draws a
-  corner x: a ghost icon-sm button with Lucide's x, `aria-label`
-  "Dismiss", absolute at the top right, the content padded clear of it.
-  A click runs OnClose and closes nothing. TestToastOnClose; the story
-  uses it. Sent to p-796 for a look at its name and doc.
-
-## L5: Clicks and Refocus (plx's G-click-count and G-focus-now)
-
-plx's palette slice has two root-package gaps.
-
-**G-click-count.** A palette row selects on a click and runs on a double
-click. `hotty.Event.Count` exists, and hosts and cells.Screen send it
-(cells counts clicks on one element within 500 ms), but `surf.Click`
-takes `func()`. The pack:
-
-- `surf.Clicks(fn func(count int)) Handler`: Click with the count, 1 for
-  a click or for Enter or space, 2 for a double click's second, and so
-  on. A double click arrives as a click, then a click with count 2, so a
-  row hears both (select, then run).
-- It is stored as the element's Click, reading the count the surface puts
-  on the frame while the click's handler runs. Kit components that wrap
-  an element's Click (ListItem's selection) keep working with Clicks.
-- Click and Clicks on one element are a fault.
-
-**G-focus-now.** The palette's query asks for the keyboard on every
-frame (Autofocus), which moves it only when the asked element changes.
-Tab leaves the query for an invisible stop whose Focus handler gives Tab
-to plx's keymap; the query must have the keyboard back in that same
-frame. plx's stand-in renders once without Autofocus, then once with it,
-through Do.
-
-- `surf.Refocus(ctx, id)`: Autofocus that moves the keyboard though the
-  frame before asked for the same element, unless the element has it
-  already. Asked in the render after the stop's Focus, it goes out in the
-  same event's frame. Asked on every render it would trap the keyboard;
-  its doc says to ask only in the render that should move it.
-
-Questions for the review:
-
-1. The gap row's other route is Tab on the field itself: a KeyScope
-   or data-keys taking `tab=program` on a text field, so no stops are
-   needed. B3 reserved Tab and Shift+Tab from KeyScope (focus traversal
-   is the host's). Refocus keeps that reservation; is it the one to take,
-   or does the maintainer want Tab takeable on a field instead?
-2. `Clicks(func(n int))` or a `Click` taking an event struct (count,
-   mods)? Mods aren't asked for; the narrow shape reads as Click does.
-3. surftest's Rig has no DoubleClick (the tests feed the count as events).
-   Add `Rig.DoubleClick(sel)`, a new name, now or when an app's test
-   needs it?
-
-Reviewed (p-796): both names
-approved. The questions were settled as: keep Tab reserved (Refocus is
-the route); keep the narrow `func(count int)`; add `Rig.DoubleClick(sel)`
-now. Applied:
-
-- `surftest.Rig.DoubleClick(sel)`, on the test host's DoubleClick (count
-  1, then 2, each a press and a release). TestClicks uses it.
-- Refocus's doc gives the pattern (a handler sets a flag, the view asks
-  once and clears it) and what asking on every render does.
-- Clicks' doc says each click of a double click has its own press and
-  release, so a Drag on the element hears them as usual.
-- The fault reads "(Click or Clicks)": two Clicks fault too.
-
-The caret risk, recorded (not a surf change). Where a text field's caret
-goes when the program focuses it (SPEC §10.1 doesn't say):
-
-- The test host and cells.Screen: at the end on the first focus, and
-  where it was after Tab and Refocus (TestRefocusCaretVector: "query",
-  x, Tab, y gives "queryxy").
-- hotty-blitz v0.8.9 (a probe on its Host, not committed there): a=focus
-  keeps the caret and the selection, as a browser's focus() does. On a
-  first focus the caret is at the end. A caret at 2 stays at 2 through
-  Tab and a=focus, and a typed x gives "quxery". A selection 1..4 stays
-  selected, and a typed x replaces it ("qxy").
-- So no host selects all or moves the caret to the start. A SPEC note
-  ("a=focus keeps a field's selection") would make it a rule; that is
-  the maintainer's.
-
-A cells gap found on the way: cells.Screen's Tab order takes only the
-elements its layout drew, so an empty `<span tabindex="0">` (plx's
-invisible stops) is skipped, and Tab from the query blurs. A browser
-and the hosts tab to it. plx draws its cells palette itself, so it
-doesn't block plx now; it goes to cells' owner.
-
-## plx: which overlays are open (the menu lease, a pack of its own)
+  skipped) and its cells. A half is the caller's arithmetic.
+- The double click's clock is internal: 500 ms on one element.
+- A drag ends short (a dragend with no target, no drop and no click) on
+  `Focus(false)`, a new document, a=del, the dragged element leaving, or a
+  Press before its Release. A press of any button drops a click whose
+  release was lost. Escape doesn't end a drag, as on a host.
+
+## Key labels
+
+plx's which-key overlay and command palette need every scoped key
+labelled, with an enabled state, and the keyless actions too. In hotty
+0.8 a host's which-key and palette come from the program's menu (SPEC
+§10.7, `a=menu`), which hotty-go has as `hotty.MenuTree`, so the kit
+gives the tree and writes no escape sequence.
+
+- **`ui.KeyScope(bindings []KeyBinding)`**, with `KeyBinding{Key, Label,
+  Name string; Disabled bool; Run func() bool}`. Each binding carries its
+  Run, as MenuItem carries OnSelect; a nil Run is a fault. A keyless
+  binding with a Name is an action only a pick reaches. A disabled
+  binding's key goes on as if the scope didn't name it, and the menu shows
+  it disabled. KeyScope's signature changed from B3's: v0.7 is untagged,
+  and one way to scope keys beats a second, unlistable one.
+- **Reach.** The keyboard is inside a scope on its kit controls, on an
+  element whose surf.On ran in it, or inside one of those, and the
+  outermost scopes have it while nothing is focused. On a plain element a
+  scope hears only the keys the host gives the program anyway. One
+  function is the reach for both dispatch and Bindings.
+- **`ui.Bindings(s) []KeyBinding`:** what s offers now, in a stable render
+  order. One Name is one action, listed once at its first place. The
+  listed bindings' Run is nil: call Pick.
+- **`ui.HostMenu(s, label) *hotty.MenuTree`:** Bindings as one level of
+  hotty menu items (nil for none). Named for the host, apart from
+  MenuItem. Groups could come later as an additive `KeyBinding.Group`.
+- **`ui.Pick(s, name) bool`** runs the binding a menu's pick or a palette
+  names.
+- All of them run on the driver's goroutine.
+- **An element that types keeps its printable keys.** No scope takes a
+  character or space from a kit Input, Textarea, Combobox or Command
+  input, or a plain text field or editing host. Bindings lists such a
+  binding without its key while the field has the keyboard. A modified
+  key (ctrl+s) still reaches the scope. This is kit rule K27.
+- run.App sends `hotty.Menu(ui.HostMenu(…))` when it changes and turns a
+  command event's name into `ui.Pick`. An app that places its surfaces
+  itself builds and sends its own menu.
+
+## List rows, icon buttons and symbols
+
+The maintainer asked to port the spike's ListItem, IconButton and
+Symbols, with their stories. Thumbnails and busy badges stay plx's.
+
+- **`ui.List(ListProps)`** is a named listbox of button rows: OnChange by
+  item index, Attrs for its name, Class. **`ui.ListItem`** takes Attrs
+  (its id and surf.On handlers) and Class, with the selection and active
+  looks and its slots.
+- List has the listbox keys. Tab enters at the selected enabled item, else
+  where the keyboard or a click last was, else the first enabled. ↑ ↓
+  move one enabled item, and Home and End go to the ends, stopping there.
+  A move asks OnChange and moves the keyboard but never runs the row's
+  click. A click asks OnChange, if the row isn't selected, then runs the
+  row's own click once. Disabled rows are skipped. The keyboard is kept by
+  item id across renders.
+- The keys are the kit's default, so a KeyScope takes a named key first.
+- Faults: a List with no accessible name, more than one Selected item, an
+  owned attribute in Attrs, a ListItem outside a List, and two Lists with
+  one id.
+- **`ui.IconButton`** is an icon-only button with a name and the caller's
+  attributes, a kit button to a KeyScope. **`ui.Symbol`** draws a
+  decorative filled Material Symbol from a Shape, and **`ui.Symbols`**
+  lists the seven the spike shipped.
+
+## Colour in cells
+
+plx paints its cells surfaces in its theme: accent, muted, border, error,
+a selected row's band, a card's and a field's fill mixed into the
+terminal's ground. `cells.Screen` emitted attributes only, so plx's cells
+hosts lost every colour.
+
+- **`cells.Role`** is a theme colour named as the kit's (Basecoat's,
+  shadcn's) CSS variable: `primary`, `muted-foreground`, `destructive`,
+  `accent`, `card`, `border`, `chart-1`…. A string, with no constants:
+  the set is Basecoat's and the program's own, and constants would be a
+  second list to keep in step. A program's own variable in an inline
+  style or an arbitrary class passes through by name. A tint keeps
+  Tailwind's opacity in the role (`destructive/10`, `input/30`). SPEC
+  §8's `hotty-*` variables are roles too; a literal colour reads as "".
+- **`Screen.Cells() [][]Cell`, `Cell{Text, Fg, Bg, Attr}`, `Attr`** (Bold
+  to Strike): the program paints cell by cell, and it needs the fill and
+  the ink apart, which SGR can't carry.
+- **Lines doesn't change.** It is Cells with the roles left out, kept
+  byte-identical by a golden over every story and a probe document.
+- The focused element stays Reverse.
+- What the Screen reads is in `cells/SUBSET.md` ("Colours"): `text-*`,
+  `bg-*` and `border-*` of the kit's tokens, inline `var()` colours, the
+  `dark:` scheme, v4's `text-(--x)`, and the kit's components' colours
+  from Basecoat's sheet.
+- A palette function or 24-bit SGR from the Screen weren't taken, and
+  neither was a `Paint` helper. Kit rule K28: cells names colours, and the
+  program paints them.
+- Size: a stripped native hello grows 16 KB raw. The wasm build doesn't
+  link cells.
+
+### The selected band's role
+
+`accent` also fills a ghost button's hover, a highlighted menu item and
+the sidebar's accent, so plx couldn't tell its selection from them.
+
+- The selected band's fill is the role `"selected"`: a list's, tree's or
+  grid's selected row, and a nav list's current item. Its ink stays
+  `accent-foreground`. There's no Go name, just a Role value and its doc.
+  A program with no selection colour of its own paints it as "accent",
+  and a nav list's current item falls back to "sidebar-accent".
+- A selected tab isn't part of the band. It keeps Basecoat's raised
+  segment: "foreground" on "background".
+- The band with the keyboard adds Reverse, and a program with a fill of
+  its own for a focused selection paints "selected" with Reverse as
+  that fill.
+
+## The context menu, and Menu
+
+A menu opened at the pointer by a right click, or by the keyboard's menu
+keys at the focused element. hotty-surf v0.6.3 had one (surfrun's
+context menu), and this ports its behaviour onto DropdownMenu's code and
+surf.Secondary.
+
+- **`ui.ContextMenu(st *ContextMenuState, p ContextMenuProps)`**, Props
+  `{ID, Items []MenuItem, Class}`, with an opaque State that has no Open:
+  only the user opens it. Its children are the area, which is a block.
+- A secondary press in the area opens it at the pointer's cell, with no
+  item highlighted. shift+f10 or context_menu opens it under the area,
+  with the first item highlighted. The menu takes the keyboard and has a
+  DropdownMenu's keys. Escape, a choice, or the opening keys again close
+  it and give the keyboard back. A press outside closes it. It is the
+  surface's one open popup.
+- Placement uses only proven CSS: `position: absolute`, top and left by
+  `calc()` over the host's `--hotty-cell-w` and `--hotty-cell-h`.
+- **The host's limits, named in the doc, not worked around.** A key
+  opens it under the area, since a `focus` event carries no area. It
+  doesn't flip at the edges, since the kit doesn't know the surface's
+  size in cells. An area on focus, or host-placed popovers, is a SPEC
+  proposal deferred to the maintainer.
+- **`ui.Menu(MenuProps{ID, Items, Highlight, OnHighlight, Class})`:** the
+  `[role=menu]` panel alone, shown, its highlight the app's (K25). A menu
+  per table row is surf.Secondary on the rows plus a Menu the app draws.
+  It takes no part in the one open popup, and its panel sits in the
+  flow. Kit rule K29: menus have three ways in and one panel.
+
+### Menu rows of the app's own
+
+plx's rows include a host's colour dot, a switch's look, an aside, a
+note, a name being typed, an MDI icon and a bare rule. Three slots on
+MenuItem serve DropdownMenu, ContextMenu and Menu at once:
+
+- **Leading** in the icon's box. On a checkable row it is drawn in place
+  of the kit's check or radio indicator, and `aria-checked` still says
+  the state. **Content** replaces the label's text, which stays the
+  item's aria-label. **Trailing** replaces the shortcut, at the row's
+  end.
+- A slot set with the field it replaces is a fault. So is a control in a
+  slot (an input, button, select, textarea, `a[href]`, `[tabindex]` or a
+  `data-on` handler). Kit rule K31: slots are pictures.
+- **A rule is `Role: "separator"`,** an `<hr role="separator">`. It keeps
+  its index, is never highlighted, and surftest faults one that is first,
+  last, next to another or at a group change.
+- Command ignores the slots. Whether the kit draws a checkbox item as a
+  switch is the maintainer's call.
+
+## A field's selection in cells
+
+In cells, plx copies a field's selection to the terminal's clipboard.
+The Screen has no clipboard, and it leaves copy, cut and paste to the
+program.
+
+- **`Screen.Selection() string`:** the focused text field's or textarea's
+  selected text, "" for none or a password.
+- **`Screen.Cut() string`:** the same, deleted as the user's edit. It does
+  nothing in a readonly or disabled field or a password.
+- The program asks on its own key. Paste was already `Paste(text)`, and
+  Lines changes with Cut and Paste, so the program draws again.
+  Methods were chosen over a copy callback on New, whose signature is
+  approved.
+
+## Focused, Chars and Blur
+
+plx routes a key that types a character to its own bindings only when
+the focused element wouldn't type or pick by it, and needs to know which
+element is focused. It lends the host's keyboard to its own menus with
+a=blur. v0.6.3 had `Keys() ([]KeyUse, Chars)`; v0.7 had neither.
+
+- **`Surface.Focused() string`:** the focused element, as the surface
+  sees it.
+- **`Surface.Chars() Chars`**, `CharsBound`, `CharsPick`, `CharsText`.
+  A text input, textarea or contenteditable types, and a readonly field
+  counts too. A native single select picks. Anything else, a disabled
+  element, or nothing focused is bound. The kit's Select and DropdownMenu
+  don't pick by characters, so an open one is bound. The doc names its
+  limits.
+- **`Surface.Blur() (bool, error)`**, Focus's mirror. It runs the blur
+  itself first, then sends a=blur. The host's `blur` that follows (SPEC
+  §10.1) is swallowed as its echo, so nothing runs twice; a focus event,
+  Focus() or an Autofocus clears that. In cells the program calls
+  `Screen.Focus(false)`, which the surface hears as the same blur.
+- Two methods, Focused and Chars, keep each answer readable at its call
+  site.
+
+## Toasts an app owns
+
+plx's toasts were its own markup because ui.Toaster couldn't be driven by
+the app. The app owns lifetimes and the keyboard, and the kit draws.
+Basecoat's markup and behaviour stay for an app that doesn't drive it.
+
+- **`Toast.ID` and `ToasterState.Remove(id)`.** Show with a shown toast's
+  ID changes it in place, keeping its element, place and timer. Remove
+  closes it with its leaving transition and runs no OnSelect.
+- **`Toast.Actions []ToastAction`** replaces Action and Cancel.
+  `ToastAction.Variant` is the look: Outline is Basecoat's cancel, and
+  any other is its action.
+- **`Toast.OnClick`:** a press on the body, outside its buttons. The body
+  gets a pointer and the hover fill.
+- **`Toast.Focused`:** the app walks its toasts with its own keys, and
+  Focused draws the one it's on with Basecoat's button focus look, the
+  bar still and the timer paused. The toast never takes the host's focus.
+  A key's OnSelect doesn't close it; Remove does.
+- **`Toast.Countdown time.Time`:** a 3 px bar along the top that shrinks
+  to the middle, run by the host with a CSS animation in tenths of a
+  second, so no render runs it (K30). The same Countdown keeps the run,
+  and another starts it full. A focus holds it where it stands, and its
+  end runs it on to the Countdown given then. The bar is a picture: the
+  toast goes by Duration or Remove.
+- **`Toast.OnClose`:** a corner x (`aria-label` "Dismiss"), which runs
+  OnClose and closes nothing.
+- **`ToasterProps{OnLeave, Class}`, `Toaster(st, p)`:** OnLeave hears the
+  pointer leave the toaster. ToasterState has no exported field.
+- The bar's `transform: scaleX` and `steps()` animation aren't on the
+  proven list yet. They need a live hottyterm check and a css-subset.md
+  row. In cells a toast draws without the bar.
+
+## Clicks and Refocus
+
+A palette row selects on a click and runs on a double click. Its query
+asks for the keyboard on every frame, and must have it back in the same
+frame as Tab leaves it for an invisible stop.
+
+- **`surf.Clicks(fn func(count int)) Handler`:** Click with the count. A
+  double click arrives as a click, then a click with count 2. It is
+  stored as the element's Click, so kit components that wrap a Click keep
+  working. Two of Click and Clicks on one element are a fault. The narrow
+  shape was kept over an event struct.
+- **`surf.Refocus(ctx, id)`:** Autofocus that moves the keyboard even
+  though the frame before asked for the same element. Its doc gives the
+  pattern: a handler sets a flag, and the view asks once and clears it.
+  Asked on every render, it would trap the keyboard. Tab stays reserved
+  from KeyScope; Refocus is the route.
+- **`surftest.Rig.DoubleClick(sel)`**.
+- Where a field's caret goes when the program focuses it isn't SPEC's. The
+  test host, cells and hotty-blitz all keep it where it was (at the end
+  on a first focus), and keep a selection. A SPEC note would make that a
+  rule, which is the maintainer's call.
+
+## Which overlays are open
 
 plx's SDK hands the keyboard to a tool while the tool's menu is open (its
-"menu lease"). It does so today for its own overlay menu. It needs the
-same for the kit's popups, which only the kit opens and closes: a
-ContextMenu's press, a Select's trigger, Escape, a click outside, one
-popup closing another.
+menu lease), which it needs for the kit's popups too.
 
-**Shape: `func (s *Surface) Overlays() []string`,** a query like Focused and
-Chars. It gives the ids of the kit's overlays open in the last frame
-rendered (by any call that renders: Document, Update, Event, Key, Focus,
-Blur): the modals outermost first (`rt.Frame.Modal`, as the runtime
-already keeps them), then the one popup.
+- **`Surface.Overlays() []string`:** the ids of the kit's overlays open in
+  the last frame rendered by any call that renders, modals outermost
+  first, then the one popup. An overlay opened in its State but not
+  rendered isn't open. A query, not an event: a driver reads it between
+  Update and its write. The name is a noun, as Surface's queries are
+  (Focused, Chars, Pending); `Open()` would read as "open it".
+- Not overlays here: ui.Menu (the app's own panel), Tooltip, Toaster, and
+  a native select's list (the host's).
 
-Inside:
-- A kit popup's render already joins the surface's popup record (one open
-  at a time). The record now keeps the open popup's ID and the frame that
-  drew it.
-- Once the view has rendered, the frame lists the popup the record holds,
-  if this frame drew it (`rt.Frame.Popups`). A popup dropped from the view
-  while open is open nowhere.
-- No new state for modals: Dialog, AlertDialog, Drawer and CommandDialog
-  already list themselves.
+## OwnKeys
 
-Tests:
-- `ui.TestSurfaceOverlays`: each kind, one closing another, Escape, a click
-  outside, a popup dropped from the view, a menu in a dialog.
-- `TestSurfaceOverlaysFirstDocument`: a popover its State opened.
-- `cells.TestOverlaysInCells`.
-- `ExampleSurface_Overlays`: the driver's read between Update and its write.
+v0.6.3's `Surface.Keys` said, with each key, whether the focused element
+took it itself, and plx routes by it. v0.7 had the other two halves,
+Chars and ui.Bindings.
 
-Open questions, with a lean:
-1. **A query, not an event (lean).** plx's frame loop collects a frame's
-   hotty commands in its own buffer, sends the lease (a Call, acknowledged
-   before the menu reaches the host), then writes. A query read after
-   Update is therefore early enough. A hook run between render and write
-   (`OnOpen(func([]string))`) would serve a driver that writes straight
-   to the pty, but it would be a second name for the same fact, and a
-   callback the Surface runs mid-send. Add one only if a driver needs it.
-2. **Modals included (lean).** Command's list is a CommandDialog, which
-   is a modal, and plx's SDK can't see a tool's Open props. If the kit's
-   modal should not take the lease, `Open` could keep popups only, and
-   modals would wait for an ask of their own.
-3. **What isn't an overlay here:**
-   - `ui.Menu`: the app's own panel, which the app shows itself.
-   - Tooltip: takes no keys.
-   - Toaster: not modal, and takes the keyboard only as any element
-     does.
-   - A native `<select>`'s open list: the host's, which never reaches
-     the program. Not to be added.
-4. **Ids are the components' IDs** (their defaults when ID is ""), the
-   names the app gave, not element ids.
-5. **The name.** `Open` was plx's ask.
+- **`Surface.OwnKeys() []string`:** the focused element's own keys other
+  than characters, sorted, as the host resolves them:
+  - a native control's keys (SPEC §10.2's table, a text field's from its
+    keymap);
+  - the keys its own Key handlers declare;
+  - the keys declared on the elements around it;
+  - scroll bindings.
 
-As reviewed (p-796, review-open.md):
-- **The name is `Overlays`.** On Surface, a bare verb acts (Focus, Blur,
-  Update, Do), and a query is a noun or a participle (Focused, Chars,
-  Name, Pending), so `Open()` read as "open it".
-- **The doc** names every call that renders. It adds that an overlay
-  opened in its State but not rendered is not open. It drops "gives the
-  keyboard to the surface", which is the driver's policy.
-- **Q1–Q4 as leaned.** plx's port: `if len(s.Overlays()) > 0 { name =
-  s.Name() }`.
+  Each comes with shift where it isn't a character. Never Tab or
+  Shift+Tab, never a KeyScope's binding. A readonly field keeps its
+  edits. It is nil before Attach. One method serves a host and cells.
+- **Kit rule K32:** a kit control declares its keys on the element that
+  takes focus. Tabs and DropdownMenu's trigger were fixed to.
+- The routing rule is written once, in docs/keyboard-model.md under
+  "Routing", and OwnKeys', Chars' and ui.Bindings' docs point at it.
 
-## L5: OwnKeys (plx's G-keys-decl, the Own half)
+## The kit's sheet as a resource
 
-v0.6.3's `Surface.Keys` listed, with each key, whether the focused
-element took it itself (`KeyUse.Own`). plx routes by it: a key the
-element owns goes to the surface ahead of plx's keymap. v0.7 has the
-two other halves: `Chars` (characters) and `ui.Bindings` (KeyScope
-bindings). The pack adds the third:
+`ui.Stylesheet()` is about 229 KB, and an app carried it in every full
+send of every surface. hotty's a=res (SPEC §7.1) stores it once per
+session.
 
-- `Surface.OwnKeys() []string`: the focused element's own keys other
-  than characters, as hotty names them, sorted. They come from:
-  - the native control (SPEC §10.2's table). A text field's keys are
-    its keymap: `hotty.Resolve` over the platform and the data-keys
-    from the root down, which is what a host and cells.Screen read. A
-    move is listed with shift too. A key the keymap gives the program,
-    a prefix or a scroll is left out. A select, a date or time field,
-    and a button, link, summary, check box or radio button take the
-    keys SPEC lists, each with shift.
-  - a kit control's own declaration: the `k=program` entries on the
-    focused element itself (List rows, Combobox, Select's trigger,
-    Slider, menu items). Under a KeyScope, the kit keeps its own in
-    `data-hotty-default-keys`, and the scope's bindings stay out.
-- Never Tab or Shift+Tab, never characters (space only counts as one in
-  a text field), never a KeyScope's binding, never an app's `surf.Key`
-  handler's keys (it declares none). An app that wants a key first binds
-  it in a KeyScope.
-- One method serves a host and cells. cells.Screen resolves the same
-  keymap, so no Screen method is needed (as with Chars).
+- **`surf.Sheet{ID, CSS}`, `Surface.Link(sheets ...Sheet)`, `ui.Sheet()`.**
+  A linked sheet is a `<link rel="stylesheet" href="cid:ID">` ahead of
+  the surface's own `<style>`.
+- A sheet with CSS is sent by the surface, once per Attach, before the
+  next document. A sheet without CSS is the program's to send, for a host
+  that owns one connection for many surfaces. Link replaces, and Link()
+  links none.
+- A sheet past the host's limits isn't sent. The document carries it in
+  a `<style>`, with a fault once per Attach. There's no error API: the
+  caps decide.
+- `ui.Sheet()`'s ID is `hotty-surf-kit-` and FNV-1a over the sheet (not
+  sha256, for TinyGo's size).
+- Every example, the scaffold and the book link the kit through
+  `newSurface` in their css.go. cells ignores a=res and `<link>`.
+- On hello: one surface and three full sends went from 101,721 bytes to
+  36,744, at +7.8 KB raw in the release wasm.
 
-Questions for the review:
+## The Screen's own redraw
 
-1. A declaration on an ancestor isn't read. NavList puts its keys on its
-   container, so a focused element inside has them only through the
-   host's data-keys. Should OwnKeys read `=program` entries up the chain
-   until a KeyScope, or is the element alone right? plx's wrappers
-   (`data-keys="k=program"` on a pane) are plx's own keys, not the
-   element's, which argues for the element alone.
-2. A readonly text field lists its edits (backspace) too, as the host
-   keeps them for it. Leave it, or drop the edits?
-3. `[]string`, or a set type (`func(key string) bool`) for routing? The
-   slice is what a palette or a help line shows; plx can build its own
-   set from it.
+Cells draws a tooltip on a Move, with nothing written, but Move's doc
+told a program to redraw only on Writes, presses and releases, so plx's
+tooltips showed late and stayed.
 
-Reviewed (p-796): OwnKeys was
-approved. The questions were settled as: the element alone (NavList
-declares on its rows and its filter, not its container); keep a readonly
-field's edits; keep `[]string`. The review added kit rule K32: a kit
-control declares its keys on the element that takes focus. Applied:
-
-- The routing rule is written once, in docs/keyboard-model.md, under
-  "Routing". OwnKeys', Chars' and ui.Bindings' docs point at it.
-  - The review's text names `Overlays` (Surface.Overlays, p-794's
-    menu-lease pack, merged into v07 after this branch was cut). With
-    v07 merged in, the rule is the review's text as written.
-- OwnKeys' doc says "as the host resolves it": the data-keys as
-  written, so a KeyScope's bindings are the program's.
-  - TestOwnKeysFieldUnderScope pins it: a field under a scope binding
-    ctrl+a leaves ctrl+a out of OwnKeys, and Bindings lists it.
-  - keymapsOf and rt.NativeKeyDefault's walk each name the other, so
-    nobody merges them.
-- Before Attach (no platform), OwnKeys is nil (TestOwnKeysBeforeAttach).
-- The readonly edits are locked in TestReadonlyKeepsCharsVector, beside
-  Chars' case.
-- TestOwnKeysKit has a case per kit control that takes keys: List row,
-  NavList row and filter, Combobox, Select trigger, Slider thumb,
-  DropdownMenu open and closed, Tabs, Command input. It found two K32
-  breaks in the kit, both fixed here:
-  - Tabs declared nothing; its selected tab took arrow_left, arrow_right,
-    Home and End undeclared. The tab now declares them (tabs.go keys,
-    tabs.templ).
-  - DropdownMenu's handler is on its root, but the keyboard stays on the
-    trigger, which declared only Enter and Space while open. The trigger
-    now declares what the handler takes: arrow_down and arrow_up while
-    closed, and the arrows, Home, End, Enter, Space and Escape while
-    open.
-  - A menu item never takes focus (aria-activedescendant on the trigger),
-    so there is no item case.
-
-## L5: the kit's sheet as a resource (plx's G-kit-sheet)
-
-`ui.Stylesheet()` is 228,864 bytes, and an app carries it in every
-document (New's css), on every full send, for every surface. hotty's
-a=res (SPEC §7.1) stores it once per session; documents link it as
-`cid:<id>`.
-
-The pack: `surf.Sheet{ID, CSS}`, `Surface.Link(sheets ...Sheet)` and
-`ui.Sheet()`.
-
-- A linked sheet is a `<link rel="stylesheet" href="cid:ID">` ahead of
-  the surface's own `<style>` (New's css, which a dev reload restyles; it
-  is written even empty while a sheet is linked, for the reload to fill).
-- A sheet with CSS is sent by the surface: a=res on Attach's writer, once
-  per Attach, before the next document Document returns. That covers
-  run.App (term, wasm, dev, cells) with no change there.
-- A sheet without CSS is the program's to send: a host that owns one
-  connection for many surfaces (plx's surfhost) sends `hotty.Res` once
-  and links `surf.Sheet{ID: ui.Sheet().ID}` from each.
-- `ui.Sheet()`'s ID is `hotty-surf-kit-` and 8 hex digits of FNV-1a (32
-  bits) over the sheet, computed once.
-- **Cells:** nothing to do. A cells.Screen reads Basecoat classes and
-  inline styles, never a stylesheet (SUBSET.md); it ignores a=res and
-  `<link>` as it ignores `<style>`.
-- Every example, the `hotty-surf new` scaffold and the book link the kit:
-  each package's css.go has `newSurface(name, view)`, which is New with
-  the package's own CSS, then `Link(ui.Sheet())`.
-
-Measured on examples/hello (bytes written, hotty-go's encoding):
-
-| | once per connection | each full send |
-| --- | ---: | ---: |
-| kit embedded (v07) | 0 | 33,907 |
-| kit linked | 32,907 | 1,279 |
-
-1 surface, 3 full sends: 101,721 → 36,744. 10 surfaces, 3 full sends
-each: 1,017,210 → 71,277. TinyGo release wasm of hello, on v07
-cf1cb8f: 2,267,015 → 2,274,821 raw (+7,806), 726,158 → 728,008 gzip -9n
-(+1,850). The ID's hash is little of that: with crypto/sha256 in place of
-FNV-1a the same build is 2,275,330 raw, 728,195 gzip, so FNV-1a saves 509
-bytes raw, 187 gzip; the rest is Link and Sheet themselves. (The draft's
-+6,345 was all of Link, not sha256's.)
-
-Questions for the review:
-
-1. Once per Attach per surface: two surfaces of one program on one writer
-   that both carry CSS each send it (the second replaces the first, and
-   the host redraws). A program with many surfaces links without CSS.
-   Enough, or a shared sender?
-2. a=res is sent NoReply. A host that refuses it (EQUOTA, limits.message)
-   shows the documents unstyled with no error; the embedded sheet would
-   have gone over limits.message as well. Ask for errors and surface them?
-3. Move the other examples and the book to Link in the apply, or leave
-   them as the embedded shape's examples?
-
-Reviewed (review-sheet.md): approved as named; Q1 per Attach, no shared
-sender; Q2 no error API, the caps decide; Q3 every example and the book
-on Link. Applied:
-
-- **Past the caps.** A sheet with CSS longer than the host's
-  limits.message or limits.resources (Attach's caps) isn't sent: the
-  document carries it in a `<style>` where its link would be, and the
-  surface records a fault once per Attach (TestSheetPastLimits).
-- **Docs.** Sheet.ID is the program's to change with the CSS; CSS
-  without, the program sends it before the first document; Link
-  replaces, and Link() links none (TestLinkReplaces); Link names the
-  fallback and the re-Attach after a host drops its resources;
-  Document's doc states its a=res write; Stylesheet and Sheet point at
-  each other.
-- **TinyGo.** FNV-1a inline in place of crypto/sha256 (ui.Sheet's test
-  checks it against hash/fnv).
-- **Examples.** Every one, the scaffold and the book link the kit through
-  `newSurface` in its css.go; surftea's commits and files examples and its
-  Example link it where they make the surface.
-
-Verified (verify-sheet.md, p-801), fixes applied: v07 merged in (notes
-and reasons a union); the scaffold's css.go imports in gofmt's order,
-kept so by TestScaffoldIsFormatted over every rendered Go template;
-Document's and Link's sentences word for word as the review wrote them;
-surftea's examples on Link. Also: limits.message counts the whole
-decoded message, so a sheet must leave resMargin (1 KiB) under it for
-the command's keys; the over-limit sheet is marked sent so that its
-fault is recorded once per Attach (commented).
-
-## L6: the Screen's own redraw, for plx's tooltips (a pack of its own)
-
-Cells draws a tooltip (v07 be531b5): with the pointer over an element
-with `data-tooltip` (`ui.Tooltip`), its text is drawn beside it. It shows
-and goes on a `Move`, with nothing written. But `Move`'s approved doc
-(the pointer pack, its review's change 3) says:
-
-> Lines changes after a Move only through what the surface writes (a
-> hover's look, the dragging class), so a program redraws on Writes, and
-> on the presses and releases it takes, not on every motion.
-
-plx follows it, so in plx a tooltip shows late (at the next Write) and
-stays after the pointer leaves. p-801 found it in the spot-check.
-
-### The change (one name, and Move's doc)
-
-- **`func (c *Screen) Dirty() bool`**: whether `Lines` or `Cells` would
-  now return other than what either last returned. It is true before the
-  first draw, and after a Write that changed the screen. Its doc:
-
-  > Dirty says whether Lines, or Cells, would now return other than what
-  > it last returned: the Screen changed by itself, with no Write, as a
-  > tooltip shows or goes when the pointer moves (Move). A program that
-  > redraws on Writes and on the presses and releases it takes asks it
-  > after the other calls (a Move, a Wheel) and redraws where it says so.
-  > It is cheap: the Screen is laid out once for each change.
-
-- **`Move`'s doc**, the last sentence, becomes:
-
-  > Lines changes after a Move through what the surface writes (a hover's
-  > look, the dragging class), and by itself where a tooltip shows or
-  > goes: a program redraws on Writes, on the presses and releases it
-  > takes, and after a Move where Dirty says so, not on every motion.
-
-  `Move`'s signature doesn't change.
-
-It compares the visible cells (text, look, owner) with a copy taken when
-Lines or Cells last drew. The layout is cached between changes, so asking
-after a Move that changed nothing costs one copy of the screen's cells.
-
-Tests: `TestDirty` covers these cases:
-- before the first draw;
-- a move over no tooltip (clean);
-- a tooltip showing (dirty);
-- clean again once drawn, by Lines;
-- a move within the same element (clean);
-- the tooltip going (dirty);
-- clean once drawn by Cells;
-- a new document (dirty).
-
-### Alternatives
-
-- **(b) `Move` returns `(taken, redraw bool)`**, as v0.6.3's did. It
-  answers only for Move, not for anything else that changes the screen by
-  itself later. It also changes an approved signature, along with plx's
-  call site and the doc's examples. This was p-653's first lean; p-653
-  then took (a).
-- **(c) Draw a tip only when a Write happens anyway.** No API change, but
-  a tooltip then shows late, which is barely a tooltip.
-- **(d) A callback (`OnRedraw func()`)**: the Screen would call into the
-  program from inside Move. That inverts the calls a program makes today
-  for no gain over a query it makes after Move anyway.
-
-### As reviewed (p-796)
-
-- `Dirty() bool` as named, and (a) over (b), (c) and (d).
-- No copy on the common path. The Screen keeps the layout and the scroll
-  that Lines or Cells last drew. Every change that can draw differently
-  drops the layout, so the same layout at the same scroll returns false
-  with no copy and no layout pass. Otherwise it compares the cells as
-  before, so the answer stays exact, and a match records the new layout.
-  Lines and Cells copy only when the layout or scroll moved.
-  TestDirty checks that a move within one element keeps the layout.
-- Dirty's doc gives the one rule: ask it after whatever you hand the
-  Screen, and draw where it says so. It is true before the first Lines or
-  Cells. Move's last sentence points at it: "…and by itself where a
-  tooltip shows or goes; Dirty says when, so a program needn't redraw on
-  every motion." Move's taken keeps its meaning: whose gesture it is.
-- TestDirty gains Resize cases: the same size is clean, a new size dirty.
-- plx's port: after Move, or any call, `if s.cr.Dirty() { redraw }`.
-
-### As verified (p-801)
-
-- Fix first: the slow path compared the cells Lines draws from (text,
-  look, owner). But Cells works out roles from the elements' classes and
-  attributes at call time, so a change that shows only in Cells was
-  clean. Two cases: a colour class (text-primary to text-destructive),
-  and the selected band moving to another row in an unfocused list (plx's
-  nav and lists after a click). The snapshot now holds Cells' grid too,
-  through one helper (cellsOf) that Cells and Dirty share. TestDirtyRoles
-  covers both, plus a data-x change that stays clean. The fast path is
-  unchanged: such changes come by Write, which drops the layout.
+- **`Screen.Dirty() bool`:** whether Lines or Cells would now return other
+  than what they last returned. Ask it after whatever you hand the
+  Screen, and draw where it says so. It is true before the first draw.
+  Move's doc points at it.
+- It is cheap: the same layout at the same scroll returns false with no
+  copy. Otherwise it compares Lines' and Cells' grids, so a change that
+  shows only in roles counts too.
+- Not taken: Move returning a redraw flag (it answers only for Move, and
+  changes an approved signature), drawing tips only on Writes, or a
+  callback from inside Move.
 
 ## No key binds in templates (the maintainer, 2026-11-18)
 
 "I don't want templates to carry key binds." `data-keys` came from
 hotty-a2ui, where A2UI's code-free model forced it. In hotty-surf a key
 is declared in Go, by the code that handles it. SPEC §10.2's `data-keys`
-still reaches the wire, because a host needs the list, but only as the
-runtime's output, derived from the registered handlers. No template,
-component or app writes it.
+still reaches the wire, but only as the runtime's output.
 
-Proposed:
-
-```go
-// before
-func Key(fn func(key string) bool) Handler
-// after
-func Key(fn func(key string) bool, keys ...string) Handler
-```
-
-- **keys are what fn takes ahead of the element.** While the keyboard is
-  on the element or inside it, the host gives each of them to the
-  program (SPEC §10.2 `key=program`) rather than using it itself: a
-  field's edit, a button's Space, the surface's scroll. Keys use fn's
-  notation ("arrow_down", "mod+s", "ctrl+n"), read for the host's
-  platform. Without keys, fn hears only the keys that reach the program
-  anyway, as today.
-- **The runtime writes `data-keys`.** After a render it writes each
-  element's attribute from the keys its Key handlers declare and the
-  ui.KeyScopes around a kit control. A `data-keys` that a template or an
-  Attrs map writes is a fault and is dropped, as a runtime id is. So are
-  the internal `data-hotty-default-keys`, `data-hotty-keyscope` and
-  `data-hotty-keykind` attributes.
-- **A key that doesn't parse, and `shift+tab`, are faults.** `tab` is
-  allowed: SPEC lets a text field give it to the program (completion),
-  and a host ignores it elsewhere.
-- **ui.KeyScope is unchanged.** Its `[]KeyBinding` already names its
-  keys. Only where its bindings are written moves into the runtime.
-- **OwnKeys' doc** reads "the keys the focused element's Key handlers
-  declare" in place of "the k=program entries on the focused element"
-  and "an app's Key handler's keys, which declare none".
-- **No other name changes.** `Surface.Program` and `surfui.Node.Give`,
-  which the brief names, are not in v0.7.
-
-Why a variadic on Key: the brief's rule is that the keys sit with the
-code that takes them. A separate `surf.Keys(...)` handler would let them
-drift apart again, and a `[]string` costs every call a literal. A Key
-handler that takes keys conditionally (a menu open or closed) passes the
-condition's list, as the string builders did, and the runtime rewrites
-the attribute when the list changes.
-
-The kit follows K32 (keys are declared where the keyboard is). A kit
-control whose handler sits on its root but whose keyboard sits on a
-descendant (DropdownMenu's trigger, Command's and Combobox's input)
-registers the same handler, with the keys, on that descendant. Its root
-keeps the handler without keys, for keys that reach the program from
-elsewhere inside (Escape on a chip's button). A key the first one
-declines goes to the root's, which declines it too: the handlers act
-only on what they take.
-
-Questions for the review:
-
-1. **Keys that aren't the program's.** `data-keys` also carried
-   `prefix`, `default`, the scroll actions (`j=scroll-down`) and a
-   field's edit actions (`hotty.TerminalKeys`). No component in this
-   repository uses them, but an app could. Lean: they go with this
-   change, and a later pack offers a Go declaration if the maintainer
-   wants one. The maintainer's rule is about templates, but a `surf.Keymap`
-   handler would be a new API this brief doesn't ask for.
-2. **OwnKeys and an app's declared keys.** An app's `data-keys` on the
-   focused element counted before. A Key handler's keys are the same
-   declaration. Lean: count them, kit's and app's alike.
-3. **cells.Screen reads `data-keys` from the document.** The brief asks
-   that it read the handler registry. But the Screen is a host rendition:
-   it takes the document a host takes, and the key vectors check that
-   both read the same wire. Lean: keep it reading the wire, as
-   hotty-xterm.js does.
-4. **Variadic `keys ...string`, `[]string`, or a separate handler.**
-   Lean: variadic, as above.
-
-### As reviewed (p-819)
-
-Accepted with changes; every lean applied:
-
+- **`surf.Key(fn func(key string) bool, keys ...string) Handler`:** keys
+  are what fn takes ahead of the element (SPEC's `key=program`) while the
+  keyboard is on it or inside it. Without keys, fn hears only what
+  reaches the program anyway.
+  - Several handlers' keys on one id are their union.
+  - A declared `ctrl+n` arrives as `mod+n` where ctrl is the mod.
+  - `escape` is allowed and not written.
+  - `tab` is a fault outside a text field's own handler, and so is
+    `shift+tab` or a key that doesn't parse.
+  - A declared printable key is given back to every typing element inside
+    (K27).
+  - Variadic, so the keys sit with the code that takes them.
 - **The surface strips, then writes.** After each render it takes every
-  `data-keys` and every kit key marker off the parsed document (any
-  case, any way in: a literal, an Attrs map, templ.Raw) and writes
-  `data-keys` by id from the registry, its bindings sorted. Without
-  `data-hotty-default-keys`, the kit's `data-hotty-keyscope` and
-  `data-hotty-keykind` stay in the surface's tree by id and no longer
-  reach the wire. The cells still read `data-keys` from the document, as
-  a host does (Q3).
-- **No key literal in a .templ.** NavList's and the spike popup's keys
-  are Go lists beside their handlers. Slider's and Combobox's owned lists
-  and List's merge of an app's `data-keys` are gone. The lint rule
-  `data-keys` finds one in an app's .templ or .go.
-- **Key's contract** adds: the keys of several handlers on one id are
-  their union; a declared `ctrl+n` arrives as `mod+n` where ctrl is the
-  mod; `escape` is allowed and not written (a host ignores it), but
-  OwnKeys lists it; `tab` is a fault outside a text field's own handler;
-  a declared printable key is written back as `key=default` on every
-  typing element inside the declaring one (K27). Page shortcuts point at
-  ui.KeyScope.
-- **Q1.** `prefix`, the scroll actions and a field's edit actions
-  (`hotty.TerminalKeys`) are cut. They are the follow-up pack's scope:
-  - `prefix` (a leader the host holds for the program);
-  - `scroll-up`, `scroll-down`, `scroll-left`, `scroll-right`,
-    `scroll-page-up`, `scroll-page-down`, `scroll-half-page-up`,
-    `scroll-half-page-down`, `scroll-start`, `scroll-end`;
-  - a field's edit actions, `hotty.TerminalKeys` among them;
-  - `default` given explicitly, if declining turns out not to be enough.
+  `data-keys` and every kit key marker off the parsed document, however
+  it got there, and writes `data-keys` by id from the registry. The lint
+  rule `data-keys` finds one in an app's sources.
+- **`default` is declining.** A declared key every handler declines is the
+  focused element's own use, which the surface does itself: activation,
+  a field's edit, a toggle, a pick.
+- cells reads `data-keys` from the document, as a host does.
+- Kit controls follow K32. DropdownMenu's handler is on its trigger, and
+  Command's and Combobox's root keeps a keyless handler for keys from
+  elsewhere inside.
 
-  `default` itself is replaced by declining: a declared key every
-  handler declines is the focused element's own use, which the surface
-  does through rt.NativeKeyDefault (activation itself; a field's edit, a
-  toggle and a pick through the kit's fallback, which ui now links at
-  init). A use it can't do (the host's scrolling, a date field's) is
-  lost.
-- **Q2.** OwnKeys counts the declared keys of the focused element and of
-  every element around it, KeyScope bindings excluded, each with shift
-  where it isn't a character (SPEC §10.2 looks a shifted key up again
-  without shift), and a declared character except on an element that
-  types.
-- **Q4.** Variadic.
-- **K32** kept. DropdownMenu's handler moved to its trigger, the only
-  element in it that takes focus, so it has no double ask. Command's
-  and Combobox's root keep the handler for keys from elsewhere inside;
-  TestComboboxDoubleAsk pins that a key the field's declines, the
-  root's declines too with nothing done.
-- **Docs.** KeyScope's "as surf.Key does" reads "as a surf.Key that
-  declares no keys does"; OwnKeys' doc is rewritten;
-  docs/keyboard-model.md has "Declared keys" and a new Routing
-  paragraph; vault/knowledge/field-keys.md has the v0.7 model; Key's
-  reason quotes the maintainer's rule.
-- **The API.** `api/next.txt` has the one changed line,
-  `func Key(func(string) bool, ...string) Handler`. `api/v0.7.txt` waits
-  for the maintainer's `make api-approve`.
+## Bind: the host's keys, declared in Go (the maintainer, 2026-11-19)
 
-## Field keys, prefix and scroll declared in Go (2026-11-19)
-
-The follow-up the review of "No key binds in templates" named (Q1).
 `data-keys` carried three things besides `key=program`, and v0.7 lost
-them with the authored attribute: a text field's edit actions
-(readline's `hotty.TerminalKeys`, SPEC §10.2), `prefix` (§10.5) and the
-scroll actions (§10.2, *Scrolling keys*). plx's palette set
-`hotty.TerminalKeys` on its query, so on a host its line has no readline
-editing until this lands. Here they are declared in Go, as `surf.Key`'s
-keys are, and the runtime writes them into `data-keys` beside
-`key=program`. No template, Attrs map or string carries one.
+them with the authored attribute:
 
-Proposed (two new names, two contracts extended):
+- a text field's edit actions (readline's `hotty.TerminalKeys`, SPEC
+  §10.2);
+- `prefix` (§10.5);
+- the scroll actions.
 
-```go
-// Bind binds keys, on the element, to one of SPEC §10.2's actions other
-// than program: a text field's edit action (hotty.WordBackward, …) on a
-// field or on an element that holds fields, hotty.Prefix (§10.5), or a
-// scroll action (hotty.ScrollDown, …) on an element that isn't a field.
-func Bind(action hotty.Action, keys ...string) Handler
-
-// Readline binds, on a text field or an element that holds fields, the
-// SDK's readline keymap (hotty.TerminalKeys: ctrl+a, ctrl+e, ctrl+k,
-// ctrl+w, alt+b, …), the same on every platform.
-func Readline() Handler
-
-// Key (extended): a key fn declares wins over the element's Bind and
-// Readline bindings of it, as the program's bind did over readline.
-
-// Surface.Focus (extended): with the keyboard on it already, Focus sends
-// a=focus without a target where the focused element's keymap has a
-// prefix: it ends a key sequence (SPEC §10.5), and sends nothing else.
-```
-
-plx's palette, its one line:
-
-```go
-surf.On(b.ctx, idLine, surf.Input(m.SetQuery), surf.Readline())
-```
-
-A pager's surface: `surf.On(ctx, "log", surf.Bind(hotty.ScrollDown, "j"),
-surf.Bind(hotty.ScrollUp, "k"), surf.Bind(hotty.ScrollEnd, "shift+g"))`,
-and an app's leader, read by its own keymap: `surf.On(ctx, "main",
-surf.Bind(hotty.Prefix, "mod+k"))`. (The proposal had a list's `g g`
-here; the review: a list doesn't use `g`, so `surf.Key(fn, "g")` hears
-both, and needs no prefix.)
-
-Why: the maintainer's rule is that a key sits with the Go code that owns
-the element, and Bind is `surf.Key(fn, keys...)`'s twin, an action in
-place of fn, so both read the same way and sit in the same `surf.On`.
-The action is hotty-go's own `hotty.Action`, whose names are SPEC's, so
-the API adds no vocabulary of its own and a spec action is usable the
-day hotty-go has it. Readline is the one named set because it is the one
-an app asks for whole (plx's palette, the old A2UI host's fields); a
-`Readline()` handler, not a `[]Bind` or a string, can't be edited in
-place or written into an attribute. Ending a prefix needs the program to
-send `a=focus`, and `Surface.Focus` is the program's way to send it, but
-today it sends nothing when the surface has the keyboard.
-
-### The rules
-
-- **Bindings on one element.** Readline's come first, then the Binds,
-  so a Bind changes one of Readline's keys on the same element. Two Binds
-  of one key to different actions are a fault; the first stays. A key
-  `surf.Key` declares is the program's on that element whatever a Bind
-  or Readline says (plx's palette takes `arrow_up`, `page_up` and
-  `ctrl+n` from readline that way), and so is a KeyScope's forwarded
-  key; a Bind (not Readline) of a key that a Key handler on the same
-  element declares is a fault, unless the action is `prefix`, which gives
-  fn the key too. Across elements SPEC's chain holds: the nearer wins.
-- **Faults** (each binding dropped, the rest kept): an action that is
-  `program` (surf.Key's), `default` (declining is surf's default),
-  `insert` or not SPEC's; a key that doesn't parse, `shift+tab`,
-  `escape`, `tab` (SPEC lets only program or default have it); an edit
-  action on an element that is no text field and holds none (SPEC: it
-  does nothing there); a multi-line action (`newline`, `line-next`, …)
-  bound on an `input` itself; a scroll action on a text field (SPEC
-  leaves it out of a field's keymap).
-- **The wire.** writeKeys writes each binding as `key=action` in the
-  element's `data-keys`, sorted with the program's. A printable key bound
-  to `prefix` is given back to the fields inside (`key=default`, K27), as
-  a declared one is; a printable scroll binding needs no K27, since a
-  field's keymap leaves scroll actions out.
-- **The surface's own use** of a declared key every handler declines
-  reads the field's keymap with the chain's Bind and Readline bindings,
-  so a declined `ctrl+n` under Readline is line-next, not the default's.
-- **Prefix.** On a host the host holds the sequence. The surface learns
-  of it in Surface.Key (the key the focused chain binds to prefix) and
-  does no element's own use of a declined key until the sequence ends:
-  the host didn't use those keys. Surface.Focus ends it (above), Blur and
-  a focus or blur from the host end it too, and so does any a=focus the
-  surface writes: a render's (Autofocus, a modal's), and one written
-  while the prefix key itself was handled, which then starts no sequence
-  (p-835's verification of fa14556).
-- **cells** read the wire as a host does: edit actions and scroll actions
-  already resolve there (`hotty.Resolve`, `Keymap.Scroll`). A prefix is
-  added to the Screen: after a key the keymap binds to prefix, every key
-  is the program's, Tab and Escape too, until the program's a=focus or
-  a=blur, the Screen's losing the keyboard, or a press that focuses an
-  element (SPEC §10.5).
-- **OwnKeys** lists scroll-bound keys on an element that isn't a field
-  (the host takes them ahead of the program), with shift where it isn't a
-  character, but not a printable one on an element that types. A text
-  field's edit bindings were already listed through its resolved keymap.
-  Prefix keys are not listed: they are the program's (its leader).
-- **Lint.** The `data-keys` rule is unchanged; its message points at
-  Bind and Readline too.
-
-### Size
-
-`ui` set the text fallback (`hottyedit`, graphemes) at init, so every
-TinyGo app linked it. It moves behind the components that edit text
-(Input, Textarea, Combobox, Command, InputGroup's input), KeyScope, and
-`surf.Bind`/`surf.Readline`; the toggle and pick fallbacks, which are
-small, stay linked with `ui`. A plain `<input>` in a template, with
-declared keys, in an app that uses none of those, loses the surface's own
-edit of a declined key, as an app without `ui` already does; the
-measurement and that case go in the report.
-
-Questions for the review:
-
-1. **`Bind(action, keys...)` and `Readline()`, or a `[]Bind` value.**
-   Lean: the two handlers. A `surf.Keymap(binds ...surf.KeyBind)` with
-   a `surf.ReadlineKeys() []surf.KeyBind` adds a type and lets an app
-   edit the set in place.
-2. **Key against Bind on one element.** Lean: Key wins over Readline
-   silently (the palette needs it), and a Bind of a Key's key is a
-   fault, but for prefix.
-3. **Ending a prefix.** Lean: Surface.Focus sends a=focus where the chain
-   has a prefix. The other way is a surface that ends the sequence by
-   itself after the key that follows (a `g g`), but a leader that the
-   program's own keymap reads never passes through the surface.
-4. **Other named sets.** Lean: Readline only. A pager's j/k set is a
-   handful of Binds, and no app asks for one yet.
-
-### As reviewed (p-832)
-
-Accepted with changes; every lean and change applied:
-
-- **Names.** `surf.Bind(action hotty.Action, keys ...string) Handler`
-  and `surf.Readline() Handler`, as proposed (Q1, Q4). No `KeyBind`
-  type, no other named set.
-- **One binding per key on the wire.** The surface works each element's
-  bindings out in Go, by the key as the platform reads it (`mod+k` and
-  `ctrl+k` are one on Linux), and writes one per key, so sorting never
-  orders two of one key by action. keysig carries the bindings, so a
-  render that changes only a Bind repaints.
-- **Readline yields to the program's keys around it** (Q2, changed).
-  Readline leaves out every key the program is given on the element or on
-  any element around it: a Key's declared key, a prefix, a KeyScope's
-  forwarded key. A page's `mod+k` on `<main>` reaches its handler from a
-  field under Readline, as the 2026-11-04 decision had it. An explicit
-  Bind keeps SPEC's nearer-wins. A Bind of a key a Key on the same
-  element declares is a fault, but for prefix, which writes `prefix` and
-  still lets fn hear the key. The surface's own use of a key a handler
-  declared and declined is Readline's edit (what the host does with no
-  declaration of it).
-- **Ending a prefix** (Q3, changed). Surface.Focus, with the keyboard on
-  the surface already, always sends `a=focus` without `t` (SPEC §10.1:
-  focus stays, no event). And a prefix a Key handler took is the
-  surface's sequence: it ends once the key after it has been through the
-  handlers, the surface sending `a=focus` itself, so an app under
-  `run.App`, whose handlers have no Surface, is never stuck. A prefix no
-  handler took is the program's leader, ended by Focus.
-- **Faults.** The fault for an edit action on an element that holds no
-  field is cut (a palette root holds its input only while open): an edit
-  action is a fault only on a control that isn't a text field (a button,
-  a select, a check box, a date field), and Readline there too. A key
-  bound twice to one action, and Readline twice, are one binding. The
-  rest of the list stands.
-- **ui.Bindings** drops a binding's key while the focused plain text
-  field takes it itself (its keymap's edit, Readline's `ctrl+k`); a kit
-  control under the scope gets the scope's keys forwarded, as before. Its
-  doc says a `surf.Bind` is not one of its bindings.
-- **Size, with a fault.** `ui` no longer links the text fallback at init:
-  `rt.LinkText` links it from ui's text components (Input, Textarea,
-  Command, Combobox, NavList's filter), ui.KeyScope, surf.Readline and
-  surf.Bind. A declined key on a text field with none linked edits
-  nothing and is a fault, once per surface, naming what links it.
-- **Docs.** Readline's doc is the review's ("over the platform's
-  default; mod+a still selects all"); Bind's says "other than program
-  and default". docs/keyboard-model.md has "Keys that aren't the
-  program's", the Routing sentence on a router's prefix, and Command and
-  Combobox getting Readline from a wrapper; field-keys.md has the v0.7
-  decision; the lint message names Bind and Readline.
-- **Vectors on hottytest and in cells:** Readline on a field and around
-  it, a declared ancestor key over Readline, a declined key under
-  Readline, a scroll Bind, a prefix ended by Focus and by itself. The
-  scroll vector's host half is skipped: hottytest 0.8 does no scroll
-  action (a gap in the test host, for hotty-go).
-- **The API.** `api/next.txt` has the two new lines. `api/v0.7.txt` waits
-  for the maintainer's `make api-approve`.
-
-## Bind, extensible (the maintainer, 2026-11-19)
-
-The maintainer, on 4dd9b13's `surf.Bind(action, keys...)` and
-`surf.Readline()`: "I would make Bind API extensible so that Readline
-becomes just one of the options that carries a predefined group of
-bindings. Plus, add options to control override behavior, so callers can
-naturally use it." This section replaces the two names above. The rest
-of the reviewed pack stands as it is: one binding per key on the wire,
-prefixes always end, the size rule, the faults, cells parity.
-
-Proposed (replacing `Bind(hotty.Action, ...string)` and `Readline()`):
-
-```go
-// Bind declares, on the element, keys the host does something with
-// itself: SPEC §10.2's edit and scroll actions and prefix. What it binds
-// are its options: Keys, a group (Readline, or an app's Group), and an
-// override option, Yield or Override, for all of them.
-func Bind(opts ...BindOption) Handler
-
-// A BindOption is what Bind takes. Keys, Group, Readline, Yield and
-// Override make them; it is a closed set.
-type BindOption interface{ bindOption() }
-
-// Keys binds keys to one action. It wins: on the element it is the
-// nearer binding, as SPEC §10.2 has it.
-func Keys(action hotty.Action, keys ...string) BindOption
-
-// Group is a named set of bindings, an app's or the kit's, given whole.
-// Its bindings yield: each leaves alone a key the program is given on
-// the element or around it.
-func Group(opts ...BindOption) BindOption
-
-// Readline is the group of the SDK's readline keymap
-// (hotty.TerminalKeys).
-func Readline() BindOption
-
-// Yield and Override set how the bindings beside them, in the same Bind
-// or Group, meet the keys the program is given (a surf.Key's declared
-// key, a prefix, a ui.KeyScope's forwarded key), on the element or
-// around it: Yield leaves those keys alone, Override binds them anyway
-// (SPEC §10.2: the nearer binding wins).
-func Yield() BindOption
-func Override() BindOption
-```
-
-plx's palette, still one line:
-
-```go
-surf.On(b.ctx, idLine, surf.Input(m.SetQuery), surf.Bind(surf.Readline()))
-```
-
-A custom group, defined once and bound where it's needed:
-
-```go
-// pager scrolls a log with a pager's keys.
-var pager = surf.Group(
-	surf.Keys(hotty.ScrollDown, "j", "arrow_down"),
-	surf.Keys(hotty.ScrollUp, "k", "arrow_up"),
-	surf.Keys(hotty.ScrollStart, "g"),
-	surf.Keys(hotty.ScrollEnd, "shift+g"),
-)
-
-surf.On(ctx, "log", surf.Bind(pager))
-```
-
-The overrides:
-
-```go
-// readline that wins: ctrl+k deletes to the line's end in this field
-// even though the page's main declares mod+k
-surf.Bind(surf.Readline(), surf.Override())
-// one key that yields: alt+b moves back a word unless something around
-// the field takes alt+b
-surf.Bind(surf.Keys(hotty.WordBackward, "alt+b"), surf.Yield())
-// the app's leader, as before (a single binding: it wins)
-surf.Bind(surf.Keys(hotty.Prefix, "mod+k"))
-```
-
-Why: the maintainer wants one entry point an author learns once.
-`surf.Key` gives keys to the program and `surf.Bind` gives them to the
-host, and everything the host does with a key goes through Bind. A group
-is data the app can name, share and layer, as `data-keys` values once
-were; readline is just the first one the framework ships. The override
-behaviour was hidden in which name the caller used (Readline yielded,
-Bind won). As an option it is visible at the call site, and each kind
-keeps the default 4dd9b13 had: a group yields, a single binding wins. A
-closed `BindOption` interface lets Keys, groups and options share one
-variadic without a second shape, and the readline table stays linked
-only by `Readline()`.
-
-### The rules
-
-- **Defaults.** A Keys binding given to Bind directly wins. Every binding
-  inside a group yields, Readline's too. The first Yield or Override among
-  a Bind's or a Group's options sets it for every binding in that call,
-  nested groups included, except a nested group that sets its own. Both
-  in one call is a fault, and the first stays.
-- **Yield** leaves out a key the program is given on the element or
-  around it (a Key's declared key, a prefix, a KeyScope's forwarded key):
-  the farther binding holds. **Override** writes it anyway. On the element
-  itself a Key's declared key is the program's either way, and an
-  Override of it is a fault, but for prefix (4dd9b13's rule).
-- **Layering on one element.** Bindings are read in order, Bind handler
-  by handler and option by option. A direct Keys (one given to Bind, not
-  in a group) replaces a group's binding of its key, whatever either
-  yields. A later group's binding replaces an earlier group's (groups
-  layer, as `data-keys` values did). Two direct bindings of one key to
-  different actions are a fault, and the first stays. One key bound twice
-  to one action is one binding. (Written first as "a binding that wins
-  replaces a yielding one"; while building it, that made
-  `Bind(Readline(), Override(), Keys(…))` a fault, so the precedence is
-  where a binding came from, not its yield.)
-- **Faults** stand as reviewed: an action that isn't SPEC's or is
-  program, default or insert; a key that doesn't parse, tab, shift+tab,
-  escape; an edit action on a control that isn't a text field; a
-  multi-line one on an input; a scroll action on a text field. A group
-  reports each fault once per element. An empty Group is no binding.
-- **Linking.** Bind links the kit's text fallback (rt.LinkText), as
-  Bind and Readline did; Readline's table is linked only by `Readline()`.
-
-Questions for the review:
-
-1. **Names.** `Keys` (one action), `Group`, `Readline`, `Yield`,
-   `Override`, `BindOption`. Lean: these. `Keys` reads as "these keys do
-   this action" beside `surf.Key`; `Action(hotty.X, keys...)` is the
-   other candidate. `Win` or `Nearer` for Override; lean Override.
-2. **Options as values vs methods.** `surf.Readline().Override()` (a
-   `Bindings` struct with methods) would read left to right, but needs a
-   type with methods, and the maintainer asked for options. Lean: option
-   values in the variadic.
-3. **Scope of an override option.** Lean: it sets the whole Bind or
-   Group call it's in. Per-binding (`surf.Keys(…, surf.Yield())`) would
-   mix keys and options in one variadic of strings, so the alternative
-   is wrapping: `surf.Yield(surf.Keys(…))`. Wrapping is more precise but
-   nests; a second Bind handler on the element does the same.
-4. **Two groups of one key.** Lean: the later layers over the earlier,
-   silently, as `data-keys` did; a fault would make an app's variant of
-   readline impossible without Override.
-5. **Should Keys inside a group keep "wins"?** Lean: no, a group is one
-   unit with one behaviour. A key in a group that must win goes in the
-   Bind beside the group.
-
-### As reviewed (p-836)
-
-Accepted with changes; every item applied. The final shape:
+plx's palette needs readline on its query. The maintainer: "I would make
+Bind API extensible so that Readline becomes just one of the options
+that carries a predefined group of bindings. Plus, add options to
+control override behavior, so callers can naturally use it."
 
 ```go
 func Bind(opts ...BindOption) Handler
@@ -3408,53 +1876,53 @@ func Yield() BindOption
 func Override() BindOption
 ```
 
-- **`Keys` is `Action`** (Q1): `surf.Key(fn, "mod+k")` and
-  `surf.Keys(hotty.Prefix, "mod+k")` side by side in one `On` differed
-  by one letter. Key's first argument is the program's code, Action's the
-  host's action.
-- **Yield and Override are Bind's only** (Q3, changed). One sets every
-  binding of its Bind, groups included; in a Group it is a fault ("set it
-  where the group is bound"). The nested group that set its own is cut:
-  it let a group's author beat the caller. A per-binding choice is a
-  second Bind in the same `On`.
-- **Layering is apart from yield** (§4): on one element a key is held by
-  a surf.Key's or KeyScope's key (the program's), then a direct Action or
-  Unbind (two disagreeing are a fault), then the groups', the last read
-  winning; only then does that binding's Yield or Override decide whether
-  it gives way to the program's keys around the element. A binding that
-  yields is dropped, and nothing under it comes back (resolve, then
-  yield).
-- **`Unbind(keys...)`** (§6) writes `key=default`: readline without a key
-  is `surf.Bind(surf.Readline(), surf.Unbind("ctrl+k"))`. It yields by
-  default even given directly, so removing one of readline's keys never
-  takes a page's shortcut (the 2026-11-04 regression); taking a key back
-  from the program says `Override()`. `tab` is allowed for it.
+```go
+surf.On(ctx, "query", surf.Input(m.SetQuery), surf.Bind(surf.Readline()))
+surf.Bind(surf.Readline(), surf.Unbind("ctrl+k"))
+surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j")))
+surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
+```
+
+- `surf.Key` gives keys to the program and `surf.Bind` gives them to the
+  host. Everything the host does with a key goes through Bind, one entry
+  point. The action is hotty-go's `hotty.Action`, SPEC's own names.
+  `Action`, not `Keys`, so it doesn't read one letter off `surf.Key`.
+- **Groups** are data an app can name, share and layer. Readline is the
+  first the framework ships, and its table is linked only by `Readline()`.
+- **Yield and Override** belong to Bind alone, and set every binding of
+  that Bind, groups included. In a Group either one is a fault. A direct
+  Action wins by default; a group's bindings and Unbind yield by default,
+  so removing one of readline's keys never takes a page's shortcut.
+- **Layering on one element:**
+  1. a surf.Key's or KeyScope's key, which is the program's;
+  2. then a direct Action or Unbind (two that disagree are a fault);
+  3. then the groups', the last read winning.
+
+  Only then does Yield or Override decide whether that binding gives way
+  to the program's keys around the element. A yielding binding is
+  dropped, and nothing under it comes back.
+- **Unbind** writes `key=default`. `tab` is allowed for it.
   `Action(hotty.Default, …)` is a fault naming Unbind.
-- **One resolver.** writeBinds resolves each element's bindings once per
-  tree and records them (rt.Handlers.Written); data-keys is written from
-  it, and the surface's own use of a declined key (EditKeys) reads it.
-  ui.Bindings reads the written data-keys, so under Override any group
-  takes a scope's key there. A render whose HTML and bindings are the
-  last one's carries the record over. keysig carries every input of the
-  resolver, Yield and Direct included, which with the same HTML makes the
-  same output: toggling Override alone repaints.
-- **Faults for groups** generalise Readline's: a group's multi-line
-  binding on an input is harmless; a group on a non-text control is one
-  fault per element; a group's binding of a key a surf.Key on the element
-  declares is silent (a direct one is a fault, but prefix); an Override
-  of a KeyScope's key on the element is silent, the scope keeps it.
-- **Values.** Every BindOption is a pointer to an unexported struct, so
-  `==` never panics; Group, Action and Unbind copy their slices, so a
-  group stays as it was made. A nil option is none; a Bind with no
-  binding (`Bind()`, `Bind(Yield())`, `Bind(Group())`) is no handler and
-  no fault.
-- **Dynamic changes** need no API: bindings are a render's. Vectors on
-  hottytest and in cells: a prefix taken, then a render that drops its
-  binding, the next key still the handler's and the sequence ending
-  after it; a field typing while a render toggles Readline keeps its
-  caret (the change is an attribute delta). The docs say so.
-- **Linking** unchanged: Bind links the text fallback, so a pager-only
-  app links it too (reported in the sizes).
-- **Docs** are the review's exact wording for Bind, BindOption, Action,
-  Group, Readline, Yield, Override and Unbind, and for surf.Key's
-  sentence.
+- **One binding per key on the wire:** one resolver per tree, recorded,
+  from which `data-keys` is written and the surface's own use of a
+  declined key reads.
+- **Faults**, each dropping its binding:
+  - an action that isn't SPEC's, or is program, default or insert;
+  - a key that doesn't parse, tab, shift+tab or escape;
+  - an edit action on a control that isn't a text field;
+  - a multi-line action on an input;
+  - a scroll action on a text field;
+  - an Override of a Key's own key on the element, except a prefix.
+- **Prefix.** On a host the host holds the sequence. A prefix a Key
+  handler took is the surface's sequence, ended by the surface's own
+  a=focus once the next key has been through the handlers. A prefix no
+  handler took is the program's leader, which Surface.Focus ends: with
+  the keyboard already on the surface, it sends a=focus without a target.
+  cells holds a prefix as a host does.
+- **Values:** every option is a pointer to an unexported struct, so `==`
+  never panics. Group, Action and Unbind copy their slices. A Bind with
+  no binding is no handler. Bindings are a render's, so they change with
+  the view.
+- **Size:** `ui` no longer links the text fallback at init. ui's text
+  components, KeyScope and Bind link it. A declined key on a text field
+  with none linked edits nothing, and is a fault naming what links it.
