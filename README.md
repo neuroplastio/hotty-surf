@@ -163,9 +163,9 @@ with `surftea` (Bubble Tea,
 [`surftea/examples/files`](surftea/examples/files)) or with `surf`,
 `cells` and hottyterm alone ([`examples/pane`](examples/pane)). Such a
 program gets no live reload: reload its surface's app on its own.
-surftea is a module of its own, and for now it builds only from a
-checkout of this repository: its go.mod requires hotty-surf through a
-`replace` until main has a commit for it to pin.
+surftea is a module of its own
+(`go get neuroplast.io/hotty-surf/surftea@main`), which requires a
+hotty-surf commit on main.
 
 ## Packages
 

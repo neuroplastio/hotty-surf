@@ -4,12 +4,10 @@ module neuroplast.io/hotty-surf/surftea
 
 go 1.26.0
 
-// Checkout-only for now: the require below is a placeholder that only this
-// replace resolves, and an importer's go ignores a dependency's replace, so
-// `go get neuroplast.io/hotty-surf/surftea@main` doesn't work yet. Once main
-// has v0.7, the require becomes a pseudo-version of a hotty-surf commit on
-// main (the replace stays for the checkout), and a tag of either module
-// requires a tagged hotty-surf (gov P-5).
+// The require below is a pseudo-version of a hotty-surf commit on main, so
+// `go get neuroplast.io/hotty-surf/surftea@main` works; the replace keeps a
+// checkout building against its own tree (an importer's go ignores it). A
+// tag of either module requires a tagged hotty-surf (gov P-5).
 replace neuroplast.io/hotty-surf => ../
 
 require (
@@ -19,7 +17,7 @@ require (
 	neuroplast.io/hotty-go v0.8.2
 	neuroplast.io/hotty-go/hottytea v0.8.2
 	neuroplast.io/hotty-go/hottytest v0.8.2
-	neuroplast.io/hotty-surf v0.0.0-00010101000000-000000000000
+	neuroplast.io/hotty-surf v0.6.4-0.20261119210853-f9479b9b8b77
 )
 
 require (
