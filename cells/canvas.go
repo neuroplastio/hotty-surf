@@ -2,6 +2,7 @@ package cells
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/clipperhouse/displaywidth"
 	"github.com/clipperhouse/uax29/v2/graphemes"
@@ -162,20 +163,45 @@ type char struct {
 // charsOf are s's characters as they are drawn: a tab is a space, and a
 // character that takes no cells (a control, a lone joiner) is left out.
 func charsOf(s string) []char {
-	var out []char
-	for g := graphemes.FromString(s); g.Next(); {
+	// Its cap is its length, so that an append to it copies.
+	if ascii(s) {
+		out := make([]char, 0, len(s))
+		for i := 0; i < len(s); i++ {
+			switch b := s[i]; {
+			case b == '\t':
+				out = append(out, char{" ", 1})
+			case b < 0x20 || b == 0x7f:
+				// A control takes no cells; CR LF is one, and none.
+			default:
+				out = append(out, char{s[i : i+1], 1})
+			}
+		}
+		return out[:len(out):len(out)]
+	}
+	out := make([]char, 0, utf8.RuneCountInString(s))
+	for g := displaywidth.StringGraphemes(s); g.Next(); {
 		v := g.Value()
 		if v == "\t" {
 			out = append(out, char{" ", 1})
 			continue
 		}
-		w := displaywidth.String(v)
+		w := g.Width()
 		if w <= 0 {
 			continue
 		}
 		out = append(out, char{v, min(w, 2)})
 	}
-	return out
+	return out[:len(out):len(out)]
+}
+
+// ascii says whether s is all ASCII, whose characters are its bytes.
+func ascii(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= utf8.RuneSelf {
+			return false
+		}
+	}
+	return true
 }
 
 func widthOf(cs []char) int {
