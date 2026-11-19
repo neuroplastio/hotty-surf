@@ -339,7 +339,7 @@ func length(s string) (float64, bool) {
 
 // inline reads an inline style's declarations that the Screen knows.
 func (b *box) inline(style string) {
-	for _, d := range strings.Split(style, ";") {
+	for d := range strings.SplitSeq(style, ";") {
 		k, v, ok := strings.Cut(d, ":")
 		if !ok {
 			continue

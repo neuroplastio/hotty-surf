@@ -550,7 +550,7 @@ func num(s string, def float64) float64 {
 // styleValue is the value of the inline style's declaration k, "" for
 // none.
 func styleValue(n *html.Node, k string) string {
-	for _, d := range strings.Split(attr(n, "style"), ";") {
+	for d := range strings.SplitSeq(attr(n, "style"), ";") {
 		if dk, v, ok := strings.Cut(d, ":"); ok && strings.TrimSpace(dk) == k {
 			return strings.TrimSpace(v)
 		}

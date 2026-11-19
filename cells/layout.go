@@ -53,8 +53,10 @@ type layout struct {
 	styles  map[*html.Node]box
 	colours map[*html.Node][2]Role
 	// texts are each text's pieces in this pass, as textPieces makes them
-	// after no pieces.
-	texts map[textKey][]piece
+	// after no pieces; kidsOf each element's children in the order they
+	// show.
+	texts  map[textKey][]piece
+	kidsOf map[*html.Node][]*html.Node
 	// heights are the definite heights of the elements that have one
 	// (h-screen, h-full, h-[…]), and of a column's growing items, which
 	// it gives the rows its other items leave (flex-1).
@@ -120,6 +122,7 @@ func (c *Screen) layout() *layout {
 		styles:  map[*html.Node]box{},
 		colours: map[*html.Node][2]Role{},
 		texts:   map[textKey][]piece{},
+		kidsOf:  map[*html.Node][]*html.Node{},
 	}
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
@@ -151,7 +154,7 @@ func (l *layout) measure(n *html.Node, in inh) int {
 	if w, ok := l.memo[k]; ok {
 		return w
 	}
-	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
+	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 	_, w := m.node(n, 0, 0, infinite, in)
 	l.memo[k] = w
 	return w
@@ -413,7 +416,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 	var growers []*html.Node
 	used, items := 0, 0
-	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
+	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 	var run []*html.Node
 	flush := func() {
 		if len(run) > 0 {
@@ -423,7 +426,7 @@ func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 			run = nil
 		}
 	}
-	for _, k := range kids(n, l.style(n)) {
+	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			if strings.TrimSpace(k.Data) != "" {
@@ -497,7 +500,7 @@ func (l *layout) drawOverlays() {
 	for len(l.overlays) > 0 {
 		o := l.overlays[0]
 		l.overlays = l.overlays[1:]
-		m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
+		m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 		h, pw := m.node(o.n, 0, 0, o.w, o.in)
 		pw = max(min(pw, o.w), 1)
 		for j := o.y; j < o.y+h; j++ {
@@ -652,7 +655,7 @@ func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int
 			run = nil
 		}
 	}
-	for _, k := range kids(n, l.style(n)) {
+	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			run = append(run, k)
@@ -712,14 +715,14 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		fixed bool // shrink-0: not made narrower
 	}
 	var items []item
-	for _, k := range kids(n, l.style(n)) {
+	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
 			if !in.pre && strings.TrimSpace(k.Data) == "" {
 				continue
 			}
 			it := item{n: k}
-			m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts}
+			m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
 			_, it.w = m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
 			items = append(items, it)
 		case html.ElementNode:
@@ -1488,4 +1491,14 @@ func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
 		t = t[1:]
 	}
 	return append(ps, t...)
+}
+
+// kids are kids(n), once a pass.
+func (l *layout) kids(n *html.Node) []*html.Node {
+	if ks, ok := l.kidsOf[n]; ok {
+		return ks
+	}
+	ks := kids(n, l.style(n))
+	l.kidsOf[n] = ks
+	return ks
 }

@@ -122,7 +122,7 @@ func (c *Screen) cellsOf(l *layout) [][]Cell {
 			if x < len(src) {
 				k = src[x]
 			}
-			fg, bg := rolesAt(k.own, memo)
+			fg, bg := rolesAt(l, k.own, memo)
 			switch {
 			case k.look&lTip != 0:
 				fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
@@ -155,16 +155,16 @@ func attrOf(l look) Attr {
 // rolesAt are the roles of a cell drawn for n: its text's, its nearest
 // own or inherited colour, and its fill's, the nearest fill of n or an
 // element around it, as CSS paints a box's ground under what it holds.
-func rolesAt(n *html.Node, memo map[*html.Node][2]Role) (fg, bg Role) {
+func rolesAt(l *layout, n *html.Node, memo map[*html.Node][2]Role) (fg, bg Role) {
 	if n == nil {
 		return "", ""
 	}
 	if r, ok := memo[n]; ok {
 		return r[0], r[1]
 	}
-	fg, bg = coloursOf(n)
+	fg, bg = l.colour(n)
 	if n.Parent != nil && (fg == "" || bg == "") {
-		pf, pb := rolesAt(n.Parent, memo)
+		pf, pb := rolesAt(l, n.Parent, memo)
 		if fg == "" {
 			fg = pf
 		}
@@ -199,7 +199,7 @@ func coloursOf(n *html.Node) (fg, bg Role) {
 			bg = r
 		}
 	}
-	for _, d := range strings.Split(attr(n, "style"), ";") {
+	for d := range strings.SplitSeq(attr(n, "style"), ";") {
 		k, v, ok := strings.Cut(d, ":")
 		if !ok {
 			continue
