@@ -2,6 +2,7 @@ package cells
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -24,6 +25,18 @@ func (c *Screen) load(name, doc string) error {
 		body.AppendChild(n)
 	}
 	c.cutDrag()
+	if c.body != nil && c.name == name && c.kept != nil && sameShape(c.body, body) {
+		// The same elements with other text or attributes: the
+		// kept tree takes the new one's, and keeps what a pass knows of
+		// what didn't change. The rest is as for a new tree.
+		c.refill(c.body, body)
+		c.fields = map[*html.Node]*field{}
+		c.focused, c.remembered = nil, nil
+		c.scroll = 0
+		c.boxScroll = nil
+		c.ids, c.lay = nil, nil
+		return nil
+	}
 	c.name, c.body = name, body
 	c.fields = map[*html.Node]*field{}
 	c.focused, c.remembered = nil, nil
@@ -370,4 +383,50 @@ func inSVG(n *html.Node) bool {
 func idOf(n *html.Node) string {
 	id, _ := get(n, "id")
 	return id
+}
+
+// sameShape says whether two trees have the same nodes in the same places:
+// their types and tags, whatever their text and attributes.
+func sameShape(a, b *html.Node) bool {
+	if a.Type != b.Type || a.DataAtom != b.DataAtom || a.Type == html.ElementNode && a.Data != b.Data {
+		return false
+	}
+	ka, kb := a.FirstChild, b.FirstChild
+	for ; ka != nil && kb != nil; ka, kb = ka.NextSibling, kb.NextSibling {
+		if !sameShape(ka, kb) {
+			return false
+		}
+	}
+	return ka == nil && kb == nil
+}
+
+// refill gives the kept tree a the text and attributes of b, its shape,
+// and forgets what a pass knew of each node that changed.
+func (c *Screen) refill(a, b *html.Node) {
+	k := c.kept
+	switch a.Type {
+	case html.TextNode:
+		if a.Data != b.Data {
+			a.Data = b.Data
+			delete(k.texts, a)
+		}
+	case html.ElementNode:
+		if !slices.Equal(a.Attr, b.Attr) {
+			a.Attr = b.Attr
+			delete(k.styles, a)
+			delete(k.kidsOf, a)
+			if a.Parent != nil {
+				delete(k.kidsOf, a.Parent)
+			}
+			// Its colours, and its descendants' (a scheme's class), and
+			// the pieces of its texts, whose look may change.
+			walk(a, func(n *html.Node) {
+				delete(k.colours, n)
+				delete(k.texts, n)
+			})
+		}
+	}
+	for ka, kb := a.FirstChild, b.FirstChild; ka != nil; ka, kb = ka.NextSibling, kb.NextSibling {
+		c.refill(ka, kb)
+	}
 }

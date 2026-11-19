@@ -52,10 +52,10 @@ type layout struct {
 	// while it is laid out.
 	styles  map[*html.Node]box
 	colours map[*html.Node][2]Role
-	// texts are each text's pieces in this pass, as textPieces makes them
-	// after no pieces; kidsOf each element's children in the order they
-	// show.
-	texts  map[textKey][]piece
+	// texts are each text's pieces in this pass, in each look it is laid
+	// out in, as textPieces makes them after no pieces; kidsOf each
+	// element's children in the order they show.
+	texts  map[*html.Node][]textPass
 	kidsOf map[*html.Node][]*html.Node
 	// heights are the definite heights of the elements that have one
 	// (h-screen, h-full, h-[…]), and of a column's growing items, which
@@ -124,7 +124,7 @@ func (c *Screen) layout() *layout {
 		c.kept = &kept{
 			styles:  map[*html.Node]box{},
 			colours: map[*html.Node][2]Role{},
-			texts:   map[textKey][]piece{},
+			texts:   map[*html.Node][]textPass{},
 			kidsOf:  map[*html.Node][]*html.Node{},
 		}
 	}
@@ -1476,21 +1476,27 @@ func (l *layout) colour(n *html.Node) (fg, bg Role) {
 	return fg, bg
 }
 
-// textKey is a text and what it inherits: what its pieces are of.
-type textKey struct {
-	n  *html.Node
+// textPass is a text's pieces under what it inherits.
+type textPass struct {
 	in inh
+	ps []piece
 }
 
 // textPieces adds a text's pieces to ps, as textPieces does, making them
-// once a pass. Only its first white space depends on ps: collapsed into
-// a space ps ends with.
+// once for each look it is laid out in. Only its first white space depends
+// on ps: collapsed into a space ps ends with.
 func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
-	k := textKey{n, in}
-	t, ok := l.texts[k]
-	if !ok {
+	var t []piece
+	found := false
+	for _, e := range l.texts[n] {
+		if e.in == in {
+			t, found = e.ps, true
+			break
+		}
+	}
+	if !found {
 		t = textPieces(nil, n.Data, in, n.Parent)
-		l.texts[k] = t
+		l.texts[n] = append(l.texts[n], textPass{in, t})
 	}
 	if !in.pre && len(t) > 0 && t[0].kind == pSpace && len(ps) > 0 && ps[len(ps)-1].kind == pSpace {
 		t = t[1:]
@@ -1515,6 +1521,6 @@ func (l *layout) kids(n *html.Node) []*html.Node {
 type kept struct {
 	styles  map[*html.Node]box
 	colours map[*html.Node][2]Role
-	texts   map[textKey][]piece
+	texts   map[*html.Node][]textPass
 	kidsOf  map[*html.Node][]*html.Node
 }
