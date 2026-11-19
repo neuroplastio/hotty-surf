@@ -58,7 +58,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	}
 	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
 	clicks := 0
-	readline, binds := false, []rt.Bind(nil)
+	var readline func(*rt.Frame) []rt.Bind
+	var binds []rt.Bind
 	for _, h := range hs {
 		switch h.kind {
 		case kindClick, kindClicks:
@@ -89,7 +90,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 				}
 			}
 		case kindReadline:
-			readline = true
+			readline = h.fn.(func(*rt.Frame) []rt.Bind)
 		case kindBind:
 			for _, k := range h.keys {
 				c, ok := f.Platform.ReadKey(k)
@@ -124,15 +125,19 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	return a
 }
 
-// bindsOf is an element's bindings (rt.Handlers.Binds): Readline's set,
-// when it has it, then binds, each replacing Readline's binding of its
+// bindsOf is an element's bindings (rt.Handlers.Binds): Readline's set
+// (readline, which only Readline's handler carries, so that an app
+// without it doesn't link the set), then binds, each replacing Readline's binding of its
 // key. Two binds of a key to different actions are a fault, and the
 // first stays; so is a bind of a key a Key handler declares (keys), but
 // to prefix, which gives fn the key too.
-func bindsOf(f *rt.Frame, id string, keys []string, readline bool, binds []rt.Bind) []rt.Bind {
+func bindsOf(f *rt.Frame, id string, keys []string, readline func(*rt.Frame) []rt.Bind, binds []rt.Bind) []rt.Bind {
+	if readline == nil && len(binds) == 0 {
+		return nil
+	}
 	var out []rt.Bind
-	if readline {
-		out = append(out, readlineBinds(f)...)
+	if readline != nil {
+		out = append(out, readline(f)...)
 	}
 	for _, b := range binds {
 		if b.Action != string(hotty.Prefix) && slices.Contains(keys, b.Key) {
@@ -401,7 +406,7 @@ func Bind(action hotty.Action, keys ...string) Handler {
 // Readline on an element around the component.
 func Readline() Handler {
 	rt.LinkText(keydefault.Text)
-	return Handler{kind: kindReadline, fn: struct{}{}}
+	return Handler{kind: kindReadline, fn: readlineBinds}
 }
 
 // Focus calls fn with true when the user moves the keyboard onto the
