@@ -2570,7 +2570,7 @@ Questions for the review:
    Add `Rig.DoubleClick(sel)`, a new name, now or when an app's test
    needs it?
 
-Reviewed (p-796, ~/.cache/hotty-surf-l5/review-clicks.md): both names
+Reviewed (p-796): both names
 approved. The questions were settled as: keep Tab reserved (Refocus is
 the route); keep the narrow `func(count int)`; add `Rig.DoubleClick(sel)`
 now. Applied:
@@ -2710,7 +2710,7 @@ Questions for the review:
    slice is what a palette or a help line shows; plx can build its own
    set from it.
 
-Reviewed (p-796, ~/.cache/hotty-surf-l5/review-ownkeys.md): OwnKeys was
+Reviewed (p-796): OwnKeys was
 approved. The questions were settled as: the element alone (NavList
 declares on its rows and its filter, not its container); keep a readonly
 field's edits; keep `[]string`. The review added kit rule K32: a kit
@@ -2892,7 +2892,7 @@ Tests: `TestDirty` covers these cases:
   program from inside Move. That inverts the calls a program makes today
   for no gain over a query it makes after Move anyway.
 
-### As reviewed (p-796, ~/.cache/hotty-surf/review-cells-redraw.md)
+### As reviewed (p-796)
 
 - `Dirty() bool` as named, and (a) over (b), (c) and (d).
 - No copy on the common path. The Screen keeps the layout and the scroll
@@ -2910,7 +2910,7 @@ Tests: `TestDirty` covers these cases:
 - TestDirty gains Resize cases: the same size is clean, a new size dirty.
 - plx's port: after Move, or any call, `if s.cr.Dirty() { redraw }`.
 
-### As verified (p-801, ~/.cache/hotty-surf/verify-cells-redraw.md)
+### As verified (p-801)
 
 - Fix first: the slow path compared the cells Lines draws from (text,
   look, owner). But Cells works out roles from the elements' classes and
@@ -3000,7 +3000,7 @@ Questions for the review:
 4. **Variadic `keys ...string`, `[]string`, or a separate handler.**
    Lean: variadic, as above.
 
-### As reviewed (p-819, ~/.cache/hotty-surf-nodatakeys/review.md)
+### As reviewed (p-819)
 
 Accepted with changes; every lean applied:
 
@@ -3193,7 +3193,7 @@ Questions for the review:
 4. **Other named sets.** Lean: Readline only. A pager's j/k set is a
    handful of Binds, and no app asks for one yet.
 
-### As reviewed (p-832, ~/.cache/hotty-surf-fieldkeys/review.md)
+### As reviewed (p-832)
 
 Accepted with changes; every lean and change applied:
 
@@ -3393,7 +3393,7 @@ Questions for the review:
    unit with one behaviour. A key in a group that must win goes in the
    Bind beside the group.
 
-### As reviewed (p-836, ~/.cache/hotty-surf-fieldkeys/review2.md)
+### As reviewed (p-836)
 
 Accepted with changes; every item applied. The final shape:
 
