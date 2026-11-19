@@ -78,7 +78,17 @@ each render, from what the code declares.
   declared printable key is written back as `key=default` on the fields
   inside (K27), so a field types it.
 - **Readline (`hotty.TerminalKeys`), `prefix` and the scroll actions**
-  have no Go declaration yet. The `.surf` `readline` and `program`
-  attributes above went with v0.6. A later pack adds a declaration if the
-  maintainer wants one (api/notes.md, "No key binds in templates").
+  are declared in Go since 2026-11-19 (api/notes.md, "Field keys, prefix
+  and scroll declared in Go" and "Bind, extensible"):
+  `surf.Bind(surf.Readline())` and `surf.Bind(surf.Action(action,
+  keys...))`, written into `data-keys` beside `key=program`. The `.surf` `readline` and `program` attributes above
+  went with v0.6.
+- **The 2026-11-04 decision holds in Go, by default:** a group's
+  bindings, Readline's among them, yield: they leave alone every key the
+  program is given on the field or around it (a Key's declared key, a
+  prefix, a KeyScope's forwarded key), so a leader or a page's `mod+k`
+  declared on `<main>` still reaches the program from a field under
+  Readline. A direct `surf.Action` keeps SPEC's rule, the nearer binding
+  wins. The caller changes either with `surf.Yield()` or
+  `surf.Override()` (the maintainer, 2026-11-19).
 - The cells still read the same chain from the document, as a host does.

@@ -343,3 +343,139 @@ func ExampleSurface_Overlays() {
 	// []
 	// [filter]
 }
+
+// attrList writes an element's attributes from surf.On, as templ spreads
+// them.
+func attrList(a templ.Attributes) string {
+	var b bytes.Buffer
+	for _, kv := range a.Items() {
+		fmt.Fprintf(&b, " %s=%q", kv.Key, fmt.Sprint(kv.Value))
+	}
+	return b.String()
+}
+
+// A pager's log scrolls with j and k where the host scrolls it, and the
+// app's leader, mod+k, hands its own keymap the keys after it, which it
+// ends with Surface.Focus. The surface writes the bindings into data-keys.
+func ExampleBind() {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		main := surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
+		log := surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"), surf.Action(hotty.ScrollUp, "k")))
+		_, err := fmt.Fprintf(w, `<main%s><pre%s tabindex="0">…</pre></main>`, attrList(main), attrList(log))
+		return err
+	})
+	s := surf.New("pager", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		return
+	}
+	for _, b := range []string{`data-keys="ctrl+k=prefix"`, `data-keys="j=scroll-down k=scroll-up"`} {
+		fmt.Println(b, bytes.Contains([]byte(doc), []byte(b)))
+	}
+	// Output:
+	// data-keys="ctrl+k=prefix" true
+	// data-keys="j=scroll-down k=scroll-up" true
+}
+
+// A palette's query edits as a terminal's line does: ctrl+w deletes the
+// word before the caret. Its handler still takes the arrows it declares,
+// which Readline would bind to the field's moves.
+func ExampleReadline() {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		rows := func(key string) bool { return key == "arrow_up" || key == "arrow_down" }
+		q := surf.On(ctx, "query", surf.Input(func(string) {}), surf.Bind(surf.Readline()),
+			surf.Key(rows, "arrow_up", "arrow_down"))
+		_, err := fmt.Fprintf(w, `<input%s>`, attrList(q))
+		return err
+	})
+	s := surf.New("palette", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		return
+	}
+	for _, b := range []string{"ctrl+w=delete-word-backward", "arrow_up=program", "arrow_up=line-previous"} {
+		fmt.Println(b, bytes.Contains([]byte(doc), []byte(b)))
+	}
+	// Output:
+	// ctrl+w=delete-word-backward true
+	// arrow_up=program true
+	// arrow_up=line-previous false
+}
+
+// keysOf renders view on a surface and prints the data-keys the surface
+// wrote on each id.
+func keysOf(view func(ctx context.Context) string, ids ...string) {
+	s := surf.New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := io.WriteString(w, view(ctx))
+		return err
+	}), "")
+	s.Attach(io.Discard, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		return
+	}
+	for _, id := range ids {
+		at := bytes.Index([]byte(doc), []byte(`id="`+id+`"`))
+		rest := doc[at:]
+		end := bytes.IndexByte([]byte(rest), '>')
+		keys := ""
+		if i := bytes.Index([]byte(rest[:end]), []byte(`data-keys="`)); i >= 0 {
+			keys = rest[i+len(`data-keys="`):]
+			keys = keys[:bytes.IndexByte([]byte(keys), '"')]
+		}
+		fmt.Printf("%s: %s\n", id, keys)
+	}
+}
+
+// Action binds keys to one action: here a list scrolls with j and k.
+func ExampleAction() {
+	keysOf(func(ctx context.Context) string {
+		return `<ul` + attrList(surf.On(ctx, "rows", surf.Bind(surf.Action(hotty.ScrollDown, "j"), surf.Action(hotty.ScrollUp, "k")))) + ` tabindex="0"></ul>`
+	}, "rows")
+	// Output: rows: j=scroll-down k=scroll-up
+}
+
+// pager is an app's group: a pager's keys, defined once.
+var pager = surf.Group(
+	surf.Action(hotty.ScrollDown, "j"),
+	surf.Action(hotty.ScrollEnd, "shift+g"),
+)
+
+// A group is bound whole, wherever it's needed.
+func ExampleGroup() {
+	keysOf(func(ctx context.Context) string {
+		return `<pre` + attrList(surf.On(ctx, "log", surf.Bind(pager))) + ` tabindex="0"></pre>`
+	}, "log")
+	// Output: log: j=scroll-down shift+g=scroll-end
+}
+
+// A group yields: the page declares alt+b on its main, so a field under
+// a word-moving group leaves alt+b to the page. Override binds it anyway.
+func ExampleOverride() {
+	words := surf.Group(surf.Action(hotty.WordBackward, "alt+b"), surf.Action(hotty.WordForward, "alt+f"))
+	keysOf(func(ctx context.Context) string {
+		main := surf.On(ctx, "main", surf.Key(func(string) bool { return true }, "alt+b"))
+		a := surf.On(ctx, "a", surf.Bind(words))
+		b := surf.On(ctx, "b", surf.Bind(words, surf.Override()))
+		return `<main` + attrList(main) + `><input` + attrList(a) + `><input` + attrList(b) + `></main>`
+	}, "a", "b")
+	// Output:
+	// a: alt+f=word-forward
+	// b: alt+b=word-backward alt+f=word-forward
+}
+
+// A key bound directly overrides; Yield leaves it to what is declared
+// around the field.
+func ExampleYield() {
+	keysOf(func(ctx context.Context) string {
+		main := surf.On(ctx, "main", surf.Key(func(string) bool { return true }, "ctrl+e"))
+		a := surf.On(ctx, "a", surf.Bind(surf.Action(hotty.LineEnd, "ctrl+e")))
+		b := surf.On(ctx, "b", surf.Bind(surf.Action(hotty.LineEnd, "ctrl+e"), surf.Yield()))
+		return `<main` + attrList(main) + `><input` + attrList(a) + `><input` + attrList(b) + `></main>`
+	}, "a", "b")
+	// Output:
+	// a: ctrl+e=line-end
+	// b:
+}

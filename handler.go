@@ -57,6 +57,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	}
 	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
 	clicks := 0
+	var binds []rt.Bind
 	for _, h := range hs {
 		switch h.kind {
 		case kindClick, kindClicks:
@@ -86,6 +87,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 					e.Keys = append(e.Keys, c)
 				}
 			}
+		case kindBind:
+			binds = flatten(f, id, h.fn.([]BindOption), binds)
 		case kindFocus:
 			e.Focus = h.fn.(func(bool))
 		case kindOutside:
@@ -102,6 +105,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Secondary = h.fn.(func(hotty.Cell, hotty.Area))
 		}
 	}
+	e.Binds = bindsOf(f, id, e.Keys, binds)
 	f.On[id] = e
 	f.Order = append(f.Order, id)
 	return a
@@ -132,6 +136,7 @@ const (
 	kindDrop
 	kindSecondary
 	kindClicks
+	kindBind
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -227,7 +232,10 @@ func Check(fn func(checked bool)) Handler {
 //
 // The surface writes the declaration as the element's data-keys (SPEC
 // §10.2, key=program): a template that writes data-keys itself is a
-// fault, and the attribute is dropped.
+// fault, and the attribute is dropped. A declared key wins over the
+// element's Bind bindings of it, and over a yielding binding (a group's,
+// an Unbind) on the elements inside. The keys that aren't the program's
+// (a field's edit actions, a prefix, the scroll actions) are [Bind]'s.
 //
 // A ui.KeyScope naming a key is offered it before the focused kit
 // control's default and ordinary Key handlers. A declined key then goes

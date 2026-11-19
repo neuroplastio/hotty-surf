@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/rt"
 )
@@ -40,12 +41,15 @@ const (
 //     ignores (it reaches the program anyway), only OwnKeys lists; tab
 //     only on a text field, the one place SPEC lets it go;
 //   - the keys the KeyScopes around a kit control forward;
+//   - its surf.Bind bindings, key=action, but for a key
+//     the two above give the program;
 //   - on an element that types, each printable key an element around it
 //     declares, given back (key=default), so a field types it (K27).
 //
-// It says how many printable keys n declares, which it pushed on t's
-// stack for n's insides; number pops them after.
-func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
+// It says how many printable keys n declares, and how many keys it gives
+// the program, which it pushed on t's stacks for n's insides; number pops
+// them after.
+func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	scope, kind := 0, ""
 	for i := 0; i < len(n.Attr); i++ {
 		a := n.Attr[i]
@@ -84,14 +88,15 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 		t.scopes[id] = keyMark{scope: scope, kind: kind}
 	}
 	if t.f == nil {
-		return 0
+		return keyPush{}
 	}
 	var own []string
-	if h := t.f.On[id]; h != nil {
+	h := t.f.On[id]
+	if h != nil {
 		own = h.Keys
 	}
 	var binds []string
-	text, _ := nativeKind(n)
+	text, multiline := nativeKind(n)
 	pushed := 0
 	for _, k := range own {
 		switch {
@@ -114,18 +119,113 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 			}
 		}
 	}
+	var bound []string
+	if h != nil && len(h.Binds) > 0 {
+		var n2 int
+		binds, bound, n2 = s.writeBinds(id, h, text, multiline, binds, t)
+		pushed += n2
+	}
 	if rt.Types(n) {
 		for _, k := range t.printable[:len(t.printable)-pushed] {
-			if !contains(own, k) && !slices.Contains(binds, k+"=default") {
+			if !contains(own, k) && !contains(bound, k) && !slices.Contains(binds, k+"=default") {
 				binds = append(binds, k+"=default")
 			}
+		}
+	}
+	// One binding per key, the first: a host reads a key's last binding,
+	// and sorting orders two of one key by action.
+	seen := make(map[string]bool, len(binds))
+	binds = slices.DeleteFunc(binds, func(b string) bool {
+		k := b[:strings.LastIndexByte(b, '=')]
+		if seen[k] {
+			return true
+		}
+		seen[k] = true
+		return false
+	})
+	given := 0
+	for _, b := range binds {
+		if k, ok := strings.CutSuffix(b, "=program"); ok {
+			t.given = append(t.given, k)
+			given++
+		} else if k, ok := strings.CutSuffix(b, "=prefix"); ok {
+			t.given = append(t.given, k)
+			given++
 		}
 	}
 	if len(binds) > 0 {
 		slices.Sort(binds)
 		n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
 	}
-	return pushed
+	return keyPush{printable: pushed, given: given}
+}
+
+// keyPush is what writeKeys pushed on a tree's stacks for an element's
+// insides.
+type keyPush struct{ printable, given int }
+
+// writeBinds is the one resolver of an element's surf.Bind bindings
+// (h.Binds, one per key already): it records in h.Written those that
+// hold on the element, and adds to binds those the wire carries, each
+// key=action. Of h.Binds it drops:
+//   - a yielding one of a key an element around gives the program
+//     (t.given): a shortcut or a leader there still reaches it from the
+//     field (vault/knowledge/field-keys.md, 2026-11-04);
+//   - as faults, one the element can't have (SPEC §10.2): an edit action
+//     on a control that isn't a text field (a button's, a select's, a
+//     date field's; one fault for a group's), a direct multi-line one on
+//     an input (a group's is harmless there), a scroll action on a text
+//     field.
+//
+// Where binds gives the key to the program already (a Key handler's, a
+// KeyScope's) the binding is recorded but not written: the program's
+// wins, but a prefix, which is the program's too, is written in its
+// place. A printable key bound to prefix is pushed on t's stack, so the
+// fields inside type it (K27). It returns binds, the keys it wrote, and
+// how many it pushed.
+func (s *Surface) writeBinds(id string, h *rt.Handlers, kind string, multiline bool, binds []string, t *tree) ([]string, []string, int) {
+	var bound []string
+	pushed, groupFault := 0, false
+	h.Written = h.Written[:0]
+	for _, b := range h.Binds {
+		a := hotty.Action(b.Action)
+		if b.Yield && slices.Contains(t.given, b.Key) {
+			continue
+		}
+		switch {
+		case a == hotty.Prefix, a == hotty.Default:
+		case a.Scrolls():
+			if kind == "text" {
+				s.fault("surf.Bind: the id " + id + " is a text field, whose keymap leaves out " + b.Action + " (SPEC §10.2): bind it on what scrolls")
+				continue
+			}
+		case kind != "text" && kind != "":
+			if b.Direct {
+				s.fault("surf.Bind: the id " + id + " binds " + strconv.Quote(b.Key) + " to " + b.Action + ", a text field's action, on a control that isn't one")
+			} else if !groupFault {
+				groupFault = true
+				s.fault("surf.Bind: the id " + id + " binds a group of a text field's actions on a control that isn't one")
+			}
+			continue
+		case b.Direct && kind == "text" && !multiline && a.Multiline():
+			s.fault("surf.Bind: the id " + id + " is an input, which has no " + b.Action + " (SPEC §10.2)")
+			continue
+		}
+		h.Written = append(h.Written, b)
+		if i := slices.Index(binds, b.Key+"=program"); i >= 0 {
+			if a == hotty.Prefix {
+				binds[i] = b.Key + "=prefix"
+			}
+			continue
+		}
+		if a == hotty.Prefix && rt.Printable(b.Key) {
+			t.printable = append(t.printable, b.Key)
+			pushed++
+		}
+		binds = append(binds, b.Key+"="+b.Action)
+		bound = append(bound, b.Key)
+	}
+	return binds, bound, pushed
 }
 
 // A keyMark is a kit control's place under the KeyScopes: the frame's
@@ -141,11 +241,26 @@ type keyMark struct {
 func keysig(b []byte, f *rt.Frame) []byte {
 	b = b[:0]
 	for _, id := range f.Order {
-		if h := f.On[id]; h != nil && len(h.Keys) > 0 {
+		if h := f.On[id]; h != nil && len(h.Keys)+len(h.Binds) > 0 {
 			b = append(b, id...)
 			for _, k := range h.Keys {
 				b = append(b, ' ')
 				b = append(b, k...)
+			}
+			// Every input of the resolver (writeBinds), which, with the
+			// same HTML, makes the same data-keys: a Yield or Override
+			// toggled alone repaints.
+			for _, x := range h.Binds {
+				b = append(b, ' ')
+				b = append(b, x.Key...)
+				b = append(b, '=')
+				b = append(b, x.Action...)
+				if x.Yield {
+					b = append(b, '~')
+				}
+				if x.Direct {
+					b = append(b, '!')
+				}
 			}
 			b = append(b, '\n')
 		}

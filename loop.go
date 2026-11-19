@@ -104,7 +104,16 @@ func (s *Surface) send() error {
 	}
 	if same {
 		// The tree is the host's already; only the fields may have moved
-		// from what the markup gives them.
+		// from what the markup gives them. The bindings resolved as the
+		// last frame's did (keysig is the same), so they are carried over
+		// rather than resolved again.
+		if s.frame != nil {
+			for id, h := range f.On {
+				if old := s.frame.On[id]; old != nil {
+					h.Written = old.Written
+				}
+			}
+		}
 		for _, id := range s.fields {
 			d.field(id, s.byID[id])
 		}
@@ -158,8 +167,11 @@ func (s *Surface) send() error {
 	if f.Focus != "" && (f.Focus != s.asked || s.askDue || f.Refocus && f.Focus != s.focused) {
 		cmds = append(cmds, hotty.Focus(s.name, f.Focus))
 		// The host sends no focus for focus the program gives (SPEC
-		// §10.1): the surface knows it from here.
+		// §10.1): the surface knows it from here. a=focus ends a key
+		// sequence too (§10.5), the surface's and the host's.
 		s.focused, s.focusIn = f.Focus, s.chain(f.Focus)
+		s.prefixed, s.prefixTaken = false, false
+		s.focusSent++
 		s.lastFocus = f.Focus
 		s.blurAsked = false
 	}
@@ -300,6 +312,9 @@ func (s *Surface) event(e hotty.Event) error {
 	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
 		ran = s.dragged(e)
 	case hotty.EventFocus:
+		// A focus ends a key sequence (SPEC §10.5), the host's or the
+		// program's own.
+		s.prefixed, s.prefixTaken = false, false
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
 		// asks again once the user moved the keyboard off it.
@@ -314,6 +329,7 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 		ran = true
 	case hotty.EventBlur:
+		s.prefixed, s.prefixTaken = false, false
 		s.focus("")
 		if modal != "" && afterPress && scopedPress {
 			s.modalFocus = "first"
@@ -507,6 +523,36 @@ func (s *Surface) key(k string) (bool, error) {
 	if s.frame == nil {
 		return false, errNoDocument
 	}
+	// After a prefix the host used no key: the surface does no element's
+	// own use of one either (SPEC §10.5). A prefix starts one. One a Key
+	// handler took is the surface's sequence, which ends once the key
+	// after it has been through the handlers: the surface sends a=focus
+	// without a target itself. One no handler took is the program's
+	// keymap's (a leader), which ends it with Focus.
+	// A prefix whose handler, or the render after it, sent a=focus or
+	// a=blur has ended already (focusSent moved): it starts nothing.
+	held, auto, sent := s.prefixed, s.prefixTaken, s.focusSent
+	starts := !held && s.prefixAt(s.byID[s.focused], k)
+	taken, err := s.route(k, held)
+	switch {
+	case err != nil:
+	case starts && s.focusSent != sent:
+	case starts:
+		s.prefixed, s.prefixTaken = true, taken
+	case held && auto && s.prefixed:
+		s.prefixed, s.prefixTaken = false, false
+		if s.out != nil {
+			s.focusSent++
+			err = s.write([]string{hotty.Focus(s.name, "")})
+		}
+	}
+	return taken, err
+}
+
+// route offers k to the KeyScopes and the Key handlers, and does a
+// declared key's own use (held: not after a prefix, when the host used
+// no key).
+func (s *Surface) route(k string, held bool) (bool, error) {
 	physical := k
 	if len(s.frame.Scopes) > 0 && s.frame.Scopes[0].Canonical != nil {
 		physical, _ = s.frame.Scopes[0].Canonical(s.platform, k)
@@ -532,7 +578,7 @@ func (s *Surface) key(k string) (bool, error) {
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
 	}
-	if n := s.byID[s.focused]; intercepted && n != nil && s.keyMarks[s.focused].kind != "compound-text" && native != nil && native(&env, physical, fallback) {
+	if n := s.byID[s.focused]; intercepted && !held && n != nil && s.keyMarks[s.focused].kind != "compound-text" && native != nil && native(&env, physical, fallback) {
 		return true, s.send()
 	}
 	ids := s.chain(s.focused)
@@ -596,15 +642,32 @@ func (s *Surface) key(k string) (bool, error) {
 	// A declared key every handler declined is the element's own use
 	// (surf.Key), as a binding's under a KeyScope is: the host gave it
 	// the program, so the surface does what the host would have.
-	if n := s.byID[s.focused]; n != nil && s.declared(physical) {
+	if n := s.byID[s.focused]; n != nil && !held && s.declared(physical) {
 		env := rt.KeyEnvironment{Node: n, Kind: useKind(n), Declined: true, Focused: s.focused, On: s.frame.On, Platform: s.platform,
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
+		if env.Kind == "text" && rt.TextDefault() == nil && !s.textFaulted {
+			s.textFaulted = true
+			s.fault("surf: a declined " + strconv.Quote(physical) + " on the text field " + strconv.Quote(s.focused) + " is the field's own edit, which needs the kit's text editing: ui's text components (Input, Textarea, Combobox, Command, NavList), ui.KeyScope and surf.Bind link it; this app has none, so the key edits nothing")
+		}
 		if env.Kind != "" && rt.NativeKeyDefault(&env, physical, rt.KitDefault) {
 			return true, s.send()
 		}
 	}
 	return false, nil
+}
+
+// prefixAt says whether n's keymap, as a host reads it from the data-keys
+// the surface wrote, binds key to prefix (SPEC §10.5).
+func (s *Surface) prefixAt(n *html.Node, key string) bool {
+	if n == nil {
+		return false
+	}
+	vs := keymapsOf(n)
+	if len(vs) == 0 {
+		return false
+	}
+	return hotty.ParseKeymap(s.platform, strings.Join(vs, " ")).Prefix(key)
 }
 
 // declared says whether a Key handler of the focused element or of one
@@ -746,6 +809,13 @@ func modName(p hotty.Platform, k string) string {
 // as the host's focus event.
 func (s *Surface) takeFocus() (bool, error) {
 	if s.focused != "" {
+		// With the keyboard here already, a=focus without a target moves
+		// nothing and ends a key sequence (SPEC §10.1, §10.5).
+		s.prefixed, s.prefixTaken = false, false
+		if s.out != nil {
+			s.focusSent++
+			return true, s.write([]string{hotty.Focus(s.name, "")})
+		}
 		return true, nil
 	}
 	if s.prev == nil || s.out == nil {
@@ -761,6 +831,7 @@ func (s *Surface) takeFocus() (bool, error) {
 		return false, nil
 	}
 	s.blurAsked = false
+	s.focusSent++
 	if err := s.write([]string{hotty.Focus(s.name, id)}); err != nil {
 		return false, err
 	}
@@ -836,6 +907,7 @@ func (s *Surface) blur() (bool, error) {
 		return true, nil
 	}
 	s.blurAsked = true
+	s.focusSent++
 	return true, s.write([]string{hotty.Blur(s.name)})
 }
 

@@ -361,7 +361,7 @@ func (f *checker) keys() {
 			continue
 		}
 		for _, m := range keysRe.FindAllStringIndex(l, -1) {
-			f.add(i+1, m[0]+1, "data-keys", "a key bind in markup: data-keys is the runtime's, written from the keys a Key handler declares; write surf.Key(fn, \"arrow_down\", …) on the element instead")
+			f.add(i+1, m[0]+1, "data-keys", "a key bind in markup: data-keys is the runtime's, written from the keys declared in Go; on the element write surf.Key(fn, \"arrow_down\", …) for the program's keys, surf.Bind(surf.Action(hotty.ScrollDown, \"j\")) for an edit, prefix or scroll action, or surf.Bind(surf.Readline()) for readline's keys")
 		}
 	}
 }

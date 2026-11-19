@@ -42,7 +42,8 @@ type KeyEnvironment struct {
 	// "text", …), or the native element's kind for a declared key.
 	Kind string
 	// Declined says every Key handler that declared the key declined it:
-	// the field's keymap is its default, the declarations left out.
+	// the field's keymap is its default and the chain's surf.Bind and
+	// Readline bindings, the declared keys left out.
 	Declined                      bool
 	Focused                       string
 	On                            map[string]*Handlers

@@ -87,6 +87,10 @@ type Surface struct {
 	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
 	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
 	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
+	prefixed     bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)
+	prefixTaken  bool            // a Key handler took that key: the surface ends the sequence after the next key
+	focusSent    uint64          // a=focus and a=blur the surface has written: a prefix whose key's handling wrote one has ended
+	textFaulted  bool            // the fault that the kit's text editing isn't linked was recorded
 	sending      bool
 	deferred     []hotty.Event
 
@@ -136,6 +140,8 @@ func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
 	s.sheetSent, s.limits = nil, caps.Limits
+	// A new host holds no key sequence.
+	s.prefixed, s.prefixTaken = false, false
 }
 
 // Sheet is a stylesheet that documents link as a resource (SPEC §7.1)
@@ -202,8 +208,11 @@ func (s *Surface) Event(e hotty.Event) error {
 // event for focus the program gives, so the surface takes the move as that
 // event itself: its Focus handlers hear it, as they hear a Tab inside the
 // surface, and the keys the host passes on reach that element's Key
-// handlers. focused says whether the surface has the keyboard after it:
-// true when it had it already, and false, with nothing sent, when nothing
+// handlers. With the keyboard on it already, Focus sends a=focus without
+// a target, which moves nothing and ends a key sequence (SPEC §10.1,
+// §10.5): how a program ends the sequence a surf.Bind(surf.Action(hotty.Prefix, …))
+// started for its own keymap. focused says whether the surface has the
+// keyboard after it: true when it had it already, and false, with nothing sent, when nothing
 // in it takes focus or it hasn't rendered and been attached yet. In cells
 // the program gives the Screen the keyboard first (cells.Screen.Focus),
 // which may already have restored the element. It runs on the driver's
@@ -289,6 +298,11 @@ func (s *Surface) Chars() Chars {
 //     with shift where it isn't a character, as the host gives that too
 //     (SPEC §10.2), and Escape when declared. A declared character is
 //     listed, but not on an element that types, which keeps it.
+//   - on an element that isn't a text field, the keys its keymap binds to
+//     a scroll action (surf.Bind), which the host scrolls with, a
+//     character among them; with shift where the keymap gives that too.
+//
+// A key bound to prefix is not listed: it is the program's (a leader).
 //
 // Tab and Shift+Tab are never in it, nor a KeyScope's bindings, which
 // ui.Bindings lists. A disabled element, nothing focused

@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -58,6 +59,9 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		}
 		return true
 	}
+	if fallback == nil && (kind == "text" || kind == "compound-text") {
+		fallback = TextDefault()
+	}
 	if fallback == nil {
 		return false
 	}
@@ -91,14 +95,18 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		}
 		visit(n)
 	}
-	if (kind == "text" || kind == "compound-text") && !e.Declined {
-		// The fields' and its ancestors' own keymaps: their Key handlers'
-		// keys, not the scopes' forwarded ones, so a field's key a
-		// binding declines stays the field's. surf's keymapsOf (OwnKeys)
-		// reads data-keys as written, as a host does; keep the two apart.
+	if kind == "text" || kind == "compound-text" {
+		// The fields' and its ancestors' own keymaps: their surf.Bind and
+		// Readline bindings, then (but for a declined key, which is the
+		// element's use) their Key handlers' keys, not the scopes'
+		// forwarded ones, so a field's key a binding declines stays the
+		// field's. surf's keymapsOf (OwnKeys) reads data-keys as written,
+		// as a host does; keep the two apart.
 		for p := n; p != nil; p = p.Parent {
-			if h := e.On[attr(p, "id")]; h != nil && len(h.Keys) > 0 {
-				in.Keymaps = append(in.Keymaps, ProgramKeys(h.Keys))
+			if h := e.On[attr(p, "id")]; h != nil {
+				if v := EditKeys(h, !e.Declined); v != "" {
+					in.Keymaps = append(in.Keymaps, v)
+				}
 			}
 		}
 		slices.Reverse(in.Keymaps)
@@ -198,3 +206,37 @@ func ProgramKeys(keys []string) string {
 // when it is linked: what does a declared key's own use once every Key
 // handler declined it. Without ui, only activation is done.
 var KitDefault func(KeyDefault) KeyResult
+
+// textDefault is the kit's text fallback (keydefault.Text), once linked.
+var textDefault atomic.Pointer[func(KeyDefault) KeyResult]
+
+// LinkText links f as the kit's text fallback, which KitDefault does a
+// text field's edit with. What edits text calls it when it renders (ui's
+// text components, ui.KeyScope) or is called (surf.Bind),
+// so that an app that has none of them doesn't link hottyedit: that is
+// about 30 KB gzipped of every TinyGo app.
+func LinkText(f func(KeyDefault) KeyResult) {
+	if textDefault.Load() == nil {
+		textDefault.Store(&f)
+	}
+}
+
+// TextDefault is the text fallback LinkText linked, nil before.
+func TextDefault() func(KeyDefault) KeyResult {
+	if f := textDefault.Load(); f != nil {
+		return *f
+	}
+	return nil
+}
+
+// SwapText sets the linked text fallback to f, nil for none, and returns
+// the one before: for a test of an app that links none.
+func SwapText(f func(KeyDefault) KeyResult) func(KeyDefault) KeyResult {
+	old := TextDefault()
+	if f == nil {
+		textDefault.Store(nil)
+	} else {
+		textDefault.Store(&f)
+	}
+	return old
+}

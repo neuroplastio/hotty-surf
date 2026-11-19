@@ -77,9 +77,9 @@ The same surface handlers run when a host or cells sends the event or
 passes a key to the application. Cells also implements native control
 editing, activation and navigation. Text fields resolve their keymap with
 `hotty.Resolve`; a host and cells must agree on the platform and on the
-ordered keymap. Readline-style editing (`hotty.TerminalKeys`) has no Go
-declaration yet: it went with the authored `data-keys` (see Declared
-keys).
+ordered keymap. Readline-style editing (`hotty.TerminalKeys`) is
+`surf.Bind(surf.Readline())` on the field or on what holds it (see Keys that aren't
+the program's).
 
 ## B1 and B2 audit
 
@@ -154,10 +154,87 @@ the keys fn takes ahead of the element:
 field's completion. Shortcuts that a menu or a palette lists are
 `ui.KeyScope`'s, below.
 
-`data-keys` carried more than `program` once: `prefix`, the scroll
-actions (`j=scroll-down`) and a field's edit actions (readline's
-`hotty.TerminalKeys`). Those have no Go declaration yet; a later pack
-adds them if the maintainer wants them.
+## Keys that aren't the program's
+
+`surf.Key` gives keys to the program; `surf.Bind` gives them to the host,
+which does one of SPEC §10.2's actions with them, and no handler hears
+them. Bind's options are bindings, `surf.Action(action, keys...)`,
+`surf.Unbind(keys...)` and groups (`surf.Readline()`, readline's set, or
+an app's own `surf.Group`), and at most one of `surf.Yield()` or
+`surf.Override()` for all of them.
+
+```go
+// a palette's query: readline's ctrl+w, ctrl+u, alt+b, …
+surf.On(ctx, "query", surf.Input(a.setQuery),
+    surf.Bind(surf.Readline()))
+// readline without ctrl+k
+surf.Bind(surf.Readline(), surf.Unbind("ctrl+k"))
+// a pager: j and k scroll the log where the host scrolls it
+surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"),
+    surf.Action(hotty.ScrollUp, "k")))
+// the app's leader: mod+k and the keys after it reach its keymap
+surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
+// an app's own group, made once and bound wherever it's needed
+var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
+    surf.Action(hotty.ScrollEnd, "shift+g"))
+```
+
+- **Edit actions** (`hotty.WordBackward`, …) go on a field or on what
+  holds fields, as SPEC's keymap chain has it: the nearer binding wins.
+  On a control that isn't a text field (a button, a select) they are a
+  fault; a direct multi-line one on an `input` is too.
+- **Which binding holds a key** on one element: a `surf.Key`'s or a
+  KeyScope's key, the program's; then a direct Action or Unbind (two of
+  one key to different actions are a fault); then the groups' bindings,
+  the last read winning.
+- **Then yield or override.** The program is given a key on an element
+  by a `surf.Key` declaration, a prefix or a KeyScope's forwarded key. A
+  binding that yields leaves such a key on an element around it alone,
+  and is dropped; nothing under it on the element comes back. A page's
+  `mod+k` still opens its palette from a field under Readline, where
+  Readline would delete to the line's end with `ctrl+k`. One that
+  overrides is written anyway, the nearer binding winning. A direct
+  Action overrides; an Unbind and a group's bindings yield; `Yield()` or
+  `Override()` sets every binding of its Bind (in a Group they are a
+  fault). A key the field's own handler declares and declines is its
+  binding's edit. A key declared around the field whose handler declines
+  it is what the host does with the wire: under a yielding Readline, the
+  platform default's; under `Override()`, Readline's edit.
+- **Unbind** gives a key back to the host's own meaning (`key=default`):
+  one of a group's keys on the element, or a key a container binds, on
+  an element inside it. Taking a key back from the program says
+  `Override()`.
+- **Bindings are a render's**, as every handler is: a render that
+  passes other options rebinds the element, and the host has it with
+  the render's delta, an attribute change that keeps a field's caret; a
+  key sequence in progress goes on.
+- **A prefix** (SPEC §10.5) gives the program its key and every key
+  after it, Tab and Escape too. One a Key handler takes is the surface's
+  sequence: it ends once the next key has been through the handlers. One
+  no handler takes is the program's leader, and the program ends it with
+  `Surface.Focus`, which, with the keyboard already on the surface,
+  sends `a=focus` without a target. A printable prefix still types in a
+  field inside. A list's `g g` needs no prefix: a list doesn't use `g`,
+  so `surf.Key(fn, "g")` hears both.
+- **Scroll actions** go on what isn't a field: a key the focused element
+  doesn't use scrolls the nearest element that scrolls. A field's keymap
+  leaves them out, so a field under `j=scroll-down` types `j`; on a field
+  itself they are a fault.
+- **Cells** read the same `data-keys`, as a host does: a field's edit
+  actions through `hotty.Resolve`, the scroll actions, and a prefix,
+  after which the Screen gives the program every key until the
+  program's `a=focus` or `a=blur`, the Screen's losing the keyboard, or a
+  press that focuses an element. The protocol test host (hottytest 0.8)
+  does no scroll action yet: a scroll-bound key reaches the program
+  there.
+- **A kit Command or Combobox** takes no handler of the app's on its
+  field: it gets Readline from a `surf.Bind(surf.Readline())` on an
+  element around the component.
+- **Size.** The kit's own edit of a declined key on a text field
+  (`hottyedit`) is linked only by what edits text: ui's text components,
+  `ui.KeyScope` and `surf.Bind` (a pager's scroll-only Bind too). A
+  plain `<input>` in an app with none of them edits nothing on a declined
+  key, and that is a fault, once.
 
 ## Scoped overrides
 
@@ -232,6 +309,12 @@ declarations of the focused element and of every element around it,
 each key with its shift variant (the host gives that too), so a key an
 app declares on its `<main>` reaches its handler through a multiplexer.
 A declared character is OwnKeys' too, except on an element that types.
+So are the keys an element that isn't a field binds to a scroll action
+(`surf.Bind`), which the host scrolls with. A key bound to prefix is not:
+a router's prefix is its own leader, and it ends the sequence with
+`Surface.Focus`. Sequences inside the surface (a prefix a Key handler
+takes) work where the driver offers every key to the surface first
+(`run`, `surftea`).
 
 ## Menus and palettes
 
@@ -241,10 +324,12 @@ The labels serve the user's view of the keys too:
   in render order, so a palette and a which-key level don't reorder as the
   focus moves. A Name is one action: listed once, and run as the binding
   of that name nearest the keyboard. A binding keeps its key only while
-  the key reaches it. One a nearer scope's key shadows, or whose scope the
-  keyboard is outside, is listed without its key when it has a name (a
-  pick still runs it), and left out when it has none. An app's palette
-  lists these.
+  the key reaches it. One a nearer scope's key shadows, whose scope the
+  keyboard is outside, or which a focused plain text field takes itself
+  (its keymap's edit, `surf.Readline`'s `ctrl+k` among them), is listed
+  without its key when it has a name (a pick still runs it), and left out
+  when it has none. A `surf.Bind` is the host's action and is never one
+  of them. An app's palette lists these.
 - `ui.HostMenu(s, label)` is the same list as hotty's menu (SPEC §10.7),
   for `hotty.Menu`. A host that takes menus shows its which-key level from
   it and lists the named items in its own palette. Keys come and go with

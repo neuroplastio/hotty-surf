@@ -69,6 +69,31 @@ func ownKeys(n *html.Node, on map[string]*rt.Handlers, p hotty.Platform) []strin
 	case "activate":
 		addShifted(activateKeys)
 	}
+	if kind != "text" {
+		// The keys its keymap binds to a scroll action (surf.Bind): the
+		// host scrolls with them, ahead of the program, unless a nearer
+		// binding gives one the program. A character is listed too, as a
+		// declared one is: the element doesn't type it.
+		m := hotty.ParseKeymap(p, strings.Join(keymapsOf(n), " "))
+		for _, b := range strings.Fields(m.Format()) {
+			k, a, _ := strings.Cut(b, "=")
+			if !hotty.Action(a).Scrolls() {
+				continue
+			}
+			c, ok := p.ReadKey(k)
+			if !ok {
+				continue
+			}
+			if rt.Printable(c) {
+				set[c] = true
+				continue
+			}
+			add(c)
+			if !strings.Contains(c, "shift+") && m.Scroll("shift+"+c) != "" {
+				add("shift+" + c)
+			}
+		}
+	}
 	// The keys the Key handlers of it and the elements around it declare:
 	// those the host gives the program there, for them to take (a list's
 	// arrows, a combobox's Enter, an app's mod+s on its main), with shift
@@ -160,4 +185,24 @@ func keymapsOf(n *html.Node) []string {
 	}
 	slices.Reverse(vs)
 	return vs
+}
+
+// fieldTakes is rt.Peek.FieldTakes: the focused element is a text field,
+// not a kit control under a KeyScope (whose scope's keys the kit forwards),
+// and its keymap binds key to an edit action, which it does itself.
+func (s *Surface) fieldTakes(key string) bool {
+	n := s.byID[s.focused]
+	if n == nil || s.keyMarks[s.focused].scope > 0 {
+		return false
+	}
+	kind, multiline := nativeKind(n)
+	if kind != "text" {
+		return false
+	}
+	m := hotty.Resolve(s.platform, multiline, keymapsOf(n)...)
+	switch a := m.Lookup(key); a {
+	case "", hotty.Program, hotty.Prefix, hotty.Insert:
+		return false
+	}
+	return true
 }

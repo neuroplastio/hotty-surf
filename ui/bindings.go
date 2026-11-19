@@ -12,8 +12,11 @@ import (
 // palette shows them. A Name is listed once (see KeyBinding.Name).
 //
 // A binding keeps its Key only while the key reaches it: the keyboard is
-// inside its scope, and no nearer scope's enabled binding takes the same
-// key. Any other keyed binding is listed with Key "" when it has a Name,
+// inside its scope, no nearer scope's enabled binding takes the same key,
+// and the focused element doesn't use it itself (a plain text field's
+// keymap, surf.Readline's ctrl+k among them; a kit control under the
+// scope gives the scope its keys). A surf.Bind is not a binding: it is
+// the host's action, which no menu lists. Any other keyed binding is listed with Key "" when it has a Name,
 // since a pick still runs it, and left out when it has none. Disabled
 // bindings are listed, Disabled. Their Run is nil: call [Pick] to run
 // one, so that Disabled and a Name's nearest binding hold.
@@ -93,13 +96,16 @@ func offered(s *surf.Surface) []offer {
 	if n := byID(rt.Peek.Tree(s), rt.Peek.Focused(s)); n != nil {
 		typing = rt.Types(n)
 	}
+	// A plain field takes the keys its keymap binds to edit actions (its
+	// default's, surf.Readline's, surf.Bind's): those reach no binding.
+	takes := func(key string) bool { return rt.Peek.FieldTakes != nil && rt.Peek.FieldTakes(s, key) }
 	// winner is each key's binding: the nearest enabled one, else the
 	// nearest disabled one. nearest is each name's.
 	winner, nearest := map[string]at{}, map[string]at{}
 	for _, enabled := range []bool{true, false} {
 		for _, sc := range reach {
 			for i, b := range sc.Bindings {
-				if b.Physical != "" && b.Disabled != enabled && !(typing && rt.Printable(b.Physical)) {
+				if b.Physical != "" && b.Disabled != enabled && !(typing && rt.Printable(b.Physical)) && !takes(b.Physical) {
 					if _, ok := winner[b.Physical]; !ok {
 						winner[b.Physical] = at{sc, i}
 					}

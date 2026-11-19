@@ -6,6 +6,8 @@ package rt
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -22,6 +24,18 @@ type Handlers struct {
 	// as the element's data-keys, each bound to program.
 	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
+	// Binds are surf.Bind's bindings, canonical for the frame's
+	// platform, one per key, layered as surf.Bind says (a direct Action's
+	// or Unbind's over a group's, a later group's over an earlier). The runtime
+	// writes each as key=action, but where Keys declares the key, or
+	// one yields to a key given around it.
+	Binds []Bind
+	// Written are Binds as the surface resolved them on the element when
+	// it last wrote its data-keys: the faults dropped, and those that
+	// yield to a key given around it. It is the one resolver's output,
+	// which data-keys, the surface's own use of a declined key (EditKeys)
+	// and so a host and cells read alike.
+	Written []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
 	Scope   *KeyScope
@@ -33,6 +47,45 @@ type Handlers struct {
 	// type is surf's (rt can't import surf). Secondary is surf.Secondary's.
 	Drag, Drop any
 	Secondary  func(hotty.Cell, hotty.Area)
+}
+
+// A Bind is one key bound to an action that isn't program (SPEC §10.2):
+// a field's edit action, prefix, a scroll action, or default (surf.Unbind).
+// Yield says it leaves alone a key the program is given around its
+// element; Direct says it was given to surf.Bind directly, not in a group,
+// and holds its key over the groups'.
+type Bind struct {
+	Key, Action string
+	Yield       bool
+	Direct      bool
+}
+
+// EditKeys is h's resolved bindings (Written) as a field's keymap reads
+// them (SPEC §10.2), a data-keys value, then, with program, its Key
+// handlers' keys, each the program's: what a host resolves on the
+// element. Without program, a key the Key handlers declare is its
+// binding's, so that a declined one is what the host does with no
+// declaration of it.
+func EditKeys(h *Handlers, program bool) string {
+	var b strings.Builder
+	for _, x := range h.Written {
+		if program && slices.Contains(h.Keys, x.Key) {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(x.Key)
+		b.WriteByte('=')
+		b.WriteString(x.Action)
+	}
+	if p := ProgramKeys(h.Keys); program && p != "" {
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(p)
+	}
+	return b.String()
 }
 
 // A Frame is one render's registrations.
@@ -97,6 +150,9 @@ type Frame struct {
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.
 	Scopes []*KeyScope
+	// Readline is hotty.TerminalKeys as Binds for Platform, made the
+	// first time an element binds surf.Readline in the frame.
+	Readline []Bind
 }
 
 // ModalOps performs the tree and focus work of an active modal.

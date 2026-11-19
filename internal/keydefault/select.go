@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/clipperhouse/uax29/v2/graphemes"
 	"neuroplast.io/hotty-go"
 )
 
@@ -40,9 +39,11 @@ func Select(opts []Option, current, key, name string) (string, bool, bool) {
 		p = from(len(opts)-1, -1)
 	case "space", "enter":
 	default:
+		// KeyText types one character (one grapheme cluster, as hotty's
+		// key names have it) or a space; no grapheme count here, so that
+		// a select doesn't link uax29's tables (only text editing does).
 		text, ok := hotty.KeyText(key)
-		g := graphemes.FromString(text)
-		if !ok || !g.Next() || g.Next() {
+		if !ok || text == "" {
 			return current, false, false
 		}
 		for k := 1; k <= len(opts); k++ {

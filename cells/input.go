@@ -299,6 +299,7 @@ func (c *Screen) area(n *html.Node) *hotty.Area {
 // focusTo moves the keyboard to n. The user's move is told (focus); the
 // program's (a=focus) is not (SPEC §10.1). A text field it leaves commits.
 func (c *Screen) focusTo(n *html.Node, user bool) {
+	c.prefixed = false
 	if n == c.focused {
 		return
 	}
@@ -541,7 +542,13 @@ func (c *Screen) key(key string) bool {
 		return false
 	}
 	k, ok := c.plat.ReadKey(key)
-	if !ok {
+	if !ok || c.prefixed {
+		// After a prefix every key is the program's, Tab and Escape too,
+		// until it ends the sequence (SPEC §10.5).
+		return false
+	}
+	if c.focused != nil && hotty.ParseKeymap(c.plat, strings.Join(keymaps(c.focused), " ")).Prefix(key) {
+		c.prefixed = true
 		return false
 	}
 	mods, name := splitKey(k)

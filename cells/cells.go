@@ -72,6 +72,7 @@ type Screen struct {
 	// focused is the element that has the keyboard, and remembered the
 	// one that had it when the Screen lost it.
 	active     bool
+	prefixed   bool // a key bound to prefix: every key is the program's until a focus or a blur (SPEC §10.5)
 	focused    *html.Node
 	remembered *html.Node
 
@@ -237,6 +238,7 @@ func (c *Screen) Focus(in bool) {
 			c.focusTo(n, true)
 		}
 	case !in && c.active:
+		c.prefixed = false
 		c.cutDrag()
 		if c.body != nil {
 			n := c.focused
@@ -422,6 +424,9 @@ func (c *Screen) apply(m hotty.Message) error {
 			return fmt.Errorf("cells: a=field: %w", err)
 		}
 	case "focus":
+		// The program's a=focus, with a target or without, ends a key
+		// sequence (SPEC §10.5).
+		c.prefixed = false
 		var n *html.Node
 		if t := hotty.Get(m.Control, "t"); t != "" {
 			if n = c.byID(t); n == nil {
@@ -444,6 +449,7 @@ func (c *Screen) apply(m hotty.Message) error {
 		}
 		c.focusTo(n, false)
 	case "blur":
+		c.prefixed = false
 		// The program's blur holds while the Screen hasn't the keyboard
 		// too: Focus(true) gives it to nothing.
 		c.blur()
