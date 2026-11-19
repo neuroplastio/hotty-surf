@@ -40,6 +40,9 @@ type Screen struct {
 	// an element's id: settle forgets what it keeps of the tree, and the
 	// ids.
 	reshaped, reIDed bool
+	// relayout says they changed what the layout reads: more than
+	// colours that leave every look as it was.
+	relayout bool
 
 	cols, rows int
 	events     func(hotty.Event)

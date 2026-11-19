@@ -228,6 +228,10 @@ func (l *layout) ext(n *html.Node, r rect) {
 // adds, reverse while it has the keyboard, dim while disabled.
 func (l *layout) lookOf(n *html.Node, in look, st box) look {
 	lk := in | st.look
+	if lk&lMuted != 0 {
+		// A colour of its own changes its look here (inMuted).
+		l.memoOf(n).inMuted = true
+	}
 	if fg, _ := l.colour(n); unmutes(fg) {
 		// A colour of its own: no longer the muted text around it.
 		lk &^= lMuted
@@ -1589,6 +1593,11 @@ type nodeMemo struct {
 	texts   []textPass
 	w       widths
 	wGen    uint64
+	// inMuted says a layout drew the element where the text around it
+	// is muted, so that a colour of its own changes its look (lookOf).
+	// It is kept until the styles are forgotten: a look that comes to
+	// be muted lays the element out again, which sets it.
+	inMuted bool
 }
 
 // forgetStyles forgets every node's style and children, and the widths
@@ -1598,6 +1607,7 @@ func (k *kept) forgetStyles() {
 	for _, m := range k.nodes {
 		m.hasSt, m.hasKids = false, false
 		m.kids = nil
+		m.inMuted = false
 	}
 	k.gen++
 }

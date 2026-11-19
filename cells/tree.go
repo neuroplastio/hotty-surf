@@ -67,15 +67,33 @@ func (c *Screen) load(name, doc string) error {
 // style too, which reads its neighbours' attributes (kit, filtered).
 func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
 	k := c.kept
-	if k == nil || slices.Equal(was, n.Attr) {
+	if slices.Equal(was, n.Attr) {
+		return
+	}
+	if k == nil {
+		c.relayout = true
 		return
 	}
 	if colourOnly(was, n.Attr) {
+		// The layout reads a colour only where an element's own ends the
+		// muted text around it (lookOf): where that holds, so do the
+		// looks, and only the roles change.
+		if m := k.nodes[n]; m == nil || !m.hasCol || m.inMuted && unmutes(m.fg) != unmutesNow(n) {
+			c.relayout = true
+		}
 		k.forgetColours(n)
 		return
 	}
+	c.relayout = true
 	k.forgetStyles()
 	k.forgetLooks(n)
+}
+
+// unmutesNow says whether n's own text colour, as its attributes give it
+// now, ends the muted text around it (lookOf).
+func unmutesNow(n *html.Node) bool {
+	fg, _ := coloursOf(n)
+	return unmutes(fg)
 }
 
 // changed says the tree changed: its ids and its layout are made again
@@ -120,7 +138,7 @@ func (c *Screen) attached(n *html.Node) bool {
 // error, and the ops after it are not applied (the program sends the
 // document again).
 func (c *Screen) delta(ops []hotty.Op) error {
-	c.reshaped, c.reIDed = false, false
+	c.reshaped, c.reIDed, c.relayout = false, false, false
 	defer c.settle()
 	for i, o := range ops {
 		if err := c.op(o); err != nil {
@@ -134,8 +152,15 @@ func (c *Screen) delta(ops []hotty.Op) error {
 // focus of an element that is gone.
 func (c *Screen) settle() {
 	// What the ops reached is forgotten (op); where they changed the
-	// tree's shape, all of it is.
-	c.lay = nil
+	// tree's shape, all of it is. Where they changed only colours, which
+	// left every look as it was (attrsChanged), the layout holds and its
+	// cells are painted again: what was drawn is no longer this
+	// layout's (Dirty).
+	if c.reshaped || c.relayout || c.lay == nil {
+		c.lay = nil
+	} else {
+		c.shownLay = nil
+	}
 	if c.reshaped || c.reIDed {
 		c.ids = nil
 	}
@@ -156,6 +181,7 @@ func (c *Screen) settle() {
 		// the keyboard (SPEC §6.2); its rev stays.
 		if d := defaultOf(n); d != f.def {
 			f.def = d
+			c.lay = nil
 			if n == c.focused {
 				continue
 			}
@@ -171,6 +197,7 @@ func (c *Screen) settle() {
 		// An element that stops taking focus loses it, as a browser's
 		// does; the surface keeps the keyboard with nothing focused.
 		c.focused = nil
+		c.lay = nil
 	}
 	if c.remembered != nil && !c.attached(c.remembered) {
 		c.remembered = nil
@@ -212,6 +239,7 @@ func (c *Screen) op(o hotty.Op) error {
 			// Its one text's: only that text's pieces are forgotten.
 			if k.Data != v {
 				k.Data = v
+				c.relayout = true
 				if c.kept != nil {
 					c.kept.forgetText(k)
 				}
@@ -271,6 +299,7 @@ func (c *Screen) op(o hotty.Op) error {
 			return fmt.Errorf("unknown reveal alignment %q (%s)", v, hotty.EINVAL)
 		}
 		c.revealAfter, c.revealWhere = t, v
+		c.relayout = true // a layout reveals it
 	default:
 		return fmt.Errorf("unknown op %q (%s)", o.Op, hotty.EINVAL)
 	}
