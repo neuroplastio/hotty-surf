@@ -13,9 +13,12 @@ user's clicks and typing back to the program. hotty-surf is the layer
 above the protocol: you write state, a view and handlers, and it keeps
 the surface in step with them.
 
-> **v0.7 is in progress.** Its API is approved (`api/v0.7.txt`) and
-> documented, and its bodies are being written. v0.6.3, on `.surf`
-> templates, is the last release.
+> **main is v0.7, untagged.** Its API is approved and locked
+> (`api/v0.7.txt`), and every name in it is implemented. v0.7.0 is
+> tagged when every Basecoat component is done: 23 of 39 are now (see
+> [coverage](docs/coverage.md)). v0.6.3, on `.surf` templates, is the
+> last release; its docs are at the
+> [v0.6.3 tag](https://github.com/neuroplastio/hotty-surf/tree/v0.6.3).
 
 ## A first app
 
@@ -97,8 +100,8 @@ button by its text or its label, and lint asks for one.
 
 ## The dev tool
 
-`hotty-surf` (from a checkout, `go install ./cmd/hotty-surf`, until
-v0.7 is published: see *What it needs*) makes, runs and ships an app whose
+`hotty-surf` (`go install neuroplast.io/hotty-surf/cmd/hotty-surf@main`
+until v0.7.0 is tagged: see *What it needs*) makes, runs and ships an app whose
 main is `run.App`:
 
 ```sh
@@ -143,10 +146,17 @@ go install github.com/tinylib/msgp@v1.6.5
 `go test` and `go build` read what was generated last, so after an edit
 made without them, run `templ generate` and `go generate`.
 
-v0.7 isn't published yet: `go get neuroplast.io/hotty-surf` gets v0.6.3,
-an older API. Until it is, install `hotty-surf` from a checkout
-(`go install ./cmd/hotty-surf`); `hotty-surf new` then writes an app whose
-go.mod replaces hotty-surf with that checkout.
+v0.7 has no tag yet, so `go get neuroplast.io/hotty-surf` (or `@latest`)
+gets v0.6.3, an older API. This README's API is main's:
+
+```sh
+go get neuroplast.io/hotty-surf@main
+go install neuroplast.io/hotty-surf/cmd/hotty-surf@main
+```
+
+From a checkout, `go install ./cmd/hotty-surf` does the same, and
+`hotty-surf new` then writes an app whose go.mod replaces hotty-surf with
+that checkout.
 
 A program that owns its terminal shows a surface in part of its screen
 with `surftea` (Bubble Tea,
@@ -159,7 +169,7 @@ program gets no live reload: reload its surface's app on its own.
 | Package | What it is |
 | --- | --- |
 | `surf` (the root) | a surface: a view, its handlers, its deltas; `On` and the handlers |
-| `ui` | every Basecoat 1.1.0 component ([coverage](docs/coverage.md)) |
+| `ui` | Basecoat 1.1.0's components, 23 of 39 done so far ([coverage](docs/coverage.md)) |
 | `run` | an app in a terminal, or in a browser under js/wasm |
 | `surftest` | tests that click, type and find, against a test host |
 | `lint` | the checks a view's files must pass |
