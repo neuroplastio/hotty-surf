@@ -10,7 +10,7 @@ import (
 	"neuroplast.io/hotty-surf/ui"
 )
 
-// plx's rows (G-menu-rows) in each of the three menus: a dot in the icon's
+// plx's rows in each of the three menus: a dot in the icon's
 // place, a note in the keys' place, a rule between items, an on/off row
 // with an aside, and a checkable row whose Leading draws its state in
 // place of the kit's check. The app's markup goes where it says; the row

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-// Colour in cells (G-cells-colour, for plx). The Screen reads which of the
+// Colour in cells (for plx). The Screen reads which of the
 // kit's theme colours the stylesheet would paint an element's text and
 // fill in, as it reads its layout: from its classes, its inline style and
 // what it knows of the kit's components (SUBSET.md, "Colours"). It names

@@ -126,7 +126,7 @@ func TestDirty(t *testing.T) {
 
 // A change that shows only in Cells' roles is dirty too: a colour class,
 // the selected band moving to another row (a list without the keyboard);
-// an attribute that draws nothing is not (p-801's probes).
+// an attribute that draws nothing is not (the verifier's probes).
 func TestDirtyRoles(t *testing.T) {
 	for _, tc := range []struct {
 		name, doc string

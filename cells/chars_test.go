@@ -69,7 +69,7 @@ func TestCharsOfOneCellRunes(t *testing.T) {
 // combining marks, joiners and selectors, regional indicators, emoji and
 // their modifiers, Hangul jamo and syllables, Indic conjuncts, Prepend
 // and SpacingMark, tags, wide and fullwidth, box drawing, and invalid
-// UTF-8 (p-833's).
+// UTF-8 (the verifier's).
 var charsAlphabet = []string{
 	"a", "Z", " ", "\t", "\r", "\n", "\x00", "\x1b", "\x7f", "\u0080", "\u009f",
 	"\u00a0", "\u00ad", "\u00e9", "\u00ff", "\u0300", "\u0301", "\u036f", "\u0483",

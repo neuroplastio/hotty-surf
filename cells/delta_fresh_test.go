@@ -26,7 +26,7 @@ func freshShot(c *cells.Screen) string {
 
 // A colour-only class change is told by splitting classes at spaces, and
 // every rule that reads a class must split it the same way: a class with a
-// tab, a vertical tab or a no-break space in it isn't colour-only (p-842).
+// tab, a vertical tab or a no-break space in it isn't colour-only (the verifier's).
 func TestColourOnlyClassesWithOtherSpaces(t *testing.T) {
 	cases := []struct {
 		name, before, after string
@@ -74,7 +74,7 @@ func TestColourOnlyClassesWithOtherSpaces(t *testing.T) {
 }
 
 // Ops later in one delta find the elements the earlier ones made, moved,
-// renamed or removed (p-842).
+// renamed or removed (the verifier's).
 func TestDeltaOpsSeeEarlierOps(t *testing.T) {
 	cases := []struct {
 		name, before, after string

@@ -7,7 +7,7 @@ import (
 	"neuroplast.io/hotty-go"
 )
 
-// Copy and cut in cells (G-cells-copy, for plx). The Screen has no
+// Copy and cut in cells (for plx). The Screen has no
 // clipboard: the copy and cut keys aren't its (Key leaves them to the
 // program), so the program asks it for the field's selection on its own
 // copy key and puts it on the terminal's clipboard, as it pastes with

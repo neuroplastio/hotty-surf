@@ -98,7 +98,7 @@ func checkSameShape(t *testing.T, tc sameShapeCase) {
 // its children's (kit: a field's label grows, a breadcrumb's list is a
 // row), its parent's (an input group's addon, a popover's side), its
 // ancestors' (a command group whose items are all filtered out); and a
-// scheme's colours, details' open, plain text. p-833's cases.
+// scheme's colours, details' open, plain text. The verifier's cases.
 func TestSameShapeDocDrawsAsALoad(t *testing.T) {
 	for _, tc := range []sameShapeCase{
 		{name: "a field's orientation",

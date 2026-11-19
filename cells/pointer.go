@@ -12,7 +12,7 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
-// The pointer in cells (G-cells-hit, for plx). A Screen hears the
+// The pointer in cells (for plx). A Screen hears the
 // terminal's mouse as the program decodes it, at its own cells, and sends
 // the surface the events a hotty host sends for the same gestures (SPEC
 // §9): a press, a click with its count and mods, a secondary press, a

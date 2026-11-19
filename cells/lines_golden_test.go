@@ -23,7 +23,7 @@ const linesProbe = `<div class="dark">` +
 	`</div>`
 
 // TestLinesGolden holds Lines to what it drew before the Screen read
-// colours (G-cells-colour, K28): every story's lines, byte for byte.
+// colours (K28): every story's lines, byte for byte.
 // Colour is Cells'; Lines stays attributes only.
 func TestLinesGolden(t *testing.T) {
 	var b strings.Builder
