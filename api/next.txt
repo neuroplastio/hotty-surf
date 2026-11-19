@@ -1,6 +1,7 @@
 pkg neuroplast.io/hotty-surf, const CharsBound Chars = 0
 pkg neuroplast.io/hotty-surf, const CharsPick Chars = 1
 pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
+pkg neuroplast.io/hotty-surf, func Action(hotty.Action, ...string) BindOption
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Bind(...BindOption) Handler
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
@@ -13,7 +14,6 @@ pkg neuroplast.io/hotty-surf, func Group(...BindOption) BindOption
 pkg neuroplast.io/hotty-surf, func Hover(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Input(func(string)) Handler
 pkg neuroplast.io/hotty-surf, func Key(func(string) bool, ...string) Handler
-pkg neuroplast.io/hotty-surf, func Keys(hotty.Action, ...string) BindOption
 pkg neuroplast.io/hotty-surf, func New(string, templ.Component, string) *Surface
 pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
@@ -24,6 +24,7 @@ pkg neuroplast.io/hotty-surf, func Readline() BindOption
 pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
+pkg neuroplast.io/hotty-surf, func Unbind(...string) BindOption
 pkg neuroplast.io/hotty-surf, func Yield() BindOption
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Blur() (bool, error)

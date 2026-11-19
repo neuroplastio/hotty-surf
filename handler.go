@@ -88,7 +88,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 				}
 			}
 		case kindBind:
-			binds = flatten(f, id, h.fn.([]BindOption), 0, false, binds)
+			binds = flatten(f, id, h.fn.([]BindOption), binds)
 		case kindFocus:
 			e.Focus = h.fn.(func(bool))
 		case kindOutside:
@@ -233,11 +233,9 @@ func Check(fn func(checked bool)) Handler {
 // The surface writes the declaration as the element's data-keys (SPEC
 // §10.2, key=program): a template that writes data-keys itself is a
 // fault, and the attribute is dropped. A declared key wins over the
-// element's [Bind] and [Readline] bindings of it, and over Readline's
-// on the elements inside: the program's key is the program's, as a
-// program's bind was over readline (vault/knowledge/field-keys.md).
-// The keys that aren't the program's (a field's edit actions, a prefix,
-// the scroll actions) are Bind's.
+// element's Bind bindings of it, and over a yielding binding (a group's,
+// an Unbind) on the elements inside. The keys that aren't the program's
+// (a field's edit actions, a prefix, the scroll actions) are [Bind]'s.
 //
 // A ui.KeyScope naming a key is offered it before the focused kit
 // control's default and ordinary Key handlers. A declined key then goes

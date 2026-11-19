@@ -359,8 +359,8 @@ func attrList(a templ.Attributes) string {
 // ends with Surface.Focus. The surface writes the bindings into data-keys.
 func ExampleBind() {
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		main := surf.On(ctx, "main", surf.Bind(surf.Keys(hotty.Prefix, "mod+k")))
-		log := surf.On(ctx, "log", surf.Bind(surf.Keys(hotty.ScrollDown, "j"), surf.Keys(hotty.ScrollUp, "k")))
+		main := surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
+		log := surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"), surf.Action(hotty.ScrollUp, "k")))
 		_, err := fmt.Fprintf(w, `<main%s><pre%s tabindex="0">…</pre></main>`, attrList(main), attrList(log))
 		return err
 	})
@@ -429,18 +429,18 @@ func keysOf(view func(ctx context.Context) string, ids ...string) {
 	}
 }
 
-// Keys binds keys to one action: here a list scrolls with j and k.
-func ExampleKeys() {
+// Action binds keys to one action: here a list scrolls with j and k.
+func ExampleAction() {
 	keysOf(func(ctx context.Context) string {
-		return `<ul` + attrList(surf.On(ctx, "rows", surf.Bind(surf.Keys(hotty.ScrollDown, "j"), surf.Keys(hotty.ScrollUp, "k")))) + ` tabindex="0"></ul>`
+		return `<ul` + attrList(surf.On(ctx, "rows", surf.Bind(surf.Action(hotty.ScrollDown, "j"), surf.Action(hotty.ScrollUp, "k")))) + ` tabindex="0"></ul>`
 	}, "rows")
 	// Output: rows: j=scroll-down k=scroll-up
 }
 
 // pager is an app's group: a pager's keys, defined once.
 var pager = surf.Group(
-	surf.Keys(hotty.ScrollDown, "j"),
-	surf.Keys(hotty.ScrollEnd, "shift+g"),
+	surf.Action(hotty.ScrollDown, "j"),
+	surf.Action(hotty.ScrollEnd, "shift+g"),
 )
 
 // A group is bound whole, wherever it's needed.
@@ -454,7 +454,7 @@ func ExampleGroup() {
 // A group yields: the page declares alt+b on its main, so a field under
 // a word-moving group leaves alt+b to the page. Override binds it anyway.
 func ExampleOverride() {
-	words := surf.Group(surf.Keys(hotty.WordBackward, "alt+b"), surf.Keys(hotty.WordForward, "alt+f"))
+	words := surf.Group(surf.Action(hotty.WordBackward, "alt+b"), surf.Action(hotty.WordForward, "alt+f"))
 	keysOf(func(ctx context.Context) string {
 		main := surf.On(ctx, "main", surf.Key(func(string) bool { return true }, "alt+b"))
 		a := surf.On(ctx, "a", surf.Bind(words))
@@ -471,8 +471,8 @@ func ExampleOverride() {
 func ExampleYield() {
 	keysOf(func(ctx context.Context) string {
 		main := surf.On(ctx, "main", surf.Key(func(string) bool { return true }, "ctrl+e"))
-		a := surf.On(ctx, "a", surf.Bind(surf.Keys(hotty.LineEnd, "ctrl+e")))
-		b := surf.On(ctx, "b", surf.Bind(surf.Keys(hotty.LineEnd, "ctrl+e"), surf.Yield()))
+		a := surf.On(ctx, "a", surf.Bind(surf.Action(hotty.LineEnd, "ctrl+e")))
+		b := surf.On(ctx, "b", surf.Bind(surf.Action(hotty.LineEnd, "ctrl+e"), surf.Yield()))
 		return `<main` + attrList(main) + `><input` + attrList(a) + `><input` + attrList(b) + `></main>`
 	}, "a", "b")
 	// Output:

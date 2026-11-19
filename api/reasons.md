@@ -745,3 +745,8 @@ The maintainer: "I would make Bind API extensible so that Readline becomes just 
 - `surf.Readline`: plx's palette's readline (hotty.TerminalKeys), now the framework's first group; still one line: `surf.Bind(surf.Readline())`.
 - `surf.Yield`: the maintainer's "options to control override behavior": a binding that gives way to keys the program is given around it; a single key that should not take a page's shortcut from a field.
 - `surf.Override`: the other half: a group that wins over keys claimed around it (readline's ctrl+k in a field even where the page declares mod+k).
+
+## Bind, extensible, as reviewed (p-836)
+
+- `surf.Action`: replaces `surf.Keys`, which differed from `surf.Key` by one letter beside it in one `On`; Key takes the program's code, Action the host's action.
+- `surf.Unbind`: the maintainer's question, how a caller removes a key: readline without ctrl+k, or a key given back inside a container that binds it (SPEC §10.2 key=default). It yields by default, so dropping one of readline's keys never takes a page's shortcut.

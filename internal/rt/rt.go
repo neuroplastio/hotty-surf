@@ -30,6 +30,12 @@ type Handlers struct {
 	// writes each as key=action, but where Keys declares the key, or
 	// one yields to a key given around it.
 	Binds []Bind
+	// Written are Binds as the surface resolved them on the element when
+	// it last wrote its data-keys: the faults dropped, and those that
+	// yield to a key given around it. It is the one resolver's output,
+	// which data-keys, the surface's own use of a declined key (EditKeys)
+	// and so a host and cells read alike.
+	Written []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
 	Scope   *KeyScope
@@ -44,27 +50,26 @@ type Handlers struct {
 }
 
 // A Bind is one key bound to an action that isn't program (SPEC §10.2):
-// a field's edit action, prefix, or a scroll action. Yield says it leaves
-// alone a key the program is given on its element or around it (a
-// group's, by default); Group says it came from a group (surf.Group,
-// surf.Readline), which a direct surf.Keys on the element replaces.
+// a field's edit action, prefix, a scroll action, or default (surf.Unbind).
+// Yield says it leaves alone a key the program is given around its
+// element; Direct says it was given to surf.Bind directly, not in a group,
+// and holds its key over the groups'.
 type Bind struct {
 	Key, Action string
 	Yield       bool
-	Group       bool
+	Direct      bool
 }
 
-// EditKeys is h's bindings as a field's keymap reads them (SPEC §10.2),
-// a data-keys value, then, with program, its Key handlers' keys, each
-// the program's: what a host resolves on the element. Without program, a
-// key the Key handlers declare is left out, so that a declined one is
-// the binding's farther in, or the default's. A Readline binding of a
-// key in given (the keys the chain gives the program) that yields is
-// left out, as the surface leaves it out of data-keys.
-func EditKeys(h *Handlers, program bool, given []string) string {
+// EditKeys is h's resolved bindings (Written) as a field's keymap reads
+// them (SPEC §10.2), a data-keys value, then, with program, its Key
+// handlers' keys, each the program's: what a host resolves on the
+// element. Without program, a key the Key handlers declare is its
+// binding's, so that a declined one is what the host does with no
+// declaration of it.
+func EditKeys(h *Handlers, program bool) string {
 	var b strings.Builder
-	for _, x := range h.Binds {
-		if program && slices.Contains(h.Keys, x.Key) || x.Yield && slices.Contains(given, x.Key) {
+	for _, x := range h.Written {
+		if program && slices.Contains(h.Keys, x.Key) {
 			continue
 		}
 		if b.Len() > 0 {
@@ -81,24 +86,6 @@ func EditKeys(h *Handlers, program bool, given []string) string {
 		b.WriteString(p)
 	}
 	return b.String()
-}
-
-// Given is the keys the Key handlers of n and the elements around it
-// declare, and those they bind to prefix: the keys a host gives the
-// program there, which Readline's bindings leave alone.
-func Given(n *html.Node, on map[string]*Handlers) []string {
-	var out []string
-	for p := n; p != nil; p = p.Parent {
-		if h := on[attr(p, "id")]; h != nil {
-			out = append(out, h.Keys...)
-			for _, b := range h.Binds {
-				if b.Action == string(hotty.Prefix) {
-					out = append(out, b.Key)
-				}
-			}
-		}
-	}
-	return out
 }
 
 // A Frame is one render's registrations.

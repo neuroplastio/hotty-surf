@@ -122,7 +122,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	var bound []string
 	if h != nil && len(h.Binds) > 0 {
 		var n2 int
-		binds, bound, n2 = s.writeBinds(id, h.Binds, text, multiline, binds, t)
+		binds, bound, n2 = s.writeBinds(id, h, text, multiline, binds, t)
 		pushed += n2
 	}
 	if rt.Types(n) {
@@ -164,55 +164,63 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 // insides.
 type keyPush struct{ printable, given int }
 
-// writeBinds adds an element's surf.Bind bindings to
-// binds, one per key, each key=action, but where binds gives the key to
-// the program already (a Key handler's, a KeyScope's): that one wins, but
-// a prefix, which is the program's too, is written in its place. A
-// Readline binding also leaves alone a key an element around gives the
-// program (t.given): a shortcut or a leader there still reaches it from
-// the field (vault/knowledge/field-keys.md, 2026-11-04). It drops, as
-// faults, a binding the element can't have (SPEC §10.2): an edit action
-// on a control that isn't a text field (kind: a button's, a select's, a
-// date field's), a multi-line one an input binds, a scroll action a text
-// field binds; a group's multi-line action on an input is harmless. A printable key bound to prefix is pushed on t's stack, so
-// the fields inside type it (K27). It returns binds, the keys it wrote,
-// and how many it pushed.
-func (s *Surface) writeBinds(id string, bs []rt.Bind, kind string, multiline bool, binds []string, t *tree) ([]string, []string, int) {
+// writeBinds is the one resolver of an element's surf.Bind bindings
+// (h.Binds, one per key already): it records in h.Written those that
+// hold on the element, and adds to binds those the wire carries, each
+// key=action. Of h.Binds it drops:
+//   - a yielding one of a key an element around gives the program
+//     (t.given): a shortcut or a leader there still reaches it from the
+//     field (vault/knowledge/field-keys.md, 2026-11-04);
+//   - as faults, one the element can't have (SPEC §10.2): an edit action
+//     on a control that isn't a text field (a button's, a select's, a
+//     date field's; one fault for a group's), a direct multi-line one on
+//     an input (a group's is harmless there), a scroll action on a text
+//     field.
+//
+// Where binds gives the key to the program already (a Key handler's, a
+// KeyScope's) the binding is recorded but not written: the program's
+// wins, but a prefix, which is the program's too, is written in its
+// place. A printable key bound to prefix is pushed on t's stack, so the
+// fields inside type it (K27). It returns binds, the keys it wrote, and
+// how many it pushed.
+func (s *Surface) writeBinds(id string, h *rt.Handlers, kind string, multiline bool, binds []string, t *tree) ([]string, []string, int) {
 	var bound []string
 	pushed, groupFault := 0, false
-	for _, b := range bs {
+	h.Written = h.Written[:0]
+	for _, b := range h.Binds {
 		a := hotty.Action(b.Action)
-		if i := slices.Index(binds, b.Key+"=program"); i >= 0 {
-			if a == hotty.Prefix {
-				binds[i] = b.Key + "=prefix"
-			}
-			continue
-		}
 		if b.Yield && slices.Contains(t.given, b.Key) {
 			continue
 		}
 		switch {
-		case a == hotty.Prefix:
-			if rt.Printable(b.Key) {
-				t.printable = append(t.printable, b.Key)
-				pushed++
-			}
+		case a == hotty.Prefix, a == hotty.Default:
 		case a.Scrolls():
 			if kind == "text" {
 				s.fault("surf.Bind: the id " + id + " is a text field, whose keymap leaves out " + b.Action + " (SPEC §10.2): bind it on what scrolls")
 				continue
 			}
 		case kind != "text" && kind != "":
-			if !b.Group {
+			if b.Direct {
 				s.fault("surf.Bind: the id " + id + " binds " + strconv.Quote(b.Key) + " to " + b.Action + ", a text field's action, on a control that isn't one")
 			} else if !groupFault {
 				groupFault = true
-				s.fault("surf.Bind: the id " + id + " binds a group of a text field's actions (Readline's) on a control that isn't one")
+				s.fault("surf.Bind: the id " + id + " binds a group of a text field's actions on a control that isn't one")
 			}
 			continue
-		case !b.Group && kind == "text" && !multiline && a.Multiline():
+		case b.Direct && kind == "text" && !multiline && a.Multiline():
 			s.fault("surf.Bind: the id " + id + " is an input, which has no " + b.Action + " (SPEC §10.2)")
 			continue
+		}
+		h.Written = append(h.Written, b)
+		if i := slices.Index(binds, b.Key+"=program"); i >= 0 {
+			if a == hotty.Prefix {
+				binds[i] = b.Key + "=prefix"
+			}
+			continue
+		}
+		if a == hotty.Prefix && rt.Printable(b.Key) {
+			t.printable = append(t.printable, b.Key)
+			pushed++
 		}
 		binds = append(binds, b.Key+"="+b.Action)
 		bound = append(bound, b.Key)
@@ -239,11 +247,20 @@ func keysig(b []byte, f *rt.Frame) []byte {
 				b = append(b, ' ')
 				b = append(b, k...)
 			}
+			// Every input of the resolver (writeBinds), which, with the
+			// same HTML, makes the same data-keys: a Yield or Override
+			// toggled alone repaints.
 			for _, x := range h.Binds {
 				b = append(b, ' ')
 				b = append(b, x.Key...)
 				b = append(b, '=')
 				b = append(b, x.Action...)
+				if x.Yield {
+					b = append(b, '~')
+				}
+				if x.Direct {
+					b = append(b, '!')
+				}
 			}
 			b = append(b, '\n')
 		}

@@ -102,15 +102,9 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		// forwarded ones, so a field's key a binding declines stays the
 		// field's. surf's keymapsOf (OwnKeys) reads data-keys as written,
 		// as a host does; keep the two apart.
-		// A declined key is what the host does with no declaration of
-		// it: Readline's binding holds then, wherever the key is given.
-		var given []string
-		if !e.Declined {
-			given = Given(n, e.On)
-		}
 		for p := n; p != nil; p = p.Parent {
 			if h := e.On[attr(p, "id")]; h != nil {
-				if v := EditKeys(h, !e.Declined, given); v != "" {
+				if v := EditKeys(h, !e.Declined); v != "" {
 					in.Keymaps = append(in.Keymaps, v)
 				}
 			}

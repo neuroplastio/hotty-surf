@@ -190,7 +190,7 @@ func TestReadlineUnderKeys(t *testing.T) {
 func prefixView(key func(string) bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		rows := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			_, err := io.WriteString(w, "<div"+attrString(surf.On(ctx, "rows", surf.Key(key), surf.Bind(surf.Keys(hotty.Prefix, "g"))))+
+			_, err := io.WriteString(w, "<div"+attrString(surf.On(ctx, "rows", surf.Key(key), surf.Bind(surf.Action(hotty.Prefix, "g"))))+
 				` tabindex="0">rows</div><button id="after">After</button>`)
 			return err
 		})
@@ -288,7 +288,7 @@ func TestScrollBindVectors(t *testing.T) {
 				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					var hs []surf.Handler
 					if bound {
-						hs = append(hs, surf.Bind(surf.Keys(hotty.ScrollDown, "j")))
+						hs = append(hs, surf.Bind(surf.Action(hotty.ScrollDown, "j")))
 					}
 					log := templ.Raw(`<div` + attrString(surf.On(ctx, "log", hs...)) + ` tabindex="0">log</div>`)
 					rec := func(k string) bool { heard = append(heard, k); return false }
@@ -365,6 +365,80 @@ func TestReadlineOverrideVectors(t *testing.T) {
 		}
 		if opened != 0 || value != "" {
 			t.Errorf("opened %d, value %q: want readline's ctrl+k", opened, value)
+		}
+	})
+}
+
+// A render that drops a prefix binding mid-sequence doesn't end the
+// sequence: the key after it still reaches the handler, and the sequence
+// ends after it, as a taken prefix's does.
+func TestPrefixOutlivesItsBinding(t *testing.T) {
+	var heard []string
+	bound := true
+	view := func() templ.Component {
+		heard, bound = nil, true
+		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			key := func(k string) bool {
+				heard = append(heard, k)
+				if k == "g" {
+					bound = false
+				}
+				return true
+			}
+			var hs []surf.Handler
+			hs = append(hs, surf.Key(key))
+			if bound {
+				hs = append(hs, surf.Bind(surf.Action(hotty.Prefix, "g")))
+			}
+			rows := templ.Raw(`<div` + attrString(surf.On(ctx, "rows", hs...)) + ` tabindex="0">rows</div><button id="after">After</button>`)
+			return outside(rows).Render(ctx, w)
+		})
+	}
+	both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+		press("g")
+		press("tab")
+		if !slices.Equal(heard, []string{"g", "tab"}) || s.Focused() != "rows" {
+			t.Fatalf("heard %q, focused %q", heard, s.Focused())
+		}
+		heard = nil
+		press("tab")
+		if len(heard) != 0 || s.Focused() != "after" {
+			t.Errorf("after the sequence: heard %q, focused %q", heard, s.Focused())
+		}
+	})
+}
+
+// A focused field whose bindings change while the user types keeps its
+// caret: the change reaches the host as data-keys, not a new element.
+func TestRebindKeepsTheCaret(t *testing.T) {
+	value, readline := "", false
+	view := func() templ.Component {
+		value, readline = "", false
+		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			toggle := func(k string) bool {
+				if k == "f2" {
+					readline = !readline
+					return true
+				}
+				return false
+			}
+			hs := []surf.Handler{surf.Input(func(v string) { value = v }), surf.Key(toggle)}
+			if readline {
+				hs = append(hs, surf.Bind(surf.Readline()))
+			}
+			return outside(ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", hs...)})).Render(ctx, w)
+		})
+	}
+	both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+		for _, k := range []string{"a", "b", "c", "arrow_left", "f2", "x"} {
+			press(k)
+		}
+		if value != "abxc" {
+			t.Fatalf("value %q, want abxc: the caret moved with the rebind", value)
+		}
+		press("ctrl+w")
+		if value != "c" {
+			t.Errorf("after ctrl+w under the new Readline: %q", value)
 		}
 	})
 }

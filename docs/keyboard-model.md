@@ -158,42 +158,54 @@ field's completion. Shortcuts that a menu or a palette lists are
 
 `surf.Key` gives keys to the program; `surf.Bind` gives them to the host,
 which does one of SPEC §10.2's actions with them, and no handler hears
-them. Bind takes options: `surf.Keys(action, keys...)` for keys bound to
-one action, a group (`surf.Readline()`, readline's set, or an app's own
-`surf.Group`), and `surf.Yield()` or `surf.Override()` for how all of
-them meet the keys the program is given.
+them. Bind's options are bindings, `surf.Action(action, keys...)`,
+`surf.Unbind(keys...)` and groups (`surf.Readline()`, readline's set, or
+an app's own `surf.Group`), and at most one of `surf.Yield()` or
+`surf.Override()` for all of them.
 
 ```go
 // a palette's query: readline's ctrl+w, ctrl+u, alt+b, …
 surf.On(ctx, "query", surf.Input(a.setQuery),
     surf.Bind(surf.Readline()))
+// readline without ctrl+k
+surf.Bind(surf.Readline(), surf.Unbind("ctrl+k"))
 // a pager: j and k scroll the log where the host scrolls it
-surf.On(ctx, "log", surf.Bind(surf.Keys(hotty.ScrollDown, "j"),
-    surf.Keys(hotty.ScrollUp, "k")))
+surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"),
+    surf.Action(hotty.ScrollUp, "k")))
 // the app's leader: mod+k and the keys after it reach its keymap
-surf.On(ctx, "main", surf.Bind(surf.Keys(hotty.Prefix, "mod+k")))
-// an app's own group, defined once
-var pager = surf.Group(surf.Keys(hotty.ScrollDown, "j"),
-    surf.Keys(hotty.ScrollEnd, "shift+g"))
+surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
+// an app's own group, made once and bound wherever it's needed
+var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
+    surf.Action(hotty.ScrollEnd, "shift+g"))
 ```
 
 - **Edit actions** (`hotty.WordBackward`, …) go on a field or on what
   holds fields, as SPEC's keymap chain has it: the nearer binding wins.
   On a control that isn't a text field (a button, a select) they are a
-  fault; a multi-line one on an `input` is too.
-- **Yield or override.** The program is given a key on an element by a
-  `surf.Key` declaration, a prefix or a KeyScope's forwarded key. A
-  binding that yields leaves such a key alone, on the element and on
-  every element around it: a page's `mod+k` still opens its palette from
-  a field under Readline, where Readline would delete to the line's end
-  with `ctrl+k`. One that overrides is written anyway, the nearer binding
-  winning. A group yields and a direct `surf.Keys` overrides;
-  `surf.Yield()` or `surf.Override()` changes it for the whole Bind or
-  Group call. A key the field's own handler declares and declines is the
+  fault; a direct multi-line one on an `input` is too.
+- **Which binding holds a key** on one element: a `surf.Key`'s or a
+  KeyScope's key, the program's; then a direct Action or Unbind (two of
+  one key to different actions are a fault); then the groups' bindings,
+  the last read winning.
+- **Then yield or override.** The program is given a key on an element
+  by a `surf.Key` declaration, a prefix or a KeyScope's forwarded key. A
+  binding that yields leaves such a key on an element around it alone,
+  and is dropped; nothing under it on the element comes back. A page's
+  `mod+k` still opens its palette from a field under Readline, where
+  Readline would delete to the line's end with `ctrl+k`. One that
+  overrides is written anyway, the nearer binding winning. A direct
+  Action overrides; an Unbind and a group's bindings yield; `Yield()` or
+  `Override()` sets every binding of its Bind (in a Group they are a
+  fault). A key the field's own handler declares and declines is its
   binding's edit.
-- **Layering.** On one element a direct `surf.Keys` replaces a group's
-  binding of its key, and a later group's replaces an earlier group's;
-  two direct ones of a key to different actions are a fault.
+- **Unbind** gives a key back to the host's own meaning (`key=default`):
+  one of a group's keys on the element, or a key a container binds, on
+  an element inside it. Taking a key back from the program says
+  `Override()`.
+- **Bindings are a render's**, as every handler is: a render that
+  passes other options rebinds the element, and the host has it with
+  the render's delta, an attribute change that keeps a field's caret; a
+  key sequence in progress goes on.
 - **A prefix** (SPEC §10.5) gives the program its key and every key
   after it, Tab and Escape too. One a Key handler takes is the surface's
   sequence: it ends once the next key has been through the handlers. One
@@ -214,13 +226,13 @@ var pager = surf.Group(surf.Keys(hotty.ScrollDown, "j"),
   does no scroll action yet: a scroll-bound key reaches the program
   there.
 - **A kit Command or Combobox** takes no handler of the app's on its
-  field: it gets Readline from a `surf.Bind(surf.Readline())` on an element around
-  the component.
+  field: it gets Readline from a `surf.Bind(surf.Readline())` on an
+  element around the component.
 - **Size.** The kit's own edit of a declined key on a text field
   (`hottyedit`) is linked only by what edits text: ui's text components,
-  `ui.KeyScope`, `surf.Readline` and `surf.Bind`. A plain `<input>` in an
-  app with none of them edits nothing on a declined key, and that is a
-  fault, once.
+  `ui.KeyScope` and `surf.Bind` (a pager's scroll-only Bind too). A
+  plain `<input>` in an app with none of them edits nothing on a declined
+  key, and that is a fault, once.
 
 ## Scoped overrides
 

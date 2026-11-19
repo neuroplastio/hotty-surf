@@ -104,7 +104,16 @@ func (s *Surface) send() error {
 	}
 	if same {
 		// The tree is the host's already; only the fields may have moved
-		// from what the markup gives them.
+		// from what the markup gives them. The bindings resolved as the
+		// last frame's did (keysig is the same), so they are carried over
+		// rather than resolved again.
+		if s.frame != nil {
+			for id, h := range f.On {
+				if old := s.frame.On[id]; old != nil {
+					h.Written = old.Written
+				}
+			}
+		}
 		for _, id := range s.fields {
 			d.field(id, s.byID[id])
 		}

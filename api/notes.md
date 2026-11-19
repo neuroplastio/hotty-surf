@@ -3389,3 +3389,69 @@ Questions for the review:
 5. **Should Keys inside a group keep "wins"?** Lean: no, a group is one
    unit with one behaviour. A key in a group that must win goes in the
    Bind beside the group.
+
+### As reviewed (p-836, ~/.cache/hotty-surf-fieldkeys/review2.md)
+
+Accepted with changes; every item applied. The final shape:
+
+```go
+func Bind(opts ...BindOption) Handler
+type BindOption interface{ bindOption() } // pointers to unexported structs
+func Action(action hotty.Action, keys ...string) BindOption
+func Unbind(keys ...string) BindOption
+func Group(opts ...BindOption) BindOption
+func Readline() BindOption
+func Yield() BindOption
+func Override() BindOption
+```
+
+- **`Keys` is `Action`** (Q1): `surf.Key(fn, "mod+k")` and
+  `surf.Keys(hotty.Prefix, "mod+k")` side by side in one `On` differed
+  by one letter. Key's first argument is the program's code, Action's the
+  host's action.
+- **Yield and Override are Bind's only** (Q3, changed). One sets every
+  binding of its Bind, groups included; in a Group it is a fault ("set it
+  where the group is bound"). The nested group that set its own is cut:
+  it let a group's author beat the caller. A per-binding choice is a
+  second Bind in the same `On`.
+- **Layering is apart from yield** (§4): on one element a key is held by
+  a surf.Key's or KeyScope's key (the program's), then a direct Action or
+  Unbind (two disagreeing are a fault), then the groups', the last read
+  winning; only then does that binding's Yield or Override decide whether
+  it gives way to the program's keys around the element. A binding that
+  yields is dropped, and nothing under it comes back (resolve, then
+  yield).
+- **`Unbind(keys...)`** (§6) writes `key=default`: readline without a key
+  is `surf.Bind(surf.Readline(), surf.Unbind("ctrl+k"))`. It yields by
+  default even given directly, so removing one of readline's keys never
+  takes a page's shortcut (the 2026-11-04 regression); taking a key back
+  from the program says `Override()`. `tab` is allowed for it.
+  `Action(hotty.Default, …)` is a fault naming Unbind.
+- **One resolver.** writeBinds resolves each element's bindings once per
+  tree and records them (rt.Handlers.Written); data-keys is written from
+  it, and the surface's own use of a declined key (EditKeys) reads it.
+  ui.Bindings reads the written data-keys, so under Override any group
+  takes a scope's key there. A render whose HTML and bindings are the
+  last one's carries the record over. keysig carries every input of the
+  resolver, Yield and Direct included, which with the same HTML makes the
+  same output: toggling Override alone repaints.
+- **Faults for groups** generalise Readline's: a group's multi-line
+  binding on an input is harmless; a group on a non-text control is one
+  fault per element; a group's binding of a key a surf.Key on the element
+  declares is silent (a direct one is a fault, but prefix); an Override
+  of a KeyScope's key on the element is silent, the scope keeps it.
+- **Values.** Every BindOption is a pointer to an unexported struct, so
+  `==` never panics; Group, Action and Unbind copy their slices, so a
+  group stays as it was made. A nil option is none; a Bind with no
+  binding (`Bind()`, `Bind(Yield())`, `Bind(Group())`) is no handler and
+  no fault.
+- **Dynamic changes** need no API: bindings are a render's. Vectors on
+  hottytest and in cells: a prefix taken, then a render that drops its
+  binding, the next key still the handler's and the sequence ending
+  after it; a field typing while a render toggles Readline keeps its
+  caret (the change is an attribute delta). The docs say so.
+- **Linking** unchanged: Bind links the text fallback, so a pager-only
+  app links it too (reported in the sizes).
+- **Docs** are the review's exact wording for Bind, BindOption, Action,
+  Group, Readline, Yield, Override and Unbind, and for surf.Key's
+  sentence.
