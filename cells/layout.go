@@ -180,7 +180,7 @@ func (l *layout) lookOf(n *html.Node, in look, st box) look {
 		// A colour of its own: no longer the muted text around it.
 		lk &^= lMuted
 	}
-	if st.look&lBold == 0 && in&lBold != 0 && strings.Contains(" "+attr(n, "class")+" ", " font-normal ") {
+	if st.look&lBold == 0 && in&lBold != 0 && st.fx.normal {
 		lk &^= lBold
 	}
 	if l.c.active {
@@ -191,18 +191,9 @@ func (l *layout) lookOf(n *html.Node, in look, st box) look {
 			lk |= lReverse
 		}
 	}
-	if disabled(n) || attr(n, "aria-disabled") == "true" {
-		lk |= lDim
-	}
-	if attr(n, "role") == "tab" && attr(n, "aria-selected") == "true" {
-		// The chosen tab, among tabs drawn alike.
-		lk |= lBold | lUnderline
-	}
-	if attr(n, "role") == "heading" && closest(n, func(a *html.Node) bool { return attr(a, "role") == "group" }) != nil {
-		// A group's label in a menu or a list: not one of its items.
-		lk |= lBold
-	}
-	return lk
+	// Dim while disabled; the chosen tab among tabs drawn alike; a
+	// group's label in a menu or a list, not one of its items (facts).
+	return lk | st.fx.add
 }
 
 // activeItem is the element the focused one names its active one
@@ -261,14 +252,18 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	in.look = l.lookOf(n, in.look, st)
 	in.pre = in.pre || st.pre
 	in.nowrap = in.nowrap || st.truncate
-	if separator(n) == "vertical" {
+	sep := st.fx.sep
+	if sep != "" && textOf(n) != "" {
+		sep = ""
+	}
+	if sep == "vertical" {
 		if l.cv != nil {
 			l.cv.put(x, y, "│", 1, in.look|lRule, n)
 		}
 		l.done(n, rect{x, y, 1, 1})
 		return 1, 1
 	}
-	if n.DataAtom == atom.Hr || separator(n) == "horizontal" {
+	if n.DataAtom == atom.Hr || sep == "horizontal" {
 		for i := 0; i < w && l.cv != nil; i++ {
 			l.cv.put(x+i, y, "─", 1, in.look|lRule, n)
 		}
@@ -277,7 +272,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	}
 	cx, cy := x+st.padL, y+st.padT
 	cw := max(w-st.padL-st.padR, 1)
-	if m := marker(n); m != "" {
+	if m := st.fx.marker; m != "" {
 		mw := widthOf(charsOf(m))
 		if l.cv != nil {
 			px := cx
@@ -291,7 +286,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		used += mw
 	}
 	var ch, cu, lead, ew int
-	if s, ok := empty(n); ok {
+	if s, ok := st.fx.empty, st.fx.hasEmpty; ok {
 		// The kit's ::before: a line of its own before the rest.
 		cs := charsOf(s)
 		if widthOf(cs) > cw {
@@ -302,7 +297,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		cy++
 		lead = 1
 	}
-	if fh, fu, ok := l.figure(n, cx, cy, cw, in); ok {
+	if fh, fu, ok := l.figure(n, st.fx.fig, cx, cy, cw, in); ok {
 		h = st.padT + fh + st.padB
 		used += st.padL + fu + st.padR
 		l.done(n, rect{x, y, w, h})
@@ -371,7 +366,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		h = max(h, def) // a column as high as it is, an item as it grew
 	}
 	used += st.padL + max(cu, ew) + st.padR
-	if h == 0 && marker(n) != "" {
+	if h == 0 && st.fx.marker != "" {
 		h = 1
 	}
 	l.done(n, rect{x, y, w, h})
@@ -572,21 +567,6 @@ func (l *layout) drawTip() {
 	}
 }
 
-// separator is the orientation of a separator with nothing in it
-// (role=separator, Basecoat's and the kit's), "" for an element that is
-// none: "horizontal" a rule row, "vertical" a bar a cell wide.
-func separator(n *html.Node) string {
-	if attr(n, "role") != "separator" || textOf(n) != "" {
-		return ""
-	}
-	for _, k := range []string{"aria-orientation", "data-orientation"} {
-		if attr(n, k) == "vertical" {
-			return "vertical"
-		}
-	}
-	return "horizontal"
-}
-
 // done records n's box, and makes its empty cells its own.
 func (l *layout) done(n *html.Node, r rect) {
 	if l.cv == nil {
@@ -735,7 +715,7 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 			if ks.display == dNone {
 				continue
 			}
-			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k) || kitGrows(k), fixed: ks.noShrink})
+			items = append(items, item{n: k, w: l.measure(k, in), grow: ks.grow || ks.full && isTextField(k) || ks.fx.grows, fixed: ks.noShrink})
 		}
 	}
 	if len(items) == 0 {
@@ -1462,6 +1442,9 @@ func (l *layout) style(n *html.Node) box {
 		return st
 	}
 	st := styleOf(n)
+	if n.Type == html.ElementNode {
+		st.fx = factsOf(n)
+	}
 	l.styles[n] = st
 	return st
 }
