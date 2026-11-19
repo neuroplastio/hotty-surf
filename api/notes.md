@@ -3057,3 +3057,133 @@ Accepted with changes; every lean applied:
 - **The API.** `api/next.txt` has the one changed line,
   `func Key(func(string) bool, ...string) Handler`. `api/v0.7.txt` waits
   for the maintainer's `make api-approve`.
+
+## Field keys, prefix and scroll declared in Go (2026-11-19)
+
+The follow-up the review of "No key binds in templates" named (Q1).
+`data-keys` carried three things besides `key=program`, and v0.7 lost
+them with the authored attribute: a text field's edit actions
+(readline's `hotty.TerminalKeys`, SPEC §10.2), `prefix` (§10.5) and the
+scroll actions (§10.2, *Scrolling keys*). plx's palette set
+`hotty.TerminalKeys` on its query, so on a host its line has no readline
+editing until this lands. Here they are declared in Go, as `surf.Key`'s
+keys are, and the runtime writes them into `data-keys` beside
+`key=program`. No template, Attrs map or string carries one.
+
+Proposed (two new names, two contracts extended):
+
+```go
+// Bind binds keys, on the element, to one of SPEC §10.2's actions other
+// than program: a text field's edit action (hotty.WordBackward, …) on a
+// field or on an element that holds fields, hotty.Prefix (§10.5), or a
+// scroll action (hotty.ScrollDown, …) on an element that isn't a field.
+func Bind(action hotty.Action, keys ...string) Handler
+
+// Readline binds, on a text field or an element that holds fields, the
+// SDK's readline keymap (hotty.TerminalKeys: ctrl+a, ctrl+e, ctrl+k,
+// ctrl+w, alt+b, …), the same on every platform.
+func Readline() Handler
+
+// Key (extended): a key fn declares wins over the element's Bind and
+// Readline bindings of it, as the program's bind did over readline.
+
+// Surface.Focus (extended): with the keyboard on it already, Focus sends
+// a=focus without a target where the focused element's keymap has a
+// prefix: it ends a key sequence (SPEC §10.5), and sends nothing else.
+```
+
+plx's palette, its one line:
+
+```go
+surf.On(b.ctx, idLine, surf.Input(m.SetQuery), surf.Readline())
+```
+
+A pager's surface: `surf.On(ctx, "log", surf.Bind(hotty.ScrollDown, "j"),
+surf.Bind(hotty.ScrollUp, "k"), surf.Bind(hotty.ScrollEnd, "shift+g"))`,
+and a list's `g g`: `surf.On(ctx, "rows", surf.Key(a.rowKey),
+surf.Bind(hotty.Prefix, "g"))`.
+
+Why: the maintainer's rule is that a key sits with the Go code that owns
+the element, and Bind is `surf.Key(fn, keys...)`'s twin, an action in
+place of fn, so both read the same way and sit in the same `surf.On`.
+The action is hotty-go's own `hotty.Action`, whose names are SPEC's, so
+the API adds no vocabulary of its own and a spec action is usable the
+day hotty-go has it. Readline is the one named set because it is the one
+an app asks for whole (plx's palette, the old A2UI host's fields); a
+`Readline()` handler, not a `[]Bind` or a string, can't be edited in
+place or written into an attribute. Ending a prefix needs the program to
+send `a=focus`, and `Surface.Focus` is the program's way to send it, but
+today it sends nothing when the surface has the keyboard.
+
+### The rules
+
+- **Bindings on one element.** Readline's come first, then the Binds,
+  so a Bind changes one of Readline's keys on the same element. Two Binds
+  of one key to different actions are a fault; the first stays. A key
+  `surf.Key` declares is the program's on that element whatever a Bind
+  or Readline says (plx's palette takes `arrow_up`, `page_up` and
+  `ctrl+n` from readline that way), and so is a KeyScope's forwarded
+  key; a Bind (not Readline) of a key that a Key handler on the same
+  element declares is a fault, unless the action is `prefix`, which gives
+  fn the key too. Across elements SPEC's chain holds: the nearer wins.
+- **Faults** (each binding dropped, the rest kept): an action that is
+  `program` (surf.Key's), `default` (declining is surf's default),
+  `insert` or not SPEC's; a key that doesn't parse, `shift+tab`,
+  `escape`, `tab` (SPEC lets only program or default have it); an edit
+  action on an element that is no text field and holds none (SPEC: it
+  does nothing there); a multi-line action (`newline`, `line-next`, …)
+  bound on an `input` itself; a scroll action on a text field (SPEC
+  leaves it out of a field's keymap).
+- **The wire.** writeKeys writes each binding as `key=action` in the
+  element's `data-keys`, sorted with the program's. A printable key bound
+  to `prefix` is given back to the fields inside (`key=default`, K27), as
+  a declared one is; a printable scroll binding needs no K27, since a
+  field's keymap leaves scroll actions out.
+- **The surface's own use** of a declared key every handler declines
+  reads the field's keymap with the chain's Bind and Readline bindings,
+  so a declined `ctrl+n` under Readline is line-next, not the default's.
+- **Prefix.** On a host the host holds the sequence. The surface learns
+  of it in Surface.Key (the key the focused chain binds to prefix) and
+  does no element's own use of a declined key until the sequence ends:
+  the host didn't use those keys. Surface.Focus ends it (above), Blur and
+  a focus or blur from the host end it too.
+- **cells** read the wire as a host does: edit actions and scroll actions
+  already resolve there (`hotty.Resolve`, `Keymap.Scroll`). A prefix is
+  added to the Screen: after a key the keymap binds to prefix, every key
+  is the program's, Tab and Escape too, until the program's a=focus or
+  a=blur, the Screen's losing the keyboard, or a press that focuses an
+  element (SPEC §10.5).
+- **OwnKeys** lists scroll-bound keys on an element that isn't a field
+  (the host takes them ahead of the program), with shift where it isn't a
+  character, but not a printable one on an element that types. A text
+  field's edit bindings were already listed through its resolved keymap.
+  Prefix keys are not listed: they are the program's (its leader).
+- **Lint.** The `data-keys` rule is unchanged; its message points at
+  Bind and Readline too.
+
+### Size
+
+`ui` set the text fallback (`hottyedit`, graphemes) at init, so every
+TinyGo app linked it. It moves behind the components that edit text
+(Input, Textarea, Combobox, Command, InputGroup's input), KeyScope, and
+`surf.Bind`/`surf.Readline`; the toggle and pick fallbacks, which are
+small, stay linked with `ui`. A plain `<input>` in a template, with
+declared keys, in an app that uses none of those, loses the surface's own
+edit of a declined key, as an app without `ui` already does; the
+measurement and that case go in the report.
+
+Questions for the review:
+
+1. **`Bind(action, keys...)` and `Readline()`, or a `[]Bind` value.**
+   Lean: the two handlers. A `surf.Keymap(binds ...surf.KeyBind)` with
+   a `surf.ReadlineKeys() []surf.KeyBind` adds a type and lets an app
+   edit the set in place.
+2. **Key against Bind on one element.** Lean: Key wins over Readline
+   silently (the palette needs it), and a Bind of a Key's key is a
+   fault, but for prefix.
+3. **Ending a prefix.** Lean: Surface.Focus sends a=focus where the chain
+   has a prefix. The other way is a surface that ends the sequence by
+   itself after the key that follows (a `g g`), but a leader that the
+   program's own keymap reads never passes through the surface.
+4. **Other named sets.** Lean: Readline only. A pager's j/k set is a
+   handful of Binds, and no app asks for one yet.
