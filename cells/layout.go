@@ -46,17 +46,18 @@ type layout struct {
 	caret     [2]int
 	hasCaret  bool
 	measuring bool
-	memo      map[memoKey]int
-	// styles and colours are each element's styleOf and coloursOf in this
-	// pass, shared with the measuring layouts: the tree doesn't change
-	// while it is laid out.
-	styles  map[*html.Node]box
-	colours map[*html.Node][2]Role
-	// texts are each text's pieces in this pass, in each look it is laid
-	// out in, as textPieces makes them after no pieces; kidsOf each
-	// element's children in the order they show.
-	texts  map[*html.Node][]textPass
-	kidsOf map[*html.Node][]*html.Node
+	// widthOnly is measure's layout, whose heights no one reads: a row
+	// doesn't lay its items out again for them.
+	widthOnly bool
+	// nodes are what a pass knows of each node (kept), shared with the
+	// measuring layouts: the tree doesn't change while it is laid out.
+	// Widths of another gen than the pass's are not known. lastN and
+	// lastM are the node last looked up and its memo: a pass asks of
+	// one node several times in a row.
+	nodes map[*html.Node]*nodeMemo
+	gen   uint64
+	lastN *html.Node
+	lastM *nodeMemo
 	// heights are the definite heights of the elements that have one
 	// (h-screen, h-full, h-[…]), and of a column's growing items, which
 	// it gives the rows its other items leave (flex-1).
@@ -91,9 +92,18 @@ func scrollLimit(value string, screenRows int) (int, bool) {
 	return 0, false
 }
 
-type memoKey struct {
-	n   *html.Node
-	pre bool
+// widths are a node's widths when nothing wraps (measure), as white
+// space is collapsed and as it is kept (pre); has says which are known.
+type widths struct {
+	w   [2]int
+	has [2]bool
+}
+
+func preIndex(pre bool) int {
+	if pre {
+		return 1
+	}
+	return 0
 }
 
 // inh is what an element's content inherits: its look, and whether white
@@ -118,17 +128,14 @@ func (c *Screen) layout() *layout {
 		boxes:   map[*html.Node]rect{},
 		fields:  map[*html.Node]rect{},
 		scrolls: map[*html.Node]scrollBox{},
-		memo:    map[memoKey]int{},
 	}
 	if c.kept == nil {
-		c.kept = &kept{
-			styles:  map[*html.Node]box{},
-			colours: map[*html.Node][2]Role{},
-			texts:   map[*html.Node][]textPass{},
-			kidsOf:  map[*html.Node][]*html.Node{},
-		}
+		c.kept = &kept{nodes: map[*html.Node]*nodeMemo{}}
 	}
-	l.styles, l.colours, l.texts, l.kidsOf = c.kept.styles, c.kept.colours, c.kept.texts, c.kept.kidsOf
+	// A Screen's widths are its pass's: a field's value changes them
+	// without a change to the tree.
+	c.kept.gen++
+	l.nodes, l.gen = c.kept.nodes, c.kept.gen
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
 		l.drawOverlays()
@@ -155,14 +162,59 @@ func (c *Screen) layout() *layout {
 
 // measure is the width n's content takes when nothing wraps.
 func (l *layout) measure(n *html.Node, in inh) int {
-	k := memoKey{n, in.pre}
-	if w, ok := l.memo[k]; ok {
+	i := preIndex(in.pre)
+	if w, ok := l.widthOf(n, i); ok {
 		return w
 	}
-	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
+	m := &layout{c: l.c, measuring: true, widthOnly: true, nodes: l.nodes, gen: l.gen}
 	_, w := m.node(n, 0, 0, infinite, in)
-	l.memo[k] = w
+	l.setWidth(n, i, w)
 	return w
+}
+
+// measureText is the width text k takes in n's line when nothing wraps,
+// memoized as measure's.
+func (l *layout) measureText(k, n *html.Node, in inh) int {
+	i := preIndex(in.pre)
+	if w, ok := l.widthOf(k, i); ok {
+		return w
+	}
+	m := &layout{c: l.c, measuring: true, widthOnly: true, nodes: l.nodes, gen: l.gen}
+	_, w := m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
+	l.setWidth(k, i, w)
+	return w
+}
+
+// widthOf is n's width when nothing wraps (measure), if this pass's gen
+// knows it.
+func (l *layout) widthOf(n *html.Node, i int) (int, bool) {
+	m := l.memoOf(n)
+	if m.wGen != l.gen || !m.w.has[i] {
+		return 0, false
+	}
+	return m.w.w[i], true
+}
+
+func (l *layout) setWidth(n *html.Node, i, w int) {
+	m := l.memoOf(n)
+	if m.wGen != l.gen {
+		m.w, m.wGen = widths{}, l.gen
+	}
+	m.w.w[i], m.w.has[i] = w, true
+}
+
+// memoOf is n's memo, made where it has none.
+func (l *layout) memoOf(n *html.Node) *nodeMemo {
+	if n == l.lastN && l.lastM != nil {
+		return l.lastM
+	}
+	m := l.nodes[n]
+	if m == nil {
+		m = &nodeMemo{}
+		l.nodes[n] = m
+	}
+	l.lastN, l.lastM = n, m
+	return m
 }
 
 func (l *layout) ext(n *html.Node, r rect) {
@@ -176,7 +228,7 @@ func (l *layout) ext(n *html.Node, r rect) {
 // adds, reverse while it has the keyboard, dim while disabled.
 func (l *layout) lookOf(n *html.Node, in look, st box) look {
 	lk := in | st.look
-	if fg, _ := l.colour(n); fg != "" && fg != "muted-foreground" {
+	if fg, _ := l.colour(n); unmutes(fg) {
 		// A colour of its own: no longer the muted text around it.
 		lk &^= lMuted
 	}
@@ -416,7 +468,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 	var growers []*html.Node
 	used, items := 0, 0
-	m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
+	m := &layout{c: l.c, measuring: true, nodes: l.nodes, gen: l.gen}
 	var run []*html.Node
 	flush := func() {
 		if len(run) > 0 {
@@ -500,7 +552,7 @@ func (l *layout) drawOverlays() {
 	for len(l.overlays) > 0 {
 		o := l.overlays[0]
 		l.overlays = l.overlays[1:]
-		m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
+		m := &layout{c: l.c, measuring: true, nodes: l.nodes, gen: l.gen}
 		h, pw := m.node(o.n, 0, 0, o.w, o.in)
 		pw = max(min(pw, o.w), 1)
 		for j := o.y; j < o.y+h; j++ {
@@ -701,10 +753,7 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 			if !in.pre && strings.TrimSpace(k.Data) == "" {
 				continue
 			}
-			it := item{n: k}
-			m := &layout{c: l.c, measuring: true, memo: l.memo, styles: l.styles, colours: l.colours, texts: l.texts, kidsOf: l.kidsOf}
-			_, it.w = m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
-			items = append(items, it)
+			items = append(items, item{n: k, w: l.measureText(k, n, in)})
 		case html.ElementNode:
 			ks := l.style(k)
 			if ks.display == dNone {
@@ -722,6 +771,10 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		sum += it.w
 	}
 	used = sum + gaps
+	if l.widthOnly {
+		// measure's: the width alone.
+		return 0, used
+	}
 	if l.measuring {
 		for _, it := range items {
 			hh := 0
@@ -1040,6 +1093,16 @@ func (l *layout) inline(nodes []*html.Node, stop *html.Node, x, y, w int, in inh
 			l.paint(p.chars, x+cx, y+cy, p.look, p.own, stop)
 			cx++
 		case pWord:
+			if l.cv == nil && w >= infinite/2 {
+				// Measured where nothing wraps and nothing is drawn:
+				// the word's width, as its characters would add up.
+				if len(p.chars) > 0 {
+					cx += p.w
+					lineUsed = true
+					used = max(used, cx)
+				}
+				continue
+			}
 			if cx > 0 && cx+p.w > w {
 				newline()
 			}
@@ -1435,24 +1498,32 @@ func iconLabel(n *html.Node) string {
 
 // style is styleOf(n), once a pass.
 func (l *layout) style(n *html.Node) box {
-	if st, ok := l.styles[n]; ok {
-		return st
+	m := l.memoOf(n)
+	if m.hasSt {
+		return m.st
 	}
 	st := styleOf(n)
 	if n.Type == html.ElementNode {
 		st.fx = factsOf(n)
 	}
-	l.styles[n] = st
+	m.st, m.hasSt = st, true
 	return st
+}
+
+// unmutes says whether an element's own text colour fg ends the muted
+// text around it (lookOf).
+func unmutes(fg Role) bool {
+	return fg != "" && fg != "muted-foreground"
 }
 
 // colour is coloursOf(n), once a pass.
 func (l *layout) colour(n *html.Node) (fg, bg Role) {
-	if r, ok := l.colours[n]; ok {
-		return r[0], r[1]
+	m := l.memoOf(n)
+	if m.hasCol {
+		return m.fg, m.bg
 	}
 	fg, bg = coloursOf(n)
-	l.colours[n] = [2]Role{fg, bg}
+	m.fg, m.bg, m.hasCol = fg, bg, true
 	return fg, bg
 }
 
@@ -1468,7 +1539,8 @@ type textPass struct {
 func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
 	var t []piece
 	found := false
-	for _, e := range l.texts[n] {
+	m := l.memoOf(n)
+	for _, e := range m.texts {
 		if e.in == in {
 			t, found = e.ps, true
 			break
@@ -1476,7 +1548,7 @@ func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
 	}
 	if !found {
 		t = textPieces(nil, n.Data, in, n.Parent)
-		l.texts[n] = append(l.texts[n], textPass{in, t})
+		m.texts = append(m.texts, textPass{in, t})
 	}
 	if !in.pre && len(t) > 0 && t[0].kind == pSpace && len(ps) > 0 && ps[len(ps)-1].kind == pSpace {
 		t = t[1:]
@@ -1486,23 +1558,76 @@ func (l *layout) textPieces(ps []piece, n *html.Node, in inh) []piece {
 
 // kids are kids(n), once a pass.
 func (l *layout) kids(n *html.Node) []*html.Node {
-	if ks, ok := l.kidsOf[n]; ok {
-		return ks
+	if m := l.memoOf(n); m.hasKids {
+		return m.kids
 	}
 	ks := kids(n, l.style(n))
-	l.kidsOf[n] = ks
+	m := l.memoOf(n)
+	m.kids, m.hasKids = ks, true
 	return ks
 }
 
 // kept is what a layout pass knows of the tree that holds until it
-// changes (Screen.changed): each element's style, colours and children,
-// and each text's pieces. The widths (memo) are not: a field's
-// value changes them without a change to the tree.
+// changes (Screen.changed), node by node. A Screen's widths are its
+// pass's (gen): a field's value changes them without a change to the
+// tree.
 type kept struct {
-	styles  map[*html.Node]box
-	colours map[*html.Node][2]Role
-	texts   map[*html.Node][]textPass
-	kidsOf  map[*html.Node][]*html.Node
+	nodes map[*html.Node]*nodeMemo
+	gen   uint64
+}
+
+// nodeMemo is what a pass knows of a node: an element's style, colours
+// and children, a text's pieces in each look it is laid out in (as
+// textPieces makes them after no pieces), and its widths as of wGen.
+type nodeMemo struct {
+	st      box
+	hasSt   bool
+	fg, bg  Role
+	hasCol  bool
+	kids    []*html.Node
+	hasKids bool
+	texts   []textPass
+	w       widths
+	wGen    uint64
+}
+
+// forgetStyles forgets every node's style and children, and the widths
+// they make: an attribute changed, which any element's style may read
+// (kit, filtered, barLabels).
+func (k *kept) forgetStyles() {
+	for _, m := range k.nodes {
+		m.hasSt, m.hasKids = false, false
+		m.kids = nil
+	}
+	k.gen++
+}
+
+// forgetLooks forgets the colours of n and its descendants, and the
+// pieces of their texts.
+func (k *kept) forgetLooks(n *html.Node) {
+	walk(n, func(d *html.Node) {
+		if m := k.nodes[d]; m != nil {
+			m.hasCol = false
+			m.texts = nil
+		}
+	})
+}
+
+// forgetColours forgets the colours of n and its descendants. Their
+// texts' pieces hold: they are kept by the look they were made in.
+func (k *kept) forgetColours(n *html.Node) {
+	walk(n, func(d *html.Node) {
+		if m := k.nodes[d]; m != nil {
+			m.hasCol = false
+		}
+	})
+}
+
+// forgetText forgets a text's pieces.
+func (k *kept) forgetText(n *html.Node) {
+	if m := k.nodes[n]; m != nil {
+		m.texts = nil
+	}
 }
 
 // item is a flex row's item: its element or text, its width, whether

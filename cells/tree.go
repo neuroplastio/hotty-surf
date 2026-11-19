@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -34,8 +36,7 @@ func (c *Screen) load(name, doc string) error {
 			// An element's style reads its parent's, children's,
 			// descendants' and siblings' attributes too (kit, filtered,
 			// barLabels): any change, and none of them holds.
-			c.kept.styles = map[*html.Node]box{}
-			c.kept.kidsOf = map[*html.Node][]*html.Node{}
+			c.kept.forgetStyles()
 		}
 		c.fields = map[*html.Node]*field{}
 		c.focused, c.remembered = nil, nil
@@ -355,10 +356,28 @@ func unset(n *html.Node, k string) {
 // tokens says whether the space-separated list in n's attribute k holds
 // tok (class~=, data-on~=).
 func tokens(n *html.Node, k, tok string) bool {
-	for t := range strings.FieldsSeq(attr(n, k)) {
-		if t == tok {
+	return hasField(attr(n, k), tok)
+}
+
+// hasField says whether tok is one of strings.Fields(s), for a tok with
+// no space in it, found where it stands rather than by splitting s.
+func hasField(s, tok string) bool {
+	if tok == "" {
+		return false
+	}
+	for i := 0; i+len(tok) <= len(s); {
+		j := strings.Index(s[i:], tok)
+		if j < 0 {
+			return false
+		}
+		j += i
+		end := j + len(tok)
+		before, _ := utf8.DecodeLastRuneInString(s[:j])
+		after, _ := utf8.DecodeRuneInString(s[end:])
+		if (j == 0 || unicode.IsSpace(before)) && (end == len(s) || unicode.IsSpace(after)) {
 			return true
 		}
+		i = j + 1
 	}
 	return false
 }
@@ -425,7 +444,7 @@ func (c *Screen) refill(a, b *html.Node) (attrs bool) {
 	case html.TextNode:
 		if a.Data != b.Data {
 			a.Data = b.Data
-			delete(k.texts, a)
+			k.forgetText(a)
 		}
 	case html.ElementNode:
 		if !slices.Equal(a.Attr, b.Attr) {
@@ -433,10 +452,7 @@ func (c *Screen) refill(a, b *html.Node) (attrs bool) {
 			attrs = true
 			// Its colours, and its descendants' (a scheme's class), and
 			// the pieces of its texts.
-			walk(a, func(n *html.Node) {
-				delete(k.colours, n)
-				delete(k.texts, n)
-			})
+			k.forgetLooks(a)
 		}
 	}
 	for ka, kb := a.FirstChild, b.FirstChild; ka != nil; ka, kb = ka.NextSibling, kb.NextSibling {

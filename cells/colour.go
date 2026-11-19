@@ -103,11 +103,39 @@ func copyGrid(g [][]Cell) [][]Cell {
 	return out
 }
 
+// cellOf is a canvas cell of l as Cells gives it: its roles its own
+// element's, or the nearest ancestor's that has them, or its look's.
+func cellOf(l *layout, k cell, rc *roleCache) Cell {
+	if k.own != rc.last || !rc.ok {
+		rc.fg, rc.bg = rolesAt(l, k.own, rc.memo)
+		rc.last, rc.ok = k.own, true
+	}
+	fg, bg := rc.fg, rc.bg
+	switch {
+	case k.look&lTip != 0:
+		fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
+	case k.look&lRule != 0:
+		fg = "border"
+	case k.look&lMuted != 0:
+		fg = "muted-foreground"
+	}
+	return Cell{Text: k.s, Fg: fg, Bg: bg, Attr: attrOf(k.look)}
+}
+
+// roleCache is rolesAt's memo while a grid is made, and the last
+// element's roles: a run of cells is mostly one element's.
+type roleCache struct {
+	memo   map[*html.Node][2]Role
+	last   *html.Node
+	ok     bool
+	fg, bg Role
+}
+
 // cellsOf is Cells' grid of l: also what Dirty compares, so a change that
 // shows only in the roles (a colour class, the selected band moving)
 // counts.
 func (c *Screen) cellsOf(l *layout) [][]Cell {
-	memo := map[*html.Node][2]Role{}
+	rc := &roleCache{memo: map[*html.Node][2]Role{}}
 	out := make([][]Cell, c.rows)
 	all := make([]Cell, c.rows*c.cols) // the grid in one array
 	for i := range out {
@@ -122,16 +150,7 @@ func (c *Screen) cellsOf(l *layout) [][]Cell {
 			if x < len(src) {
 				k = src[x]
 			}
-			fg, bg := rolesAt(l, k.own, memo)
-			switch {
-			case k.look&lTip != 0:
-				fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
-			case k.look&lRule != 0:
-				fg = "border"
-			case k.look&lMuted != 0:
-				fg = "muted-foreground"
-			}
-			row[x] = Cell{Text: k.s, Fg: fg, Bg: bg, Attr: attrOf(k.look)}
+			row[x] = cellOf(l, k, rc)
 		}
 		out[i] = row
 	}
