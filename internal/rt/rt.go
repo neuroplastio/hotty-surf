@@ -25,8 +25,8 @@ type Handlers struct {
 	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
 	// Binds are surf.Bind's bindings, canonical for the frame's
-	// platform, one per key, layered as surf.Bind says (a direct Keys's
-	// over a group's, a later group's over an earlier). The runtime
+	// platform, one per key, layered as surf.Bind says (a direct Action's
+	// or Unbind's over a group's, a later group's over an earlier). The runtime
 	// writes each as key=action, but where Keys declares the key, or
 	// one yields to a key given around it.
 	Binds []Bind

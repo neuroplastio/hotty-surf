@@ -259,9 +259,9 @@ func TestDeclinedEditUnlinkedIsAFault(t *testing.T) {
 	}
 }
 
-// Groups and the override options: a group yields and a direct Keys
-// overrides, unless Yield or Override says otherwise for its whole call,
-// nested groups included but for one that sets its own.
+// Groups and the override options: a group and an Unbind yield and a
+// direct Action overrides, unless Yield or Override says otherwise for
+// its whole Bind, groups included; in a Group either is a fault.
 func TestBindOptions(t *testing.T) {
 	take := func(string) bool { return true }
 	cases := []struct {

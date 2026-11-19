@@ -197,7 +197,9 @@ var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
   Action overrides; an Unbind and a group's bindings yield; `Yield()` or
   `Override()` sets every binding of its Bind (in a Group they are a
   fault). A key the field's own handler declares and declines is its
-  binding's edit.
+  binding's edit. A key declared around the field whose handler declines
+  it is what the host does with the wire: under a yielding Readline, the
+  platform default's; under `Override()`, Readline's edit.
 - **Unbind** gives a key back to the host's own meaning (`key=default`):
   one of a group's keys on the element, or a key a container binds, on
   an element inside it. Taking a key back from the program says
