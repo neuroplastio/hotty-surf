@@ -116,3 +116,24 @@ func TestAutofocusNothingIsAFault(t *testing.T) {
 		t.Errorf("faults %q, want Autofocus's", s.faults)
 	}
 }
+
+// An id a hotty value can't carry comes back from a host changed (SPEC
+// §3.2), so its handlers would never fire: a fault at render.
+func TestOnIDTheWireChangesIsAFault(t *testing.T) {
+	for _, id := range []string{"leaf:1", "a;b", "k=v", "café", "tab\x01"} {
+		s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			fmt.Fprintf(w, `<div><button%s>a</button></div>`, attrsOf(On(ctx, id, Click(func() {}))))
+			return nil
+		}))
+		if len(s.faults) == 0 || !strings.Contains(s.faults[0], "has a character a hotty value can't carry") {
+			t.Errorf("%q: faults %q, want On's", id, s.faults)
+		}
+	}
+	s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		fmt.Fprintf(w, `<div><button%s>a</button></div>`, attrsOf(On(ctx, "row-1_a.b", Click(func() {}))))
+		return nil
+	}))
+	if len(s.faults) != 0 {
+		t.Errorf("a clean id: faults %q", s.faults)
+	}
+}

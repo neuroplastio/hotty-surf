@@ -21,6 +21,10 @@ import (
 // button, a link, a summary or a field, a [Click] handler makes it report
 // clicks (data-on).
 //
+// The id is sent to and from the host as a hotty value (SPEC §3.2): one
+// with ':', ';', '=', a control character or a character outside ASCII
+// comes back changed, and is a fault.
+//
 // A render registers each id once. A second On for an id in the same render
 // fails a surftest test; elsewhere the first one's handlers stay and the
 // second's are dropped. A list gives each item an id of its own
@@ -54,6 +58,12 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	if f.On[id] != nil {
 		f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
 		return a
+	}
+	if clean := hotty.Sanitize(id); clean != id {
+		// SPEC §3.2: a value can't carry ':', ';', '=', a control character
+		// or anything outside ASCII, so the host names the element by the
+		// cleaned id, and no handler is registered under that.
+		f.Faults = append(f.Faults, "surf.On: the id "+strconv.Quote(id)+" has a character a hotty value can't carry (':', ';', '=', a control character or non-ASCII); a host sends it back as "+strconv.Quote(clean)+", and its handlers never hear it")
 	}
 	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
 	clicks := 0
