@@ -3148,7 +3148,10 @@ today it sends nothing when the surface has the keyboard.
   of it in Surface.Key (the key the focused chain binds to prefix) and
   does no element's own use of a declined key until the sequence ends:
   the host didn't use those keys. Surface.Focus ends it (above), Blur and
-  a focus or blur from the host end it too.
+  a focus or blur from the host end it too, and so does any a=focus the
+  surface writes: a render's (Autofocus, a modal's), and one written
+  while the prefix key itself was handled, which then starts no sequence
+  (p-835's verification of fa14556).
 - **cells** read the wire as a host does: edit actions and scroll actions
   already resolve there (`hotty.Resolve`, `Keymap.Scroll`). A prefix is
   added to the Screen: after a key the keymap binds to prefix, every key

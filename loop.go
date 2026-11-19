@@ -167,8 +167,11 @@ func (s *Surface) send() error {
 	if f.Focus != "" && (f.Focus != s.asked || s.askDue || f.Refocus && f.Focus != s.focused) {
 		cmds = append(cmds, hotty.Focus(s.name, f.Focus))
 		// The host sends no focus for focus the program gives (SPEC
-		// §10.1): the surface knows it from here.
+		// §10.1): the surface knows it from here. a=focus ends a key
+		// sequence too (§10.5), the surface's and the host's.
 		s.focused, s.focusIn = f.Focus, s.chain(f.Focus)
+		s.prefixed, s.prefixTaken = false, false
+		s.focusSent++
 		s.lastFocus = f.Focus
 		s.blurAsked = false
 	}
@@ -526,16 +529,20 @@ func (s *Surface) key(k string) (bool, error) {
 	// after it has been through the handlers: the surface sends a=focus
 	// without a target itself. One no handler took is the program's
 	// keymap's (a leader), which ends it with Focus.
-	held, auto := s.prefixed, s.prefixTaken
+	// A prefix whose handler, or the render after it, sent a=focus or
+	// a=blur has ended already (focusSent moved): it starts nothing.
+	held, auto, sent := s.prefixed, s.prefixTaken, s.focusSent
 	starts := !held && s.prefixAt(s.byID[s.focused], k)
 	taken, err := s.route(k, held)
 	switch {
 	case err != nil:
+	case starts && s.focusSent != sent:
 	case starts:
 		s.prefixed, s.prefixTaken = true, taken
 	case held && auto && s.prefixed:
 		s.prefixed, s.prefixTaken = false, false
 		if s.out != nil {
+			s.focusSent++
 			err = s.write([]string{hotty.Focus(s.name, "")})
 		}
 	}
@@ -806,6 +813,7 @@ func (s *Surface) takeFocus() (bool, error) {
 		// nothing and ends a key sequence (SPEC §10.1, §10.5).
 		s.prefixed, s.prefixTaken = false, false
 		if s.out != nil {
+			s.focusSent++
 			return true, s.write([]string{hotty.Focus(s.name, "")})
 		}
 		return true, nil
@@ -823,6 +831,7 @@ func (s *Surface) takeFocus() (bool, error) {
 		return false, nil
 	}
 	s.blurAsked = false
+	s.focusSent++
 	if err := s.write([]string{hotty.Focus(s.name, id)}); err != nil {
 		return false, err
 	}
@@ -898,6 +907,7 @@ func (s *Surface) blur() (bool, error) {
 		return true, nil
 	}
 	s.blurAsked = true
+	s.focusSent++
 	return true, s.write([]string{hotty.Blur(s.name)})
 }
 

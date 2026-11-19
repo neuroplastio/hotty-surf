@@ -442,3 +442,53 @@ func TestRebindKeepsTheCaret(t *testing.T) {
 		}
 	})
 }
+
+// A render that moves the keyboard (Autofocus) after a prefix ends the
+// sequence, as its a=focus does on the host (SPEC §10.1, §10.5): a key the
+// field declares and declines is then the field's own edit, whether a Key
+// handler took the prefix or none did (the program's leader).
+func TestRenderFocusEndsPrefix(t *testing.T) {
+	for _, takes := range []bool{true, false} {
+		t.Run(fmt.Sprint("taken=", takes), func(t *testing.T) {
+			value, moved := "", false
+			view := func() templ.Component {
+				value, moved = "", false
+				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					if moved {
+						surf.Autofocus(ctx, "f")
+					}
+					lead := func(k string) bool {
+						if k == "g" {
+							moved = true
+						}
+						return takes
+					}
+					decline := func(string) bool { return false }
+					rows := templ.Raw(`<div` + attrString(surf.On(ctx, "rows", surf.Key(lead, "g"), surf.Bind(surf.Action(hotty.Prefix, "g")))) + ` tabindex="0">rows</div>`)
+					field := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "f", surf.Input(func(v string) { value = v }), surf.Key(decline, "backspace"))})
+					return outside(templ.Join(rows, field)).Render(ctx, w)
+				})
+			}
+			both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+				press("g")
+				if !takes {
+					// The program's own keymap read the leader, and moves
+					// the keyboard to the field with a render of its own.
+					moved = true
+					if err := s.Update(); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if s.Focused() != "f" {
+					t.Fatalf("focused %q after the leader's render", s.Focused())
+				}
+				for _, k := range []string{"a", "b", "backspace"} {
+					press(k)
+				}
+				if value != "a" {
+					t.Errorf("value %q, want a: a declined backspace after the render's a=focus is the field's own edit", value)
+				}
+			})
+		})
+	}
+}

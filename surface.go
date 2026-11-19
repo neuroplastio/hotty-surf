@@ -89,6 +89,7 @@ type Surface struct {
 	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
 	prefixed     bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)
 	prefixTaken  bool            // a Key handler took that key: the surface ends the sequence after the next key
+	focusSent    uint64          // a=focus and a=blur the surface has written: a prefix whose key's handling wrote one has ended
 	textFaulted  bool            // the fault that the kit's text editing isn't linked was recorded
 	sending      bool
 	deferred     []hotty.Event
@@ -139,6 +140,8 @@ func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
 	s.sheetSent, s.limits = nil, caps.Limits
+	// A new host holds no key sequence.
+	s.prefixed, s.prefixTaken = false, false
 }
 
 // Sheet is a stylesheet that documents link as a resource (SPEC §7.1)
