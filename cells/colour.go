@@ -2,6 +2,7 @@ package cells
 
 import (
 	"strings"
+	"unicode"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -419,6 +420,12 @@ func colourOnly(a, b []html.Attribute) bool {
 		ci = i
 	}
 	if ci < 0 {
+		return false
+	}
+	// Rules split a class at spaces in three ways (FieldsSeq, hasField,
+	// " font-normal "): only where every gap is a space do they agree.
+	odd := func(r rune) bool { return r != ' ' && unicode.IsSpace(r) }
+	if strings.ContainsFunc(a[ci].Val, odd) || strings.ContainsFunc(b[ci].Val, odd) {
 		return false
 	}
 	// The tokens that aren't colours, in turn from each.

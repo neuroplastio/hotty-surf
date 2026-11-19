@@ -231,7 +231,7 @@ func (c *Screen) op(o hotty.Op) error {
 			unset(t, o.Key)
 		}
 		if o.Key == "id" {
-			c.reIDed = true
+			c.reIDed, c.ids = true, nil
 		}
 		c.attrsChanged(t, was)
 	case "text":
@@ -248,7 +248,7 @@ func (c *Screen) op(o hotty.Op) error {
 		}
 		clear(t)
 		t.AppendChild(&html.Node{Type: html.TextNode, Data: v})
-		c.reshaped = true
+		c.reshaped, c.ids = true, nil
 	case "inner":
 		old := map[string]*html.Node{}
 		walk(t, func(n *html.Node) {
@@ -261,7 +261,7 @@ func (c *Screen) op(o hotty.Op) error {
 			t.AppendChild(n)
 		}
 		c.adopt(t, old)
-		c.reshaped = true
+		c.reshaped, c.ids = true, nil
 	case "replace", "before", "after":
 		p := t.Parent
 		if p == nil {
@@ -277,7 +277,7 @@ func (c *Screen) op(o hotty.Op) error {
 		if o.Op == "replace" {
 			p.RemoveChild(t)
 		}
-		c.reshaped = true
+		c.reshaped, c.ids = true, nil
 	case "append", "prepend":
 		first := t.FirstChild
 		for _, n := range fragment(v, t) {
@@ -287,13 +287,13 @@ func (c *Screen) op(o hotty.Op) error {
 				t.InsertBefore(n, first)
 			}
 		}
-		c.reshaped = true
+		c.reshaped, c.ids = true, nil
 	case "remove":
 		if t.Parent == nil {
 			return fmt.Errorf("no parent (%s)", hotty.EINVAL)
 		}
 		t.Parent.RemoveChild(t)
-		c.reshaped = true
+		c.reshaped, c.ids = true, nil
 	case "reveal":
 		if v != hotty.RevealNearest && v != hotty.RevealStart && v != hotty.RevealEnd {
 			return fmt.Errorf("unknown reveal alignment %q (%s)", v, hotty.EINVAL)
