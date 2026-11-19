@@ -103,15 +103,7 @@ func List(p ListProps) templ.Component {
 				v.memo.current = v.items[i].id
 			}
 		}
-		stop := v.stop()
-		out := body.String()
-		for i := range v.items {
-			val := "-1"
-			if i == stop {
-				val = "0"
-			}
-			out = strings.Replace(out, `tabindex="`+v.tag+strconv.Itoa(i)+`"`, `tabindex="`+val+`"`, 1)
-		}
+		out := stopTabindex(body.String(), v.tag, len(v.items), v.stop())
 		if ask := v.memo.focus; ask != "" {
 			v.memo.focus = ""
 			if i := v.index(ask); i >= 0 && !v.items[i].disabled {
@@ -120,6 +112,45 @@ func List(p ListProps) templ.Component {
 		}
 		return listBox(p, out).Render(ctx, w)
 	}), false)
+}
+
+// stopTabindex writes each item's tabindex in one pass over the body: "0"
+// on the Tab stop, "-1" on every other item. Each item's markup carries the
+// placeholder tabindex="<tag><i>" (itemAttrs), its first occurrence the
+// item's own. It writes what one strings.Replace per item did, without
+// going over the body once per item.
+func stopTabindex(body, tag string, n, stop int) string {
+	mark := `tabindex="` + tag
+	var b strings.Builder
+	b.Grow(len(body))
+	seen := make([]bool, n)
+	for {
+		at := strings.Index(body, mark)
+		if at < 0 {
+			b.WriteString(body)
+			return b.String()
+		}
+		rest := body[at+len(mark):]
+		end := strings.IndexByte(rest, '"')
+		i, err := strconv.Atoi(rest[:max(end, 0)])
+		if end < 0 || err != nil || i < 0 || i >= n || seen[i] {
+			// Not one of ours, or an item's second: left as it is, as the
+			// one Replace per item left it.
+			b.WriteString(body[:at+len(mark)])
+			body = rest
+			continue
+		}
+		seen[i] = true
+		val := "-1"
+		if i == stop {
+			val = "0"
+		}
+		b.WriteString(body[:at])
+		b.WriteString(`tabindex="`)
+		b.WriteString(val)
+		b.WriteByte('"')
+		body = rest[end+1:]
+	}
 }
 
 // listKey is the context key of the List an item renders in.
