@@ -119,11 +119,16 @@ func (c *Screen) layout() *layout {
 		fields:  map[*html.Node]rect{},
 		scrolls: map[*html.Node]scrollBox{},
 		memo:    map[memoKey]int{},
-		styles:  map[*html.Node]box{},
-		colours: map[*html.Node][2]Role{},
-		texts:   map[textKey][]piece{},
-		kidsOf:  map[*html.Node][]*html.Node{},
 	}
+	if c.kept == nil {
+		c.kept = &kept{
+			styles:  map[*html.Node]box{},
+			colours: map[*html.Node][2]Role{},
+			texts:   map[textKey][]piece{},
+			kidsOf:  map[*html.Node][]*html.Node{},
+		}
+	}
+	l.styles, l.colours, l.texts, l.kidsOf = c.kept.styles, c.kept.colours, c.kept.texts, c.kept.kidsOf
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
 		l.drawOverlays()
@@ -1501,4 +1506,15 @@ func (l *layout) kids(n *html.Node) []*html.Node {
 	ks := kids(n, l.style(n))
 	l.kidsOf[n] = ks
 	return ks
+}
+
+// kept is what a layout pass knows of the tree that holds until it
+// changes (Screen.changed): each element's style, colours and children,
+// and each text's pieces. The widths (memo) are not: a field's
+// value changes them without a change to the tree.
+type kept struct {
+	styles  map[*html.Node]box
+	colours map[*html.Node][2]Role
+	texts   map[textKey][]piece
+	kidsOf  map[*html.Node][]*html.Node
 }

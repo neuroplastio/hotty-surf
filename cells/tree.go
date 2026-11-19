@@ -38,6 +38,7 @@ func (c *Screen) load(name, doc string) error {
 func (c *Screen) changed() {
 	c.ids = nil
 	c.lay = nil
+	c.kept = nil
 }
 
 // byID is the element with the id, or nil.

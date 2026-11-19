@@ -76,6 +76,7 @@ type Screen struct {
 	remembered *html.Node
 
 	lay         *layout
+	kept        *kept
 	scroll      int
 	revealAfter *html.Node
 	revealWhere string
