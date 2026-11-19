@@ -1568,7 +1568,7 @@ func (l *layout) kids(n *html.Node) []*html.Node {
 }
 
 // kept is what a layout pass knows of the tree that holds until it
-// changes (Screen.changed), node by node. A Screen's widths are its
+// changes (settle), node by node. A Screen's widths are its
 // pass's (gen): a field's value changes them without a change to the
 // tree.
 type kept struct {

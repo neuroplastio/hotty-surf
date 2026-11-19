@@ -396,3 +396,85 @@ func varRole(v string) Role {
 	}
 	return Role(strings.TrimSpace(s[:end]))
 }
+
+// colourOnly says whether attributes b differ from a only in a class's
+// colours: the same attributes in the same order, the class's other
+// tokens the same in the same order, and every token that came or went
+// a colour no rule reads by name (colourToken).
+func colourOnly(a, b []html.Attribute) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	ci := -1
+	for i := range a {
+		if a[i].Namespace != b[i].Namespace || a[i].Key != b[i].Key {
+			return false
+		}
+		if a[i].Val == b[i].Val {
+			continue
+		}
+		if a[i].Namespace != "" || a[i].Key != "class" || ci >= 0 {
+			return false
+		}
+		ci = i
+	}
+	if ci < 0 {
+		return false
+	}
+	// The tokens that aren't colours, in turn from each.
+	sa, sb := a[ci].Val, b[ci].Val
+	for {
+		var x, y string
+		x, sa = nextOther(sa)
+		y, sb = nextOther(sb)
+		if x != y {
+			return false
+		}
+		if x == "" {
+			return true
+		}
+	}
+}
+
+// nextOther is the first token of class s that isn't a colour
+// (colourToken), and the rest of s after it; "" for none.
+func nextOther(s string) (tok, rest string) {
+	for {
+		s = strings.TrimLeft(s, " \t\n\f\r")
+		if s == "" {
+			return "", ""
+		}
+		end := strings.IndexAny(s, " \t\n\f\r")
+		if end < 0 {
+			end = len(s)
+		}
+		tok, s = s[:end], s[end:]
+		if !colourToken(tok) {
+			return tok, s
+		}
+	}
+}
+
+// namedColours are the colour classes a rule reads by name, besides
+// coloursOf: they change more than a colour. TestColourTokensNamed holds
+// it to the package's source.
+var namedColours = map[string]bool{
+	"text-muted-foreground": true,
+}
+
+// colourToken says whether class token c sets only a colour: a text- or
+// bg- role (classRole), or its dark: variant, that no rule names.
+func colourToken(c string) bool {
+	if namedColours[c] {
+		return false
+	}
+	c, _ = strings.CutPrefix(c, "dark:")
+	if namedColours[c] {
+		return false
+	}
+	if _, ok := classRole(c, "text-"); ok {
+		return true
+	}
+	_, ok := classRole(c, "bg-")
+	return ok
+}

@@ -62,6 +62,22 @@ func (c *Screen) load(name, doc string) error {
 	return nil
 }
 
+// attrsChanged forgets what an element's attributes, was before, reach:
+// where only colour classes changed (colourOnly), its colours; else every
+// style too, which reads its neighbours' attributes (kit, filtered).
+func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
+	k := c.kept
+	if k == nil || slices.Equal(was, n.Attr) {
+		return
+	}
+	if colourOnly(was, n.Attr) {
+		k.forgetColours(n)
+		return
+	}
+	k.forgetStyles()
+	k.forgetLooks(n)
+}
+
 // changed says the tree changed: its ids and its layout are made again
 // when next asked for.
 func (c *Screen) changed() {
@@ -104,6 +120,7 @@ func (c *Screen) attached(n *html.Node) bool {
 // error, and the ops after it are not applied (the program sends the
 // document again).
 func (c *Screen) delta(ops []hotty.Op) error {
+	c.reshaped, c.reIDed = false, false
 	defer c.settle()
 	for i, o := range ops {
 		if err := c.op(o); err != nil {
@@ -116,7 +133,15 @@ func (c *Screen) delta(ops []hotty.Op) error {
 // settle forgets what left the document: the fields' state, and the
 // focus of an element that is gone.
 func (c *Screen) settle() {
-	c.changed()
+	// What the ops reached is forgotten (op); where they changed the
+	// tree's shape, all of it is.
+	c.lay = nil
+	if c.reshaped || c.reIDed {
+		c.ids = nil
+	}
+	if c.reshaped {
+		c.kept = nil
+	}
 	for n := range c.boxScroll {
 		if !c.attached(n) {
 			delete(c.boxScroll, n)
@@ -171,20 +196,31 @@ func (c *Screen) op(o hotty.Op) error {
 		return errNoTarget
 	}
 	switch o.Op {
-	case "attr":
-		set(t, o.Key, v)
-		if o.Key == "id" {
-			c.ids = nil
+	case "attr", "unattr":
+		was := slices.Clone(t.Attr)
+		if o.Op == "attr" {
+			set(t, o.Key, v)
+		} else {
+			unset(t, o.Key)
 		}
-	case "unattr":
-		unset(t, o.Key)
 		if o.Key == "id" {
-			c.ids = nil
+			c.reIDed = true
 		}
+		c.attrsChanged(t, was)
 	case "text":
+		if k := t.FirstChild; k != nil && k.Type == html.TextNode && k.NextSibling == nil {
+			// Its one text's: only that text's pieces are forgotten.
+			if k.Data != v {
+				k.Data = v
+				if c.kept != nil {
+					c.kept.forgetText(k)
+				}
+			}
+			return nil
+		}
 		clear(t)
 		t.AppendChild(&html.Node{Type: html.TextNode, Data: v})
-		c.ids = nil
+		c.reshaped = true
 	case "inner":
 		old := map[string]*html.Node{}
 		walk(t, func(n *html.Node) {
@@ -197,7 +233,7 @@ func (c *Screen) op(o hotty.Op) error {
 			t.AppendChild(n)
 		}
 		c.adopt(t, old)
-		c.ids = nil
+		c.reshaped = true
 	case "replace", "before", "after":
 		p := t.Parent
 		if p == nil {
@@ -213,7 +249,7 @@ func (c *Screen) op(o hotty.Op) error {
 		if o.Op == "replace" {
 			p.RemoveChild(t)
 		}
-		c.ids = nil
+		c.reshaped = true
 	case "append", "prepend":
 		first := t.FirstChild
 		for _, n := range fragment(v, t) {
@@ -223,13 +259,13 @@ func (c *Screen) op(o hotty.Op) error {
 				t.InsertBefore(n, first)
 			}
 		}
-		c.ids = nil
+		c.reshaped = true
 	case "remove":
 		if t.Parent == nil {
 			return fmt.Errorf("no parent (%s)", hotty.EINVAL)
 		}
 		t.Parent.RemoveChild(t)
-		c.ids = nil
+		c.reshaped = true
 	case "reveal":
 		if v != hotty.RevealNearest && v != hotty.RevealStart && v != hotty.RevealEnd {
 			return fmt.Errorf("unknown reveal alignment %q (%s)", v, hotty.EINVAL)
