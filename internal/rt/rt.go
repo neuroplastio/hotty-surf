@@ -55,11 +55,13 @@ type Bind struct {
 // a data-keys value, then, with program, its Key handlers' keys, each
 // the program's: what a host resolves on the element. Without program, a
 // key the Key handlers declare is left out, so that a declined one is
-// the binding's farther in, or the default's.
-func EditKeys(h *Handlers, program bool) string {
+// the binding's farther in, or the default's. A Readline binding of a
+// key in given (the keys the chain gives the program) is left out, as
+// the surface leaves it out of data-keys.
+func EditKeys(h *Handlers, program bool, given []string) string {
 	var b strings.Builder
 	for _, x := range h.Binds {
-		if program && slices.Contains(h.Keys, x.Key) {
+		if program && slices.Contains(h.Keys, x.Key) || x.Readline && slices.Contains(given, x.Key) {
 			continue
 		}
 		if b.Len() > 0 {
@@ -76,6 +78,24 @@ func EditKeys(h *Handlers, program bool) string {
 		b.WriteString(p)
 	}
 	return b.String()
+}
+
+// Given is the keys the Key handlers of n and the elements around it
+// declare, and those they bind to prefix: the keys a host gives the
+// program there, which Readline's bindings leave alone.
+func Given(n *html.Node, on map[string]*Handlers) []string {
+	var out []string
+	for p := n; p != nil; p = p.Parent {
+		if h := on[attr(p, "id")]; h != nil {
+			out = append(out, h.Keys...)
+			for _, b := range h.Binds {
+				if b.Action == string(hotty.Prefix) {
+					out = append(out, b.Key)
+				}
+			}
+		}
+	}
+	return out
 }
 
 // A Frame is one render's registrations.

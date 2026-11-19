@@ -2,9 +2,10 @@ package ui_test
 
 import (
 	"context"
-	"io"
 	"fmt"
+	"io"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -184,42 +185,128 @@ func TestReadlineUnderKeys(t *testing.T) {
 	})
 }
 
-// After a prefix every key is the program's, Tab too, until the program
-// ends the sequence with Surface.Focus; then Tab moves on again.
-func TestPrefixVectors(t *testing.T) {
+// prefixView is a focusable rows element whose prefix is g, with key its
+// Key handler, and a button after it.
+func prefixView(key func(string) bool) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		rows := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			_, err := io.WriteString(w, "<div"+attrString(surf.On(ctx, "rows", surf.Key(key), surf.Bind(hotty.Prefix, "g")))+
+				` tabindex="0">rows</div><button id="after">After</button>`)
+			return err
+		})
+		return outside(rows).Render(ctx, w)
+	})
+}
+
+// A prefix no handler takes is the program's (a leader its own keymap
+// reads): every key after it is the program's, Tab too, until the
+// program ends the sequence with Surface.Focus; then Tab moves on again.
+func TestPrefixEndedByFocus(t *testing.T) {
 	var heard []string
 	view := func() templ.Component {
 		heard = nil
-		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			key := func(k string) bool { heard = append(heard, k); return true }
-			rows := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-				if _, err := io.WriteString(w, "<div"); err != nil {
-					return err
-				}
-				if _, err := io.WriteString(w, attrString(surf.On(ctx, "rows", surf.Key(key), surf.Bind(hotty.Prefix, "g")))); err != nil {
-					return err
-				}
-				_, err := io.WriteString(w, ` tabindex="0">rows</div><button id="after">After</button>`)
-				return err
-			})
-			return outside(rows).Render(ctx, w)
-		})
+		return prefixView(func(k string) bool { heard = append(heard, k); return false })
 	}
 	both(t, view, func(t *testing.T, s *surf.Surface, press func(string), focus func()) {
 		if s.Focused() != "rows" {
 			t.Fatalf("focused %q, want rows", s.Focused())
 		}
-		press("g")
-		press("tab")
-		press("g")
-		if !slices.Equal(heard, []string{"g", "tab", "g"}) || s.Focused() != "rows" {
+		for _, k := range []string{"g", "tab", "space"} {
+			press(k)
+		}
+		if !slices.Equal(heard, []string{"g", "tab", "space"}) || s.Focused() != "rows" {
 			t.Fatalf("heard %q, focused %q", heard, s.Focused())
 		}
 		focus()
 		heard = nil
 		press("tab")
 		if len(heard) != 0 || s.Focused() != "after" {
+			t.Errorf("after Focus: heard %q, focused %q", heard, s.Focused())
+		}
+	})
+}
+
+// A prefix a Key handler takes is the surface's sequence: it ends by
+// itself once the key after it has been through the handlers.
+func TestPrefixEndsByItself(t *testing.T) {
+	var heard []string
+	view := func() templ.Component {
+		heard = nil
+		return prefixView(func(k string) bool { heard = append(heard, k); return true })
+	}
+	both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+		press("g")
+		press("tab")
+		if !slices.Equal(heard, []string{"g", "tab"}) || s.Focused() != "rows" {
+			t.Fatalf("heard %q, focused %q", heard, s.Focused())
+		}
+		heard = nil
+		press("tab")
+		if len(heard) != 0 || s.Focused() != "after" {
 			t.Errorf("after the sequence: heard %q, focused %q", heard, s.Focused())
 		}
 	})
+}
+
+// A key an element around the field declares (a page's mod+k) still
+// reaches its handler from a field under Readline, which would bind it
+// (ctrl+k, delete-to-line-end): Readline leaves the program's keys alone.
+func TestDeclaredAroundWinsOverReadline(t *testing.T) {
+	value, opened := "", 0
+	view := func() templ.Component {
+		value, opened = "", 0
+		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+			open := func(k string) bool {
+				if k == "mod+k" {
+					opened++
+					return true
+				}
+				return false
+			}
+			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }), surf.Readline())})
+			return outside(wrap(surf.On(ctx, "main", surf.Key(open, "mod+k")), in)).Render(ctx, w)
+		})
+	}
+	both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+		for _, k := range []string{"a", "b", "home", "ctrl+k", "ctrl+e", "ctrl+w"} {
+			press(k)
+		}
+		if opened != 1 || value != "" {
+			t.Errorf("opened %d, value %q: want mod+k heard once, then readline's ctrl+e and ctrl+w", opened, value)
+		}
+	})
+}
+
+// A key a non-field binds to a scroll action is the host's: it scrolls,
+// and no handler around hears it; without the binding the handler does.
+func TestScrollBindVectors(t *testing.T) {
+	for _, bound := range []bool{true, false} {
+		t.Run(strconv.FormatBool(bound), func(t *testing.T) {
+			var heard []string
+			view := func() templ.Component {
+				heard = nil
+				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					var hs []surf.Handler
+					if bound {
+						hs = append(hs, surf.Bind(hotty.ScrollDown, "j"))
+					}
+					log := templ.Raw(`<div` + attrString(surf.On(ctx, "log", hs...)) + ` tabindex="0">log</div>`)
+					rec := func(k string) bool { heard = append(heard, k); return false }
+					return outside(wrap(surf.On(ctx, "page", surf.Key(rec)), log)).Render(ctx, w)
+				})
+			}
+			both(t, view, func(t *testing.T, s *surf.Surface, press func(string), _ func()) {
+				if bound && strings.HasSuffix(t.Name(), "/host") {
+					// hottytest 0.8 does no scroll action (SPEC §10.2,
+					// scrolling keys): the key reaches the program. The
+					// test host's gap, reported to hotty-go; cells does it.
+					t.Skip("hottytest does no scroll action")
+				}
+				press("j")
+				if got := slices.Contains(heard, "j"); got == bound {
+					t.Errorf("bound %v: heard %q", bound, heard)
+				}
+			})
+		})
+	}
 }

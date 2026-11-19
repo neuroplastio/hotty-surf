@@ -157,6 +157,10 @@ type tree struct {
 	// printable are the printable keys the elements around the one being
 	// numbered declare (writeKeys).
 	printable []string
+	// given are the keys the elements around the one being numbered give
+	// the program (key=program, key=prefix), which Readline's bindings
+	// leave alone (writeKeys).
+	given []string
 }
 
 // keep takes t as what the host has, and the HTML paint rendered as its
@@ -223,7 +227,8 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			t.fields = append(t.fields, id)
 		}
 		s.number(c, id, t, pre || c.Data == "pre" || c.Data == "textarea" || c.Data == "listing")
-		t.printable = t.printable[:len(t.printable)-pushed]
+		t.printable = t.printable[:len(t.printable)-pushed.printable]
+		t.given = t.given[:len(t.given)-pushed.given]
 		c = next
 	}
 }

@@ -46,9 +46,10 @@ const (
 //   - on an element that types, each printable key an element around it
 //     declares, given back (key=default), so a field types it (K27).
 //
-// It says how many printable keys n declares, which it pushed on t's
-// stack for n's insides; number pops them after.
-func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
+// It says how many printable keys n declares, and how many keys it gives
+// the program, which it pushed on t's stacks for n's insides; number pops
+// them after.
+func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	scope, kind := 0, ""
 	for i := 0; i < len(n.Attr); i++ {
 		a := n.Attr[i]
@@ -87,7 +88,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 		t.scopes[id] = keyMark{scope: scope, kind: kind}
 	}
 	if t.f == nil {
-		return 0
+		return keyPush{}
 	}
 	var own []string
 	h := t.f.On[id]
@@ -121,7 +122,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 	var bound []string
 	if h != nil && len(h.Binds) > 0 {
 		var n2 int
-		binds, bound, n2 = s.writeBinds(n, id, h.Binds, text == "text", multiline, binds, t)
+		binds, bound, n2 = s.writeBinds(id, h.Binds, text, multiline, binds, t)
 		pushed += n2
 	}
 	if rt.Types(n) {
@@ -131,33 +132,63 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 			}
 		}
 	}
+	// One binding per key, the first: a host reads a key's last binding,
+	// and sorting orders two of one key by action.
+	seen := make(map[string]bool, len(binds))
+	binds = slices.DeleteFunc(binds, func(b string) bool {
+		k := b[:strings.LastIndexByte(b, '=')]
+		if seen[k] {
+			return true
+		}
+		seen[k] = true
+		return false
+	})
+	given := 0
+	for _, b := range binds {
+		if k, ok := strings.CutSuffix(b, "=program"); ok {
+			t.given = append(t.given, k)
+			given++
+		} else if k, ok := strings.CutSuffix(b, "=prefix"); ok {
+			t.given = append(t.given, k)
+			given++
+		}
+	}
 	if len(binds) > 0 {
 		slices.Sort(binds)
 		n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
 	}
-	return pushed
+	return keyPush{printable: pushed, given: given}
 }
 
-// writeBinds adds n's surf.Bind and surf.Readline bindings to binds, each
-// key=action, but where binds gives the key to the program already (a
-// Key handler's, a KeyScope's): that one wins, but a prefix, which is
-// the program's too, is written in its place. It drops, as faults, a
-// binding the element can't have (SPEC §10.2): an edit action where no
-// text field is (n or inside it), a multi-line one an input binds, a
-// scroll action a text field binds. A printable key bound to prefix is
-// pushed on t's stack, so the fields inside type it (K27). It returns
-// binds, the keys it wrote, and how many it pushed.
-func (s *Surface) writeBinds(n *html.Node, id string, bs []rt.Bind, field, multiline bool, binds []string, t *tree) ([]string, []string, int) {
+// keyPush is what writeKeys pushed on a tree's stacks for an element's
+// insides.
+type keyPush struct{ printable, given int }
+
+// writeBinds adds an element's surf.Bind and surf.Readline bindings to
+// binds, one per key, each key=action, but where binds gives the key to
+// the program already (a Key handler's, a KeyScope's): that one wins, but
+// a prefix, which is the program's too, is written in its place. A
+// Readline binding also leaves alone a key an element around gives the
+// program (t.given): a shortcut or a leader there still reaches it from
+// the field (vault/knowledge/field-keys.md, 2026-11-04). It drops, as
+// faults, a binding the element can't have (SPEC §10.2): an edit action
+// on a control that isn't a text field (kind: a button's, a select's, a
+// date field's), a multi-line one an input binds, a scroll action a text
+// field binds. A printable key bound to prefix is pushed on t's stack, so
+// the fields inside type it (K27). It returns binds, the keys it wrote,
+// and how many it pushed.
+func (s *Surface) writeBinds(id string, bs []rt.Bind, kind string, multiline bool, binds []string, t *tree) ([]string, []string, int) {
 	var bound []string
-	pushed, holds, readlineFault := 0, -1, false
+	pushed, readlineFault := 0, false
 	for _, b := range bs {
 		a := hotty.Action(b.Action)
 		if i := slices.Index(binds, b.Key+"=program"); i >= 0 {
-			// The program's already; a prefix is the program's too, and
-			// holds the keys after it for it.
 			if a == hotty.Prefix {
 				binds[i] = b.Key + "=prefix"
 			}
+			continue
+		}
+		if b.Readline && slices.Contains(t.given, b.Key) {
 			continue
 		}
 		switch {
@@ -167,48 +198,26 @@ func (s *Surface) writeBinds(n *html.Node, id string, bs []rt.Bind, field, multi
 				pushed++
 			}
 		case a.Scrolls():
-			if field {
+			if kind == "text" {
 				s.fault("surf.Bind: the id " + id + " is a text field, whose keymap leaves out " + b.Action + " (SPEC §10.2): bind it on what scrolls")
 				continue
 			}
-		default:
-			if holds < 0 {
-				holds = 0
-				if field || holdsField(n) {
-					holds = 1
-				}
+		case kind != "text" && kind != "":
+			if !b.Readline {
+				s.fault("surf.Bind: the id " + id + " binds " + strconv.Quote(b.Key) + " to " + b.Action + ", a text field's action, on a control that isn't one")
+			} else if !readlineFault {
+				readlineFault = true
+				s.fault("surf.Readline: the id " + id + " is a control that isn't a text field")
 			}
-			if holds == 0 {
-				if !b.Readline {
-					s.fault("surf.Bind: the id " + id + " binds " + strconv.Quote(b.Key) + " to " + b.Action + ", a text field's action, but is no text field and holds none")
-				} else if !readlineFault {
-					readlineFault = true
-					s.fault("surf.Readline: the id " + id + " is no text field and holds none")
-				}
-				continue
-			}
-			if !b.Readline && field && !multiline && a.Multiline() {
-				s.fault("surf.Bind: the id " + id + " is an input, which has no " + b.Action + " (SPEC §10.2)")
-				continue
-			}
+			continue
+		case !b.Readline && kind == "text" && !multiline && a.Multiline():
+			s.fault("surf.Bind: the id " + id + " is an input, which has no " + b.Action + " (SPEC §10.2)")
+			continue
 		}
 		binds = append(binds, b.Key+"="+b.Action)
 		bound = append(bound, b.Key)
 	}
 	return binds, bound, pushed
-}
-
-// holdsField says whether a text field is inside n.
-func holdsField(n *html.Node) bool {
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type != html.ElementNode {
-			continue
-		}
-		if k, _ := nativeKind(c); k == "text" || holdsField(c) {
-			return true
-		}
-	}
-	return false
 }
 
 // A keyMark is a kit control's place under the KeyScopes: the frame's

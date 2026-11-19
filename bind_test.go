@@ -99,8 +99,9 @@ func TestBindFaults(t *testing.T) {
 		{"insert", `<input%s>`, func() []Handler { return []Handler{Bind(hotty.Insert, "x")} }, ""},
 		{"unknown", `<input%s>`, func() []Handler { return []Handler{Bind("teleport", "x")} }, ""},
 		{"bad key", `<input%s>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "nope+x", "tab", "shift+tab", "escape")} }, ""},
-		{"edit without a field", `<div%s tabindex="0"><button>b</button></div>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "ctrl+a")} }, ""},
-		{"readline without a field", `<button%s>b</button>`, func() []Handler { return []Handler{Readline()} }, ""},
+		{"edit on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "ctrl+a")} }, ""},
+		{"edit on a select", `<select%s><option>a</option></select>`, func() []Handler { return []Handler{Bind(hotty.LineStart, "ctrl+a")} }, ""},
+		{"readline on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Readline()} }, ""},
 		{"multi-line on an input", `<input%s>`, func() []Handler { return []Handler{Bind(hotty.Newline, "ctrl+j"), Bind(hotty.LineEnd, "ctrl+e")} }, "ctrl+e=line-end"},
 		{"scroll on a field", `<textarea%s></textarea>`, func() []Handler { return []Handler{Bind(hotty.ScrollDown, "ctrl+j")} }, ""},
 		{"two uses", `<input%s>`, func() []Handler {
@@ -123,14 +124,16 @@ func TestBindFaults(t *testing.T) {
 			}
 		})
 	}
-	// Neither a prefix of a Key's key, nor a multi-line action in
-	// Readline's set on an input, nor an edit action on what holds a
-	// field, is one.
-	s := bindPage(t, `<div%s tabindex="0"></div><input%s><div%s><textarea></textarea></div>`, func(ctx context.Context) []templ.Attributes {
+	// None of these is one: a prefix of a Key's key; a multi-line action
+	// in Readline's set on an input; an edit action on what holds a
+	// field, or on a container holding none yet (a palette's root before
+	// it opens); a key bound twice to one action, and Readline twice.
+	s := bindPage(t, `<div%s tabindex="0"></div><input%s><div%s><textarea></textarea></div><div%s></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
 			On(ctx, "a", Key(take, "g"), Bind(hotty.Prefix, "g")),
-			On(ctx, "b", Readline()),
+			On(ctx, "b", Readline(), Readline(), Bind(hotty.LineEnd, "ctrl+e", "ctrl+e"), Bind(hotty.LineEnd, "ctrl+e")),
 			On(ctx, "c", Bind(hotty.Newline, "ctrl+j")),
+			On(ctx, "d", Readline()),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -183,32 +186,28 @@ func TestBindsAloneChange(t *testing.T) {
 	}
 }
 
-// Focus, with the keyboard on an element whose keymap has a prefix, sends
-// a=focus without a target: it ends a key sequence. Elsewhere it sends
-// nothing, as before.
+// Focus, with the keyboard on the surface already, sends a=focus without
+// a target, which moves nothing and ends a key sequence.
 func TestFocusEndsAPrefix(t *testing.T) {
 	var out bytes.Buffer
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div%s tabindex="0">rows</div><button id="b">b</button>`, attrsOf(On(ctx, "rows", Key(func(string) bool { return true }), Bind(hotty.Prefix, "g"))))
+		fmt.Fprintf(w, `<div%s tabindex="0">rows</div><button id="b">b</button>`, attrsOf(On(ctx, "rows", Bind(hotty.Prefix, "g"))))
 		return nil
 	}), "")
 	s.Attach(&out, hotty.Caps{})
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	for _, c := range []struct {
-		id   string
-		want bool
-	}{{"b", false}, {"rows", true}} {
-		if err := s.Event(hotty.Event{Surface: "t", Kind: hotty.EventFocus, Target: c.id}); err != nil {
+	for _, id := range []string{"b", "rows"} {
+		if err := s.Event(hotty.Event{Surface: "t", Kind: hotty.EventFocus, Target: id}); err != nil {
 			t.Fatal(err)
 		}
 		out.Reset()
 		if ok, err := s.Focus(); !ok || err != nil {
 			t.Fatalf("Focus: %v, %v", ok, err)
 		}
-		if got := strings.Contains(out.String(), "a=focus"); got != c.want {
-			t.Errorf("on %s: sent a=focus %v, want %v (%q)", c.id, got, c.want, out.String())
+		if got := out.String(); !strings.Contains(got, "a=focus") || strings.Contains(got, ":t=") {
+			t.Errorf("on %s: sent %q, want a=focus without t", id, got)
 		}
 	}
 }

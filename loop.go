@@ -302,7 +302,7 @@ func (s *Surface) event(e hotty.Event) error {
 	case hotty.EventFocus:
 		// A focus ends a key sequence (SPEC §10.5), the host's or the
 		// program's own.
-		s.prefixed = false
+		s.prefixed, s.prefixTaken = false, false
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
 		// asks again once the user moved the keyboard off it.
@@ -317,7 +317,7 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 		ran = true
 	case hotty.EventBlur:
-		s.prefixed = false
+		s.prefixed, s.prefixTaken = false, false
 		s.focus("")
 		if modal != "" && afterPress && scopedPress {
 			s.modalFocus = "first"
@@ -511,17 +511,37 @@ func (s *Surface) key(k string) (bool, error) {
 	if s.frame == nil {
 		return false, errNoDocument
 	}
+	// After a prefix the host used no key: the surface does no element's
+	// own use of one either (SPEC §10.5). A prefix starts one. One a Key
+	// handler took is the surface's sequence, which ends once the key
+	// after it has been through the handlers: the surface sends a=focus
+	// without a target itself. One no handler took is the program's
+	// keymap's (a leader), which ends it with Focus.
+	held, auto := s.prefixed, s.prefixTaken
+	starts := !held && s.prefixAt(s.byID[s.focused], k)
+	taken, err := s.route(k, held)
+	switch {
+	case err != nil:
+	case starts:
+		s.prefixed, s.prefixTaken = true, taken
+	case held && auto && s.prefixed:
+		s.prefixed, s.prefixTaken = false, false
+		if s.out != nil {
+			err = s.write([]string{hotty.Focus(s.name, "")})
+		}
+	}
+	return taken, err
+}
+
+// route offers k to the KeyScopes and the Key handlers, and does a
+// declared key's own use (held: not after a prefix, when the host used
+// no key).
+func (s *Surface) route(k string, held bool) (bool, error) {
 	physical := k
 	if len(s.frame.Scopes) > 0 && s.frame.Scopes[0].Canonical != nil {
 		physical, _ = s.frame.Scopes[0].Canonical(s.platform, k)
 	}
 	k = modName(s.platform, k)
-	// After a prefix the host used no key: the surface does no element's
-	// own use of one either (SPEC §10.5). A prefix starts one.
-	held := s.prefixed
-	if !held && s.prefixAt(s.byID[s.focused], physical) {
-		s.prefixed = true
-	}
 	intercepted := false
 	var fallback func(rt.KeyDefault) rt.KeyResult
 	var native func(*rt.KeyEnvironment, string, func(rt.KeyDefault) rt.KeyResult) bool
@@ -618,8 +638,7 @@ func (s *Surface) key(k string) (bool, error) {
 }
 
 // prefixAt says whether n's keymap, as a host reads it from the data-keys
-// the surface wrote, binds key to prefix (SPEC §10.5); with key "",
-// whether it binds any key to prefix.
+// the surface wrote, binds key to prefix (SPEC §10.5).
 func (s *Surface) prefixAt(n *html.Node, key string) bool {
 	if n == nil {
 		return false
@@ -628,16 +647,7 @@ func (s *Surface) prefixAt(n *html.Node, key string) bool {
 	if len(vs) == 0 {
 		return false
 	}
-	m := hotty.ParseKeymap(s.platform, strings.Join(vs, " "))
-	if key != "" {
-		return m.Prefix(key)
-	}
-	for _, b := range strings.Fields(m.Format()) {
-		if strings.HasSuffix(b, "=prefix") {
-			return true
-		}
-	}
-	return false
+	return hotty.ParseKeymap(s.platform, strings.Join(vs, " ")).Prefix(key)
 }
 
 // declared says whether a Key handler of the focused element or of one
@@ -779,13 +789,11 @@ func modName(p hotty.Platform, k string) string {
 // as the host's focus event.
 func (s *Surface) takeFocus() (bool, error) {
 	if s.focused != "" {
-		// With the keyboard here already, a=focus without a target ends
-		// a key sequence, where one may run (SPEC §10.5).
-		if s.out != nil && (s.prefixed || s.prefixAt(s.byID[s.focused], "")) {
-			s.prefixed = false
-			if err := s.write([]string{hotty.Focus(s.name, "")}); err != nil {
-				return true, err
-			}
+		// With the keyboard here already, a=focus without a target moves
+		// nothing and ends a key sequence (SPEC §10.1, §10.5).
+		s.prefixed, s.prefixTaken = false, false
+		if s.out != nil {
+			return true, s.write([]string{hotty.Focus(s.name, "")})
 		}
 		return true, nil
 	}
