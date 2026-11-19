@@ -197,13 +197,13 @@ func kids(n *html.Node, st box) []*html.Node {
 // figure draws what the kit draws with its stylesheet or an svg: a
 // progress bar, a skeleton, a chart, a breadcrumb's separator. ok is
 // false for anything else.
-func (l *layout) figure(n *html.Node, x, y, w int, in inh) (h, used int, ok bool) {
-	switch {
-	case has(n, "data-hotty-slider"):
+func (l *layout) figure(n *html.Node, fig figKind, x, y, w int, in inh) (h, used int, ok bool) {
+	switch fig {
+	case figSlider:
 		return l.slider(n, x, y, w, in), min(w, 40), true
-	case attr(n, "role") == "progressbar":
+	case figBar:
 		return l.bar(n, x, y, w, in), min(w, barW), true
-	case tokens(n, "class", "skeleton"):
+	case figSkeleton:
 		cw := min(max(pxCols(styleValue(n, "width")), 1), w)
 		rh := max(pxRows(styleValue(n, "height")), 1)
 		for r := range rh {
@@ -212,15 +212,46 @@ func (l *layout) figure(n *html.Node, x, y, w int, in inh) (h, used int, ok bool
 			}
 		}
 		return rh, cw, true
-	case tokens(n, "class", "chart"):
+	case figChart:
 		return l.chart(n, x, y, w, in)
-	case n.DataAtom == atom.Li && attr(n, "role") == "presentation" &&
-		closest(n, func(a *html.Node) bool { return tokens(a, "class", "breadcrumb") }) != nil &&
-		textOf(n) == "":
-		l.put(x, y, "›", in.look|lMuted, n)
-		return 1, 1, true
+	case figCrumb:
+		if textOf(n) == "" {
+			l.put(x, y, "›", in.look|lMuted, n)
+			return 1, 1, true
+		}
 	}
 	return 0, 0, false
+}
+
+// figKind is which of figure's an element is, by its attributes and
+// its place (factsOf); a breadcrumb's separator also has no text.
+type figKind uint8
+
+const (
+	figNone figKind = iota
+	figSlider
+	figBar
+	figSkeleton
+	figChart
+	figCrumb
+)
+
+// figureOf is n's figKind.
+func figureOf(n *html.Node) figKind {
+	switch {
+	case has(n, "data-hotty-slider"):
+		return figSlider
+	case attr(n, "role") == "progressbar":
+		return figBar
+	case tokens(n, "class", "skeleton"):
+		return figSkeleton
+	case tokens(n, "class", "chart"):
+		return figChart
+	case n.DataAtom == atom.Li && attr(n, "role") == "presentation" &&
+		closest(n, func(a *html.Node) bool { return tokens(a, "class", "breadcrumb") }) != nil:
+		return figCrumb
+	}
+	return figNone
 }
 
 // slider follows the cells range presentation: two thumbs with a filled

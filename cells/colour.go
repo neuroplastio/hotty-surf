@@ -2,6 +2,7 @@ package cells
 
 import (
 	"strings"
+	"unicode"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -103,11 +104,39 @@ func copyGrid(g [][]Cell) [][]Cell {
 	return out
 }
 
+// cellOf is a canvas cell of l as Cells gives it: its roles its own
+// element's, or the nearest ancestor's that has them, or its look's.
+func cellOf(l *layout, k cell, rc *roleCache) Cell {
+	if k.own != rc.last || !rc.ok {
+		rc.fg, rc.bg = rolesAt(l, k.own, rc.memo)
+		rc.last, rc.ok = k.own, true
+	}
+	fg, bg := rc.fg, rc.bg
+	switch {
+	case k.look&lTip != 0:
+		fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
+	case k.look&lRule != 0:
+		fg = "border"
+	case k.look&lMuted != 0:
+		fg = "muted-foreground"
+	}
+	return Cell{Text: k.s, Fg: fg, Bg: bg, Attr: attrOf(k.look)}
+}
+
+// roleCache is rolesAt's memo while a grid is made, and the last
+// element's roles: a run of cells is mostly one element's.
+type roleCache struct {
+	memo   map[*html.Node][2]Role
+	last   *html.Node
+	ok     bool
+	fg, bg Role
+}
+
 // cellsOf is Cells' grid of l: also what Dirty compares, so a change that
 // shows only in the roles (a colour class, the selected band moving)
 // counts.
 func (c *Screen) cellsOf(l *layout) [][]Cell {
-	memo := map[*html.Node][2]Role{}
+	rc := &roleCache{memo: map[*html.Node][2]Role{}}
 	out := make([][]Cell, c.rows)
 	all := make([]Cell, c.rows*c.cols) // the grid in one array
 	for i := range out {
@@ -122,16 +151,7 @@ func (c *Screen) cellsOf(l *layout) [][]Cell {
 			if x < len(src) {
 				k = src[x]
 			}
-			fg, bg := rolesAt(l, k.own, memo)
-			switch {
-			case k.look&lTip != 0:
-				fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
-			case k.look&lRule != 0:
-				fg = "border"
-			case k.look&lMuted != 0:
-				fg = "muted-foreground"
-			}
-			row[x] = Cell{Text: k.s, Fg: fg, Bg: bg, Attr: attrOf(k.look)}
+			row[x] = cellOf(l, k, rc)
 		}
 		out[i] = row
 	}
@@ -376,4 +396,92 @@ func varRole(v string) Role {
 		return ""
 	}
 	return Role(strings.TrimSpace(s[:end]))
+}
+
+// colourOnly says whether attributes b differ from a only in a class's
+// colours: the same attributes in the same order, the class's other
+// tokens the same in the same order, and every token that came or went
+// a colour no rule reads by name (colourToken).
+func colourOnly(a, b []html.Attribute) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	ci := -1
+	for i := range a {
+		if a[i].Namespace != b[i].Namespace || a[i].Key != b[i].Key {
+			return false
+		}
+		if a[i].Val == b[i].Val {
+			continue
+		}
+		if a[i].Namespace != "" || a[i].Key != "class" || ci >= 0 {
+			return false
+		}
+		ci = i
+	}
+	if ci < 0 {
+		return false
+	}
+	// Rules split a class at spaces in three ways (FieldsSeq, hasField,
+	// " font-normal "): only where every gap is a space do they agree.
+	odd := func(r rune) bool { return r != ' ' && unicode.IsSpace(r) }
+	if strings.ContainsFunc(a[ci].Val, odd) || strings.ContainsFunc(b[ci].Val, odd) {
+		return false
+	}
+	// The tokens that aren't colours, in turn from each.
+	sa, sb := a[ci].Val, b[ci].Val
+	for {
+		var x, y string
+		x, sa = nextOther(sa)
+		y, sb = nextOther(sb)
+		if x != y {
+			return false
+		}
+		if x == "" {
+			return true
+		}
+	}
+}
+
+// nextOther is the first token of class s that isn't a colour
+// (colourToken), and the rest of s after it; "" for none.
+func nextOther(s string) (tok, rest string) {
+	for {
+		s = strings.TrimLeft(s, " \t\n\f\r")
+		if s == "" {
+			return "", ""
+		}
+		end := strings.IndexAny(s, " \t\n\f\r")
+		if end < 0 {
+			end = len(s)
+		}
+		tok, s = s[:end], s[end:]
+		if !colourToken(tok) {
+			return tok, s
+		}
+	}
+}
+
+// namedColours are the colour classes a rule reads by name, besides
+// coloursOf: they change more than a colour. TestColourTokensNamed holds
+// it to the package's source.
+var namedColours = map[string]bool{
+	"text-muted-foreground": true,
+}
+
+// colourToken says whether class token c sets only a colour: a text- or
+// bg- role (classRole), or its dark: variant, that no rule names.
+func colourToken(c string) bool {
+	if namedColours[c] {
+		return false
+	}
+	c, _ = strings.CutPrefix(c, "dark:")
+	if namedColours[c] {
+		return false
+	}
+	if _, ok := classRole(c, "text-"); ok {
+		return true
+	}
+	_, ok := classRole(c, "bg-")
+	return ok
 }

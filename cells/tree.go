@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -34,8 +36,7 @@ func (c *Screen) load(name, doc string) error {
 			// An element's style reads its parent's, children's,
 			// descendants' and siblings' attributes too (kit, filtered,
 			// barLabels): any change, and none of them holds.
-			c.kept.styles = map[*html.Node]box{}
-			c.kept.kidsOf = map[*html.Node][]*html.Node{}
+			c.kept.forgetStyles()
 		}
 		c.fields = map[*html.Node]*field{}
 		c.focused, c.remembered = nil, nil
@@ -59,6 +60,40 @@ func (c *Screen) load(name, doc string) error {
 	c.boxScroll = nil
 	c.changed()
 	return nil
+}
+
+// attrsChanged forgets what an element's attributes, was before, reach:
+// where only colour classes changed (colourOnly), its colours; else every
+// style too, which reads its neighbours' attributes (kit, filtered).
+func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
+	k := c.kept
+	if slices.Equal(was, n.Attr) {
+		return
+	}
+	if k == nil {
+		c.relayout = true
+		return
+	}
+	if colourOnly(was, n.Attr) {
+		// The layout reads a colour only where an element's own ends the
+		// muted text around it (lookOf): where that holds, so do the
+		// looks, and only the roles change.
+		if m := k.nodes[n]; m == nil || !m.hasCol || m.inMuted && unmutes(m.fg) != unmutesNow(n) {
+			c.relayout = true
+		}
+		k.forgetColours(n)
+		return
+	}
+	c.relayout = true
+	k.forgetStyles()
+	k.forgetLooks(n)
+}
+
+// unmutesNow says whether n's own text colour, as its attributes give it
+// now, ends the muted text around it (lookOf).
+func unmutesNow(n *html.Node) bool {
+	fg, _ := coloursOf(n)
+	return unmutes(fg)
 }
 
 // changed says the tree changed: its ids and its layout are made again
@@ -103,6 +138,7 @@ func (c *Screen) attached(n *html.Node) bool {
 // error, and the ops after it are not applied (the program sends the
 // document again).
 func (c *Screen) delta(ops []hotty.Op) error {
+	c.reshaped, c.reIDed, c.relayout = false, false, false
 	defer c.settle()
 	for i, o := range ops {
 		if err := c.op(o); err != nil {
@@ -115,7 +151,22 @@ func (c *Screen) delta(ops []hotty.Op) error {
 // settle forgets what left the document: the fields' state, and the
 // focus of an element that is gone.
 func (c *Screen) settle() {
-	c.changed()
+	// What the ops reached is forgotten (op); where they changed the
+	// tree's shape, all of it is. Where they changed only colours, which
+	// left every look as it was (attrsChanged), the layout holds and its
+	// cells are painted again: what was drawn is no longer this
+	// layout's (Dirty).
+	if c.reshaped || c.relayout || c.lay == nil {
+		c.lay = nil
+	} else {
+		c.shownLay = nil
+	}
+	if c.reshaped || c.reIDed {
+		c.ids = nil
+	}
+	if c.reshaped {
+		c.kept = nil
+	}
 	for n := range c.boxScroll {
 		if !c.attached(n) {
 			delete(c.boxScroll, n)
@@ -130,6 +181,7 @@ func (c *Screen) settle() {
 		// the keyboard (SPEC §6.2); its rev stays.
 		if d := defaultOf(n); d != f.def {
 			f.def = d
+			c.lay = nil
 			if n == c.focused {
 				continue
 			}
@@ -145,6 +197,7 @@ func (c *Screen) settle() {
 		// An element that stops taking focus loses it, as a browser's
 		// does; the surface keeps the keyboard with nothing focused.
 		c.focused = nil
+		c.lay = nil
 	}
 	if c.remembered != nil && !c.attached(c.remembered) {
 		c.remembered = nil
@@ -170,20 +223,32 @@ func (c *Screen) op(o hotty.Op) error {
 		return errNoTarget
 	}
 	switch o.Op {
-	case "attr":
-		set(t, o.Key, v)
-		if o.Key == "id" {
-			c.ids = nil
+	case "attr", "unattr":
+		was := slices.Clone(t.Attr)
+		if o.Op == "attr" {
+			set(t, o.Key, v)
+		} else {
+			unset(t, o.Key)
 		}
-	case "unattr":
-		unset(t, o.Key)
 		if o.Key == "id" {
-			c.ids = nil
+			c.reIDed, c.ids = true, nil
 		}
+		c.attrsChanged(t, was)
 	case "text":
+		if k := t.FirstChild; k != nil && k.Type == html.TextNode && k.NextSibling == nil {
+			// Its one text's: only that text's pieces are forgotten.
+			if k.Data != v {
+				k.Data = v
+				c.relayout = true
+				if c.kept != nil {
+					c.kept.forgetText(k)
+				}
+			}
+			return nil
+		}
 		clear(t)
 		t.AppendChild(&html.Node{Type: html.TextNode, Data: v})
-		c.ids = nil
+		c.reshaped, c.ids = true, nil
 	case "inner":
 		old := map[string]*html.Node{}
 		walk(t, func(n *html.Node) {
@@ -196,7 +261,7 @@ func (c *Screen) op(o hotty.Op) error {
 			t.AppendChild(n)
 		}
 		c.adopt(t, old)
-		c.ids = nil
+		c.reshaped, c.ids = true, nil
 	case "replace", "before", "after":
 		p := t.Parent
 		if p == nil {
@@ -212,7 +277,7 @@ func (c *Screen) op(o hotty.Op) error {
 		if o.Op == "replace" {
 			p.RemoveChild(t)
 		}
-		c.ids = nil
+		c.reshaped, c.ids = true, nil
 	case "append", "prepend":
 		first := t.FirstChild
 		for _, n := range fragment(v, t) {
@@ -222,18 +287,19 @@ func (c *Screen) op(o hotty.Op) error {
 				t.InsertBefore(n, first)
 			}
 		}
-		c.ids = nil
+		c.reshaped, c.ids = true, nil
 	case "remove":
 		if t.Parent == nil {
 			return fmt.Errorf("no parent (%s)", hotty.EINVAL)
 		}
 		t.Parent.RemoveChild(t)
-		c.ids = nil
+		c.reshaped, c.ids = true, nil
 	case "reveal":
 		if v != hotty.RevealNearest && v != hotty.RevealStart && v != hotty.RevealEnd {
 			return fmt.Errorf("unknown reveal alignment %q (%s)", v, hotty.EINVAL)
 		}
 		c.revealAfter, c.revealWhere = t, v
+		c.relayout = true // a layout reveals it
 	default:
 		return fmt.Errorf("unknown op %q (%s)", o.Op, hotty.EINVAL)
 	}
@@ -355,10 +421,28 @@ func unset(n *html.Node, k string) {
 // tokens says whether the space-separated list in n's attribute k holds
 // tok (class~=, data-on~=).
 func tokens(n *html.Node, k, tok string) bool {
-	for t := range strings.FieldsSeq(attr(n, k)) {
-		if t == tok {
+	return hasField(attr(n, k), tok)
+}
+
+// hasField says whether tok is one of strings.Fields(s), for a tok with
+// no space in it, found where it stands rather than by splitting s.
+func hasField(s, tok string) bool {
+	if tok == "" {
+		return false
+	}
+	for i := 0; i+len(tok) <= len(s); {
+		j := strings.Index(s[i:], tok)
+		if j < 0 {
+			return false
+		}
+		j += i
+		end := j + len(tok)
+		before, _ := utf8.DecodeLastRuneInString(s[:j])
+		after, _ := utf8.DecodeRuneInString(s[end:])
+		if (j == 0 || unicode.IsSpace(before)) && (end == len(s) || unicode.IsSpace(after)) {
 			return true
 		}
+		i = j + 1
 	}
 	return false
 }
@@ -425,7 +509,7 @@ func (c *Screen) refill(a, b *html.Node) (attrs bool) {
 	case html.TextNode:
 		if a.Data != b.Data {
 			a.Data = b.Data
-			delete(k.texts, a)
+			k.forgetText(a)
 		}
 	case html.ElementNode:
 		if !slices.Equal(a.Attr, b.Attr) {
@@ -433,10 +517,7 @@ func (c *Screen) refill(a, b *html.Node) (attrs bool) {
 			attrs = true
 			// Its colours, and its descendants' (a scheme's class), and
 			// the pieces of its texts.
-			walk(a, func(n *html.Node) {
-				delete(k.colours, n)
-				delete(k.texts, n)
-			})
+			k.forgetLooks(a)
 		}
 	}
 	for ka, kb := a.FirstChild, b.FirstChild; ka != nil; ka, kb = ka.NextSibling, kb.NextSibling {

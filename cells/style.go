@@ -78,6 +78,57 @@ type box struct {
 	marginT         int
 	marginB         int
 	height          string
+	// fx is what the layout reads of the element besides its style, as
+	// the pass's style memo holds it (layout.style); styleOf leaves it.
+	fx facts
+}
+
+// facts are what a layout pass reads of an element's attributes and its
+// place besides its style: like a style, they read no text, so they are
+// kept with it. What reads text (a separator's, a breadcrumb's) is
+// checked where it is drawn.
+type facts struct {
+	// sep is the orientation of a separator (role=separator, Basecoat's
+	// and the kit's), "" for an element that is none: "horizontal" a
+	// rule row, "vertical" a bar a cell wide. One with something in it
+	// is none (box).
+	sep      string
+	marker   string // marker
+	empty    string // empty's text, where hasEmpty
+	hasEmpty bool
+	fig      figKind
+	grows    bool // kitGrows
+	normal   bool // font-normal: not the bold around it
+	add      look // disabled, a chosen tab, a group's heading (lookOf)
+}
+
+// factsOf are n's facts.
+func factsOf(n *html.Node) facts {
+	var f facts
+	if attr(n, "role") == "separator" {
+		f.sep = "horizontal"
+		for _, k := range []string{"aria-orientation", "data-orientation"} {
+			if attr(n, k) == "vertical" {
+				f.sep = "vertical"
+				break
+			}
+		}
+	}
+	f.marker = marker(n)
+	f.empty, f.hasEmpty = empty(n)
+	f.fig = figureOf(n)
+	f.grows = kitGrows(n)
+	f.normal = strings.Contains(" "+attr(n, "class")+" ", " font-normal ")
+	if disabled(n) || attr(n, "aria-disabled") == "true" {
+		f.add |= lDim
+	}
+	if attr(n, "role") == "tab" && attr(n, "aria-selected") == "true" {
+		f.add |= lBold | lUnderline
+	}
+	if attr(n, "role") == "heading" && closest(n, func(a *html.Node) bool { return attr(a, "role") == "group" }) != nil {
+		f.add |= lBold
+	}
+	return f
 }
 
 // skipped are the elements that draw nothing, whatever their style.

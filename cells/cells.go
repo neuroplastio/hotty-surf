@@ -34,6 +34,16 @@ import (
 type Screen struct {
 	_ struct{}
 
+	// bufs are the layout's scratch slices, kept between passes.
+	bufs scratch
+	// reshaped says a delta's ops changed the tree's shape, and reIDed
+	// an element's id: settle forgets what it keeps of the tree, and the
+	// ids.
+	reshaped, reIDed bool
+	// relayout says they changed what the layout reads: more than
+	// colours that leave every look as it was.
+	relayout bool
+
 	cols, rows int
 	events     func(hotty.Event)
 	plat       hotty.Platform
