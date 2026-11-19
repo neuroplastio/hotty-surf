@@ -34,6 +34,9 @@ import (
 type Screen struct {
 	_ struct{}
 
+	// sc are the layout's scratch slices, kept between passes.
+	bufs scratch
+
 	cols, rows int
 	events     func(hotty.Event)
 	plat       hotty.Platform

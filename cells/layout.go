@@ -693,13 +693,8 @@ func (l *layout) hasBlock(n *html.Node) bool {
 // content, the room left to those that grow, or between them
 // (justify-between); too little room is taken from the widest.
 func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
-	type item struct {
-		n     *html.Node
-		w     int
-		grow  bool
-		fixed bool // shrink-0: not made narrower
-	}
-	var items []item
+	items := l.c.bufs.items()
+	defer func() { l.c.bufs.putItems(items) }()
 	for _, k := range l.kids(n) {
 		switch k.Type {
 		case html.TextNode:
@@ -761,7 +756,8 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		return h + lineH, w
 	}
 	avail := max(w-gaps, len(items))
-	lead, between := 0, make([]int, len(items))
+	lead, between := 0, l.c.bufs.ints(len(items))
+	defer l.c.bufs.putInts(between)
 	if sum <= avail {
 		extra := avail - sum
 		growers := 0
@@ -982,7 +978,8 @@ const (
 // spaces, and a word too long for a line wherever it must. fill makes a
 // lone field as wide as the line (a flex item's).
 func (l *layout) inline(nodes []*html.Node, stop *html.Node, x, y, w int, in inh, fill bool) (h, used int) {
-	var ps []piece
+	ps := l.c.bufs.pieces()
+	defer func() { l.c.bufs.putPieces(ps) }()
 	for _, n := range nodes {
 		ps = l.pieces(ps, n, in, fill)
 	}
@@ -1507,3 +1504,71 @@ type kept struct {
 	texts   map[*html.Node][]textPass
 	kidsOf  map[*html.Node][]*html.Node
 }
+
+// item is a flex row's item: its element or text, its width, whether
+// it grows, and whether it is made no narrower (shrink-0).
+type item struct {
+	n     *html.Node
+	w     int
+	grow  bool
+	fixed bool
+}
+
+// scratch are slices a layout pass uses and gives back, taken and given
+// back in turn as the calls that use them nest: pieces for a run of
+// inline content, a row's items and its gaps.
+type scratch struct {
+	ps  [][]piece
+	its [][]item
+	is  [][]int
+}
+
+func (s *scratch) pieces() []piece {
+	if n := len(s.ps); n > 0 {
+		b := s.ps[n-1]
+		s.ps = s.ps[:n-1]
+		return b[:0]
+	}
+	return nil
+}
+
+func (s *scratch) putPieces(b []piece) {
+	for i := range b {
+		b[i] = piece{} // nothing of this pass held for the next
+	}
+	s.ps = append(s.ps, b[:0])
+}
+
+func (s *scratch) items() []item {
+	if n := len(s.its); n > 0 {
+		b := s.its[n-1]
+		s.its = s.its[:n-1]
+		return b[:0]
+	}
+	return nil
+}
+
+func (s *scratch) putItems(b []item) {
+	for i := range b {
+		b[i] = item{}
+	}
+	s.its = append(s.its, b[:0])
+}
+
+// ints is n zeros.
+func (s *scratch) ints(n int) []int {
+	if k := len(s.is); k > 0 {
+		b := s.is[k-1]
+		s.is = s.is[:k-1]
+		if cap(b) >= n {
+			b = b[:n]
+			for i := range b {
+				b[i] = 0
+			}
+			return b
+		}
+	}
+	return make([]int, n)
+}
+
+func (s *scratch) putInts(b []int) { s.is = append(s.is, b) }
