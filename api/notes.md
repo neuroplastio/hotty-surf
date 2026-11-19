@@ -3247,3 +3247,141 @@ Accepted with changes; every lean and change applied:
   action (a gap in the test host, for hotty-go).
 - **The API.** `api/next.txt` has the two new lines. `api/v0.7.txt` waits
   for the maintainer's `make api-approve`.
+
+## Bind, extensible (the maintainer, 2026-11-19)
+
+The maintainer, on 4dd9b13's `surf.Bind(action, keys...)` and
+`surf.Readline()`: "I would make Bind API extensible so that Readline
+becomes just one of the options that carries a predefined group of
+bindings. Plus, add options to control override behavior, so callers can
+naturally use it." This section replaces the two names above. The rest
+of the reviewed pack stands as it is: one binding per key on the wire,
+prefixes always end, the size rule, the faults, cells parity.
+
+Proposed (replacing `Bind(hotty.Action, ...string)` and `Readline()`):
+
+```go
+// Bind declares, on the element, keys the host does something with
+// itself: SPEC §10.2's edit and scroll actions and prefix. What it binds
+// are its options: Keys, a group (Readline, or an app's Group), and an
+// override option, Yield or Override, for all of them.
+func Bind(opts ...BindOption) Handler
+
+// A BindOption is what Bind takes. Keys, Group, Readline, Yield and
+// Override make them; it is a closed set.
+type BindOption interface{ bindOption() }
+
+// Keys binds keys to one action. It wins: on the element it is the
+// nearer binding, as SPEC §10.2 has it.
+func Keys(action hotty.Action, keys ...string) BindOption
+
+// Group is a named set of bindings, an app's or the kit's, given whole.
+// Its bindings yield: each leaves alone a key the program is given on
+// the element or around it.
+func Group(opts ...BindOption) BindOption
+
+// Readline is the group of the SDK's readline keymap
+// (hotty.TerminalKeys).
+func Readline() BindOption
+
+// Yield and Override set how the bindings beside them, in the same Bind
+// or Group, meet the keys the program is given (a surf.Key's declared
+// key, a prefix, a ui.KeyScope's forwarded key), on the element or
+// around it: Yield leaves those keys alone, Override binds them anyway
+// (SPEC §10.2: the nearer binding wins).
+func Yield() BindOption
+func Override() BindOption
+```
+
+plx's palette, still one line:
+
+```go
+surf.On(b.ctx, idLine, surf.Input(m.SetQuery), surf.Bind(surf.Readline()))
+```
+
+A custom group, defined once and bound where it's needed:
+
+```go
+// pager scrolls a log with a pager's keys.
+var pager = surf.Group(
+	surf.Keys(hotty.ScrollDown, "j", "arrow_down"),
+	surf.Keys(hotty.ScrollUp, "k", "arrow_up"),
+	surf.Keys(hotty.ScrollStart, "g"),
+	surf.Keys(hotty.ScrollEnd, "shift+g"),
+)
+
+surf.On(ctx, "log", surf.Bind(pager))
+```
+
+The overrides:
+
+```go
+// readline that wins: ctrl+k deletes to the line's end in this field
+// even though the page's main declares mod+k
+surf.Bind(surf.Readline(), surf.Override())
+// one key that yields: alt+b moves back a word unless something around
+// the field takes alt+b
+surf.Bind(surf.Keys(hotty.WordBackward, "alt+b"), surf.Yield())
+// the app's leader, as before (a single binding: it wins)
+surf.Bind(surf.Keys(hotty.Prefix, "mod+k"))
+```
+
+Why: the maintainer wants one entry point an author learns once.
+`surf.Key` gives keys to the program and `surf.Bind` gives them to the
+host, and everything the host does with a key goes through Bind. A group
+is data the app can name, share and layer, as `data-keys` values once
+were; readline is just the first one the framework ships. The override
+behaviour was hidden in which name the caller used (Readline yielded,
+Bind won). As an option it is visible at the call site, and each kind
+keeps the default 4dd9b13 had: a group yields, a single binding wins. A
+closed `BindOption` interface lets Keys, groups and options share one
+variadic without a second shape, and the readline table stays linked
+only by `Readline()`.
+
+### The rules
+
+- **Defaults.** A Keys binding given to Bind directly wins. Every binding
+  inside a group yields, Readline's too. The first Yield or Override among
+  a Bind's or a Group's options sets it for every binding in that call,
+  nested groups included, except a nested group that sets its own. Both
+  in one call is a fault, and the first stays.
+- **Yield** leaves out a key the program is given on the element or
+  around it (a Key's declared key, a prefix, a KeyScope's forwarded key):
+  the farther binding holds. **Override** writes it anyway. On the element
+  itself a Key's declared key is the program's either way, and an
+  Override of it is a fault, but for prefix (4dd9b13's rule).
+- **Layering on one element.** Bindings are read in order, Bind handler
+  by handler and option by option. A binding that wins replaces a
+  yielding one of the same key. A later group's binding replaces an
+  earlier group's (groups layer, as `data-keys` values did). Two winning
+  bindings of one key to different actions are a fault, and the first
+  stays. One key bound twice to one action is one binding.
+- **Faults** stand as reviewed: an action that isn't SPEC's or is
+  program, default or insert; a key that doesn't parse, tab, shift+tab,
+  escape; an edit action on a control that isn't a text field; a
+  multi-line one on an input; a scroll action on a text field. A group
+  reports each fault once per element. An empty Group is no binding.
+- **Linking.** Bind links the kit's text fallback (rt.LinkText), as
+  Bind and Readline did; Readline's table is linked only by `Readline()`.
+
+Questions for the review:
+
+1. **Names.** `Keys` (one action), `Group`, `Readline`, `Yield`,
+   `Override`, `BindOption`. Lean: these. `Keys` reads as "these keys do
+   this action" beside `surf.Key`; `Action(hotty.X, keys...)` is the
+   other candidate. `Win` or `Nearer` for Override; lean Override.
+2. **Options as values vs methods.** `surf.Readline().Override()` (a
+   `Bindings` struct with methods) would read left to right, but needs a
+   type with methods, and the maintainer asked for options. Lean: option
+   values in the variadic.
+3. **Scope of an override option.** Lean: it sets the whole Bind or
+   Group call it's in. Per-binding (`surf.Keys(…, surf.Yield())`) would
+   mix keys and options in one variadic of strings, so the alternative
+   is wrapping: `surf.Yield(surf.Keys(…))`. Wrapping is more precise but
+   nests; a second Bind handler on the element does the same.
+4. **Two groups of one key.** Lean: the later layers over the earlier,
+   silently, as `data-keys` did; a fault would make an app's variant of
+   readline impossible without Override.
+5. **Should Keys inside a group keep "wins"?** Lean: no, a group is one
+   unit with one behaviour. A key in a group that must win goes in the
+   Bind beside the group.
