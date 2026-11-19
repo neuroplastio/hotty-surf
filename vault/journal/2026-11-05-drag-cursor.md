@@ -36,8 +36,7 @@ overrode it in its own sheet; it can drop that now.
 - The five drag cases (`pkg/conformance/cases/drag-*.txt`) rewritten with
   `-update`: the ops and documents of the start and end frames carry the
   class; cells unchanged.
-- Chromium computed style, a throwaway script (`~/.cache/hotty/drag-cursor/
-  cursor.cjs`): without the mark handles are `pointer`, button and link
+- Chromium computed style, from a throwaway script: without the mark handles are `pointer`, button and link
   `pointer`, field `text`, disabled `default`; with it all ten elements
   say `grabbing`.
 
