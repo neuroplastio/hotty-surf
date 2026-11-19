@@ -300,6 +300,9 @@ func (s *Surface) event(e hotty.Event) error {
 	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
 		ran = s.dragged(e)
 	case hotty.EventFocus:
+		// A focus ends a key sequence (SPEC §10.5), the host's or the
+		// program's own.
+		s.prefixed = false
 		// Every move of the keyboard renders, handlers or not: a view
 		// that asks for an element on every render (Autofocus) then
 		// asks again once the user moved the keyboard off it.
@@ -314,6 +317,7 @@ func (s *Surface) event(e hotty.Event) error {
 		}
 		ran = true
 	case hotty.EventBlur:
+		s.prefixed = false
 		s.focus("")
 		if modal != "" && afterPress && scopedPress {
 			s.modalFocus = "first"
@@ -512,6 +516,12 @@ func (s *Surface) key(k string) (bool, error) {
 		physical, _ = s.frame.Scopes[0].Canonical(s.platform, k)
 	}
 	k = modName(s.platform, k)
+	// After a prefix the host used no key: the surface does no element's
+	// own use of one either (SPEC §10.5). A prefix starts one.
+	held := s.prefixed
+	if !held && s.prefixAt(s.byID[s.focused], physical) {
+		s.prefixed = true
+	}
 	intercepted := false
 	var fallback func(rt.KeyDefault) rt.KeyResult
 	var native func(*rt.KeyEnvironment, string, func(rt.KeyDefault) rt.KeyResult) bool
@@ -532,7 +542,7 @@ func (s *Surface) key(k string) (bool, error) {
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
 	}
-	if n := s.byID[s.focused]; intercepted && n != nil && s.keyMarks[s.focused].kind != "compound-text" && native != nil && native(&env, physical, fallback) {
+	if n := s.byID[s.focused]; intercepted && !held && n != nil && s.keyMarks[s.focused].kind != "compound-text" && native != nil && native(&env, physical, fallback) {
 		return true, s.send()
 	}
 	ids := s.chain(s.focused)
@@ -596,7 +606,7 @@ func (s *Surface) key(k string) (bool, error) {
 	// A declared key every handler declined is the element's own use
 	// (surf.Key), as a binding's under a KeyScope is: the host gave it
 	// the program, so the surface does what the host would have.
-	if n := s.byID[s.focused]; n != nil && s.declared(physical) {
+	if n := s.byID[s.focused]; n != nil && !held && s.declared(physical) {
 		env := rt.KeyEnvironment{Node: n, Kind: useKind(n), Declined: true, Focused: s.focused, On: s.frame.On, Platform: s.platform,
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
@@ -605,6 +615,29 @@ func (s *Surface) key(k string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// prefixAt says whether n's keymap, as a host reads it from the data-keys
+// the surface wrote, binds key to prefix (SPEC §10.5); with key "",
+// whether it binds any key to prefix.
+func (s *Surface) prefixAt(n *html.Node, key string) bool {
+	if n == nil {
+		return false
+	}
+	vs := keymapsOf(n)
+	if len(vs) == 0 {
+		return false
+	}
+	m := hotty.ParseKeymap(s.platform, strings.Join(vs, " "))
+	if key != "" {
+		return m.Prefix(key)
+	}
+	for _, b := range strings.Fields(m.Format()) {
+		if strings.HasSuffix(b, "=prefix") {
+			return true
+		}
+	}
+	return false
 }
 
 // declared says whether a Key handler of the focused element or of one
@@ -746,6 +779,14 @@ func modName(p hotty.Platform, k string) string {
 // as the host's focus event.
 func (s *Surface) takeFocus() (bool, error) {
 	if s.focused != "" {
+		// With the keyboard here already, a=focus without a target ends
+		// a key sequence, where one may run (SPEC §10.5).
+		if s.out != nil && (s.prefixed || s.prefixAt(s.byID[s.focused], "")) {
+			s.prefixed = false
+			if err := s.write([]string{hotty.Focus(s.name, "")}); err != nil {
+				return true, err
+			}
+		}
 		return true, nil
 	}
 	if s.prev == nil || s.out == nil {

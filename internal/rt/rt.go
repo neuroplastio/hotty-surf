@@ -6,6 +6,8 @@ package rt
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -22,6 +24,12 @@ type Handlers struct {
 	// as the element's data-keys, each bound to program.
 	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
+	// Binds are surf.Bind's and surf.Readline's bindings, canonical for
+	// the frame's platform: Readline's first, then the Binds, a later
+	// one of a key replacing an earlier (the first stays where two Binds
+	// disagree, a fault). The runtime writes each as key=action, but
+	// where Keys declares the key.
+	Binds []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
 	Scope   *KeyScope
@@ -33,6 +41,41 @@ type Handlers struct {
 	// type is surf's (rt can't import surf). Secondary is surf.Secondary's.
 	Drag, Drop any
 	Secondary  func(hotty.Cell, hotty.Area)
+}
+
+// A Bind is one key bound to an action that isn't program (SPEC §10.2):
+// a field's edit action, prefix, or a scroll action. Readline says it
+// came from surf.Readline's set, which a Bind on the element overrides.
+type Bind struct {
+	Key, Action string
+	Readline    bool
+}
+
+// EditKeys is h's bindings as a field's keymap reads them (SPEC §10.2),
+// a data-keys value, then, with program, its Key handlers' keys, each
+// the program's: what a host resolves on the element. Without program, a
+// key the Key handlers declare is left out, so that a declined one is
+// the binding's farther in, or the default's.
+func EditKeys(h *Handlers, program bool) string {
+	var b strings.Builder
+	for _, x := range h.Binds {
+		if program && slices.Contains(h.Keys, x.Key) {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(x.Key)
+		b.WriteByte('=')
+		b.WriteString(x.Action)
+	}
+	if p := ProgramKeys(h.Keys); program && p != "" {
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(p)
+	}
+	return b.String()
 }
 
 // A Frame is one render's registrations.
@@ -97,6 +140,9 @@ type Frame struct {
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.
 	Scopes []*KeyScope
+	// Readline is hotty.TerminalKeys as Binds for Platform, made the
+	// first time an element binds it in the frame (surf.Readline).
+	Readline []Bind
 }
 
 // ModalOps performs the tree and focus work of an active modal.

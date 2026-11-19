@@ -57,6 +57,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	}
 	e := &rt.Handlers{Scope: rt.KeyScopeFrom(ctx)}
 	clicks := 0
+	readline, binds := false, []rt.Bind(nil)
 	for _, h := range hs {
 		switch h.kind {
 		case kindClick, kindClicks:
@@ -86,6 +87,20 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 					e.Keys = append(e.Keys, c)
 				}
 			}
+		case kindReadline:
+			readline = true
+		case kindBind:
+			for _, k := range h.keys {
+				c, ok := f.Platform.ReadKey(k)
+				switch {
+				case !ok || c == "shift+tab" || c == "escape" || c == "tab":
+					f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds the key "+strconv.Quote(k)+", which doesn't parse or keeps its own meaning (SPEC §10.2)")
+				case !bindable(h.action):
+					f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(k)+" to "+strconv.Quote(string(h.action))+", which isn't an action Bind takes: program is surf.Key's, default is declining")
+				default:
+					binds = append(binds, rt.Bind{Key: c, Action: string(h.action)})
+				}
+			}
 		case kindFocus:
 			e.Focus = h.fn.(func(bool))
 		case kindOutside:
@@ -102,18 +117,73 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Secondary = h.fn.(func(hotty.Cell, hotty.Area))
 		}
 	}
+	e.Binds = bindsOf(f, id, e.Keys, readline, binds)
 	f.On[id] = e
 	f.Order = append(f.Order, id)
 	return a
+}
+
+// bindsOf is an element's bindings (rt.Handlers.Binds): Readline's set,
+// when it has it, then binds, each replacing Readline's binding of its
+// key. Two binds of a key to different actions are a fault, and the
+// first stays; so is a bind of a key a Key handler declares (keys), but
+// to prefix, which gives fn the key too.
+func bindsOf(f *rt.Frame, id string, keys []string, readline bool, binds []rt.Bind) []rt.Bind {
+	var out []rt.Bind
+	if readline {
+		out = append(out, readlineBinds(f)...)
+	}
+	for _, b := range binds {
+		if b.Action != string(hotty.Prefix) && slices.Contains(keys, b.Key) {
+			f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(b.Key)+", which its surf.Key declares: a key has one use on an element")
+			continue
+		}
+		i := slices.IndexFunc(out, func(x rt.Bind) bool { return x.Key == b.Key })
+		switch {
+		case i < 0:
+			out = append(out, b)
+		case out[i].Readline:
+			out[i] = b
+		case out[i].Action != b.Action:
+			f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(b.Key)+" to "+out[i].Action+" and to "+b.Action+": a key has one use on an element")
+		}
+	}
+	return out
+}
+
+// readlineBinds is hotty.TerminalKeys for the frame's platform, read
+// once a frame.
+func readlineBinds(f *rt.Frame) []rt.Bind {
+	if f.Readline == nil {
+		m := hotty.ParseKeymap(f.Platform, hotty.TerminalKeys)
+		for _, b := range strings.Fields(m.Format()) {
+			k, a, _ := strings.Cut(b, "=")
+			if c, ok := f.Platform.ReadKey(k); ok {
+				f.Readline = append(f.Readline, rt.Bind{Key: c, Action: a, Readline: true})
+			}
+		}
+	}
+	return f.Readline
+}
+
+// bindable says whether Bind takes the action: one of SPEC §10.2's but
+// program, default and insert.
+func bindable(a hotty.Action) bool {
+	switch a {
+	case hotty.Program, hotty.Default, hotty.Insert:
+		return false
+	}
+	return new(hotty.Keymap).Bind("a", a)
 }
 
 // A Handler is one of an element's handlers, for [On]. Click, Clicks,
 // Input, Check, Key, Focus, Outside, Hover, Submit, Drag, Drop and
 // Secondary make them.
 type Handler struct {
-	kind kind
-	fn   any      // the func the kind takes; nil is no handler
-	keys []string // Key's keys, as the app wrote them
+	kind   kind
+	fn     any          // the func the kind takes; nil is no handler
+	keys   []string     // Key's and Bind's keys, as the app wrote them
+	action hotty.Action // Bind's
 }
 
 type kind uint8
@@ -132,6 +202,8 @@ const (
 	kindDrop
 	kindSecondary
 	kindClicks
+	kindBind
+	kindReadline
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -249,6 +321,67 @@ func Key(fn func(key string) bool, keys ...string) Handler {
 		h.keys = keys
 	}
 	return h
+}
+
+// Bind binds keys, on the element, to action, one of SPEC §10.2's
+// actions but program, which is [Key]'s, and default, which is declining
+// (a Key handler's false). The host does the action itself; no handler
+// hears the key. It is how the keys that aren't the program's are
+// declared, in Go beside the element's other handlers:
+//   - a text field's edit actions (hotty.WordBackward, hotty.LineStart,
+//     …), on a field or on an element that holds fields, for every field
+//     inside; a multi-line one (hotty.Newline, hotty.LineNext, …) on a
+//     textarea, an editing host or an element that holds one. [Readline]
+//     binds the SDK's set of them at once.
+//   - hotty.Prefix (SPEC §10.5): the key reaches the program, as a
+//     declared one does, and so does every key after it, Tab and Escape
+//     too, until the program ends the sequence with Surface.Focus (or
+//     Blur). Key handlers hear the key and those after it as they hear
+//     any key that reaches the program; a printable prefix still types
+//     in a field inside, as a declared key does.
+//   - a scroll action (hotty.ScrollDown, hotty.ScrollPageUp, …) on an
+//     element that isn't a field: while the keyboard is on it, or inside
+//     it outside a field, a key it doesn't use scrolls the nearest
+//     element that scrolls (SPEC §10.2, scrolling keys). A pager binds
+//     hotty.ScrollDown to "j".
+//
+// keys are in Key's notation, read for the host's platform. The
+// bindings of an element and those around it make a field's keymap as
+// SPEC §10.2 has it: the nearer binding of a key wins.
+//
+// On one element a key has one use. A key a Key handler declares is the
+// program's, whatever Readline binds it to (a palette's arrow_up), and
+// a Bind of it is a fault, but to hotty.Prefix. Two Binds of a key to
+// different actions are a fault, and the first stays; a Bind replaces
+// Readline's binding of its key. So are faults, each binding dropped: an
+// action that isn't SPEC's, or is program, default or insert; a key that
+// doesn't parse, tab, shift+tab and escape, which keep their meaning; an
+// edit action on an element that isn't a text field and holds none; a
+// multi-line one on an input; a scroll action on a text field.
+//
+// The surface writes the bindings into the element's data-keys (SPEC
+// §10.2), as it writes Key's.
+func Bind(action hotty.Action, keys ...string) Handler {
+	return Handler{kind: kindBind, keys: keys, action: action}
+}
+
+// Readline binds, on a text field or on an element that holds fields, the
+// SDK's readline keymap, hotty.TerminalKeys: Bubble Tea's text input's
+// keys (ctrl+a and ctrl+e to the line's ends, ctrl+b, ctrl+f, alt+b and
+// alt+f to move, ctrl+w, ctrl+u, ctrl+k and alt+d to delete, …), the same
+// on every platform, but mod+a, which selects all. A program whose
+// fields edit as a terminal's line does, as a palette's query, puts it
+// on the field or on what holds its fields, once:
+//
+//	surf.On(ctx, "query", surf.Input(a.SetQuery), surf.Readline())
+//
+// It is [Bind] of each of the set's keys, read before the element's own
+// Binds, which change one of its keys; a key a Key handler on the element
+// declares stays the program's. A field inside that binds a key itself
+// wins over it (SPEC §10.2). On an element that isn't a text field and
+// holds none it is a fault.
+func Readline() Handler {
+	return Handler{kind: kindReadline, fn: struct{}{}}
 }
 
 // Focus calls fn with true when the user moves the keyboard onto the

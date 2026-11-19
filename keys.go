@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/rt"
 )
@@ -40,6 +41,8 @@ const (
 //     ignores (it reaches the program anyway), only OwnKeys lists; tab
 //     only on a text field, the one place SPEC lets it go;
 //   - the keys the KeyScopes around a kit control forward;
+//   - its surf.Bind and surf.Readline bindings, key=action, but for a key
+//     the two above give the program;
 //   - on an element that types, each printable key an element around it
 //     declares, given back (key=default), so a field types it (K27).
 //
@@ -87,11 +90,12 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 		return 0
 	}
 	var own []string
-	if h := t.f.On[id]; h != nil {
+	h := t.f.On[id]
+	if h != nil {
 		own = h.Keys
 	}
 	var binds []string
-	text, _ := nativeKind(n)
+	text, multiline := nativeKind(n)
 	pushed := 0
 	for _, k := range own {
 		switch {
@@ -114,9 +118,15 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 			}
 		}
 	}
+	var bound []string
+	if h != nil && len(h.Binds) > 0 {
+		var n2 int
+		binds, bound, n2 = s.writeBinds(n, id, h.Binds, text == "text", multiline, binds, t)
+		pushed += n2
+	}
 	if rt.Types(n) {
 		for _, k := range t.printable[:len(t.printable)-pushed] {
-			if !contains(own, k) && !slices.Contains(binds, k+"=default") {
+			if !contains(own, k) && !contains(bound, k) && !slices.Contains(binds, k+"=default") {
 				binds = append(binds, k+"=default")
 			}
 		}
@@ -126,6 +136,79 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) int {
 		n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
 	}
 	return pushed
+}
+
+// writeBinds adds n's surf.Bind and surf.Readline bindings to binds, each
+// key=action, but where binds gives the key to the program already (a
+// Key handler's, a KeyScope's): that one wins, but a prefix, which is
+// the program's too, is written in its place. It drops, as faults, a
+// binding the element can't have (SPEC §10.2): an edit action where no
+// text field is (n or inside it), a multi-line one an input binds, a
+// scroll action a text field binds. A printable key bound to prefix is
+// pushed on t's stack, so the fields inside type it (K27). It returns
+// binds, the keys it wrote, and how many it pushed.
+func (s *Surface) writeBinds(n *html.Node, id string, bs []rt.Bind, field, multiline bool, binds []string, t *tree) ([]string, []string, int) {
+	var bound []string
+	pushed, holds, readlineFault := 0, -1, false
+	for _, b := range bs {
+		a := hotty.Action(b.Action)
+		if i := slices.Index(binds, b.Key+"=program"); i >= 0 {
+			// The program's already; a prefix is the program's too, and
+			// holds the keys after it for it.
+			if a == hotty.Prefix {
+				binds[i] = b.Key + "=prefix"
+			}
+			continue
+		}
+		switch {
+		case a == hotty.Prefix:
+			if rt.Printable(b.Key) {
+				t.printable = append(t.printable, b.Key)
+				pushed++
+			}
+		case a.Scrolls():
+			if field {
+				s.fault("surf.Bind: the id " + id + " is a text field, whose keymap leaves out " + b.Action + " (SPEC §10.2): bind it on what scrolls")
+				continue
+			}
+		default:
+			if holds < 0 {
+				holds = 0
+				if field || holdsField(n) {
+					holds = 1
+				}
+			}
+			if holds == 0 {
+				if !b.Readline {
+					s.fault("surf.Bind: the id " + id + " binds " + strconv.Quote(b.Key) + " to " + b.Action + ", a text field's action, but is no text field and holds none")
+				} else if !readlineFault {
+					readlineFault = true
+					s.fault("surf.Readline: the id " + id + " is no text field and holds none")
+				}
+				continue
+			}
+			if !b.Readline && field && !multiline && a.Multiline() {
+				s.fault("surf.Bind: the id " + id + " is an input, which has no " + b.Action + " (SPEC §10.2)")
+				continue
+			}
+		}
+		binds = append(binds, b.Key+"="+b.Action)
+		bound = append(bound, b.Key)
+	}
+	return binds, bound, pushed
+}
+
+// holdsField says whether a text field is inside n.
+func holdsField(n *html.Node) bool {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type != html.ElementNode {
+			continue
+		}
+		if k, _ := nativeKind(c); k == "text" || holdsField(c) {
+			return true
+		}
+	}
+	return false
 }
 
 // A keyMark is a kit control's place under the KeyScopes: the frame's
@@ -141,11 +224,17 @@ type keyMark struct {
 func keysig(b []byte, f *rt.Frame) []byte {
 	b = b[:0]
 	for _, id := range f.Order {
-		if h := f.On[id]; h != nil && len(h.Keys) > 0 {
+		if h := f.On[id]; h != nil && len(h.Keys)+len(h.Binds) > 0 {
 			b = append(b, id...)
 			for _, k := range h.Keys {
 				b = append(b, ' ')
 				b = append(b, k...)
+			}
+			for _, x := range h.Binds {
+				b = append(b, ' ')
+				b = append(b, x.Key...)
+				b = append(b, '=')
+				b = append(b, x.Action...)
 			}
 			b = append(b, '\n')
 		}

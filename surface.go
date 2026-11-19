@@ -87,6 +87,7 @@ type Surface struct {
 	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
 	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
 	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
+	prefixed     bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)
 	sending      bool
 	deferred     []hotty.Event
 
