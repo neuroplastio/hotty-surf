@@ -13,7 +13,8 @@
 // with no type, which submits it), button-label (a button with only an icon
 // and no label, which the cells fallback draws as "[ · ]"), data-keys (a key
 // bind written in a .templ or a .go file, as an attribute or an attrs
-// map's key: the surface writes data-keys from surf.Key's keys). colour and px read the app's .css files
+// map's key: the surface writes data-keys from surf.Key's keys and
+// surf.Bind's and surf.Readline's bindings). colour and px read the app's .css files
 // too, but for a theme file (theme*.css) and, for colour, a custom
 // property (--name: value).
 // An exception is written where it is made, with its reason, on the line

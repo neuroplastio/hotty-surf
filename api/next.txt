@@ -2,6 +2,7 @@ pkg neuroplast.io/hotty-surf, const CharsBound Chars = 0
 pkg neuroplast.io/hotty-surf, const CharsPick Chars = 1
 pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
+pkg neuroplast.io/hotty-surf, func Bind(hotty.Action, ...string) Handler
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
 pkg neuroplast.io/hotty-surf, func Clicks(func(int)) Handler
@@ -16,6 +17,7 @@ pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
+pkg neuroplast.io/hotty-surf, func Readline() Handler
 pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler

@@ -728,3 +728,8 @@ Each is one of Basecoat's components that shows something and takes no keys of i
 ## L6: the Screen's own redraw, for plx's tooltips
 
 - `cells.Screen.Dirty`: a tooltip (ui.Tooltip) shows and goes on a bare Move, with nothing written, and Move's approved doc told a program to redraw only on Writes and on the presses and releases it takes, so plx would draw a tip late and leave it behind (p-801's spot-check of the tooltip merge). The Screen says when what it draws changed; Move keeps its approved signature, and anything else local (a hover's own look, later) is covered too.
+
+## Field keys, prefix and scroll declared in Go (plx's palette, 2026-11-19)
+
+- `surf.Bind`: the maintainer's rule (2026-11-18) is that no template carries a key bind, and v0.7 lost with the authored `data-keys` the three things it carried besides `key=program`: a field's edit actions, `prefix` (SPEC §10.5) and the scroll actions. Bind declares them in Go, beside the element's other handlers, as `surf.Key(fn, keys...)` declares the program's: an action of hotty-go's `hotty.Action` (SPEC's names) in place of fn.
+- `surf.Readline`: plx's palette set `hotty.TerminalKeys` on its query, so on a host its line lost readline editing with v0.7 (ctrl+w, ctrl+u, alt+b). A named set the app asks for whole, as one handler that can't be edited in place or written into an attribute; it leaves alone the keys the program is given there, as the 2026-11-04 decision had the program's bind win over readline.

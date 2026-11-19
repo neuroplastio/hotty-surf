@@ -205,8 +205,11 @@ func (s *Surface) Event(e hotty.Event) error {
 // event for focus the program gives, so the surface takes the move as that
 // event itself: its Focus handlers hear it, as they hear a Tab inside the
 // surface, and the keys the host passes on reach that element's Key
-// handlers. focused says whether the surface has the keyboard after it:
-// true when it had it already, and false, with nothing sent, when nothing
+// handlers. With the keyboard on it already, Focus sends a=focus without
+// a target, which moves nothing and ends a key sequence (SPEC §10.1,
+// §10.5): how a program ends the sequence a surf.Bind(hotty.Prefix, …)
+// started for its own keymap. focused says whether the surface has the
+// keyboard after it: true when it had it already, and false, with nothing sent, when nothing
 // in it takes focus or it hasn't rendered and been attached yet. In cells
 // the program gives the Screen the keyboard first (cells.Screen.Focus),
 // which may already have restored the element. It runs on the driver's
@@ -292,6 +295,11 @@ func (s *Surface) Chars() Chars {
 //     with shift where it isn't a character, as the host gives that too
 //     (SPEC §10.2), and Escape when declared. A declared character is
 //     listed, but not on an element that types, which keeps it.
+//   - on an element that isn't a text field, the keys its keymap binds to
+//     a scroll action (surf.Bind), which the host scrolls with, a
+//     character among them; with shift where the keymap gives that too.
+//
+// A key bound to prefix is not listed: it is the program's (a leader).
 //
 // Tab and Shift+Tab are never in it, nor a KeyScope's bindings, which
 // ui.Bindings lists. A disabled element, nothing focused

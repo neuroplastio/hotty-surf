@@ -343,3 +343,63 @@ func ExampleSurface_Overlays() {
 	// []
 	// [filter]
 }
+
+// attrList writes an element's attributes from surf.On, as templ spreads
+// them.
+func attrList(a templ.Attributes) string {
+	var b bytes.Buffer
+	for _, kv := range a.Items() {
+		fmt.Fprintf(&b, " %s=%q", kv.Key, fmt.Sprint(kv.Value))
+	}
+	return b.String()
+}
+
+// A pager's log scrolls with j and k where the host scrolls it, and the
+// app's leader, mod+k, hands its own keymap the keys after it, which it
+// ends with Surface.Focus. The surface writes the bindings into data-keys.
+func ExampleBind() {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		main := surf.On(ctx, "main", surf.Bind(hotty.Prefix, "mod+k"))
+		log := surf.On(ctx, "log", surf.Bind(hotty.ScrollDown, "j"), surf.Bind(hotty.ScrollUp, "k"))
+		_, err := fmt.Fprintf(w, `<main%s><pre%s tabindex="0">…</pre></main>`, attrList(main), attrList(log))
+		return err
+	})
+	s := surf.New("pager", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		return
+	}
+	for _, b := range []string{`data-keys="ctrl+k=prefix"`, `data-keys="j=scroll-down k=scroll-up"`} {
+		fmt.Println(b, bytes.Contains([]byte(doc), []byte(b)))
+	}
+	// Output:
+	// data-keys="ctrl+k=prefix" true
+	// data-keys="j=scroll-down k=scroll-up" true
+}
+
+// A palette's query edits as a terminal's line does: ctrl+w deletes the
+// word before the caret. Its handler still takes the arrows it declares,
+// which Readline would bind to the field's moves.
+func ExampleReadline() {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		rows := func(key string) bool { return key == "arrow_up" || key == "arrow_down" }
+		q := surf.On(ctx, "query", surf.Input(func(string) {}), surf.Readline(),
+			surf.Key(rows, "arrow_up", "arrow_down"))
+		_, err := fmt.Fprintf(w, `<input%s>`, attrList(q))
+		return err
+	})
+	s := surf.New("palette", view, "")
+	s.Attach(io.Discard, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		return
+	}
+	for _, b := range []string{"ctrl+w=delete-word-backward", "arrow_up=program", "arrow_up=line-previous"} {
+		fmt.Println(b, bytes.Contains([]byte(doc), []byte(b)))
+	}
+	// Output:
+	// ctrl+w=delete-word-backward true
+	// arrow_up=program true
+	// arrow_up=line-previous false
+}

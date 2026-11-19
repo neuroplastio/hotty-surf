@@ -3100,8 +3100,10 @@ surf.On(b.ctx, idLine, surf.Input(m.SetQuery), surf.Readline())
 
 A pager's surface: `surf.On(ctx, "log", surf.Bind(hotty.ScrollDown, "j"),
 surf.Bind(hotty.ScrollUp, "k"), surf.Bind(hotty.ScrollEnd, "shift+g"))`,
-and a list's `g g`: `surf.On(ctx, "rows", surf.Key(a.rowKey),
-surf.Bind(hotty.Prefix, "g"))`.
+and an app's leader, read by its own keymap: `surf.On(ctx, "main",
+surf.Bind(hotty.Prefix, "mod+k"))`. (The proposal had a list's `g g`
+here; the review: a list doesn't use `g`, so `surf.Key(fn, "g")` hears
+both, and needs no prefix.)
 
 Why: the maintainer's rule is that a key sits with the Go code that owns
 the element, and Bind is `surf.Key(fn, keys...)`'s twin, an action in
@@ -3187,3 +3189,61 @@ Questions for the review:
    program's own keymap reads never passes through the surface.
 4. **Other named sets.** Lean: Readline only. A pager's j/k set is a
    handful of Binds, and no app asks for one yet.
+
+### As reviewed (p-832, ~/.cache/hotty-surf-fieldkeys/review.md)
+
+Accepted with changes; every lean and change applied:
+
+- **Names.** `surf.Bind(action hotty.Action, keys ...string) Handler`
+  and `surf.Readline() Handler`, as proposed (Q1, Q4). No `KeyBind`
+  type, no other named set.
+- **One binding per key on the wire.** The surface works each element's
+  bindings out in Go, by the key as the platform reads it (`mod+k` and
+  `ctrl+k` are one on Linux), and writes one per key, so sorting never
+  orders two of one key by action. keysig carries the bindings, so a
+  render that changes only a Bind repaints.
+- **Readline yields to the program's keys around it** (Q2, changed).
+  Readline leaves out every key the program is given on the element or on
+  any element around it: a Key's declared key, a prefix, a KeyScope's
+  forwarded key. A page's `mod+k` on `<main>` reaches its handler from a
+  field under Readline, as the 2026-11-04 decision had it. An explicit
+  Bind keeps SPEC's nearer-wins. A Bind of a key a Key on the same
+  element declares is a fault, but for prefix, which writes `prefix` and
+  still lets fn hear the key. The surface's own use of a key a handler
+  declared and declined is Readline's edit (what the host does with no
+  declaration of it).
+- **Ending a prefix** (Q3, changed). Surface.Focus, with the keyboard on
+  the surface already, always sends `a=focus` without `t` (SPEC §10.1:
+  focus stays, no event). And a prefix a Key handler took is the
+  surface's sequence: it ends once the key after it has been through the
+  handlers, the surface sending `a=focus` itself, so an app under
+  `run.App`, whose handlers have no Surface, is never stuck. A prefix no
+  handler took is the program's leader, ended by Focus.
+- **Faults.** The fault for an edit action on an element that holds no
+  field is cut (a palette root holds its input only while open): an edit
+  action is a fault only on a control that isn't a text field (a button,
+  a select, a check box, a date field), and Readline there too. A key
+  bound twice to one action, and Readline twice, are one binding. The
+  rest of the list stands.
+- **ui.Bindings** drops a binding's key while the focused plain text
+  field takes it itself (its keymap's edit, Readline's `ctrl+k`); a kit
+  control under the scope gets the scope's keys forwarded, as before. Its
+  doc says a `surf.Bind` is not one of its bindings.
+- **Size, with a fault.** `ui` no longer links the text fallback at init:
+  `rt.LinkText` links it from ui's text components (Input, Textarea,
+  Command, Combobox, NavList's filter), ui.KeyScope, surf.Readline and
+  surf.Bind. A declined key on a text field with none linked edits
+  nothing and is a fault, once per surface, naming what links it.
+- **Docs.** Readline's doc is the review's ("over the platform's
+  default; mod+a still selects all"); Bind's says "other than program
+  and default". docs/keyboard-model.md has "Keys that aren't the
+  program's", the Routing sentence on a router's prefix, and Command and
+  Combobox getting Readline from a wrapper; field-keys.md has the v0.7
+  decision; the lint message names Bind and Readline.
+- **Vectors on hottytest and in cells:** Readline on a field and around
+  it, a declared ancestor key over Readline, a declined key under
+  Readline, a scroll Bind, a prefix ended by Focus and by itself. The
+  scroll vector's host half is skipped: hottytest 0.8 does no scroll
+  action (a gap in the test host, for hotty-go).
+- **The API.** `api/next.txt` has the two new lines. `api/v0.7.txt` waits
+  for the maintainer's `make api-approve`.

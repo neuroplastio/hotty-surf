@@ -300,7 +300,12 @@ func Check(fn func(checked bool)) Handler {
 //
 // The surface writes the declaration as the element's data-keys (SPEC
 // §10.2, key=program): a template that writes data-keys itself is a
-// fault, and the attribute is dropped.
+// fault, and the attribute is dropped. A declared key wins over the
+// element's [Bind] and [Readline] bindings of it, and over Readline's
+// on the elements inside: the program's key is the program's, as a
+// program's bind was over readline (vault/knowledge/field-keys.md).
+// The keys that aren't the program's (a field's edit actions, a prefix,
+// the scroll actions) are Bind's.
 //
 // A ui.KeyScope naming a key is offered it before the focused kit
 // control's default and ordinary Key handlers. A declined key then goes
@@ -325,20 +330,23 @@ func Key(fn func(key string) bool, keys ...string) Handler {
 }
 
 // Bind binds keys, on the element, to action, one of SPEC §10.2's
-// actions but program, which is [Key]'s, and default, which is declining
-// (a Key handler's false). The host does the action itself; no handler
-// hears the key. It is how the keys that aren't the program's are
-// declared, in Go beside the element's other handlers:
+// actions other than program, which is [Key]'s, and default, which is
+// declining (a Key handler's false). The host does the action itself, and
+// no handler hears the key, but for prefix. It is how the keys that aren't
+// the program's are declared, in Go beside the element's other handlers:
 //   - a text field's edit actions (hotty.WordBackward, hotty.LineStart,
 //     …), on a field or on an element that holds fields, for every field
 //     inside; a multi-line one (hotty.Newline, hotty.LineNext, …) on a
 //     textarea, an editing host or an element that holds one. [Readline]
 //     binds the SDK's set of them at once.
-//   - hotty.Prefix (SPEC §10.5): the key reaches the program, as a
-//     declared one does, and so does every key after it, Tab and Escape
-//     too, until the program ends the sequence with Surface.Focus (or
-//     Blur). Key handlers hear the key and those after it as they hear
-//     any key that reaches the program; a printable prefix still types
+//   - hotty.Prefix (SPEC §10.5): a leader. The key reaches the program,
+//     as a declared one does, and so does every key after it, Tab and
+//     Escape too, until the sequence ends. A prefix a Key handler takes
+//     is the surface's: it ends once the key after it has been through
+//     the handlers (a field's ctrl+x and the key that follows). One no
+//     handler takes is the program's own keymap's (an app's leader,
+//     surf.On(ctx, "main", surf.Bind(hotty.Prefix, "mod+k"))), and the
+//     program ends it with Surface.Focus. A printable prefix still types
 //     in a field inside, as a declared key does.
 //   - a scroll action (hotty.ScrollDown, hotty.ScrollPageUp, …) on an
 //     element that isn't a field: while the keyboard is on it, or inside
@@ -346,42 +354,51 @@ func Key(fn func(key string) bool, keys ...string) Handler {
 //     element that scrolls (SPEC §10.2, scrolling keys). A pager binds
 //     hotty.ScrollDown to "j".
 //
-// keys are in Key's notation, read for the host's platform. The
-// bindings of an element and those around it make a field's keymap as
-// SPEC §10.2 has it: the nearer binding of a key wins.
+// keys are in Key's notation, read for the host's platform. The bindings
+// of an element and of those around it make a field's keymap as SPEC
+// §10.2 has it: the nearer binding of a key wins.
 //
 // On one element a key has one use. A key a Key handler declares is the
-// program's, whatever Readline binds it to (a palette's arrow_up), and
-// a Bind of it is a fault, but to hotty.Prefix. Two Binds of a key to
-// different actions are a fault, and the first stays; a Bind replaces
-// Readline's binding of its key. So are faults, each binding dropped: an
-// action that isn't SPEC's, or is program, default or insert; a key that
-// doesn't parse, tab, shift+tab and escape, which keep their meaning; an
-// edit action on an element that isn't a text field and holds none; a
-// multi-line one on an input; a scroll action on a text field.
+// program's, and a Bind of it is a fault, but to hotty.Prefix, which
+// still gives fn the key. A key bound twice to one action is one
+// binding; two Binds of it to different actions are a fault, and the
+// first stays. A Bind replaces [Readline]'s binding of its key. These
+// are faults too, each binding dropped: an action that isn't SPEC's, or
+// is program, default or insert; a key that doesn't parse, and tab,
+// shift+tab and escape, which keep their meaning; an edit action on a
+// control that isn't a text field (a button, a select, a check box, a
+// date field); a multi-line one on an input; a scroll action on a text
+// field. An edit action on an element that holds no field (yet) is
+// harmless, and no fault.
 //
 // The surface writes the bindings into the element's data-keys (SPEC
-// §10.2), as it writes Key's.
+// §10.2), as it writes Key's, one per key. A Bind is the host's action,
+// not one of ui.Bindings'.
 func Bind(action hotty.Action, keys ...string) Handler {
 	rt.LinkText(keydefault.Text)
 	return Handler{kind: kindBind, keys: keys, action: action}
 }
 
-// Readline binds, on a text field or on an element that holds fields, the
-// SDK's readline keymap, hotty.TerminalKeys: Bubble Tea's text input's
-// keys (ctrl+a and ctrl+e to the line's ends, ctrl+b, ctrl+f, alt+b and
-// alt+f to move, ctrl+w, ctrl+u, ctrl+k and alt+d to delete, …), the same
-// on every platform, but mod+a, which selects all. A program whose
-// fields edit as a terminal's line does, as a palette's query, puts it
-// on the field or on what holds its fields, once:
+// Readline binds, on a text field or an element that holds fields, the
+// SDK's readline keymap (hotty.TerminalKeys: Bubble Tea's ctrl+e,
+// ctrl+k, ctrl+u, ctrl+w, alt+b, alt+f, …) over the platform's default;
+// mod+a still selects all. A program whose fields edit as a terminal's
+// line does, as a palette's query, puts it on the field or on what holds
+// its fields, once:
 //
 //	surf.On(ctx, "query", surf.Input(a.SetQuery), surf.Readline())
 //
-// It is [Bind] of each of the set's keys, read before the element's own
-// Binds, which change one of its keys; a key a Key handler on the element
-// declares stays the program's. A field inside that binds a key itself
-// wins over it (SPEC §10.2). On an element that isn't a text field and
-// holds none it is a fault.
+// It is [Bind] of each of the set's keys, but it leaves alone every key
+// the program is given there: one a Key handler on the element or around
+// it declares, one bound to prefix there, one a ui.KeyScope forwards. So
+// a page's mod+k, declared on its main, still reaches its handler from
+// the field, where Readline would delete to the line's end with ctrl+k
+// (vault/knowledge/field-keys.md). A Bind on the element replaces one of
+// its keys, and a field inside that binds a key itself wins over it
+// (SPEC §10.2). Twice on one element it is once. On a control that isn't
+// a text field (a button, a select) it is a fault. A kit Command's or
+// Combobox's field, which takes no handler of the app's, gets it from a
+// Readline on an element around the component.
 func Readline() Handler {
 	rt.LinkText(keydefault.Text)
 	return Handler{kind: kindReadline, fn: struct{}{}}
