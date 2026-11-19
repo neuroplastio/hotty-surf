@@ -145,13 +145,13 @@ func horizontal(field *html.Node) bool {
 // kids are n's children in the order they show: an input group's by
 // their data-align (block-start, inline-start, the control, inline-end,
 // block-end), anything else's as written.
-func kids(n *html.Node) []*html.Node {
+func kids(n *html.Node, st box) []*html.Node {
 	var ks []*html.Node
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
 		ks = append(ks, k)
 	}
 	if n.Type == html.ElementNode {
-		if st := styleOf(n); st.reverse && st.display == dFlex {
+		if st.reverse && st.display == dFlex {
 			// flex-col-reverse, flex-row-reverse: the items the other way.
 			slices.Reverse(ks)
 		}
