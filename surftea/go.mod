@@ -12,9 +12,9 @@ require (
 	charm.land/bubbletea/v2 v2.0.8
 	charm.land/lipgloss/v2 v2.1.1
 	github.com/a-h/templ v0.3.1118
-	neuroplast.io/hotty-go v0.8.1-0.20261117175548-e1d9f6887ae0
-	neuroplast.io/hotty-go/hottytea v0.8.0
-	neuroplast.io/hotty-go/hottytest v0.8.2-0.20261117175548-e1d9f6887ae0
+	neuroplast.io/hotty-go v0.8.2
+	neuroplast.io/hotty-go/hottytea v0.8.2
+	neuroplast.io/hotty-go/hottytest v0.8.2
 	neuroplast.io/hotty-surf v0.0.0-00010101000000-000000000000
 )
 
@@ -37,7 +37,7 @@ require (
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
-	neuroplast.io/hotty-go/hottyedit v0.8.0 // indirect
-	neuroplast.io/hotty-go/hottyterm v0.8.0 // indirect
+	neuroplast.io/hotty-go/hottyedit v0.8.2 // indirect
+	neuroplast.io/hotty-go/hottyterm v0.8.2 // indirect
 	neuroplast.io/myelin/myelinkey v0.2.0 // indirect
 )
