@@ -303,15 +303,21 @@ func (c *Screen) drew(l *layout) {
 // the scroll, as wide as the Screen.
 func (c *Screen) visible() snapshot {
 	l := c.layout()
+	return snapshot{raw: c.rawOf(l), cells: c.cellsOf(l)}
+}
+
+// rawOf is a copy of l's cells Lines draws, the rows from the scroll.
+func (c *Screen) rawOf(l *layout) [][]cell {
 	raw := make([][]cell, c.rows)
+	all := make([]cell, c.rows*c.cols) // the copy in one array
 	for i := range raw {
-		row := make([]cell, c.cols)
+		row := all[i*c.cols : (i+1)*c.cols : (i+1)*c.cols]
 		if y := c.scroll + i; y >= 0 && y < len(l.cv.rows) {
 			copy(row, l.cv.rows[y])
 		}
 		raw[i] = row
 	}
-	return snapshot{raw: raw, cells: c.cellsOf(l)}
+	return raw
 }
 
 // snapshot is what Lines and Cells drew: the cells Lines draws from, and

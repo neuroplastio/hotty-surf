@@ -78,7 +78,28 @@ type Cell struct {
 func (c *Screen) Cells() [][]Cell {
 	l := c.layout()
 	out := c.cellsOf(l)
-	c.drew(l)
+	if c.shown.raw != nil && l == c.shownLay && c.scroll == c.shownScroll {
+		return out
+	}
+	// Dirty's snapshot is a copy of the grid, which is the caller's to
+	// keep and change: cheaper than making it again.
+	c.shown, c.shownLay, c.shownScroll = snapshot{raw: c.rawOf(l), cells: copyGrid(out)}, l, c.scroll
+	return out
+}
+
+// copyGrid is a copy of g, in one array.
+func copyGrid(g [][]Cell) [][]Cell {
+	n := 0
+	for _, r := range g {
+		n += len(r)
+	}
+	all := make([]Cell, n)
+	out := make([][]Cell, len(g))
+	for i, r := range g {
+		out[i] = all[:len(r):len(r)]
+		copy(out[i], r)
+		all = all[len(r):]
+	}
 	return out
 }
 
@@ -88,8 +109,9 @@ func (c *Screen) Cells() [][]Cell {
 func (c *Screen) cellsOf(l *layout) [][]Cell {
 	memo := map[*html.Node][2]Role{}
 	out := make([][]Cell, c.rows)
+	all := make([]Cell, c.rows*c.cols) // the grid in one array
 	for i := range out {
-		row := make([]Cell, c.cols)
+		row := all[i*c.cols : (i+1)*c.cols : (i+1)*c.cols]
 		y := c.scroll + i
 		var src []cell
 		if y >= 0 && y < len(l.cv.rows) {
