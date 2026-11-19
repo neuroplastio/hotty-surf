@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
@@ -57,6 +58,9 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 			e.submitKey(n)
 		}
 		return true
+	}
+	if fallback == nil && (kind == "text" || kind == "compound-text") {
+		fallback = TextDefault()
 	}
 	if fallback == nil {
 		return false
@@ -208,3 +212,37 @@ func ProgramKeys(keys []string) string {
 // when it is linked: what does a declared key's own use once every Key
 // handler declined it. Without ui, only activation is done.
 var KitDefault func(KeyDefault) KeyResult
+
+// textDefault is the kit's text fallback (keydefault.Text), once linked.
+var textDefault atomic.Pointer[func(KeyDefault) KeyResult]
+
+// LinkText links f as the kit's text fallback, which KitDefault does a
+// text field's edit with. What edits text calls it when it renders (ui's
+// text components, ui.KeyScope) or is called (surf.Readline, surf.Bind),
+// so that an app that has none of them doesn't link hottyedit: that is
+// about 30 KB gzipped of every TinyGo app.
+func LinkText(f func(KeyDefault) KeyResult) {
+	if textDefault.Load() == nil {
+		textDefault.Store(&f)
+	}
+}
+
+// TextDefault is the text fallback LinkText linked, nil before.
+func TextDefault() func(KeyDefault) KeyResult {
+	if f := textDefault.Load(); f != nil {
+		return *f
+	}
+	return nil
+}
+
+// SwapText sets the linked text fallback to f, nil for none, and returns
+// the one before: for a test of an app that links none.
+func SwapText(f func(KeyDefault) KeyResult) func(KeyDefault) KeyResult {
+	old := TextDefault()
+	if f == nil {
+		textDefault.Store(nil)
+	} else {
+		textDefault.Store(&f)
+	}
+	return old
+}

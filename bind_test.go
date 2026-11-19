@@ -11,6 +11,9 @@ import (
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
+
+	"neuroplast.io/hotty-surf/internal/keydefault"
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // bindPage renders markup with each %s an On's attributes, in order.
@@ -209,5 +212,43 @@ func TestFocusEndsAPrefix(t *testing.T) {
 		if got := out.String(); !strings.Contains(got, "a=focus") || strings.Contains(got, ":t=") {
 			t.Errorf("on %s: sent %q, want a=focus without t", id, got)
 		}
+	}
+}
+
+// A declined key on a text field is the field's own edit, which needs the
+// kit's text editing; in an app that links none (no ui text component,
+// KeyScope, Readline or Bind), it edits nothing, and that is a fault,
+// once.
+func TestDeclinedEditUnlinkedIsAFault(t *testing.T) {
+	old := rt.SwapText(nil)
+	defer rt.SwapText(old)
+	value := "ab"
+	s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		fmt.Fprintf(w, `<input%s value=%q>`, attrsOf(On(ctx, "f", Input(func(v string) { value = v }), Key(func(string) bool { return false }, "backspace"))), value)
+		return nil
+	}))
+	if err := s.Event(hotty.Event{Surface: "t", Kind: hotty.EventFocus, Target: "f"}); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if _, err := s.Key("backspace"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	n := 0
+	for _, f := range s.faults {
+		if strings.Contains(f, "text editing") {
+			n++
+		}
+	}
+	if n != 1 || value != "ab" {
+		t.Errorf("value %q, faults %q: want one, and no edit", value, s.faults)
+	}
+	rt.SwapText(keydefault.Text)
+	if _, err := s.Key("backspace"); err != nil {
+		t.Fatal(err)
+	}
+	if value != "a" {
+		t.Errorf("linked, backspace left %q", value)
 	}
 }

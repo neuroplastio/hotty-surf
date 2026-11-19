@@ -6,6 +6,7 @@ import "neuroplast.io/hotty-surf"
 // Arrows and Page Up/Down move the list; Enter is forwarded to the app.
 // Home and End follow the field's editing keymap.
 templ (l *NavList) FilterInput(class string) {
+	{{ linkText() }}
 	<input
 		type="text"
 		class={ join("input", class) }

@@ -9,6 +9,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 
+	"neuroplast.io/hotty-surf/internal/keydefault"
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
@@ -362,6 +363,7 @@ func Key(fn func(key string) bool, keys ...string) Handler {
 // The surface writes the bindings into the element's data-keys (SPEC
 // §10.2), as it writes Key's.
 func Bind(action hotty.Action, keys ...string) Handler {
+	rt.LinkText(keydefault.Text)
 	return Handler{kind: kindBind, keys: keys, action: action}
 }
 
@@ -381,6 +383,7 @@ func Bind(action hotty.Action, keys ...string) Handler {
 // wins over it (SPEC §10.2). On an element that isn't a text field and
 // holds none it is a fault.
 func Readline() Handler {
+	rt.LinkText(keydefault.Text)
 	return Handler{kind: kindReadline, fn: struct{}{}}
 }
 

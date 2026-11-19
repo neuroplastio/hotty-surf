@@ -89,6 +89,7 @@ type Surface struct {
 	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
 	prefixed     bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)
 	prefixTaken  bool            // a Key handler took that key: the surface ends the sequence after the next key
+	textFaulted  bool            // the fault that the kit's text editing isn't linked was recorded
 	sending      bool
 	deferred     []hotty.Event
 

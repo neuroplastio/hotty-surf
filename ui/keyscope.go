@@ -11,6 +11,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/keydefault"
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
@@ -75,6 +76,7 @@ type KeyBinding struct {
 // native select list can keep keys until it closes (SPEC §10.2).
 func KeyScope(bindings []KeyBinding) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		linkText()
 		children := templ.GetChildren(ctx)
 		p := hotty.Platform{}
 		f := rt.From(ctx)
@@ -192,6 +194,7 @@ func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ
 }
 
 func scopeTextAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
+	linkText()
 	return applyScope(ctx, attrs, "text")
 }
 
@@ -202,5 +205,10 @@ func scopeNativeAttrs(ctx context.Context, attrs templ.Attributes, kind string) 
 // scopeCompoundAttrs are a compound field's (a Command's or a
 // Combobox's input): it types, and its kit default is its component's.
 func scopeCompoundAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
+	linkText()
 	return applyScope(ctx, attrs, "compound-text")
 }
+
+// linkText links the kit's text fallback (rt.LinkText): every component
+// with a text field calls it as it renders, and KeyScope does.
+func linkText() { rt.LinkText(keydefault.Text) }
