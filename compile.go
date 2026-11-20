@@ -237,6 +237,7 @@ type record struct {
 	base             []rt.Bind
 	edit             []keyAt
 	editN            int
+	editKeys         []string
 	ws               string
 }
 
@@ -807,6 +808,9 @@ func (r *record) placed(c *html.Node, own string, pre bool, t *tree) {
 	r.given = append(r.given[:0], t.given...)
 	r.base = append(r.base[:0], t.base...)
 	r.edit, r.editN = append(r.edit[:0], t.edit...), t.editN
+	if t.f != nil {
+		r.editKeys = t.f.EditKeys
+	}
 	r.ws = wsOf(r.raw)
 }
 
@@ -900,6 +904,9 @@ func (s *Surface) fill(d *differ, f *rt.Frame) bool {
 		j.t.given = append([]string(nil), j.r.given...)
 		j.t.base = append([]rt.Bind(nil), j.r.base...)
 		j.t.edit, j.t.editN = append([]keyAt(nil), j.r.edit...), j.r.editN
+		if f.EditKeys == nil {
+			f.EditKeys = j.r.editKeys
+		}
 		s.number(j.holder, "", j.t, j.r.pre)
 	}
 	// An element that moves from outside a job's element into it (a row

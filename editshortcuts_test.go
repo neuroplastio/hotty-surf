@@ -438,3 +438,41 @@ func TestEditShortcutsInAnInstance(t *testing.T) {
 		t.Errorf("under CocoaEditShortcuts where mod is super: %q", got)
 	}
 }
+
+type editFormProps struct{ Name string }
+
+var editForm = Compile(func(p editFormProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		fmt.Fprintf(w, `<div%s><span>%s</span><input%s></div>`, attrsOf(On(ctx, "form", Bind(cuaEdit))), p.Name, attrsOf(On(ctx, "q")))
+		return nil
+	})
+})
+
+// A kept compiled instance that binds the group itself: a render that
+// changes only what is outside it still finds the group's keys, and the
+// instance's field keeps its bindings.
+func TestEditShortcutsInAKeptInstance(t *testing.T) {
+	n := 0
+	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		fmt.Fprintf(w, `<div><p>%d</p>`, n)
+		if err := editForm.With("k", editFormProps{Name: "a"}).Render(ctx, w); err != nil {
+			return err
+		}
+		fmt.Fprint(w, `</div>`)
+		return nil
+	}), "")
+	s.Attach(io.Discard, superHost)
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if !slices.Contains(bindings(s, "q"), "ctrl+c=copy") || len(s.faults) > 0 {
+			t.Fatalf("render %d: %q, faults %q", n, bindings(s, "q"), s.faults)
+		}
+		n++
+		s.Do(func() {})
+		if err := s.Update(); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
