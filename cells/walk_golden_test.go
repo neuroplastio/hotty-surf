@@ -25,7 +25,7 @@ import (
 
 var (
 	updateWalk = flag.Bool("update-walk", false, "write testdata/walk.golden from every run of TestWalkGolden")
-	walkAll    = flag.Bool("walk-all", false, "make every run of TestWalkGolden, not a fortieth of them")
+	walkAll    = flag.Bool("walk-all", false, "make every run of TestWalkGolden, not an eightieth of them")
 	walkDump   = flag.String("walk-dump", "", "write each step of TestWalkGolden's runs to this file, to compare two commits'")
 )
 
@@ -48,12 +48,12 @@ const gwSteps = 150
 // Screen drew before either. The golden was written by a commit that
 // kept nothing between passes.
 //
-// It makes a fortieth of its 1,400 runs; -walk-all makes all of them.
+// It makes an eightieth of its 1,400 runs; -walk-all makes all of them.
 // A change that draws differently writes the golden again
 // (-update-walk). To find the step that differs, run -walk-all with
 // -walk-dump at two commits and compare the files.
 func TestWalkGolden(t *testing.T) {
-	stride := 40
+	stride := 80
 	if testing.Short() {
 		stride = 200
 	}

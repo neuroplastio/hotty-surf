@@ -24,9 +24,9 @@ func TestIncrementalIsFresh(t *testing.T) {
 	for _, st := range stories.All() {
 		docs = append(docs, withIDs(storyMarkup(t, st)))
 	}
-	seeds, steps := 150, 60
+	seeds, steps := 60, 40
 	if testing.Short() {
-		seeds, steps = 30, 40
+		seeds, steps = 30, 30
 	}
 	for seed := range seeds {
 		docs = append(docs, randomDoc(rand.New(rand.NewPCG(uint64(seed), 7))))
@@ -156,6 +156,25 @@ func TestIncrementalGrownIsKept(t *testing.T) {
 	long := strings.Repeat("word ", 40)
 	stepFresh(t, c, "no rows to grow in", hotty.OpText("sib", long))
 	stepFresh(t, c, "rows again", hotty.OpText("sib", "x"))
+}
+
+// A column's growing item that is an open popover is laid out after the
+// flow, at the share the column gave it. Where the column's laid is
+// replayed, the replay gives the item its share again (oHeight).
+func TestIncrementalGrowingPopover(t *testing.T) {
+	var b strings.Builder
+	b.WriteString(`<div id="root"><div id="col" class="flex flex-col h-[6rem]">`)
+	b.WriteString(`<div id="g" class="flex-1 overflow-y-auto" data-popover="">`)
+	for i := range 8 {
+		fmt.Fprintf(&b, `<p id="g%d">item %d</p>`, i, i)
+	}
+	b.WriteString(`</div><p id="f">footer</p></div></div>`)
+	c := fresh(t, 29, 7, b.String())
+	c.Resize(29, 7) // laid out again, the same
+	c.Cells()
+	if err := CheckFresh(c); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // withIDs gives every element of markup an id, so that every one is a

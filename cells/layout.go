@@ -1799,6 +1799,9 @@ func (k *kept) forgetLooks(n *html.Node) {
 		if m := k.nodes[d]; m != nil {
 			m.hasCol, m.hasRoles = false, false
 			m.texts = nil
+			// Its callers forget the styles round n too, which drops these
+			// laids already; dropped here as well, so that forgetLooks alone
+			// is whole.
 			m.laid = nil
 			m.ver++
 			k.recoloured[d] = struct{}{}
