@@ -185,8 +185,8 @@ type tree struct {
 	// roots are the compiled instances' elements (brackets).
 	roots map[*html.Node]*record
 	// base are CUAKeys' and CocoaKeys' bindings on the elements around the one
-	// being numbered, the nearest last: what an Unbind there gives a key
-	// back to (writeBinds).
+	// being numbered, the nearest last: what an Unbind there gives a key back
+	// to (writeBinds).
 	base []rt.Bind
 }
 

@@ -157,8 +157,8 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	})
 	given := 0
 	for _, b := range binds {
-		// A program binding writeBinds wrote is a give-back (only CUAKeys'
-		// and CocoaKeys' bindings are program there): not a key given.
+		// A program binding writeBinds wrote is a give-back (only CUAKeys' and
+		// CocoaKeys' bindings are program there): not a key given.
 		if k, ok := strings.CutSuffix(b, "=program"); ok && !contains(bound, k) {
 			t.given = append(t.given, k)
 			given++
@@ -332,7 +332,8 @@ func keysig(b []byte, f *rt.Frame) []byte {
 					b = append(b, '^')
 				}
 			}
-			// What an Unbind here or inside goes back to (CUAKeys', CocoaKeys').
+			// What an Unbind here or inside goes back to (CUAKeys',
+			// CocoaKeys').
 			for _, x := range h.Base {
 				b = append(b, " ^"...)
 				b = append(b, x.Key...)

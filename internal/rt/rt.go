@@ -37,9 +37,9 @@ type Handlers struct {
 	// and so a host and cells read alike.
 	Written []Bind
 	// Base are the bindings the element's surf.CUAKeys and surf.CocoaKeys read,
-	// one per key, the last read winning, whether or not another binding
-	// holds the key on the element: what an Unbind on the element, or
-	// inside it, gives the key back to.
+	// one per key, the last read winning, whether or not another binding holds
+	// the key on the element: what an Unbind on the element, or inside it,
+	// gives the key back to.
 	Base []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.

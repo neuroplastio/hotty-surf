@@ -71,10 +71,10 @@ func TestEditingKeymapTables(t *testing.T) {
 	}
 }
 
-// On every host, a field under CUAKeys or CocoaKeys resolves each of the tables'
-// keys as that keymap's platform does with no data-keys, but a key the
-// host's edit shortcuts hold, which stays the host's; and the surface's
-// own use of a key (EditKeys, which cells' fallback reads) is the wire's.
+// On every host, a field under CUAKeys or CocoaKeys resolves each of the
+// tables' keys as that keymap's platform does with no data-keys, but a key the
+// host's edit shortcuts hold, which stays the host's; and the surface's own use
+// of a key (EditKeys, which cells' fallback reads) is the wire's.
 func TestEditingKeymapsResolve(t *testing.T) {
 	none := map[string][]string{}
 	for _, caps := range []hotty.Caps{ctrlHost, superHost, {Edit: map[string][]string{"select-all": {"ctrl+shift+a"}}}} {
@@ -127,11 +127,11 @@ func TestEditingKeymapsResolve(t *testing.T) {
 	}
 }
 
-// How CUAKeys and CocoaKeys meet the other bindings: a nearer ReadlineKeys keeps its
-// keys (a give-back isn't a key given to the program); a page's key
-// stays the page's; on one element the last group read wins; and an
-// Unbind gives a key back to the editing keymap in effect, on the element
-// or around it, not to the host's platform.
+// How CUAKeys and CocoaKeys meet the other bindings: a nearer ReadlineKeys
+// keeps its keys (a give-back isn't a key given to the program); a page's key
+// stays the page's; on one element the last group read wins; and an Unbind
+// gives a key back to the editing keymap in effect, on the element or around
+// it, not to the host's platform.
 func TestEditingKeymapsCompose(t *testing.T) {
 	take := func(string) bool { return true }
 	cases := []struct {

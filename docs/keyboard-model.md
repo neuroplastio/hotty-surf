@@ -249,8 +249,12 @@ editing keymaps: groups of a text field's caret and delete keys.
 - **CUAKeys** is IBM's Common User Access: the Windows and Linux
   desktop's keys, SPEC §10.2's where `mod` is `ctrl`. Its source is
   IBM's "Object-Oriented Interface Design: IBM Common User Access
-  Guidelines", SC34-4399-00 (1992), which replaces SC34-4290. IBM no
-  longer hosts it, so the link is to
+  Guidelines", SC34-4399-00 (1992), which replaces SC34-4290, for the
+  word moves (`ctrl+arrow_left`, `ctrl+arrow_right`) and the moves to
+  the value's ends (`ctrl+home`, `ctrl+end`). The word deletes,
+  `ctrl+backspace` and `ctrl+delete`, aren't in it: they are later
+  Windows and Linux practice, as SPEC §10.2 has them. IBM no longer
+  hosts it, so the link is to
   [a scan](https://archive.org/download/sc34-4399-00/).
 - **CocoaKeys** is macOS's text system's, SPEC §10.2's where `mod` is
   `super`. Its source is AppKit's StandardKeyBinding.dict, in Apple's

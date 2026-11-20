@@ -30,7 +30,8 @@ import (
 //
 // The palette's query edits as a terminal's line does, in one line:
 //
-//	surf.On(ctx, "query", surf.Input(a.SetQuery), surf.Bind(surf.ReadlineKeys()))
+//	surf.On(ctx, "query", surf.Input(a.SetQuery),
+//		surf.Bind(surf.ReadlineKeys()))
 //
 // The actions:
 //   - a text field's edit actions (hotty.WordBackward, hotty.LineStart,
@@ -88,8 +89,8 @@ func Bind(opts ...BindOption) Handler {
 	return Handler{kind: kindBind, fn: slices.Clone(opts)}
 }
 
-// A BindOption is one of Bind's options. Action, Unbind, Group, ReadlineKeys,
-// CUAKeys, CocoaKeys, Yield and Override make them, and
+// A BindOption is one of Bind's options. Action, Unbind, Group,
+// ReadlineKeys, CUAKeys, CocoaKeys, Yield and Override make them, and
 // nothing else does.
 type BindOption interface{ bindOption() }
 
@@ -158,8 +159,10 @@ func ReadlineKeys() BindOption {
 // ctrl+end go to the value's ends, ctrl+backspace and ctrl+delete delete
 // words. Its source is IBM's "Object-Oriented Interface Design: IBM
 // Common User Access Guidelines", SC34-4399-00 (1992), which replaces
-// SC34-4290. IBM no longer hosts it; a scan is at
-// https://archive.org/download/sc34-4399-00/
+// SC34-4290, for the word moves and the moves to the value's ends; the
+// word deletes, ctrl+backspace and ctrl+delete, aren't in it, and are
+// later Windows and Linux practice, as SPEC §10.2 has them. IBM no
+// longer hosts it; a scan is at https://archive.org/download/sc34-4399-00/
 //
 // The keys only macOS gives a field (super+arrow_left,
 // super+backspace, ctrl+a, ctrl+e, ctrl+k, …) are given back: from a
