@@ -1,9 +1,12 @@
 package surf
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -154,6 +157,45 @@ func TestEditShortcutsKeptInstanceUnderAnAction(t *testing.T) {
 		s.Do(func() {})
 		if err := s.Update(); err != nil {
 			t.Fatal(err)
+		}
+	}
+}
+
+// A password field under CUAEditShortcuts on a Mac host pastes with
+// ctrl+v: the binding is written, though no host here has a clipboard to
+// show the paste.
+func TestEditShortcutsPasswordPaste(t *testing.T) {
+	s := editPageOn(t, superHost, []BindOption{cuaEdit}, nil, `<input type="password" id="f"%s>`)
+	if !slices.Contains(bindings(s, "f"), "ctrl+v=paste") || lookup(s, superHost, "f", "ctrl+v") != hotty.Paste {
+		t.Errorf("the password field: %q", chain(s, "f"))
+	}
+}
+
+// An app that binds no edit-shortcut group links none of their tables,
+// nor the editing keymaps': examples/hello, built, has none of the
+// functions that make them, and does have the resolver every app links.
+func TestHelloLinksNoEditTable(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds examples/hello")
+	}
+	goBin, err := exec.LookPath("go")
+	if err != nil {
+		t.Skip("no go to build with")
+	}
+	bin := filepath.Join(t.TempDir(), "hello")
+	if out, err := exec.Command(goBin, "build", "-o", bin, "./examples/hello").CombinedOutput(); err != nil {
+		t.Fatalf("go build: %v\n%s", err, out)
+	}
+	syms, err := exec.Command(goBin, "tool", "nm", bin).Output()
+	if err != nil {
+		t.Fatalf("go tool nm: %v", err)
+	}
+	if !bytes.Contains(syms, []byte("hotty-surf.(*Surface).writeEdits")) {
+		t.Fatal("the build has no writeEdits: the symbols aren't what this test reads")
+	}
+	for _, name := range []string{"editShortcutTables", "cuaEditBinds", "cocoaEditBinds", "editingFor"} {
+		if bytes.Contains(syms, []byte("hotty-surf."+name)) {
+			t.Errorf("hello links %s", name)
 		}
 	}
 }

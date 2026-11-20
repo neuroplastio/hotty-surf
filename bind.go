@@ -98,8 +98,7 @@ func Bind(opts ...BindOption) Handler {
 
 // A BindOption is one of Bind's options. Action, Unbind, Group,
 // ReadlineKeys, CUAKeys, CocoaKeys, CUAEditShortcuts, CocoaEditShortcuts,
-// Yield and Override make them, and
-// nothing else does.
+// Yield and Override make them, and nothing else does.
 type BindOption interface{ bindOption() }
 
 // Action binds keys to one of SPEC §10.2's actions other than program
