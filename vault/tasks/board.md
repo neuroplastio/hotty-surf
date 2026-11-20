@@ -193,6 +193,18 @@ The single list of what the tag needs.
   and host-placed popovers (ContextMenu's key-opened placement and its
   flip at the edges); a note that a=focus keeps a field's caret and
   selection; focus fixup as HTML's (B3's notes).
+- [ ] **For hotty's spec list, from the edit-shortcut groups' review
+  (2026-11-20), the maintainer's call:**
+  - SPEC §10.6: does a key bound to `program` that is one of the host's
+    edit shortcuts reach a program that took `a=edit` as a `command`,
+    or as the key? surf takes no `a=edit` today, so nothing waits on it.
+  - A field-only binding scope: data-keys that only a text field reads.
+    It would let an edit-shortcut group be written once, on the element
+    that binds it, instead of on each field, and spare the caret groups'
+    give-backs outside a field.
+  - A host that reports the keys it keeps for itself (Cmd+C on a macOS
+    terminal), so that an app can tell its user that CocoaEditShortcuts
+    has no copy key there.
 - ~~kit.css has no `.dialog`, `.toaster` or `.toast` rules~~: L2 builds
   kit.css whole. ~~No cross-component close~~: one popup open per
   surface (ui/popup.go). ~~`ctl shot` through `hotty render`~~ and
