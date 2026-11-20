@@ -116,6 +116,14 @@ the last release.
   be checkout-only; the review trail out of api/notes.md; reasons,
   comments and the board without pane ids, plx's gap ids or private
   files.
+- **Incremental layout** (branch cells-incremental, 11-20, journal
+  2026-11-20): a Screen lays out again only the elements a delta
+  reached, replays the rest, and paints only the rows that changed. nav
+  510 → 210 µs a frame, label 110 → 42, box even. It falls short of the
+  60 µs target for nav's layout and repaint, at about 85.
+- [ ] **The tooltip at an unclamped scroll:** drawTip reads the scroll
+  before the pass clamps it, so a tip can move on an unrelated relayout
+  (journal 2026-11-20).
 
 ### Before v0.7.0
 
