@@ -54,15 +54,15 @@ func TestBindIsWritten(t *testing.T) {
 	}
 }
 
-// Readline is hotty.TerminalKeys on the field; a Key handler's key stays
+// ReadlineKeys is hotty.TerminalKeys on the field; a Key handler's key stays
 // the program's, and a Bind on the element replaces readline's binding.
 func TestReadlineIsWritten(t *testing.T) {
 	take := func(string) bool { return true }
 	s := bindPage(t, `<input%s><input%s><div%s><input id="in"></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
-			On(ctx, "q", Bind(Readline())),
-			On(ctx, "p", Bind(Readline()), Key(take, "ctrl+n", "arrow_up"), Bind(Action(hotty.LineStart, "ctrl+w"))),
-			On(ctx, "box", Bind(Readline())),
+			On(ctx, "q", Bind(ReadlineKeys())),
+			On(ctx, "p", Bind(ReadlineKeys()), Key(take, "ctrl+n", "arrow_up"), Bind(Action(hotty.LineStart, "ctrl+w"))),
+			On(ctx, "box", Bind(ReadlineKeys())),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -108,7 +108,7 @@ func TestBindFaults(t *testing.T) {
 		}, ""},
 		{"edit on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(Action(hotty.LineStart, "ctrl+a"))} }, ""},
 		{"edit on a select", `<select%s><option>a</option></select>`, func() []Handler { return []Handler{Bind(Action(hotty.LineStart, "ctrl+a"))} }, ""},
-		{"readline on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(Readline())} }, ""},
+		{"readline on a button", `<button%s>b</button>`, func() []Handler { return []Handler{Bind(ReadlineKeys())} }, ""},
 		{"multi-line on an input", `<input%s>`, func() []Handler {
 			return []Handler{Bind(Action(hotty.Newline, "ctrl+j")), Bind(Action(hotty.LineEnd, "ctrl+e"))}
 		}, "ctrl+e=line-end"},
@@ -134,15 +134,15 @@ func TestBindFaults(t *testing.T) {
 		})
 	}
 	// None of these is one: a prefix of a Key's key; a multi-line action
-	// in Readline's set on an input; an edit action on what holds a
+	// in ReadlineKeys' set on an input; an edit action on what holds a
 	// field, or on a container holding none yet (a palette's root before
-	// it opens); a key bound twice to one action, and Readline twice.
+	// it opens); a key bound twice to one action, and ReadlineKeys twice.
 	s := bindPage(t, `<div%s tabindex="0"></div><input%s><div%s><textarea></textarea></div><div%s></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
 			On(ctx, "a", Key(take, "g"), Bind(Action(hotty.Prefix, "g"))),
-			On(ctx, "b", Bind(Readline()), Bind(Readline()), Bind(Action(hotty.LineEnd, "ctrl+e", "ctrl+e")), Bind(Action(hotty.LineEnd, "ctrl+e"))),
+			On(ctx, "b", Bind(ReadlineKeys()), Bind(ReadlineKeys()), Bind(Action(hotty.LineEnd, "ctrl+e", "ctrl+e")), Bind(Action(hotty.LineEnd, "ctrl+e"))),
 			On(ctx, "c", Bind(Action(hotty.Newline, "ctrl+j"))),
-			On(ctx, "d", Bind(Readline())),
+			On(ctx, "d", Bind(ReadlineKeys())),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -223,7 +223,7 @@ func TestFocusEndsAPrefix(t *testing.T) {
 
 // A declined key on a text field is the field's own edit, which needs the
 // kit's text editing; in an app that links none (no ui text component,
-// KeyScope, Readline or Bind), it edits nothing, and that is a fault,
+// KeyScope, ReadlineKeys or Bind), it edits nothing, and that is a fault,
 // once.
 func TestDeclinedEditUnlinkedIsAFault(t *testing.T) {
 	old := rt.SwapText(nil)
@@ -271,22 +271,22 @@ func TestBindOptions(t *testing.T) {
 		not   []string
 		fault bool
 	}{
-		{"a group yields", []BindOption{Readline()}, []string{"ctrl+w=delete-word-backward"}, []string{"ctrl+k=delete-to-line-end", "alt+b=word-backward"}, false},
-		{"a group that overrides", []BindOption{Readline(), Override()}, []string{"ctrl+k=delete-to-line-end", "alt+b=word-backward"}, nil, false},
+		{"a group yields", []BindOption{ReadlineKeys()}, []string{"ctrl+w=delete-word-backward"}, []string{"ctrl+k=delete-to-line-end", "alt+b=word-backward"}, false},
+		{"a group that overrides", []BindOption{ReadlineKeys(), Override()}, []string{"ctrl+k=delete-to-line-end", "alt+b=word-backward"}, nil, false},
 		{"a direct key overrides", []BindOption{Action(hotty.WordBackward, "alt+b")}, []string{"alt+b=word-backward"}, nil, false},
 		{"a direct key that yields", []BindOption{Action(hotty.WordBackward, "alt+b"), Yield()}, nil, []string{"alt+b=word-backward"}, false},
 		{"a custom group", []BindOption{Group(Action(hotty.LineStart, "ctrl+a", "alt+b"))}, []string{"ctrl+a=line-start"}, []string{"alt+b=line-start"}, false},
 		{"a nested group inherits", []BindOption{Override(), Group(Action(hotty.WordBackward, "alt+b"))}, []string{"alt+b=word-backward"}, nil, false},
 		{"a mode in a group is a fault", []BindOption{Override(), Group(Yield(), Action(hotty.WordBackward, "alt+b"))}, []string{"alt+b=word-backward"}, nil, true},
-		{"unbind gives readline's key back", []BindOption{Readline(), Unbind("ctrl+w")}, []string{"ctrl+w=default"}, []string{"ctrl+w=delete-word-backward"}, false},
-		{"unbind yields", []BindOption{Readline(), Unbind("ctrl+k")}, nil, []string{"ctrl+k=default", "ctrl+k=delete-to-line-end"}, false},
+		{"unbind gives readline's key back", []BindOption{ReadlineKeys(), Unbind("ctrl+w")}, []string{"ctrl+w=default"}, []string{"ctrl+w=delete-word-backward"}, false},
+		{"unbind yields", []BindOption{ReadlineKeys(), Unbind("ctrl+k")}, nil, []string{"ctrl+k=default", "ctrl+k=delete-to-line-end"}, false},
 		{"unbind that overrides", []BindOption{Unbind("ctrl+k"), Override()}, []string{"ctrl+k=default"}, nil, false},
 		{"unbind tab", []BindOption{Unbind("tab")}, []string{"tab=default"}, nil, false},
 		{"default is unbind's", []BindOption{Action(hotty.Default, "ctrl+w")}, nil, []string{"ctrl+w=default"}, true},
 		{"a nil option is none", []BindOption{nil, Action(hotty.LineEnd, "ctrl+e")}, []string{"ctrl+e=line-end"}, nil, false},
-		{"a key beside a group replaces its", []BindOption{Readline(), Action(hotty.LineStart, "ctrl+w")}, []string{"ctrl+w=line-start"}, []string{"ctrl+w=delete-word-backward"}, false},
+		{"a key beside a group replaces its", []BindOption{ReadlineKeys(), Action(hotty.LineStart, "ctrl+w")}, []string{"ctrl+w=line-start"}, []string{"ctrl+w=delete-word-backward"}, false},
 		{"a later group layers", []BindOption{Group(Action(hotty.LineStart, "ctrl+w")), Group(Action(hotty.LineEnd, "ctrl+w"))}, []string{"ctrl+w=line-end"}, nil, false},
-		{"a group after a key", []BindOption{Action(hotty.LineStart, "ctrl+w"), Readline()}, []string{"ctrl+w=line-start"}, nil, false},
+		{"a group after a key", []BindOption{Action(hotty.LineStart, "ctrl+w"), ReadlineKeys()}, []string{"ctrl+w=line-start"}, nil, false},
 		{"yield and override: the first holds", []BindOption{Yield(), Override(), Action(hotty.WordBackward, "alt+b"), Action(hotty.LineStart, "ctrl+w")}, []string{"ctrl+w=line-start"}, []string{"alt+b=word-backward"}, true},
 	}
 	for _, c := range cases {
@@ -334,7 +334,7 @@ func TestResolveThenYield(t *testing.T) {
 	s := bindPage(t, `<div%s><input%s></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{
 			On(ctx, "main", Key(take, "mod+k")),
-			On(ctx, "f", Bind(Readline(), Override()), Bind(Action(hotty.LineStart, "ctrl+k"), Yield())),
+			On(ctx, "f", Bind(ReadlineKeys(), Override()), Bind(Action(hotty.LineStart, "ctrl+k"), Yield())),
 		}
 	})
 	if len(s.faults) > 0 {
@@ -370,7 +370,7 @@ func TestOverrideAloneRepaints(t *testing.T) {
 	over := false
 	var out bytes.Buffer
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		opts := []BindOption{Readline()}
+		opts := []BindOption{ReadlineKeys()}
 		if over {
 			opts = append(opts, Override())
 		}

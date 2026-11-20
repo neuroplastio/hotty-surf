@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"neuroplast.io/hotty-go"
 
@@ -13,16 +14,23 @@ import (
 
 // Bind gives keys on the element to the host's own actions (SPEC §10.2):
 // a text field's edit actions, the scroll actions, and prefix (§10.5).
-// surf.Key gives keys to the program. Its options are bindings (Action,
-// Unbind, Group, Readline) and at most one of Yield or Override, which
-// sets how all of them meet the keys the program is given around the
-// element. Without either, an Action wins and an Unbind and a group's
-// bindings yield. A Bind with no binding is no handler; a nil option is
-// none.
+// surf.Key gives keys to the program, and so do the give-backs of
+// CUAKeys and CocoaKeys, the keys a field doesn't use on that platform.
+// Its options are bindings (Action, Unbind, Group, and the editing
+// keymaps ReadlineKeys, CUAKeys and CocoaKeys) and at most one of Yield
+// or Override, which sets how all of them meet the keys the program is
+// given around the element. Without either, an Action wins and an Unbind
+// and a group's bindings yield. A Bind with no binding is no handler; a
+// nil option is none.
+//
+// The groups layer: one Bind can hold several, read in order, a later
+// binding replacing an earlier one of the same key, so
+// surf.Bind(surf.CUAKeys(), surf.ReadlineKeys()) is the Windows and Linux
+// desktop's keys with readline's over them.
 //
 // The palette's query edits as a terminal's line does, in one line:
 //
-//	surf.On(ctx, "query", surf.Input(a.SetQuery), surf.Bind(surf.Readline()))
+//	surf.On(ctx, "query", surf.Input(a.SetQuery), surf.Bind(surf.ReadlineKeys()))
 //
 // The actions:
 //   - a text field's edit actions (hotty.WordBackward, hotty.LineStart,
@@ -51,7 +59,7 @@ import (
 // element (a surf.Key's declared key, a prefix, a ui.KeyScope's forwarded
 // key, on an element around it): a binding that yields is dropped, and
 // nothing under it on the element comes back. So a page's mod+k on its
-// main still reaches its handler from a field under Readline, where
+// main still reaches its handler from a field under ReadlineKeys, where
 // readline would delete to the line's end with ctrl+k.
 //
 // These are faults, each binding dropped: an Action that isn't SPEC's,
@@ -80,8 +88,9 @@ func Bind(opts ...BindOption) Handler {
 	return Handler{kind: kindBind, fn: slices.Clone(opts)}
 }
 
-// A BindOption is one of Bind's options. Action, Unbind, Group, Readline,
-// Yield and Override make them, and nothing else does.
+// A BindOption is one of Bind's options. Action, Unbind, Group, ReadlineKeys,
+// CUAKeys, CocoaKeys, Yield and Override make them, and
+// nothing else does.
 type BindOption interface{ bindOption() }
 
 // Action binds keys to one of SPEC §10.2's actions other than program
@@ -97,8 +106,15 @@ func Action(action hotty.Action, keys ...string) BindOption {
 // button's Space, the surface's scrolling. It replaces the bindings of
 // those keys before it, on the element and around it, but yields to a key
 // the program is given around the element unless its Bind says Override.
-// Readline without ctrl+k is surf.Bind(surf.Readline(),
+// Readline's keys without ctrl+k are surf.Bind(surf.ReadlineKeys(),
 // surf.Unbind("ctrl+k")).
+//
+// Under CUAKeys or CocoaKeys, on the element or around it, a key the
+// keymap binds goes back to the keymap's binding instead, not to the
+// host's platform: its edit action, or, for a key it gives back, the
+// program. So under CUAKeys on a host whose mod is super, readline's
+// keys without ctrl+k give ctrl+k to the program, as on Linux, where the
+// host's own default would delete to the line's end.
 func Unbind(keys ...string) BindOption {
 	return &keysOption{action: hotty.Default, keys: slices.Clone(keys), unbind: true}
 }
@@ -119,14 +135,82 @@ func Group(opts ...BindOption) BindOption {
 	return &groupOption{opts: slices.Clone(opts)}
 }
 
-// Readline is the group of the SDK's readline keymap (hotty.TerminalKeys:
-// Bubble Tea's ctrl+e, ctrl+k, ctrl+u, ctrl+w, alt+b, alt+f, …), over the
-// platform's default; mod+a still selects all. On an element that holds
-// fields, it binds them all. A kit Command's or Combobox's field, which
-// takes no handler of the app's, gets it from a Bind on an element around
-// the component.
-func Readline() BindOption {
+// ReadlineKeys is the editing keymap of a terminal's line, a group: the
+// SDK's hotty.TerminalKeys, the readline keys of Bubble Tea's text input
+// (ctrl+e, ctrl+k, ctrl+u, ctrl+w, alt+b, alt+f, …), over the platform's
+// default; mod+a still selects all. Its source is GNU Readline's manual,
+// "Bindable Readline Commands" in the GNU Readline Library User
+// Interface: https://tiswww.case.edu/php/chet/readline/rluserman.html
+//
+// On an element that holds fields, it binds them all. A kit Command's or
+// Combobox's field, which takes no handler of the app's, gets it from a
+// Bind on an element around the component. It layers with the other
+// editing keymaps, as Bind says: surf.Bind(surf.CUAKeys(),
+// surf.ReadlineKeys()) puts readline's keys over the desktop's.
+func ReadlineKeys() BindOption {
 	return &groupOption{read: readlineBinds}
+}
+
+// CUAKeys is the editing keymap of IBM's Common User Access, the Windows
+// and Linux desktop's, a group: a text field's caret and delete keys as
+// SPEC §10.2 has them where mod is ctrl, whatever the host's mod:
+// ctrl+arrow_left and ctrl+arrow_right move by words, ctrl+home and
+// ctrl+end go to the value's ends, ctrl+backspace and ctrl+delete delete
+// words. Its source is IBM's "Object-Oriented Interface Design: IBM
+// Common User Access Guidelines", SC34-4399-00 (1992), which replaces
+// SC34-4290. IBM no longer hosts it; a scan is at
+// https://archive.org/download/sc34-4399-00/
+//
+// The keys only macOS gives a field (super+arrow_left,
+// super+backspace, ctrl+a, ctrl+e, ctrl+k, …) are given back: from a
+// field they reach the program, as on Linux, and a binding nearer the
+// field still takes them.
+//
+// Only those keys change. What mod stands for stays the host's, and so
+// do a shortcut's keycap, the edit shortcuts (select all, copy, paste,
+// undo: the host's and the user's, SPEC §10.2), every key the edit
+// shortcuts hold, and the host's scrolling. Outside a field the
+// give-backs reach the program too: on a host whose mod is super, a
+// focused button no longer scrolls with super+arrow_up and
+// super+arrow_down, where the host did (home, end and the page keys
+// still scroll). Under it, Unbind gives a key back to CUAKeys' binding,
+// not to the host's platform.
+//
+// Bind it once, on the outermost element of each surface's view, so
+// that every field inside has it, the kit's included: a field outside
+// that element doesn't. It layers with the other editing keymaps, as
+// Bind says, the later one's binding of a key winning: put it before
+// ReadlineKeys, whose keys then win where the two differ, as in
+// surf.Bind(surf.CUAKeys(), surf.ReadlineKeys()). A field may bind
+// CocoaKeys, or ReadlineKeys, nearer.
+//
+//	surf.On(ctx, "app", surf.Bind(surf.CUAKeys()))
+func CUAKeys() BindOption {
+	return &groupOption{read: cuaBinds}
+}
+
+// CocoaKeys is the editing keymap of macOS's text system, a group: a
+// text field's caret and delete keys as SPEC §10.2 has them where mod is
+// super, whatever the host's mod: super+arrow_left and super+arrow_right
+// go to the line's ends, super+arrow_up and super+arrow_down to the
+// value's, super+backspace deletes to the line's start, and ctrl+a,
+// ctrl+e, ctrl+b, ctrl+f, ctrl+p, ctrl+n, ctrl+h, ctrl+d and ctrl+k move
+// and delete as emacs's do. Its source is AppKit's StandardKeyBinding.dict,
+// in Apple's "Text System Defaults and Key Bindings":
+// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/EventOverview/TextDefaultsBindings/TextDefaultsBindings.html
+//
+// The keys only Linux and Windows give a field (ctrl+arrow_left,
+// ctrl+backspace, ctrl+home, …) are given back: from a field they reach
+// the program, as on macOS, and a binding nearer the field still takes
+// them.
+//
+// What it leaves the host's, where it goes, how it layers, and Unbind
+// under it are as CUAKeys says, with CUAKeys and CocoaKeys swapped: on a
+// host whose mod is ctrl, ctrl+a stays select all, and a focused button
+// no longer scrolls with ctrl+home and ctrl+end. surf.Bind(surf.CocoaKeys(),
+// surf.ReadlineKeys()) puts readline's keys over macOS's.
+func CocoaKeys() BindOption {
+	return &groupOption{read: cocoaBinds}
 }
 
 // Yield makes every binding of its Bind leave alone a key the program is
@@ -147,8 +231,9 @@ type keysOption struct {
 }
 
 // A groupOption is Group's opts, or a predefined group's bindings, which
-// read makes for the frame's platform (Readline's): only the option's
-// maker refers to read, so an app without it doesn't link the set.
+// read makes for the frame's platform (the editing keymaps'):
+// only the option's maker refers to read, so an app without it doesn't
+// link the set.
 type groupOption struct {
 	opts []BindOption
 	read func(*rt.Frame) []rt.Bind
@@ -166,7 +251,7 @@ func (*groupOption) bindOption() {}
 func (*modeOption) bindOption()  {}
 
 // binds says whether opts hold a binding: an Action, an Unbind, a
-// Readline, or a group that holds one.
+// ReadlineKeys, or a group that holds one.
 func binds(opts []BindOption) bool {
 	for _, o := range opts {
 		switch o := o.(type) {
@@ -253,13 +338,21 @@ func flattenIn(f *rt.Frame, id string, opts []BindOption, mode *modeOption, grou
 // among the groups' the last read wins. A direct binding of a key a Key
 // handler declares (keys) is a fault, but to prefix, which gives fn the
 // key too; a group's is kept, unwritten (the program has the key), for
-// the field's own use of the key when the handler declines it.
-func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) []rt.Bind {
+// the field's own use of the key when the handler declines it. base is
+// CUAKeys' and CocoaKeys' bindings (rt.Handlers.Base), one per key, the last
+// read winning, whatever holds the key.
+func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base []rt.Bind) {
 	if len(binds) == 0 {
-		return nil
+		return nil, nil
 	}
-	var out []rt.Bind
 	for _, b := range binds {
+		if b.Base {
+			if i := slices.IndexFunc(base, func(x rt.Bind) bool { return x.Key == b.Key }); i >= 0 {
+				base[i] = b
+			} else {
+				base = append(base, b)
+			}
+		}
 		if b.Direct && b.Action != string(hotty.Prefix) && slices.Contains(keys, b.Key) {
 			f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(b.Key)+", which its surf.Key declares: a key has one use on an element")
 			continue
@@ -280,22 +373,100 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) []rt.Bind {
 			out[i] = b
 		}
 	}
-	return out
+	return out, base
 }
 
 // readlineBinds is hotty.TerminalKeys for the frame's platform, read
 // once a frame.
 func readlineBinds(f *rt.Frame) []rt.Bind {
-	if f.Readline == nil {
+	if f.ReadlineKeys == nil {
 		m := hotty.ParseKeymap(f.Platform, hotty.TerminalKeys)
 		for _, b := range strings.Fields(m.Format()) {
 			k, a, _ := strings.Cut(b, "=")
 			if c, ok := f.Platform.ReadKey(k); ok {
-				f.Readline = append(f.Readline, rt.Bind{Key: c, Action: a})
+				f.ReadlineKeys = append(f.ReadlineKeys, rt.Bind{Key: c, Action: a})
 			}
 		}
 	}
-	return f.Readline
+	return f.ReadlineKeys
+}
+
+// cuaBinds and cocoaBinds are CUAKeys' and CocoaKeys' bindings for the frame's
+// platform, read once a frame.
+func cuaBinds(f *rt.Frame) []rt.Bind   { return editingFor(f, 0) }
+func cocoaBinds(f *rt.Frame) []rt.Bind { return editingFor(f, 1) }
+
+// editingFor is editingTables()[i] for the frame's platform: each key
+// as the platform reads it, less every key the host's edit shortcuts hold
+// (Platform.Edit, or DefaultEdit(Mod) where it reports none), which stay
+// the host's.
+func editingFor(f *rt.Frame, i int) []rt.Bind {
+	if f.Editing[i] == nil {
+		edit := f.Platform.Edit
+		if edit == nil {
+			edit = hotty.DefaultEdit(f.Platform.Mod)
+		}
+		held := map[string]bool{}
+		for _, keys := range edit {
+			for _, k := range keys {
+				if c, ok := f.Platform.ReadKey(k); ok {
+					held[c] = true
+				}
+			}
+		}
+		out := []rt.Bind{}
+		for _, b := range editingTables()[i] {
+			if c, ok := f.Platform.ReadKey(b.Key); ok && !held[c] {
+				b.Key = c
+				out = append(out, b)
+			}
+		}
+		f.Editing[i] = out
+	}
+	return f.Editing[i]
+}
+
+var (
+	editingOnce  sync.Once
+	editingTable [2][]rt.Bind
+)
+
+// editingTables is SPEC §10.2's two tables of a field's keys by mod, as
+// hotty.Resolve has them (no copy of them here): for every key whose
+// action differs between a field's default keymap where mod is ctrl and
+// where it is super, both without edit shortcuts, CUAKeys' binding ([0]) and
+// CocoaKeys' ([1]), each the key's action on its platform or, where that
+// platform's field doesn't use the key, program (a give-back). They
+// don't depend on the host, so they are made once a process.
+func editingTables() *[2][]rt.Bind {
+	editingOnce.Do(func() {
+		none := map[string][]string{}
+		var keys []string
+		var acts [2]map[string]string
+		for i, mod := range [2]string{"ctrl", "super"} {
+			acts[i] = map[string]string{}
+			for _, b := range strings.Fields(hotty.Resolve(hotty.Platform{Mod: mod, Edit: none}, true).Format()) {
+				j := strings.LastIndexByte(b, '=')
+				if !slices.Contains(keys, b[:j]) {
+					keys = append(keys, b[:j])
+				}
+				acts[i][b[:j]] = b[j+1:]
+			}
+		}
+		for _, k := range keys {
+			if acts[0][k] == acts[1][k] {
+				continue
+			}
+			for i := range acts {
+				a := acts[i][k]
+				if a == "" {
+					a = string(hotty.Program)
+				}
+				editingTable[i] = append(editingTable[i], rt.Bind{Key: k, Action: a, Base: true})
+			}
+		}
+	})
+	return &editingTable
 }
 
 // bindable says whether Bind takes the action: one of SPEC §10.2's but

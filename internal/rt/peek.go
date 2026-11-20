@@ -31,7 +31,7 @@ var Peek struct {
 	// FieldTakes says whether the focused element is a text field that
 	// isn't a kit control under a KeyScope and whose keymap, as the host
 	// resolves it from the data-keys the surface wrote, binds key to an
-	// edit action (surf.Readline's ctrl+k): the key never reaches a
+	// edit action (surf.ReadlineKeys' ctrl+k): the key never reaches a
 	// KeyScope's binding there (ui.Bindings).
 	FieldTakes func(s any, key string) bool
 	// Faults are the faults of the renders since the last call, which it

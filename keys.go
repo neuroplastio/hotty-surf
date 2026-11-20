@@ -42,12 +42,15 @@ const (
 //     only on a text field, the one place SPEC lets it go;
 //   - the keys the KeyScopes around a kit control forward;
 //   - its surf.Bind bindings, key=action, but for a key
-//     the two above give the program;
+//     the two above give the program, an Unbind under CUAKeys or CocoaKeys
+//     written as that keymap's binding;
 //   - on an element that types, each printable key an element around it
 //     declares, given back (key=default), so a field types it (K27).
 //
-// It says how many printable keys n declares, and how many keys it gives
-// the program, which it pushed on t's stacks for n's insides; number pops
+// It says how many printable keys n declares, how many keys it gives
+// the program (CUAKeys' and CocoaKeys' give-backs aren't: a binding inside
+// still takes them), and how many of CUAKeys' and CocoaKeys' bindings n holds
+// (h.Base), which it pushed on t's stacks for n's insides; number pops
 // them after.
 func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	scope, kind := 0, ""
@@ -154,7 +157,9 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	})
 	given := 0
 	for _, b := range binds {
-		if k, ok := strings.CutSuffix(b, "=program"); ok {
+		// A program binding writeBinds wrote is a give-back (only CUAKeys'
+		// and CocoaKeys' bindings are program there): not a key given.
+		if k, ok := strings.CutSuffix(b, "=program"); ok && !contains(bound, k) {
 			t.given = append(t.given, k)
 			given++
 		} else if k, ok := strings.CutSuffix(b, "=prefix"); ok {
@@ -166,12 +171,34 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		slices.Sort(binds)
 		n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
 	}
-	return keyPush{printable: pushed, given: given}
+	base := 0
+	if h != nil {
+		t.base = append(t.base, h.Base...)
+		base = len(h.Base)
+	}
+	return keyPush{printable: pushed, given: given, base: base}
 }
 
 // keyPush is what writeKeys pushed on a tree's stacks for an element's
 // insides.
-type keyPush struct{ printable, given int }
+type keyPush struct{ printable, given, base int }
+
+// baseOf is CUAKeys' or CocoaKeys' binding of key in effect on the element
+// whose handlers are h: the element's own, else the nearest one's around
+// it (t.base).
+func baseOf(h *rt.Handlers, t *tree, key string) (rt.Bind, bool) {
+	for _, c := range h.Base {
+		if c.Key == key {
+			return c, true
+		}
+	}
+	for i := len(t.base) - 1; i >= 0; i-- {
+		if t.base[i].Key == key {
+			return t.base[i], true
+		}
+	}
+	return rt.Bind{}, false
+}
 
 // writeBinds is the one resolver of an element's surf.Bind bindings
 // (h.Binds, one per key already): it records in h.Written those that
@@ -186,6 +213,11 @@ type keyPush struct{ printable, given int }
 //     an input (a group's is harmless there), a scroll action on a text
 //     field.
 //
+// An Unbind of a key CUAKeys or CocoaKeys binds, on the element or around it
+// (baseOf), is that keymap's binding instead of key=default: the keymap,
+// not the host's platform, is what it gives the key back to. It is the
+// user's Unbind, so none of the faults above is its.
+//
 // Where binds gives the key to the program already (a Key handler's, a
 // KeyScope's) the binding is recorded but not written: the program's
 // wins, but a prefix, which is the program's too, is written in its
@@ -197,12 +229,18 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, kind string, multiline b
 	pushed, groupFault := 0, false
 	h.Written = h.Written[:0]
 	for _, b := range h.Binds {
+		resolved := false
+		if b.Action == string(hotty.Default) {
+			if c, ok := baseOf(h, t, b.Key); ok {
+				b.Action, b.Base, resolved = c.Action, true, true
+			}
+		}
 		a := hotty.Action(b.Action)
 		if b.Yield && slices.Contains(t.given, b.Key) {
 			continue
 		}
 		switch {
-		case a == hotty.Prefix, a == hotty.Default:
+		case resolved, a == hotty.Prefix, a == hotty.Default:
 		case a.Scrolls():
 			if kind == "text" {
 				s.fault("surf.Bind: the id " + id + " is a text field, whose keymap leaves out " + b.Action + " (SPEC §10.2): bind it on what scrolls")
@@ -290,6 +328,16 @@ func keysig(b []byte, f *rt.Frame) []byte {
 				if x.Direct {
 					b = append(b, '!')
 				}
+				if x.Base {
+					b = append(b, '^')
+				}
+			}
+			// What an Unbind here or inside goes back to (CUAKeys', CocoaKeys').
+			for _, x := range h.Base {
+				b = append(b, " ^"...)
+				b = append(b, x.Key...)
+				b = append(b, '=')
+				b = append(b, x.Action...)
 			}
 			b = append(b, '\n')
 		}

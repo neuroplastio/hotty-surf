@@ -36,6 +36,11 @@ type Handlers struct {
 	// which data-keys, the surface's own use of a declined key (EditKeys)
 	// and so a host and cells read alike.
 	Written []Bind
+	// Base are the bindings the element's surf.CUAKeys and surf.CocoaKeys read,
+	// one per key, the last read winning, whether or not another binding
+	// holds the key on the element: what an Unbind on the element, or
+	// inside it, gives the key back to.
+	Base []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
 	Scope   *KeyScope
@@ -49,15 +54,20 @@ type Handlers struct {
 	Secondary  func(hotty.Cell, hotty.Area)
 }
 
-// A Bind is one key bound to an action that isn't program (SPEC §10.2):
-// a field's edit action, prefix, a scroll action, or default (surf.Unbind).
-// Yield says it leaves alone a key the program is given around its
-// element; Direct says it was given to surf.Bind directly, not in a group,
-// and holds its key over the groups'.
+// A Bind is one key bound to one of SPEC §10.2's actions: a field's edit
+// action, prefix, a scroll action, default (surf.Unbind), or, from
+// surf.CUAKeys and surf.CocoaKeys alone, program. Yield says it leaves alone a
+// key the program is given around its element; Direct says it was given
+// to surf.Bind directly, not in a group, and holds its key over the
+// groups'. Base says CUAKeys or CocoaKeys made it (or an Unbind resolved it to
+// their binding): bound to program it is a give-back, a key the field
+// doesn't use, which isn't a key given to the program around the
+// element, so a nearer binding still takes it.
 type Bind struct {
 	Key, Action string
 	Yield       bool
 	Direct      bool
+	Base        bool
 }
 
 // EditKeys is h's resolved bindings (Written) as a field's keymap reads
@@ -142,9 +152,13 @@ type Frame struct {
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.
 	Scopes []*KeyScope
-	// Readline is hotty.TerminalKeys as Binds for Platform, made the
-	// first time an element binds surf.Readline in the frame.
-	Readline []Bind
+	// ReadlineKeys is hotty.TerminalKeys as Binds for Platform, made the
+	// first time an element binds surf.ReadlineKeys in the frame.
+	ReadlineKeys []Bind
+	// Editing are surf.CUAKeys' and surf.CocoaKeys' bindings (in that order)
+	// for Platform, each made the first time an element binds it in the
+	// frame.
+	Editing [2][]Bind
 	// Replays are what the render registered on a component around it
 	// (Register), in order: a kept compiled instance runs its own again.
 	Replays []func(context.Context)

@@ -78,8 +78,9 @@ passes a key to the application. Cells also implements native control
 editing, activation and navigation. Text fields resolve their keymap with
 `hotty.Resolve`; a host and cells must agree on the platform and on the
 ordered keymap. Readline-style editing (`hotty.TerminalKeys`) is
-`surf.Bind(surf.Readline())` on the field or on what holds it (see Keys that aren't
-the program's).
+`surf.Bind(surf.ReadlineKeys())` on the field or on what holds it, and a
+desktop's editing keys whatever the host's platform are `surf.CUAKeys()` or
+`surf.CocoaKeys()` (see Editing keymaps, below).
 
 ## B1 and B2 audit
 
@@ -159,16 +160,16 @@ field's completion. Shortcuts that a menu or a palette lists are
 `surf.Key` gives keys to the program; `surf.Bind` gives them to the host,
 which does one of SPEC §10.2's actions with them, and no handler hears
 them. Bind's options are bindings, `surf.Action(action, keys...)`,
-`surf.Unbind(keys...)` and groups (`surf.Readline()`, readline's set, or
-an app's own `surf.Group`), and at most one of `surf.Yield()` or
-`surf.Override()` for all of them.
+`surf.Unbind(keys...)` and groups (the editing keymaps `surf.ReadlineKeys()`,
+`surf.CUAKeys()` and `surf.CocoaKeys()`, or an app's own `surf.Group`), and at
+most one of `surf.Yield()` or `surf.Override()` for all of them.
 
 ```go
 // a palette's query: readline's ctrl+w, ctrl+u, alt+b, …
 surf.On(ctx, "query", surf.Input(a.setQuery),
-    surf.Bind(surf.Readline()))
+    surf.Bind(surf.ReadlineKeys()))
 // readline without ctrl+k
-surf.Bind(surf.Readline(), surf.Unbind("ctrl+k"))
+surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k"))
 // a pager: j and k scroll the log where the host scrolls it
 surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"),
     surf.Action(hotty.ScrollUp, "k")))
@@ -191,19 +192,20 @@ var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
   by a `surf.Key` declaration, a prefix or a KeyScope's forwarded key. A
   binding that yields leaves such a key on an element around it alone,
   and is dropped; nothing under it on the element comes back. A page's
-  `mod+k` still opens its palette from a field under Readline, where
-  Readline would delete to the line's end with `ctrl+k`. One that
+  `mod+k` still opens its palette from a field under ReadlineKeys, where
+  ReadlineKeys would delete to the line's end with `ctrl+k`. One that
   overrides is written anyway, the nearer binding winning. A direct
   Action overrides; an Unbind and a group's bindings yield; `Yield()` or
   `Override()` sets every binding of its Bind (in a Group they are a
   fault). A key the field's own handler declares and declines is its
   binding's edit. A key declared around the field whose handler declines
-  it is what the host does with the wire: under a yielding Readline, the
-  platform default's; under `Override()`, Readline's edit.
+  it is what the host does with the wire: under a yielding ReadlineKeys, the
+  platform default's; under `Override()`, ReadlineKeys' edit.
 - **Unbind** gives a key back to the host's own meaning (`key=default`):
   one of a group's keys on the element, or a key a container binds, on
   an element inside it. Taking a key back from the program says
-  `Override()`.
+  `Override()`. Under CUAKeys or CocoaKeys it gives the key back to that
+  keymap instead (below).
 - **Bindings are a render's**, as every handler is: a render that
   passes other options rebinds the element, and the host has it with
   the render's delta, an attribute change that keeps a field's caret; a
@@ -228,13 +230,86 @@ var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
   does no scroll action yet: a scroll-bound key reaches the program
   there.
 - **A kit Command or Combobox** takes no handler of the app's on its
-  field: it gets Readline from a `surf.Bind(surf.Readline())` on an
+  field: it gets ReadlineKeys, CUAKeys or CocoaKeys from a `surf.Bind` on an
   element around the component.
 - **Size.** The kit's own edit of a declined key on a text field
   (`hottyedit`) is linked only by what edits text: ui's text components,
   `ui.KeyScope` and `surf.Bind` (a pager's scroll-only Bind too). A
   plain `<input>` in an app with none of them edits nothing on a declined
   key, and that is a fault, once.
+
+## Editing keymaps
+
+`surf.ReadlineKeys()`, `surf.CUAKeys()` and `surf.CocoaKeys()` are the
+editing keymaps: groups of a text field's caret and delete keys.
+- **ReadlineKeys** is a terminal line's (`hotty.TerminalKeys`), over the
+  host's default. Its source is GNU Readline's manual, "Bindable
+  Readline Commands" in the
+  [GNU Readline Library User Interface](https://tiswww.case.edu/php/chet/readline/rluserman.html).
+- **CUAKeys** is IBM's Common User Access: the Windows and Linux
+  desktop's keys, SPEC §10.2's where `mod` is `ctrl`. Its source is
+  IBM's "Object-Oriented Interface Design: IBM Common User Access
+  Guidelines", SC34-4399-00 (1992), which replaces SC34-4290. IBM no
+  longer hosts it, so the link is to
+  [a scan](https://archive.org/download/sc34-4399-00/).
+- **CocoaKeys** is macOS's text system's, SPEC §10.2's where `mod` is
+  `super`. Its source is AppKit's StandardKeyBinding.dict, in Apple's
+  [Text System Defaults and Key Bindings](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/EventOverview/TextDefaultsBindings/TextDefaultsBindings.html).
+
+They layer: one Bind can hold several, read in order, a later binding
+replacing an earlier one of the same key. `surf.Bind(surf.CUAKeys(),
+surf.ReadlineKeys())` is the desktop's keys with readline's over them.
+
+A host's `mod` says which of CUA's and Cocoa's tables a field starts
+from. CUAKeys and CocoaKeys take that choice from the platform and give
+it to the app, so an app can keep `super` as its `mod` and still edit
+as on Linux:
+
+```go
+var keys surf.BindOption // nil: the host's own
+switch cfg.Keymap {
+case "cua":
+    keys = surf.CUAKeys()
+case "cocoa":
+    keys = surf.CocoaKeys()
+}
+surf.On(ctx, "app", surf.Bind(keys))
+// readline's keys over the desktop's: CUAKeys or CocoaKeys first
+surf.Bind(surf.CUAKeys(), surf.ReadlineKeys())
+```
+
+- **What changes:** each binds its own keys and gives back the other
+  platform's: from a field they reach the program, as on that
+  platform. Under CUAKeys on a host whose `mod` is `super`,
+  `ctrl+backspace` deletes a word, and `ctrl+k` reaches the program
+  instead of deleting to the line's end.
+- **What stays the host's:** what `mod` stands for, so a shortcut's
+  keycap; the edit shortcuts (select all, copy, paste, undo), which are
+  the host's and the user's, and every key they hold, so under CocoaKeys
+  where `mod` is `ctrl`, `ctrl+a` stays select all; and the host's
+  scrolling.
+- **Where:** once, on the outermost element of each surface's view.
+  Every field inside has it, the kit's included; a field outside that
+  element doesn't. A field may bind the other one, or ReadlineKeys, nearer.
+- **Outside a field** the give-backs reach the program too: a focused
+  button no longer scrolls with the other platform's go-to-top and
+  go-to-bottom keys (`super+arrow_up` and `super+arrow_down` under CUAKeys,
+  `ctrl+home` and `ctrl+end` under CocoaKeys). `home`, `end` and the page
+  keys still scroll.
+- **Order:** on one element the last group read wins, so put CUAKeys or
+  CocoaKeys before ReadlineKeys. A give-back isn't a key the program is given
+  around a field: a ReadlineKeys nearer the field still takes `ctrl+k`. A
+  page's own key (a `surf.Key`) still reaches it from a field, unless
+  the Bind says `Override()`.
+- **Unbind under them** gives a key back to the keymap's binding, not
+  to the host's platform: under CUAKeys,
+  `surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k"))` gives `ctrl+k` to
+  the program, as on Linux, where the host's default on macOS would
+  delete to the line's end.
+- **On a host and in cells** they are the same `data-keys`, about 450
+  bytes on the element, written once. A cells Screen's `mod` is always
+  `ctrl`, so there CUAKeys changes nothing in a field and CocoaKeys is what
+  makes `ctrl+k` delete.
 
 ## Scoped overrides
 
@@ -326,7 +401,7 @@ The labels serve the user's view of the keys too:
   of that name nearest the keyboard. A binding keeps its key only while
   the key reaches it. One a nearer scope's key shadows, whose scope the
   keyboard is outside, or which a focused plain text field takes itself
-  (its keymap's edit, `surf.Readline`'s `ctrl+k` among them), is listed
+  (its keymap's edit, `surf.ReadlineKeys`'s `ctrl+k` among them), is listed
   without its key when it has a name (a pick still runs it), and left out
   when it has none. A `surf.Bind` is the host's action and is never one
   of them. An app's palette lists these.

@@ -43,7 +43,7 @@ type KeyEnvironment struct {
 	Kind string
 	// Declined says every Key handler that declared the key declined it:
 	// the field's keymap is its default and the chain's surf.Bind and
-	// Readline bindings, the declared keys left out.
+	// ReadlineKeys bindings, the declared keys left out.
 	Declined                      bool
 	Focused                       string
 	On                            map[string]*Handlers

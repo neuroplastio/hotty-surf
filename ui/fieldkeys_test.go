@@ -104,8 +104,8 @@ func wrap(attrs templ.Attributes, c templ.Component) templ.Component {
 	})
 }
 
-// A field under surf.Readline edits as a terminal's line does, on a host
-// and in cells alike, whether Readline is on the field or on what holds
+// A field under surf.ReadlineKeys edits as a terminal's line does, on a host
+// and in cells alike, whether ReadlineKeys is on the field or on what holds
 // it; without it, ctrl+w is the program's and edits nothing.
 func TestReadlineVectors(t *testing.T) {
 	steps := []struct{ key, want string }{
@@ -121,11 +121,11 @@ func TestReadlineVectors(t *testing.T) {
 				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					hs := []surf.Handler{surf.Input(func(v string) { value = v })}
 					if where == "field" {
-						hs = append(hs, surf.Bind(surf.Readline()))
+						hs = append(hs, surf.Bind(surf.ReadlineKeys()))
 					}
 					var around templ.Attributes
 					if where == "around" {
-						around = surf.On(ctx, "box", surf.Bind(surf.Readline()))
+						around = surf.On(ctx, "box", surf.Bind(surf.ReadlineKeys()))
 					}
 					in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", hs...)})
 					return outside(wrap(around, in)).Render(ctx, w)
@@ -138,7 +138,7 @@ func TestReadlineVectors(t *testing.T) {
 					if where == "none" {
 						if st.key == "ctrl+w" {
 							if value != "ab cd" {
-								t.Fatalf("without Readline ctrl+w edited: %q", value)
+								t.Fatalf("without ReadlineKeys ctrl+w edited: %q", value)
 							}
 							return
 						}
@@ -152,7 +152,7 @@ func TestReadlineVectors(t *testing.T) {
 	}
 }
 
-// Readline's keys that a Key handler on the field declares are the
+// ReadlineKeys' keys that a Key handler on the field declares are the
 // handler's (a palette's arrows and ctrl+n); one it declines is the
 // field's own use, as readline has it.
 func TestReadlineUnderKeys(t *testing.T) {
@@ -166,7 +166,7 @@ func TestReadlineUnderKeys(t *testing.T) {
 				return k != "mod+u"
 			}
 			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q",
-				surf.Input(func(v string) { value = v }), surf.Bind(surf.Readline()),
+				surf.Input(func(v string) { value = v }), surf.Bind(surf.ReadlineKeys()),
 				surf.Key(key, "ctrl+n", "arrow_up", "ctrl+u"))})
 			return outside(in).Render(ctx, w)
 		})
@@ -249,8 +249,8 @@ func TestPrefixEndsByItself(t *testing.T) {
 }
 
 // A key an element around the field declares (a page's mod+k) still
-// reaches its handler from a field under Readline, which would bind it
-// (ctrl+k, delete-to-line-end): Readline leaves the program's keys alone.
+// reaches its handler from a field under ReadlineKeys, which would bind it
+// (ctrl+k, delete-to-line-end): ReadlineKeys leaves the program's keys alone.
 func TestDeclaredAroundWinsOverReadline(t *testing.T) {
 	value, opened := "", 0
 	view := func() templ.Component {
@@ -263,7 +263,7 @@ func TestDeclaredAroundWinsOverReadline(t *testing.T) {
 				}
 				return false
 			}
-			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }), surf.Bind(surf.Readline()))})
+			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }), surf.Bind(surf.ReadlineKeys()))})
 			return outside(wrap(surf.On(ctx, "main", surf.Key(open, "mod+k")), in)).Render(ctx, w)
 		})
 	}
@@ -312,7 +312,7 @@ func TestScrollBindVectors(t *testing.T) {
 }
 
 // A KeyScope's binding keeps its key in Bindings only while the key
-// reaches it: a plain field under Readline takes ctrl+k (delete to the
+// reaches it: a plain field under ReadlineKeys takes ctrl+k (delete to the
 // line's end), so the binding is listed without it there.
 func TestBindingsUnderReadline(t *testing.T) {
 	for _, readline := range []bool{false, true} {
@@ -320,7 +320,7 @@ func TestBindingsUnderReadline(t *testing.T) {
 			s := surf.New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 				var hs []surf.Handler
 				if readline {
-					hs = append(hs, surf.Bind(surf.Readline()))
+					hs = append(hs, surf.Bind(surf.ReadlineKeys()))
 				}
 				field := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					_, err := io.WriteString(w, `<input`+attrString(surf.On(ctx, "q", hs...))+`>`)
@@ -346,7 +346,7 @@ func TestBindingsUnderReadline(t *testing.T) {
 	}
 }
 
-// Readline with Override binds the keys declared around the field too:
+// ReadlineKeys with Override binds the keys declared around the field too:
 // ctrl+k deletes to the line's end there, and main's mod+k isn't heard.
 func TestReadlineOverrideVectors(t *testing.T) {
 	value, opened := "", 0
@@ -355,7 +355,7 @@ func TestReadlineOverrideVectors(t *testing.T) {
 		return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			open := func(k string) bool { opened++; return true }
 			in := ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", surf.Input(func(v string) { value = v }),
-				surf.Bind(surf.Readline(), surf.Override()))})
+				surf.Bind(surf.ReadlineKeys(), surf.Override()))})
 			return outside(wrap(surf.On(ctx, "main", surf.Key(open, "mod+k")), in)).Render(ctx, w)
 		})
 	}
@@ -424,7 +424,7 @@ func TestRebindKeepsTheCaret(t *testing.T) {
 			}
 			hs := []surf.Handler{surf.Input(func(v string) { value = v }), surf.Key(toggle)}
 			if readline {
-				hs = append(hs, surf.Bind(surf.Readline()))
+				hs = append(hs, surf.Bind(surf.ReadlineKeys()))
 			}
 			return outside(ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "q", hs...)})).Render(ctx, w)
 		})
@@ -438,7 +438,7 @@ func TestRebindKeepsTheCaret(t *testing.T) {
 		}
 		press("ctrl+w")
 		if value != "c" {
-			t.Errorf("after ctrl+w under the new Readline: %q", value)
+			t.Errorf("after ctrl+w under the new ReadlineKeys: %q", value)
 		}
 	})
 }

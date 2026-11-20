@@ -97,7 +97,7 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 	}
 	if kind == "text" || kind == "compound-text" {
 		// The fields' and its ancestors' own keymaps: their surf.Bind and
-		// Readline bindings, then (but for a declined key, which is the
+		// ReadlineKeys bindings, then (but for a declined key, which is the
 		// element's use) their Key handlers' keys, not the scopes'
 		// forwarded ones, so a field's key a binding declines stays the
 		// field's. surf's keymapsOf (OwnKeys) reads data-keys as written,

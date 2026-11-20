@@ -14,7 +14,7 @@ import (
 // A binding keeps its Key only while the key reaches it: the keyboard is
 // inside its scope, no nearer scope's enabled binding takes the same key,
 // and the focused element doesn't use it itself (a plain text field's
-// keymap, surf.Readline's ctrl+k among them; a kit control under the
+// keymap, surf.ReadlineKeys' ctrl+k among them; a kit control under the
 // scope gives the scope its keys). A surf.Bind is not a binding: it is
 // the host's action, which no menu lists. Any other keyed binding is listed with Key "" when it has a Name,
 // since a pick still runs it, and left out when it has none. Disabled
@@ -97,7 +97,7 @@ func offered(s *surf.Surface) []offer {
 		typing = rt.Types(n)
 	}
 	// A plain field takes the keys its keymap binds to edit actions (its
-	// default's, surf.Readline's, surf.Bind's): those reach no binding.
+	// default's, surf.ReadlineKeys', surf.Bind's): those reach no binding.
 	takes := func(key string) bool { return rt.Peek.FieldTakes != nil && rt.Peek.FieldTakes(s, key) }
 	// winner is each key's binding: the nearest enabled one, else the
 	// nearest disabled one. nearest is each name's.

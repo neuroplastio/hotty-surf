@@ -380,11 +380,11 @@ func ExampleBind() {
 
 // A palette's query edits as a terminal's line does: ctrl+w deletes the
 // word before the caret. Its handler still takes the arrows it declares,
-// which Readline would bind to the field's moves.
-func ExampleReadline() {
+// which ReadlineKeys would bind to the field's moves.
+func ExampleReadlineKeys() {
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		rows := func(key string) bool { return key == "arrow_up" || key == "arrow_down" }
-		q := surf.On(ctx, "query", surf.Input(func(string) {}), surf.Bind(surf.Readline()),
+		q := surf.On(ctx, "query", surf.Input(func(string) {}), surf.Bind(surf.ReadlineKeys()),
 			surf.Key(rows, "arrow_up", "arrow_down"))
 		_, err := fmt.Fprintf(w, `<input%s>`, attrList(q))
 		return err
@@ -404,14 +404,42 @@ func ExampleReadline() {
 	// arrow_up=line-previous false
 }
 
+// CUAKeys on a host whose mod is super (macOS's): the app's fields edit as
+// on Linux. ctrl+backspace deletes a word, and CocoaKeys' keys (ctrl+k,
+// super+arrow_left, …) reach the program; mod is still super, so super+a
+// still selects all, as the host's edit shortcut.
+func ExampleCUAKeys() {
+	keysOn(hotty.Caps{Mod: "super"}, func(ctx context.Context) string {
+		app := surf.On(ctx, "app", surf.Bind(surf.CUAKeys()))
+		return `<div` + attrList(app) + `><input id="query"></div>`
+	}, "app")
+	// Output: app: ctrl+a=program ctrl+arrow_left=word-backward ctrl+arrow_right=word-forward ctrl+b=program ctrl+backspace=delete-word-backward ctrl+d=program ctrl+delete=delete-word-forward ctrl+e=program ctrl+end=input-end ctrl+f=program ctrl+h=program ctrl+home=input-start ctrl+k=program ctrl+n=program ctrl+p=program super+arrow_down=program super+arrow_left=program super+arrow_right=program super+arrow_up=program super+backspace=program
+}
+
+// CocoaKeys on a host whose mod is ctrl: ctrl+e and ctrl+k edit as on macOS,
+// and the Linux word keys (ctrl+arrow_left, ctrl+backspace, …) reach the
+// program. ctrl+a, the host's select all, isn't CocoaKeys' here.
+func ExampleCocoaKeys() {
+	keysOn(hotty.Caps{}, func(ctx context.Context) string {
+		app := surf.On(ctx, "app", surf.Bind(surf.CocoaKeys()))
+		return `<div` + attrList(app) + `><input id="query"></div>`
+	}, "app")
+	// Output: app: ctrl+arrow_left=program ctrl+arrow_right=program ctrl+b=char-backward ctrl+backspace=program ctrl+d=delete-char-forward ctrl+delete=program ctrl+e=line-end ctrl+end=program ctrl+f=char-forward ctrl+h=delete-char-backward ctrl+home=program ctrl+k=delete-to-line-end ctrl+n=line-next ctrl+p=line-previous super+arrow_down=input-end super+arrow_left=line-start super+arrow_right=line-end super+arrow_up=input-start super+backspace=delete-to-line-start
+}
+
 // keysOf renders view on a surface and prints the data-keys the surface
 // wrote on each id.
 func keysOf(view func(ctx context.Context) string, ids ...string) {
+	keysOn(hotty.Caps{}, view, ids...)
+}
+
+// keysOn is keysOf on a host of caps.
+func keysOn(caps hotty.Caps, view func(ctx context.Context) string, ids ...string) {
 	s := surf.New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		_, err := io.WriteString(w, view(ctx))
 		return err
 	}), "")
-	s.Attach(io.Discard, hotty.Caps{})
+	s.Attach(io.Discard, caps)
 	doc, err := s.Document()
 	if err != nil {
 		return

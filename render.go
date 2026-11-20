@@ -179,11 +179,15 @@ type tree struct {
 	// numbered declare (writeKeys).
 	printable []string
 	// given are the keys the elements around the one being numbered give
-	// the program (key=program, key=prefix), which Readline's bindings
-	// leave alone (writeKeys).
+	// the program (key=program, key=prefix), which ReadlineKeys' bindings
+	// leave alone (writeKeys); CUAKeys' and CocoaKeys' give-backs aren't.
 	given []string
 	// roots are the compiled instances' elements (brackets).
 	roots map[*html.Node]*record
+	// base are CUAKeys' and CocoaKeys' bindings on the elements around the one
+	// being numbered, the nearest last: what an Unbind there gives a key
+	// back to (writeBinds).
+	base []rt.Bind
 }
 
 // keep takes t as what the host has, and the HTML paint rendered as its
@@ -267,6 +271,7 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 		s.number(c, id, t, pre || c.Data == "pre" || c.Data == "textarea" || c.Data == "listing")
 		t.printable = t.printable[:len(t.printable)-pushed.printable]
 		t.given = t.given[:len(t.given)-pushed.given]
+		t.base = t.base[:len(t.base)-pushed.base]
 		c = next
 	}
 }
