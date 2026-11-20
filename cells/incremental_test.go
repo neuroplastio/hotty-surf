@@ -204,11 +204,14 @@ var (
 	incClasses = []string{"text-primary", "bg-muted", "text-(--pill)", "dark:text-primary", "text-muted-foreground", "font-bold",
 		"hidden", "flex", "flex-col", "grow", "flex-1", "truncate", "shrink-0", "whitespace-pre", "p-1", "gap-1", "dark",
 		"overflow-y-auto", "max-h-[2rem]", "h-full", "justify-between", "list-disc", "mt-1", "w-full", "btn",
-		"max-h-[50vh]", "h-[40vh]", "h-screen", "max-h-[30vh]"}
+		"max-h-[50vh]", "h-[40vh]", "h-screen", "max-h-[30vh]",
+		"hover:bg-accent", "hover:underline", "hover:font-bold", "hover:text-muted-foreground", "dark:hover:bg-muted",
+		"hover:hidden", "hover:p-1", "hover:text-primary"}
 	// incColours are the classes a colour-only change swaps.
-	incColours = []string{"text-primary", "bg-muted", "text-(--pill)", "dark:text-primary", "text-destructive", "bg-accent"}
-	incTexts   = []string{"", " ", "x", "Machines", "a longer label that wraps", "日本語", "👍🏽 ok", "a\nb"}
-	incAttrs   = [][2]string{{"aria-selected", "true"}, {"aria-hidden", "true"}, {"open", ""}, {"hidden", ""},
+	incColours = []string{"text-primary", "bg-muted", "text-(--pill)", "dark:text-primary", "text-destructive", "bg-accent",
+		"hover:bg-accent", "hover:text-primary"}
+	incTexts = []string{"", " ", "x", "Machines", "a longer label that wraps", "日本語", "👍🏽 ok", "a\nb"}
+	incAttrs = [][2]string{{"aria-selected", "true"}, {"aria-hidden", "true"}, {"open", ""}, {"hidden", ""},
 		{"data-variant", "outline"}, {"disabled", ""}, {"data-tooltip", "tip"}, {"data-popover", ""},
 		{"aria-activedescendant", "o2"}, {"style", "color:var(--x)"}, {"tabindex", "0"}, {"role", "option"}}
 	incKeys = []string{"tab", "shift+tab", "enter", "space", "a", "backspace", "arrow_down", "arrow_up", "end", "home"}
@@ -249,6 +252,9 @@ func randomDoc(r *rand.Rand) string {
 	b.WriteString(`<table id="tb"><thead id="th"><tr id="thr"><th id="th1">name</th></tr></thead><tbody id="tbb"><tr id="tr1"><td id="td1">alpha</td></tr></tbody></table>`)
 	b.WriteString(`<div id="fm" class="flex"><select id="fs"><option value="a">alpha</option><option value="b">a long beta</option></select><input id="fc" type="checkbox"><input id="ft" class="input" value="typed"><textarea id="fta" rows="2" cols="8">one two three</textarea></div>`)
 	b.WriteString(`<div id="lb" role="listbox" tabindex="0" aria-activedescendant="o1"><div id="o1" role="option">one</div><div id="o2" role="option">two</div></div>`)
+	b.WriteString(`<div id="hk" class="flex gap-1"><button id="hb1" class="btn" data-variant="outline">out</button><button id="hb2" class="btn" data-variant="ghost">ghost</button><a id="hb3" class="btn" data-variant="link" href="#x">link</a><a id="hb4" class="badge" href="#x">badge</a><button id="hb6" class="btn">go</button></div>`)
+	b.WriteString(`<table id="ht" class="table"><tbody id="htb"><tr id="htr1"><td id="htd1">one</td></tr><tr id="htr2" role="row" aria-selected="true"><td id="htd2">two</td></tr></tbody></table>`)
+	b.WriteString(`<p id="hp" class="hover:bg-accent hover:text-accent-foreground">lit <span id="hps" class="hover:underline text-primary">inside</span></p>`)
 	b.WriteString(`<div id="mu" class="text-muted-foreground"><p id="mu1" class="text-primary x">coloured</p><p id="mu2" class="x">muted</p></div>`)
 	b.WriteString(`<div id="vh" class="overflow-y-auto max-h-[40vh]"><p id="vh1">a</p><p id="vh2">b</p><p id="vh3">c</p><p id="vh4">d</p><p id="vh5">e</p></div>`)
 	b.WriteString(`<div id="ch" data-slot="chart"><svg id="chs" class="chart"><rect id="cr1" data-value="3"></rect><rect id="cr2" data-value="5"></rect></svg>` +
@@ -280,6 +286,20 @@ func (w *walker) recolour(n *html.Node) string {
 	return strings.Join(ts, " ")
 }
 
+// off is a cell just off the Screen: the pointer leaving it.
+func (w *walker) off() (x, y int) {
+	switch w.r.IntN(4) {
+	case 0:
+		return -1, w.r.IntN(w.rows)
+	case 1:
+		return w.r.IntN(w.cols), -1
+	case 2:
+		return w.cols, w.r.IntN(w.rows)
+	default:
+		return w.r.IntN(w.cols), w.rows
+	}
+}
+
 // byID is the Screen's element with the id, or nil.
 func (w *walker) byID(id string) *html.Node {
 	var found *html.Node
@@ -309,7 +329,7 @@ func (w *walker) target() string {
 func (w *walker) step() string {
 	r, c := w.r, w.c
 	pick := func(s []string) string { return s[r.IntN(len(s))] }
-	switch k := r.IntN(16); {
+	switch k := r.IntN(19); {
 	case k < 7:
 		var ops []hotty.Op
 		for range 1 + r.IntN(3) {
@@ -373,6 +393,37 @@ func (w *walker) step() string {
 		in := r.IntN(2) == 0
 		c.Focus(in)
 		return fmt.Sprintf("focus %v", in)
+	case k == 16:
+		x, y := w.off()
+		c.Move(x, y, 0)
+		return fmt.Sprintf("move off %d,%d", x, y)
+	case k == 17:
+		// A button down, moved with, and let go or still down.
+		x, y := r.IntN(w.cols), r.IntN(w.rows)
+		c.Press(x, y, 0, r.IntN(3))
+		act := fmt.Sprintf("press %d,%d", x, y)
+		for range 1 + r.IntN(3) {
+			if r.IntN(4) == 0 {
+				x, y = w.off()
+			} else {
+				x, y = r.IntN(w.cols), r.IntN(w.rows)
+			}
+			c.Move(x, y, 0)
+			act += fmt.Sprintf(", move %d,%d", x, y)
+		}
+		if r.IntN(3) != 0 {
+			c.Release(x, y, 0)
+			act += ", release"
+		}
+		return act
+	case k == 18:
+		act := "moves"
+		for range 2 + r.IntN(3) {
+			x, y := r.IntN(w.cols), r.IntN(w.rows)
+			c.Move(x, y, 0)
+			act += fmt.Sprintf(" %d,%d", x, y)
+		}
+		return act
 	default:
 		c.Paste(pick(incTexts))
 		return "paste"

@@ -38,7 +38,8 @@ const gwSteps = 150
 // layout keeps beyond the flow (a scrolled box, a column whose item
 // grows, a popover, a table, fields, an active descendant, tooltips, a
 // chart and its legend), each through 150 steps of every kind: deltas of
-// every op, keys, the pointer, resizes, fields, focus, paste and cut.
+// every op, keys, the pointer (over elements and off the Screen, with a
+// button down and none), resizes, fields, focus, paste and cut.
 // After each step it hashes Lines, Cells, Draw into a program's grid at
 // an offset, Dirty before and after, the cursor, the selection, At and
 // the events sent.
@@ -156,13 +157,15 @@ var (
 		"text-(--pill)", "text-(--pill-hot)", "bg-(--pill-hover)", "bg-[var(--x)]", "dark:bg-muted", "dark:text-primary",
 		"text-muted-foreground/70", "text-accent-foreground", "bg-secondary", "text-primary-foreground", "bg-card",
 		"text-(--muted-foreground)", "text-[var(--muted-foreground)]", "dark:text-(--muted-foreground)", "bg-background",
-		"text-sidebar-foreground", "bg-sidebar-accent"}
+		"text-sidebar-foreground", "bg-sidebar-accent", "hover:bg-accent", "hover:text-primary", "dark:hover:bg-muted",
+		"hover:bg-(--pill-hover)", "hover:dark:text-destructive"}
 	gwOther = []string{"text-muted-foreground", "dark:text-muted-foreground", "text-sm", "text-center", "bg-transparent",
 		"font-bold", "font-normal", "hidden", "p-1", "px-2", "truncate", "flex", "flex-col", "shrink-0", "whitespace-pre",
 		"grow", "opacity-50", "dark", "light", "btn", "badge", "card", "nav-item", "tabs", "skeleton", "hover:bg-accent",
 		"line-through", "w-4", "gap-1", "input", "flex-1", "overflow-y-auto", "max-h-[3rem]", "h-full", "h-screen", "justify-between",
 		"flex-wrap", "list-disc", "mt-1", "mb-1", "py-1", "w-full", "max-w-[10rem]", "flex-col-reverse", "popover",
-		"max-h-[50vh]", "h-[40vh]"}
+		"max-h-[50vh]", "h-[40vh]", "hover:underline", "hover:font-bold", "hover:text-muted-foreground", "hover:opacity-50",
+		"hover:hidden", "hover:p-1"}
 	gwRoleNames = map[string]bool{"foreground": true, "background": true, "primary": true, "primary-foreground": true,
 		"secondary": true, "secondary-foreground": true, "muted": true, "accent": true, "accent-foreground": true,
 		"destructive": true, "card": true, "card-foreground": true, "popover": true, "popover-foreground": true,
@@ -279,6 +282,12 @@ func (g *gwGen) doc() string {
 	}
 	if g.r.IntN(3) == 0 {
 		b.WriteString(`<div id="cht" data-slot="chart"><div id="chp" class="chart"><svg id="chs"><rect id="cr1" data-value="3"></rect><rect id="cr2" data-value="5"></rect><rect id="cr3" data-value="2"></rect><rect id="cr4" data-value="4"></rect></svg></div><div id="chl" aria-hidden="true" class="text-xs"><span id="chl1">jan</span><span id="chl2">feb</span></div><div id="chg" class="chart-legend"><div id="chg1"><span id="chi1" class="chart-legend-indicator"></span>one</div><div id="chg2"><span id="chi2" class="chart-legend-indicator"></span>two</div></div></div>`)
+	}
+	if g.r.IntN(2) == 0 {
+		// What the kit lights under the pointer, and classes that do.
+		b.WriteString(`<div id="hk" class="flex gap-1"><button id="hb1" class="btn" data-variant="outline">out</button><button id="hb2" class="btn" data-variant="ghost">ghost</button><a id="hb3" class="btn" data-variant="link" href="#x">link</a><a id="hb4" class="badge" href="#x">badge</a><button id="hb5" class="btn" data-variant="destructive">del</button><button id="hb6" class="btn">go</button></div>`)
+		b.WriteString(`<table id="ht" class="table"><tbody id="htb"><tr id="htr1"><td id="htd1">one</td></tr><tr id="htr2" role="row" aria-selected="true"><td id="htd2">two</td></tr></tbody></table>`)
+		b.WriteString(`<p id="hp" class="hover:bg-accent hover:text-accent-foreground">lit <span id="hps" class="hover:underline text-primary">inside</span></p>`)
 	}
 	b.WriteString("</div>")
 	return b.String()
@@ -612,7 +621,7 @@ func gwRunOne(t *testing.T, w io.Writer, name, markup string, seed uint64, steps
 					act += fmt.Sprintf(" PANIC %v", p)
 				}
 			}()
-			switch k := g.r.IntN(22); {
+			switch k := g.r.IntN(25); {
 			case k < 2:
 				key := g.pick(gwKeys)
 				act = "key " + key
@@ -670,6 +679,37 @@ func gwRunOne(t *testing.T, w io.Writer, name, markup string, seed uint64, steps
 			case k == 20:
 				act = "cut"
 				fmt.Fprintf(h, "%q", s.c.Cut())
+			case k == 22:
+				x, y := gwOff(g, cols, rows)
+				act = fmt.Sprintf("move off %d,%d", x, y)
+				fmt.Fprintf(h, "%v", s.c.Move(x, y, 0))
+			case k == 23:
+				// A button down, the pointer moved with it, over the
+				// Screen and off it, and let go or still down.
+				x, y, b := g.r.IntN(cols), g.r.IntN(rows), g.pick([]string{"0", "0", "2", "1"})
+				button, _ := strconv.Atoi(b)
+				act = fmt.Sprintf("press %d at %d,%d", button, x, y)
+				fmt.Fprintf(h, "%v", s.c.Press(x, y, 0, button))
+				for range 1 + g.r.IntN(3) {
+					if g.r.IntN(4) == 0 {
+						x, y = gwOff(g, cols, rows)
+					} else {
+						x, y = g.r.IntN(cols), g.r.IntN(rows)
+					}
+					act += fmt.Sprintf(", move %d,%d", x, y)
+					fmt.Fprintf(h, "%v", s.c.Move(x, y, 0))
+				}
+				if g.r.IntN(3) != 0 {
+					act += ", release"
+					fmt.Fprintf(h, "%v", s.c.Release(x, y, 0))
+				}
+			case k == 24:
+				act = "moves"
+				for range 2 + g.r.IntN(3) {
+					x, y := g.r.IntN(cols), g.r.IntN(rows)
+					act += fmt.Sprintf(" %d,%d", x, y)
+					fmt.Fprintf(h, "%v", s.c.Move(x, y, 0))
+				}
 			default:
 				act = "same doc"
 				_, err := s.c.Write([]byte(hotty.Doc("v", cur)))
@@ -682,5 +722,19 @@ func gwRunOne(t *testing.T, w io.Writer, name, markup string, seed uint64, steps
 		}
 		s.events = s.events[:0]
 		fmt.Fprintf(w, "%s %d %s %s\n", name, i+1, sum(h), act)
+	}
+}
+
+// gwOff is a cell just off a Screen cols by rows: the pointer leaving it.
+func gwOff(g *gwGen, cols, rows int) (x, y int) {
+	switch g.r.IntN(4) {
+	case 0:
+		return -1, g.r.IntN(rows)
+	case 1:
+		return g.r.IntN(cols), -1
+	case 2:
+		return cols, g.r.IntN(rows)
+	default:
+		return g.r.IntN(cols), rows
 	}
 }
