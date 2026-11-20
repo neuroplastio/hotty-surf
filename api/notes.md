@@ -1926,3 +1926,111 @@ surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
 - **Size:** `ui` no longer links the text fallback at init. ui's text
   components, KeyScope and Bind link it. A declined key on a text field
   with none linked edits nothing, and is a fault naming what links it.
+
+## Compiled components and Screen.Draw (the maintainer, 2026-11-19)
+
+Every update renders the whole view, compares it with the last, parses
+it, numbers it and diffs the trees. A view of long lists with small
+changes pays for all of it: plx's nav (8 workspaces of 6 tabs) renders
+every row on a tab switch that changes two. plx can't keep a row's
+markup itself, because the row registers its handlers as it renders. In
+cells the Screen then laid the whole document out again, since every
+delta dropped what it kept of the tree.
+
+A cells-only answer (a Template drawn by the Screen's code) was built and
+withdrawn: the maintainer asked for compilation as the framework's
+mechanism, the same in both renditions, so a host gains what cells
+gains. NEIO-15 says so.
+
+```go
+type Compiled[P comparable] struct{ /* unexported */ }
+func Compile[P comparable](view func(P) templ.Component) *Compiled[P]
+func (c *Compiled[P]) With(key string, props P) templ.Component
+
+func (c *cells.Screen) Draw(g [][]cells.Cell, col, row int)
+```
+
+- **`Compile`** is called once per component, at package level: Go can't
+  compare func values, so the Compiled is the component's identity. It
+  panics at init on props that hold an interface, naming the field: `==`
+  on an interface holding a func panics, and a `templ.Component` field
+  is the obvious way to get one. P is `comparable`; an app's `Equal`
+  could come later behind another constraint.
+- **`With`** is an instance, named by an instance key ("key" alone means
+  a keyboard key in this package), that stays with it as rows move. An
+  instance whose props are `==` to its last isn't rendered: the view
+  gets a marker, and the frame gets what the instance registered last
+  (handlers, scopes, focus and reveal asks, faults, the kit's
+  registrations). One whose props changed renders alone; where only
+  instances changed, each is parsed in its parent's context, numbered,
+  diffed with its element and put in place. Otherwise its markup goes in
+  place of its marker and the update takes the full path.
+- **What an instance may read:** its props. Reads of the frame (the
+  focused element, the memo, the render's count, After, surf.Of) go
+  through accessors that make the instance, and every instance around
+  it, render every time. A ctx value read through the runtime is noted,
+  and the instance stands only while it is the same. A handler takes
+  what it uses from props or reads it when it runs.
+- **One element, no children, one key.** An instance renders one element
+  where the parser leaves it; else, and for a `{ … }` block, and for an
+  instance key used twice, the copies render as the view's own markup
+  and fault. A parent is kept only while every instance it holds is
+  still its own, came once and wasn't used yet that render.
+- **What the runtime writes isn't filled.** Ids, data-keys, a List's tab
+  stop and the drag's class are written as an element is numbered. An
+  instance's element's place key is its view's name, its instance key
+  and its tag, the same across processes, so a Go reload keeps its ids.
+  Since that id doesn't name the parent, a fill runs the moves pass over
+  each instance it fills, and an update whose filled element holds an
+  id still in the tree outside it takes the full path, whose moves pass
+  covers the whole tree.
+- **The check:** under surftest, and in a surfdev build unless
+  `HOTTY_SURF_COMPILE_CHECK=off`, each kept instance renders again into
+  a scratch frame, and a difference in markup, handler ids, key scopes
+  or focus asks is a fault. It can't see inside a handler. A view's side
+  effects run twice in dev because of it. A text reload forgets every
+  instance.
+- **ui.List's items** register with the List's memo through the runtime,
+  which a kept row replays, and the runtime writes the List's tab stop,
+  so a row holding a ListItem with an id is kept. Handlers find their
+  item by id when they run. A static render keeps the placeholder the
+  List rewrites.
+- **`Screen.Draw`** writes a Screen's cells into the program's own grid
+  at a place, clipped, with no grid made each frame, and counts as Cells
+  for Dirty. Chrome a program draws itself is a Screen the size of its
+  place: the same tree, subset and layout, and a surface with compiled
+  rows keeps it current. Its size is the Screen's, so Draw takes no
+  second one.
+- **The Screen forgets only what a delta reaches.** A text forgets its
+  pieces; a colour-only class change repaints roles on the same layout;
+  any other attribute forgets the styles of its element's ancestors and
+  of everything under its parent, which is all a style reads of others.
+- **On the wire** a filled instance sends SPEC §6's ops, as the differ
+  does: `attr`, `unattr`, `text`, `a=field`, and `inner` for a text among
+  elements, which hotty has no op for. A spec proposal waits for a scene
+  that shows the cost.
+- Not taken: compiling `.templ` files into slots (generated code, which
+  NEIO-15 rules out); keeping unchanged rows without filling changed
+  ones; a direct in-process path from a surface to its Screen (the wire
+  is at most a third of a cells update).
+
+The cost targets and the measured updates, on made-up scenes in plx's
+shapes (`BenchmarkCompiled`), the machine loaded:
+
+| update | plain, host | compiled, host | target | plain, cells | compiled, cells | of it, the wire | target |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| nav switch, 2 of 56 rows | 1.56 ms | 141 µs | ≤ 25 µs | 1.96 ms | 677 µs | ~120 µs | ≤ 60 µs |
+| strip hover, 2 of 20 pills | 133 µs | 25 µs | ≤ 15 µs | 189 µs | 67 µs | ~16 µs | ≤ 40 µs |
+| strip, a label | 132 µs | 16 µs | ≤ 15 µs | 249 µs | 122 µs | ~4 µs | ≤ 60 µs |
+| box at a new size | 73 µs | 40 µs | ≤ 40 µs | 183 µs | 139 µs | ~40 µs | ≤ 150 µs |
+| nothing changed | 609 µs | 39 µs | ≤ 5 µs | 670 µs | 43 µs | none | a copy |
+
+The box meets its targets. What the others still pay, each a change of
+its own for the maintainer to decide:
+
+- the view around the instances, every update: about 0.7 µs a kept row
+  for its With, its compare and its replay;
+- hotty-go compressing every delta at zlib's default level, about 30 µs
+  of the nav's update on a host;
+- the Screen laying its whole document out on any change but a
+  colour's, about 280 µs of the nav's update in cells.

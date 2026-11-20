@@ -750,3 +750,12 @@ The maintainer: "I would make Bind API extensible so that Readline becomes just 
 
 - `surf.Action`: replaces `surf.Keys`, which differed from `surf.Key` by one letter beside it in one `On`; Key takes the program's code, Action the host's action.
 - `surf.Unbind`: the maintainer's question, how a caller removes a key: readline without ctrl+k, or a key given back inside a container that binds it (SPEC §10.2 key=default). It yields by default, so dropping one of readline's keys never takes a page's shortcut.
+
+## Compiled components (NEIO-15, the maintainer, 2026-11-19)
+
+A cells-only `cells.Template`, drawn by the Screen's own code, was proposed first; the maintainer asked instead for compilation as a framework mechanism, the same in both renditions, so that what cells gains a host gains too. The Template's nine names are withdrawn; a program draws its own chrome with a Screen and `Screen.Draw`. NEIO-15 says so as reworded for it.
+
+- `surf.Compile`: a component's identity, which Go can't take from a func value: a package-level value, once per component. It panics at init on props that hold an interface, which `==` can panic on in a render.
+- `surf.Compiled`: what Compile returns and With hangs on; it holds no surface's state, so one serves every surface. Generic in its props, so With is typed and its comparison is `==`.
+- `surf.Compiled.With`: an instance in a view, by an instance key that stays with it as rows move: kept where its props are equal, rendered alone and filled where they aren't, and view(props) outside a surface.
+- `cells.Screen.Draw`: the Screen's cells written into the program's own grid at a place, with no grid made each frame, and counted as Cells for Dirty: chrome a program draws itself is a Screen the size of its place.

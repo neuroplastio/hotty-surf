@@ -86,6 +86,52 @@ goes to the renderer's buffer.
   the host, unless the host morphs it (an `inner` of its parent, the same
   id under the same parent), where it keeps its rev.
 
+### Compiled instances
+
+`surf.Compile` (compile.go, gov NEIO-15) keeps each instance a view
+renders with `With` in a `record`, by its Compiled and instance key: its
+props, its markup, and what its render registered (handlers in order,
+scopes and key scopes, focus, reveal, faults, the kit's replayed
+registrations through `rt.Register`).
+
+- **Kept or rendered.** Where the props are `==` to the last and what the
+  instance read through `rt.Value` is the same, `paint` writes a marker
+  (`<!--` secret `@` id `-->`) and replays the record into the frame.
+  Otherwise it renders the instance into its own buffer with a fresh
+  frame list, and writes the marker. An instance that read the frame
+  through an `rt` accessor (the focused element, the memo, the render's
+  count, `After`, `surf.Of`) is volatile: it renders in place between
+  bracket markers every time, and so does every instance around it.
+- **The outer markup.** With markers in place of instances, a view whose
+  outer markup, handlers' keys and modal are the last render's is
+  `outerSame`. Then `fill` takes only the instances that rendered: each
+  one's markup is parsed in its parent's context (`parseIn`), checked to
+  be one element of the same tag and whitespace around it, numbered,
+  diffed against its element and put in its place. Fields and the
+  runtime's tab stops are checked over the whole tree after.
+- **Otherwise** `expand` puts each instance's markup in place of its
+  marker, between brackets, and the render goes through `tree` as any
+  other; `brackets` finds each instance's element and takes the markers
+  out. An instance that isn't one element there renders as the view's
+  markup, and is a fault.
+- **Ids.** An instance's element's place key is its view's name, its
+  instance key and its tag, so its ids hold when rows move and across
+  processes (the Go tier's snapshot). Kit markers inside it are scoped
+  to it, so a kit control outside that comes or goes shifts nothing.
+  Because that id doesn't name its parent, an element can change
+  parents in an update. A fill runs the differ's moves pass over each
+  instance it fills, which takes an element moving inside it out of its
+  old parent first. One that comes from outside the instance makes the
+  update take the full path, whose moves pass covers the whole tree.
+- **Kept parents.** A parent is kept only while every record it holds
+  (`holds`) is still its key's, came once, and isn't used yet this
+  render; a dropped duplicate makes its holders render.
+- **The check.** Under `surftest`, and in a surfdev build unless
+  `HOTTY_SURF_COMPILE_CHECK=off`, `checkKept` renders each kept instance
+  again into a scratch frame and faults where its markup, handler ids,
+  key scopes or focus asks differ from the record. It can't see what a
+  handler closes over.
+
 ## Events, keys and focus
 
 The surface keeps what the host told it: the element with the keyboard
@@ -147,7 +193,12 @@ attributes return when the modal closes.
   a test a surface holds at most 64 faults.
 - **`cells`** is a hotty host inside the program. It lays a document out
   in character cells, keeps its focus and fields, and sends the surface
-  the events a host would.
+  the events a host would. Chrome a program draws itself every frame is
+  a Screen the size of its place (gov NEIO-15): `Screen.Draw` writes its
+  cells into the program's grid there, a copy where nothing changed. A
+  delta forgets only what its ops reach of what the Screen keeps of the
+  tree (styles, colours, texts' pieces), and one that swaps only colours
+  keeps the layout.
 
 ## Insides that other packages reach
 

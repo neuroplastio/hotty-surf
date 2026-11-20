@@ -7,6 +7,7 @@ pkg neuroplast.io/hotty-surf, func Bind(...BindOption) Handler
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
 pkg neuroplast.io/hotty-surf, func Clicks(func(int)) Handler
+pkg neuroplast.io/hotty-surf, func Compile[P comparable](func(P) templ.Component) *Compiled[P]
 pkg neuroplast.io/hotty-surf, func Drag(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Drop(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Focus(func(bool)) Handler
@@ -26,6 +27,7 @@ pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handl
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
 pkg neuroplast.io/hotty-surf, func Unbind(...string) BindOption
 pkg neuroplast.io/hotty-surf, func Yield() BindOption
+pkg neuroplast.io/hotty-surf, method (*Compiled) With(string, P) templ.Component
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Blur() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Chars() Chars
@@ -43,6 +45,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
 pkg neuroplast.io/hotty-surf, type BindOption interface {  }
 pkg neuroplast.io/hotty-surf, type Chars uint8
+pkg neuroplast.io/hotty-surf, type Compiled[P comparable] struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct, End bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, ID string
@@ -67,6 +70,7 @@ pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cursor() (int, int, bool)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cut() string
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Dirty() bool
+pkg neuroplast.io/hotty-surf/cells, method (*Screen) Draw([][]Cell, int, int)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Focus(bool)
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Key(string) bool
 pkg neuroplast.io/hotty-surf/cells, method (*Screen) Lines() []string
