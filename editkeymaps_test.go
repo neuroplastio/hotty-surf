@@ -1,6 +1,7 @@
 package surf
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -129,7 +130,8 @@ func TestEditingKeymapsResolve(t *testing.T) {
 
 // How CUAKeys and CocoaKeys meet the other bindings: a nearer ReadlineKeys
 // keeps its keys (a give-back isn't a key given to the program); a page's key
-// stays the page's; on one element the last group read wins; and an Unbind
+// stays the page's; on one element the last group read wins where both
+// bind a key, and a give-back fills only a key no group binds; and an Unbind
 // gives a key back to the editing keymap in effect, on the element or around
 // it, not to the host's platform.
 func TestEditingKeymapsCompose(t *testing.T) {
@@ -148,7 +150,9 @@ func TestEditingKeymapsCompose(t *testing.T) {
 		{"override takes a page's key", superHost, nil, []Handler{Key(take, "ctrl+backspace")}, []BindOption{CUAKeys(), Override()},
 			[]string{"ctrl+backspace=delete-word-backward"}, nil},
 		{"readline, then CUAKeys", superHost, nil, nil, []BindOption{ReadlineKeys(), CUAKeys()},
-			[]string{"ctrl+k=program", "ctrl+w=delete-word-backward"}, []string{"ctrl+k=delete-to-line-end"}},
+			[]string{"ctrl+k=delete-to-line-end", "ctrl+w=delete-word-backward", "super+arrow_left=program"}, []string{"ctrl+k=program"}},
+		{"readline, then CUAKeys, unbind", superHost, nil, nil, []BindOption{ReadlineKeys(), CUAKeys(), Unbind("ctrl+k")},
+			[]string{"ctrl+k=program"}, []string{"ctrl+k=default", "ctrl+k=delete-to-line-end"}},
 		{"CUAKeys, then readline", superHost, nil, nil, []BindOption{CUAKeys(), ReadlineKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "super+arrow_left=program"}, nil},
 		{"unbind on the element", superHost, nil, nil, []BindOption{CUAKeys(), Unbind("ctrl+k")},
@@ -165,8 +169,8 @@ func TestEditingKeymapsCompose(t *testing.T) {
 			[]string{"ctrl+w=default"}, nil},
 		{"the nearer keymap is the one unbind goes back to", superHost, []Handler{Bind(CUAKeys())}, []Handler{Bind(CocoaKeys())}, []BindOption{ReadlineKeys(), Unbind("ctrl+k")},
 			[]string{"ctrl+k=delete-to-line-end"}, []string{"ctrl+k=program", "ctrl+k=default"}},
-		{"both in one Bind: the last wins", superHost, nil, nil, []BindOption{CUAKeys(), CocoaKeys()},
-			[]string{"ctrl+k=delete-to-line-end", "ctrl+backspace=program"}, nil},
+		{"both in one Bind: their keys together", superHost, nil, nil, []BindOption{CUAKeys(), CocoaKeys()},
+			[]string{"ctrl+k=delete-to-line-end", "ctrl+backspace=delete-word-backward"}, []string{"ctrl+k=program", "ctrl+backspace=program"}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -262,7 +266,8 @@ func TestEditingKeymapAloneRepaints(t *testing.T) {
 
 // The editing keymaps layer: in one Bind, read in order, a later one's
 // binding of a key replaces an earlier one's, and an earlier one's other
-// keys stay. One layering of each pair.
+// keys stay; a give-back takes no key the other binds. One layering of
+// each pair.
 func TestEditingKeymapsLayer(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -275,7 +280,7 @@ func TestEditingKeymapsLayer(t *testing.T) {
 		{"CocoaKeys, then ReadlineKeys", ctrlHost, []BindOption{CocoaKeys(), ReadlineKeys()},
 			[]string{"ctrl+backspace=delete-word-backward", "ctrl+w=delete-word-backward", "super+arrow_left=line-start"}, []string{"ctrl+backspace=program"}},
 		{"CocoaKeys, then CUAKeys", superHost, []BindOption{CocoaKeys(), CUAKeys()},
-			[]string{"ctrl+k=program", "ctrl+backspace=delete-word-backward"}, []string{"ctrl+k=delete-to-line-end"}},
+			[]string{"ctrl+k=delete-to-line-end", "ctrl+backspace=delete-word-backward"}, []string{"ctrl+k=program", "ctrl+backspace=program"}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -329,5 +334,56 @@ func TestEditingKeymapsOncePerPlatform(t *testing.T) {
 	}
 	if len(s.editing[0]) != 19 || slices.Contains(bindings(s, "app"), "ctrl+a=program") {
 		t.Errorf("attached where mod is ctrl: %d bindings, %q", len(s.editing[0]), bindings(s, "app"))
+	}
+}
+
+// A give-back fills only a key no group in the Bind binds for real, in
+// either order; between two real bindings of a key the later wins. Each
+// order of each pair, on a host whose mod is ctrl (a cells Screen's
+// platform) and on one whose mod is super, as a field resolves the wire.
+func TestEditingKeymapsFill(t *testing.T) {
+	groups := map[string]BindOption{"ReadlineKeys": ReadlineKeys(), "CUAKeys": CUAKeys(), "CocoaKeys": CocoaKeys()}
+	pairs := [][2]string{{"ReadlineKeys", "CUAKeys"}, {"ReadlineKeys", "CocoaKeys"}, {"CUAKeys", "CocoaKeys"}}
+	for _, caps := range []hotty.Caps{ctrlHost, superHost} {
+		host := hotty.PlatformOf(caps)
+		for _, p := range pairs {
+			for _, order := range [][2]string{p, {p[1], p[0]}} {
+				t.Run(fmt.Sprintf("%s, then %s, on %s", order[0], order[1], cmp.Or(string(host.Mod), "ctrl")), func(t *testing.T) {
+					// What each holds, on its own, for this platform.
+					f := &rt.Frame{Platform: host}
+					want := map[string]string{}
+					var keys []string
+					for _, name := range order {
+						var binds []rt.Bind
+						binds = flatten(f, "app", []BindOption{groups[name]}, binds)
+						for _, b := range binds {
+							if !slices.Contains(keys, b.Key) {
+								keys = append(keys, b.Key)
+							}
+							if _, ok := want[b.Key]; ok && giveBack(b) {
+								continue // fills only
+							}
+							want[b.Key] = b.Action
+						}
+					}
+					s := bindPageOn(t, caps, `<div%s><textarea id="f"></textarea></div>`, func(ctx context.Context) []templ.Attributes {
+						return []templ.Attributes{On(ctx, "app", Bind(groups[order[0]], groups[order[1]]))}
+					})
+					if len(s.faults) > 0 {
+						t.Fatalf("faults %q", s.faults)
+					}
+					on := hotty.Resolve(host, true, attr(s.byID["app"], "data-keys"))
+					for _, k := range keys {
+						w := hotty.Action(want[k])
+						if w == hotty.Program {
+							w = ""
+						}
+						if got := on.Lookup(k); got != w {
+							t.Errorf("%s: %q, want %q", k, got, w)
+						}
+					}
+				})
+			}
+		}
 	}
 }

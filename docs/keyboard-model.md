@@ -261,8 +261,10 @@ editing keymaps: groups of a text field's caret and delete keys.
   [Text System Defaults and Key Bindings](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/EventOverview/TextDefaultsBindings/TextDefaultsBindings.html).
 
 They layer: one Bind can hold several, read in order, a later binding
-replacing an earlier one of the same key. `surf.Bind(surf.CUAKeys(),
-surf.ReadlineKeys())` is the desktop's keys with readline's over them.
+replacing an earlier one of the same key. A give-back (below) only fills
+a key no group on the element binds, whatever the order.
+`surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())` is the desktop's keys
+where they bind and readline's for the rest.
 
 A host's `mod` says which of CUA's and Cocoa's tables a field starts
 from. CUAKeys and CocoaKeys take that choice from the platform and give
@@ -278,8 +280,8 @@ case "cocoa":
     keys = surf.CocoaKeys()
 }
 surf.On(ctx, "app", surf.Bind(keys))
-// readline's keys over the desktop's: CUAKeys or CocoaKeys first
-surf.Bind(surf.CUAKeys(), surf.ReadlineKeys())
+// the platform's keys where they bind, readline's for the rest
+surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
 ```
 
 - **What changes:** each binds its own keys and gives back the other
@@ -300,10 +302,13 @@ surf.Bind(surf.CUAKeys(), surf.ReadlineKeys())
   go-to-bottom keys (`super+arrow_up` and `super+arrow_down` under CUAKeys,
   `ctrl+home` and `ctrl+end` under CocoaKeys). `home`, `end` and the page
   keys still scroll.
-- **Order:** on one element the last group read wins, so put CUAKeys or
-  CocoaKeys before ReadlineKeys. A give-back isn't a key the program is given
-  around a field: a ReadlineKeys nearer the field still takes `ctrl+k`. A
-  page's own key (a `surf.Key`) still reaches it from a field, unless
+- **Order:** on one element, where two groups bind a key, the last read
+  wins. A give-back only fills: it holds a key no group on the element
+  binds, before it or after it. So ReadlineKeys keeps `ctrl+k` beside
+  CUAKeys in either order, and CUAKeys with CocoaKeys is both
+  platforms' keys. A give-back isn't a key the program is given around
+  a field either: a ReadlineKeys nearer the field still takes `ctrl+k`.
+  A page's own key (a `surf.Key`) still reaches it from a field, unless
   the Bind says `Override()`.
 - **Unbind under them** gives a key back to the keymap's binding, not
   to the host's platform: under CUAKeys,

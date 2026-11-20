@@ -24,9 +24,12 @@ import (
 // nil option is none.
 //
 // The groups layer: one Bind can hold several, read in order, a later
-// binding replacing an earlier one of the same key, so
-// surf.Bind(surf.CUAKeys(), surf.ReadlineKeys()) is the Windows and Linux
-// desktop's keys with readline's over them.
+// binding replacing an earlier one of the same key. A give-back of
+// CUAKeys or CocoaKeys (a key it hands the program) is the exception: it
+// fills only a key no group on the element binds, whatever the order.
+// So surf.Bind(surf.ReadlineKeys(), surf.CUAKeys()) is the Windows and
+// Linux desktop's keys where they bind and readline's for the rest, and
+// readline keeps ctrl+k, which CUAKeys gives back, in either order.
 //
 // The palette's query edits as a terminal's line does, in one line:
 //
@@ -55,7 +58,8 @@ import (
 // Unbind (one given to Bind, not in a group), where two of one key to
 // different actions are a fault and the first stays; then the groups'
 // bindings, the last one read winning (Bind by Bind, option by option, a
-// group's bindings in their order). Then that binding's Yield or
+// group's bindings in their order), but a give-back, which holds only a
+// key no group binds. Then that binding's Yield or
 // Override decides whether it gives way to the program's keys around the
 // element (a surf.Key's declared key, a prefix, a ui.KeyScope's forwarded
 // key, on an element around it): a binding that yields is dropped, and
@@ -146,8 +150,10 @@ func Group(opts ...BindOption) BindOption {
 // On an element that holds fields, it binds them all. A kit Command's or
 // Combobox's field, which takes no handler of the app's, gets it from a
 // Bind on an element around the component. It layers with the other
-// editing keymaps, as Bind says: surf.Bind(surf.CUAKeys(),
-// surf.ReadlineKeys()) puts readline's keys over the desktop's.
+// editing keymaps, as Bind says, in either order:
+// surf.Bind(surf.ReadlineKeys(), surf.CUAKeys()) is the desktop's keys
+// where they bind and readline's for the rest, since CUAKeys' give-backs
+// don't take a key readline binds.
 func ReadlineKeys() BindOption {
 	return &groupOption{read: readlineBinds}
 }
@@ -166,8 +172,9 @@ func ReadlineKeys() BindOption {
 //
 // The keys only macOS gives a field (super+arrow_left,
 // super+backspace, ctrl+a, ctrl+e, ctrl+k, …) are given back: from a
-// field they reach the program, as on Linux, and a binding nearer the
-// field still takes them.
+// field they reach the program, as on Linux. A give-back only fills: a
+// binding nearer the field still takes the key, and so does any group on
+// the same element that binds it, before CUAKeys or after it.
 //
 // Only those keys change. What mod stands for stays the host's, and so
 // do a shortcut's keycap, the edit shortcuts (select all, copy, paste,
@@ -182,9 +189,11 @@ func ReadlineKeys() BindOption {
 // Bind it once, on the outermost element of each surface's view, so
 // that every field inside has it, the kit's included: a field outside
 // that element doesn't. It layers with the other editing keymaps, as
-// Bind says, the later one's binding of a key winning: put it before
-// ReadlineKeys, whose keys then win where the two differ, as in
-// surf.Bind(surf.CUAKeys(), surf.ReadlineKeys()). A field may bind
+// Bind says: where two groups bind a key, the later one's binding wins,
+// and its give-backs fill only the keys the others leave, so
+// surf.Bind(surf.ReadlineKeys(), surf.CUAKeys()) is the desktop's keys
+// where they bind and readline's for the rest. With CocoaKeys in the
+// same Bind it is the two platforms' keys together. A field may bind
 // CocoaKeys, or ReadlineKeys, nearer.
 //
 //	surf.On(ctx, "app", surf.Bind(surf.CUAKeys()))
@@ -204,14 +213,15 @@ func CUAKeys() BindOption {
 //
 // The keys only Linux and Windows give a field (ctrl+arrow_left,
 // ctrl+backspace, ctrl+home, …) are given back: from a field they reach
-// the program, as on macOS, and a binding nearer the field still takes
-// them.
+// the program, as on macOS, but only where no group on the element binds
+// them, and a binding nearer the field still takes them.
 //
 // What it leaves the host's, where it goes, how it layers, and Unbind
 // under it are as CUAKeys says, with CUAKeys and CocoaKeys swapped: on a
 // host whose mod is ctrl, ctrl+a stays select all, and a focused button
-// no longer scrolls with ctrl+home and ctrl+end. surf.Bind(surf.CocoaKeys(),
-// surf.ReadlineKeys()) puts readline's keys over macOS's.
+// no longer scrolls with ctrl+home and ctrl+end.
+// surf.Bind(surf.ReadlineKeys(), surf.CocoaKeys()) is macOS's keys where
+// they bind and readline's for the rest, ctrl+backspace among them.
 func CocoaKeys() BindOption {
 	return &groupOption{read: cocoaBinds}
 }
@@ -338,7 +348,8 @@ func flattenIn(f *rt.Frame, id string, opts []BindOption, mode *modeOption, grou
 // bindsOf is an element's bindings (rt.Handlers.Binds), one per key, from
 // binds in order: a direct one holds its key over the groups', two direct
 // ones of a key to different actions being a fault (the first stays);
-// among the groups' the last read wins. A direct binding of a key a Key
+// among the groups' the last read wins, but a give-back (giveBack), which
+// only fills a key no group binds for real, in any order. A direct binding of a key a Key
 // handler declares (keys) is a fault, but to prefix, which gives fn the
 // key too; a group's is kept, unwritten (the program has the key), for
 // the field's own use of the key when the handler declines it. base is
@@ -370,6 +381,8 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base 
 			}
 		case out[i].Direct:
 			// A group's binding after a direct one: the direct one holds.
+		case giveBack(b) && !giveBack(out[i]):
+			// A give-back fills only a key no group binds for real.
 		default:
 			// A direct binding over a group's; a later group's over an
 			// earlier one's.
@@ -377,6 +390,12 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base 
 		}
 	}
 	return out, base
+}
+
+// giveBack says whether b is a give-back: CUAKeys' or CocoaKeys' key of
+// the other platform, a group's, bound to program.
+func giveBack(b rt.Bind) bool {
+	return b.Base && !b.Direct && b.Action == string(hotty.Program)
 }
 
 // readlineBinds is hotty.TerminalKeys for the frame's platform, read

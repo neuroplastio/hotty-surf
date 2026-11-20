@@ -2070,9 +2070,12 @@ surf.On(ctx, "query", surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k")))
   are the host's, and its zero value is ctrl, so an unset config would
   pick CUA.
 - **They layer:** one Bind holds several, read in order, a later
-  binding replacing an earlier one of the same key:
-  `surf.Bind(surf.CUAKeys(), surf.ReadlineKeys())` is the desktop's
-  keys with readline's over them.
+  binding replacing an earlier one of the same key, but a give-back,
+  which fills only a key no group on the element binds, whatever the
+  order (the maintainer, 2026-11-20): `surf.Bind(surf.ReadlineKeys(),
+  surf.CUAKeys())` is the desktop's keys where they bind and readline's
+  for the rest, which an app's ordered setting can offer as is. A
+  give-back written over readline's ctrl+k took it on every host.
 - **What each holds:** its own table of §10.2 (CUA 6 keys, Cocoa 14),
   and the other table's keys bound to `program`, the give-backs: from
   a field they reach the program, as an unbound key does on that

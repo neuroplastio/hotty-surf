@@ -1,6 +1,7 @@
 package surf_test
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -234,5 +235,120 @@ func TestCUAGivesBackFromAButton(t *testing.T) {
 				t.Errorf("super+arrow_up: heard %v", *r.heard)
 			}
 		})
+	}
+}
+
+// A give-back fills only a key no group in the Bind binds, so each pair
+// of editing keymaps, in either order, keeps both keymaps' own keys:
+// ctrl+backspace deletes a word (ReadlineKeys' and CUAKeys', CocoaKeys'
+// give-back) and ctrl+k deletes to the line's end (ReadlineKeys' and
+// CocoaKeys', CUAKeys' give-back), on a host whose mod is ctrl, on one
+// whose mod is super, and on a Screen.
+func TestEditingKeymapsFillInEitherOrder(t *testing.T) {
+	groups := map[string]surf.BindOption{"ReadlineKeys": surf.ReadlineKeys(), "CUAKeys": surf.CUAKeys(), "CocoaKeys": surf.CocoaKeys()}
+	pairs := [][2]string{{"ReadlineKeys", "CUAKeys"}, {"ReadlineKeys", "CocoaKeys"}, {"CUAKeys", "CocoaKeys"}}
+	for _, caps := range []hotty.Caps{{}, {Mod: "super"}} {
+		for _, p := range pairs {
+			for _, order := range [][2]string{p, {p[1], p[0]}} {
+				app := []surf.BindOption{groups[order[0]], groups[order[1]]}
+				for name, rig := range rigs(t, caps, app, nil) {
+					if name == "cells" && caps.Mod == "super" {
+						continue // a Screen's mod is ctrl: run once
+					}
+					where := name
+					if name == "host" {
+						where = "a " + cmp.Or(caps.Mod, "ctrl") + " host"
+					}
+					t.Run(fmt.Sprintf("%s, then %s, on %s", order[0], order[1], where), func(t *testing.T) {
+						r := rig()
+						r.focus("q")
+						r.typ("hello world")
+						if r.press("ctrl+backspace") || r.value("q") != "hello " {
+							t.Errorf("ctrl+backspace: heard %v, left %q", *r.heard, r.value("q"))
+						}
+						r.key("home")
+						if r.press("ctrl+k") || r.value("q") != "" {
+							t.Errorf("ctrl+k: heard %v, left %q", *r.heard, r.value("q"))
+						}
+					})
+				}
+			}
+		}
+	}
+}
+
+// An app's ordered setting whose default is readline, then the
+// platform's keys: the platform's keys where they bind, readline's for
+// the rest. On Linux (CUAKeys where mod is ctrl, and a Screen) and on
+// macOS (where mod is super, under CUAKeys and under CocoaKeys) a field
+// keeps readline's ctrl+k, ctrl+e and ctrl+w, the platform's word
+// delete, and the host's select all; a give-back readline doesn't bind
+// still reaches the program from a button.
+func TestReadlineThenThePlatform(t *testing.T) {
+	cases := []struct {
+		name     string
+		caps     hotty.Caps
+		platform surf.BindOption
+		back     string // a give-back readline doesn't bind, or none
+	}{
+		{"Linux", hotty.Caps{}, surf.CUAKeys(), "super+arrow_up"},
+		{"macOS, CUAKeys", hotty.Caps{Mod: "super"}, surf.CUAKeys(), "super+arrow_up"},
+		{"macOS, CocoaKeys", hotty.Caps{Mod: "super"}, surf.CocoaKeys(), ""},
+	}
+	for _, c := range cases {
+		for name, rig := range rigs(t, c.caps, []surf.BindOption{surf.ReadlineKeys(), c.platform}, nil) {
+			if name == "cells" && c.caps.Mod == "super" {
+				continue
+			}
+			t.Run(c.name+" "+name, func(t *testing.T) {
+				r := rig()
+				r.focus("q")
+				r.typ("one two three")
+				if r.press("ctrl+w") || r.value("q") != "one two " {
+					t.Fatalf("ctrl+w: heard %v, left %q", *r.heard, r.value("q"))
+				}
+				if r.press("ctrl+backspace") || r.value("q") != "one " {
+					t.Fatalf("ctrl+backspace: heard %v, left %q", *r.heard, r.value("q"))
+				}
+				r.typ("two")
+				r.key("home")
+				if r.press("ctrl+k") || r.value("q") != "" {
+					t.Fatalf("ctrl+k: heard %v, left %q", *r.heard, r.value("q"))
+				}
+				r.typ("abc")
+				r.key("home")
+				if r.press("ctrl+e") {
+					t.Fatalf("ctrl+e reached the program")
+				}
+				r.typ("d")
+				if r.value("q") != "abcd" {
+					t.Errorf("ctrl+e, then d, left %q", r.value("q"))
+				}
+				selectAll := "ctrl+a"
+				if name == "host" && c.caps.Mod == "super" {
+					selectAll = "super+a"
+				}
+				r.key(selectAll)
+				r.key("x")
+				if r.value("q") != "x" {
+					t.Errorf("%s, then x, left %q", selectAll, r.value("q"))
+				}
+				if c.back == "" {
+					return
+				}
+				r.focus("b")
+				if r.h != nil {
+					// No terminal encoding for it: the host only leaves it
+					// unused (TestCUAGivesBackFromAButton).
+					if r.h.Key(c.back) {
+						t.Errorf("the host used %s on the button", c.back)
+					}
+					return
+				}
+				if !r.press(c.back) || !slices.Contains(*r.heard, c.back) {
+					t.Errorf("%s from the button: heard %v", c.back, *r.heard)
+				}
+			})
+		}
 	}
 }
