@@ -277,10 +277,15 @@ func kitHoverColours(n *html.Node, dark bool) (fg, bg Role) {
 		return "", "muted/50" // a selected row keeps its band
 	case n.DataAtom == atom.A && cls("item"):
 		return "", "muted"
-	case menuItem(n):
-		if closest(n, func(a *html.Node) bool { return tokens(a, "class", "command") }) != nil {
+	case commandItem(n):
+		// Its own rule, as the menu's script hasn't taken it over; then
+		// any command's (Basecoat's command.css).
+		if attr(n, "role") == "menuitem" && !disabled(n) &&
+			closest(n, func(a *html.Node) bool { return tokens(a, "class", "command") && !has(a, "data-command-initialized") }) != nil {
 			return "foreground", "muted"
 		}
+		return "accent-foreground", "accent"
+	case menuItem(n):
 		return "accent-foreground", "accent"
 	case sidebarItem(n):
 		return "sidebar-accent-foreground", "sidebar-accent"
@@ -291,24 +296,31 @@ func kitHoverColours(n *html.Node, dark bool) (fg, bg Role) {
 	return "", ""
 }
 
+// commandItem is an item of a Command's menu the kit lights under the
+// pointer: not aria-disabled, as its rules say (a disabled one takes no
+// pointer anyway, kitPointer).
+func commandItem(n *html.Node) bool {
+	return attr(n, "role") == "menuitem" && attr(n, "aria-disabled") != "true" &&
+		closest(n, func(a *html.Node) bool { return tokens(a, "class", "command") }) != nil
+}
+
 // menuItem is an item of a menu or a list the kit lights under the
-// pointer: an option of a Combobox's list or a Select's, an item of a
-// Command's menu or a Dropdown Menu's, not disabled, in a component its
-// script hasn't taken over (data-*-initialized), as the Screen has it.
+// pointer, as its rules name it (not disabled, not aria-disabled): an
+// option of a Select's list, or a Combobox's, an item of a Dropdown
+// Menu's, the last two in a component its script hasn't taken over
+// (data-*-initialized).
 func menuItem(n *html.Node) bool {
 	if disabled(n) || attr(n, "aria-disabled") == "true" {
 		return false
 	}
 	in := func(class, init string) bool {
-		return closest(n, func(a *html.Node) bool { return tokens(a, "class", class) && !has(a, init) }) != nil
+		return closest(n, func(a *html.Node) bool { return tokens(a, "class", class) && (init == "" || !has(a, init)) }) != nil
 	}
 	switch attr(n, "role") {
 	case "option":
 		return in("combobox", "data-combobox-initialized") ||
-			in("select", "data-select-initialized") && closest(n, func(a *html.Node) bool { return a.DataAtom == atom.Select }) == nil
-	case "menuitem":
-		return in("command", "data-command-initialized") || in("dropdown-menu", "data-dropdown-menu-initialized")
-	case "menuitemcheckbox", "menuitemradio":
+			in("select", "") && closest(n, func(a *html.Node) bool { return a.DataAtom == atom.Select }) == nil
+	case "menuitem", "menuitemcheckbox", "menuitemradio":
 		return in("dropdown-menu", "data-dropdown-menu-initialized")
 	}
 	return false

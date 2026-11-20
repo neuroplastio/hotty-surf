@@ -228,18 +228,24 @@ surface's hover events and `At` still name the innermost element.
 | a tab of a `.tabs` tab list, not selected | `foreground` | | |
 | `select.select`, a `.field`'s `select`, a `.select`'s button, under `.dark` | | `input/50` | |
 | `.breadcrumb a` | `foreground` | | |
-| `.table tr`, not a selected row | | `muted/50` | |
+| `.table tr`, not a selected row (an `aria-selected` row keeps the Screen's own band, which a host doesn't draw; `data-state=selected` isn't read) | | `muted/50` | |
 | `a.item` | | `muted` | |
-| an option of a `.combobox`'s or a `.select`'s list; an item of a `.dropdown-menu`; not disabled, not `data-*-initialized` | `accent-foreground` | `accent` | |
-| an item of a `.command`'s menu, as those | `foreground` | `muted` | |
+| an option of a `.select`'s list; an option of a `.combobox`'s list or an item of a `.dropdown-menu`, not `data-*-initialized`; neither disabled nor `aria-disabled` | `accent-foreground` | `accent` | |
+| an item of a `.command`'s menu, not `aria-disabled`: not `data-command-initialized` (nor disabled); else | `foreground`; `accent-foreground` | `muted`; `accent` | |
 | a sidebar nav's `li > a`, `li > button`, `li > details > summary` | `sidebar-accent-foreground` | `sidebar-accent` | |
 | `.toaster .toast-content[data-on~=click]` | | `accent` | |
 | an `.accordion`'s `summary` | | | Underline |
 
-  A hover that mixes colours (a secondary button's `color-mix`), a
-  shadow, an opacity, a link's colour inside a description, and a
-  range's thumb are not read. TestHoverAsTheHost holds the table's
-  colours to ui's stylesheet, compiled, which a host applies.
+  Not read: a hover that mixes two colours (a secondary button's
+  `color-mix` in oklch); an opacity (a dialog's, a command dialog's
+  close button, a combobox chip's remove); a link's colour inside a
+  description (`.empty`'s header, `.item`'s text, a field's or a
+  fieldset's text, a dialog's or an alert dialog's description); a
+  range's thumb; a shadow. TestHoverAsTheHost holds the table's colours
+  to ui's stylesheet, compiled (kit.css and toast.css), which a host
+  applies, a dark rule over the light one it is over;
+  TestHoverRulesAllNamed holds every `:hover` rule there to the table,
+  to a `hover:` class, to the tooltip, or to this list.
 - **What changes**: a change of the chain forgets the looks of the
   elements that came into it or left it, and of nothing else. Where their
   hover changes only colours, their rows are painted again and nothing is

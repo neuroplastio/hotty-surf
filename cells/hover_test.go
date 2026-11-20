@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"regexp"
@@ -177,34 +178,128 @@ type hoverCase struct {
 	name, markup string
 	dark         bool
 	selector     string
+	// under is a rule's selector that matches too, before it in the
+	// cascade (the light rule a dark one is over), "" for none.
+	under string
 }
 
 var hoverCases = []hoverCase{
-	{"primary button", `<button id="h" class="btn">Go</button>`, false, `:is(.btn:not([data-variant]),.btn[data-variant=primary])`},
-	{"outline button", `<button id="h" class="btn" data-variant="outline">Go</button>`, false, `.btn[data-variant=outline]`},
-	{"outline button, dark", `<button id="h" class="btn" data-variant="outline">Go</button>`, true, `.btn[data-variant=outline]:is(.dark *)`},
-	{"ghost button", `<button id="h" class="btn" data-variant="ghost">Go</button>`, false, `.btn[data-variant=ghost]`},
-	{"ghost button, dark", `<button id="h" class="btn" data-variant="ghost">Go</button>`, true, `.btn[data-variant=ghost]:is(.dark *)`},
-	{"destructive button", `<button id="h" class="btn" data-variant="destructive">Go</button>`, false, `.btn[data-variant=destructive]`},
-	{"destructive button, dark", `<button id="h" class="btn" data-variant="destructive">Go</button>`, true, `.btn[data-variant=destructive]:is(.dark *)`},
-	{"secondary link badge", `<a id="h" class="badge" data-variant="secondary" href="#x">New</a>`, false, `.badge[data-variant=secondary]:is(a)`},
-	{"outline link badge", `<a id="h" class="badge" data-variant="outline" href="#x">New</a>`, false, `.badge[data-variant=outline]:is(a)`},
-	{"destructive link badge", `<a id="h" class="badge" data-variant="destructive" href="#x">New</a>`, false, `.badge[data-variant=destructive]:is(a)`},
-	{"ghost badge", `<span id="h" class="badge" data-variant="ghost">New</span>`, false, `.badge[data-variant=ghost]`},
-	{"tab", `<div class="tabs"><div role="tablist"><button role="tab" aria-selected="true">One</button><button id="h" role="tab">Two</button></div></div>`, false, `.tabs>[role=tablist]>[role=tab]`},
-	{"table row", `<table class="table"><tbody><tr id="h"><td>alpha</td></tr></tbody></table>`, false, `.table tr`},
-	{"breadcrumb link", `<nav class="breadcrumb"><ol><li><a id="h" href="#x">Home</a></li></ol></nav>`, false, `.breadcrumb a`},
-	{"link item", `<a id="h" class="item" href="#x">An item</a>`, false, `a.item`},
-	{"command item", `<div class="command"><div role="menu"><div id="h" role="menuitem">Open</div></div></div>`, false, `.command:not([data-command-initialized]) [role=menuitem]:not([aria-disabled=true]):not(:disabled)`},
-	{"select option", `<div class="select"><div data-popover aria-hidden="false"><div role="listbox"><div id="h" role="option">One</div></div></div></div>`, false, `.select:not(select):not([data-select-initialized]) [role=option]:not([aria-disabled=true]):not(:disabled)`},
-	{"sidebar link", `<aside class="sidebar"><nav><ul><li><a id="h" href="#x">Home</a></li></ul></nav></aside>`, false, `:is(.sidebar>nav li>:is(a,button),.sidebar>nav li>details>summary)`},
-	{"select, dark", `<select id="h" class="select"><option>One</option></select>`, true, `:is(.field>select,select.select):is(.dark *)`},
-	{"primary link badge", `<a id="h" class="badge" href="#x">New</a>`, false, `:is(.badge:not([data-variant]),.badge[data-variant=primary]):is(a)`},
+	{"primary button", `<button id="h" class="btn">Go</button>`, false, `:is(.btn:not([data-variant]),.btn[data-variant=primary])`, ""},
+	{"outline button", `<button id="h" class="btn" data-variant="outline">Go</button>`, false, `.btn[data-variant=outline]`, ""},
+	{"outline button, dark", `<button id="h" class="btn" data-variant="outline">Go</button>`, true, `.btn[data-variant=outline]:is(.dark *)`, `.btn[data-variant=outline]`},
+	{"ghost button", `<button id="h" class="btn" data-variant="ghost">Go</button>`, false, `.btn[data-variant=ghost]`, ""},
+	{"ghost button, dark", `<button id="h" class="btn" data-variant="ghost">Go</button>`, true, `.btn[data-variant=ghost]:is(.dark *)`, `.btn[data-variant=ghost]`},
+	{"destructive button", `<button id="h" class="btn" data-variant="destructive">Go</button>`, false, `.btn[data-variant=destructive]`, ""},
+	{"destructive button, dark", `<button id="h" class="btn" data-variant="destructive">Go</button>`, true, `.btn[data-variant=destructive]:is(.dark *)`, `.btn[data-variant=destructive]`},
+	{"secondary link badge", `<a id="h" class="badge" data-variant="secondary" href="#x">New</a>`, false, `.badge[data-variant=secondary]:is(a)`, ""},
+	{"outline link badge", `<a id="h" class="badge" data-variant="outline" href="#x">New</a>`, false, `.badge[data-variant=outline]:is(a)`, ""},
+	{"destructive link badge", `<a id="h" class="badge" data-variant="destructive" href="#x">New</a>`, false, `.badge[data-variant=destructive]:is(a)`, ""},
+	{"ghost badge", `<span id="h" class="badge" data-variant="ghost">New</span>`, false, `.badge[data-variant=ghost]`, ""},
+	{"ghost badge, dark", `<span id="h" class="badge" data-variant="ghost">New</span>`, true, `.badge[data-variant=ghost]:is(.dark *)`, `.badge[data-variant=ghost]`},
+	{"tab", `<div class="tabs"><div role="tablist"><button role="tab" aria-selected="true">One</button><button id="h" role="tab">Two</button></div></div>`, false, `.tabs>[role=tablist]>[role=tab]`, ""},
+	{"table row", `<table class="table"><tbody><tr id="h"><td>alpha</td></tr></tbody></table>`, false, `.table tr`, ""},
+	{"breadcrumb link", `<nav class="breadcrumb"><ol><li><a id="h" href="#x">Home</a></li></ol></nav>`, false, `.breadcrumb a`, ""},
+	{"link item", `<a id="h" class="item" href="#x">An item</a>`, false, `a.item`, ""},
+	{"command item", `<div class="command"><div role="menu"><div id="h" role="menuitem">Open</div></div></div>`, false, `.command:not([data-command-initialized]) [role=menuitem]:not([aria-disabled=true]):not(:disabled)`, ""},
+	{"select option", `<div class="select"><div data-popover aria-hidden="false"><div role="listbox"><div id="h" role="option">One</div></div></div></div>`, false, `.select:not(select):not([data-select-initialized]) [role=option]:not([aria-disabled=true]):not(:disabled)`, ""},
+	{"sidebar link", `<aside class="sidebar"><nav><ul><li><a id="h" href="#x">Home</a></li></ul></nav></aside>`, false, `:is(.sidebar>nav li>:is(a,button),.sidebar>nav li>details>summary)`, ""},
+	{"select, dark", `<select id="h" class="select"><option>One</option></select>`, true, `:is(.field>select,select.select):is(.dark *)`, ""},
+	{"primary link badge", `<a id="h" class="badge" href="#x">New</a>`, false, `:is(.badge:not([data-variant]),.badge[data-variant=primary]):is(a)`, ""},
 	{"dropdown menu item", `<div class="dropdown-menu"><div data-popover aria-hidden="false"><div role="menu"><div id="h" role="menuitem">Copy</div></div></div></div>`, false,
-		`.dropdown-menu:not([data-dropdown-menu-initialized]) :is([role=menuitem],[role=menuitemcheckbox],[role=menuitemradio]):not([aria-disabled=true]):not(:disabled)`},
+		`.dropdown-menu:not([data-dropdown-menu-initialized]) :is([role=menuitem],[role=menuitemcheckbox],[role=menuitemradio]):not([aria-disabled=true]):not(:disabled)`, ""},
 	{"combobox option", `<div class="combobox"><div data-popover aria-hidden="false"><div role="listbox"><div id="h" role="option">One</div></div></div></div>`, false,
-		`.combobox:not([data-combobox-initialized]) [role=option]:not([aria-disabled=true]):not(:disabled)`},
-	{"clickable toast", `<div class="toaster"><div class="toast"><div id="h" class="toast-content" data-on="click">Saved</div></div></div>`, false, `.toaster .toast .toast-content[data-on~=click]`},
+		`.combobox:not([data-combobox-initialized]) [role=option]:not([aria-disabled=true]):not(:disabled)`, ""},
+	{"clickable toast", `<div class="toaster"><div class="toast"><div id="h" class="toast-content" data-on="click">Saved</div></div></div>`, false, `.toaster .toast .toast-content[data-on~=click]`, ""},
+	{"tab, dark", `<div class="tabs"><div role="tablist"><button role="tab" aria-selected="true">One</button><button id="h" role="tab">Two</button></div></div>`, true, `.tabs>[role=tablist]>[role=tab]:is(.dark *)`, `.tabs>[role=tablist]>[role=tab]`},
+	{"select's button, dark", `<div class="select"><button id="h">Pick</button></div>`, true, `.select:not(select)>button:is(.dark *)`, ""},
+	{"command item, taken over", `<div class="command" data-command-initialized><div role="menu"><div id="h" role="menuitem">Open</div></div></div>`, false, `.command [role=menuitem]:not([aria-disabled=true])`, ""},
+	{"select option, taken over", `<div class="select" data-select-initialized><div data-popover aria-hidden="false"><div role="listbox"><div id="h" role="option">One</div></div></div></div>`, false,
+		`.select:not(select) [role=option]:not([aria-disabled=true]):not(:disabled)`, ""},
+	{"sidebar button, open", `<aside class="sidebar"><nav><ul><li><button id="h" data-open>Home</button></li></ul></nav></aside>`, false, `:is(.sidebar>nav li>:is(a,button),.sidebar>nav li>details>summary)[data-open]`, ""},
+	{"sidebar link, default", `<aside class="sidebar"><nav><ul><li><a id="h" href="#x">Home</a></li></ul></nav></aside>`, false,
+		`:is(.sidebar>nav li>:is(a,button):not([data-variant]),.sidebar>nav li>details>summary:not([data-variant]),.sidebar>nav li>:is(a,button)[data-variant=default],.sidebar>nav li>details>summary[data-variant=default])`, ""},
+	{"sidebar link, outline", `<aside class="sidebar"><nav><ul><li><a id="h" href="#x" data-variant="outline">Home</a></li></ul></nav></aside>`, false,
+		`:is(.sidebar>nav li>:is(a,button)[data-variant=outline],.sidebar>nav li>details>summary[data-variant=outline])`, ""},
+	{"sidebar link, nested", `<aside class="sidebar"><nav><ul><li><ul><li><a id="h" href="#x">Inner</a></li></ul></li></ul></nav></aside>`, false,
+		`:is(.sidebar>nav ul ul>li>:is(a,button),.sidebar>nav ul ul>li>details>summary)`, ""},
+	{"a hover: utility", `<button id="h" class="hover:bg-sidebar-accent">Go</button>`, false, `.hover\:bg-sidebar-accent`, ""},
+}
+
+// hoverLooks are the kit's :hover rules that change a look, not a colour
+// (kitHoverLook, TestHoverKitLook).
+var hoverLooks = []string{`.btn[data-variant=link]`, `.badge[data-variant=link]`, `.accordion>details>summary`}
+
+// hoverNotRead are the :hover rules of ui's stylesheet the Screen doesn't
+// read, and why.
+var hoverNotRead = map[string]string{
+	`.btn[data-variant=secondary]`:                                    "a color-mix in oklch of two roles",
+	`.command-dialog>.command>:is(button,form[method=dialog]>button)`: "an opacity",
+	`.dialog>*>:is(button,form[method=dialog]>button)`:                "an opacity",
+	`.combobox-chip-remove`:                                           "an opacity",
+	`.empty>header>p>a`:                                               "a link's colour inside a description",
+	`:is(.fieldset legend+p,.field>p,.field section>p)>a`:             "a link's colour inside a description",
+	`.item p>a`: "a link's colour inside a description",
+	`:is(.dialog>*>header>p,.dialog>*>[data-description]) a`:                       "a link's colour inside a description",
+	`:is(.alert-dialog>*>header>p,.alert-dialog>*>[data-description]) a`:           "a link's colour inside a description",
+	`:is(.field>input[type=range],.input[type=range]):hover::-webkit-slider-thumb`: "a range's thumb",
+	`:is(.field>input[type=range],.input[type=range]):hover::-moz-range-thumb`:     "a range's thumb",
+	`:is(.field>input[type=range],.input[type=range]):hover::-ms-thumb`:            "a range's thumb",
+	`[data-tooltip]:focus-visible:not(:hover):before`:                              "the tooltip on focus",
+}
+
+// hoverParts are the selectors in sheet with :hover in them, each one
+// of a rule's list: without its last :hover where it ends so.
+func hoverParts(sheet string) []string {
+	var out []string
+	for _, m := range regexp.MustCompile(`([^{}]*)\{`).FindAllStringSubmatch(sheet, -1) {
+		sel := strings.TrimSpace(m[1])
+		if !strings.Contains(sel, ":hover") || strings.HasPrefix(sel, "@") {
+			continue
+		}
+		depth, from := 0, 0
+		for i := 0; i <= len(sel); i++ {
+			if i < len(sel) {
+				switch sel[i] {
+				case '(', '[':
+					depth++
+				case ')', ']':
+					depth--
+				}
+				if sel[i] != ',' || depth > 0 {
+					continue
+				}
+			}
+			if p := strings.TrimSpace(sel[from:i]); strings.Contains(p, ":hover") {
+				out = append(out, strings.TrimSuffix(p, ":hover"))
+			}
+			from = i + 1
+		}
+	}
+	return out
+}
+
+// Every :hover rule of ui's stylesheet is held to the Screen
+// (hoverCases, hoverLooks, the tooltip's) or named as not read.
+func TestHoverRulesAllNamed(t *testing.T) {
+	listed := map[string]bool{}
+	for _, tc := range hoverCases {
+		listed[tc.selector] = true
+	}
+	for _, s := range hoverLooks {
+		listed[s] = true
+	}
+	for _, f := range []string{"../ui/kit.css", "../ui/toast.css"} {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range hoverParts(regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(string(b), "")) {
+			tip := strings.Contains(p, "[data-tooltip]") && strings.HasSuffix(p, ":hover:before")
+			if !listed[p] && hoverNotRead[p] == "" && !tip {
+				t.Errorf("%s: %s:hover is neither held (hoverCases, hoverLooks) nor named (hoverNotRead)", f, p)
+			}
+		}
+	}
 }
 
 // The kit's components lit under the pointer, as a host lights them: the
@@ -226,13 +321,23 @@ func TestHoverAsTheHost(t *testing.T) {
 			if !ok {
 				t.Fatalf("no :hover rule for %s in ui's stylesheet", tc.selector)
 			}
+			if tc.under != "" {
+				uf, ub, ok := hoverRule(sheet, tc.under)
+				if !ok {
+					t.Fatalf("no :hover rule for %s in ui's stylesheet", tc.under)
+				}
+				fg, bg = cmp.Or(fg, uf), cmp.Or(bg, ub)
+			}
 			scheme := "light"
 			if tc.dark {
 				scheme = "dark"
 			}
-			c := hoverScreen(t, `<div id="root" class="`+scheme+`">`+tc.markup+`</div>`)
+			c := hoverScreen(t, `<div id="root" class="`+scheme+`">`+tc.markup+`<p id="none">none</p></div>`)
+			// Where the rule sets no colour, the element keeps its own.
+			was := cellAt(t, c, "h")
+			fg, bg = cmp.Or(fg, was.Fg), cmp.Or(bg, was.Bg)
 			got := over(t, c, "h")
-			if fg != "" && got.Fg != fg || bg != "" && got.Bg != bg {
+			if got.Fg != fg || got.Bg != bg {
 				t.Fatalf("hovered: %q on %q, the host's %q on %q", got.Fg, got.Bg, fg, bg)
 			}
 		})
@@ -254,9 +359,14 @@ func hoverRule(sheet, selector string) (fg, bg Role, ok bool) {
 		if j < 0 {
 			return fg, bg, ok
 		}
-		i += j + len(key)
-		if sheet[i] != '{' && sheet[i] != ',' {
+		at := i + j
+		i = at + len(key)
+		after := strings.TrimLeft(sheet[i:], " \t\n")
+		if after == "" || after[0] != '{' && after[0] != ',' {
 			continue // a longer selector: one of its descendants' rules
+		}
+		if before := strings.TrimRight(sheet[:at], " \t\n"); before != "" && !strings.ContainsRune("{},/", rune(before[len(before)-1])) {
+			continue // a longer selector that ends with this one
 		}
 		i += strings.IndexByte(sheet[i:], '{') + 1
 		end := strings.IndexByte(sheet[i:], '}')
