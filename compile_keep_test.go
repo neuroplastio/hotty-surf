@@ -169,6 +169,9 @@ type keepState struct {
 	cols  [3]kCol
 	bind  bool
 	n     int // the next card's number
+	// churn names the hidden ids that change every step, so the slots
+	// fill with ids gone out of use and compact (rt.Slots).
+	churn int
 }
 
 func (st *keepState) view(l *kLog, plain bool) templ.Component {
@@ -182,7 +185,11 @@ func (st *keepState) view(l *kLog, plain bool) templ.Component {
 			// plain render make an element anew while it has the focus
 			// would leave the host's focus on the compiled one's alone,
 			// which keeps the element (a finer delta, not a handler).
-			fmt.Fprintf(w, `<main class="flex flex-col"><button%s>(home)</button>`, onAttrs(ctx, "home", surf.Click(func() {})))
+			fmt.Fprintf(w, `<main class="flex flex-col"><button%s>(home)</button><div hidden>`, onAttrs(ctx, "home", surf.Click(func() {})))
+			for i := range 8 {
+				fmt.Fprintf(w, `<span%s></span>`, onAttrs(ctx, fmt.Sprintf("z%d-%d", st.churn, i), surf.Click(func() {})))
+			}
+			io.WriteString(w, `</div>`)
 			items := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 				for _, c := range st.loose {
 					c.L = l
@@ -683,6 +690,7 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 					c.click(t, "#home", "(home)")
 					p.click(t, "#home", "(home)")
 					what := st.step(r)
+					st.churn++
 					c.note()
 					c.update(t)
 					p.update(t)
@@ -746,7 +754,11 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 					}
 					same(i, what)
 				}
-				t.Logf("%d steps, %d with a key used twice, %d kept handlers the same, %d typings skipped", steps, dups, kept, skipped)
+				epoch := rt.Peek.Frame(c.s).Slots().Epoch
+				t.Logf("%d steps, %d with a key used twice, %d kept handlers the same, %d compactions, %d typings skipped", steps, dups, kept, epoch, skipped)
+				if epoch == 0 {
+					t.Error("the slots never compacted")
+				}
 				if kept == 0 {
 					t.Error("no instance kept its handlers")
 				}
