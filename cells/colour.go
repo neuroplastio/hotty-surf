@@ -88,6 +88,39 @@ func (c *Screen) Cells() [][]Cell {
 	return out
 }
 
+// Draw is Cells written into g at col, row, clipped to g, with no new
+// grid: it shows what Cells shows (the Screen's view, as scrolled, its
+// size New or Resize gave it) and counts as a Cells for Dirty. Cells of
+// g outside that rectangle are not written; a wide character cut by g's
+// edge is a blank. A Draw with nothing changed since the last costs a
+// copy.
+func (c *Screen) Draw(g [][]Cell, col, row int) {
+	l := c.layout()
+	if c.shown.raw == nil || l != c.shownLay || c.scroll != c.shownScroll {
+		// The grid is the Screen's own, not a caller's: no copy.
+		c.shown, c.shownLay, c.shownScroll = snapshot{raw: c.rawOf(l), cells: c.cellsOf(l)}, l, c.scroll
+	}
+	for y, src := range c.shown.cells {
+		gy := row + y
+		if gy < 0 || gy >= len(g) {
+			continue
+		}
+		r := g[gy]
+		x0, x1 := max(0, -col), min(len(src), len(r)-col)
+		if x0 >= x1 {
+			continue
+		}
+		copy(r[col+x0:col+x1], src[x0:x1])
+		// A wide character's halves either side of g's edge: blanks.
+		if x0 > 0 && src[x0].Text == "" {
+			r[col+x0].Text = " "
+		}
+		if x1 < len(src) && src[x1].Text == "" {
+			r[col+x1-1].Text = " "
+		}
+	}
+}
+
 // copyGrid is a copy of g, in one array.
 func copyGrid(g [][]Cell) [][]Cell {
 	n := 0

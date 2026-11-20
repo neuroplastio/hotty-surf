@@ -84,3 +84,33 @@ func ExampleScreen_Cells() {
 		}
 	}
 }
+
+// Chrome a program draws itself: a status line of its own, laid out by a
+// Screen the size of the place it goes, drawn into the program's frame
+// grid at that place each frame. A frame where nothing changed costs a
+// copy; Dirty says whether one did.
+func ExampleScreen_Draw() {
+	frame := make([][]cells.Cell, 3)
+	for y := range frame {
+		frame[y] = make([]cells.Cell, 20)
+		for x := range frame[y] {
+			frame[y][x] = cells.Cell{Text: "."}
+		}
+	}
+	status := cells.New(16, 1, nil)
+	status.Write([]byte(hotty.Doc("status", `<div class="flex"><span class="grow">main</span><span>3 jobs</span></div>`)))
+	status.Draw(frame, 2, 1)
+	for _, row := range frame {
+		var b strings.Builder
+		for _, c := range row {
+			b.WriteString(c.Text)
+		}
+		fmt.Println(b.String())
+	}
+	fmt.Println(status.Dirty())
+	// Output:
+	// ....................
+	// ..main      3 jobs..
+	// ....................
+	// false
+}
