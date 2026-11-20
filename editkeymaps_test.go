@@ -387,3 +387,35 @@ func TestEditingKeymapsFill(t *testing.T) {
 		}
 	}
 }
+
+// ReadlineKeys' bindings too are made once a platform: a second render
+// shares them, and Attach where mod is super makes them anew, mod+a
+// read as super+a.
+func TestReadlineKeysOncePerPlatform(t *testing.T) {
+	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		fmt.Fprintf(w, `<div><input%s></div>`, attrsOf(On(ctx, "f", Bind(ReadlineKeys()))))
+		return nil
+	}), "")
+	s.Attach(io.Discard, ctrlHost)
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	first := s.editing[2]
+	if len(first) == 0 || !slices.Contains(bindings(s, "f"), "ctrl+a=select-all") {
+		t.Fatalf("where mod is ctrl: %d bindings, %q", len(first), bindings(s, "f"))
+	}
+	s.Do(func() {})
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if &s.editing[2][0] != &first[0] {
+		t.Error("a second render made the bindings again")
+	}
+	s.Attach(io.Discard, superHost)
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	if got := bindings(s, "f"); &s.editing[2][0] == &first[0] || !slices.Contains(got, "super+a=select-all") || slices.Contains(got, "ctrl+a=select-all") {
+		t.Errorf("attached where mod is super: %q", got)
+	}
+}

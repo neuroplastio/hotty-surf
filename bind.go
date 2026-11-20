@@ -398,19 +398,24 @@ func giveBack(b rt.Bind) bool {
 	return b.Base && !b.Direct && b.Action == string(hotty.Program)
 }
 
-// readlineBinds is hotty.TerminalKeys for the frame's platform, read
-// once a frame.
+// readlineBinds is hotty.TerminalKeys for the frame's platform, made
+// once a platform (rt.Frame.Editing).
 func readlineBinds(f *rt.Frame) []rt.Bind {
-	if f.ReadlineKeys == nil {
+	if f.Editing == nil {
+		f.Editing = new([3][]rt.Bind)
+	}
+	if f.Editing[2] == nil {
+		out := []rt.Bind{}
 		m := hotty.ParseKeymap(f.Platform, hotty.TerminalKeys)
 		for _, b := range strings.Fields(m.Format()) {
 			k, a, _ := strings.Cut(b, "=")
 			if c, ok := f.Platform.ReadKey(k); ok {
-				f.ReadlineKeys = append(f.ReadlineKeys, rt.Bind{Key: c, Action: a})
+				out = append(out, rt.Bind{Key: c, Action: a})
 			}
 		}
+		f.Editing[2] = out
 	}
-	return f.ReadlineKeys
+	return f.Editing[2]
 }
 
 // cuaBinds and cocoaBinds are CUAKeys' and CocoaKeys' bindings for the
@@ -424,7 +429,7 @@ func cocoaBinds(f *rt.Frame) []rt.Bind { return editingFor(f, 1) }
 // the host's.
 func editingFor(f *rt.Frame, i int) []rt.Bind {
 	if f.Editing == nil {
-		f.Editing = new([2][]rt.Bind)
+		f.Editing = new([3][]rt.Bind)
 	}
 	if f.Editing[i] == nil {
 		edit := f.Platform.Edit

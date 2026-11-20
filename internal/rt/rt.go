@@ -159,14 +159,11 @@ type Frame struct {
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.
 	Scopes []*KeyScope
-	// ReadlineKeys is hotty.TerminalKeys as Binds for Platform, made the
-	// first time an element binds surf.ReadlineKeys in the frame.
-	ReadlineKeys []Bind
-	// Editing are surf.CUAKeys' and surf.CocoaKeys' bindings (in that
-	// order) for Platform, each made the first time an element binds it:
-	// the surface's, which its frames share until it is attached anew, or
-	// the frame's own where nil.
-	Editing *[2][]Bind
+	// Editing are surf.CUAKeys', surf.CocoaKeys' and surf.ReadlineKeys'
+	// bindings (in that order) for Platform, each made the first time an
+	// element binds it: the surface's, which its frames share until it is
+	// attached anew, or the frame's own where nil.
+	Editing *[3][]Bind
 	// Replays are what the render registered on a component around it
 	// (Register), in order: a kept compiled instance runs its own again.
 	Replays []func(context.Context)
