@@ -390,8 +390,9 @@ func baseOf(base []rt.Bind, t *tree, key string) (rt.Bind, bool) {
 // wins, but a prefix, which is the program's too, is written in its
 // place. A printable key bound to prefix is pushed on t's stack, so the
 // fields inside type it (K27). An Unbind that goes back to an
-// edit-shortcut group's binding is written only on a text field:
-// elsewhere it is returned (unbound), for the fields inside. It returns
+// edit-shortcut group's binding isn't written here: it is returned
+// (unbound), for the fields' resolver (writeEdits) to write on the
+// fields inside, and on this one if it is one. It returns
 // binds, the keys it wrote, those Unbinds, how many it pushed, and
 // whether it faulted a group.
 func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind string, multiline bool, binds []string, t *tree) ([]string, []string, []rt.Bind, int, bool) {
@@ -405,9 +406,10 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind
 				b.Action, b.Base, b.Edit, resolved = c.Action, true, c.Edit, true
 			}
 		}
-		if b.Edit && kind != "text" {
+		if b.Edit {
 			// An Unbind that goes back to an edit-shortcut group's
-			// binding: only fields are written it.
+			// binding: only fields are written it, and the fields'
+			// resolver (writeEdits) writes it, this one's too.
 			unbound = append(unbound, b)
 			continue
 		}
