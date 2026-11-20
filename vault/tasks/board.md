@@ -1,6 +1,6 @@
 # Board
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 **Phase:** hotty-surf v0.7 on main, untagged: Go, templ and Basecoat, by
 the plan of 2026-11-16. main fast-forwarded to v0.7 on 2026-11-19, and
@@ -72,6 +72,13 @@ the last release.
   the selected band (d6813ab), the stand-ins (9a0aaf5), Tab stops
   (9e4f696), tooltips (be531b5), Screen.Dirty (c325fc3). Left: margin,
   plx's move to v0.7, and the tag when "Before v0.7.0" is empty.
+- [ ] **Editing keymaps** (the maintainer, 2026-11-20): `surf.CUAKeys()`
+  and `surf.CocoaKeys()`, and `surf.Readline()` renamed
+  `surf.ReadlineKeys()`, so an app picks a desktop's field keys from
+  its own config, apart from the host's mod (`api/notes.md` › Editing
+  keymaps). Built, with its tests on a host and in cells; the pack waits
+  for the maintainer's sign, then `make api-approve`. Whether it goes
+  before v0.7.0 is the maintainer's call: it isn't a coverage row.
 
 ### Landed after 2026-11-17
 

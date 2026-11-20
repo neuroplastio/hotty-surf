@@ -80,7 +80,7 @@ each render, from what the code declares.
 - **Readline (`hotty.TerminalKeys`), `prefix` and the scroll actions**
   are declared in Go since 2026-11-19 (api/notes.md, "Field keys, prefix
   and scroll declared in Go" and "Bind, extensible"):
-  `surf.Bind(surf.Readline())` and `surf.Bind(surf.Action(action,
+  `surf.Bind(surf.ReadlineKeys())` and `surf.Bind(surf.Action(action,
   keys...))`, written into `data-keys` beside `key=program`. The `.surf` `readline` and `program` attributes above
   went with v0.6.
 - **The 2026-11-04 decision holds in Go, by default:** a group's
