@@ -394,8 +394,8 @@ func readlineBinds(f *rt.Frame) []rt.Bind {
 	return f.ReadlineKeys
 }
 
-// cuaBinds and cocoaBinds are CUAKeys' and CocoaKeys' bindings for the frame's
-// platform, read once a frame.
+// cuaBinds and cocoaBinds are CUAKeys' and CocoaKeys' bindings for the
+// frame's platform, made once a platform (rt.Frame.Editing).
 func cuaBinds(f *rt.Frame) []rt.Bind   { return editingFor(f, 0) }
 func cocoaBinds(f *rt.Frame) []rt.Bind { return editingFor(f, 1) }
 
@@ -404,6 +404,9 @@ func cocoaBinds(f *rt.Frame) []rt.Bind { return editingFor(f, 1) }
 // (Platform.Edit, or DefaultEdit(Mod) where it reports none), which stay
 // the host's.
 func editingFor(f *rt.Frame, i int) []rt.Bind {
+	if f.Editing == nil {
+		f.Editing = new([2][]rt.Bind)
+	}
 	if f.Editing[i] == nil {
 		edit := f.Platform.Edit
 		if edit == nil {

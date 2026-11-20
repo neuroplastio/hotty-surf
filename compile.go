@@ -548,6 +548,7 @@ func (s *Surface) renderInstance(ctx context.Context, f *rt.Frame, out io.Writer
 func (s *Surface) checkKept(ctx context.Context, f *rt.Frame, r *record, w instanceOf) {
 	g := rt.NewFrame(s, f.Platform, s.focused, s.memo, s.n, s.keyMark+r.id+".", len(r.order))
 	g.Focus, g.Reveal, g.Shadow = unset, unset, true
+	g.Editing = f.Editing
 	in := &rt.Instance{}
 	g.In = in
 	s.c.shadow, s.c.checked = true, r

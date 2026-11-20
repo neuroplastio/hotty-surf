@@ -99,6 +99,7 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 		ids = len(s.frame.On)
 	}
 	f = rt.NewFrame(s, s.platform, s.focused, s.memo, s.n, s.keyMark, ids)
+	f.Editing = &s.editing
 	s.dropDups()
 	s.c.changed, s.c.stack = s.c.changed[:0], s.c.stack[:0]
 	s.r.buf.Reset()

@@ -38,6 +38,10 @@ type Surface struct {
 
 	out      io.Writer
 	platform hotty.Platform
+	// editing are surf.CUAKeys' and surf.CocoaKeys' bindings for
+	// platform, made the first time a render binds one and kept until
+	// Attach: every frame shares them (rt.Frame.Editing).
+	editing [2][]rt.Bind
 
 	// The last frame sent: its tree under #root, the handlers its render
 	// registered, every element by its id, and the ids given by place.
@@ -150,6 +154,7 @@ func (s *Surface) Name() string {
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
+	s.editing = [2][]rt.Bind{}
 	// A compiled instance's keys are its platform's.
 	s.forgetInstances()
 	s.sheetSent, s.limits = nil, caps.Limits

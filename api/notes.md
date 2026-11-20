@@ -2084,8 +2084,9 @@ surf.On(ctx, "query", surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k")))
   every host but for those keys, so order means the same everywhere.
 - **Derived, not copied:** the tables are the keys whose action differs
   between `hotty.Resolve` where mod is ctrl and where it is super, both
-  with no edit shortcuts, made once a process and read once a frame,
-  less the host's edit keys. Only the two makers refer to them.
+  with no edit shortcuts, made once a process, then less the host's
+  edit keys once a platform: a surface keeps them until it is attached
+  anew. Only the two makers refer to them.
 - **Mod stays the host's:** how `mod+` reads, the keycaps, the edit
   shortcuts and the host's scrolling.
 - **Give-backs aren't keys given to the program** around an element: a

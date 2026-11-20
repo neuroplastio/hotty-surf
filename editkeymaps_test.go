@@ -38,8 +38,8 @@ func bindPageOn(t *testing.T, caps hotty.Caps, markup string, ons func(ctx conte
 }
 
 // The tables are SPEC §10.2's, as hotty.Resolve has them: CUAKeys' six keys
-// and CocoaKeys' fourteen, each giving back the other's, made once a process
-// and read once a frame.
+// and CocoaKeys' fourteen, each giving back the other's, made once a
+// process, and filtered once for a frame without a surface's.
 func TestEditingKeymapTables(t *testing.T) {
 	tabs := editingTables()
 	if tabs != editingTables() {
@@ -64,7 +64,7 @@ func TestEditingKeymapTables(t *testing.T) {
 	f := &rt.Frame{Platform: hotty.PlatformOf(superHost)}
 	a, b := cuaBinds(f), cuaBinds(f)
 	if len(a) != 20 || &a[0] != &b[0] {
-		t.Errorf("CUAKeys on a super host: %d bindings, read once a frame: %v", len(a), &a[0] == &b[0])
+		t.Errorf("CUAKeys on a super host: %d bindings, made once: %v", len(a), &a[0] == &b[0])
 	}
 	if c := cuaBinds(&rt.Frame{}); len(c) != 19 {
 		t.Errorf("CUAKeys on the zero platform: %d bindings, want 19 (ctrl+a is select all's)", len(c))
@@ -297,5 +297,37 @@ func TestEditingKeymapsLayer(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// A surface makes CUAKeys' bindings once for its platform: every render
+// after the first, and a compiled instance's check, share them, and
+// Attach, which may bring another platform, makes them anew.
+func TestEditingKeymapsOncePerPlatform(t *testing.T) {
+	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		fmt.Fprintf(w, `<div%s><input id="f"></div>`, attrsOf(On(ctx, "app", Bind(CUAKeys()))))
+		return nil
+	}), "")
+	s.Attach(io.Discard, superHost)
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	first := s.editing[0]
+	if len(first) != 20 {
+		t.Fatalf("on a super host: %d bindings", len(first))
+	}
+	s.Do(func() {})
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if &s.editing[0][0] != &first[0] {
+		t.Error("a second render made the bindings again")
+	}
+	s.Attach(io.Discard, ctrlHost)
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	if len(s.editing[0]) != 19 || slices.Contains(bindings(s, "app"), "ctrl+a=program") {
+		t.Errorf("attached where mod is ctrl: %d bindings, %q", len(s.editing[0]), bindings(s, "app"))
 	}
 }
