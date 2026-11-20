@@ -69,24 +69,27 @@ nav, compiled, in cells, as shares of the benchmark's loop:
   paste and cut. After each step it hashes Lines, Cells, Draw at random
   offsets, Dirty, the cursor, the selection, At and the events. All
   1,400 runs (211,400 steps) are main's, byte for byte, with no panics.
-  `make check` makes a fortieth of them; `-walk-all` makes every one.
+  `make check` makes an eightieth of them; `-walk-all` makes every one.
 - **CheckFresh** (cells/export_test.go) holds a Screen's layout and grid
   to a pass that keeps nothing: the canvas, the boxes, the fields and
   scrolled boxes, the caret, the height, Cells' grid and the snapshot
-  shown. TestIncrementalIsFresh walks every story and 150 random
-  documents through 60 steps each with it. Its vocabulary has heights
+  shown. TestIncrementalIsFresh walks every story and 60 random
+  documents through 40 steps each with it. Its vocabulary has heights
   in vh, colour-only class swaps inside muted text, and a chart whose
-  bars change under its legend. Four targeted tests hold what the walk
+  bars change under its legend. Five targeted tests hold what the walk
   might miss: a vh box on a taller Screen, a colour-only change that
-  ends or starts the muted text, a legend whose plot loses its bars,
-  and a growing item that stops growing. Each check fails a test when
-  it is taken out:
+  ends or starts the muted text, a legend whose plot loses its bars, a
+  growing item that stops growing, and a growing item that is an open
+  popover. Each check fails a test when it is taken out:
   - the Screen's height a record read (VhResize, and the walk);
   - laying out again on a colour-only change that unmutes
     (ColourOnlyUnmutes, and the walk);
   - the legend's dependency on its figure (LegendFollowsPlot, and the
     walk), and the dependencies as a whole;
   - grown in the key (GrownIsKept);
+  - what it inherits in the key (the walk, and TestWalkGolden);
+  - a column's heights replayed (GrowingPopover: the popover is laid
+    out after the flow, at the share the replay gives it);
   - a text that doesn't forget its record, a chart without its
     label-row dependency, painting that ignores the recoloured, a shown
     row taken regardless, and canvas rows not blanked.
