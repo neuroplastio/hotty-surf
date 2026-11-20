@@ -664,7 +664,7 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 				r := rand.New(rand.NewPCG(seed, 11))
 				st := newKeepState(r)
 				c, p := startKSide(t, st, false, onScreen), startKSide(t, st, true, onScreen)
-				kept, dups, skipped := 0, 0, 0
+				kept, dups := 0, 0
 				same := func(i int, what string) {
 					t.Helper()
 					if got, want := c.show(), p.show(); got != want {
@@ -722,16 +722,6 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 						if !q.Field || at.col < 0 {
 							break
 						}
-						if twice[q.Key] {
-							// Known, and not this test's: a field in a
-							// card whose key came twice in the render takes
-							// no typing on a host or a Screen, as it
-							// took none before kept handlers (seeds 0, 4
-							// and 13).
-							what = "no typing in " + q.ID + ", its key twice"
-							skipped++
-							break
-						}
 						what = "type in " + q.ID
 						if !onScreen {
 							c.host.Type("#in-"+q.ID, "zz")
@@ -755,7 +745,7 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 					same(i, what)
 				}
 				epoch := rt.Peek.Frame(c.s).Slots().Epoch
-				t.Logf("%d steps, %d with a key used twice, %d kept handlers the same, %d compactions, %d typings skipped", steps, dups, kept, epoch, skipped)
+				t.Logf("%d steps, %d with a key used twice, %d kept handlers the same, %d compactions", steps, dups, kept, epoch)
 				if epoch == 0 {
 					t.Error("the slots never compacted")
 				}

@@ -255,6 +255,10 @@ type instances struct {
 	stack   []*record // the instances rendering, outermost first
 	changed []*record // rendered this render, with other markup
 	dups    []*record
+	// dupIn are the instances a copy of a key used twice rendered in,
+	// as their own markup: they hold no marker for it, and render again
+	// with the first copy's holders (dropDups).
+	dupIn   []*record
 	check   bool    // render every kept one too (Peek.Check)
 	shadow  bool    // a check's render: instances only write their markers
 	checked *record // the instance a check renders, whose kids are its own
@@ -299,7 +303,7 @@ func (s *Surface) forgetInstances() {
 			r.gone = true
 		}
 	}
-	s.c.byKey, s.c.byID, s.c.changed, s.c.dups = nil, nil, nil, nil
+	s.c.byKey, s.c.byID, s.c.changed, s.c.dups, s.c.dupIn = nil, nil, nil, nil, nil
 	s.c.lastC, s.c.lastM = nil, nil
 }
 
@@ -366,6 +370,9 @@ func (s *Surface) instance(ctx context.Context, f *rt.Frame, out io.Writer, c *c
 			f.Faults = append(f.Faults, "surf.Compile: "+c.name+": the instance key "+strconv.Quote(key)+" is used twice in one render: both copies render as the view's own markup")
 			r.dup = true
 			s.c.dups = append(s.c.dups, r)
+		}
+		if n := len(s.c.stack); n > 0 {
+			s.c.dupIn = append(s.c.dupIn, s.c.stack[n-1])
 		}
 		return w.view().Render(ctx, out)
 	}
@@ -669,7 +676,15 @@ func (s *Surface) dropDups() {
 			u.rendered = false
 		}
 	}
-	s.c.dups = s.c.dups[:0]
+	// What a later copy rendered in holds that copy as its own markup:
+	// kept, it would replay it, and the next render wouldn't meet the
+	// key twice, though the view still uses it twice. It renders too.
+	for _, h := range s.c.dupIn {
+		for u := h; u != nil; u = u.up {
+			u.rendered = false
+		}
+	}
+	s.c.dups, s.c.dupIn = s.c.dups[:0], s.c.dupIn[:0]
 }
 
 // expand appends src to dst with each instance's marker replaced by its
