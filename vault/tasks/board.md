@@ -183,6 +183,12 @@ The single list of what the tag needs.
   check against v0.8.2.
 - mods/templ's canary runs weekly in CI from main (`make canary`); a red
   run goes here. Green on templ 9a0eb3c (2026-11-19).
+- [ ] run/term.go attaches once (`t.Caps()` at start) and doesn't
+  attach again when the host sends new `caps` (SPEC §4); surftea does.
+  A field's edit shortcuts and their elision follow `Mod` and
+  `Platform.Edit`, so under an edit-shortcut group a mid-session change
+  leaves the fields as the first caps had them. Found in the
+  edit-shortcut groups' review, 2026-11-20; it predates them.
 - [ ] **SPEC proposals, deferred to the maintainer:** an area on focus,
   and host-placed popovers (ContextMenu's key-opened placement and its
   flip at the edges); a note that a=focus keeps a field's caret and
