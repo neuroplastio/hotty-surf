@@ -309,8 +309,9 @@ func (c *Screen) Lines() []string {
 // Dirty says whether Lines, or Cells, would now return other than what
 // either last returned: after a Write that changed the screen, a key or
 // a paste that edited a field, a press that moved the focus, a wheel that
-// scrolled, or by itself, as a tooltip shows or goes when the pointer
-// moves. A program asks it after whatever it hands the Screen and draws
+// scrolled, or by itself, as what the pointer is over looks other hovered
+// and a tooltip shows or goes when the pointer moves, or when what is
+// under it moves. A program asks it after whatever it hands the Screen and draws
 // where it says so, with no need to know which calls change what. It is
 // true before the first Lines or Cells. A call that changed nothing costs
 // nothing to ask about.
