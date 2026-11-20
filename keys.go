@@ -114,16 +114,6 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	// in effect, or again for the edit shortcuts in effect here.
 	var lb, lbase, ledits []rt.Bind
 	if h != nil {
-		if t.f.EditKeys == nil {
-			// A kept compiled instance's handlers, registered in an
-			// earlier frame: its group's keys are the frame's (each
-			// table holds all of them).
-			for _, b := range h.Flat {
-				if b.Edit && !slices.Contains(t.f.EditKeys, b.Key) {
-					t.f.EditKeys = append(t.f.EditKeys, b.Key)
-				}
-			}
-		}
 		lb, lbase, ledits = h.Binds, h.Base, h.Edits
 		if t.f.EditKeys != nil && (t.editN > 0 || slices.ContainsFunc(h.Flat, func(b rt.Bind) bool { return b.Edit })) &&
 			slices.ContainsFunc(h.Flat, func(b rt.Bind) bool { return b.Base && !b.Edit && !b.Direct }) {

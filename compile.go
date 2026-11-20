@@ -226,6 +226,10 @@ type record struct {
 	focusSet  bool
 	refocus   bool
 	revealSet bool
+	// editKeys are the edit-shortcut keys (rt.Frame.EditKeys) its own
+	// render read a group of, nil for none: a replay sets them on the frame,
+	// as the render did.
+	editKeys []string
 
 	// Where it is in the tree: its element, the id the view gave it ("" for
 	// none), whether it is in a pre, what writeKeys knew around it, and the
@@ -237,7 +241,6 @@ type record struct {
 	base             []rt.Bind
 	edit             []keyAt
 	editN            int
-	editKeys         []string
 	ws               string
 }
 
@@ -470,6 +473,11 @@ func (s *Surface) replay(ctx context.Context, f *rt.Frame, r *record, encl *rt.K
 	if r.modalOps != nil {
 		f.ModalOps = r.modalOps
 	}
+	if r.editKeys != nil {
+		// Before any element is numbered: the fields around the instance
+		// resolve the keys too.
+		f.EditKeys = r.editKeys
+	}
 	if r.focusSet {
 		f.Focus = r.focus
 	}
@@ -541,6 +549,7 @@ func (s *Surface) renderInstance(ctx context.Context, f *rt.Frame, out io.Writer
 	saved := *f
 	f.Order, f.Scopes, f.KeyScopes, f.KeyKinds, f.Modal, f.Faults, f.Replays = nil, nil, nil, nil, nil, nil, nil
 	f.ModalOps = nil
+	f.EditKeys = nil
 	f.Focus, f.Refocus, f.Reveal = unset, false, unset
 	f.KeyMark = s.keyMark + r.id + "."
 	r.in = rt.Instance{Up: f.In}
@@ -561,6 +570,10 @@ func (s *Surface) renderInstance(ctx context.Context, f *rt.Frame, out io.Writer
 	}
 	r.scopes, r.keyScopes, r.keyKinds, r.modal, r.faults, r.replays = f.Scopes, f.KeyScopes, f.KeyKinds, f.Modal, f.Faults, f.Replays
 	r.modalOps = f.ModalOps
+	r.editKeys = f.EditKeys
+	if f.EditKeys == nil {
+		f.EditKeys = saved.EditKeys
+	}
 	r.focusSet, r.focus = f.Focus != unset, f.Focus
 	r.refocus = f.Refocus
 	r.revealSet, r.reveal = f.Reveal != unset, f.Reveal
@@ -808,9 +821,6 @@ func (r *record) placed(c *html.Node, own string, pre bool, t *tree) {
 	r.given = append(r.given[:0], t.given...)
 	r.base = append(r.base[:0], t.base...)
 	r.edit, r.editN = append(r.edit[:0], t.edit...), t.editN
-	if t.f != nil {
-		r.editKeys = t.f.EditKeys
-	}
 	r.ws = wsOf(r.raw)
 }
 
@@ -904,9 +914,6 @@ func (s *Surface) fill(d *differ, f *rt.Frame) bool {
 		j.t.given = append([]string(nil), j.r.given...)
 		j.t.base = append([]rt.Bind(nil), j.r.base...)
 		j.t.edit, j.t.editN = append([]keyAt(nil), j.r.edit...), j.r.editN
-		if f.EditKeys == nil {
-			f.EditKeys = j.r.editKeys
-		}
 		s.number(j.holder, "", j.t, j.r.pre)
 	}
 	// An element that moves from outside a job's element into it (a row
