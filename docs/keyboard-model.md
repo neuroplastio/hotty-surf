@@ -337,7 +337,7 @@ where `mod` is `ctrl`, or where it is `super`, whatever the host's.
 
 ```go
 // a setting: the caret keys and the edit shortcuts chosen apart,
-// in the same Bind, on the outermost element; nil is the host's own
+// on the outermost element; nil is the host's own
 var caret, edit surf.BindOption
 switch cfg.Keymap {
 case "cua":
@@ -370,17 +370,21 @@ surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), caret, edit))
   a Mac host it writes about 200 bytes a field.
 - **Nothing selected:** copy and cut reach the program, as in a
   password field, so `ctrl+c` in an empty field still interrupts.
-- **A separate category.** On one element the group decides the six
-  edit actions: its keys win over ReadlineKeys', CUAKeys' and
-  CocoaKeys' in either order, ReadlineKeys' `mod+a` gives way to it,
-  and its give-backs fill only the keys those leave. Those keymaps then
-  leave out the keys it binds instead of the host's, so CocoaKeys with
-  CocoaEditShortcuts on Linux puts `ctrl+a` at the line's start.
-- **Between elements the nearer binding wins**, as for every binding:
-  an element between the group's and the field, its own Action or its
-  own CocoaKeys, keeps its keys. So bind the group in the same Bind as
-  the editing keymaps. Under it, Unbind gives a key back to the group's
-  binding, on the fields inside.
+- **A separate category.** Wherever the group is in effect it decides
+  the six edit actions. On its own element its keys win over
+  ReadlineKeys', CUAKeys' and CocoaKeys' in either order, and its
+  give-backs fill only the keys those leave. On that element and every
+  element inside it, those keymaps' binding of a key to an edit action
+  (ReadlineKeys' `mod+a`) gives way where the group binds the key, and
+  they leave out the keys it binds instead of the host's. So CocoaKeys
+  with CocoaEditShortcuts on Linux puts `ctrl+a` at the line's start,
+  and a field's own ReadlineKeys under CUAEditShortcuts on a Mac gives
+  `super+a` back.
+- **Otherwise the nearer binding wins**, as for every binding: an
+  element between the group's and the field keeps its own Action, and
+  its caret and delete keys. So bind the group once, on the outermost
+  element of each surface's view. Under it, Unbind gives a key back to
+  the group's binding, on the fields inside.
 - **A host that keeps `super`** may never send `super+c`, and a host
   that reads keys as bytes (a cells Screen, a host inside another
   terminal) never sees it. There, under CocoaEditShortcuts, the field

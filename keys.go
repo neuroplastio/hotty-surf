@@ -50,8 +50,8 @@ const (
 // It says how many printable keys n declares, how many keys it gives
 // the program (CUAKeys' and CocoaKeys' give-backs aren't: a binding inside
 // still takes them), and how many of CUAKeys' and CocoaKeys' bindings n holds
-// (h.Base), which it pushed on t's stacks for n's insides; number pops
-// them after.
+// (layout's base), which it pushed on t's stacks for n's insides; number
+// pops them after.
 func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	scope, kind := 0, ""
 	var mark keyMark
@@ -110,14 +110,13 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	var binds []string
 	text, multiline := nativeKind(n)
 	pushed := 0
-	// The element's bindings as laid out where no edit-shortcut group is
-	// in effect, or again for the edit shortcuts in effect here.
+	// The element's bindings, laid out under the edit shortcuts in effect
+	// here, into the tree's scratch: nothing keeps them past this element.
 	var lb, lbase, ledits []rt.Bind
 	if h != nil {
-		lb, lbase, ledits = h.Binds, h.Base, h.Edits
-		if t.f.EditKeys != nil && (t.editN > 0 || slices.ContainsFunc(h.Flat, func(b rt.Bind) bool { return b.Edit })) &&
-			slices.ContainsFunc(h.Flat, func(b rt.Bind) bool { return b.Base && !b.Edit && !b.Direct }) {
-			lb, lbase, ledits = layout(nil, id, h.Keys, h.Flat, func(b rt.Bind) bool { return t.heldAt(h.Flat, b) })
+		if len(h.Flat) > 0 {
+			t.lb, t.lbase, t.ledits = layout(s, id, h.Keys, h.Flat, t, t.lb[:0], t.lbase[:0], t.ledits[:0])
+			lb, lbase, ledits = t.lb, t.lbase, t.ledits
 		}
 		if len(lb) > 0 || t.f.EditKeys != nil && text == "text" {
 			h.Written = h.Written[:0]
@@ -239,10 +238,11 @@ type keyAt struct {
 	edit, yield, given bool
 }
 
-// heldAt is layout's held for an element under an edit-shortcut group
-// (its own, among flat, or one around it): the nearest edit-shortcut
-// binding of b's key holds it if it is a real one, not a give-back; a
-// key none of them binds is held as the host's edit shortcuts hold it.
+// heldAt says whether the edit shortcuts in effect on an element hold
+// b's key, for layout: the nearest edit-shortcut binding of it (the
+// element's own, among flat, or one around it) holds it if it is a real
+// one, not a give-back; a key none of them binds, as where no group is in
+// effect, is held as the host's edit shortcuts hold it (b.Held).
 func (t *tree) heldAt(flat []rt.Bind, b rt.Bind) bool {
 	var e *rt.Bind
 	for i := range flat {
@@ -259,6 +259,14 @@ func (t *tree) heldAt(flat []rt.Bind, b rt.Bind) bool {
 		}
 	}
 	return b.Held
+}
+
+// editedAround says whether an edit-shortcut binding of key is in effect
+// around the element being written (t.edit), real or a give-back: the
+// edit shortcuts in effect then decide key's edit action, as heldAt finds
+// them.
+func (t *tree) editedAround(key string) bool {
+	return slices.ContainsFunc(t.edit, func(x keyAt) bool { return x.edit && x.key == key })
 }
 
 // writeEdits writes on a text field the edit-shortcut groups' bindings in
@@ -350,7 +358,7 @@ func editDefaults(f *rt.Frame) map[string]string {
 }
 
 // baseOf is CUAKeys', CocoaKeys' or an edit-shortcut group's binding of
-// key in effect on the element whose base (rt.Handlers.Base) is base: the
+// key in effect on the element whose base (layout's) is base: the
 // element's own, else the nearest one's around it (t.base).
 func baseOf(base []rt.Bind, t *tree, key string) (rt.Bind, bool) {
 	for _, c := range base {
@@ -367,10 +375,10 @@ func baseOf(base []rt.Bind, t *tree, key string) (rt.Bind, bool) {
 }
 
 // writeBinds is the one resolver of an element's surf.Bind bindings
-// (lb, h.Binds or as laid out again under the edit shortcuts in effect,
-// one per key already): it records in h.Written those that
-// hold on the element, and adds to binds those the wire carries, each
-// key=action. Of lb it drops:
+// (lb, as layout laid them out under the edit shortcuts in effect, one
+// per key already): it records in h.Written those that hold on the
+// element, and adds to binds those the wire carries, each key=action. Of
+// lb it drops:
 //   - a yielding one of a key an element around gives the program
 //     (t.given): a shortcut or a leader there still reaches it from the
 //     field (vault/knowledge/field-keys.md, 2026-11-04);

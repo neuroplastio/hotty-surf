@@ -197,6 +197,9 @@ type tree struct {
 	// edit-shortcut group's: what a text field resolves (writeEdits).
 	edit  []keyAt
 	editN int
+	// lb, lbase and ledits are writeKeys' scratch for an element's
+	// bindings as layout lays them out.
+	lb, lbase, ledits []rt.Bind
 }
 
 // keep takes t as what the host has, and the HTML paint rendered as its

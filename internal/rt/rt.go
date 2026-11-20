@@ -25,35 +25,22 @@ type Handlers struct {
 	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
 	// Flat are surf.Bind's bindings as its options read, in order, each
-	// canonical for the frame's platform: what Binds, Base and Edits are
-	// laid out from, and so the resolver's input (keysig).
+	// canonical for the frame's platform: the resolver's input (keysig).
+	// The runtime lays them out as surf.Bind says where it writes the
+	// element's data-keys, under the edit shortcuts in effect there: one
+	// per key, a direct Action's or Unbind's over a group's, a later
+	// group's over an earlier; the edit-shortcut groups' written on each
+	// text field inside it (and on it, if it is one), never on another
+	// element; an Unbind going back to the bindings surf.CUAKeys,
+	// surf.CocoaKeys and the edit-shortcut groups read, whether or not
+	// another binding holds the key on the element.
 	Flat []Bind
-	// Binds are surf.Bind's bindings, canonical for the frame's
-	// platform, one per key, layered as surf.Bind says (a direct Action's
-	// or Unbind's over a group's, a later group's over an earlier), the
-	// edit-shortcut groups' aside (Edits). The runtime
-	// writes each as key=action, but where Keys declares the key, or
-	// one yields to a key given around it. They are laid out as where no
-	// edit-shortcut group is in effect; where one is, the resolver lays
-	// out Flat again.
-	Binds []Bind
-	// Edits are the element's edit-shortcut groups' bindings that hold
-	// on it, one per key: written on each text field inside it (and on
-	// it, if it is one), never on another element.
-	Edits []Bind
-	// Written are Binds as the surface resolved them on the element when
-	// it last wrote its data-keys: the faults dropped, and those that
-	// yield to a key given around it. It is the one resolver's output,
-	// which data-keys, the surface's own use of a declined key (EditKeys)
-	// and so a host and cells read alike.
+	// Written are Flat's bindings as the surface resolved them on the
+	// element when it last wrote its data-keys: the faults dropped, and
+	// those that yield to a key given around it. It is the one resolver's
+	// output, which data-keys, the surface's own use of a declined key
+	// (EditKeys) and so a host and cells read alike.
 	Written []Bind
-	// Base are the bindings the element's surf.CUAKeys, surf.CocoaKeys and
-	// edit-shortcut groups read, one per key, the last read winning but a
-	// give-back, which fills only (and an edit-shortcut group's, as on the
-	// element), whether or not another binding holds the key on the
-	// element: what an Unbind on the element, or inside it, gives the key
-	// back to.
-	Base []Bind
 	// Scope is the ui.KeyScope On ran in, nil for none: the keyboard on
 	// the element, or inside it, is inside the scope.
 	Scope   *KeyScope

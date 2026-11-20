@@ -122,7 +122,6 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		}
 	}
 	e.Flat = binds
-	e.Binds, e.Base, e.Edits = layout(f, id, e.Keys, binds, heldByHost)
 	f.Set(id, e)
 	f.Order = append(f.Order, id)
 	return a

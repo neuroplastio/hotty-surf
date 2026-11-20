@@ -54,7 +54,7 @@ type kCol struct {
 	N          int
 	Plain      bool
 	// Edit binds surf.CUAKeys around the column's cards, so that a field's
-	// Unbind in it goes back to CUAKeys' binding (Handlers.Base).
+	// Unbind in it goes back to CUAKeys' binding (layout's base).
 	Edit bool
 }
 

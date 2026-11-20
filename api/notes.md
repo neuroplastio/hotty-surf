@@ -2124,12 +2124,13 @@ surf.On(ctx, "query", surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k")))
     reported edit shortcuts, then the data-keys above it) is left out,
     and a give-back takes a key only from an edit shortcut. About 200
     bytes a field on a Mac host, none on Linux.
-  - On one element the group owns the six edit actions: its real
-    binding wins over the editing keymaps' in either order, their
-    binding to an edit action (ReadlineKeys' mod+a) gives way, its
-    give-backs fill only. Under it the editing keymaps leave out its
-    keys instead of the host's edit shortcuts ("in effect": on the
-    element or around it).
+  - The group owns the six edit actions where it is in effect (on the
+    element or around it). On its element its real binding wins over
+    the editing keymaps' in either order and its give-backs fill only;
+    there and inside, their binding to an edit action (ReadlineKeys'
+    mod+a) gives way where it binds the key, and they leave out its
+    keys instead of the host's edit shortcuts. So every order of the
+    editing keymaps, on any element under it, writes the same keys.
   - An Unbind under it goes back to its binding, written only on a
     field. Yield and Override are as for every group.
 - **Cost:** 19 or 20 bindings, 411 to 466 bytes on the element, sent

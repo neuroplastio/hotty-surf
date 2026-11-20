@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"testing"
 
 	"github.com/a-h/templ"
@@ -17,6 +18,65 @@ func editFieldPage(t *testing.T, caps hotty.Caps, app, form, field []BindOption)
 	return bindPageOn(t, caps, `<div%s><p id="p">text</p><form%s><input id="f"%s></form></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{On(ctx, "app", Bind(app...)), On(ctx, "form", Bind(form...)), On(ctx, "f", Bind(field...))}
 	})
+}
+
+// Under an edit-shortcut group in effect around it, every order of the
+// editing keymaps on an element inside, the form or the field, writes
+// the same keys: their bindings to an edit action give way where the
+// group binds the key, as on the group's own element.
+func TestEditShortcutsInEffectAround(t *testing.T) {
+	sets := map[string][]BindOption{
+		"RC":  {ReadlineKeys(), CocoaKeys()},
+		"RU":  {ReadlineKeys(), CUAKeys()},
+		"UC":  {CUAKeys(), CocoaKeys()},
+		"RUC": {ReadlineKeys(), CUAKeys(), CocoaKeys()},
+	}
+	for _, caps := range []hotty.Caps{ctrlHost, superHost} {
+		for gname, group := range map[string]BindOption{"CUAEdit": cuaEdit, "CocoaEdit": cocoaEdit} {
+			for _, onField := range []bool{false, true} {
+				for name, set := range sets {
+					var seen []string
+					for _, order := range permutations(set) {
+						form, field := order, []BindOption(nil)
+						if onField {
+							form, field = nil, order
+						}
+						s := editFieldPage(t, caps, []BindOption{group}, form, field)
+						if len(s.faults) > 0 {
+							t.Fatalf("%s under %s: faults %q", name, gname, s.faults)
+						}
+						got := slices.Concat(chain(s, "f"), []string{attr(s.byID["p"], "data-keys")})
+						if seen == nil {
+							seen = got
+						} else if !slices.Equal(seen, got) {
+							t.Errorf("mod %q, %s under %s (on the field: %v): another order wrote another keymap:\n%q\n%q", caps.Mod, name, gname, onField, seen, got)
+						}
+					}
+				}
+			}
+		}
+	}
+	// CocoaEditShortcuts on a host whose mod is ctrl, ReadlineKeys and
+	// CocoaKeys on the form: ctrl+a goes to the line's start in either
+	// order.
+	for _, order := range permutations([]BindOption{ReadlineKeys(), CocoaKeys()}) {
+		s := editFieldPage(t, ctrlHost, []BindOption{cocoaEdit}, order, nil)
+		if got := lookup(s, ctrlHost, "f", "ctrl+a"); got != hotty.LineStart {
+			t.Errorf("ctrl+a: %q (%q)", got, chain(s, "f"))
+		}
+	}
+	// A palette on a Mac host: CUAKeys and CUAEditShortcuts on the app,
+	// ReadlineKeys on the field. super+a is given back with the rest of
+	// the Mac's edit shortcuts, and ctrl+a selects all.
+	s := editFieldPage(t, superHost, []BindOption{CUAKeys(), cuaEdit}, nil, []BindOption{ReadlineKeys()})
+	for _, k := range []string{"super+a", "super+c", "super+v", "super+z"} {
+		if got := lookup(s, superHost, "f", k); got != "" {
+			t.Errorf("%s: %q, want it given back (%q)", k, got, chain(s, "f"))
+		}
+	}
+	if got := lookup(s, superHost, "f", "ctrl+a"); got != hotty.SelectAll {
+		t.Errorf("ctrl+a: %q (%q)", got, chain(s, "f"))
+	}
 }
 
 // An Unbind of an edit-shortcut key, on the field or on the form, changes
