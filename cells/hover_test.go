@@ -149,6 +149,20 @@ func TestHoverDark(t *testing.T) {
 	if got := over(t, hoverScreen(t, doc("light")), "p"); got.Bg != "accent" || got.Fg != "" {
 		t.Fatalf("light: %+v", got)
 	}
+	// dark: is after hover: in the sheet, at the same specificity: a
+	// dark: class is over a hover: class under .dark, and over a plain
+	// one before or after it in the attribute.
+	c := hoverScreen(t, `<div id="root" class="dark"><p id="p" class="dark:bg-muted hover:bg-accent dark:text-primary text-destructive">p</p><p id="q">q</p></div>`)
+	if got := cellAt(t, c, "p"); got.Bg != "muted" || got.Fg != "primary" {
+		t.Fatalf("dark, not hovered: %+v", got)
+	}
+	if got := over(t, c, "p"); got.Bg != "muted" || got.Fg != "primary" {
+		t.Fatalf("dark, hovered: %+v", got)
+	}
+	c = hoverScreen(t, `<div id="root" class="light"><p id="p" class="dark:bg-muted hover:bg-accent">p</p></div>`)
+	if got := over(t, c, "p"); got.Bg != "accent" {
+		t.Fatalf("light, hovered: %+v", got)
+	}
 }
 
 // hoverCase is a kit component lit under the pointer: its markup (with

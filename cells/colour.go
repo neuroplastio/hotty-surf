@@ -209,10 +209,9 @@ func rolesAt(l *layout, n *html.Node) (fg, bg Role) {
 // inline style, each over the one before, as utilities and an inline
 // style win over a component's rules.
 //
-// While n is hovered (hov), the kit's :hover colours are over its
-// component's, and its hover: classes over its other classes (a :hover
-// rule is more specific than the class it varies), dark:hover: over
-// hover: (Tailwind's order of variants).
+// Its classes come in Tailwind's order (variantOf): the plain ones, then
+// hover: while n is hovered, then dark: under .dark, then dark:hover:.
+// While n is hovered, the kit's :hover colours are over its component's.
 func coloursOf(n *html.Node, hov bool) (fg, bg Role) {
 	if n.Type != html.ElementNode {
 		return "", ""
@@ -224,7 +223,10 @@ func coloursOf(n *html.Node, hov bool) (fg, bg Role) {
 			fg, bg = cmp.Or(hf, fg), cmp.Or(hb, bg)
 		}
 	}
-	for pass := range 3 {
+	for pass := range 4 {
+		if pass == 1 && !hov || pass == 2 && !dark || pass == 3 && !(hov && dark) {
+			continue
+		}
 		for c := range strings.FieldsSeq(attr(n, "class")) {
 			// The scheme's variant, under .dark; the hover's, while n is
 			// hovered; a state or a width the Screen doesn't know is left
@@ -238,9 +240,6 @@ func coloursOf(n *html.Node, hov bool) (fg, bg Role) {
 			} else if r, ok := classRole(v, "bg-"); ok {
 				bg = r
 			}
-		}
-		if !hov {
-			break
 		}
 	}
 	for d := range strings.SplitSeq(attr(n, "style"), ";") {

@@ -96,7 +96,9 @@ The Screen never resolves a colour value.
 - **The scheme**: `dark:` classes apply under the nearest `.dark` (the
   root's, as the kit and plx set it), not under `.light` or neither.
   `hover:` applies while the element is hovered (see Hover). Other
-  variants aren't read.
+  variants aren't read. The classes come in the stylesheet's order,
+  not the attribute's: the plain ones, then `hover:`, then `dark:`,
+  then `dark:hover:`, each over the ones before for the same property.
 - **Roles the Screen draws itself**: muted text, a placeholder, a chart's
   labels and values, a progress bar's track: `muted-foreground` (Dim in
   Lines, not in Cells). `hr` and a table head's rule: `border`. A text
@@ -179,10 +181,11 @@ delta takes out leaves it.
 
 - **`hover:` classes**: an element in the chain reads its `hover:`
   classes as it reads the same classes without the variant: colours,
-  looks and layout. They are over its other classes, as a `:hover` rule
-  is more specific than the class it varies; `dark:hover:` (or
-  `hover:dark:`) is over `hover:` under `.dark`, and in no scheme else.
-  In a colour, it is read where `dark:` is (Colours); in the layout's
+  looks and layout. They are over its plain classes, but not over a
+  `dark:` class under `.dark`, which comes after them in the sheet at
+  the same specificity; `dark:hover:` (or `hover:dark:`) is over both
+  under `.dark`, and in no scheme else (Colours, the scheme). In a
+  colour, it is read where `dark:` is (Colours); in the layout's
   classes, where a class is, without `dark:`. Two readings leave the
   hover out: a list's marker (`hover:list-disc`), and whether an
   element is hidden from Tab and the focus.

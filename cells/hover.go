@@ -144,9 +144,11 @@ func hoverClass(t string) (v string, ok bool) {
 // while it is hovered, in either order. ok is false for a variant the
 // element isn't in (dark: outside .dark, hover: while not hovered) or
 // one the Screen doesn't know. rank is where the token's rule comes in
-// the cascade (coloursOf): 0 with no hover:, 1 with hover:, 2 with
-// hover: and dark:, as Tailwind orders its variants after the utilities,
-// and dark after hover.
+// the cascade (coloursOf): 0 with neither, 1 with hover:, 2 with dark:,
+// 3 with both. Tailwind writes the variants after the utilities, dark
+// after hover, and the hover rule of one variant is no more specific
+// than the dark rule of another (:is(.dark *) is a class), so the later
+// wins; both together are more specific than either.
 func variantOf(t string, dark, hov bool) (v string, rank int, ok bool) {
 	hovered, darkened := false, false
 	for {
@@ -162,11 +164,11 @@ func variantOf(t string, dark, hov bool) (v string, rank int, ok bool) {
 			}
 			t, darkened = t[len("dark:"):], true
 		default:
-			switch {
-			case hovered && darkened:
-				rank = 2
-			case hovered:
+			if hovered {
 				rank = 1
+			}
+			if darkened {
+				rank += 2
 			}
 			return t, rank, strings.IndexByte(t, ':') < 0
 		}
