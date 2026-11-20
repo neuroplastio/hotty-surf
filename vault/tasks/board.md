@@ -123,7 +123,10 @@ the last release.
   60 µs target for nav's layout and repaint, at about 85.
 - [ ] **The tooltip at an unclamped scroll:** drawTip reads the scroll
   before the pass clamps it, so a tip can move on an unrelated relayout
-  (journal 2026-11-20).
+  (journal 2026-11-20). Clamping first isn't all of it: a wheel on the
+  document and a reveal change the scroll and keep the layout, so the
+  tip would still be drawn at the scroll before. It changes what the
+  Screen draws, with its own tests, and TestWalkGolden's golden again.
 
 ### Before v0.7.0
 

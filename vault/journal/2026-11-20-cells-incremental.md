@@ -58,28 +58,50 @@ nav, compiled, in cells, as shares of the benchmark's loop:
 
 ## What holds
 
-- **The public differential**: the screen-memos one, widened. It adds
-  selects and textareas, more classes and attributes, a scrolled box, a
-  column with a growing item, a popover, a table, a form, a listbox
-  with an active descendant, tooltips, a chart with a legend, Draw at
-  random offsets, Dirty and extra Cells. Over 1,400 runs and 211,400
-  steps, the branch's dump is main's byte for byte, with no panics. That
-  holds at the start of the work and at the end.
+- **TestWalkGolden** (cells/walk_golden_test.go) holds what a Screen
+  shows to a golden written at main before this change, when nothing
+  was kept between passes. Its 1,400 runs are every story in a plain, a
+  dark and a muted wrapper, and random markup with what a layout keeps
+  beyond the flow: a scrolled box, a column with a growing item, a
+  popover, a table, a form, a listbox with an active descendant,
+  tooltips, and a chart with a legend. Each run takes 150 steps of every
+  kind: deltas of every op, keys, the pointer, resizes, fields, focus,
+  paste and cut. After each step it hashes Lines, Cells, Draw at random
+  offsets, Dirty, the cursor, the selection, At and the events. All
+  1,400 runs (211,400 steps) are main's, byte for byte, with no panics.
+  `make check` makes a fortieth of them; `-walk-all` makes every one.
 - **CheckFresh** (cells/export_test.go) holds a Screen's layout and grid
   to a pass that keeps nothing: the canvas, the boxes, the fields and
   scrolled boxes, the caret, the height, Cells' grid and the snapshot
-  shown. TestIncrementalIsFresh walks half the stories and 30 random
-  documents through 40 steps each with it. It catches each of these
-  breakages: a text that doesn't forget its record, a chart without its
-  label-row dependency, painting that ignores the recoloured, a shown
-  row taken regardless, and canvas rows not blanked.
-- **The fresh check in the differential** found 29 steps of 210,000
-  where a fresh pass differs. Every one is the tooltip. drawTip reads
-  the scroll before the pass clamps it, so a layout drawn before a clamp
-  places the tip where a pass after it doesn't. With drawTip off, none
-  is left. main does the same, and the public differential shows the
-  branch keeps it as it is. It is a fix of its own (clamp the scroll
-  before the tip), which changes what main draws.
+  shown. TestIncrementalIsFresh walks every story and 150 random
+  documents through 60 steps each with it. Its vocabulary has heights
+  in vh, colour-only class swaps inside muted text, and a chart whose
+  bars change under its legend. Four targeted tests hold what the walk
+  might miss: a vh box on a taller Screen, a colour-only change that
+  ends or starts the muted text, a legend whose plot loses its bars,
+  and a growing item that stops growing. Each check fails a test when
+  it is taken out:
+  - the Screen's height a record read (VhResize, and the walk);
+  - laying out again on a colour-only change that unmutes
+    (ColourOnlyUnmutes, and the walk);
+  - the legend's dependency on its figure (LegendFollowsPlot, and the
+    walk), and the dependencies as a whole;
+  - grown in the key (GrownIsKept);
+  - a text that doesn't forget its record, a chart without its
+    label-row dependency, painting that ignores the recoloured, a shown
+    row taken regardless, and canvas rows not blanked.
+- **A box scrolled past its end** is scrolled back, and the pass laid out
+  again. A record of that pass is never replayed: the pass after looks
+  up every record on the box's path with the same key, and none of them
+  holds, because the offset it read changed. With the replay made to
+  panic, the walks and TestWalkGolden pass.
+- **Tooltips** differ from a fresh pass in a few steps. drawTip reads the
+  document's scroll before the pass bounds it, so a tip drawn before
+  the scroll is bounded sits where a pass after it, for the same state,
+  doesn't put it. main does the same, and TestWalkGolden shows the
+  branch keeps it. TestIncrementalIsFresh takes the tip away before
+  CheckFresh. Where the tip should be drawn changes what the Screen
+  shows, so it is left for a change of its own: the board has it.
 
 ## The numbers
 
@@ -96,7 +118,7 @@ went from 14 down to 7. The figures are medians, per frame:
 | unchanged | 37 | 37 | 28,392 | 28,366 | 155 | 155 |
 
 Draw alone, timed apart from Update, five rounds each, alternating, at
-a load of 120 to 176 (other sessions' builds): nav 671 → 159 µs, hover
+a load of 120 to 176 (other builds): nav 671 → 159 µs, hover
 75 → 23, label 173 → 41, box 89 → 89, unchanged 8 → 8. On a quieter
 machine (load 9), nav's Draw was 82 to 95 µs against main's 360 to 405.
 
@@ -106,7 +128,7 @@ and more allocations.
 
 ## Short of the target
 
-The brief's target for nav's layout and repaint was 60 µs. The branch
+The target for nav's layout and repaint was 60 µs. The branch
 is at about 85 µs on a quiet machine. Per tab switch, 13 elements are
 laid out again: the two items, measured and drawn, and their ancestors
 up to the body. The rest of the document is replayed. What's left of

@@ -230,7 +230,9 @@ attributes return when the modal closes.
     element recoloured since, is the row shown.
   - `CheckFresh` (cells/export_test.go) holds both to a pass that keeps
     nothing, and `TestIncrementalIsFresh` walks the stories and random
-    markup through every kind of step with it.
+    markup through every kind of step with it. `TestWalkGolden` holds
+    what long random walks show to a golden written before the Screen
+    kept anything between passes.
 
 ## Insides that other packages reach
 
