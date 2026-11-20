@@ -2034,3 +2034,78 @@ its own for the maintainer to decide:
   of the nav's update on a host;
 - the Screen laying its whole document out on any change but a
   colour's, about 280 µs of the nav's update in cells.
+
+## Editing keymaps: ReadlineKeys, CUAKeys and CocoaKeys (the maintainer, 2026-11-20)
+
+A host's mod (SPEC §10.4) did two jobs: what `mod+` means, and which of
+§10.2's two tables a field starts from. The maintainer wants an app to
+pick the second from its own config. plx keeps super as its mod and
+wants a field to edit as on Linux.
+
+```go
+func ReadlineKeys() BindOption // was Readline: GNU Readline's keys
+func CUAKeys() BindOption      // IBM's Common User Access: Windows', Linux's
+func CocoaKeys() BindOption    // macOS's text system (StandardKeyBinding)
+```
+
+```go
+var keys surf.BindOption // nil: the host's own
+switch cfg.Keymap {
+case "cua":
+	keys = surf.CUAKeys()
+case "cocoa":
+	keys = surf.CocoaKeys()
+}
+surf.On(ctx, "app", surf.Bind(keys))
+surf.On(ctx, "query", surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k")))
+```
+
+- **The editing keymaps** are ReadlineKeys, CUAKeys and CocoaKeys, each
+  a group, named by the maintainer; `Readline` is renamed, which breaks
+  the approved v0.7 API by the maintainer's choice. Each doc cites its
+  source: GNU Readline's manual ("Bindable Readline Commands"), IBM's
+  CUA guidelines (SC34-4399-00, 1992, linked as a scan, since IBM no
+  longer hosts it), AppKit's StandardKeyBinding.dict. Not one function
+  of a `hotty.Platform`: a Platform carries the edit shortcuts, which
+  are the host's, and its zero value is ctrl, so an unset config would
+  pick CUA.
+- **They layer:** one Bind holds several, read in order, a later
+  binding replacing an earlier one of the same key:
+  `surf.Bind(surf.CUAKeys(), surf.ReadlineKeys())` is the desktop's
+  keys with readline's over them.
+- **What each holds:** its own table of §10.2 (CUA 6 keys, Cocoa 14),
+  and the other table's keys bound to `program`, the give-backs: from
+  a field they reach the program, as an unbound key does on that
+  platform. Without them CUA on a Mac host leaves Cocoa's ctrl+k
+  deleting text. Not the every-host keys, which both share, and not
+  any key the host's edit shortcuts hold (`Platform.Edit`, else
+  `DefaultEdit(Mod)`): those stay the host's and the user's (§10.2),
+  as TerminalKeys leaves ctrl+a for `mod+a`. The group is the same on
+  every host but for those keys, so order means the same everywhere.
+- **Derived, not copied:** the tables are the keys whose action differs
+  between `hotty.Resolve` where mod is ctrl and where it is super, both
+  with no edit shortcuts, made once a process and read once a frame,
+  less the host's edit keys. Only the two makers refer to them.
+- **Mod stays the host's:** how `mod+` reads, the keycaps, the edit
+  shortcuts and the host's scrolling.
+- **Give-backs aren't keys given to the program** around an element: a
+  nearer yielding binding (Readline's ctrl+k on a field) still takes
+  them. `Action(hotty.Program, …)` stays a fault; only these groups
+  write `program` from Bind.
+- **Unbind under them** gives a key back to the keymap's binding (its
+  action, or `program` for a give-back), the nearest one on the element
+  or around it, not to the host's platform: `key=default` would reach
+  the host's table, the coupling this undoes. The resolver writes it,
+  so a host and cells read the same.
+- **Outside a field** the give-backs reach the program from a button
+  too, so it no longer scrolls with the other platform's go-to-top and
+  go-to-bottom keys (super+arrow_up/down under CUA, ctrl+home/end under
+  Cocoa). Accepted: writing them per field costs ~280 bytes a field,
+  and a field-only action would be a SPEC proposal. On a button
+  directly either keymap is one fault, as Readline is.
+- **Where:** once, on the outermost element of each surface's view
+  (`root` is the runtime's own id). The kit draws its fields where the
+  view puts them, so they get it too.
+- **Cost:** 19 or 20 bindings, 411 to 466 bytes on the element, sent
+  with a full document; a render copies them and resolves them as
+  Readline's.

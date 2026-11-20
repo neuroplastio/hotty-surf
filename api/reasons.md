@@ -759,3 +759,13 @@ A cells-only `cells.Template`, drawn by the Screen's own code, was proposed firs
 - `surf.Compiled`: what Compile returns and With hangs on; it holds no surface's state, so one serves every surface. Generic in its props, so With is typed and its comparison is `==`.
 - `surf.Compiled.With`: an instance in a view, by an instance key that stays with it as rows move: kept where its props are equal, rendered alone and filled where they aren't, and view(props) outside a surface.
 - `cells.Screen.Draw`: the Screen's cells written into the program's own grid at a place, with no grid made each frame, and counted as Cells for Dirty: chrome a program draws itself is a Screen the size of its place.
+
+## Editing keymaps apart from the host's mod (the maintainer, 2026-11-20)
+
+The maintainer: an app picks a desktop's editing keys from its own config, apart from the host's mod. Today one setting does two jobs: a host's mod (SPEC §10.4) says what `mod+` means, and it also picks which of §10.2's two tables a field starts from. ReadlineKeys, CUAKeys and CocoaKeys are the editing keymaps, each a group of Bind's, named by the maintainer, each doc linking its source. They layer: one Bind holds several, read in order, a later binding replacing an earlier one of the same key.
+
+- `surf.CUAKeys`: plx keeps super as its mod, so ctrl stays the terminal's, and wants a field to edit as on Linux: ctrl+backspace deletes a word, and ctrl+k reaches plx and doesn't delete the line. IBM's Common User Access is the Windows and Linux desktop's keys; the group binds them and gives Cocoa's back to the program, whatever the host's mod. Named by the maintainer.
+- `surf.CocoaKeys`: the other half: macOS's text system keys (AppKit's StandardKeyBinding.dict) on a host whose mod is ctrl, for a user who wants Cocoa's ctrl+a, ctrl+e, ctrl+k and the super moves in a field. Named by the maintainer.
+- `surf.ReadlineKeys`: `surf.Readline` renamed by the maintainer, so the three editing keymaps read alike; the approved v0.7 name goes, a break the maintainer made. Its doc names its source, GNU Readline's manual, and how it layers with the other two.
+- `surf.Bind`, `surf.BindOption` (docs only): the options list gains the editing keymaps, and Bind's doc says how groups layer. CUAKeys' and CocoaKeys' give-backs give keys to the program, so "surf.Key gives keys to the program" gains a clause.
+- `surf.Unbind` (doc only): under CUA or Cocoa, on the element or around it, Unbind gives a key back to that keymap's binding, not to the host's platform. Otherwise readline without ctrl+k, under CUA on a host whose mod is super, would delete to the line's end, Cocoa's way, the coupling this change undoes.
