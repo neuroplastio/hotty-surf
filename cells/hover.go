@@ -331,3 +331,194 @@ func sidebarItem(n *html.Node) bool {
 	nav := closest(p, func(a *html.Node) bool { return a.DataAtom == atom.Nav })
 	return nav != nil && nav.Parent != nil && tokens(nav.Parent, "class", "sidebar")
 }
+
+// pointerEvents is an element's own pointer-events, which inherits:
+// none, auto, or the parent's (peInherit).
+type pointerEvents int8
+
+const (
+	peInherit pointerEvents = iota
+	peNone
+	peAuto
+)
+
+// takesPointer is what a host hits where hit is drawn: the innermost of
+// hit and the elements around it whose pointer-events isn't none, as a
+// host's hit test passes over those (Blitz's); nil for none.
+func takesPointer(hit *html.Node) *html.Node {
+	var at [32]*html.Node
+	chain := appendChain(at[:0], hit)
+	// From the outermost in, as pointer-events inherits.
+	var takes *html.Node
+	none := false
+	for i := len(chain) - 1; i >= 0; i-- {
+		switch pointerOf(chain[i]) {
+		case peNone:
+			none = true
+		case peAuto:
+			none = false
+		}
+		if !none {
+			takes = chain[i]
+		}
+	}
+	return takes
+}
+
+// pointerOf is n's own pointer-events: its inline style's, a modal's
+// inert (the runtime's pointer-events:none, by its mark too), its
+// pointer-events- class, else the kit's (kitPointer).
+func pointerOf(n *html.Node) pointerEvents {
+	for d := range strings.SplitSeq(attr(n, "style"), ";") {
+		k, v, ok := strings.Cut(d, ":")
+		if !ok || !strings.EqualFold(strings.TrimSpace(k), "pointer-events") {
+			continue
+		}
+		v, _ = strings.CutSuffix(strings.TrimSpace(strings.ToLower(v)), "!important")
+		switch strings.TrimSpace(v) {
+		case "none":
+			return peNone
+		case "auto":
+			return peAuto
+		}
+	}
+	if has(n, "data-hotty-modal-inert") {
+		return peNone
+	}
+	switch {
+	case tokens(n, "class", "pointer-events-none"):
+		return peNone
+	case tokens(n, "class", "pointer-events-auto"):
+		return peAuto
+	}
+	return kitPointer(n)
+}
+
+// kitPointer is the pointer-events the kit's sheet gives n (ui's kit.css,
+// Basecoat's): none for its disabled controls, buttons, tabs and items,
+// a disabled field's label, a key cap, a chart's tooltip and the toaster;
+// auto for a toast in it. Its svg rules aren't read: an icon is its
+// control's glyph, not an element of its own (iconLabel).
+func kitPointer(n *html.Node) pointerEvents {
+	if n.Type != html.ElementNode {
+		return peInherit
+	}
+	cls := func(t string) bool { return tokens(n, "class", t) }
+	in := func(t string) bool {
+		return closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", t) }) != nil
+	}
+	parent := func(t string) bool { return n.Parent != nil && tokens(n.Parent, "class", t) }
+	off := disabled(n) || attr(n, "aria-disabled") == "true"
+	role := attr(n, "role")
+	switch {
+	case cls("kbd"), cls("chart-tooltip"), cls("toaster"), cls("combobox-trigger-icon"):
+		return peNone
+	case cls("toast") && in("toaster"):
+		return peAuto
+	case disabled(n) && cls("btn"):
+		return peNone
+	case n.DataAtom == atom.Summary && n.Parent != nil && n.Parent.DataAtom == atom.Details && parent2(n, "accordion") &&
+		(attr(n, "aria-disabled") == "true" || attr(n.Parent, "aria-disabled") == "true"):
+		return peNone
+	case n.DataAtom == atom.Input && role == "combobox" && disabled(n) &&
+		(parent("combobox") || parent("combobox-chips") || in("combobox") &&
+			closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", "input-group") || has(a, "data-popover") }) != nil):
+		return peNone
+	case has(n, "data-clear") && disabled(n) && in("combobox"):
+		return peNone
+	case role == "option" && off && (in("combobox") || selectList(n)):
+		return peNone
+	case role == "menuitem" && in("command") && (off || attr(n, "data-disabled") == "true"):
+		return peNone
+	case (role == "menuitem" || role == "menuitemcheckbox" || role == "menuitemradio") && off && in("dropdown-menu"):
+		return peNone
+	case has(n, "data-indicator") && in("dropdown-menu"):
+		return peNone
+	case n.DataAtom == atom.Button && disabled(n) && dialogButton(n):
+		return peNone
+	case n.DataAtom == atom.Input && disabled(n) && (parent("field") || cls("input")) && fieldInput(n, cls("input")):
+		return peNone
+	case labelOfDisabled(n):
+		return peNone
+	case n.DataAtom == atom.Button && disabled(n) && n.Parent != nil && tokens(n.Parent, "class", "select") && n.Parent.DataAtom != atom.Select:
+		return peNone
+	case off && sidebarItem(n):
+		return peNone
+	case role == "tab" && off && n.Parent != nil && attr(n.Parent, "role") == "tablist" && parent2(n, "tabs"):
+		return peNone
+	}
+	return peInherit
+}
+
+// parent2 says whether n's parent's parent has the class.
+func parent2(n *html.Node, class string) bool {
+	return n.Parent != nil && n.Parent.Parent != nil && tokens(n.Parent.Parent, "class", class)
+}
+
+// selectList says whether n is in a .select's list, not a native select.
+func selectList(n *html.Node) bool {
+	s := closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", "select") })
+	return s != nil && s.DataAtom != atom.Select
+}
+
+// dialogButton is a button of a dialog's or a command dialog's own (its
+// close), as the kit's sheet names them: a child of a child of .dialog,
+// of .command in .command-dialog, or one in a form[method=dialog] there.
+func dialogButton(n *html.Node) bool {
+	p := n.Parent
+	if p != nil && p.DataAtom == atom.Form && strings.EqualFold(attr(p, "method"), "dialog") {
+		p = p.Parent
+	}
+	if p == nil {
+		return false
+	}
+	if tokens(p, "class", "command") && p.Parent != nil && tokens(p.Parent, "class", "command-dialog") {
+		return true
+	}
+	return p.Parent != nil && tokens(p.Parent, "class", "dialog")
+}
+
+// fieldInput is an input the kit's disabled field rule names: of a text
+// type, a range, or (an .input) of none.
+func fieldInput(n *html.Node, input bool) bool {
+	t, ok := get(n, "type")
+	if !ok {
+		return input
+	}
+	switch strings.ToLower(t) {
+	case "text", "email", "password", "number", "file", "tel", "url", "search",
+		"date", "datetime-local", "month", "week", "time", "range":
+		return true
+	}
+	return false
+}
+
+// labelOfDisabled is a field's label the kit takes the pointer from: by
+// a disabled control it holds or that follows it, or after a disabled
+// .peer.
+func labelOfDisabled(n *html.Node) bool {
+	p := n.Parent
+	isLabel := tokens(n, "class", "label") || n.DataAtom == atom.Label && p != nil &&
+		(tokens(p, "class", "field") || p.DataAtom == atom.Section && p.Parent != nil && tokens(p.Parent, "class", "field"))
+	if !isLabel {
+		return false
+	}
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		if k.Type == html.ElementNode && disabled(k) {
+			return true
+		}
+	}
+	next := n.NextSibling
+	for next != nil && next.Type != html.ElementNode {
+		next = next.NextSibling
+	}
+	if next != nil && disabled(next) {
+		return true
+	}
+	for s := n.PrevSibling; s != nil; s = s.PrevSibling {
+		if s.Type == html.ElementNode && tokens(s, "class", "peer") && disabled(s) {
+			return true
+		}
+	}
+	return false
+}

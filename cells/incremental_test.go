@@ -255,6 +255,8 @@ func randomDoc(r *rand.Rand) string {
 	b.WriteString(`<div id="hk" class="flex gap-1"><button id="hb1" class="btn" data-variant="outline">out</button><button id="hb2" class="btn" data-variant="ghost">ghost</button><a id="hb3" class="btn" data-variant="link" href="#x">link</a><a id="hb4" class="badge" href="#x">badge</a><button id="hb6" class="btn">go</button></div>`)
 	b.WriteString(`<table id="ht" class="table"><tbody id="htb"><tr id="htr1"><td id="htd1">one</td></tr><tr id="htr2" role="row" aria-selected="true"><td id="htd2">two</td></tr></tbody></table>`)
 	b.WriteString(`<p id="hp" class="hover:bg-accent hover:text-accent-foreground">lit <span id="hps" class="hover:underline text-primary">inside</span></p>`)
+	b.WriteString(`<div id="hn" class="flex gap-1"><button id="hn1" class="btn" disabled>off</button><div class="tabs"><div role="tablist"><button id="hn2" role="tab" aria-disabled="true" data-tooltip="no">tab</button></div></div>` +
+		`<div id="hn3" data-hotty-modal-inert style="pointer-events:none!important"><p id="hn4" class="hover:bg-accent pointer-events-auto">back</p><p id="hn5" class="hover:bg-accent">behind</p></div></div>`)
 	b.WriteString(`<div id="mu" class="text-muted-foreground"><p id="mu1" class="text-primary x">coloured</p><p id="mu2" class="x">muted</p></div>`)
 	b.WriteString(`<div id="vh" class="overflow-y-auto max-h-[40vh]"><p id="vh1">a</p><p id="vh2">b</p><p id="vh3">c</p><p id="vh4">d</p><p id="vh5">e</p></div>`)
 	b.WriteString(`<div id="ch" data-slot="chart"><svg id="chs" class="chart"><rect id="cr1" data-value="3"></rect><rect id="cr2" data-value="5"></rect></svg>` +

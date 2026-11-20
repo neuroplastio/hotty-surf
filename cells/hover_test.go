@@ -486,3 +486,139 @@ func TestHoverTooltipIsTheChains(t *testing.T) {
 		t.Fatalf("the focus lost: tip %v", idOf2(c.tip))
 	}
 }
+
+// A pointer-events:none rule of the kit's sheet, mirrored (kitPointer):
+// with the pointer over #h, the chain starts at want.
+type pointerCase struct {
+	selector, doc, want string
+}
+
+var pointerCases = []pointerCase{
+	{`.btn:disabled`, `<button id="h" class="btn" disabled>Go</button>`, ""},
+	{`.accordion>details[aria-disabled=true]>summary,.accordion>details>summary[aria-disabled=true]`,
+		`<div class="accordion"><details aria-disabled="true"><summary id="h">One</summary>body</details></div>`, ""},
+	{`.combobox>input[role=combobox]:disabled`, `<div class="combobox"><input id="h" role="combobox" disabled value="abc"></div>`, ""},
+	{`:is(.combobox .input-group input[role=combobox],.combobox [data-popover] input[role=combobox]):disabled`,
+		`<div class="combobox"><div class="input-group"><input id="h" role="combobox" disabled value="abc"></div></div>`, ""},
+	{`.combobox [data-clear]:disabled`, `<div class="combobox"><button id="h" data-clear disabled>Clear</button></div>`, ""},
+	{`.combobox [role=option]:disabled,.combobox [role=option][aria-disabled=true]`,
+		`<div class="combobox"><div data-popover aria-hidden="false"><div role="listbox"><div id="h" role="option" aria-disabled="true">One</div></div></div></div>`, ""},
+	{`.combobox-chips>input[role=combobox]:disabled`, `<div class="combobox-chips"><input id="h" role="combobox" disabled value="abc"></div>`, ""},
+	{`.command-dialog>.command>:is(button,form[method=dialog]>button):disabled,.command-dialog>.command>:is(button,form[method=dialog]>button) svg`,
+		`<div class="command-dialog"><div class="command"><button id="h" disabled>Close</button></div></div>`, ""},
+	{`.command [role=menuitem]:disabled,.command [role=menuitem][aria-disabled=true]`,
+		`<div class="command"><div role="menu"><div id="h" role="menuitem" aria-disabled="true">Copy</div></div></div>`, ""},
+	{`.command [role=menuitem][data-disabled=true]`,
+		`<div class="command"><div role="menu"><div id="h" role="menuitem" data-disabled="true">Copy</div></div></div>`, ""},
+	{`.dialog>*>:is(button,form[method=dialog]>button):disabled,.dialog>*>:is(button,form[method=dialog]>button) svg`,
+		`<div class="dialog"><div><form method="dialog"><button id="h" disabled>Close</button></form></div></div>`, ""},
+	{`.dropdown-menu :is([role=menuitem],[role=menuitemcheckbox],[role=menuitemradio]):disabled,.dropdown-menu :is([role=menuitem],[role=menuitemcheckbox],[role=menuitemradio])[aria-disabled=true]`,
+		`<div class="dropdown-menu"><div data-popover aria-hidden="false"><div role="menu"><div id="h" role="menuitem" aria-disabled="true">Copy</div></div></div></div>`, ""},
+	{`.dropdown-menu [data-indicator]`, `<div class="dropdown-menu"><span id="h" data-indicator>Mark</span></div>`, ""},
+	{`.kbd`, `<span id="h" class="kbd">Ctrl</span>`, ""},
+	{`:is(.field>label,.field>section>label,.label):is(:where(.peer):disabled~*),:is(.field>label,.field>section>label,.label):has(>:disabled),:is(.field>label,.field>section>label,.label):has(+:disabled)`,
+		`<div class="field"><label id="h">Name</label><input disabled value="x"></div>`, ""},
+	{`:is(.field>input[type=range],.input[type=range]):disabled`, `<input id="h" class="input" type="range" disabled>`, ""},
+	{`.select:not(select)>button:disabled`, `<div class="select"><button id="h" disabled>Pick</button></div>`, ""},
+	{`.select:not(select) [role=option]:disabled,.select:not(select) [role=option][aria-disabled=true]`,
+		`<div class="select"><div data-popover aria-hidden="false"><div role="listbox"><div id="h" role="option" aria-disabled="true">One</div></div></div></div>`, ""},
+	{`:is(.sidebar>nav>section ul li>a,.sidebar>nav>section ul li>button,.sidebar>nav>section ul li>details>summary):disabled,:is(.sidebar>nav>section ul li>a,.sidebar>nav>section ul li>button,.sidebar>nav>section ul li>details>summary)[aria-disabled=true]`,
+		`<div class="sidebar"><nav><section><ul><li><a id="h" href="#x" aria-disabled="true">Home</a></li></ul></section></nav></div>`, ""},
+	{`.tabs>[role=tablist]>[role=tab]:disabled,.tabs>[role=tablist]>[role=tab][aria-disabled=true]`,
+		`<div class="tabs"><div role="tablist"><button role="tab" aria-selected="true">One</button><button id="h" role="tab" disabled>Two</button></div></div>`, ""},
+	{`.toaster`, `<div id="h" class="toaster">gap</div>`, ""},
+	{`.chart-tooltip`, `<div id="h" class="chart-tooltip">3 items</div>`, ""},
+	{`.combobox>svg,.combobox-trigger-icon`, `<div class="combobox"><span id="h" class="combobox-trigger-icon">v</span></div>`, ""},
+}
+
+// The pointer-events:none rules of the kit's sheet the chain doesn't
+// read, and why.
+var pointerNotRead = map[string]string{
+	`.accordion>details>summary>svg:last-child`: "an icon is its control's glyph (iconLabel), not an element drawn",
+	`.badge>svg`: "an icon",
+	`.btn svg`:   "an icon",
+	`.button-group>:is(span,label,output) svg`: "an icon",
+	`.combobox [role=option] svg`:              "an icon",
+	`.command [role=menuitem] svg`:             "an icon",
+	`.alert-dialog>*>header>figure svg`:        "an icon",
+	`.dropdown-menu :is([role=menuitem],[role=menuitemcheckbox],[role=menuitemradio]) svg`: "an icon",
+	`.empty figure svg`:                     "an icon",
+	`.input-group>svg`:                      "an icon",
+	`.item>figure svg`:                      "an icon",
+	`.select:not(select)>button svg`:        "an icon",
+	`.select:not(select) [role=option] svg`: "an icon",
+	`.tabs>[role=tablist]>[role=tab] svg`:   "an icon",
+	`:is(.field>input[type=checkbox][role=switch],.input[type=checkbox][role=switch]):before`: "a pseudo-element",
+	`[data-tooltip]:before`: "a pseudo-element: the tooltip's cells are what is under it",
+}
+
+// fieldDisabledRule is the kit's rule for a disabled field's input, too
+// long to list as its selector: it starts so.
+const fieldDisabledRule = `:is(.field>input[type=text]:not(:is(.command>header input,.dialog>*>header input))`
+
+// pointerRules are the selectors of the rules in sheet that set
+// pointer-events:none.
+func pointerRules(sheet string) []string {
+	var out []string
+	for i := 0; ; {
+		j := strings.Index(sheet[i:], "pointer-events:none")
+		if j < 0 {
+			return out
+		}
+		j += i
+		a := strings.LastIndexByte(sheet[:j], '}')
+		b := strings.IndexByte(sheet[a+1:], '{')
+		out = append(out, sheet[a+1:a+1+b])
+		i = j + 1
+	}
+}
+
+// An element the kit's sheet, a modal or its own style takes the pointer
+// from isn't hovered: the chain starts at the nearest one around it that
+// takes it, as a host's hit test passes over it. Every pointer-events:none
+// rule of the sheet is mirrored or named as not read.
+func TestHoverTakesNoPointer(t *testing.T) {
+	b, err := os.ReadFile("../ui/kit.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	listed := map[string]bool{}
+	for _, pc := range pointerCases {
+		listed[pc.selector] = true
+	}
+	for _, sel := range pointerRules(string(b)) {
+		if !listed[sel] && pointerNotRead[sel] == "" && !strings.HasPrefix(sel, fieldDisabledRule) {
+			t.Errorf("pointer-events:none on %s: neither mirrored (pointerCases) nor named (pointerNotRead)", sel)
+		}
+	}
+	cases := append(pointerCases,
+		pointerCase{fieldDisabledRule, `<div class="field"><input id="h" type="text" disabled value="abc"></div>`, ""},
+		pointerCase{"a modal's inert", `<div data-hotty-modal-inert style="pointer-events:none!important"><p id="h" class="hover:bg-accent">behind</p></div>`, "p"},
+		pointerCase{"a class", `<div class="pointer-events-none"><p id="h">through</p></div>`, "p"},
+		pointerCase{"auto inside none", `<div style="pointer-events:none"><p id="h" class="pointer-events-auto">back</p></div>`, "h"},
+		pointerCase{"a toast in the toaster", `<div class="toaster"><div id="h" class="toast"><div class="toast-content">Saved</div></div></div>`, "h"},
+	)
+	for _, pc := range cases {
+		c := hoverScreen(t, `<div id="root"><div id="p">`+pc.doc+`</div><p id="none">none</p></div>`)
+		col, row := cellIn(t, c, "h")
+		c.Move(col, row, 0)
+		holdFresh(t, c, pc.selector)
+		h := c.byID("h")
+		want := h.Parent
+		if pc.want != "" {
+			want = c.byID(pc.want)
+		}
+		if len(c.hovered) == 0 || !within(c.hovered[0], want) || pc.want != "h" && c.hovered[0] != want {
+			t.Errorf("%s: over #h, the chain is %s, want it from #%s", pc.selector, hoveredIDs(c), cmpOr(pc.want, "h's parent"))
+		}
+	}
+	// Lit as a host lights them: a disabled button keeps its look.
+	c := hoverScreen(t, `<div id="root"><button id="h" class="btn" disabled>Go</button><p id="none">x</p></div>`)
+	if got, was := over(t, c, "h"), cellAt(t, c, "h"); got != was || got.Bg != "primary" {
+		t.Errorf("a disabled button hovered: %+v, not hovered %+v", got, was)
+	}
+	c = hoverScreen(t, `<div id="root"><div data-hotty-modal-inert style="pointer-events:none!important"><p id="h" class="hover:bg-accent">behind</p></div></div>`)
+	if got := over(t, c, "h"); got.Bg != "" {
+		t.Errorf("behind a modal: %+v", got)
+	}
+}

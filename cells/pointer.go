@@ -367,8 +367,8 @@ func (c *Screen) point(col, row int) {
 }
 
 // pointed is what the hovered chain starts at in l: the innermost
-// element drawn at the pointer's cell; nil with no pointer, off the
-// Screen or over none.
+// element drawn at the pointer's cell that takes the pointer
+// (takesPointer); nil with no pointer, off the Screen or over none.
 func (c *Screen) pointed(l *layout) *html.Node {
 	col, row := c.ptrCol, c.ptrRow
 	if !c.ptrIn || c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
@@ -378,5 +378,5 @@ func (c *Screen) pointed(l *layout) *html.Node {
 	if y >= len(l.cv.rows) {
 		return nil
 	}
-	return l.cv.rows[y][col].own
+	return takesPointer(l.cv.rows[y][col].own)
 }

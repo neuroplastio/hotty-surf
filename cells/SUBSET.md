@@ -184,6 +184,21 @@ chased. A `Move` off the Screen and `Focus(false)` clear it; after
 `Focus(false)`, a `Move` sets it again. `Wheel` doesn't move the
 pointer.
 
+The chain starts at the innermost element under the pointer that takes
+it, as a host's hit test passes over what has `pointer-events:none`,
+which inherits: an inline `pointer-events` (`none`, `auto`), a modal's
+inert (`data-hotty-modal-inert`), `pointer-events-none` and
+`pointer-events-auto`, and the kit's rules: a disabled `.btn`, tab,
+accordion summary, sidebar item, a `.select`'s button, a dialog's own
+button, a disabled field's input and its label; a disabled or
+`aria-disabled` option or item of a combobox, a select, a command or a
+dropdown menu (a command's `data-disabled` too), a dropdown menu's
+indicator, a combobox's input, clear button and trigger icon; a `.kbd`,
+a `.chart-tooltip` and the `.toaster` (but a `.toast` in it). Its icon
+rules are not read (an icon is drawn as its control's glyph), nor a
+field's not taken from a command's or a dialog's header. Clicks, the
+surface's hover events and `At` still name the innermost element.
+
 - **`hover:` classes**: an element in the chain reads its `hover:`
   classes as it reads the same classes without the variant: colours,
   looks and layout. They are over its plain classes, but not over a
