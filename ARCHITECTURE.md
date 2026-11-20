@@ -35,7 +35,9 @@ A frame holds its handlers in an array by slot: the surface's
 two frames compare by slot and a kept instance puts its handlers back by
 the slots it noted. Where ids that went out of use take most of the
 slots, the surface compacts them after a frame is sent, and every
-noted slot is noted again.
+noted slot is noted again. A compaction starts a generation of slots
+for that frame: a frame made before it (an event's, read again after a
+handler that rendered) keeps reading its own.
 
 - **If the HTML is byte for byte the last render's,** the tree is the
   last one. Only the fields are checked (a render sets a field back to its

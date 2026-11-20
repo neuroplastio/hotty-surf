@@ -420,7 +420,7 @@ func (s *Surface) replay(ctx context.Context, f *rt.Frame, r *record, encl *rt.K
 	if len(r.slots) != len(r.order) || r.slotEpoch != sl.Epoch {
 		r.slots = r.slots[:0]
 		for _, id := range r.order {
-			r.slots = append(r.slots, sl.Slot(id))
+			r.slots = append(r.slots, f.Slot(id))
 		}
 		r.slotEpoch = sl.Epoch
 	}

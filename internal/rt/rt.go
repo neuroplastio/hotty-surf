@@ -100,11 +100,13 @@ func EditKeys(h *Handlers, program bool) string {
 
 // A Frame is one render's registrations.
 type Frame struct {
-	// on is each element's handlers, by its id's slot in slots (Get and
-	// Set reach them): an array, so that a kept compiled instance puts
-	// its handlers back by the slots it noted, with no hashing.
+	// on is each element's handlers, by its id's slot in gen, the
+	// generation of slots the frame was made in (Get and Set reach
+	// them): an array, so that a kept compiled instance puts its handlers
+	// back by the slots it noted, with no hashing.
 	on    []*Handlers
 	slots *Slots
+	gen   *slotGen
 	count int
 	// Order is the ids the frame registered (Set), in the order of the
 	// render.
@@ -210,79 +212,110 @@ func NewFrame(s any, p hotty.Platform, focused string, memo map[string]any, n ui
 	if slots == nil {
 		slots = &Slots{}
 	}
-	return &Frame{on: make([]*Handlers, len(slots.ids)), slots: slots, Platform: p, surface: s, focused: focused, memo: memo, n: n, KeyMark: keyMark}
+	g := slots.current()
+	return &Frame{on: make([]*Handlers, len(g.ids)), slots: slots, gen: g, Platform: p, surface: s, focused: focused, memo: memo, n: n, KeyMark: keyMark}
 }
 
 // Slots number the ids a surface registers handlers under, from render
 // to render: a frame holds its handlers in an array by slot, and a kept
 // compiled instance notes its ids' slots once. An id keeps its slot
-// until Compact; Epoch counts the Compacts, after which a noted slot is
-// noted again.
+// until Compact, which starts a generation of slots; Epoch counts the
+// Compacts, after which a noted slot is noted again.
 type Slots struct {
-	at    map[string]int32
-	ids   []string
+	gen   *slotGen
 	Epoch uint64
 }
 
+// A slotGen is a generation of slots: each id's, and the id in each. A
+// frame reads its handlers by the generation it was made in, which an
+// id given a slot after it joins in place; Compact starts another, so a
+// frame made before it (an event's, read again after a handler that
+// rendered) still reads its own.
+type slotGen struct {
+	at  map[string]int32
+	ids []string
+}
+
+func (x *Slots) current() *slotGen {
+	if x.gen == nil {
+		x.gen = &slotGen{}
+	}
+	return x.gen
+}
+
 // Slot is id's slot, given one where it has none.
-func (x *Slots) Slot(id string) int32 {
-	if i, ok := x.at[id]; ok {
+func (x *Slots) Slot(id string) int32 { return x.current().slot(id) }
+
+func (g *slotGen) slot(id string) int32 {
+	if i, ok := g.at[id]; ok {
 		return i
 	}
-	if x.at == nil {
-		x.at = map[string]int32{}
+	if g.at == nil {
+		g.at = map[string]int32{}
 	}
-	i := int32(len(x.ids))
-	x.at[id] = i
-	x.ids = append(x.ids, id)
+	i := int32(len(g.ids))
+	g.at[id] = i
+	g.ids = append(g.ids, id)
 	return i
 }
 
 // Len is how many ids have a slot.
-func (x *Slots) Len() int { return len(x.ids) }
+func (x *Slots) Len() int { return len(x.current().ids) }
 
-// Compact gives slots only to the ids f registered, in the order of
-// their slots, and moves f's handlers to them: ids that went out of use
-// no longer take room in every frame. A frame made before it, other
-// than f, reads its handlers wrongly after it.
+// Compact starts a generation of slots in which only the ids f
+// registered have one, in the order of their slots, and moves f's
+// handlers to it: ids that went out of use no longer take room in every
+// frame. f is of the current generation; a frame made before it keeps
+// reading its own.
 func (x *Slots) Compact(f *Frame) {
-	at := make(map[string]int32, f.count)
-	ids := make([]string, 0, f.count)
+	old := f.gen
+	g := &slotGen{at: make(map[string]int32, f.count), ids: make([]string, 0, f.count)}
 	on := make([]*Handlers, 0, f.count)
 	for i, h := range f.on {
 		if h != nil {
-			at[x.ids[i]] = int32(len(ids))
-			ids = append(ids, x.ids[i])
+			g.at[old.ids[i]] = int32(len(g.ids))
+			g.ids = append(g.ids, old.ids[i])
 			on = append(on, h)
 		}
 	}
-	x.at, x.ids = at, ids
+	x.gen = g
 	x.Epoch++
-	f.on = on
+	f.on, f.gen = on, g
 }
 
 func (f *Frame) slotsOf() *Slots {
 	if f.slots == nil {
 		f.slots = &Slots{}
 	}
+	if f.gen == nil {
+		f.gen = f.slots.current()
+	}
 	return f.slots
 }
 
 // Get is the handlers registered under id in this frame, nil for none.
 func (f *Frame) Get(id string) *Handlers {
-	if f == nil || f.slots == nil {
+	if f == nil || f.gen == nil {
 		return nil
 	}
-	if i, ok := f.slots.at[id]; ok && int(i) < len(f.on) {
+	if i, ok := f.gen.at[id]; ok && int(i) < len(f.on) {
 		return f.on[i]
 	}
 	return nil
 }
 
+// Slot is id's slot in the frame's generation, given one where it has
+// none.
+func (f *Frame) Slot(id string) int32 {
+	f.slotsOf()
+	return f.gen.slot(id)
+}
+
 // Set registers h under id, in place of what was (Order is the
 // caller's).
 func (f *Frame) Set(id string, h *Handlers) {
-	f.SetAt(f.slotsOf().Slot(id), h)
+	f.slotsOf()
+	f.SetAt(f.gen.slot(id), h)
 }
 
 // GetAt is the handlers in slot i, nil for none.
@@ -325,9 +358,12 @@ func (f *Frame) Each(fn func(id string, h *Handlers)) {
 	if f == nil {
 		return
 	}
+	if f.gen == nil {
+		return
+	}
 	for i, h := range f.on {
 		if h != nil {
-			fn(f.slots.ids[i], h)
+			fn(f.gen.ids[i], h)
 		}
 	}
 }
