@@ -79,6 +79,15 @@ the last release.
   keymaps). Built, with its tests on a host and in cells; the pack waits
   for the maintainer's sign, then `make api-approve`. Whether it goes
   before v0.7.0 is the maintainer's call: it isn't a coverage row.
+- [ ] **A Screen on the host's platform** (found verifying the editing
+  keymaps, 2026-11-20): a `cells.Screen` is always the zero Platform,
+  mod ctrl, with no setter for a Mod or edit shortcuts. So an app whose
+  mod is super, run in cells, reads `mod+` as ctrl there, and under
+  `CUAKeys` its `ctrl+a` is select all in cells but a key given to the
+  program on a super host: the edit-shortcut keys are the only place
+  the keymaps differ between the two. The keymaps themselves are the
+  same; the fix is a Screen that takes the host's Mod and Edit, an API
+  change for a pack.
 
 ### Landed after 2026-11-17
 
