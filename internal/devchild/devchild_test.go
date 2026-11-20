@@ -20,6 +20,7 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/devhook"
 	"neuroplast.io/hotty-surf/internal/devwire"
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // reloader is the reloader's end of a child's wire, scripted by a test:
@@ -626,5 +627,29 @@ func TestFailedHandoverKeepsEarlierSurfaceAttached(t *testing.T) {
 	<-driven
 	if output.Len() == 0 {
 		t.Fatal("earlier surface was detached after the failed handover")
+	}
+}
+
+// TestCheckCompiledAppWins: a dev build turns the check of compiled
+// instances on, but an app's own CheckCompiled holds over it, whether the
+// child takes the surface in Serve's catch-up (made before Serve) or in
+// New (made after).
+func TestCheckCompiledAppWins(t *testing.T) {
+	fresh()
+	t.Setenv("HOTTY_SURF_COMPILE_CHECK", "")
+	before := surf.New("before", templ.NopComponent, "")
+	before.CheckCompiled(false)
+	plain := surf.New("plain", templ.NopComponent, "")
+	serve(t, context.Background(), "app", &devwire.Welcome{})
+	after := surf.New("after", templ.NopComponent, "")
+	after.CheckCompiled(false)
+	if rt.Peek.Checking(before) {
+		t.Error("made before Serve: the dev default overrode CheckCompiled(false)")
+	}
+	if rt.Peek.Checking(after) {
+		t.Error("made after Serve: CheckCompiled(false) didn't hold")
+	}
+	if !rt.Peek.Checking(plain) {
+		t.Error("a surface that set nothing isn't checked in a dev build")
 	}
 }

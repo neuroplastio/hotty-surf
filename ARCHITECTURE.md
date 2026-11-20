@@ -140,11 +140,12 @@ registrations through `rt.Register`).
 - **Kept parents.** A parent is kept only while every record it holds
   (`holds`) is still its key's, came once, and isn't used yet this
   render; a dropped duplicate makes its holders render.
-- **The check.** Under `surftest`, and in a surfdev build unless
-  `HOTTY_SURF_COMPILE_CHECK=off`, `checkKept` renders each kept instance
-  again into a scratch frame and faults where its markup, handler ids,
-  key scopes or focus asks differ from the record. It can't see what a
-  handler closes over.
+- **The check.** Where it is on (`Surface.CheckCompiled`; surftest, and
+  a surfdev build unless `HOTTY_SURF_COMPILE_CHECK=off`, whose default
+  yields to the app's own call: `checkSet`), `checkKept` renders each
+  kept instance again into a scratch frame and faults where its markup,
+  handler ids, key scopes or focus asks differ from the record. It can't
+  see what a handler closes over.
 
 ## Events, keys and focus
 
@@ -203,8 +204,12 @@ attributes return when the modal closes.
 - **`surftest`** drives a surface on hotty-go's test host. After every
   act it checks that the host's document, built from the deltas, is the
   surface's own tree, and fails the test on any fault a render recorded
-  (a duplicate `surf.On` id, a value a ui component doesn't take). Outside
-  a test a surface holds at most 64 faults.
+  (a duplicate `surf.On` id, a value a ui component doesn't take). A
+  surface keeps faults for it only where its Start asked
+  (`rt.Peek.KeepFaults`), at most 64 between its reads. Every fault goes
+  through `fault()`, which also gives it to `OnFault`'s fn: once each
+  until the next Document, at the end of the outermost driver call
+  (`enter`/`leave` count them), never while the surface sends.
 - **`cells`** is a hotty host inside the program. It lays a document out
   in character cells, keeps its focus and fields, and sends the surface
   the events a host would. Chrome a program draws itself every frame is

@@ -62,7 +62,13 @@ func init() {
 	}
 	rt.Peek.CSS = func(s any) string { return s.(*Surface).css }
 	rt.Peek.Forget = func(s any) { s.(*Surface).forgetInstances() }
-	rt.Peek.Check = func(s any, on bool) { s.(*Surface).c.check = on }
+	rt.Peek.CheckDefault = func(s any, on bool) {
+		if c := &s.(*Surface).c; !c.checkSet {
+			c.check = on
+		}
+	}
+	rt.Peek.Checking = func(s any) bool { return s.(*Surface).c.check }
+	rt.Peek.KeepFaults = func(s any) { s.(*Surface).keepFaults = true }
 	rt.Peek.Instances = func(s any) []string { return s.(*Surface).instancesOf() }
 	rt.Peek.Fills = func(s any) (int, int) { c := &s.(*Surface).c; return c.fills, c.keyed }
 	rt.Peek.Rendered = func(s any) time.Time {
@@ -578,21 +584,6 @@ func textOf(n *html.Node) string {
 		b.WriteString(textOf(c))
 	}
 	return b.String()
-}
-
-// maxFaults is as many faults as a surface holds: surftest drains them
-// after each act, and outside a test they would otherwise pile up, one
-// per render.
-const maxFaults = 64
-
-// fault records faults while the surface holds fewer than maxFaults.
-func (s *Surface) fault(fs ...string) {
-	for _, f := range fs {
-		if len(s.faults) >= maxFaults {
-			return
-		}
-		s.faults = append(s.faults, f)
-	}
 }
 
 // chooses says whether a select's markup chooses an option (one of its

@@ -76,15 +76,31 @@ like any other row: the List writes its tab stop.
 
 ## The check
 
-Under `surftest`, and in a dev build (`hotty-surf dev`), every kept
-instance renders again beside the update. Where its markup, its
-handlers' ids, its key scopes or its focus asks differ from what was
-kept, that is a fault naming the view and the instance key: it finds a
-read of a pointer's target or a ctx value that isn't props. It can't see
-inside a handler: one that closes over a value that isn't props runs
-stale with no fault (see the rules). A view's side effects run twice in
-dev because of it. `HOTTY_SURF_COMPILE_CHECK=off` turns it off in a dev
-build.
+The check renders every kept instance again beside the update. Where
+its markup, its handlers' ids, its key scopes or its focus asks differ
+from what was kept, that is a fault naming the view and the instance
+key: it finds a read of a pointer's target or a ctx value that isn't
+props. It can't see inside a handler: one that closes over a value
+that isn't props runs stale with no fault (see the rules).
+
+It is on under `surftest`, which fails the test on a fault, and in a
+dev build (`hotty-surf dev`), unless `HOTTY_SURF_COMPILE_CHECK=off`.
+An app's own `CheckCompiled` wins over a dev build's default.
+Elsewhere an app turns it on itself, in its own dev build or a gate,
+and hears what it finds:
+
+```go
+s := surf.New("app", view, css)
+if devMode {
+	s.CheckCompiled(true)
+	s.OnFault(func(f string) { log.Print(f) })
+}
+```
+
+`OnFault` hears every fault, not only the check's (an id registered
+twice, a key a Bind can't take), each once until the next document.
+The check costs about what the kept rows would cost rendered plainly,
+and a view's side effects run twice: leave it off in a release.
 
 ## Chrome in cells
 

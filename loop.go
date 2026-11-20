@@ -26,6 +26,8 @@ func (s *Surface) wake() {
 
 // document renders the whole document, and takes it as what the host has.
 func (s *Surface) document() (string, error) {
+	// Its faults are given again (OnFault), its sheet's among them.
+	s.heardAnew()
 	if err := s.sendSheets(); err != nil {
 		return "", err
 	}

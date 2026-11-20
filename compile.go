@@ -34,13 +34,14 @@ import (
 // (a Dialog, a Popover, the focused element, a ListItem without an id)
 // make their instance, and every instance around it, render every time.
 //
-// The check: under surftest, and in a surfdev build unless
-// HOTTY_SURF_COMPILE_CHECK=off, every kept instance is rendered too, and
+// The check: where it is on (Surface.CheckCompiled; surftest and a
+// surfdev build turn it on), every kept instance is rendered too, and
 // where its markup, its handlers' ids, its key scopes or its focus asks
-// differ from what was kept, that is a fault. It can't see inside a
-// handler: one that closes over a value that isn't props runs with the
-// value its render saw, with no fault. The check renders a view twice,
-// so a view's side effects run twice in dev.
+// differ from what was kept, that is a fault (Surface.OnFault). It
+// can't see inside a handler: one that closes over a value that isn't
+// props runs with the value its render saw, with no fault. The check
+// renders a view twice, so a view's side effects run twice while it is
+// on.
 //
 // A Compiled holds no surface's state. Instances are each surface's own,
 // and one Compiled may serve many surfaces.
@@ -264,10 +265,13 @@ type instances struct {
 	// dupIn are the instances a copy of a key used twice rendered in,
 	// as their own markup: they hold no marker for it, and render again
 	// with the first copy's holders (dropDups).
-	dupIn   []*record
-	check   bool    // render every kept one too (Peek.Check)
-	shadow  bool    // a check's render: instances only write their markers
-	checked *record // the instance a check renders, whose kids are its own
+	dupIn []*record
+	check bool // render every kept one too (CheckCompiled)
+	// checkSet says the app called CheckCompiled, which a surfdev
+	// build's default yields to (rt.Peek.CheckDefault).
+	checkSet bool
+	shadow   bool    // a check's render: instances only write their markers
+	checked  *record // the instance a check renders, whose kids are its own
 	// fills counts the instances filled alone (fill), and keyed those
 	// of them under an editing keymap (record.base): rt.Peek.Fills.
 	fills, keyed int

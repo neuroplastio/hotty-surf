@@ -279,8 +279,10 @@ locked API, in the order they were made.
   shortcuts.
 - **Generated ids are `_` and base 36** (`_1`, `_a`), where they were
   `e1`; an app's own id `root`, `hotty-css` or `_<base 36>` is a fault.
-- **At most 64 faults are held:** surftest drains them; a release build
-  would otherwise keep one more per render.
+- **At most 64 faults are held,** and only where a rig asked
+  (`rt.Peek.KeepFaults`, which surftest's Start calls): surftest drains
+  them. A release surface holds none; OnFault hears them (CheckCompiled
+  and OnFault, below).
 - **The pointer's place holds across a document sent again** (SPEC §9.4).
 - **The fast parser takes only templ's named references in an
   attribute** (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`, and numeric
@@ -1794,7 +1796,8 @@ session.
   links none.
 - A sheet past the host's limits isn't sent. The document carries it in
   a `<style>`, with a fault once per Attach. There's no error API: the
-  caps decide.
+  caps decide. The fault reaches `Surface.OnFault`, as every fault
+  does.
 - `ui.Sheet()`'s ID is `hotty-surf-kit-` and FNV-1a over the sheet (not
   sha256, for TinyGo's size).
 - Every example, the scaffold and the book link the kit through
@@ -2136,3 +2139,73 @@ surf.On(ctx, "query", surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k")))
 - **Cost:** 19 or 20 bindings, 411 to 466 bytes on the element, sent
   with a full document; a render copies them and resolves them as
   Readline's.
+
+## CheckCompiled and OnFault (the maintainer, 2026-11-20)
+
+plx wants the check of compiled instances in its dev builds and its
+gate, which have no surfdev tag, and to hear what it finds: to log it,
+toast it, or fail the gate. The check was in every build already, behind
+a switch only surftest and a surfdev build could reach, and every
+build collected faults that only surftest read.
+
+```go
+func (s *Surface) CheckCompiled(on bool)
+func (s *Surface) OnFault(fn func(fault string))
+```
+
+- **Per surface,** as methods: no process state that parallel tests
+  share, no change to New's approved signature, no new type. An app
+  turns it on where it makes its surfaces.
+- **The switch:** CheckCompiled sets what `rt.Peek.Check` set. A surfdev
+  build's default (on unless `HOTTY_SURF_COMPILE_CHECK=off`) yields to
+  an app's own call, made before or after the dev child takes the
+  surface: a surface made before `reload.Serve` is taken in Serve's
+  catch-up, after the app's call. surftest's Start turns it on.
+- **The sink taps `fault()`**, which every fault goes through: a
+  render's, the tree's (an unlabelled button, a Bind's key), Key's (a
+  declined edit with no text editing linked) and Document's (a sheet
+  past the host's limits). Not the 64-fault buffer, which would starve
+  a release surface in 64 renders of a lasting fault.
+- **Every fault, not only the check's:** they share one path, and each
+  is the app's bug. A string, the line surftest prints; its wording
+  isn't a contract.
+- **Once each until the next Document**, at most 256, then one line
+  that the rest wait. A fault the tree finds is found only on the full
+  path, not on a render whose tree is the last's or whose instances
+  alone changed, so "again after a render without it" would give it
+  again after every idle update. Document is the surface's reset: a new
+  host, a refused delta. The set is made only once OnFault is set.
+- **When fn runs:** at the end of the outermost driver call (Document,
+  Update, Event, Key, Focus, Blur), after what it sends is written and
+  the events a cells.Screen gave from inside that Write have run; on an
+  error return too. Never while the surface sends. Document's run
+  before it returns the document. fn is read again for each fault, so
+  OnFault(nil) inside it stops the rest. Each OnFault replaces the last
+  and starts anew.
+- **OnFault, not OnError:** the calls that render return an error for
+  what they couldn't do, which the driver acts on (sends the document
+  again). A fault is the app's bug the surface survived and rendered
+  around; the call did its job. OnError would suggest it hears the
+  returned errors too, and a `func(error)`.
+- **The buffer is a rig's:** a surface keeps its faults for
+  `rt.Peek.Faults` only where a rig asked (`rt.Peek.KeepFaults`), so a
+  release surface holds none.
+- **A surfdev build shows no fault yet:** the check runs in dev and its
+  faults went nowhere before this, as now. That is its own leg (the
+  board), through the dev child's own tap, not the app's OnFault.
+- **Cost:** off, nothing: the check's bool test was there, and with
+  OnFault unset a fault costs one nil test. The release wasm grows about
+  2.2 KB (hello: 2,481,672 to 2,483,871 bytes); leave isn't deferred,
+  which cost 4.8 KB more. `BenchmarkCompiled` with the check off and
+  OnFault unset doesn't move (nothing changed, compiled, host, runs
+  alternated: 53–64 µs before, 54–64 µs after, the machine loaded). Set, a set lookup per fault
+  and a slice given at the end of the call. On, the check costs about
+  what the kept instances would cost rendered plainly:
+
+| update (host) | plain | compiled | compiled, checked |
+| --- | ---: | ---: | ---: |
+| nav switch, 2 of 56 rows | 1.04–1.28 ms | 78 µs | 645–714 µs |
+| strip hover, 2 of 20 pills | 117–122 µs | 20–21 µs | 55–57 µs |
+| strip, a label | 117–123 µs | 13 µs | 47–51 µs |
+| box at a new size | 26–35 µs | 20–28 µs | 22–24 µs |
+| nothing changed | 1.56–1.75 ms | 48–52 µs | 0.62–1.24 ms |

@@ -70,9 +70,13 @@ type Surface struct {
 	fields  []string // the live fields' ids in prev
 	ids     map[string]string
 	nextID  int
-	faults  []string
-	memo    map[string]any // the frames' Memo, kept from render to render
-	n       uint64         // the renders so far: the last frame's N
+	// faults are the faults for a rig's buffer (rt.Peek.Faults), kept
+	// only where one asked (keepFaults); sink is OnFault's.
+	faults     []string
+	keepFaults bool
+	sink       faultSink
+	memo       map[string]any // the frames' Memo, kept from render to render
+	n          uint64         // the renders so far: the last frame's N
 
 	// What the host's fields hold, as far as the surface knows: what the
 	// user's events said, or what it last set (SPEC §6.4).
@@ -125,7 +129,7 @@ type Surface struct {
 // opened late included. A release build has none of that.
 func New(name string, view templ.Component, css string) *Surface {
 	s := &Surface{name: name, view: view, css: css, pending: make(chan struct{}, 1), memo: map[string]any{},
-		keyMark: strconv.FormatUint(rand.Uint64(), 36) + "-"}
+		keyMark: strconv.FormatUint(rand.Uint64(), 36) + "-", keepFaults: keepAll}
 	s.reset()
 	register(s)
 	return s
@@ -207,7 +211,10 @@ func (s *Surface) Link(sheets ...Sheet) {
 // naming the surface, or an error from w's Write, as a cells.Screen
 // refuses).
 func (s *Surface) Document() (string, error) {
-	return s.document()
+	s.enter()
+	doc, err := s.document()
+	s.leave()
+	return doc, err
 }
 
 // Event gives the surface an event from the host that names it (SPEC §9):
@@ -219,7 +226,10 @@ func (s *Surface) Document() (string, error) {
 // sending (a cells.Screen calls its events that way): the surface runs it
 // once that send is done, before the call that wrote returns.
 func (s *Surface) Event(e hotty.Event) error {
-	return s.event(e)
+	s.enter()
+	err := s.event(e)
+	s.leave()
+	return err
 }
 
 // Focus gives the surface the keyboard, as the program's own focus moves
@@ -239,7 +249,10 @@ func (s *Surface) Event(e hotty.Event) error {
 // which may already have restored the element. It runs on the driver's
 // goroutine, as Event does.
 func (s *Surface) Focus() (focused bool, err error) {
-	return s.takeFocus()
+	s.enter()
+	focused, err = s.takeFocus()
+	s.leave()
+	return focused, err
 }
 
 // Blur takes the keyboard from the surface, as the program's own keys
@@ -256,7 +269,10 @@ func (s *Surface) Focus() (focused bool, err error) {
 // the surface hears as the same blur. It runs on the driver's goroutine,
 // as Event does.
 func (s *Surface) Blur() (blurred bool, err error) {
-	return s.blur()
+	s.enter()
+	blurred, err = s.blur()
+	s.leave()
+	return blurred, err
 }
 
 // Focused is the id of the element that has the keyboard as the surface
@@ -366,14 +382,20 @@ const (
 // and ordinary Key handlers; a decline tries enclosing scopes, then the
 // default.
 func (s *Surface) Key(key string) (taken bool, err error) {
-	return s.key(key)
+	s.enter()
+	taken, err = s.key(key)
+	s.leave()
+	return taken, err
 }
 
 // Update runs the functions [Surface.Do] queued, renders the view, and
 // sends what changed. A driver calls it when Pending fires; a program that
 // changed the app's state on the driver's goroutine calls it itself.
 func (s *Surface) Update() error {
-	return s.update()
+	s.enter()
+	err := s.update()
+	s.leave()
+	return err
 }
 
 // Do queues fn to run on the driver's goroutine at its next Update: for a

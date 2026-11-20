@@ -506,7 +506,8 @@ func startKSide(t *testing.T, st *keepState, plain, onScreen bool) *kSide {
 		k.note()
 		return k
 	}
-	rt.Peek.Check(k.s, true)
+	k.s.CheckCompiled(true)
+	rt.Peek.KeepFaults(k.s)
 	k.screen = cells.New(kCols, kRows, func(e hotty.Event) {
 		if err := k.s.Event(e); err != nil {
 			t.Errorf("event %s %s: %v", e.Kind, e.Target, err)

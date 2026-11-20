@@ -248,8 +248,9 @@ func (c *child) sendAreas(stop <-chan struct{}) {
 func (c *child) take(s *surf.Surface) {
 	c.surfaces = append(c.surfaces, s)
 	// A dev build checks that a kept compiled instance renders what it
-	// kept (surf.Compile), unless the environment says off.
-	rt.Peek.Check(s, os.Getenv("HOTTY_SURF_COMPILE_CHECK") != "off")
+	// kept (surf.Compile), unless the environment says off or the app
+	// set the check itself (Surface.CheckCompiled), before or after.
+	rt.Peek.CheckDefault(s, os.Getenv("HOTTY_SURF_COMPILE_CHECK") != "off")
 	css := restyled(rt.Peek.CSS(s), c.styles)
 	from := ""
 	for i, sn := range c.snaps {

@@ -35,6 +35,7 @@ pkg neuroplast.io/hotty-surf, method (*Compiled) With(string, P) templ.Component
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Blur() (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Chars() Chars
+pkg neuroplast.io/hotty-surf, method (*Surface) CheckCompiled(bool)
 pkg neuroplast.io/hotty-surf, method (*Surface) Do(func())
 pkg neuroplast.io/hotty-surf, method (*Surface) Document() (string, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Event(hotty.Event) error
@@ -43,6 +44,7 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Focused() string
 pkg neuroplast.io/hotty-surf, method (*Surface) Key(string) (bool, error)
 pkg neuroplast.io/hotty-surf, method (*Surface) Link(...Sheet)
 pkg neuroplast.io/hotty-surf, method (*Surface) Name() string
+pkg neuroplast.io/hotty-surf, method (*Surface) OnFault(func(string))
 pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) OwnKeys() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}

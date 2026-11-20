@@ -13,6 +13,9 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 )
 
+// The tests of package surf read a surface's faults from its buffer.
+func init() { keepAll = true }
+
 // attached is a surface of view on a writer that drops everything, with
 // its document rendered.
 func attached(t *testing.T, view templ.Component) *Surface {
@@ -25,8 +28,8 @@ func attached(t *testing.T, view templ.Component) *Surface {
 	return s
 }
 
-// Outside a test nothing drains a surface's faults, so it holds at most
-// maxFaults of them.
+// A rig drains a surface's faults after each act, and between its reads
+// the surface holds at most maxFaults of them.
 func TestFaultsAreCapped(t *testing.T) {
 	s := attached(t, templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		On(ctx, "x")
@@ -42,6 +45,30 @@ func TestFaultsAreCapped(t *testing.T) {
 	}
 	if len(s.faults) != maxFaults {
 		t.Fatalf("%d faults held after 1000 renders", len(s.faults))
+	}
+}
+
+// A surface no rig asked keeps no faults: OnFault hears them, and a
+// release surface holds none.
+func TestFaultsKeptOnlyForARig(t *testing.T) {
+	keepAll = false
+	defer func() { keepAll = true }()
+	var heard []string
+	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		On(ctx, "x")
+		On(ctx, "x")
+		fmt.Fprint(w, `<div>hi</div>`)
+		return nil
+	}), "")
+	s.OnFault(func(f string) { heard = append(heard, f) })
+	s.Attach(io.Discard, hotty.Caps{})
+	for range 100 {
+		if _, err := s.Document(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(s.faults) != 0 || len(heard) != 100 {
+		t.Fatalf("%d faults held, %d heard: want none held, one heard per document", len(s.faults), len(heard))
 	}
 }
 

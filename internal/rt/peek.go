@@ -35,8 +35,11 @@ var Peek struct {
 	// KeyScope's binding there (ui.Bindings).
 	FieldTakes func(s any, key string) bool
 	// Faults are the faults of the renders since the last call, which it
-	// forgets.
+	// forgets: those KeepFaults asked the surface to keep, at most 64.
 	Faults func(s any) []string
+	// KeepFaults makes the surface keep its faults for Faults, as a rig
+	// does (surftest's Start). A surface keeps none otherwise.
+	KeepFaults func(s any)
 
 	// Snapshot writes the surface as the host has it, for a dev reload's
 	// handover; an error before its first Document.
@@ -67,10 +70,12 @@ var Peek struct {
 	// dev reload's text tier, whose strings their kept markup still
 	// holds. The next render renders each again.
 	Forget func(s any)
-	// Check turns on the check of compiled instances (surf.Compile): each
-	// kept one is rendered too, and a difference from what was kept is a
-	// fault. surftest turns it on, and so does a surfdev build.
-	Check func(s any, on bool)
+	// CheckDefault sets the check of compiled instances
+	// (surf.Surface.CheckCompiled) as a surfdev build's default: it does
+	// nothing once the app called CheckCompiled, before or after.
+	CheckDefault func(s any, on bool)
+	// Checking says whether the check of compiled instances is on.
+	Checking func(s any) bool
 	// Instances are the surface's compiled instances after its last
 	// render, each as "name key: why", why "kept", "rendered", or what
 	// made it render every time.

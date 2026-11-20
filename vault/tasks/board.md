@@ -159,6 +159,12 @@ The single list of what the tag needs.
   runs a watcher beside the reloader that writes `style/app.css`; the
   reloader takes that write as a css save, and lint's class rule reads
   app.css.
+- [ ] **A dev build's faults go nowhere:** `hotty-surf dev` turns the
+  check of compiled instances on, but nothing shows a fault. A leg of
+  its own, as it touches the reload wire (gov P-3, both ends): the dev
+  child taps faults through its own `rt.Peek` hook (not the app's
+  OnFault), and the parent prints them or the Report carries them; a
+  live reload starts the once-set anew.
 - Keep's get takes a driver busy past 3 s for dropped, and runs get off
   the driver (by design). Long handlers should stay under it.
 - surftest can't say where the keyboard is (`Rig.Focused()` would be an

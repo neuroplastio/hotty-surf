@@ -26,6 +26,7 @@ func TestIconButtonNamesAndOwnedAttributes(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := surf.New("icons", ui.IconButton(ui.IconButtonProps{Shape: ui.ShapePublic, Attrs: tc.attrs}), "")
+			rt.Peek.KeepFaults(s)
 			if _, err := s.Document(); err != nil {
 				t.Fatal(err)
 			}
