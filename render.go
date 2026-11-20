@@ -93,13 +93,15 @@ var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Bo
 // (outerSame) where only instances changed (c.changed).
 func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 	s.n++
-	// As many ids as the last render's: the map doesn't grow.
-	ids := 0
-	if s.frame != nil {
-		ids = len(s.frame.On)
-	}
-	f = rt.NewFrame(s, s.platform, s.focused, s.memo, s.n, s.keyMark, ids)
+	f = rt.NewFrame(s, s.platform, s.focused, s.memo, s.n, s.keyMark, &s.slots)
 	f.Editing = &s.editing
+	if l := s.frame; l != nil {
+		// As much room as the last render took: a kept instance's
+		// registrations go in with no growing.
+		f.Order = make([]string, 0, len(l.Order))
+		f.KeyScopes, f.KeyKinds = make([]*rt.KeyScope, 0, len(l.KeyScopes)), make([]string, 0, len(l.KeyKinds))
+		f.Replays = make([]func(context.Context), 0, len(l.Replays))
+	}
 	s.dropDups()
 	s.c.changed, s.c.stack = s.c.changed[:0], s.c.stack[:0]
 	s.r.buf.Reset()
@@ -483,14 +485,14 @@ func (s *Surface) fresh(n *html.Node, kept bool) {
 // submits faults a Submit on an element that isn't a form: it can never
 // run.
 func (s *Surface) submits(f *rt.Frame) {
-	for id, h := range f.On {
+	f.Each(func(id string, h *rt.Handlers) {
 		if h.Submit == nil {
-			continue
+			return
 		}
 		if n := s.byID[id]; n != nil && n.DataAtom != atom.Form {
 			s.fault("surf.Submit: the element " + id + " is a <" + n.Data + ">, not a form: only a form submits (put its fields and its submit button in one)")
 		}
-	}
+	})
 }
 
 // unlabelled faults a button with no name, as HTML names one: no text (an

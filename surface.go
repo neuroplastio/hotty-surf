@@ -47,6 +47,9 @@ type Surface struct {
 	// registered, every element by its id, and the ids given by place.
 	prev  *html.Node
 	frame *rt.Frame
+	// slots number the ids its frames register handlers under, from
+	// frame to frame (rt.Slots).
+	slots rt.Slots
 	byID  map[string]*html.Node
 	// keyMarks are the kit controls under a KeyScope, by id (writeKeys).
 	keyMarks map[string]keyMark
@@ -333,7 +336,7 @@ func (s *Surface) OwnKeys() []string {
 	if s.out == nil || s.frame == nil {
 		return nil
 	}
-	return ownKeys(s.byID[s.focused], s.frame.On, s.platform)
+	return ownKeys(s.byID[s.focused], s.frame, s.platform)
 }
 
 // Chars is what a focused element does with a key that types a character.

@@ -46,7 +46,7 @@ type KeyEnvironment struct {
 	// ReadlineKeys bindings, the declared keys left out.
 	Declined                      bool
 	Focused                       string
-	On                            map[string]*Handlers
+	On                            *Frame // the frame's handlers (Get)
 	Platform                      hotty.Platform
 	Values                        map[string]string
 	Checked                       map[string]bool

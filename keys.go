@@ -103,7 +103,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		return keyPush{}
 	}
 	var own []string
-	h := t.f.On[id]
+	h := t.f.Get(id)
 	if h != nil {
 		own = h.Keys
 	}
@@ -307,8 +307,10 @@ func scopeBase(r *record) int {
 // (paint).
 func keysig(b []byte, f *rt.Frame) []byte {
 	b = b[:0]
-	for _, id := range f.Order {
-		if h := f.On[id]; h != nil && len(h.Keys)+len(h.Binds) > 0 {
+	// By slot, not by Order: the same handlers make the same data-keys
+	// in any order, and a kept instance's are in their slots already.
+	f.Each(func(id string, h *rt.Handlers) {
+		if len(h.Keys)+len(h.Binds) > 0 {
 			b = append(b, id...)
 			for _, k := range h.Keys {
 				b = append(b, ' ')
@@ -342,7 +344,7 @@ func keysig(b []byte, f *rt.Frame) []byte {
 			}
 			b = append(b, '\n')
 		}
-	}
+	})
 	for i, sc := range f.KeyScopes {
 		b = append(b, '|')
 		if i > 0 && sc == f.KeyScopes[i-1] {

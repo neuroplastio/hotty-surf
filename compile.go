@@ -180,11 +180,6 @@ type instanceOf interface {
 	view() templ.Component
 }
 
-type instKey struct {
-	c   *core
-	key string
-}
-
 // A record is one instance in one surface: what it rendered, what that
 // registered, and where it is in the tree the host has.
 type record struct {
@@ -210,11 +205,15 @@ type record struct {
 
 	// What its render registered, in order, its instances' too, and
 	// under which ui.KeyScope.
-	encl      *rt.KeyScope
-	enclSig   string // the keys encl forwards, which a kit control's markup reads
-	scopeOff  int    // its KeyScopes' first index in its up's (or the frame's)
-	order     []string
-	handlers  []*rt.Handlers
+	encl     *rt.KeyScope
+	enclSig  string // the keys encl forwards, which a kit control's markup reads
+	scopeOff int    // its KeyScopes' first index in its up's (or the frame's)
+	order    []string
+	handlers []*rt.Handlers
+	// slots are order's ids' slots (rt.Slots) as of slotEpoch: noted
+	// once, so that keeping it puts its handlers back with no hashing.
+	slots     []int32
+	slotEpoch uint64
 	scopes    []*rt.KeyScope
 	keyScopes []*rt.KeyScope
 	keyKinds  []string
@@ -245,7 +244,12 @@ const unset = "\x00unset"
 // instances are a surface's compiled instances, and what a render did
 // with them.
 type instances struct {
-	byKey   map[instKey]*record
+	// byKey are the records by Compiled, then by instance key: a
+	// string's hash, and the last Compiled's map at hand (lastC, lastM),
+	// as a view's rows are one Compiled's in a row.
+	byKey   map[*core]map[string]*record
+	lastC   *core
+	lastM   map[string]*record
 	byID    map[string]*record
 	serial  uint64
 	stack   []*record // the instances rendering, outermost first
@@ -290,15 +294,48 @@ func (s *Surface) mark(k byte, r *record) string {
 
 // forgetInstances drops every compiled instance.
 func (s *Surface) forgetInstances() {
-	for _, r := range s.c.byKey {
-		r.gone = true
+	for _, m := range s.c.byKey {
+		for _, r := range m {
+			r.gone = true
+		}
 	}
 	s.c.byKey, s.c.byID, s.c.changed, s.c.dups = nil, nil, nil, nil
+	s.c.lastC, s.c.lastM = nil, nil
+}
+
+// of is the records of k, by instance key: nil for none, unless add.
+func (c *instances) of(k *core, add bool) map[string]*record {
+	if k == c.lastC && c.lastM != nil {
+		return c.lastM
+	}
+	m := c.byKey[k]
+	if m == nil {
+		if !add {
+			return nil
+		}
+		if c.byKey == nil {
+			c.byKey, c.byID = map[*core]map[string]*record{}, map[string]*record{}
+		}
+		m = map[string]*record{}
+		c.byKey[k] = m
+	}
+	c.lastC, c.lastM = k, m
+	return m
+}
+
+// drop forgets r by its key and id.
+func (c *instances) drop(r *record) {
+	r.gone = true
+	if m := c.byKey[r.c]; m[r.key] == r {
+		delete(m, r.key)
+	}
+	if c.byID[r.id] == r {
+		delete(c.byID, r.id)
+	}
 }
 
 // instance renders, or keeps, w as the instance key of c.
 func (s *Surface) instance(ctx context.Context, f *rt.Frame, out io.Writer, c *core, key string, w instanceOf) error {
-	k := instKey{c, key}
 	if s.c.shadow {
 		// A check's render of an instance that holds this one: it is
 		// kept, as its holder was, and registers what it did. A key its
@@ -306,7 +343,7 @@ func (s *Surface) instance(ctx context.Context, f *rt.Frame, out io.Writer, c *c
 		// rendered as its own markup) renders as the view's markup. A
 		// record's up is set as it joins its holder's kids, and changes
 		// when another With takes it, so up alone says the holder holds it.
-		if r := s.c.byKey[k]; r != nil && r.rendered && !r.inline && !r.dup && r.up == s.c.checked {
+		if r := s.c.of(c, false)[key]; r != nil && r.rendered && !r.inline && !r.dup && r.up == s.c.checked {
 			f.Order = append(f.Order, r.order...)
 			f.Scopes = append(f.Scopes, r.scopes...)
 			f.KeyScopes = append(f.KeyScopes, r.keyScopes...)
@@ -322,7 +359,8 @@ func (s *Surface) instance(ctx context.Context, f *rt.Frame, out io.Writer, c *c
 		f.Faults = append(f.Faults, "surf.Compile: "+c.name+", instance key "+strconv.Quote(key)+": With takes no children ({ … }): pass what it draws in its props")
 		ctx = templ.ClearChildren(ctx)
 	}
-	r := s.c.byKey[k]
+	m := s.c.of(c, true)
+	r := m[key]
 	if r != nil && r.used == s.n {
 		if !r.dup {
 			f.Faults = append(f.Faults, "surf.Compile: "+c.name+": the instance key "+strconv.Quote(key)+" is used twice in one render: both copies render as the view's own markup")
@@ -332,12 +370,9 @@ func (s *Surface) instance(ctx context.Context, f *rt.Frame, out io.Writer, c *c
 		return w.view().Render(ctx, out)
 	}
 	if r == nil {
-		if s.c.byKey == nil {
-			s.c.byKey, s.c.byID = map[instKey]*record{}, map[string]*record{}
-		}
 		s.c.serial++
 		r = &record{c: c, key: key, id: strconv.FormatUint(s.c.serial, 36)}
-		s.c.byKey[k], s.c.byID[r.id] = r, r
+		m[key], s.c.byID[r.id] = r, r
 	}
 	r.used = s.n
 	r.up = nil
@@ -373,19 +408,42 @@ func depsHold(ctx context.Context, r *record) bool {
 }
 
 // replay puts what r registered last into f, where its render would
-// have, under encl.
+// have, under encl: its handlers as they are, each in the slot it
+// noted, and the rest appended whole. The kit's registrations around it
+// (rt.Register) run again, with the context here.
 func (s *Surface) replay(ctx context.Context, f *rt.Frame, r *record, encl *rt.KeyScope) {
 	if encl != r.encl {
 		r.rescope(r.encl, encl)
 	}
 	r.scopeOff = len(f.KeyScopes)
-	for i, id := range r.order {
-		if f.On[id] != nil {
-			f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
+	sl := f.Slots()
+	if len(r.slots) != len(r.order) || r.slotEpoch != sl.Epoch {
+		r.slots = r.slots[:0]
+		for _, id := range r.order {
+			r.slots = append(r.slots, sl.Slot(id))
+		}
+		r.slotEpoch = sl.Epoch
+	}
+	twice := false
+	for i, at := range r.slots {
+		if f.GetAt(at) != nil {
+			twice = true
 			continue
 		}
-		f.On[id] = r.handlers[i]
-		f.Order = append(f.Order, id)
+		f.SetAt(at, r.handlers[i])
+	}
+	if !twice {
+		f.Order = append(f.Order, r.order...)
+	} else {
+		// An id registered before it in this render keeps its handlers,
+		// as surf.On keeps the first.
+		for i, id := range r.order {
+			if f.GetAt(r.slots[i]) != r.handlers[i] {
+				f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
+				continue
+			}
+			f.Order = append(f.Order, id)
+		}
 	}
 	f.Scopes = append(f.Scopes, r.scopes...)
 	f.KeyScopes = append(f.KeyScopes, r.keyScopes...)
@@ -484,8 +542,9 @@ func (s *Surface) renderInstance(ctx context.Context, f *rt.Frame, out io.Writer
 
 	r.order = f.Order
 	r.handlers = r.handlers[:0]
+	r.slots = r.slots[:0]
 	for _, id := range r.order {
-		r.handlers = append(r.handlers, f.On[id])
+		r.handlers = append(r.handlers, f.Get(id))
 	}
 	r.scopes, r.keyScopes, r.keyKinds, r.modal, r.faults, r.replays = f.Scopes, f.KeyScopes, f.KeyKinds, f.Modal, f.Faults, f.Replays
 	r.modalOps = f.ModalOps
@@ -546,7 +605,7 @@ func (s *Surface) renderInstance(ctx context.Context, f *rt.Frame, out io.Writer
 // what differs from what r kept: markup or registrations that aren't its
 // props' alone.
 func (s *Surface) checkKept(ctx context.Context, f *rt.Frame, r *record, w instanceOf) {
-	g := rt.NewFrame(s, f.Platform, s.focused, s.memo, s.n, s.keyMark+r.id+".", len(r.order))
+	g := rt.NewFrame(s, f.Platform, s.focused, s.memo, s.n, s.keyMark+r.id+".", nil)
 	g.Focus, g.Reveal, g.Shadow = unset, unset, true
 	g.Editing = f.Editing
 	in := &rt.Instance{}
@@ -591,11 +650,11 @@ func sameStrings(a, b []string) bool {
 // endInstances, after a render, forgets the instances it didn't use, and
 // those whose key it used twice.
 func (s *Surface) endInstances() {
-	for k, r := range s.c.byKey {
-		if r.used != s.n {
-			r.gone = true
-			delete(s.c.byKey, k)
-			delete(s.c.byID, r.id)
+	for _, m := range s.c.byKey {
+		for _, r := range m {
+			if r.used != s.n {
+				s.c.drop(r)
+			}
 		}
 	}
 }
@@ -604,9 +663,7 @@ func (s *Surface) endInstances() {
 // they rendered as the view's markup, and start again.
 func (s *Surface) dropDups() {
 	for _, r := range s.c.dups {
-		r.gone = true
-		delete(s.c.byKey, instKey{r.c, r.key})
-		delete(s.c.byID, r.id)
+		s.c.drop(r)
 		// What held it holds a marker that names nothing now: it renders.
 		for u := r.up; u != nil; u = u.up {
 			u.rendered = false
@@ -746,8 +803,10 @@ func wsOf(b []byte) string {
 // instancesOf is Peek.Instances.
 func (s *Surface) instancesOf() []string {
 	var out []string
-	for _, r := range s.c.byKey {
-		out = append(out, fmt.Sprintf("%s %s: %s", r.c.name, r.key, r.why))
+	for _, m := range s.c.byKey {
+		for _, r := range m {
+			out = append(out, fmt.Sprintf("%s %s: %s", r.c.name, r.key, r.why))
+		}
 	}
 	return out
 }
@@ -814,11 +873,7 @@ func (s *Surface) fill(d *differ, f *rt.Frame) bool {
 	}
 	// The bindings outside resolved as the last frame's did (keysig is the
 	// same); a filled instance's are resolved again as it is numbered.
-	for id, h := range f.On {
-		if old := s.frame.On[id]; old != nil {
-			h.Written = old.Written
-		}
-	}
+	s.carryWritten(f)
 	for _, j := range jobs {
 		j.t.printable = append([]string(nil), j.r.printable...)
 		j.t.given = append([]string(nil), j.r.given...)

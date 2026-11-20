@@ -68,8 +68,8 @@ func disableIconButton(ctx context.Context, attrs templ.Attributes) string {
 		}
 	}
 	if disabled {
-		if f := rt.From(ctx); f != nil && f.On[id] != nil {
-			f.On[id].Click = nil
+		if f := rt.From(ctx); f != nil && f.Get(id) != nil {
+			f.Get(id).Click = nil
 		}
 	}
 	return ""

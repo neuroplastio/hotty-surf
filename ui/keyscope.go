@@ -139,10 +139,10 @@ func scopeCanonical(p hotty.Platform, key string) (string, bool) { return p.Read
 
 func kitOn(ctx context.Context, id string, handlers ...surf.Handler) templ.Attributes {
 	f := rt.From(ctx)
-	wasRegistered := f != nil && f.On[id] != nil
+	wasRegistered := f != nil && f.Get(id) != nil
 	attrs := surf.On(ctx, id, handlers...)
 	if f != nil && !wasRegistered {
-		if h := f.On[id]; h != nil {
+		if h := f.Get(id); h != nil {
 			h.KitKey = true
 		}
 	}

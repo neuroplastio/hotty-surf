@@ -26,7 +26,7 @@ func TestContextMenuPlacement(t *testing.T) {
 		v := &contextView{st: &st, p: p, id: "m"}
 		v.m = newMenuView(&st.menu, DropdownMenuProps{ID: "m", Items: p.Items})
 		v.press(hotty.Cell{Col: 14, Row: 7}, c.area)
-		ctx := rt.With(context.Background(), rt.NewFrame(nil, hotty.Platform{}, "", map[string]any{}, 0, "", 0))
+		ctx := rt.With(context.Background(), rt.NewFrame(nil, hotty.Platform{}, "", map[string]any{}, 0, "", nil))
 		var out bytes.Buffer
 		if err := ContextMenu(&st, p).Render(templ.WithChildren(ctx, templ.Raw("row")), &out); err != nil {
 			t.Fatal(err)

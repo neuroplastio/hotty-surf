@@ -349,10 +349,10 @@ func listItemAttrs(ctx context.Context, p ListItemProps) templ.Attributes {
 		}
 	})
 	a["tabindex"] = "-1"
-	h := f.On[id]
+	h := f.Get(id)
 	if h == nil {
 		kitOn(ctx, id)
-		h = f.On[id]
+		h = f.Get(id)
 	}
 	if disabled {
 		h.Click = nil

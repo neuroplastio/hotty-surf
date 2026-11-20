@@ -100,9 +100,14 @@ func EditKeys(h *Handlers, program bool) string {
 
 // A Frame is one render's registrations.
 type Frame struct {
-	// On is each element's handlers, by its id.
-	On map[string]*Handlers
-	// Order is the ids On registered, in the order of the render.
+	// on is each element's handlers, by its id's slot in slots (Get and
+	// Set reach them): an array, so that a kept compiled instance puts
+	// its handlers back by the slots it noted, with no hashing.
+	on    []*Handlers
+	slots *Slots
+	count int
+	// Order is the ids the frame registered (Set), in the order of the
+	// render.
 	Order []string
 	// Focus is the element Autofocus or Refocus asked for ("" for none).
 	Focus string
@@ -198,10 +203,151 @@ type ModalOps struct {
 
 // NewFrame is a render's frame: of the surface s (a *surf.Surface), its
 // platform, the element it has focused, its memo, the render's count,
-// its secret for the kit's markers, and how many ids it may register.
-func NewFrame(s any, p hotty.Platform, focused string, memo map[string]any, n uint64, keyMark string, ids int) *Frame {
-	return &Frame{On: make(map[string]*Handlers, ids), Platform: p, surface: s, focused: focused, memo: memo, n: n, KeyMark: keyMark}
+// its secret for the kit's markers, and the slots its ids take (nil for
+// slots of its own). A frame made by a surface for each render shares
+// the surface's Slots, so that one render's slot is the next one's.
+func NewFrame(s any, p hotty.Platform, focused string, memo map[string]any, n uint64, keyMark string, slots *Slots) *Frame {
+	if slots == nil {
+		slots = &Slots{}
+	}
+	return &Frame{on: make([]*Handlers, len(slots.ids)), slots: slots, Platform: p, surface: s, focused: focused, memo: memo, n: n, KeyMark: keyMark}
 }
+
+// Slots number the ids a surface registers handlers under, from render
+// to render: a frame holds its handlers in an array by slot, and a kept
+// compiled instance notes its ids' slots once. An id keeps its slot
+// until Compact; Epoch counts the Compacts, after which a noted slot is
+// noted again.
+type Slots struct {
+	at    map[string]int32
+	ids   []string
+	Epoch uint64
+}
+
+// Slot is id's slot, given one where it has none.
+func (x *Slots) Slot(id string) int32 {
+	if i, ok := x.at[id]; ok {
+		return i
+	}
+	if x.at == nil {
+		x.at = map[string]int32{}
+	}
+	i := int32(len(x.ids))
+	x.at[id] = i
+	x.ids = append(x.ids, id)
+	return i
+}
+
+// Len is how many ids have a slot.
+func (x *Slots) Len() int { return len(x.ids) }
+
+// Compact gives slots only to the ids f registered, in the order of
+// their slots, and moves f's handlers to them: ids that went out of use
+// no longer take room in every frame. A frame made before it, other
+// than f, reads its handlers wrongly after it.
+func (x *Slots) Compact(f *Frame) {
+	at := make(map[string]int32, f.count)
+	ids := make([]string, 0, f.count)
+	on := make([]*Handlers, 0, f.count)
+	for i, h := range f.on {
+		if h != nil {
+			at[x.ids[i]] = int32(len(ids))
+			ids = append(ids, x.ids[i])
+			on = append(on, h)
+		}
+	}
+	x.at, x.ids = at, ids
+	x.Epoch++
+	f.on = on
+}
+
+func (f *Frame) slotsOf() *Slots {
+	if f.slots == nil {
+		f.slots = &Slots{}
+	}
+	return f.slots
+}
+
+// Get is the handlers registered under id in this frame, nil for none.
+func (f *Frame) Get(id string) *Handlers {
+	if f == nil || f.slots == nil {
+		return nil
+	}
+	if i, ok := f.slots.at[id]; ok && int(i) < len(f.on) {
+		return f.on[i]
+	}
+	return nil
+}
+
+// Set registers h under id, in place of what was (Order is the
+// caller's).
+func (f *Frame) Set(id string, h *Handlers) {
+	f.SetAt(f.slotsOf().Slot(id), h)
+}
+
+// GetAt is the handlers in slot i, nil for none.
+func (f *Frame) GetAt(i int32) *Handlers {
+	if int(i) < len(f.on) {
+		return f.on[i]
+	}
+	return nil
+}
+
+// SetAt puts h in slot i, in place of what was.
+func (f *Frame) SetAt(i int32, h *Handlers) {
+	if n := int(i) + 1; n > len(f.on) {
+		if n <= cap(f.on) {
+			f.on = f.on[:n]
+		} else {
+			f.on = append(f.on, make([]*Handlers, n-len(f.on))...)
+		}
+	}
+	switch {
+	case f.on[i] == nil && h != nil:
+		f.count++
+	case f.on[i] != nil && h == nil:
+		f.count--
+	}
+	f.on[i] = h
+}
+
+// Len is how many ids have handlers in this frame.
+func (f *Frame) Len() int {
+	if f == nil {
+		return 0
+	}
+	return f.count
+}
+
+// Each calls fn with every id that has handlers in this frame, and
+// them, in the order of their slots.
+func (f *Frame) Each(fn func(id string, h *Handlers)) {
+	if f == nil {
+		return
+	}
+	for i, h := range f.on {
+		if h != nil {
+			fn(f.slots.ids[i], h)
+		}
+	}
+}
+
+// EachSlot calls fn with every slot that has handlers in this frame, in
+// order, and them: Each without the ids, for a walk that compares two
+// frames of one Slots by slot.
+func (f *Frame) EachSlot(fn func(i int32, h *Handlers)) {
+	if f == nil {
+		return
+	}
+	for i, h := range f.on {
+		if h != nil {
+			fn(int32(i), h)
+		}
+	}
+}
+
+// Slots is the slots f's ids take.
+func (f *Frame) Slots() *Slots { return f.slotsOf() }
 
 // Surface is the *surf.Surface rendering, as any (rt can't import surf):
 // what surf.Of gives a view. A component reading it renders every time.

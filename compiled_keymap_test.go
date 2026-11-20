@@ -51,7 +51,7 @@ func TestUnbindInAFilledInstance(t *testing.T) {
 		t.Errorf("after the instance is filled: %q", bindings(s, "q"))
 	}
 	program := func(b rt.Bind) bool { return b.Key == "ctrl+k" && b.Action == "program" }
-	if w := s.frame.On["q"].Written; !slices.ContainsFunc(w, program) {
+	if w := s.frame.Get("q").Written; !slices.ContainsFunc(w, program) {
 		t.Errorf("Written: %v", w)
 	}
 }

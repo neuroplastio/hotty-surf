@@ -61,6 +61,7 @@ func (s *Surface) document() (string, error) {
 	}
 	s.hoverIn = s.chain(s.hoverAt)
 	s.frame = f
+	s.compact()
 	s.submits(f)
 	s.unlabelled(t.root)
 	s.remember(t.root)
@@ -108,13 +109,7 @@ func (s *Surface) send() error {
 		// from what the markup gives them. The bindings resolved as the
 		// last frame's did (keysig is the same), so they are carried over
 		// rather than resolved again.
-		if s.frame != nil {
-			for id, h := range f.On {
-				if old := s.frame.On[id]; old != nil {
-					h.Written = old.Written
-				}
-			}
-		}
+		s.carryWritten(f)
 		for _, id := range s.fields {
 			d.field(id, s.byID[id])
 		}
@@ -148,6 +143,7 @@ func (s *Surface) send() error {
 	}
 	s.modalFocus = ""
 	s.frame = f
+	s.compact()
 	s.submits(f)
 	if f.Reveal != "" {
 		d.ops = append(d.ops, hotty.OpReveal(f.Reveal, hotty.RevealNearest))
@@ -182,6 +178,34 @@ func (s *Surface) send() error {
 	}
 	s.asked, s.askDue = f.Focus, false
 	return s.write(cmds)
+}
+
+// carryWritten gives f's handlers the bindings the last frame's under
+// the same id resolved (rt.Handlers.Written), where the tree's data-keys
+// are the last frame's and aren't written again. A kept instance's
+// handlers are the last frame's own, which hold theirs.
+func (s *Surface) carryWritten(f *rt.Frame) {
+	if s.frame == nil {
+		return
+	}
+	f.EachSlot(func(i int32, h *rt.Handlers) {
+		if old := s.frame.GetAt(i); old != nil && old != h {
+			h.Written = old.Written
+		}
+	})
+}
+
+// compact gives slots only to the ids the frame registered, where ids
+// that went out of use take most of them (rt.Slots.Compact). The key
+// signature walks slots in order, so the tree's is made again.
+func (s *Surface) compact() {
+	if n := s.slots.Len(); n <= 64 || n <= 2*s.frame.Len() {
+		return
+	}
+	s.slots.Compact(s.frame)
+	if s.r.valid {
+		s.r.lastSig = keysig(s.r.lastSig, s.frame)
+	}
 }
 
 // write sends each command in a Write of its own, then runs the events
@@ -240,7 +264,7 @@ func (s *Surface) event(e hotty.Event) error {
 			s.blurAsked = false
 		}
 	}
-	on := s.frame.On
+	on := s.frame
 	ran := false
 	// A press on what takes no focus gives the keyboard back to the
 	// terminal (SPEC §10.1), so a blur comes right after it. The press
@@ -264,7 +288,7 @@ func (s *Surface) event(e hotty.Event) error {
 	}
 	switch e.Kind {
 	case hotty.EventClick:
-		if h := on[e.Target]; h != nil && h.Click != nil {
+		if h := on.Get(e.Target); h != nil && h.Click != nil {
 			s.count = e.Count
 			h.Click()
 			s.count = 0
@@ -275,7 +299,7 @@ func (s *Surface) event(e hotty.Event) error {
 		if e.Sel != nil {
 			s.sels[e.Target] = *e.Sel
 		}
-		if h := on[e.Target]; h != nil && h.Input != nil {
+		if h := on.Get(e.Target); h != nil && h.Input != nil {
 			h.Input(e.Value)
 			ran = true
 		}
@@ -283,7 +307,7 @@ func (s *Surface) event(e hotty.Event) error {
 		s.revs[e.Target] = e.Rev
 		if e.Checked != nil {
 			s.checked[e.Target] = *e.Checked
-			if h := on[e.Target]; h != nil && h.Check != nil {
+			if h := on.Get(e.Target); h != nil && h.Check != nil {
 				h.Check(*e.Checked)
 				ran = true
 			}
@@ -291,7 +315,7 @@ func (s *Surface) event(e hotty.Event) error {
 			old, seen := s.vals[e.Target]
 			s.vals[e.Target] = e.Value
 			// A commit after the edits Input heard is no edit of its own.
-			if h := on[e.Target]; h != nil && h.Input != nil && (!seen || old != e.Value) {
+			if h := on.Get(e.Target); h != nil && h.Input != nil && (!seen || old != e.Value) {
 				h.Input(e.Value)
 				ran = true
 			}
@@ -302,7 +326,7 @@ func (s *Surface) event(e hotty.Event) error {
 			s.sels[e.Target] = *e.Sel
 		}
 	case hotty.EventSubmit:
-		if h := on[e.Target]; h != nil && h.Submit != nil {
+		if h := on.Get(e.Target); h != nil && h.Submit != nil {
 			h.Submit()
 			ran = true
 		}
@@ -358,7 +382,7 @@ func (s *Surface) event(e hotty.Event) error {
 
 // secondary runs the Secondary handler of a secondary press's element.
 func (s *Surface) secondary(e hotty.Event) bool {
-	h := s.frame.On[e.Target]
+	h := s.frame.Get(e.Target)
 	if h == nil || h.Secondary == nil {
 		return false
 	}
@@ -380,7 +404,7 @@ func (s *Surface) secondary(e hotty.Event) bool {
 // at the End; the render after either is parsed again, so number puts it
 // on or leaves it off (the same HTML is otherwise the same tree).
 func (s *Surface) dragged(e hotty.Event) bool {
-	on := s.frame.On
+	on := s.frame
 	ran := false
 	d := DragEvent{Over: e.Target}
 	// An active modal confines the pointer as it does the keyboard: a drag
@@ -415,14 +439,14 @@ func (s *Surface) dragged(e hotty.Event) bool {
 		}
 		return ran
 	}
-	if h := on[s.drag]; h != nil {
+	if h := on.Get(s.drag); h != nil {
 		if fn, ok := h.Drag.(func(DragEvent)); ok {
 			fn(d)
 			ran = true
 		}
 	}
 	if d.End {
-		if h := on[e.Target]; e.Target != "" && s.drag != "" && h != nil && !behind(e.Target) {
+		if h := on.Get(e.Target); e.Target != "" && s.drag != "" && h != nil && !behind(e.Target) {
 			if fn, ok := h.Drop.(func(DragEvent)); ok {
 				fn(d)
 				ran = true
@@ -458,11 +482,11 @@ func contains(ids []string, id string) bool {
 // moved tells the handlers of the elements the move left (false, innermost
 // first) and of those it entered (true, outermost first), and says whether
 // any ran.
-func moved(on map[string]*rt.Handlers, from, to []string, pick func(*rt.Handlers) func(bool)) bool {
+func moved(on *rt.Frame, from, to []string, pick func(*rt.Handlers) func(bool)) bool {
 	ran := false
 	for _, id := range from {
 		if !contains(to, id) {
-			if h := on[id]; h != nil && pick(h) != nil {
+			if h := on.Get(id); h != nil && pick(h) != nil {
 				pick(h)(false)
 				ran = true
 			}
@@ -470,7 +494,7 @@ func moved(on map[string]*rt.Handlers, from, to []string, pick func(*rt.Handlers
 	}
 	for i := len(to) - 1; i >= 0; i-- {
 		if !contains(from, to[i]) {
-			if h := on[to[i]]; h != nil && pick(h) != nil {
+			if h := on.Get(to[i]); h != nil && pick(h) != nil {
 				pick(h)(true)
 				ran = true
 			}
@@ -488,7 +512,7 @@ func (s *Surface) focus(id string) bool {
 	to := s.chain(id)
 	from := s.focusIn
 	s.focused, s.focusIn = id, to
-	return moved(s.frame.On, from, to, func(h *rt.Handlers) func(bool) { return h.Focus })
+	return moved(s.frame, from, to, func(h *rt.Handlers) func(bool) { return h.Focus })
 }
 
 // hover moves what the surface knows of the pointer to id ("" for out) and
@@ -497,7 +521,7 @@ func (s *Surface) hover(id string) bool {
 	to := s.chain(id)
 	from := s.hoverIn
 	s.hoverAt, s.hoverIn = id, to
-	return moved(s.frame.On, from, to, func(h *rt.Handlers) func(bool) { return h.Hover })
+	return moved(s.frame, from, to, func(h *rt.Handlers) func(bool) { return h.Hover })
 }
 
 // outside runs the Outside handlers of the elements a press on id ("" for
@@ -506,7 +530,7 @@ func (s *Surface) outside(id string) bool {
 	in := s.chain(id)
 	ran := false
 	for _, x := range s.frame.Order {
-		h := s.frame.On[x]
+		h := s.frame.Get(x)
 		if modal := activeModal(s.frame); modal != "" && id != "" && !s.modalApplies(s.frame, modal, id) && s.modalApplies(s.frame, modal, x) {
 			continue
 		}
@@ -579,7 +603,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 	}
 	var env rt.KeyEnvironment
 	if intercepted {
-		env = rt.KeyEnvironment{Node: s.byID[s.focused], Kind: s.keyMarks[s.focused].kind, Focused: s.focused, On: s.frame.On, Platform: s.platform,
+		env = rt.KeyEnvironment{Node: s.byID[s.focused], Kind: s.keyMarks[s.focused].kind, Focused: s.focused, On: s.frame, Platform: s.platform,
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
 	}
@@ -609,7 +633,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 	}
 	if intercepted {
 		for _, id := range ids {
-			if h := s.frame.On[id]; h != nil && h.KitKey {
+			if h := s.frame.Get(id); h != nil && h.KitKey {
 				for _, fn := range h.Key {
 					if fn(k) {
 						return true, s.send()
@@ -622,7 +646,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 		}
 	}
 	for _, id := range ids {
-		h := s.frame.On[id]
+		h := s.frame.Get(id)
 		if h == nil || intercepted && h.KitKey {
 			continue
 		}
@@ -633,7 +657,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 		}
 	}
 	if modal != "" && !s.modalApplies(s.frame, modal, s.focused) && !slices.Contains(ids, modal) {
-		if h := s.frame.On[modal]; h != nil {
+		if h := s.frame.Get(modal); h != nil {
 			for _, fn := range h.Key {
 				if fn(k) {
 					return true, s.send()
@@ -648,7 +672,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 	// (surf.Key), as a binding's under a KeyScope is: the host gave it
 	// the program, so the surface does what the host would have.
 	if n := s.byID[s.focused]; n != nil && !held && s.declared(physical) {
-		env := rt.KeyEnvironment{Node: n, Kind: useKind(n), Declined: true, Focused: s.focused, On: s.frame.On, Platform: s.platform,
+		env := rt.KeyEnvironment{Node: n, Kind: useKind(n), Declined: true, Focused: s.focused, On: s.frame, Platform: s.platform,
 			Values: s.vals, Checked: s.checked, Revisions: s.revs, Selections: s.sels,
 			PendingSelections: s.pendingSel, PendingNative: s.pendingNative}
 		if env.Kind == "text" && rt.TextDefault() == nil && !s.textFaulted {
@@ -681,7 +705,7 @@ func (s *Surface) prefixAt(n *html.Node, key string) bool {
 func (s *Surface) declared(key string) bool {
 	plain, shifted := strings.CutPrefix(key, "shift+")
 	for _, id := range s.chain(s.focused) {
-		if h := s.frame.On[id]; h != nil {
+		if h := s.frame.Get(id); h != nil {
 			if slices.Contains(h.Keys, key) || shifted && !rt.Printable(key) && slices.Contains(h.Keys, plain) {
 				return true
 			}
@@ -733,7 +757,7 @@ func (s *Surface) reached() []*rt.KeyScope {
 			if sc != nil {
 				break
 			}
-			if h := s.frame.On[id]; h != nil {
+			if h := s.frame.Get(id); h != nil {
 				sc = h.Scope
 			}
 		}
@@ -765,7 +789,7 @@ func (s *Surface) tops() []string {
 			if c.Type != html.ElementNode {
 				continue
 			}
-			if h := s.frame.On[attr(c, "id")]; h != nil && len(h.Key) > 0 {
+			if h := s.frame.Get(attr(c, "id")); h != nil && len(h.Key) > 0 {
 				out = append(out, attr(c, "id"))
 				continue
 			}

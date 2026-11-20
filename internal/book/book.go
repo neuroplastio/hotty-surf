@@ -205,7 +205,7 @@ func (a *App) show(id string) {
 // the events they receive, on both its host and its cells surface.
 func (a *App) observeHandlers(f *rt.Frame, story *storybook.Story, ids []string) {
 	for _, id := range ids {
-		h := f.On[id]
+		h := f.Get(id)
 		if h == nil || strings.HasPrefix(id, "book-") {
 			continue
 		}

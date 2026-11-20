@@ -11,7 +11,7 @@ import (
 
 func TestKeyScopeInvalidNames(t *testing.T) {
 	no := func() bool { return false }
-	f := &rt.Frame{On: map[string]*rt.Handlers{}}
+	f := &rt.Frame{}
 	ctx := rt.With(context.Background(), f)
 	ctx = templ.WithChildren(ctx, templ.Raw("child"))
 	var out bytes.Buffer

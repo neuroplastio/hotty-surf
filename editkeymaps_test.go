@@ -106,7 +106,7 @@ func TestEditingKeymapsResolve(t *testing.T) {
 					t.Fatalf("faults %q", s.faults)
 				}
 				wire := attr(s.byID["app"], "data-keys")
-				own := strings.Fields(rt.EditKeys(s.frame.On["app"], true))
+				own := strings.Fields(rt.EditKeys(s.frame.Get("app"), true))
 				if got := strings.Fields(wire); !slices.Equal(got, slices.Sorted(slices.Values(own))) {
 					t.Errorf("the wire %q, the surface's own %q", got, own)
 				}

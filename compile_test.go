@@ -286,7 +286,7 @@ func frameOf(s *surf.Surface) string {
 	f := rt.Peek.Frame(s)
 	var b strings.Builder
 	for _, id := range f.Order {
-		h := f.On[id]
+		h := f.Get(id)
 		fmt.Fprintf(&b, "%s %v %v %v|", id, h.Keys, h.Written, h.Scope != nil)
 	}
 	fmt.Fprintf(&b, "scopes %d keyscopes %d focus %q", len(f.Scopes), len(f.KeyScopes), f.Focus)

@@ -30,6 +30,13 @@ context. `surf.On` puts each element's handlers in the frame, and
 `surf.Autofocus` the element the frame asks the keyboard for. The HTML
 goes to the renderer's buffer.
 
+A frame holds its handlers in an array by slot: the surface's
+`rt.Slots` give each id a slot, which it keeps from frame to frame, so
+two frames compare by slot and a kept instance puts its handlers back by
+the slots it noted. Where ids that went out of use take most of the
+slots, the surface compacts them after a frame is sent, and every
+noted slot is noted again.
+
 - **If the HTML is byte for byte the last render's,** the tree is the
   last one. Only the fields are checked (a render sets a field back to its
   markup's value), and the new frame's handlers replace the old.
@@ -96,7 +103,10 @@ registrations through `rt.Register`).
 
 - **Kept or rendered.** Where the props are `==` to the last and what the
   instance read through `rt.Value` is the same, `paint` writes a marker
-  (`<!--` secret `@` id `-->`) and replays the record into the frame.
+  (`<!--` secret `@` id `-->`) and puts the record into the frame:
+  its handlers as they are, in the slots it noted, its scopes, key
+  scopes and focus asks appended whole, and the kit's registrations
+  (`rt.Register`) run again with the context there.
   Otherwise it renders the instance into its own buffer with a fresh
   frame list, and writes the marker. An instance that read the frame
   through an `rt` accessor (the focused element, the memo, the render's

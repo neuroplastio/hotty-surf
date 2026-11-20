@@ -20,7 +20,7 @@ var (
 
 // ownKeys is what OwnKeys says of n, focused, on platform p, with on the
 // frame's handlers.
-func ownKeys(n *html.Node, on map[string]*rt.Handlers, p hotty.Platform) []string {
+func ownKeys(n *html.Node, on *rt.Frame, p hotty.Platform) []string {
 	if n == nil || hasAttr(n, "disabled") {
 		return nil
 	}
@@ -104,7 +104,7 @@ func ownKeys(n *html.Node, on map[string]*rt.Handlers, p hotty.Platform) []strin
 	// bindings are Bindings', not these.
 	types := rt.Types(n)
 	for e := n; e != nil; e = e.Parent {
-		h := on[attr(e, "id")]
+		h := on.Get(attr(e, "id"))
 		if h == nil || e.Type != html.ElementNode {
 			continue
 		}

@@ -46,7 +46,7 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		name = key[i+1:]
 	}
 	plain := key == name || key == "shift+"+name
-	h := e.On[e.Focused]
+	h := e.On.Get(e.Focused)
 	if kind == "button" || kind == "link" {
 		if !plain || name != "enter" && name != "space" {
 			return false
@@ -103,7 +103,7 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		// keymapsOf (OwnKeys) reads data-keys as written, as a host does; keep
 		// the two apart.
 		for p := n; p != nil; p = p.Parent {
-			if h := e.On[attr(p, "id")]; h != nil {
+			if h := e.On.Get(attr(p, "id")); h != nil {
 				if v := EditKeys(h, !e.Declined); v != "" {
 					in.Keymaps = append(in.Keymaps, v)
 				}
@@ -151,7 +151,7 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 func (e *KeyEnvironment) submitKey(n *html.Node) {
 	for p := n.Parent; p != nil; p = p.Parent {
 		if p.Data == "form" {
-			if x := e.On[attr(p, "id")]; x != nil && x.Submit != nil {
+			if x := e.On.Get(attr(p, "id")); x != nil && x.Submit != nil {
 				x.Submit()
 			}
 			return

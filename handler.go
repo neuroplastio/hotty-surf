@@ -55,7 +55,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		// component): the handlers go nowhere.
 		return a
 	}
-	if f.On[id] != nil {
+	if f.Get(id) != nil {
 		f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
 		return a
 	}
@@ -118,7 +118,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		}
 	}
 	e.Binds, e.Base = bindsOf(f, id, e.Keys, binds)
-	f.On[id] = e
+	f.Set(id, e)
 	f.Order = append(f.Order, id)
 	return a
 }
