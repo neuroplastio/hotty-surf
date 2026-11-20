@@ -715,7 +715,7 @@ func marker(n *html.Node) string {
 	if n.DataAtom != atom.Li || n.Parent == nil {
 		return ""
 	}
-	switch styleOf(n.Parent).list {
+	switch styleOf(n.Parent, false).list { // a list's hover: isn't read
 	case "disc":
 		return "• "
 	case "decimal":
@@ -1573,13 +1573,13 @@ func iconLabel(n *html.Node) string {
 	return ""
 }
 
-// style is styleOf(n), once a pass.
+// style is styleOf(n), hovered or not, once a pass.
 func (l *layout) style(n *html.Node) box {
 	m := l.memoOf(n)
 	if m.hasSt {
 		return m.st
 	}
-	st := styleOf(n)
+	st := styleOf(n, l.c.hoverOn(n))
 	if n.Type == html.ElementNode {
 		st.fx = factsOf(n)
 	}
@@ -1593,13 +1593,13 @@ func unmutes(fg Role) bool {
 	return fg != "" && fg != "muted-foreground"
 }
 
-// colour is coloursOf(n), once a pass.
+// colour is coloursOf(n), hovered or not, once a pass.
 func (l *layout) colour(n *html.Node) (fg, bg Role) {
 	m := l.memoOf(n)
 	if m.hasCol {
 		return m.fg, m.bg
 	}
-	fg, bg = coloursOf(n)
+	fg, bg = coloursOf(n, l.c.hoverOn(n))
 	m.fg, m.bg, m.hasCol = fg, bg, true
 	return fg, bg
 }

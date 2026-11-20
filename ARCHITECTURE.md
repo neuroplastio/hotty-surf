@@ -240,6 +240,12 @@ attributes return when the modal closes.
     markup through every kind of step with it. `TestWalkGolden` holds
     what long random walks show to a golden written before the Screen
     kept anything between passes.
+  - **Hover** (cells/hover.go): the Screen keeps the hovered chain, the
+    innermost element under the pointer and the elements around it. An
+    element in it reads its `hover:` classes and the kit's `:hover`
+    looks. A change of the chain forgets only the looks of the elements
+    that came into it or left it, so a hover that changes colours alone
+    repaints their rows and lays nothing out.
 
 ## Insides that other packages reach
 

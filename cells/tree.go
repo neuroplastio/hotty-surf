@@ -56,6 +56,7 @@ func (c *Screen) load(name, doc string) error {
 	c.name, c.body = name, body
 	c.fields = map[*html.Node]*field{}
 	c.focused, c.remembered = nil, nil
+	c.hovered = nil // until the pointer moves over the new tree
 	c.scroll = 0
 	c.boxScroll = nil
 	c.changed()
@@ -78,7 +79,7 @@ func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
 		// The layout reads a colour only where an element's own ends the
 		// muted text around it (lookOf): where that holds, so do the
 		// looks, and only the roles change.
-		if m := k.nodes[n]; m == nil || !m.hasCol || m.inMuted && unmutes(m.fg) != unmutesNow(n) {
+		if m := k.nodes[n]; m == nil || !m.hasCol || m.inMuted && unmutes(m.fg) != unmutes(c.ownFg(n)) {
 			// Its look may change: its layouts, and what holds them.
 			c.relayout = true
 			k.unlayAll(n)
@@ -89,13 +90,6 @@ func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
 	c.relayout = true
 	k.forgetStylesAround(n)
 	k.forgetLooks(n)
-}
-
-// unmutesNow says whether n's own text colour, as its attributes give it
-// now, ends the muted text around it (lookOf).
-func unmutesNow(n *html.Node) bool {
-	fg, _ := coloursOf(n)
-	return unmutes(fg)
 }
 
 // changed says the tree changed: its ids and its layout are made again
@@ -168,6 +162,7 @@ func (c *Screen) settle() {
 	}
 	if c.reshaped {
 		c.kept = nil
+		c.pruneHover()
 	}
 	for n := range c.boxScroll {
 		if !c.attached(n) {
@@ -351,7 +346,9 @@ func (c *Screen) adopt(t *html.Node, old map[string]*html.Node) {
 // hidden says whether n or an element it is in draws nothing
 // (display:none, hidden, …).
 func hidden(n *html.Node) bool {
-	return closest(n, func(m *html.Node) bool { return styleOf(m).display == dNone }) != nil
+	// Whatever the pointer is over: a hover: class showing or hiding an
+	// element under it doesn't take its focus.
+	return closest(n, func(m *html.Node) bool { return styleOf(m, false).display == dNone }) != nil
 }
 
 // fragment parses HTML as the children of ctx, so that rows and items

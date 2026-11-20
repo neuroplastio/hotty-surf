@@ -68,6 +68,9 @@ type Screen struct {
 	drag     *dragging
 	hoverID  string
 	hoverOut bool
+	// hovered is the hovered chain (hover.go), the innermost element
+	// first, and hoverSpare the array of the one before.
+	hovered, hoverSpare []*html.Node
 	// shown is what Lines or Cells last drew (Dirty): its cells, and
 	// the layout and scroll they came from.
 	shown       snapshot
@@ -255,6 +258,7 @@ func (c *Screen) Focus(in bool) {
 	case !in && c.active:
 		c.prefixed = false
 		c.cutDrag()
+		c.setHover(nil) // the pointer is no longer the Screen's
 		if c.body != nil {
 			n := c.focused
 			c.blur()

@@ -33,7 +33,8 @@ does for a few of its components. This is the subset (v0.7, L1 and L3).
   `sr-only`, `visibility:hidden`, `<input type=hidden>`, a `dialog`
   without `open`, a closed `details` but for its `summary`, a Basecoat
   popover with `aria-hidden=true`, `svg`, `style`, `script`, `template`.
-- A class with a variant (`md:flex`, `hover:…`, `dark:…`) is not read.
+- A class with a variant (`md:flex`, `dark:…`) is not read, but
+  `hover:` on the hovered (see Hover).
 - **Vertical overflow**: `overflow-y-auto` / `overflow-y-scroll` (also
   `overflow-auto` / `overflow-scroll`) or inline `overflow-y` / `overflow`
   with a bounded `max-height` or `height` in px, rem or viewport-height
@@ -94,7 +95,8 @@ The Screen never resolves a colour value.
   fill covers its element's cells, blank ones too, and what it holds.
 - **The scheme**: `dark:` classes apply under the nearest `.dark` (the
   root's, as the kit and plx set it), not under `.light` or neither.
-  Other variants aren't read.
+  `hover:` applies while the element is hovered (see Hover). Other
+  variants aren't read.
 - **Roles the Screen draws itself**: muted text, a placeholder, a chart's
   labels and values, a progress bar's track: `muted-foreground` (Dim in
   Lines, not in Cells). `hr` and a table head's rule: `border`. A text
@@ -165,6 +167,62 @@ the Screen. A drag ends short (a dragend with no target) on
 `Focus(false)`, a new document, the dragged element leaving, or a Press
 before its Release. Escape doesn't end a drag. `At` names the innermost
 element with an id of the app's.
+
+## Hover
+
+The Screen keeps the hovered chain a browser keeps for `:hover`: the
+innermost element under the pointer and the elements around it. A
+`Move` with no button down sets it; with a button down it stays where
+the `Press` was, until the `Release`; a `Move` off the Screen and
+`Focus(false)` clear it, a new document empties it, and an element a
+delta takes out leaves it.
+
+- **`hover:` classes**: an element in the chain reads its `hover:`
+  classes as it reads the same classes without the variant: colours,
+  looks and layout. They are over its other classes, as a `:hover` rule
+  is more specific than the class it varies; `dark:hover:` (or
+  `hover:dark:`) is over `hover:` under `.dark`, and in no scheme else.
+  In a colour, it is read where `dark:` is (Colours); in the layout's
+  classes, where a class is, without `dark:`. Two readings leave the
+  hover out: a list's marker (`hover:list-disc`), and whether an
+  element is hidden from Tab and the focus.
+- **`group-hover:`, `peer-hover:`** and the other variants are not read
+  (neither the kit nor plx uses them).
+- **The kit's `:hover`**, as Basecoat's sheets and ui's give it, for what
+  the Screen draws, over the component's colours and under the
+  element's classes:
+
+| the kit's component, hovered | Fg | Bg | look |
+| --- | --- | --- | --- |
+| `.btn` (primary) | | `primary/80` | |
+| `.btn[data-variant=outline]` | `foreground` | `muted` (`input/50` under `.dark`) | |
+| `.btn[data-variant=ghost]` | `foreground` | `muted` (`muted/50` under `.dark`) | |
+| `.btn[data-variant=destructive]` | | `destructive/20` (`destructive/30` under `.dark`) | |
+| `.btn[data-variant=link]`, `.badge[data-variant=link]` | | | Underline |
+| `a.badge` (primary), `secondary`, `destructive` | | `primary/80`, `secondary/80`, `destructive/20` | |
+| `a.badge[data-variant=outline]` | `muted-foreground` | `muted` | |
+| `.badge[data-variant=ghost]` | `muted-foreground` | `muted` (`muted/50` under `.dark`) | |
+| a tab of a `.tabs` tab list, not selected | `foreground` | | |
+| `select.select`, a `.field`'s `select`, a `.select`'s button, under `.dark` | | `input/50` | |
+| `.breadcrumb a` | `foreground` | | |
+| `.table tr`, not a selected row | | `muted/50` | |
+| `a.item` | | `muted` | |
+| an option of a `.combobox`'s or a `.select`'s list; an item of a `.dropdown-menu`; not disabled, not `data-*-initialized` | `accent-foreground` | `accent` | |
+| an item of a `.command`'s menu, as those | `foreground` | `muted` | |
+| a sidebar nav's `li > a`, `li > button`, `li > details > summary` | `sidebar-accent-foreground` | `sidebar-accent` | |
+| `.toaster .toast-content[data-on~=click]` | | `accent` | |
+| an `.accordion`'s `summary` | | | Underline |
+
+  A hover that mixes colours (a secondary button's `color-mix`), a
+  shadow, an opacity, a link's colour inside a description, and a
+  range's thumb are not read. TestHoverAsTheHost holds the table's
+  colours to ui's stylesheet, compiled, which a host applies.
+- **What changes**: a change of the chain forgets the looks of the
+  elements that came into it or left it, and of nothing else. Where their
+  hover changes only colours, their rows are painted again and nothing is
+  laid out (unless a colour of their own starts or ends the muted text
+  round them); where it changes a look or the layout, they are laid out
+  again. `Dirty` says when what is drawn changed.
 
 ## Tab
 

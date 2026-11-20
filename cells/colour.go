@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"cmp"
 	"strings"
 	"unicode"
 
@@ -207,23 +208,39 @@ func rolesAt(l *layout, n *html.Node) (fg, bg Role) {
 // gives its component (Basecoat's vega.css), then its classes, then its
 // inline style, each over the one before, as utilities and an inline
 // style win over a component's rules.
-func coloursOf(n *html.Node) (fg, bg Role) {
+//
+// While n is hovered (hov), the kit's :hover colours are over its
+// component's, and its hover: classes over its other classes (a :hover
+// rule is more specific than the class it varies), dark:hover: over
+// hover: (Tailwind's order of variants).
+func coloursOf(n *html.Node, hov bool) (fg, bg Role) {
 	if n.Type != html.ElementNode {
 		return "", ""
 	}
 	dark := darkScheme(n)
 	fg, bg = kitColours(n, dark)
-	for c := range strings.FieldsSeq(attr(n, "class")) {
-		if v, ok := strings.CutPrefix(c, "dark:"); ok && dark {
-			c = v // the scheme's variant, under .dark
+	if hov {
+		if hf, hb := kitHoverColours(n, dark); hf != "" || hb != "" {
+			fg, bg = cmp.Or(hf, fg), cmp.Or(hb, bg)
 		}
-		if strings.IndexByte(c, ':') >= 0 {
-			continue // a variant: a state or a width the Screen doesn't know
+	}
+	for pass := range 3 {
+		for c := range strings.FieldsSeq(attr(n, "class")) {
+			// The scheme's variant, under .dark; the hover's, while n is
+			// hovered; a state or a width the Screen doesn't know is left
+			// out.
+			v, rank, ok := variantOf(c, dark, hov)
+			if !ok || rank != pass {
+				continue
+			}
+			if r, ok := classRole(v, "text-"); ok {
+				fg = r
+			} else if r, ok := classRole(v, "bg-"); ok {
+				bg = r
+			}
 		}
-		if r, ok := classRole(c, "text-"); ok {
-			fg = r
-		} else if r, ok := classRole(c, "bg-"); ok {
-			bg = r
+		if !hov {
+			break
 		}
 	}
 	for d := range strings.SplitSeq(attr(n, "style"), ";") {

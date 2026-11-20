@@ -684,7 +684,7 @@ func (l *layout) drawn(n *html.Node) bool {
 		if m.Type != html.ElementNode {
 			continue
 		}
-		if styleOf(m).display == dNone {
+		if styleOf(m, false).display == dNone { // whatever the pointer is over
 			return false
 		}
 		if p := m.Parent; p != nil && p.DataAtom == atom.Details && !has(p, "open") && m.DataAtom != atom.Summary {

@@ -147,8 +147,10 @@ var inlines = map[atom.Atom]bool{
 	atom.Q: true, atom.Cite: true, atom.Br: true, atom.Wbr: true, atom.Del: true, atom.Ins: true,
 }
 
-// styleOf reads what the layout needs of an element.
-func styleOf(n *html.Node) box {
+// styleOf reads what the layout needs of an element, hovered (hov) or
+// not: while it is, its hover: classes over its others, and the kit's
+// :hover look (kitHoverLook).
+func styleOf(n *html.Node, hov bool) box {
 	var b box
 	if skipped[n.DataAtom] || n.Type != html.ElementNode {
 		b.display = dNone
@@ -196,10 +198,20 @@ func styleOf(n *html.Node) box {
 	for c := range strings.FieldsSeq(attr(n, "class")) {
 		b.class(c)
 	}
+	if hov {
+		for c := range strings.FieldsSeq(attr(n, "class")) {
+			if v, ok := strings.CutPrefix(c, "hover:"); ok {
+				b.class(v)
+			}
+		}
+	}
 	if b.display != dNone {
 		b.inline(attr(n, "style"))
 	}
 	b.kit(n)
+	if hov && b.display != dNone {
+		b.look |= kitHoverLook(n)
+	}
 	if n.DataAtom == atom.Select && b.display != dNone {
 		b.display = dAtom
 	}
@@ -234,8 +246,9 @@ func isButtonLook(n *html.Node) bool {
 // taken as 8px wide and 16px high, so p-2 is a column and p-4 a row.
 func (b *box) class(c string) {
 	if i := strings.LastIndexByte(c, ':'); i >= 0 {
-		// A variant (hover:, md:, dark:) is a state or a width the Screen
-		// doesn't know: left out.
+		// A variant (md:, dark:) is a state or a width the Screen doesn't
+		// read here; hover: is read while the element is hovered
+		// (styleOf).
 		return
 	}
 	if strings.HasPrefix(c, "max-h-[") && strings.HasSuffix(c, "]") {

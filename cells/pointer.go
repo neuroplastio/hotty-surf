@@ -47,6 +47,9 @@ import (
 // click, as the terminal lost its release.
 func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 	c.cutDrag()
+	// The hover is where the press is, and stays there while a button is
+	// down.
+	c.setHover(c.hitAt(col, row))
 	// A press of any button ends what an earlier one left: its click,
 	// whose release was lost, is no longer due.
 	c.down, c.held, c.pressing = nil, false, true
@@ -82,6 +85,9 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 		c.hoverAt(col, row)
 		c.tipAt(col, row)
 	}
+	if !c.pressing && c.drag == nil {
+		c.setHover(c.hitAt(col, row))
+	}
 	taken = c.held || !c.pressing && c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
 	c.flush()
 	return taken
@@ -105,11 +111,13 @@ func (c *Screen) Release(col, row, mods int) (taken bool) {
 			// A drag that ends elsewhere clicks nothing, and ends the run
 			// of clicks.
 			c.down, c.clicks = nil, clickRun{}
+			c.setHover(c.hitAt(col, row))
 			c.flush()
 			return taken
 		}
 	}
 	c.releaseAt(col, row, mods)
+	c.setHover(c.hitAt(col, row))
 	c.flush()
 	return taken
 }
