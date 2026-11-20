@@ -262,7 +262,10 @@ type instances struct {
 	check   bool    // render every kept one too (Peek.Check)
 	shadow  bool    // a check's render: instances only write their markers
 	checked *record // the instance a check renders, whose kids are its own
-	ph      []byte
+	// fills counts the instances filled alone (fill), and keyed those
+	// of them under an editing keymap (record.base): rt.Peek.Fills.
+	fills, keyed int
+	ph           []byte
 	// sigOf and sig are the last scope scopeSig read, and its keys.
 	sigOf *rt.KeyScope
 	sig   string
@@ -951,6 +954,12 @@ func (s *Surface) fill(d *differ, f *rt.Frame) bool {
 	}
 	for _, id := range s.fields {
 		d.field(id, s.byID[id])
+	}
+	for _, j := range jobs {
+		s.c.fills++
+		if len(j.r.base) > 0 {
+			s.c.keyed++
+		}
 	}
 	return true
 }

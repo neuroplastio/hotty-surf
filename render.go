@@ -64,6 +64,7 @@ func init() {
 	rt.Peek.Forget = func(s any) { s.(*Surface).forgetInstances() }
 	rt.Peek.Check = func(s any, on bool) { s.(*Surface).c.check = on }
 	rt.Peek.Instances = func(s any) []string { return s.(*Surface).instancesOf() }
+	rt.Peek.Fills = func(s any) (int, int) { c := &s.(*Surface).c; return c.fills, c.keyed }
 	rt.Peek.Rendered = func(s any) time.Time {
 		if n := s.(*Surface).r.at.Load(); n != 0 {
 			return time.Unix(0, n)

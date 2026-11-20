@@ -689,6 +689,9 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 		if onScreen {
 			where = "cells"
 		}
+		// Across the seeds: instances filled alone, and filled under an
+		// editing keymap, which the steps make but a seed may not.
+		filled, keyed := 0, 0
 		for seed := range uint64(16) {
 			t.Run(fmt.Sprintf("%s/%d", where, seed), func(t *testing.T) {
 				r := rand.New(rand.NewPCG(seed, 11))
@@ -779,7 +782,9 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 					same(i, what)
 				}
 				epoch := rt.Peek.Frame(c.s).Slots().Epoch
-				t.Logf("%d steps, %d with a key used twice, %d kept handlers the same, %d compactions", steps, dups, kept, epoch)
+				fills, under := rt.Peek.Fills(c.s)
+				filled, keyed = filled+fills, keyed+under
+				t.Logf("%d steps, %d with a key used twice, %d kept handlers the same, %d compactions, %d filled alone (%d under a keymap)", steps, dups, kept, epoch, fills, under)
 				if epoch == 0 {
 					t.Error("the slots never compacted")
 				}
@@ -787,6 +792,10 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 					t.Error("no instance kept its handlers")
 				}
 			})
+		}
+		t.Logf("%s: %d filled alone, %d under a keymap", where, filled, keyed)
+		if filled == 0 || keyed == 0 {
+			t.Errorf("%s: %d instances filled alone, %d under a keymap: the steps no longer fill", where, filled, keyed)
 		}
 	}
 }

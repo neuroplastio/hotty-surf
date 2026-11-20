@@ -75,4 +75,9 @@ var Peek struct {
 	// render, each as "name key: why", why "kept", "rendered", or what
 	// made it render every time.
 	Instances func(s any) []string
+	// Fills are how many compiled instances the surface has filled alone
+	// into its last document (its props changed, the markup around it
+	// the same), and how many of them under surf.CUAKeys or
+	// surf.CocoaKeys around them, whose bindings the fill resolves again.
+	Fills func(s any) (filled, keyed int)
 }
