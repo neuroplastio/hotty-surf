@@ -16,17 +16,28 @@ rule is CSS for hover.
 ## What changed
 
 - **The hovered chain** (cells/hover.go): the innermost element under
-  the pointer and the elements around it, as a browser keeps it.
-  - A `Move` with no button down sets it. A `Press` sets it where the
-    press is, and it stays there while the button is down. A `Release`
-    sets it where the pointer is.
-  - A `Move` off the Screen and `Focus(false)` clear it. A new document
-    empties it, and a delta that takes an element out takes it out of
-    the chain.
+  the pointer that takes it, and the elements around it, as a browser
+  keeps it.
+  - It is what is under the pointer's last cell (`Move`, `Press`,
+    `Release`), with a button down or none, as Blitz follows the
+    pointer.
+  - Anything that may move what is under a still pointer (a delta, a
+    document, `Wheel`, `Resize`, a key, a paste, a cut, what a press or
+    a release did) marks the cell to be hit again. The next layout
+    hits it once, as Blitz hits the pointer after each pass
+    (refresh_hover). A hover that moves what is under the pointer isn't
+    chased.
+  - The hit passes over what has `pointer-events:none`: the kit's
+    disabled controls and items, a modal's inert, an inline style, the
+    utilities.
+  - A `Move` off the Screen and `Focus(false)` clear it.
+  - The tooltip shown is the chain's innermost `data-tooltip`, so the
+    two can't part.
 - **What an element in it reads**:
   - its `hover:` classes, as it reads the same classes without the
-    variant: colours, looks and layout. They are over its other
-    classes, and `dark:hover:` is over `hover:` under `.dark`;
+    variant: colours, looks and layout. They come in the sheet's order:
+    plain, `hover:`, `dark:`, `dark:hover:`, so under `.dark` a `dark:`
+    class is over a `hover:` one;
   - the kit's `:hover` colours (kitHoverColours) for what the Screen
     draws: buttons, badges, tabs, selects, breadcrumbs, a table's rows,
     link items, the items of menus and lists, a sidebar's, a clickable
@@ -57,58 +68,81 @@ rule is CSS for hover.
   - a run of moves.
 
   Their documents have `hover:` classes (colours, looks, layout) and the
-  kit's hoverable components. That commit came first, with its golden
+  kit's hoverable components; TestIncrementalIsFresh's have elements
+  that take no pointer too. That commit came first, with its golden
   written by main's Screen, which reads no hover.
-- **The golden, written again by the hover commit.** 1,044 of its 1,400
-  runs changed, in 17,195 of 211,400 steps.
-  - With the chain kept empty, the hover commit's dump is the commit
-    before's, byte for byte. So every change is the hover's.
-  - For each changed run, the first step that differs is explained:
-    - in 1,033 runs, an element with a hover rule is in the chain at
-      that step or the one before: a `hover:` class in 823, the kit's
-      `:hover` colours in 206, its `:hover` look in 4;
-    - in 9, a press lit the element it was on during the step;
-    - in 2, the element was lit further back, and Dirty compares with
-      the grid drawn then.
+- **The golden**, written again by the last code commit, on its own.
+  1,124 of its 1,400 runs changed from main's. Each change has its
+  reason, in three layers, each a dump of the walk set against the one
+  before (main's, for the first):
+  - main with `dark:` in the sheet's order: 107 runs, each at or after a
+    step where the order changed an element's colour;
+  - this code with no hover looks (hoverOn false): 341 runs, each where
+    the tooltip shown differs, at that step or the one before: 260
+    shown only here (one follows the pointer with a button down, and
+    is hit again after a delta or a scroll), 78 only on main (a stale
+    one, or over what takes no pointer), 3 another;
+  - this code: 1,073 runs, each where an element with a hover rule is
+    in the chain at that step or before it (a `hover:` class in 826,
+    the kit's colours in 238, its look in 2), or a press, a click or a
+    drag lit one during it (7).
 
-    The steps after the first follow from it: the run's state differs
-    from then on (another click target, another focus).
+  The steps after the first follow from it. The walk's steps were not
+  changed by the fixes: a54e2e4's golden is still main's.
 - **CheckFresh after every step** holds the incremental layout to a
-  fresh pass with the hover: the walk, and every hover test. Each of
-  the following fails a test when it is taken out:
-  - forgetting on a change of the chain;
-  - forgetting what left the chain;
+  fresh pass with the hover, and the chain to what the fresh pass has
+  under the pointer (but where a hover in the chain moves what is
+  there, which is hit only once). Each of the following fails a test
+  when it is taken out:
+  - forgetting on a change of the chain, and what left it;
   - a look's hover taken for a colour's;
-  - the kit's hover look counted as a look;
-  - the kit's hover colours reached;
-  - the muted-text check;
-  - the pruning.
+  - the kit's hover look counted as a look, and its colours reached;
+  - the muted-text check, and the pruning;
+  - the re-hit in layout, and after a write, a wheel, a resize;
+  - the tooltip derived when the chain is the same;
+  - a press that pins the chain, and the pointer kept after
+    Focus(false);
+  - CheckFresh's hold on the chain.
+- **What takes no pointer.** TestHoverTakesNoPointer holds every
+  `pointer-events:none` rule of ui's kit.css to a case, or to a reason
+  it isn't read (an icon, a pseudo-element), and a modal's inert, the
+  utilities and an inline style to theirs.
 - **The host.** surftest's host lays nothing out, so it can't show a
   hover. TestHoverAsTheHost holds the Screen to the stylesheet a host
-  applies instead. For 23 of the kit's hoverable components, in both
-  schemes where the kit has a dark rule, the colours the compiled
-  `:hover` rules in ui's kit.css and toast.css give are the roles Cells
-  gives while hovered.
+  applies instead: 33 cases of the kit's hoverable components, a dark rule
+  over the light one it is over, both colours (where a rule sets none,
+  the element keeps its own). TestHoverRulesAllNamed holds every
+  `:hover` rule of kit.css and toast.css to those cases, the looks, the
+  tooltip, or a list of what isn't read and why.
 
 ## Cost
 
-Test binaries were built once, and main (7d780aa) and the branch ran
-alternately for six rounds, under the build cap, at a load of 14 to 19
-(other builds). The figures are medians, per frame, with `-benchmem`:
+Test binaries were built once, and main (7d780aa) and the branch (with
+the review's fixes) ran alternately for six rounds, under the build
+cap, at a load of 10 to 15 (other builds). The figures are medians, per
+frame, with `-benchmem`:
 
 | BenchmarkCompiled, hover scene, cells | main µs | branch µs | main B | branch B | main allocs | branch allocs |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| compiled | 86 | 86 | 18,540 | 18,540 | 169 | 169 |
-| plain | 388 | 369 | 180,000 | 180,000 | 753 | 753 |
+| compiled | 44.7 | 45.0 | 18,550 | 18,550 | 169 | 169 |
+| plain | 162 | 163 | 180,300 | 180,300 | 753 | 753 |
 
 The scene lights its pill the way plx does now: the program renders the
 strip again with the hovered pill's class, and never calls `Move`. The
-branch costs it the same, with the same bytes and allocations. The
-times are within the load's noise.
+branch costs it the same, with the same bytes and allocations: the
+re-hit after each delta is a cell's lookup and a chain that is the
+same.
 
 BenchmarkHoverMove (cells/hover_bench_test.go) is the same strip lit by
 `hover:` classes instead, with the pointer moved from pill to pill and
-the Screen drawn. It takes 26 µs a move (16 at its quietest), with
-1,392 B and 9 allocations. That is about a third of the scene's 86 µs
-and a thirteenth of its bytes: what a program saves when it stops
-rendering for hover.
+the Screen drawn: 17 µs a move, 1,392 B and 9 allocations. That is
+about a third of the scene's 45 µs and a thirteenth of its bytes: what
+a program saves when it stops rendering for hover.
+
+## Left
+
+- `Move`'s and `Dirty`'s doc comments say Lines changes by itself where
+  a tooltip shows or goes; it now changes too where a hover look does.
+  That is a contract's wording, so it goes through a pack.
+- Clicks, the surface's hover events and `At` still name the innermost
+  element, where a host's hit test passes over `pointer-events:none`.
