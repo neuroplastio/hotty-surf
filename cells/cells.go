@@ -311,7 +311,7 @@ func (c *Screen) Dirty() bool {
 	if !sameGrid(s, c.pending.snap) {
 		c.spare = s
 	}
-	c.shownLay, c.shownScroll = c.lay, c.scroll
+	c.shownLay, c.shownScroll, c.shownKept = c.lay, c.scroll, c.kept
 	c.kept.recoloured = nil
 	return false
 }

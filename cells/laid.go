@@ -313,6 +313,11 @@ func (l *layout) laidOf(m *nodeMemo, key laidKey) *laid {
 			continue
 		}
 		if l.holds(r) {
+			// The last used is the last evicted (keep).
+			if last := len(m.laid) - 1; i < last {
+				copy(m.laid[i:], m.laid[i+1:])
+				m.laid[last] = r
+			}
 			return r
 		}
 		m.laid = slices.Delete(m.laid, i, i+1)
@@ -350,7 +355,8 @@ func (l *layout) holds(r *laid) bool {
 // second width.
 const maxLaid = 4
 
-// keep keeps r as m's element's laid for its key.
+// keep keeps r as m's element's laid for its key, in place of the one
+// used longest ago (laidOf) where it has maxLaid.
 func keep(m *nodeMemo, r *laid) {
 	for i, o := range m.laid {
 		if o.key == r.key {
@@ -393,6 +399,11 @@ func (l *layout) replay(r *laid, x, y int) {
 		case oOverlay:
 			l.overlays = append(l.overlays, overlay{n: o.n, x: ox, y: oy, w: w, in: o.in})
 		case oAdjust:
+			// Not reached: a pass that adjusts is laid out again at once
+			// (layout), where every laid on the box's path is looked up
+			// with the same key and doesn't hold, the offset it read
+			// (scrolls) being the one adjusted. Done as the pass did it,
+			// all the same.
 			l.c.boxScroll[o.n] = int(o.v)
 			l.adjusted = true
 		case oHeight:

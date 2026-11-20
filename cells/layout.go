@@ -143,10 +143,6 @@ func (c *Screen) layout() *layout {
 	c.kept.frames = nil
 	l.cv.hint = c.kept.rows
 	l.cv.used, c.kept.used = c.kept.used, nil
-	if old := c.kept.canvas; old != nil {
-		c.kept.used = old.chunks
-	}
-	c.kept.canvas = l.cv
 	c.kept.settle(l)
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
@@ -155,9 +151,15 @@ func (c *Screen) layout() *layout {
 	}
 	c.kept.frames, c.kept.rows = l.p.free, len(l.cv.rows)
 	if l.adjusted {
+		// Nothing reads a pass laid out again: its rows are the next's.
+		c.kept.used = l.cv.chunks
 		c.lay = nil
 		return c.layout()
 	}
+	if old := c.kept.canvas; old != nil {
+		c.kept.used = old.chunks
+	}
+	c.kept.canvas = l.cv
 	c.kept.boxes = len(l.boxes)
 	c.lay = l
 	if t := c.revealAfter; t != nil {
@@ -1654,10 +1656,11 @@ type kept struct {
 	boxes, rows int
 	// frames are the last pass's, free, which the next records in.
 	frames []*frame
-	// canvas is the last pass's canvas, and used the chunks of the one
-	// before, which the next pass's rows take: no layout two passes old
-	// is read (a caller holds the layout it asked for only until it asks
-	// again).
+	// canvas is the last layout's canvas, and used the chunks of the
+	// one before, which the next pass's rows take: no layout two
+	// layouts old is read (a caller holds the layout it asked for only
+	// until it asks again). A pass laid out again (adjusted) is no
+	// layout: the pass after takes its chunks.
 	canvas *canvas
 	used   [][]cell
 	// recoloured are the elements whose colours were forgotten since the
