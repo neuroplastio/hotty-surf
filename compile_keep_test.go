@@ -766,3 +766,99 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 		}
 	}
 }
+
+// A duplicate element id across two instances, in both orders, against a
+// full render: the first registration has the id, and its handlers run.
+// Where the second instance's surf.On was refused, it isn't kept: when
+// the first goes, it renders and the id is its own.
+
+type pdProps struct {
+	Who string
+	L   *kLog
+}
+
+func pdView(p pdProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		who, l := p.Who, p.L
+		a := onAttrs(ctx, "x", surf.Click(func() { l.add("click " + who) }))
+		if who == "A" {
+			// A registers the id without putting it on an element: the
+			// document holds one x, B's.
+			a = ""
+		}
+		_, err := fmt.Fprintf(w, `<div class="%s"><button%s>%s</button></div>`, who, a, who)
+		return err
+	})
+}
+
+var (
+	pdA = surf.Compile(pdView)
+	pdB = surf.Compile(pdView)
+)
+
+func pdApp(showA, aAfter *bool, l *kLog, plain bool) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		io.WriteString(w, `<main>`)
+		one := func(c *surf.Compiled[pdProps], who string) error {
+			p := pdProps{Who: who, L: l}
+			if plain {
+				return pdView(p).Render(ctx, w)
+			}
+			return c.With(who, p).Render(ctx, w)
+		}
+		if *showA && !*aAfter {
+			if err := one(pdA, "A"); err != nil {
+				return err
+			}
+		}
+		if err := one(pdB, "B"); err != nil {
+			return err
+		}
+		if *showA && *aAfter {
+			if err := one(pdA, "A"); err != nil {
+				return err
+			}
+		}
+		_, err := io.WriteString(w, `</main>`)
+		return err
+	})
+}
+
+func TestCompiledDupElementID(t *testing.T) {
+	for _, order := range []string{"A then B, A goes", "B, then A before it, then A goes"} {
+		t.Run(order, func(t *testing.T) {
+			type side struct {
+				l      kLog
+				r      *surftest.Rig
+				faults []string
+				showA  bool
+				after  bool
+			}
+			mk := func(plain bool) *side {
+				x := &side{showA: order[0] == 'A'}
+				s := surf.New("t", pdApp(&x.showA, &x.after, &x.l, plain), "")
+				x.r = surftest.Start(faults{t, &x.faults}, s)
+				return x
+			}
+			c, p := mk(false), mk(true)
+			steps := []func(x *side){func(x *side) { x.showA = false }}
+			if order[0] == 'B' {
+				steps = append([]func(x *side){func(x *side) { x.showA = true }}, steps...)
+			}
+			for i, st := range steps {
+				for _, x := range []*side{c, p} {
+					x.faults = x.faults[:0]
+					st(x)
+					x.r.Update()
+					x.r.Click("#x")
+				}
+				if got, want := strings.Join(c.l.lines, ","), strings.Join(p.l.lines, ","); got != want {
+					t.Errorf("step %d: the compiled surface's handlers heard %q, the plain one's %q", i, got, want)
+				}
+				if !slices.Equal(c.faults, p.faults) {
+					t.Errorf("step %d: faults %q, plain %q", i, c.faults, p.faults)
+				}
+			}
+		})
+	}
+}

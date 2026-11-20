@@ -113,7 +113,9 @@ registrations through `rt.Register`).
   frame list, and writes the marker. An instance that read the frame
   through an `rt` accessor (the focused element, the memo, the render's
   count, `After`, `surf.Of`) is volatile: it renders in place between
-  bracket markers every time, and so does every instance around it.
+  bracket markers every time, and so does every instance around it. So
+  is one whose `surf.On` was refused for an id registered before it:
+  what it registers isn't its props' alone.
 - **The outer markup.** With markers in place of instances, a view whose
   outer markup, handlers' keys and modal are the last render's is
   `outerSame`. Then `fill` takes only the instances that rendered: each

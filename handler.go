@@ -57,6 +57,10 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	}
 	if f.Get(id) != nil {
 		f.Faults = append(f.Faults, "surf.On: the id "+id+" is registered twice in one render")
+		// What it registers depends on what came before it: a compiled
+		// instance refused one isn't kept, so that it registers the id
+		// once the other goes.
+		f.Read("an id registered before it")
 		return a
 	}
 	if clean := hotty.Sanitize(id); clean != id {
