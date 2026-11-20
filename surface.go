@@ -211,7 +211,6 @@ func (s *Surface) Link(sheets ...Sheet) {
 // naming the surface, or an error from w's Write, as a cells.Screen
 // refuses).
 func (s *Surface) Document() (string, error) {
-	s.enter()
 	doc, err := s.document()
 	s.leave()
 	return doc, err
@@ -226,7 +225,6 @@ func (s *Surface) Document() (string, error) {
 // sending (a cells.Screen calls its events that way): the surface runs it
 // once that send is done, before the call that wrote returns.
 func (s *Surface) Event(e hotty.Event) error {
-	s.enter()
 	err := s.event(e)
 	s.leave()
 	return err
@@ -249,7 +247,6 @@ func (s *Surface) Event(e hotty.Event) error {
 // which may already have restored the element. It runs on the driver's
 // goroutine, as Event does.
 func (s *Surface) Focus() (focused bool, err error) {
-	s.enter()
 	focused, err = s.takeFocus()
 	s.leave()
 	return focused, err
@@ -269,7 +266,6 @@ func (s *Surface) Focus() (focused bool, err error) {
 // the surface hears as the same blur. It runs on the driver's goroutine,
 // as Event does.
 func (s *Surface) Blur() (blurred bool, err error) {
-	s.enter()
 	blurred, err = s.blur()
 	s.leave()
 	return blurred, err
@@ -382,7 +378,6 @@ const (
 // and ordinary Key handlers; a decline tries enclosing scopes, then the
 // default.
 func (s *Surface) Key(key string) (taken bool, err error) {
-	s.enter()
 	taken, err = s.key(key)
 	s.leave()
 	return taken, err
@@ -392,7 +387,6 @@ func (s *Surface) Key(key string) (taken bool, err error) {
 // sends what changed. A driver calls it when Pending fires; a program that
 // changed the app's state on the driver's goroutine calls it itself.
 func (s *Surface) Update() error {
-	s.enter()
 	err := s.update()
 	s.leave()
 	return err

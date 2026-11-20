@@ -208,8 +208,10 @@ attributes return when the modal closes.
   surface keeps faults for it only where its Start asked
   (`rt.Peek.KeepFaults`), at most 64 between its reads. Every fault goes
   through `fault()`, which also gives it to `OnFault`'s fn: once each
-  until the next Document, at the end of the outermost driver call
-  (`enter`/`leave` count them), never while the surface sends.
+  until the next Document, at the end of the driver call that found it
+  (`leave`), never while the surface sends: an Event a cells.Screen
+  gives from inside a Write is run by the call that wrote, and that
+  call's `leave` gives its faults.
 - **`cells`** is a hotty host inside the program. It lays a document out
   in character cells, keeps its focus and fields, and sends the surface
   the events a host would. Chrome a program draws itself every frame is

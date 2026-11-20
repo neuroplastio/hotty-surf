@@ -216,13 +216,7 @@ func TestOnFaultDocument(t *testing.T) {
 
 // OnFault(nil) inside fn stops it, the rest of the call's faults with it.
 func TestOnFaultNilInside(t *testing.T) {
-	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		for _, id := range []string{"a", "b", "c"} {
-			On(ctx, id)
-			On(ctx, id)
-		}
-		return nil
-	}), "")
+	s := New("t", threeTwice, "")
 	var heard []string
 	s.OnFault(func(f string) {
 		heard = append(heard, f)
@@ -296,6 +290,104 @@ func TestOnFaultReplaced(t *testing.T) {
 	}
 }
 
+// threeTwice is a view that registers a, b and c twice each: three
+// faults at every render.
+var threeTwice = templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+	for _, id := range []string{"a", "b", "c"} {
+		On(ctx, id)
+		On(ctx, id)
+	}
+	return nil
+})
+
+// OnFault set inside fn drops the rest of that call's faults: the new fn
+// hears them at the next render that finds them.
+func TestOnFaultReplacedInside(t *testing.T) {
+	s := New("t", threeTwice, "")
+	var first, second []string
+	s.OnFault(func(f string) {
+		first = append(first, f)
+		s.OnFault(func(f string) { second = append(second, f) })
+	})
+	s.Attach(io.Discard, hotty.Caps{})
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	if len(first) != 1 || len(second) != 0 {
+		t.Fatalf("the first heard %q, the second %q: want one and none", first, second)
+	}
+	s.Do(func() {})
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if len(first) != 1 || len(second) != 3 {
+		t.Errorf("the first heard %q, the second %q: want one and three", first, second)
+	}
+}
+
+// A handler's panic the driver recovers leaves OnFault working: the next
+// render's fault is heard.
+func TestOnFaultAfterARecoveredPanic(t *testing.T) {
+	broke := false
+	s, heard := hearing(templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if broke {
+			On(ctx, "twice")
+			On(ctx, "twice")
+		}
+		_, err := fmt.Fprintf(w, `<button%s>Go</button>`, attrsOf(On(ctx, "go", Click(func() {
+			broke = true
+			panic("the handler's bug")
+		}))))
+		return err
+	}), io.Discard)
+	if _, err := s.Document(); err != nil {
+		t.Fatal(err)
+	}
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("the handler didn't panic")
+			}
+		}()
+		s.Event(hotty.Event{Surface: "t", Kind: hotty.EventClick, Target: "go"})
+	}()
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if count(*heard, "twice") != 1 {
+		t.Errorf("heard %q after the recovered panic, want the id twice", *heard)
+	}
+}
+
+// A panic in fn gives none of the call's faults twice: those it heard
+// are done, and the rest come at the next call's end.
+func TestOnFaultPanicInFn(t *testing.T) {
+	s := New("t", threeTwice, "")
+	var heard []string
+	s.OnFault(func(f string) {
+		heard = append(heard, f)
+		if len(heard) == 2 {
+			panic("fn's bug")
+		}
+	})
+	s.Attach(io.Discard, hotty.Caps{})
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("fn didn't panic")
+			}
+		}()
+		s.Document()
+	}()
+	s.Do(func() {})
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if len(heard) != 3 || count(heard, "id a ") != 1 || count(heard, "id b ") != 1 || count(heard, "id c ") != 1 {
+		t.Errorf("heard %q, want a, b and c once each", heard)
+	}
+}
+
 // The check is off in a new surface (no surfdev here) and finds a kept
 // instance reading a pointer's target once CheckCompiled turns it on.
 func TestCheckCompiled(t *testing.T) {
@@ -340,7 +432,7 @@ func TestCheckCompiled(t *testing.T) {
 }
 
 // A cells.Screen gives the surface events from inside its Write: fn runs
-// once, at the end of the outermost call, never while the surface sends.
+// once, at the end of the call that wrote, never while the surface sends.
 func TestOnFaultReentrant(t *testing.T) {
 	renders := 0
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
@@ -355,7 +447,7 @@ func TestOnFaultReentrant(t *testing.T) {
 	var heard []string
 	inside, reentered := false, false
 	s.OnFault(func(f string) {
-		if s.sink.depth != 0 || s.sending {
+		if s.sending {
 			inside = true
 		}
 		heard = append(heard, f)

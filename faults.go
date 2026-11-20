@@ -29,9 +29,6 @@ type faultSink struct {
 	heard map[string]struct{}
 	over  bool // faultsOver was given
 	due   []string
-	// depth counts the driver's calls under way: Event inside a Write
-	// to the surface's writer (a cells.Screen's) runs inside another.
-	depth int
 }
 
 // CheckCompiled turns the check of s's compiled instances (Compile) on
@@ -72,8 +69,10 @@ func (s *Surface) CheckCompiled(on bool) {
 // CheckCompiled and OnFault; it doesn't call one that renders, nor
 // Attach. Each OnFault replaces the last and starts anew: a fault found
 // before it isn't given unless it is found again, and nil stops it, the
-// rest of the call's faults with it. surftest hears faults its own way
-// whether or not fn is set. Unset, it costs nothing.
+// rest of the call's faults with it. One set inside fn drops the rest of
+// that call's faults too: the new fn hears them at the next render that
+// finds them. surftest hears faults its own way whether or not fn is
+// set. Unset, it costs nothing.
 func (s *Surface) OnFault(fn func(fault string)) {
 	k := &s.sink
 	k.fn, k.over, k.due = fn, false, k.due[:0]
@@ -122,22 +121,27 @@ func (s *Surface) heardAnew() {
 	k.over = false
 }
 
-// enter starts a driver's call; leave ends it, and at the end of the
-// outermost gives fn the faults the call found. fn is read again for
-// each, so that OnFault inside it takes effect at once. leave isn't
-// deferred: TinyGo's defer costs about 4.8 KB of wasm over the six calls,
-// and a panic out of a handler leaves the surface broken already (write's
-// sending).
-func (s *Surface) enter() { s.sink.depth++ }
-
+// leave ends a driver's call (Document, Update, Event, Key, Focus, Blur)
+// and gives fn the faults found so far, unless the surface is sending: an
+// Event from inside a Write to its writer (a cells.Screen's) is run by the
+// call that wrote once the send is done, and that call's leave gives them.
+// fn is read again for each, so that OnFault inside it takes effect at
+// once, and each is taken off due before fn hears it, so that a panic in
+// fn doesn't give one twice. leave isn't deferred, as TinyGo's defer costs
+// about 4.8 KB of wasm over the six calls, and it needs no count of the
+// calls under way: a handler's panic the driver recovers leaves nothing
+// behind.
 func (s *Surface) leave() {
 	k := &s.sink
-	if k.depth--; k.depth > 0 || len(k.due) == 0 {
+	if s.sending || len(k.due) == 0 {
 		return
 	}
-	for i := 0; i < len(k.due) && k.fn != nil; i++ {
-		k.fn(k.due[i])
+	n, base := len(k.due), k.due[:0]
+	for len(k.due) > 0 && k.fn != nil {
+		f := k.due[0]
+		k.due = k.due[1:]
+		k.fn(f)
 	}
-	clear(k.due)
-	k.due = k.due[:0]
+	clear(base[:n])
+	k.due = base
 }
