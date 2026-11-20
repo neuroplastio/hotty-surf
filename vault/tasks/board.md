@@ -127,6 +127,11 @@ the last release.
   document and a reveal change the scroll and keep the layout, so the
   tip would still be drawn at the scroll before. It changes what the
   Screen draws, with its own tests, and TestWalkGolden's golden again.
+- **Hover looks** (branch cells-hover, 11-20, journal 2026-11-20
+  cells-hover): a Screen keeps the hovered chain, and an element in it
+  reads its `hover:` classes and the kit's `:hover` looks. A program
+  needn't add hover classes to its markup any more, so a compiled
+  instance that isn't rendered again lights up as well.
 
 ### Before v0.7.0
 
