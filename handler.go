@@ -79,8 +79,10 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 				e.Click = h.fn.(func())
 				break
 			}
-			fn := h.fn.(func(int))
-			e.Click = func() { fn(max(f.Count, 1)) }
+			// The count is the click's that runs it (Surface.count), not
+			// this render's: a compiled instance's handler outlives it.
+			fn, s := h.fn.(func(int)), f.Owner().(*Surface)
+			e.Click = func() { fn(max(s.count, 1)) }
 		case kindInput:
 			e.Input = h.fn.(func(string))
 		case kindCheck:

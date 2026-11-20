@@ -80,10 +80,10 @@ type dialogMemo struct {
 func (ds *dialogs) sweep(f *rt.Frame) {
 	var gone *dialogMemo
 	for id, m := range ds.open {
-		if m.openAt == f.N {
+		if m.openAt == f.N() {
 			continue
 		}
-		if m.openAt == f.N-1 && m.back != "" && (gone == nil || m.at < gone.at) {
+		if m.openAt == f.N()-1 && m.back != "" && (gone == nil || m.at < gone.at) {
 			gone = m
 		}
 		delete(ds.open, id)
@@ -111,18 +111,18 @@ type dialogView struct {
 func newDialogView(ctx context.Context, p DialogProps) *dialogView {
 	d := &dialogView{p: p, id: or(p.ID, "dialog")}
 	f := rt.From(ctx)
-	if f == nil || f.Memo == nil {
+	if f == nil || f.Memo() == nil {
 		return d
 	}
-	ds, _ := f.Memo[dialogsKey].(*dialogs)
+	ds, _ := f.Memo()[dialogsKey].(*dialogs)
 	if ds == nil {
 		ds = &dialogs{open: map[string]*dialogMemo{}}
-		f.Memo[dialogsKey] = ds
+		f.Memo()[dialogsKey] = ds
 	}
-	if ds.n != f.N || ds.seen == nil {
+	if ds.n != f.N() || ds.seen == nil {
 		// The first Dialog of this frame.
-		ds.n, ds.seen = f.N, map[string]bool{}
-		f.After = append(f.After, func() { ds.sweep(f) })
+		ds.n, ds.seen = f.N(), map[string]bool{}
+		f.AddAfter(func() { ds.sweep(f) })
 	}
 	if ds.seen[d.id] {
 		rt.Fault(ctx, fmt.Sprintf("ui.Dialog: two dialogs with ID %q: give each its own", d.id))
@@ -136,16 +136,16 @@ func newDialogView(ctx context.Context, p DialogProps) *dialogView {
 	f.Modal = append(f.Modal, d.id)
 	f.ModalOps = &rt.ModalOps{Prepare: rt.PrepareModal, Scope: rt.ModalScope, Applies: rt.ModalApplies, Target: rt.ModalTarget}
 	m := ds.open[d.id]
-	if m == nil || m.openAt != f.N-1 {
+	if m == nil || m.openAt != f.N()-1 {
 		d.opening = true
-		m = &dialogMemo{at: f.N, in: true}
+		m = &dialogMemo{at: f.N(), in: true}
 		ds.open[d.id] = m
-	} else if f.Focused == "" {
+	} else if f.Focused() == "" {
 		// The surface knows the keyboard is nowhere: a blur, or a new
 		// document.
 		m.in = false
 	}
-	m.openAt = f.N
+	m.openAt = f.N()
 	d.m = m
 	return d
 }
@@ -218,8 +218,8 @@ func (d *dialogView) body(ctx context.Context, children templ.Component) (string
 			home = d.id + "-close"
 		}
 		f, m := d.f, d.m
-		f.After = append(f.After, func() {
-			m.back = or(f.Focus, f.Focused)
+		f.AddAfter(func() {
+			m.back = or(f.Focus, f.Focused())
 			f.Focus = home
 		})
 	}

@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/a-h/templ"
+
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // An InputGroup draws its control's border, and the kit's own class on an
@@ -16,7 +18,7 @@ import (
 type groupKey struct{}
 
 func inGroup(ctx context.Context) bool {
-	in, _ := ctx.Value(groupKey{}).(bool)
+	in, _ := rt.Value(ctx, groupKey{}).(bool)
 	return in
 }
 

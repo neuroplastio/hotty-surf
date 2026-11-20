@@ -192,7 +192,7 @@ func (a *App) show(id string) {
 			}
 			if f != nil {
 				ids := append([]string(nil), f.Order[start:]...)
-				f.After = append(f.After, func() { a.observeHandlers(f, story, ids) })
+				f.AddAfter(func() { a.observeHandlers(f, story, ids) })
 			}
 			return nil
 		})
@@ -300,7 +300,7 @@ func (a *App) sync() {
 }
 
 func (a *App) startingList(ctx context.Context) bool {
-	if f := rt.From(ctx); f != nil && f.Focused != "" {
+	if f := rt.From(ctx); f != nil && f.Focused() != "" {
 		a.startFocus = false
 	}
 	return a.startFocus
@@ -368,22 +368,22 @@ func (a *App) focusRequest(ctx context.Context) string {
 	if f == nil {
 		return ""
 	}
-	if a.wantFocus != "" && f.Focused == a.wantFocus {
+	if a.wantFocus != "" && f.Focused() == a.wantFocus {
 		a.wantFocus = ""
 	}
 	if a.wantFocus != "" {
 		return a.wantFocus
 	}
 	switch {
-	case strings.HasPrefix(f.Focused, a.nav.ID+"-item-"):
+	case strings.HasPrefix(f.Focused(), a.nav.ID+"-item-"):
 		a.model.SetRegion(storybook.RegionList)
-	case f.Focused == a.nav.FilterID():
+	case f.Focused() == a.nav.FilterID():
 		a.model.SetRegion(storybook.RegionFilter)
-	case strings.HasPrefix(f.Focused, "book-tabs-tab-"):
+	case strings.HasPrefix(f.Focused(), "book-tabs-tab-"):
 		a.model.SetRegion(storybook.RegionTabs)
-	case f.Focused == "book-panel" || strings.HasPrefix(f.Focused, "book-control-"):
+	case f.Focused() == "book-panel" || strings.HasPrefix(f.Focused(), "book-control-"):
 		a.model.SetRegion(storybook.RegionPanel)
-	case f.Focused != "":
+	case f.Focused() != "":
 		a.model.SetRegion(storybook.RegionPreview)
 	}
 	return ""
@@ -544,7 +544,7 @@ func (a *App) Edge(back bool) func(bool) {
 func (a *App) inert(ctx context.Context) bool {
 	f := rt.From(ctx)
 	a.modalOpen = f != nil && len(f.Modal) > 0
-	return f != nil && len(f.Modal) > 0 && !(own(f.Focused) && !strings.HasPrefix(f.Focused, a.nav.ID+"-item-"))
+	return f != nil && len(f.Modal) > 0 && !(own(f.Focused()) && !strings.HasPrefix(f.Focused(), a.nav.ID+"-item-"))
 }
 
 // keep has the last word on what the render asks for the keyboard: a
@@ -556,11 +556,11 @@ func (a *App) keep(ctx context.Context) {
 		return
 	}
 	last := func() {
-		if own(f.Focused) && f.Focus != "" && !own(f.Focus) && f.Focus != a.wantFocus {
+		if own(f.Focused()) && f.Focus != "" && !own(f.Focus) && f.Focus != a.wantFocus {
 			f.Focus = ""
 		}
 	}
-	f.After = append(f.After, func() { f.After = append(f.After, last) })
+	f.AddAfter(func() { f.AddAfter(last) })
 }
 
 // takeToList says, once, that this render gives the list the keyboard.

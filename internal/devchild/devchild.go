@@ -247,6 +247,9 @@ func (c *child) sendAreas(stop <-chan struct{}) {
 // takes the edits made since the build. s isn't driven yet. c.mu is held.
 func (c *child) take(s *surf.Surface) {
 	c.surfaces = append(c.surfaces, s)
+	// A dev build checks that a kept compiled instance renders what it
+	// kept (surf.Compile), unless the environment says off.
+	rt.Peek.Check(s, os.Getenv("HOTTY_SURF_COMPILE_CHECK") != "off")
 	css := restyled(rt.Peek.CSS(s), c.styles)
 	from := ""
 	for i, sn := range c.snaps {
@@ -481,11 +484,16 @@ var reread func()
 
 // render renders every surface again, for strings templ's dev mode reads
 // anew: at once when templ can be told to (reread), and otherwise once
-// templ will have checked the strings file again.
+// templ will have checked the strings file again. Its compiled instances
+// are forgotten first: their props are the same, and their text isn't.
 func (c *child) render() {
+	again := func(s *surf.Surface) bool {
+		rt.Peek.Forget(s)
+		return true
+	}
 	if reread != nil {
 		reread()
-		c.each(func(*surf.Surface) bool { return true })
+		c.each(again)
 		return
 	}
 	var last time.Time
@@ -497,7 +505,7 @@ func (c *child) render() {
 	if d := time.Until(last.Add(devModeWait)); d > 0 {
 		time.Sleep(d)
 	}
-	c.each(func(*surf.Surface) bool { return true })
+	c.each(again)
 }
 
 // restyle replaces st.Old with st.New in every surface's stylesheet that

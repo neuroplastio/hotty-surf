@@ -192,7 +192,7 @@ func keymapsOf(n *html.Node) []string {
 // and its keymap binds key to an edit action, which it does itself.
 func (s *Surface) fieldTakes(key string) bool {
 	n := s.byID[s.focused]
-	if n == nil || s.keyMarks[s.focused].scope > 0 {
+	if n == nil || s.keyMarks[s.focused].local > 0 {
 		return false
 	}
 	kind, multiline := nativeKind(n)

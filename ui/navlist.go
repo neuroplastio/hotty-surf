@@ -216,11 +216,11 @@ func (l *NavList) track(ctx context.Context) string {
 	if f := rt.From(ctx); f != nil {
 		l.mod = f.Platform.Mod
 		switch {
-		case f.Focused == l.FilterID():
+		case f.Focused() == l.FilterID():
 			l.in = "filter"
-		case strings.HasPrefix(f.Focused, l.ID+"-item-"):
+		case strings.HasPrefix(f.Focused(), l.ID+"-item-"):
 			l.in = "list"
-		case f.Focused != "":
+		case f.Focused() != "":
 			l.in = ""
 		}
 	}

@@ -51,6 +51,7 @@ const (
 // them after.
 func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	scope, kind := 0, ""
+	var mark keyMark
 	for i := 0; i < len(n.Attr); i++ {
 		a := n.Attr[i]
 		switch a.Key {
@@ -59,11 +60,18 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		case kindAttr:
 			s.fault("surf: " + kindAttr + " on " + strconv.Quote(id) + " is the kit's")
 		case scopeAttr:
-			k := -1
+			// The frame's secret, then the scope: in a compiled instance,
+			// its id, a dot, and the scope among the instance's own.
+			k, local := -1, 0
+			var rec *record
 			if t.f != nil && t.f.KeyMark != "" {
 				if rest, ok := strings.CutPrefix(a.Val, t.f.KeyMark); ok {
-					if v, err := strconv.Atoi(rest); err == nil {
-						k = v
+					if i := strings.IndexByte(rest, '.'); i >= 0 {
+						rec = s.c.byID[rest[:i]]
+						rest = rest[i+1:]
+					}
+					if v, err := strconv.Atoi(rest); err == nil && v > 0 && (rec != nil || !strings.Contains(a.Val[len(t.f.KeyMark):], ".")) {
+						k, local = v+scopeBase(rec), v
 					}
 				}
 			}
@@ -75,6 +83,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 				t.marks = map[int]bool{}
 			}
 			t.marks[k], scope, kind = true, k, t.f.KeyKinds[k-1]
+			mark = keyMark{rec: rec, local: local, kind: kind}
 		default:
 			continue
 		}
@@ -85,7 +94,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		if t.scopes == nil {
 			t.scopes = map[string]keyMark{}
 		}
-		t.scopes[id] = keyMark{scope: scope, kind: kind}
+		t.scopes[id] = mark
 	}
 	if t.f == nil {
 		return keyPush{}
@@ -228,11 +237,31 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, kind string, multiline b
 	return binds, bound, pushed
 }
 
-// A keyMark is a kit control's place under the KeyScopes: the frame's
-// scope it is in (one-based) and its kind, as ui marked it.
+// A keyMark is a kit control's place under the KeyScopes: the scope it
+// is in (one-based), of the frame's or, in a compiled instance, of the
+// instance's (rec), and its kind, as ui marked it.
 type keyMark struct {
-	scope int
+	rec   *record
+	local int
 	kind  string
+}
+
+// markScope is m's scope in the last frame's KeyScopes (one-based), 0 for
+// none: an instance's own are where the frame took them this render.
+func (s *Surface) markScope(m keyMark) int {
+	if m.local == 0 {
+		return 0
+	}
+	return m.local + scopeBase(m.rec)
+}
+
+// scopeBase is where r's KeyScopes start in its frame's.
+func scopeBase(r *record) int {
+	n := 0
+	for ; r != nil; r = r.up {
+		n += r.scopeOff
+	}
+	return n
 }
 
 // keysig is what a render declares in keys, which its HTML no longer
@@ -265,8 +294,13 @@ func keysig(b []byte, f *rt.Frame) []byte {
 			b = append(b, '\n')
 		}
 	}
-	for _, sc := range f.KeyScopes {
+	for i, sc := range f.KeyScopes {
 		b = append(b, '|')
+		if i > 0 && sc == f.KeyScopes[i-1] {
+			// The scope before's again, which forwards what it did.
+			b = append(b, '=')
+			continue
+		}
 		for _, k := range rt.Forwarded(sc, "") {
 			b = append(b, ' ')
 			b = append(b, k...)

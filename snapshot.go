@@ -55,6 +55,7 @@ func (s *Surface) adopt(r *msgp.Reader) error {
 	if sn.Name != s.name {
 		return fmt.Errorf("surf: a snapshot of %q given to %q", sn.Name, s.name)
 	}
+	s.forgetInstances()
 	kids, err := html.ParseFragment(strings.NewReader(sn.Tree), bodyCtx)
 	if err != nil {
 		return err

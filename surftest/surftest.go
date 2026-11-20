@@ -54,6 +54,8 @@ func Start(t testing.TB, s *surf.Surface, opts ...Option) *Rig {
 	}
 	h := hottytest.New(t, hottytest.Size(c.cols, c.rows))
 	r := &Rig{t: t, host: h, s: s, faulted: map[string]bool{}}
+	// Every kept compiled instance is rendered too, and checked.
+	rt.Peek.Check(s, true)
 	s.Attach(h, hottytest.DefaultCaps())
 	doc, err := s.Document()
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -26,6 +27,7 @@ type renderer struct {
 	buf   bytes.Buffer
 	p     parser
 	last  []byte // the HTML the tree the host has was parsed from
+	exp   []byte // the render with its instances' markup in place (expand)
 	valid bool   // last is that tree's: false before one, and after a snapshot is adopted
 	// sig and lastSig are the keys this render and the last tree's
 	// declare (keysig): the HTML doesn't carry them.
@@ -59,6 +61,9 @@ func init() {
 		return x.documentOf(x.prev)
 	}
 	rt.Peek.CSS = func(s any) string { return s.(*Surface).css }
+	rt.Peek.Forget = func(s any) { s.(*Surface).forgetInstances() }
+	rt.Peek.Check = func(s any, on bool) { s.(*Surface).c.check = on }
+	rt.Peek.Instances = func(s any) []string { return s.(*Surface).instancesOf() }
 	rt.Peek.Rendered = func(s any) time.Time {
 		if n := s.(*Surface).r.at.Load(); n != 0 {
 			return time.Unix(0, n)
@@ -69,6 +74,7 @@ func init() {
 
 func (s *Surface) reset() {
 	s.r.valid = false
+	s.forgetInstances()
 	s.fields = nil
 	s.ids = map[string]string{}
 	s.byID = map[string]*html.Node{}
@@ -82,10 +88,19 @@ var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Bo
 // paint renders the view into the renderer's buffer, with the frame of
 // handlers it registers, and says whether the HTML is the last tree's, byte
 // for byte: then the tree is the last one, ids and all, and needs no parse
-// and no diff.
+// and no diff. A compiled instance's markup is a marker in the view's
+// (mark), and its own markup is its record's: the view's is the same
+// (outerSame) where only instances changed (c.changed).
 func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 	s.n++
-	f = &rt.Frame{On: map[string]*rt.Handlers{}, Platform: s.platform, Surface: s, Focused: s.focused, Memo: s.memo, N: s.n, KeyMark: s.keyMark}
+	// As many ids as the last render's: the map doesn't grow.
+	ids := 0
+	if s.frame != nil {
+		ids = len(s.frame.On)
+	}
+	f = rt.NewFrame(s, s.platform, s.focused, s.memo, s.n, s.keyMark, ids)
+	s.dropDups()
+	s.c.changed, s.c.stack = s.c.changed[:0], s.c.stack[:0]
 	s.r.buf.Reset()
 	err = s.view.Render(rt.With(context.Background(), f), &s.r.buf)
 	// When it ended: templ's dev mode read its strings before then.
@@ -93,12 +108,12 @@ func (s *Surface) paint() (f *rt.Frame, same bool, err error) {
 	if err != nil {
 		return nil, false, err
 	}
-	for i := 0; i < len(f.After); i++ {
-		f.After[i]()
-	}
+	f.RunAfter()
+	s.endInstances()
 	s.fault(f.Faults...)
 	s.r.sig = keysig(s.r.sig, f)
-	return f, s.r.valid && activeModal(f) == s.r.modal && bytes.Equal(s.r.buf.Bytes(), s.r.last) && bytes.Equal(s.r.sig, s.r.lastSig), nil
+	s.outerSame = s.r.valid && activeModal(f) == s.r.modal && bytes.Equal(s.r.buf.Bytes(), s.r.last) && bytes.Equal(s.r.sig, s.r.lastSig) && len(s.c.dups) == 0
+	return f, s.outerSame && len(s.c.changed) == 0, nil
 }
 
 // tree parses what paint rendered into a fresh tree under a root, with an
@@ -112,6 +127,10 @@ func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 		byID: make(map[string]*html.Node, len(s.byID)),
 	}
 	src := s.r.buf.Bytes()
+	if len(s.c.byID) > 0 {
+		s.r.exp = s.expand(s.r.exp[:0], src)
+		src = s.r.exp
+	}
 	if !s.r.p.parse(t.root, src) {
 		t.root = newRoot()
 		if err := parseSlow(t.root, src); err != nil {
@@ -120,6 +139,7 @@ func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 	} else if parseCheck {
 		checkParse(t.root, src)
 	}
+	s.brackets(t.root, t, false)
 	if f.ModalOps != nil {
 		f.ModalOps.Prepare(t.root, activeModal(f))
 	}
@@ -162,6 +182,8 @@ type tree struct {
 	// the program (key=program, key=prefix), which Readline's bindings
 	// leave alone (writeKeys).
 	given []string
+	// roots are the compiled instances' elements (brackets).
+	roots map[*html.Node]*record
 }
 
 // keep takes t as what the host has, and the HTML paint rendered as its
@@ -205,12 +227,21 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			}
 		}
 		id := attr(c, "id")
+		own := id
 		if id != "" && rt.RuntimeID(id) {
 			s.fault(fmt.Sprintf("surf: an element's own id %q is the runtime's: root and hotty-css are the document's, and %s followed by base 36 is a generated id", id, rt.IDPrefix))
 		}
+		inst := t.roots[c]
 		if id == "" {
-			key := pid + "/" + c.Data + "#" + strconv.Itoa(n)
-			n++
+			// An instance's element is numbered by its instance key, so
+			// it keeps its ids where it moves; the view's own by place.
+			var key string
+			if inst != nil {
+				key = "@" + inst.c.name + "@" + inst.key + "/" + c.Data
+			} else {
+				key = pid + "/" + c.Data + "#" + strconv.Itoa(n)
+				n++
+			}
 			id = s.ids[key]
 			if id == "" {
 				s.nextID++
@@ -220,6 +251,12 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 			c.Attr = withID(c.Attr, id)
 		}
 		t.byID[id] = c
+		if inst != nil {
+			inst.placed(c, own, pre, t)
+		}
+		if t.f != nil && len(t.f.Stops) > 0 && slices.Contains(t.f.Stops, id) {
+			setTabindex(c, "0")
+		}
 		pushed := s.writeKeys(c, id, t)
 		if s.lifted && id == s.drag {
 			addClass(c, "dragging")
@@ -232,6 +269,37 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 		t.given = t.given[:len(t.given)-pushed.given]
 		c = next
 	}
+}
+
+// setTabindex sets the tabindex n has (the kit wrote one) to v.
+func setTabindex(n *html.Node, v string) bool {
+	for i, a := range n.Attr {
+		if a.Key == "tabindex" {
+			if a.Val == v {
+				return false
+			}
+			n.Attr[i].Val = v
+			return true
+		}
+	}
+	return false
+}
+
+// restop moves the tab stops the last frame wrote to f's (rt.Frame.Stops)
+// on the tree the host has, where no diff of the tree did.
+func (s *Surface) restop(d *differ, f *rt.Frame) {
+	for _, ids := range [][]string{s.stops, f.Stops} {
+		for _, id := range ids {
+			want := "-1"
+			if slices.Contains(f.Stops, id) {
+				want = "0"
+			}
+			if n := s.byID[id]; n != nil && setTabindex(n, want) {
+				d.ops = append(d.ops, hotty.OpAttr(id, "tabindex", want))
+			}
+		}
+	}
+	s.stops = append(s.stops[:0], f.Stops...)
 }
 
 // addClass adds class to n's class attribute.

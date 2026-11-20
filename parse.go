@@ -30,6 +30,7 @@ type parser struct {
 	nodes []html.Node
 	attrs []html.Attribute
 	stack []*html.Node
+	base  int                   // the stack's open elements no end tag closes
 	svg   map[string]*html.Node // an <svg>'s markup → its tree, to clone
 }
 
@@ -70,6 +71,44 @@ func (p *parser) parse(root *html.Node, b []byte) bool {
 	// The slabs aren't reused: the last tree still points into them.
 	p.nodes, p.attrs = nil, nil
 	p.stack = append(p.stack[:0], root)
+	p.base = 1
+	return p.run()
+}
+
+// parseIn appends a compiled instance's markup b to holder, as it parses
+// where holder stands: under parent, whose ancestors under the root are
+// anc, outermost first. holder is a bare copy of parent, which receives
+// nothing. It says whether it could (as parse), and never where an
+// ancestor is one the fast parser doesn't open itself.
+func (p *parser) parseIn(holder *html.Node, anc []*html.Node, b []byte) bool {
+	for _, a := range append(anc, holder) {
+		if a.Namespace != "" || !opens(a.DataAtom) {
+			return false
+		}
+	}
+	p.src = string(b)
+	p.stack = append(append(p.stack[:0], nil), anc...)
+	p.stack = append(p.stack, holder)
+	p.base = len(p.stack)
+	return p.run()
+}
+
+// opens says whether the fast parser opens an element a itself: one it
+// may hold the markup of.
+func opens(a atom.Atom) bool {
+	switch a {
+	case atom.Script, atom.Style, atom.Textarea, atom.Title, atom.Xmp, atom.Iframe,
+		atom.Noembed, atom.Noframes, atom.Plaintext, atom.Template, atom.Noscript,
+		atom.Pre, atom.Listing, atom.Select, atom.Option, atom.Optgroup, atom.Datalist,
+		atom.Html, atom.Head, atom.Body, atom.Frameset, atom.Math, atom.Svg, atom.Object,
+		atom.Applet, atom.Marquee, atom.Nobr, atom.Caption, atom.Colgroup:
+		return false
+	}
+	return true
+}
+
+// run parses p.src under the stack's top.
+func (p *parser) run() bool {
 	s := p.src
 	for i := 0; i < len(s); {
 		top := p.stack[len(p.stack)-1]
@@ -97,8 +136,16 @@ func (p *parser) parse(root *html.Node, b []byte) bool {
 			i = n
 			continue
 		}
+		if strings.HasPrefix(s[i:], "<!--") {
+			n, ok := p.comment(top, s, i)
+			if !ok {
+				return false
+			}
+			i = n
+			continue
+		}
 		if !isLetter(s[i+1]) {
-			return false // a comment, a doctype, or a < in text
+			return false // a doctype, a bogus comment, or a < in text
 		}
 		n, ok := p.start(top, s, i)
 		if !ok {
@@ -106,7 +153,28 @@ func (p *parser) parse(root *html.Node, b []byte) bool {
 		}
 		i = n
 	}
-	return len(p.stack) == 1
+	return len(p.stack) == p.base
+}
+
+// comment adds the comment at s[i] to top: one the tokenizer reads as it
+// is written, its text with no -- and no line end it would change.
+func (p *parser) comment(top *html.Node, s string, i int) (int, bool) {
+	body := s[i+4:]
+	if strings.HasPrefix(body, ">") || strings.HasPrefix(body, "->") {
+		return 0, false
+	}
+	end := strings.Index(body, "-->")
+	if end < 0 {
+		return 0, false
+	}
+	body = body[:end]
+	if strings.Contains(body, "--") || strings.HasSuffix(body, "-") || strings.IndexByte(body, 0) >= 0 || strings.IndexByte(body, '\r') >= 0 {
+		return 0, false
+	}
+	n := p.node()
+	n.Type, n.Data = html.CommentNode, body
+	top.AppendChild(n)
+	return i + 4 + end + 3, true
 }
 
 // text adds a text node to top: what isn't in a tag.
@@ -149,7 +217,7 @@ func (p *parser) end(top *html.Node, s string, i int) (int, bool) {
 	for k < len(s) && isSpace(s[k]) {
 		k++
 	}
-	if k >= len(s) || s[k] != '>' || len(p.stack) == 1 || !strings.EqualFold(name, top.Data) {
+	if k >= len(s) || s[k] != '>' || len(p.stack) <= p.base || !strings.EqualFold(name, top.Data) {
 		return 0, false
 	}
 	p.stack = p.stack[:len(p.stack)-1]

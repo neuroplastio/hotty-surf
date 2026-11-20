@@ -63,4 +63,16 @@ var Peek struct {
 	// before it first did. It may be called from any goroutine: the
 	// reload child waits out templ's dev-mode recheck from it.
 	Rendered func(s any) time.Time
+	// Forget drops the surface's compiled instances (surf.Compile): a
+	// dev reload's text tier, whose strings their kept markup still
+	// holds. The next render renders each again.
+	Forget func(s any)
+	// Check turns on the check of compiled instances (surf.Compile): each
+	// kept one is rendered too, and a difference from what was kept is a
+	// fault. surftest turns it on, and so does a surfdev build.
+	Check func(s any, on bool)
+	// Instances are the surface's compiled instances after its last
+	// render, each as "name key: why", why "kept", "rendered", or what
+	// made it render every time.
+	Instances func(s any) []string
 }

@@ -99,34 +99,26 @@ type Frame struct {
 	// Refocus says Focus moves the keyboard though the frame before
 	// asked for it too (surf.Refocus).
 	Refocus bool
-	// Count is the count of the click whose handler is running (SPEC §9),
-	// for surf.Clicks; 0 outside one.
-	Count int
 	// Reveal names an element to scroll into view after this frame.
 	Reveal string
 	// Platform is the host's, for a render that shows keys.
 	Platform hotty.Platform
-	// Surface is the *surf.Surface rendering, as any (rt can't import surf).
-	Surface any
+	// surface is the *surf.Surface rendering, as any (rt can't import
+	// surf): Surface reads it, and Owner for the runtime itself.
+	surface any
 	// Faults are what a test fails on and an app gets away with: an id
 	// registered twice, a value a component doesn't take.
 	Faults []string
-	// Focused is the element the keyboard is on as the surface knows it
-	// when the render starts ("" for none): where a component's keys come
-	// from, and where a dialog gives the keyboard back to.
-	Focused string
-	// Memo is the surface's, the same map from render to render: what a
-	// component that has no State remembers, by a key it makes from its
-	// id (a Dialog: that it is open, and where the keyboard was).
-	Memo map[string]any
-	// N is the surface's render count: 1 for its first render, one more
-	// for each after. A component's ask made in an event is for the frame
-	// after the one whose handler ran (N+1), and expires with it.
-	N uint64
-	// After are run in order once the view has rendered, before the
-	// frame is read: a component's last word on what the frame asks
-	// (Focus), given what the whole view asked. A hook may add hooks.
-	After []func()
+	// focused, memo, n and after are what a render reads of its surface,
+	// each through its method (Focused, Memo, N, AddAfter), which marks
+	// the instance rendering as one that must render again (Instance).
+	focused string
+	memo    map[string]any
+	n       uint64
+	after   []func()
+	// In is the compiled instance rendering (surf.Compile), nil outside
+	// one.
+	In *Instance
 	// Modal are the ids of the modal elements open in this render (a
 	// Dialog), outermost first. The last is the active modal; the runtime
 	// confines interaction and focus to it.
@@ -153,6 +145,32 @@ type Frame struct {
 	// Readline is hotty.TerminalKeys as Binds for Platform, made the
 	// first time an element binds surf.Readline in the frame.
 	Readline []Bind
+	// Replays are what the render registered on a component around it
+	// (Register), in order: a kept compiled instance runs its own again.
+	Replays []func(context.Context)
+	// Stops are the elements whose tabindex is 0, not the -1 the kit
+	// wrote: a list's roving tab stop, which the runtime writes as it
+	// writes data-keys, so that an item's markup is its props' alone.
+	Stops []string
+	// Shadow says the render is a check's (surf.Compile): what it
+	// registers goes nowhere.
+	Shadow bool
+}
+
+// Register runs fn, which registers what a component reads around it
+// (a list item, with its list), and notes it in the frame: a compiled
+// instance kept is not rendered, and runs it again where it renders,
+// with the context there.
+func Register(ctx context.Context, fn func(context.Context)) {
+	f := From(ctx)
+	if f == nil {
+		fn(ctx)
+		return
+	}
+	if !f.Shadow {
+		fn(ctx)
+	}
+	f.Replays = append(f.Replays, fn)
 }
 
 // ModalOps performs the tree and focus work of an active modal.
@@ -161,6 +179,108 @@ type ModalOps struct {
 	Scope   func(*html.Node, map[string]*html.Node, string) *html.Node
 	Applies func(*html.Node, map[string]*html.Node, string, string) bool
 	Target  func(map[string]*html.Node, string, bool) string
+}
+
+// NewFrame is a render's frame: of the surface s (a *surf.Surface), its
+// platform, the element it has focused, its memo, the render's count,
+// its secret for the kit's markers, and how many ids it may register.
+func NewFrame(s any, p hotty.Platform, focused string, memo map[string]any, n uint64, keyMark string, ids int) *Frame {
+	return &Frame{On: make(map[string]*Handlers, ids), Platform: p, surface: s, focused: focused, memo: memo, n: n, KeyMark: keyMark}
+}
+
+// Surface is the *surf.Surface rendering, as any (rt can't import surf):
+// what surf.Of gives a view. A component reading it renders every time.
+func (f *Frame) Surface() any {
+	f.Read("surf.Of")
+	return f.surface
+}
+
+// Owner is the *surf.Surface rendering, for the runtime's own use: a read
+// that marks nothing.
+func (f *Frame) Owner() any { return f.surface }
+
+// Focused is the element the keyboard is on as the surface knows it when
+// the render starts ("" for none): where a component's keys come from,
+// and where a dialog gives the keyboard back to.
+func (f *Frame) Focused() string {
+	f.Read("the focused element")
+	return f.focused
+}
+
+// Memo is the surface's, the same map from render to render: what a
+// component that has no State remembers, by a key it makes from its id
+// (a Dialog: that it is open, and where the keyboard was).
+func (f *Frame) Memo() map[string]any {
+	f.Read("the surface's memo")
+	return f.memo
+}
+
+// N is the surface's render count: 1 for its first render, one more for
+// each after. A component's ask made in an event is for the frame after
+// the one whose handler ran (N+1), and expires with it.
+func (f *Frame) N() uint64 {
+	f.Read("the render count")
+	return f.n
+}
+
+// AddAfter adds fn to what runs, in order, once the view has rendered,
+// before the frame is read: a component's last word on what the frame
+// asks (Focus), given what the whole view asked. A hook may add hooks.
+// It closes over this frame, so a compiled instance adding one renders
+// every time.
+func (f *Frame) AddAfter(fn func()) {
+	f.Read("an After hook")
+	f.after = append(f.after, fn)
+}
+
+// RunAfter runs the hooks AddAfter added, the ones they add too.
+func (f *Frame) RunAfter() {
+	for i := 0; i < len(f.after); i++ {
+		f.after[i]()
+	}
+}
+
+// An Instance is a compiled component's instance as it renders
+// (surf.Compile). Volatile says why it must render every time, "" for
+// an instance whose output is its props' alone; Up is the instance it
+// renders in. Deps are the context values it read (Read), each kept only
+// while the context gives it the same.
+type Instance struct {
+	Volatile string
+	Up       *Instance
+	Deps     []Dep
+}
+
+// A Dep is a context value an instance read: its key, and the value.
+type Dep struct{ Key, Val any }
+
+// Read marks the instance rendering, and every one it renders in, as one
+// that must render every time, for why: it read what isn't its props.
+func (f *Frame) Read(why string) {
+	if f == nil {
+		return
+	}
+	for in := f.In; in != nil && in.Volatile == ""; in = in.Up {
+		in.Volatile = why
+	}
+}
+
+// Volatile is Read, of ctx's frame.
+func Volatile(ctx context.Context, why string) {
+	From(ctx).Read(why)
+}
+
+// Value is ctx.Value(k), noted on the instance rendering and every one it
+// renders in: one is kept only while its context gives the same value
+// (==, so v must be comparable).
+func Value(ctx context.Context, k any) any {
+	v := ctx.Value(k)
+	if f := From(ctx); f != nil {
+		for in := f.In; in != nil; in = in.Up {
+			in.Deps = append(in.Deps, Dep{Key: k, Val: v})
+		}
+	}
+	return v
 }
 
 type key struct{}

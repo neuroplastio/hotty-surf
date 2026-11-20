@@ -148,11 +148,11 @@ func (v *tabsView) key(from int) func(string) bool {
 // applied through OnChange.
 func (v *tabsView) follow(ctx context.Context) string {
 	f := rt.From(ctx)
-	if f == nil || v.sel < 0 || f.Focused == v.tabID(v.sel) {
+	if f == nil || v.sel < 0 || f.Focused() == v.tabID(v.sel) {
 		return ""
 	}
 	for i := range v.p.Tabs {
-		if f.Focused == v.tabID(i) {
+		if f.Focused() == v.tabID(i) {
 			surf.Autofocus(ctx, v.tabID(v.sel))
 			break
 		}

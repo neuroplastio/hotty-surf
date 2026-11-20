@@ -136,10 +136,10 @@ func (v *sliderView) init(ctx context.Context) {
 	v.hi = math.Max(v.lo, math.Min(v.p.Max, v.hi))
 	if f := rt.From(ctx); f != nil {
 		k := "ui.slider:" + v.p.ID
-		v.memo, _ = f.Memo[k].(*sliderMemo)
+		v.memo, _ = f.Memo()[k].(*sliderMemo)
 		if v.memo == nil {
 			v.memo = &sliderMemo{}
-			f.Memo[k] = v.memo
+			f.Memo()[k] = v.memo
 		}
 		if v.memo.focus != "" {
 			surf.Autofocus(ctx, v.memo.focus)

@@ -33,6 +33,7 @@ func TestParseTakes(t *testing.T) {
 		`<my-el data-x='1'>custom</my-el>`,
 		`<DIV CLASS="up">case</DIV>`,
 		`text only & more`,
+		`<!-- c --><div>a<!--x-->b</div><table><!--t--><tbody><tr><td>1</td></tr></tbody></table>`,
 		`<svg viewBox="0 0 1 1"><svg><path d="M0"/></svg></svg><svg><path d="M0"/></svg>`,
 	} {
 		fast, d := sameAsSlow(t, src)
@@ -58,7 +59,7 @@ func TestParseGivesUp(t *testing.T) {
 		`<textarea>a</textarea>`,
 		`<pre>a</pre>`,
 		`<select><option>a</option></select>`,
-		`<!-- c --><div></div>`,
+		`<!-->`, `<!--->`, `<!-- a -- b -->`, `<!-- a --->`, `<!-- a --!>`, "<!-- \r -->",
 		`<div title="a&ampb"></div>`,
 		`a &amp b`,
 		`<div/>`,

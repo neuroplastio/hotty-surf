@@ -46,6 +46,17 @@ type Surface struct {
 	byID  map[string]*html.Node
 	// keyMarks are the kit controls under a KeyScope, by id (writeKeys).
 	keyMarks map[string]keyMark
+	// stops are the tab stops the runtime wrote on the tree the host has
+	// (rt.Frame.Stops).
+	stops []string
+	// c are its compiled instances (surf.Compile).
+	c instances
+	// outerSame says the last render's markup, its instances' markers in
+	// it, was the tree's (paint): only instances changed.
+	outerSame bool
+	// count is the count of the click whose handler is running (SPEC
+	// §9), for surf.Clicks; 0 outside one.
+	count int
 	// keyMark is the secret the kit's KeyScope markers start with
 	// (rt.Frame.KeyMark), new for each surface.
 	keyMark string
@@ -139,6 +150,8 @@ func (s *Surface) Name() string {
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
 	s.platform = hotty.PlatformOf(caps)
+	// A compiled instance's keys are its platform's.
+	s.forgetInstances()
 	s.sheetSent, s.limits = nil, caps.Limits
 	// A new host holds no key sequence.
 	s.prefixed, s.prefixTaken = false, false
@@ -376,7 +389,7 @@ func (s *Surface) Pending() <-chan struct{} {
 // Of(ctx).Do). It is nil outside a render.
 func Of(ctx context.Context) *Surface {
 	if f := rt.From(ctx); f != nil {
-		s, _ := f.Surface.(*Surface)
+		s, _ := f.Surface().(*Surface)
 		return s
 	}
 	return nil

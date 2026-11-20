@@ -464,7 +464,7 @@ func (v *selectView) refocus() bool {
 // surface: what a view's handlers know their frame by.
 func frameN(ctx context.Context) uint64 {
 	if f := rt.From(ctx); f != nil {
-		return f.N
+		return f.N()
 	}
 	return 0
 }

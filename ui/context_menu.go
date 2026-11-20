@@ -174,7 +174,7 @@ func (v *contextView) backTo() string {
 // focusedOf is the element the keyboard is on as the render begins.
 func focusedOf(ctx context.Context) string {
 	if f := rt.From(ctx); f != nil {
-		return f.Focused
+		return f.Focused()
 	}
 	return ""
 }

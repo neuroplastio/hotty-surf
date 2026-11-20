@@ -25,21 +25,21 @@ type popup struct {
 // popups is the surface's record, from a render's ctx: nil outside one.
 func popups(ctx context.Context) *popup {
 	f := rt.From(ctx)
-	if f == nil || f.Memo == nil {
+	if f == nil || f.Memo() == nil {
 		return nil
 	}
-	p, _ := f.Memo[popupKey].(*popup)
+	p, _ := f.Memo()[popupKey].(*popup)
 	if p == nil {
 		p = &popup{}
-		f.Memo[popupKey] = p
+		f.Memo()[popupKey] = p
 	}
-	if p.hook != f.N {
+	if p.hook != f.N() {
 		// Once the view has rendered, the frame says which popup is open:
 		// the one the record holds, if this frame drew it (one no longer
 		// in the view is open nowhere).
-		p.hook = f.N
-		f.After = append(f.After, func() {
-			if p.owner != nil && p.n == f.N {
+		p.hook = f.N()
+		f.AddAfter(func() {
+			if p.owner != nil && p.n == f.N() {
 				f.Popups = append(f.Popups, p.id)
 			}
 		})

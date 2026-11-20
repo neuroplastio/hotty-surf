@@ -49,6 +49,7 @@ func (s *Surface) document() (string, error) {
 		return "", err
 	}
 	s.keep(t, f)
+	s.stops = append(s.stops[:0], f.Stops...)
 	if modal := activeModal(f); modal != "" {
 		if s.modalScope(f, modal) != s.prev {
 			if f.Focus != "" && s.modalApplies(f, modal, f.Focus) {
@@ -117,6 +118,9 @@ func (s *Surface) send() error {
 		for _, id := range s.fields {
 			d.field(id, s.byID[id])
 		}
+	}
+	if same || s.outerSame && s.fill(&d, f) {
+		s.restop(&d, f)
 	} else {
 		t, err := s.tree(f)
 		if err != nil {
@@ -126,6 +130,7 @@ func (s *Surface) send() error {
 		d.el(s.prev, t.root)
 		s.keep(t, f)
 		s.unlabelled(t.root)
+		s.stops = append(s.stops[:0], f.Stops...)
 	}
 	modal := activeModal(f)
 	if modal != "" {
@@ -260,9 +265,9 @@ func (s *Surface) event(e hotty.Event) error {
 	switch e.Kind {
 	case hotty.EventClick:
 		if h := on[e.Target]; h != nil && h.Click != nil {
-			s.frame.Count = e.Count
+			s.count = e.Count
 			h.Click()
-			s.frame.Count = 0
+			s.count = 0
 			ran = true
 		}
 	case hotty.EventInput:
@@ -566,7 +571,7 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 	if n := s.byID[s.focused]; !typing && len(s.frame.KeyScopes) > 0 && n != nil && !hasAttr(n, "disabled") {
 		if dispatch := s.frame.KeyScopes[0].Dispatch; dispatch != nil {
 			var taken bool
-			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, strconv.Itoa(s.keyMarks[s.focused].scope), physical, k)
+			intercepted, taken, fallback, native = dispatch(s.frame.KeyScopes, strconv.Itoa(s.markScope(s.keyMarks[s.focused])), physical, k)
 			if taken {
 				return true, s.send()
 			}
@@ -721,7 +726,7 @@ func (s *Surface) reached() []*rt.KeyScope {
 	var out []*rt.KeyScope
 	if n := s.byID[s.focused]; n != nil {
 		var sc *rt.KeyScope
-		if i := s.keyMarks[s.focused].scope; i > 0 && i <= len(s.frame.KeyScopes) {
+		if i := s.markScope(s.keyMarks[s.focused]); i > 0 && i <= len(s.frame.KeyScopes) {
 			sc = s.frame.KeyScopes[i-1]
 		}
 		for _, id := range s.chain(s.focused) {
