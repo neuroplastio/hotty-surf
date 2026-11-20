@@ -427,6 +427,31 @@ func ExampleCocoaKeys() {
 	// Output: app: ctrl+arrow_left=program ctrl+arrow_right=program ctrl+b=char-backward ctrl+backspace=program ctrl+d=delete-char-forward ctrl+delete=program ctrl+e=line-end ctrl+end=program ctrl+f=char-forward ctrl+h=delete-char-backward ctrl+home=program ctrl+k=delete-to-line-end ctrl+n=line-next ctrl+p=line-previous super+arrow_down=input-end super+arrow_left=line-start super+arrow_right=line-end super+arrow_up=input-start super+backspace=delete-to-line-start
 }
 
+// CUAEditShortcuts with readline's keys and CUAKeys, on a host whose mod
+// is super: on the field it binds the Linux edit shortcuts, ctrl+a among
+// them, which it takes from CUAKeys' give-back on the app element, and
+// gives back the Mac's.
+func ExampleCUAEditShortcuts() {
+	keysOn(hotty.Caps{Mod: "super"}, func(ctx context.Context) string {
+		app := surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), surf.CUAKeys(),
+			surf.CUAEditShortcuts()))
+		return `<div` + attrList(app) + `><input id="query"></div>`
+	}, "query")
+	// Output: query: ctrl+a=select-all ctrl+c=copy ctrl+shift+z=redo ctrl+v=paste ctrl+x=cut ctrl+y=redo ctrl+z=undo super+a=program super+c=program super+shift+z=program super+v=program super+x=program super+z=program
+}
+
+// CocoaEditShortcuts with CocoaKeys, on a host whose mod is ctrl: on the
+// field, the Mac edit shortcuts, the Linux ones given back (ctrl+c
+// interrupts), and ctrl+a at the line's start, CocoaKeys', written on the
+// app element.
+func ExampleCocoaEditShortcuts() {
+	keysOn(hotty.Caps{}, func(ctx context.Context) string {
+		app := surf.On(ctx, "app", surf.Bind(surf.CocoaKeys(), surf.CocoaEditShortcuts()))
+		return `<div` + attrList(app) + `><input id="query"></div>`
+	}, "query")
+	// Output: query: ctrl+c=program ctrl+shift+z=program ctrl+v=program ctrl+x=program ctrl+y=program ctrl+z=program super+a=select-all super+c=copy super+shift+z=redo super+v=paste super+x=cut super+z=undo
+}
+
 // keysOf renders view on a surface and prints the data-keys the surface
 // wrote on each id.
 func keysOf(view func(ctx context.Context) string, ids ...string) {

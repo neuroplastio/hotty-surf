@@ -29,9 +29,14 @@ type keyRig struct {
 // query, then a button; a keyless Key on the app element hears what
 // reaches the program from either.
 func editPage(app, query []surf.BindOption, heard *[]string, value *string) *surf.Surface {
+	return editPageOf("text", app, query, heard, value)
+}
+
+// editPageOf is editPage with a query field of the input type typ.
+func editPageOf(typ string, app, query []surf.BindOption, heard *[]string, value *string) *surf.Surface {
 	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
 		hear := surf.Key(func(k string) bool { *heard = append(*heard, k); return true })
-		fmt.Fprintf(w, `<div%s><input type="text"%s/><button%s>b</button></div>`,
+		fmt.Fprintf(w, `<div%s><input type="`+typ+`"%s/><button%s>b</button></div>`,
 			on("app", surf.Bind(app...), hear),
 			on("q", surf.Bind(query...), surf.Input(func(s string) { *value = s })),
 			on("b", surf.Click(func() {})))
@@ -42,11 +47,16 @@ func editPage(app, query []surf.BindOption, heard *[]string, value *string) *sur
 // rigs are the same page on a test host of caps and on a cells.Screen
 // (whose platform is the zero Platform's: mod is ctrl).
 func rigs(t *testing.T, caps hotty.Caps, app, query []surf.BindOption) map[string]func() *keyRig {
+	return rigsOf(t, caps, func(heard *[]string, v *string) *surf.Surface { return editPage(app, query, heard, v) })
+}
+
+// rigsOf is rigs of the page page makes.
+func rigsOf(t *testing.T, caps hotty.Caps, page func(heard *[]string, value *string) *surf.Surface) map[string]func() *keyRig {
 	return map[string]func() *keyRig{
 		"host": func() *keyRig {
 			var heard []string
 			var v string
-			s := editPage(app, query, &heard, &v)
+			s := page(&heard, &v)
 			r := &hostRig{t: t, h: hottytest.New(t, hottytest.Size(80, 24), hottytest.Caps(caps)), s: s}
 			c := hottytest.DefaultCaps()
 			c.Mod, c.Edit = caps.Mod, caps.Edit
@@ -63,7 +73,7 @@ func rigs(t *testing.T, caps hotty.Caps, app, query []surf.BindOption) map[strin
 		"cells": func() *keyRig {
 			var heard []string
 			var v string
-			s := editPage(app, query, &heard, &v)
+			s := page(&heard, &v)
 			scr := cells.New(80, 5, func(e hotty.Event) {
 				if err := s.Event(e); err != nil {
 					t.Error(err)

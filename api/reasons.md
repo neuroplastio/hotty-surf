@@ -769,3 +769,11 @@ The maintainer: an app picks a desktop's editing keys from its own config, apart
 - `surf.ReadlineKeys`: `surf.Readline` renamed by the maintainer, so the three editing keymaps read alike; the approved v0.7 name goes, a break the maintainer made. Its doc names its source, GNU Readline's manual, and how it layers with the other two.
 - `surf.Bind`, `surf.BindOption` (docs only): the options list gains the editing keymaps, and Bind's doc says how groups layer. CUAKeys' and CocoaKeys' give-backs give keys to the program, so "surf.Key gives keys to the program" gains a clause.
 - `surf.Unbind` (doc only): under CUA or Cocoa, on the element or around it, Unbind gives a key back to that keymap's binding, not to the host's platform. Otherwise readline without ctrl+k, under CUA on a host whose mod is super, would delete to the line's end, Cocoa's way, the coupling this change undoes.
+
+## Edit shortcuts apart from the host's (the maintainer, 2026-11-20)
+
+The maintainer: an app chooses a field's copy, cut, paste, undo, redo and select all too, as a category of its own beside the caret and delete keys. SPEC §10.2 calls them the edit shortcuts and makes them the host's, by its mod; plx offers the choice as a setting beside its editing keymap. Each group is written on the fields under the element that binds it, never on that element, so a document selection's copy key and the terminal's stay the host's (SPEC §11).
+
+- `surf.CUAEditShortcuts`: plx keeps super as its mod on a Mac and wants a field's edit shortcuts as on Linux: ctrl+c copies a selection (and still interrupts with none), ctrl+v pastes, ctrl+z undoes; super+c and the other Mac keys go on as keys the field doesn't use. SPEC's table where mod is ctrl, from hotty.DefaultEdit. The name is SPEC's term for the category, and tells it from CUAKeys in one call.
+- `surf.CocoaEditShortcuts`: the other half: the Mac's edit shortcuts (super+c, super+v, …) on a host whose mod is ctrl, with ctrl+c given back so that it interrupts even over a selection, and, with CocoaKeys, ctrl+a at the line's start.
+- `surf.Bind`, `surf.BindOption`, `surf.CUAKeys` (docs only): the options list gains the two groups and their give-backs; CUAKeys and CocoaKeys leave out the keys an edit-shortcut group in effect binds, instead of the host's edit shortcuts.

@@ -2110,6 +2110,28 @@ surf.On(ctx, "query", surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k")))
 - **Where:** once, on the outermost element of each surface's view
   (`root` is the runtime's own id). The kit draws its fields where the
   view puts them, so they get it too.
+- **Edit shortcuts** are CUAEditShortcuts and CocoaEditShortcuts, a
+  category of their own beside the editing keymaps (the maintainer,
+  2026-11-20; "edit shortcuts" is SPEC's term): §10.2's edit shortcuts
+  by mod, from `hotty.DefaultEdit` in SPEC's order of the actions, made
+  once a process, each giving back the other's (13 bindings).
+  - Written on each text field under the binding element, never on it:
+    a container's copy key would be a document selection's (§11), and a
+    give-back there would take Cmd+C from the surface's text.
+  - One resolver at the field: of each key, the nearest binding wins,
+    the field's own, then each element between, then the group's.
+    What the field would do anyway (the default keymap with the host's
+    reported edit shortcuts, then the data-keys above it) is left out,
+    and a give-back takes a key only from an edit shortcut. About 200
+    bytes a field on a Mac host, none on Linux.
+  - On one element the group owns the six edit actions: its real
+    binding wins over the editing keymaps' in either order, their
+    binding to an edit action (ReadlineKeys' mod+a) gives way, its
+    give-backs fill only. Under it the editing keymaps leave out its
+    keys instead of the host's edit shortcuts ("in effect": on the
+    element or around it).
+  - An Unbind under it goes back to its binding, written only on a
+    field. Yield and Override are as for every group.
 - **Cost:** 19 or 20 bindings, 411 to 466 bytes on the element, sent
   with a full document; a render copies them and resolves them as
   Readline's.

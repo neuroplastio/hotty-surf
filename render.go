@@ -192,6 +192,11 @@ type tree struct {
 	// being numbered, the nearest last: what an Unbind there gives a key back
 	// to (writeBinds).
 	base []rt.Bind
+	// edit are the edit shortcuts' keys on the elements around the one
+	// being numbered, the nearest last, and editN how many of them are an
+	// edit-shortcut group's: what a text field resolves (writeEdits).
+	edit  []keyAt
+	editN int
 }
 
 // keep takes t as what the host has, and the HTML paint rendered as its
@@ -276,6 +281,8 @@ func (s *Surface) number(p *html.Node, pid string, t *tree, pre bool) {
 		t.printable = t.printable[:len(t.printable)-pushed.printable]
 		t.given = t.given[:len(t.given)-pushed.given]
 		t.base = t.base[:len(t.base)-pushed.base]
+		t.edit = t.edit[:len(t.edit)-pushed.edit]
+		t.editN -= pushed.editN
 		c = next
 	}
 }

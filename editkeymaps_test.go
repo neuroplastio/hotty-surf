@@ -67,8 +67,9 @@ func TestEditingKeymapTables(t *testing.T) {
 	if len(a) != 20 || &a[0] != &b[0] {
 		t.Errorf("CUAKeys on a super host: %d bindings, made once: %v", len(a), &a[0] == &b[0])
 	}
-	if c := cuaBinds(&rt.Frame{}); len(c) != 19 {
-		t.Errorf("CUAKeys on the zero platform: %d bindings, want 19 (ctrl+a is select all's)", len(c))
+	held := func(b rt.Bind) bool { return b.Held }
+	if c := cuaBinds(&rt.Frame{}); len(c) != 20 || slices.IndexFunc(c, held) < 0 || c[slices.IndexFunc(c, held)].Key != "ctrl+a" || len(slices.DeleteFunc(slices.Clone(c), held)) != 19 {
+		t.Errorf("CUAKeys on the zero platform: %v, want 20 with ctrl+a held (select all's)", c)
 	}
 }
 
@@ -325,7 +326,7 @@ func TestEditingKeymapsOncePerPlatform(t *testing.T) {
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	first := s.editing[0]
+	first := s.editing.Keymaps[0]
 	if len(first) != 20 {
 		t.Fatalf("on a super host: %d bindings", len(first))
 	}
@@ -333,15 +334,15 @@ func TestEditingKeymapsOncePerPlatform(t *testing.T) {
 	if err := s.Update(); err != nil {
 		t.Fatal(err)
 	}
-	if &s.editing[0][0] != &first[0] {
+	if &s.editing.Keymaps[0][0] != &first[0] {
 		t.Error("a second render made the bindings again")
 	}
 	s.Attach(io.Discard, ctrlHost)
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	if len(s.editing[0]) != 19 || slices.Contains(bindings(s, "app"), "ctrl+a=program") {
-		t.Errorf("attached where mod is ctrl: %d bindings, %q", len(s.editing[0]), bindings(s, "app"))
+	if len(s.editing.Keymaps[0]) != 20 || slices.Contains(bindings(s, "app"), "ctrl+a=program") {
+		t.Errorf("attached where mod is ctrl: %d bindings, %q", len(s.editing.Keymaps[0]), bindings(s, "app"))
 	}
 }
 
@@ -365,6 +366,9 @@ func TestEditingKeymapsFill(t *testing.T) {
 						var binds []rt.Bind
 						binds = flatten(f, "app", []BindOption{groups[name]}, binds)
 						for _, b := range binds {
+							if b.Held {
+								continue // the host's edit shortcuts'
+							}
 							if !slices.Contains(keys, b.Key) {
 								keys = append(keys, b.Key)
 							}
@@ -408,7 +412,7 @@ func TestReadlineKeysOncePerPlatform(t *testing.T) {
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	first := s.editing[2]
+	first := s.editing.Keymaps[2]
 	if len(first) == 0 || !slices.Contains(bindings(s, "f"), "ctrl+a=select-all") {
 		t.Fatalf("where mod is ctrl: %d bindings, %q", len(first), bindings(s, "f"))
 	}
@@ -416,14 +420,14 @@ func TestReadlineKeysOncePerPlatform(t *testing.T) {
 	if err := s.Update(); err != nil {
 		t.Fatal(err)
 	}
-	if &s.editing[2][0] != &first[0] {
+	if &s.editing.Keymaps[2][0] != &first[0] {
 		t.Error("a second render made the bindings again")
 	}
 	s.Attach(io.Discard, superHost)
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	if got := bindings(s, "f"); &s.editing[2][0] == &first[0] || !slices.Contains(got, "super+a=select-all") || slices.Contains(got, "ctrl+a=select-all") {
+	if got := bindings(s, "f"); &s.editing.Keymaps[2][0] == &first[0] || !slices.Contains(got, "super+a=select-all") || slices.Contains(got, "ctrl+a=select-all") {
 		t.Errorf("attached where mod is super: %q", got)
 	}
 }

@@ -24,21 +24,33 @@ type Handlers struct {
 	// as the element's data-keys, each bound to program.
 	Keys   []string
 	KitKey bool // Key is a kit component default, rather than an app handler
+	// Flat are surf.Bind's bindings as its options read, in order, each
+	// canonical for the frame's platform: what Binds, Base and Edits are
+	// laid out from, and so the resolver's input (keysig).
+	Flat []Bind
 	// Binds are surf.Bind's bindings, canonical for the frame's
 	// platform, one per key, layered as surf.Bind says (a direct Action's
-	// or Unbind's over a group's, a later group's over an earlier). The runtime
+	// or Unbind's over a group's, a later group's over an earlier), the
+	// edit-shortcut groups' aside (Edits). The runtime
 	// writes each as key=action, but where Keys declares the key, or
-	// one yields to a key given around it.
+	// one yields to a key given around it. They are laid out as where no
+	// edit-shortcut group is in effect; where one is, the resolver lays
+	// out Flat again.
 	Binds []Bind
+	// Edits are the element's edit-shortcut groups' bindings that hold
+	// on it, one per key: written on each text field inside it (and on
+	// it, if it is one), never on another element.
+	Edits []Bind
 	// Written are Binds as the surface resolved them on the element when
 	// it last wrote its data-keys: the faults dropped, and those that
 	// yield to a key given around it. It is the one resolver's output,
 	// which data-keys, the surface's own use of a declined key (EditKeys)
 	// and so a host and cells read alike.
 	Written []Bind
-	// Base are the bindings the element's surf.CUAKeys and surf.CocoaKeys
-	// read, one per key, the last read winning but a give-back, which
-	// fills only, whether or not another binding holds the key on the
+	// Base are the bindings the element's surf.CUAKeys, surf.CocoaKeys and
+	// edit-shortcut groups read, one per key, the last read winning but a
+	// give-back, which fills only (and an edit-shortcut group's, as on the
+	// element), whether or not another binding holds the key on the
 	// element: what an Unbind on the element, or inside it, gives the key
 	// back to.
 	Base []Bind
@@ -63,12 +75,19 @@ type Handlers struct {
 // groups'. Base says CUAKeys or CocoaKeys made it (or an Unbind resolved it to
 // their binding): bound to program it is a give-back, a key the field
 // doesn't use, which isn't a key given to the program around the
-// element, so a nearer binding still takes it.
+// element, so a nearer binding still takes it. Edit says
+// surf.CUAEditShortcuts or surf.CocoaEditShortcuts made it (Base too):
+// it is written on the text fields inside its element, never on another
+// element. Held says the host's edit shortcuts hold its key, so CUAKeys'
+// or CocoaKeys' binding of it holds only where an edit-shortcut group
+// is in effect.
 type Bind struct {
 	Key, Action string
 	Yield       bool
 	Direct      bool
 	Base        bool
+	Edit        bool
+	Held        bool
 }
 
 // EditKeys is h's resolved bindings (Written) as a field's keymap reads
@@ -160,11 +179,14 @@ type Frame struct {
 	// render, whether or not a kit control is in it: what ui.Bindings
 	// lists and ui.Pick runs.
 	Scopes []*KeyScope
-	// Editing are surf.CUAKeys', surf.CocoaKeys' and surf.ReadlineKeys'
-	// bindings (in that order) for Platform, each made the first time an
-	// element binds it: the surface's, which its frames share until it is
-	// attached anew, or the frame's own where nil.
-	Editing *[3][]Bind
+	// Editing are the editing keymaps' bindings for Platform: the
+	// surface's, which its frames share until it is attached anew, or
+	// the frame's own where nil.
+	Editing *Editing
+	// EditKeys are the keys of the edit-shortcut groups' tables, set the
+	// first time an element in the frame binds one: where nil, the frame
+	// binds none, and no field resolves them.
+	EditKeys []string
 	// Replays are what the render registered on a component around it
 	// (Register), in order: a kept compiled instance runs its own again.
 	Replays []func(context.Context)
@@ -497,4 +519,16 @@ func Fault(ctx context.Context, msg string) {
 	if f := From(ctx); f != nil {
 		f.Faults = append(f.Faults, msg)
 	}
+}
+
+// Editing are the editing keymaps' bindings for a platform, each made the
+// first time an element binds it.
+type Editing struct {
+	// Keymaps are surf.CUAKeys', surf.CocoaKeys' and surf.ReadlineKeys'
+	// bindings, in that order.
+	Keymaps [3][]Bind
+	// Defaults are what a text field's default keymap does with each of
+	// Frame.EditKeys (hotty.Keymap.Lookup, "" for a key that reaches the
+	// program), made the first time a field resolves them.
+	Defaults map[string]string
 }

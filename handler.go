@@ -121,7 +121,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Secondary = h.fn.(func(hotty.Cell, hotty.Area))
 		}
 	}
-	e.Binds, e.Base = bindsOf(f, id, e.Keys, binds)
+	e.Flat = binds
+	e.Binds, e.Base, e.Edits = layout(f, id, e.Keys, binds, heldByHost)
 	f.Set(id, e)
 	f.Order = append(f.Order, id)
 	return a

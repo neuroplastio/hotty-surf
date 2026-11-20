@@ -293,7 +293,9 @@ surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
   keycap; the edit shortcuts (select all, copy, paste, undo), which are
   the host's and the user's, and every key they hold, so under CocoaKeys
   where `mod` is `ctrl`, `ctrl+a` stays select all; and the host's
-  scrolling.
+  scrolling. An edit-shortcut group (below) chooses the edit shortcuts
+  instead: under one, CUAKeys and CocoaKeys leave out its keys, not the
+  host's.
 - **Where:** once, on the outermost element of each surface's view.
   Every field inside has it, the kit's included; a field outside that
   element doesn't. A field may bind the other one, or ReadlineKeys, nearer.
@@ -320,6 +322,76 @@ surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
   bytes on the element, written once. A cells Screen's `mod` is always
   `ctrl`, so there CUAKeys changes nothing in a field and CocoaKeys is what
   makes `ctrl+k` delete.
+
+## Edit shortcuts
+
+`surf.CUAEditShortcuts()` and `surf.CocoaEditShortcuts()` choose a
+field's edit shortcuts (select all, copy, cut, paste, undo, redo), as
+the editing keymaps choose its caret and delete keys: SPEC §10.2's
+where `mod` is `ctrl`, or where it is `super`, whatever the host's.
+
+| | select all | copy | cut | paste | undo | redo |
+| --- | --- | --- | --- | --- | --- | --- |
+| CUAEditShortcuts | `ctrl+a` | `ctrl+c` | `ctrl+x` | `ctrl+v` | `ctrl+z` | `ctrl+shift+z`, `ctrl+y` |
+| CocoaEditShortcuts | `super+a` | `super+c` | `super+x` | `super+v` | `super+z` | `super+shift+z` |
+
+```go
+// a setting: the caret keys and the edit shortcuts chosen apart,
+// in the same Bind, on the outermost element; nil is the host's own
+var caret, edit surf.BindOption
+switch cfg.Keymap {
+case "cua":
+    caret = surf.CUAKeys()
+case "cocoa":
+    caret = surf.CocoaKeys()
+}
+switch cfg.EditShortcuts {
+case "cua":
+    edit = surf.CUAEditShortcuts()
+case "cocoa":
+    edit = surf.CocoaEditShortcuts()
+}
+surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), caret, edit))
+```
+
+- **The other platform's keys are given back:** from a field they go
+  on as keys it doesn't use, to the terminal's shortcuts and then the
+  program. A give-back takes a key only from an edit shortcut, so under
+  CocoaEditShortcuts on a Mac host `ctrl+a` still goes to the line's
+  start.
+- **Fields only.** The bindings are written on each text field inside
+  the element that binds them, readonly ones included, never on that
+  element. Text elsewhere in the surface, and the terminal's own text,
+  keep the host's copy keys (SPEC §11). On a button nothing changes.
+- **Only what changes is written:** a binding the field would do
+  anyway, from the host's default keymap (its edit shortcuts as it
+  reports them) and the `data-keys` above it, is left out. On a Linux
+  host with its default shortcuts, CUAEditShortcuts writes nothing; on
+  a Mac host it writes about 200 bytes a field.
+- **Nothing selected:** copy and cut reach the program, as in a
+  password field, so `ctrl+c` in an empty field still interrupts.
+- **A separate category.** On one element the group decides the six
+  edit actions: its keys win over ReadlineKeys', CUAKeys' and
+  CocoaKeys' in either order, ReadlineKeys' `mod+a` gives way to it,
+  and its give-backs fill only the keys those leave. Those keymaps then
+  leave out the keys it binds instead of the host's, so CocoaKeys with
+  CocoaEditShortcuts on Linux puts `ctrl+a` at the line's start.
+- **Between elements the nearer binding wins**, as for every binding:
+  an element between the group's and the field, its own Action or its
+  own CocoaKeys, keeps its keys. So bind the group in the same Bind as
+  the editing keymaps. Under it, Unbind gives a key back to the group's
+  binding, on the fields inside.
+- **A host that keeps `super`** may never send `super+c`, and a host
+  that reads keys as bytes (a cells Screen, a host inside another
+  terminal) never sees it. There, under CocoaEditShortcuts, the field
+  has no copy key of its own; only a terminal that is the host itself
+  copies the field's selection with its own copy (SPEC §11). Offer it
+  as a choice, and default to the host's (no group).
+- **Cells:** a Screen has no clipboard. The program copies on its own
+  key (`cells.Screen.Selection`, `cells.Screen.Cut`), so a cells
+  program makes that key follow the same setting.
+- **Keycaps:** `surf.Platform(ctx).Edit` stays the host's. An app that
+  shows Copy's key, in a menu, shows the key of its own setting.
 
 ## Scoped overrides
 

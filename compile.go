@@ -235,6 +235,8 @@ type record struct {
 	pre              bool
 	printable, given []string
 	base             []rt.Bind
+	edit             []keyAt
+	editN            int
 	ws               string
 }
 
@@ -804,6 +806,7 @@ func (r *record) placed(c *html.Node, own string, pre bool, t *tree) {
 	r.printable = append(r.printable[:0], t.printable...)
 	r.given = append(r.given[:0], t.given...)
 	r.base = append(r.base[:0], t.base...)
+	r.edit, r.editN = append(r.edit[:0], t.edit...), t.editN
 	r.ws = wsOf(r.raw)
 }
 
@@ -896,6 +899,7 @@ func (s *Surface) fill(d *differ, f *rt.Frame) bool {
 		j.t.printable = append([]string(nil), j.r.printable...)
 		j.t.given = append([]string(nil), j.r.given...)
 		j.t.base = append([]rt.Bind(nil), j.r.base...)
+		j.t.edit, j.t.editN = append([]keyAt(nil), j.r.edit...), j.r.editN
 		s.number(j.holder, "", j.t, j.r.pre)
 	}
 	// An element that moves from outside a job's element into it (a row
@@ -957,7 +961,7 @@ func (s *Surface) fill(d *differ, f *rt.Frame) bool {
 	}
 	for _, j := range jobs {
 		s.c.fills++
-		if len(j.r.base) > 0 {
+		if len(j.r.base) > 0 || j.r.editN > 0 {
 			s.c.keyed++
 		}
 	}

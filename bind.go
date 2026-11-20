@@ -15,9 +15,12 @@ import (
 // Bind gives keys on the element to the host's own actions (SPEC §10.2):
 // a text field's edit actions, the scroll actions, and prefix (§10.5).
 // surf.Key gives keys to the program, and so do the give-backs of
-// CUAKeys and CocoaKeys, the keys a field doesn't use on that platform.
-// Its options are bindings (Action, Unbind, Group, and the editing
-// keymaps ReadlineKeys, CUAKeys and CocoaKeys) and at most one of Yield
+// CUAKeys and CocoaKeys, the keys a field doesn't use on that platform,
+// and those of CUAEditShortcuts and CocoaEditShortcuts, the other
+// platform's edit shortcuts. Its options are bindings (Action, Unbind,
+// Group, the editing keymaps ReadlineKeys, CUAKeys and CocoaKeys, and the
+// edit-shortcut groups CUAEditShortcuts and CocoaEditShortcuts, which are
+// written on the fields inside the element) and at most one of Yield
 // or Override, which sets how all of them meet the keys the program is
 // given around the element. Without either, an Action wins and an Unbind
 // and a group's bindings yield. A Bind with no binding is no handler; a
@@ -94,7 +97,8 @@ func Bind(opts ...BindOption) Handler {
 }
 
 // A BindOption is one of Bind's options. Action, Unbind, Group,
-// ReadlineKeys, CUAKeys, CocoaKeys, Yield and Override make them, and
+// ReadlineKeys, CUAKeys, CocoaKeys, CUAEditShortcuts, CocoaEditShortcuts,
+// Yield and Override make them, and
 // nothing else does.
 type BindOption interface{ bindOption() }
 
@@ -179,7 +183,9 @@ func ReadlineKeys() BindOption {
 // Only those keys change. What mod stands for stays the host's, and so
 // do a shortcut's keycap, the edit shortcuts (select all, copy, paste,
 // undo: the host's and the user's, SPEC §10.2), every key the edit
-// shortcuts hold, and the host's scrolling. Outside a field the
+// shortcuts hold, and the host's scrolling, unless CUAEditShortcuts or
+// CocoaEditShortcuts is in effect on the element, which choose them:
+// CUAKeys then leaves out the keys those bind instead of the host's. Outside a field the
 // give-backs reach the program too: on a host whose mod is super, a
 // focused button no longer scrolls with super+arrow_up and
 // super+arrow_down, where the host did, unless another group on the
@@ -226,6 +232,73 @@ func CUAKeys() BindOption {
 // they bind and readline's for the rest, ctrl+backspace among them.
 func CocoaKeys() BindOption {
 	return &groupOption{read: cocoaBinds}
+}
+
+// CUAEditShortcuts is the edit shortcuts of IBM's Common User Access,
+// the Windows and Linux desktop's, a group: SPEC §10.2's edit shortcuts
+// where mod is ctrl, whatever the host's mod and whatever it reports as
+// its own: ctrl+a selects all, ctrl+c copies, ctrl+x cuts, ctrl+v pastes,
+// ctrl+z undoes, and ctrl+shift+z and ctrl+y redo. Its source is SPEC
+// §10.2's table, as hotty.DefaultEdit has it.
+//
+// The keys only macOS gives them (super+a, super+c, super+x, super+v,
+// super+z, super+shift+z) are given back: from a field they go on as
+// keys it doesn't use, to the terminal's shortcuts and then the program
+// (SPEC §10.2), as on Linux. A give-back takes a key only from an edit
+// shortcut: where the field would do something else with it, it stays.
+// Keys the user added to the host's edit shortcuts stay the host's.
+//
+// It is for fields only: it is written on each text field inside the
+// element that binds it, readonly ones included, and never on that
+// element, so a selection in the surface's other text, and the
+// terminal's, keep their copy keys (SPEC §11). A binding that changes
+// nothing in the field is left out, so on a Linux host with its default
+// shortcuts it writes nothing. Copy or cut with nothing selected, or in
+// a password field, reaches the program (SPEC §10.2), so ctrl+c in an
+// empty field still interrupts.
+//
+// It is a category of its own beside the editing keymaps. On one element
+// it decides the six edit actions: where it binds a key, it wins over
+// ReadlineKeys', CUAKeys' and CocoaKeys' binding of that key in either
+// order; their binding of a key to an edit action (ReadlineKeys' mod+a)
+// gives way to it; and its give-backs fill only the keys they leave.
+// Those keymaps then leave out the keys it binds instead of the host's
+// edit shortcuts. Between elements the nearer binding wins, as for every
+// binding, so bind it in the same Bind as the editing keymaps, on the
+// outermost element of each surface's view. Under it, Unbind gives a key
+// back to its binding.
+//
+// A cells Screen has no clipboard: there the program copies on its own
+// key (cells.Screen.Selection), which follows the app's setting as this
+// does. surf.Platform still reports the host's edit shortcuts: an app
+// that shows Copy's keycap shows its own setting's.
+//
+//	surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), surf.CUAKeys(),
+//		surf.CUAEditShortcuts()))
+func CUAEditShortcuts() BindOption {
+	return &groupOption{read: cuaEditBinds}
+}
+
+// CocoaEditShortcuts is the edit shortcuts of macOS's text system, a
+// group: SPEC §10.2's edit shortcuts where mod is super, whatever the
+// host's: super+a selects all, super+c copies, super+x cuts, super+v
+// pastes, super+z undoes and super+shift+z redoes. The keys only Linux
+// and Windows give them (ctrl+a, ctrl+c, ctrl+x, ctrl+v, ctrl+z,
+// ctrl+shift+z, ctrl+y) are given back, as on macOS: ctrl+c interrupts
+// even with text selected, and under CocoaKeys on the same element ctrl+a
+// goes to the line's start, as it does on a Mac host, whose ctrl+a is
+// no edit shortcut to give back.
+//
+// A host may keep super+c for itself, and a host that reads keys as
+// bytes (a cells Screen, a host inside another terminal) may never see
+// it. There the field has no copy key of its own, and only a terminal
+// that is the host itself copies the field's selection with its own copy
+// (SPEC §11). An app offers it as a choice, not as its default.
+//
+// Where it goes, what it leaves out, how it layers and Unbind under it
+// are as CUAEditShortcuts says, with the two swapped.
+func CocoaEditShortcuts() BindOption {
+	return &groupOption{read: cocoaEditBinds}
 }
 
 // Yield makes every binding of its Bind leave alone a key the program is
@@ -347,22 +420,50 @@ func flattenIn(f *rt.Frame, id string, opts []BindOption, mode *modeOption, grou
 	return out
 }
 
-// bindsOf is an element's bindings (rt.Handlers.Binds), one per key, from
-// binds in order: a direct one holds its key over the groups', two direct
-// ones of a key to different actions being a fault (the first stays);
-// among the groups' the last read wins, but a give-back (giveBack), which
-// only fills a key no group binds for real, in any order. A direct
-// binding of a key a Key handler declares (keys) is a fault, but to
-// prefix, which gives fn the key too; a group's is kept, unwritten (the
-// program has the key), for the field's own use of the key when the
-// handler declines it. base is CUAKeys' and CocoaKeys' bindings
-// (rt.Handlers.Base), one per key, layered as the groups' are, a later
-// one winning but a give-back filling only, whatever holds the key.
-func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base []rt.Bind) {
-	if len(binds) == 0 {
-		return nil, nil
+// layout is an element's bindings, from flat (rt.Handlers.Flat) in
+// order:
+//   - out (rt.Handlers.Binds), one per key: a direct one holds its key
+//     over the groups', two direct ones of a key to different actions
+//     being a fault (the first stays); among the groups' the last read
+//     wins, but a give-back (giveBack), which only fills a key no group
+//     binds for real, in any order. A direct binding of a key a Key
+//     handler declares (keys) is a fault, but to prefix, which gives fn
+//     the key too; a group's is kept, unwritten (the program has the
+//     key), for the field's own use of the key when the handler declines
+//     it. A CUAKeys' or CocoaKeys' binding held is left out (held: the
+//     edit shortcuts in effect hold its key).
+//   - edits (rt.Handlers.Edits), the edit-shortcut groups', one per key,
+//     which own the six edit actions on the element: another group's
+//     binding of a key they bind to an edit action (ReadlineKeys' mod+a)
+//     gives way to theirs before the other groups meet; one's real
+//     binding of a key takes it from the other groups' bindings of it, in
+//     either order; a give-back otherwise fills only. A direct binding,
+//     and a key a Key handler declares, hold their keys over them.
+//   - base (rt.Handlers.Base), one per key: CUAKeys', CocoaKeys' and the
+//     edit-shortcut groups' bindings, layered as the groups' are (a later
+//     one winning but a give-back filling only, an edit-shortcut group's
+//     as edits are), whatever holds the key: what an Unbind goes back to.
+//
+// f is nil when the element is laid out again for the edit shortcuts in
+// effect around it, whose faults the first layout said.
+func layout(f *rt.Frame, id string, keys []string, flat []rt.Bind, held func(rt.Bind) bool) (out, base, edits []rt.Bind) {
+	for _, b := range flat {
+		if b.Edit {
+			edits = fill(edits, b)
+		}
 	}
-	for _, b := range binds {
+	for _, b := range flat {
+		if b.Edit {
+			continue
+		}
+		if b.Base && !b.Direct && held(b) {
+			continue
+		}
+		if !b.Direct && editAction(b.Action) && slices.ContainsFunc(edits, func(e rt.Bind) bool { return e.Key == b.Key }) {
+			// A group's binding to an edit action gives way to an
+			// edit-shortcut group's binding of its key.
+			continue
+		}
 		if b.Base {
 			if i := slices.IndexFunc(base, func(x rt.Bind) bool { return x.Key == b.Key }); i >= 0 {
 				if !giveBack(b) || giveBack(base[i]) {
@@ -373,7 +474,9 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base 
 			}
 		}
 		if b.Direct && b.Action != string(hotty.Prefix) && slices.Contains(keys, b.Key) {
-			f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(b.Key)+", which its surf.Key declares: a key has one use on an element")
+			if f != nil {
+				f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(b.Key)+", which its surf.Key declares: a key has one use on an element")
+			}
 			continue
 		}
 		i := slices.IndexFunc(out, func(x rt.Bind) bool { return x.Key == b.Key })
@@ -381,7 +484,7 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base 
 		case i < 0:
 			out = append(out, b)
 		case out[i].Direct && b.Direct:
-			if out[i].Action != b.Action {
+			if out[i].Action != b.Action && f != nil {
 				f.Faults = append(f.Faults, "surf.Bind: the id "+id+" binds "+strconv.Quote(b.Key)+" to "+out[i].Action+" and to "+b.Action+": a key has one use on an element")
 			}
 		case out[i].Direct:
@@ -394,8 +497,67 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base 
 			out[i] = b
 		}
 	}
-	return out, base
+	if len(edits) == 0 {
+		return out, base, nil
+	}
+	for _, e := range edits {
+		if i := slices.IndexFunc(base, func(x rt.Bind) bool { return x.Key == e.Key }); i < 0 {
+			base = append(base, e)
+		} else if takes(e, base[i]) {
+			base[i] = e
+		}
+	}
+	edits = slices.DeleteFunc(edits, func(e rt.Bind) bool {
+		if slices.Contains(keys, e.Key) {
+			return true
+		}
+		i := slices.IndexFunc(out, func(x rt.Bind) bool { return x.Key == e.Key })
+		switch {
+		case i < 0:
+			return false
+		case out[i].Direct || !takes(e, out[i]):
+			return true
+		}
+		out = slices.Delete(out, i, i+1)
+		return false
+	})
+	return out, base, edits
 }
+
+// fill lays b over bs, the edit-shortcut groups' bindings so far, one per
+// key: a later binding of a key replaces an earlier one, but a give-back,
+// which fills only.
+func fill(bs []rt.Bind, b rt.Bind) []rt.Bind {
+	i := slices.IndexFunc(bs, func(x rt.Bind) bool { return x.Key == b.Key })
+	switch {
+	case i < 0:
+		return append(bs, b)
+	case !giveBack(b) || giveBack(bs[i]):
+		bs[i] = b
+	}
+	return bs
+}
+
+// takes says whether an edit-shortcut group's binding e takes its key
+// from another group's binding c of it on one element: a real one
+// always does; a give-back only from a binding to an edit action.
+func takes(e, c rt.Bind) bool {
+	return !giveBack(e) || editAction(c.Action)
+}
+
+// editAction says whether a is one of the six edit shortcuts' actions
+// (SPEC §10.2), which an edit-shortcut group decides on its element.
+func editAction(a string) bool {
+	switch hotty.Action(a) {
+	case hotty.SelectAll, hotty.Copy, hotty.Cut, hotty.Paste, hotty.Undo, hotty.Redo:
+		return true
+	}
+	return false
+}
+
+// heldByHost is layout's held where no edit-shortcut group is in effect:
+// the host's edit shortcuts hold the key.
+func heldByHost(b rt.Bind) bool { return b.Held }
 
 // giveBack says whether b is a give-back: CUAKeys' or CocoaKeys' key of
 // the other platform, a group's, bound to program.
@@ -407,9 +569,9 @@ func giveBack(b rt.Bind) bool {
 // once a platform (rt.Frame.Editing).
 func readlineBinds(f *rt.Frame) []rt.Bind {
 	if f.Editing == nil {
-		f.Editing = new([3][]rt.Bind)
+		f.Editing = new(rt.Editing)
 	}
-	if f.Editing[2] == nil {
+	if f.Editing.Keymaps[2] == nil {
 		out := []rt.Bind{}
 		m := hotty.ParseKeymap(f.Platform, hotty.TerminalKeys)
 		for _, b := range strings.Fields(m.Format()) {
@@ -418,9 +580,9 @@ func readlineBinds(f *rt.Frame) []rt.Bind {
 				out = append(out, rt.Bind{Key: c, Action: a})
 			}
 		}
-		f.Editing[2] = out
+		f.Editing.Keymaps[2] = out
 	}
-	return f.Editing[2]
+	return f.Editing.Keymaps[2]
 }
 
 // cuaBinds and cocoaBinds are CUAKeys' and CocoaKeys' bindings for the
@@ -429,14 +591,15 @@ func cuaBinds(f *rt.Frame) []rt.Bind   { return editingFor(f, 0) }
 func cocoaBinds(f *rt.Frame) []rt.Bind { return editingFor(f, 1) }
 
 // editingFor is editingTables()[i] for the frame's platform: each key
-// as the platform reads it, less every key the host's edit shortcuts hold
-// (Platform.Edit, or DefaultEdit(Mod) where it reports none), which stay
-// the host's.
+// as the platform reads it, every key the host's edit shortcuts hold
+// (Platform.Edit, or DefaultEdit(Mod) where it reports none) marked Held,
+// which stays the host's unless an edit-shortcut group is in effect
+// (layout).
 func editingFor(f *rt.Frame, i int) []rt.Bind {
 	if f.Editing == nil {
-		f.Editing = new([3][]rt.Bind)
+		f.Editing = new(rt.Editing)
 	}
-	if f.Editing[i] == nil {
+	if f.Editing.Keymaps[i] == nil {
 		edit := f.Platform.Edit
 		if edit == nil {
 			edit = hotty.DefaultEdit(f.Platform.Mod)
@@ -451,14 +614,14 @@ func editingFor(f *rt.Frame, i int) []rt.Bind {
 		}
 		out := []rt.Bind{}
 		for _, b := range editingTables()[i] {
-			if c, ok := f.Platform.ReadKey(b.Key); ok && !held[c] {
-				b.Key = c
+			if c, ok := f.Platform.ReadKey(b.Key); ok {
+				b.Key, b.Held = c, held[c]
 				out = append(out, b)
 			}
 		}
-		f.Editing[i] = out
+		f.Editing.Keymaps[i] = out
 	}
-	return f.Editing[i]
+	return f.Editing.Keymaps[i]
 }
 
 var (
@@ -502,6 +665,62 @@ func editingTables() *[2][]rt.Bind {
 		}
 	})
 	return &editingTable
+}
+
+// cuaEditBinds and cocoaEditBinds are CUAEditShortcuts' and
+// CocoaEditShortcuts' bindings: their keys are the same on every
+// platform, so they are made once a process. Reading one tells the frame
+// which keys its fields resolve (rt.Frame.EditKeys).
+func cuaEditBinds(f *rt.Frame) []rt.Bind   { return editShortcutsFor(f, 0) }
+func cocoaEditBinds(f *rt.Frame) []rt.Bind { return editShortcutsFor(f, 1) }
+
+func editShortcutsFor(f *rt.Frame, i int) []rt.Bind {
+	t := editShortcutTables()
+	f.EditKeys = t.keys
+	return t.binds[i]
+}
+
+var (
+	editShortcutsOnce  sync.Once
+	editShortcutsTable struct {
+		binds [2][]rt.Bind
+		keys  []string
+	}
+)
+
+// editShortcutTables is SPEC §10.2's edit shortcuts where mod is ctrl
+// ([0], CUAEditShortcuts') and where it is super ([1],
+// CocoaEditShortcuts'), as hotty.DefaultEdit has them, in SPEC's order of
+// the actions (DefaultEdit is a map): each table's own keys, then the
+// other's, given back (program). keys are all thirteen.
+func editShortcutTables() *struct {
+	binds [2][]rt.Bind
+	keys  []string
+} {
+	editShortcutsOnce.Do(func() {
+		order := []hotty.Action{hotty.SelectAll, hotty.Copy, hotty.Cut, hotty.Paste, hotty.Undo, hotty.Redo}
+		var own [2][]rt.Bind
+		for i, mod := range [2]string{"ctrl", "super"} {
+			edit := hotty.DefaultEdit(mod)
+			for _, a := range order {
+				for _, k := range edit[string(a)] {
+					own[i] = append(own[i], rt.Bind{Key: k, Action: string(a), Base: true, Edit: true})
+				}
+			}
+		}
+		t := &editShortcutsTable
+		for i := range own {
+			t.binds[i] = append(t.binds[i], own[i]...)
+			for _, b := range own[1-i] {
+				b.Action = string(hotty.Program)
+				t.binds[i] = append(t.binds[i], b)
+			}
+			for _, b := range own[i] {
+				t.keys = append(t.keys, b.Key)
+			}
+		}
+	})
+	return &editShortcutsTable
 }
 
 // bindable says whether Bind takes the action: one of SPEC §10.2's but

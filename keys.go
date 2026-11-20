@@ -110,6 +110,19 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	var binds []string
 	text, multiline := nativeKind(n)
 	pushed := 0
+	// The element's bindings as laid out where no edit-shortcut group is
+	// in effect, or again for the edit shortcuts in effect here.
+	var lb, lbase, ledits []rt.Bind
+	if h != nil {
+		lb, lbase, ledits = h.Binds, h.Base, h.Edits
+		if t.f.EditKeys != nil && (t.editN > 0 || slices.ContainsFunc(h.Flat, func(b rt.Bind) bool { return b.Edit })) &&
+			slices.ContainsFunc(h.Flat, func(b rt.Bind) bool { return b.Base && !b.Edit && !b.Direct }) {
+			lb, lbase, ledits = layout(nil, id, h.Keys, h.Flat, func(b rt.Bind) bool { return t.heldAt(h.Flat, b) })
+		}
+		if len(lb) > 0 || t.f.EditKeys != nil && text == "text" {
+			h.Written = h.Written[:0]
+		}
+	}
 	for _, k := range own {
 		switch {
 		case k == "escape":
@@ -132,10 +145,30 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		}
 	}
 	var bound []string
-	if h != nil && len(h.Binds) > 0 {
+	var unbound []rt.Bind
+	faulted := false
+	if len(lb) > 0 {
 		var n2 int
-		binds, bound, n2 = s.writeBinds(id, h, text, multiline, binds, t)
+		binds, bound, unbound, n2, faulted = s.writeBinds(id, h, lb, lbase, text, multiline, binds, t)
 		pushed += n2
+	}
+	// The edit-shortcut groups' bindings here, and the Unbinds that went
+	// back to one, which only fields are written: pushed for the fields
+	// inside, and resolved on this one if it is a field.
+	edits := 0
+	if len(ledits) > 0 && text != "text" && text != "" {
+		if !faulted {
+			s.fault("surf.Bind: the id " + id + " binds a group of a text field's actions on a control that isn't one")
+		}
+		ledits = nil
+	}
+	for _, b := range slices.Concat(ledits, unbound) {
+		t.edit = append(t.edit, keyAt{key: b.Key, action: b.Action, edit: true, yield: b.Yield})
+		edits++
+	}
+	t.editN += edits
+	if text == "text" && t.editN > 0 {
+		binds, bound = s.writeEdits(h, binds, bound, t)
 	}
 	if rt.Types(n) {
 		for _, k := range t.printable[:len(t.printable)-pushed] {
@@ -171,23 +204,156 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		slices.Sort(binds)
 		n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
 	}
+	// What the element writes of the edit shortcuts' keys, for the fields
+	// inside to resolve them against.
+	written := 0
+	if t.f.EditKeys != nil {
+		for _, b := range binds {
+			i := strings.LastIndexByte(b, '=')
+			if k, a := b[:i], b[i+1:]; slices.Contains(t.f.EditKeys, k) {
+				given := a == string(hotty.Prefix) || a == string(hotty.Program) && !contains(bound, k)
+				t.edit = append(t.edit, keyAt{key: k, action: a, given: given})
+				written++
+			}
+		}
+	}
 	base := 0
 	if h != nil {
-		t.base = append(t.base, h.Base...)
-		base = len(h.Base)
+		t.base = append(t.base, lbase...)
+		base = len(lbase)
 	}
-	return keyPush{printable: pushed, given: given, base: base}
+	return keyPush{printable: pushed, given: given, base: base, edit: edits + written, editN: edits}
 }
 
 // keyPush is what writeKeys pushed on a tree's stacks for an element's
 // insides.
-type keyPush struct{ printable, given, base int }
+type keyPush struct{ printable, given, base, edit, editN int }
 
-// baseOf is CUAKeys' or CocoaKeys' binding of key in effect on the element
-// whose handlers are h: the element's own, else the nearest one's around
-// it (t.base).
-func baseOf(h *rt.Handlers, t *tree, key string) (rt.Bind, bool) {
-	for _, c := range h.Base {
+// A keyAt is one of the edit shortcuts' keys on an element around the
+// one being numbered (tree.edit): an edit-shortcut group's binding there
+// (edit), which only fields are written, or what the element wrote of
+// the key, given saying it gives the program the key (a Key handler's, a
+// KeyScope's, a prefix).
+type keyAt struct {
+	key, action        string
+	edit, yield, given bool
+}
+
+// heldAt is layout's held for an element under an edit-shortcut group
+// (its own, among flat, or one around it): the nearest edit-shortcut
+// binding of b's key holds it if it is a real one, not a give-back; a
+// key none of them binds is held as the host's edit shortcuts hold it.
+func (t *tree) heldAt(flat []rt.Bind, b rt.Bind) bool {
+	var e *rt.Bind
+	for i := range flat {
+		if x := &flat[i]; x.Edit && x.Key == b.Key && (e == nil || !giveBack(*x) || giveBack(*e)) {
+			e = x
+		}
+	}
+	if e != nil {
+		return !giveBack(*e)
+	}
+	for i := len(t.edit) - 1; i >= 0; i-- {
+		if x := t.edit[i]; x.edit && x.key == b.Key {
+			return x.action != string(hotty.Program)
+		}
+	}
+	return b.Held
+}
+
+// writeEdits writes on a text field the edit-shortcut groups' bindings in
+// effect on it, each the nearest: of each of the edit shortcuts' keys
+// that the field doesn't bind itself (binds), the edit-shortcut binding
+// nearest it (t.edit), unless an element between writes the key (a field
+// leaves out a scroll action), or gives it the program where the binding
+// yields. A binding the field would do anyway is left out: the action
+// its default keymap (Platform.Edit as the host reports it) and the
+// data-keys above it give the key. So is a give-back of a key they give
+// no edit action: a give-back takes a key only from an edit shortcut. It
+// returns binds and the keys written (bound), and records them in
+// h.Written.
+func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree) ([]string, []string) {
+	defs := editDefaults(t.f)
+	for _, k := range t.f.EditKeys {
+		if slices.ContainsFunc(binds, func(b string) bool { return b[:strings.LastIndexByte(b, '=')] == k }) {
+			continue
+		}
+		at := -1
+		for i := len(t.edit) - 1; i >= 0; i-- {
+			if x := t.edit[i]; x.edit && x.key == k {
+				at = i
+				break
+			}
+		}
+		if at < 0 {
+			continue
+		}
+		e, between := t.edit[at], false
+		for _, x := range t.edit[at+1:] {
+			if x.key == k && !x.edit && !hotty.Action(x.action).Scrolls() && (!x.given || e.yield) {
+				between = true
+				break
+			}
+		}
+		if between || e.yield && slices.Contains(t.given, k) {
+			continue
+		}
+		have := defs[k]
+		for i := len(t.edit) - 1; i >= 0; i-- {
+			x := t.edit[i]
+			if x.key != k || x.edit || hotty.Action(x.action).Scrolls() {
+				continue
+			}
+			switch hotty.Action(x.action) {
+			case hotty.Default:
+			case hotty.Program, hotty.Prefix:
+				have = ""
+			default:
+				have = x.action
+			}
+			break
+		}
+		want := e.action
+		if want == string(hotty.Program) {
+			want = ""
+		}
+		if have == want || want == "" && !editAction(have) {
+			// It changes nothing, or it is a give-back of a key the field
+			// doesn't use as an edit shortcut (macOS's ctrl+a at the
+			// line's start), which it only fills.
+			continue
+		}
+		binds = append(binds, k+"="+e.action)
+		bound = append(bound, k)
+		if h != nil {
+			h.Written = append(h.Written, rt.Bind{Key: k, Action: e.action, Yield: e.yield, Base: true, Edit: true})
+		}
+	}
+	return binds, bound
+}
+
+// editDefaults is what a text field's default keymap does with each of
+// the frame's edit shortcuts' keys (rt.Editing.Defaults), made once a
+// platform.
+func editDefaults(f *rt.Frame) map[string]string {
+	if f.Editing == nil {
+		f.Editing = new(rt.Editing)
+	}
+	if f.Editing.Defaults == nil {
+		m := hotty.Resolve(f.Platform, true)
+		f.Editing.Defaults = make(map[string]string, len(f.EditKeys))
+		for _, k := range f.EditKeys {
+			f.Editing.Defaults[k] = string(m.Lookup(k))
+		}
+	}
+	return f.Editing.Defaults
+}
+
+// baseOf is CUAKeys', CocoaKeys' or an edit-shortcut group's binding of
+// key in effect on the element whose base (rt.Handlers.Base) is base: the
+// element's own, else the nearest one's around it (t.base).
+func baseOf(base []rt.Bind, t *tree, key string) (rt.Bind, bool) {
+	for _, c := range base {
 		if c.Key == key {
 			return c, true
 		}
@@ -201,9 +367,10 @@ func baseOf(h *rt.Handlers, t *tree, key string) (rt.Bind, bool) {
 }
 
 // writeBinds is the one resolver of an element's surf.Bind bindings
-// (h.Binds, one per key already): it records in h.Written those that
+// (lb, h.Binds or as laid out again under the edit shortcuts in effect,
+// one per key already): it records in h.Written those that
 // hold on the element, and adds to binds those the wire carries, each
-// key=action. Of h.Binds it drops:
+// key=action. Of lb it drops:
 //   - a yielding one of a key an element around gives the program
 //     (t.given): a shortcut or a leader there still reaches it from the
 //     field (vault/knowledge/field-keys.md, 2026-11-04);
@@ -222,18 +389,27 @@ func baseOf(h *rt.Handlers, t *tree, key string) (rt.Bind, bool) {
 // KeyScope's) the binding is recorded but not written: the program's
 // wins, but a prefix, which is the program's too, is written in its
 // place. A printable key bound to prefix is pushed on t's stack, so the
-// fields inside type it (K27). It returns binds, the keys it wrote, and
-// how many it pushed.
-func (s *Surface) writeBinds(id string, h *rt.Handlers, kind string, multiline bool, binds []string, t *tree) ([]string, []string, int) {
+// fields inside type it (K27). An Unbind that goes back to an
+// edit-shortcut group's binding is written only on a text field:
+// elsewhere it is returned (unbound), for the fields inside. It returns
+// binds, the keys it wrote, those Unbinds, how many it pushed, and
+// whether it faulted a group.
+func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind string, multiline bool, binds []string, t *tree) ([]string, []string, []rt.Bind, int, bool) {
 	var bound []string
+	var unbound []rt.Bind
 	pushed, groupFault := 0, false
-	h.Written = h.Written[:0]
-	for _, b := range h.Binds {
+	for _, b := range lb {
 		resolved := false
 		if b.Action == string(hotty.Default) {
-			if c, ok := baseOf(h, t, b.Key); ok {
-				b.Action, b.Base, resolved = c.Action, true, true
+			if c, ok := baseOf(base, t, b.Key); ok {
+				b.Action, b.Base, b.Edit, resolved = c.Action, true, c.Edit, true
 			}
+		}
+		if b.Edit && kind != "text" {
+			// An Unbind that goes back to an edit-shortcut group's
+			// binding: only fields are written it.
+			unbound = append(unbound, b)
+			continue
 		}
 		a := hotty.Action(b.Action)
 		if b.Yield && slices.Contains(t.given, b.Key) {
@@ -272,7 +448,7 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, kind string, multiline b
 		binds = append(binds, b.Key+"="+b.Action)
 		bound = append(bound, b.Key)
 	}
-	return binds, bound, pushed
+	return binds, bound, unbound, pushed, groupFault
 }
 
 // A keyMark is a kit control's place under the KeyScopes: the scope it
@@ -310,16 +486,19 @@ func keysig(b []byte, f *rt.Frame) []byte {
 	// By slot, not by Order: the same handlers make the same data-keys
 	// in any order, and a kept instance's are in their slots already.
 	f.Each(func(id string, h *rt.Handlers) {
-		if len(h.Keys)+len(h.Binds) > 0 {
+		if len(h.Keys)+len(h.Flat) > 0 {
 			b = append(b, id...)
 			for _, k := range h.Keys {
 				b = append(b, ' ')
 				b = append(b, k...)
 			}
-			// Every input of the resolver (writeBinds), which, with the
+			// Every input of the resolver (writeKeys), which, with the
 			// same HTML, makes the same data-keys: a Yield or Override
-			// toggled alone repaints.
-			for _, x := range h.Binds {
+			// toggled alone repaints, and so does an edit-shortcut group,
+			// which the fields inside are written. Flat is what Binds,
+			// Base and Edits are laid out from, here and again under the
+			// edit shortcuts in effect.
+			for _, x := range h.Flat {
 				b = append(b, ' ')
 				b = append(b, x.Key...)
 				b = append(b, '=')
@@ -333,14 +512,12 @@ func keysig(b []byte, f *rt.Frame) []byte {
 				if x.Base {
 					b = append(b, '^')
 				}
-			}
-			// What an Unbind here or inside goes back to (CUAKeys',
-			// CocoaKeys').
-			for _, x := range h.Base {
-				b = append(b, " ^"...)
-				b = append(b, x.Key...)
-				b = append(b, '=')
-				b = append(b, x.Action...)
+				if x.Edit {
+					b = append(b, '%')
+				}
+				if x.Held {
+					b = append(b, '#')
+				}
 			}
 			b = append(b, '\n')
 		}
