@@ -28,7 +28,9 @@ import (
 // (board, columns, cards) beside a ui.List of compiled items runs
 // compiled and plain in lockstep, on a host and on a Screen, through
 // random steps: cards that change, move between columns and out of the
-// board, come twice and go, take the focus, and are typed in. Every
+// board, come twice and go, take the focus, and are typed in, and
+// columns that bind surf.CUAKeys around their cards' fields, which
+// Unbind a key, or stop binding it. Every
 // handler closes over its props and writes them to a log, so a handler
 // kept past a change of its props shows as a log that isn't the plain
 // surface's.
@@ -51,6 +53,9 @@ type kCol struct {
 	Cards      [4]kCard
 	N          int
 	Plain      bool
+	// Edit binds surf.CUAKeys around the column's cards, so that a field's
+	// Unbind in it goes back to CUAKeys' binding (Handlers.Base).
+	Edit bool
 }
 
 type kBoard struct {
@@ -80,7 +85,8 @@ func kCardView(p kCard) templ.Component {
 		), key, title, badge)
 		if p.Field {
 			fmt.Fprintf(w, `<input type="text"%s value="%s">`, onAttrs(ctx, "in-"+key,
-				surf.Input(func(v string) { l.add("input " + key + " " + title + " " + v) })), title)
+				surf.Input(func(v string) { l.add("input " + key + " " + title + " " + v) }),
+				surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k"))), title)
 		}
 		if p.Kit {
 			a := surf.On(ctx, "kit-"+key, surf.Click(func() { l.add("kit " + key + " " + badge) }))
@@ -106,7 +112,11 @@ func kCardOf(p kCard, plain bool) templ.Component {
 func kColView(p kCol) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		title, l := p.Title, kLogOf(p)
-		fmt.Fprintf(w, `<section class="flex flex-col"><button%s>{%s}</button>`, onAttrs(ctx, "col-"+p.Key,
+		edit := ""
+		if p.Edit {
+			edit = onAttrs(ctx, "edit-"+p.Key, surf.Bind(surf.CUAKeys()))
+		}
+		fmt.Fprintf(w, `<section class="flex flex-col"%s><button%s>{%s}</button>`, edit, onAttrs(ctx, "col-"+p.Key,
 			surf.Click(func() {
 				if l != nil {
 					l.add("col " + title)
@@ -168,7 +178,11 @@ type keepState struct {
 	loose []kCard
 	cols  [3]kCol
 	bind  bool
-	n     int // the next card's number
+	// edit binds surf.CUAKeys around the board: where only cards
+	// changed, the board is filled alone, and its fields' Unbind goes
+	// back to CUAKeys' binding all the same.
+	edit bool
+	n    int // the next card's number
 	// churn names the hidden ids that change every step, so the slots
 	// fill with ids gone out of use and compact (rt.Slots).
 	churn int
@@ -219,6 +233,9 @@ func (st *keepState) view(l *kLog, plain bool) templ.Component {
 					}
 				}
 			}
+			if st.edit {
+				fmt.Fprintf(w, `<div%s>`, onAttrs(ctx, "edit-board", surf.Bind(surf.CUAKeys())))
+			}
 			if plain {
 				b.Plain = true
 				err = kBoardView(b).Render(ctx, w)
@@ -227,6 +244,9 @@ func (st *keepState) view(l *kLog, plain bool) templ.Component {
 			}
 			if err != nil {
 				return err
+			}
+			if st.edit {
+				io.WriteString(w, `</div>`)
 			}
 			_, err = io.WriteString(w, `</main>`)
 			return err
@@ -256,12 +276,12 @@ func (st *keepState) vary(r *rand.Rand, c *kCard) {
 }
 
 func newKeepState(r *rand.Rand) *keepState {
-	st := &keepState{}
+	st := &keepState{edit: true}
 	for range 4 {
 		st.loose = append(st.loose, st.card(r))
 	}
 	for i := range st.cols {
-		st.cols[i] = kCol{Key: fmt.Sprintf("c%d", i), Title: fmt.Sprintf("Col %d", i)}
+		st.cols[i] = kCol{Key: fmt.Sprintf("c%d", i), Title: fmt.Sprintf("Col %d", i), Edit: i == 0}
 		for range 2 + r.IntN(2) {
 			st.cols[i].Cards[st.cols[i].N] = st.card(r)
 			st.cols[i].N++
@@ -421,13 +441,23 @@ func (st *keepState) step(r *rand.Rand) string {
 		st.at(p).Sel = true
 		return "select " + st.at(p).Key
 	case 10:
-		switch r.IntN(3) {
+		switch r.IntN(4) {
 		case 0:
 			st.bind = !st.bind
 			return "bind"
 		case 1:
 			st.cols[0], st.cols[2] = st.cols[2], st.cols[0]
 			return "swap columns"
+		case 2:
+			// CUAKeys around a column's cards, or around the board, or
+			// not: their fields' Unbind goes back to its binding, or to
+			// the host's.
+			if i := r.IntN(len(st.cols) + 1); i < len(st.cols) {
+				st.cols[i].Edit = !st.cols[i].Edit
+				return fmt.Sprintf("edit keys on %s %v", st.cols[i].Key, st.cols[i].Edit)
+			}
+			st.edit = !st.edit
+			return fmt.Sprintf("edit keys on the board %v", st.edit)
 		}
 		r.Shuffle(len(st.loose), func(i, j int) { st.loose[i], st.loose[j] = st.loose[j], st.loose[i] })
 		return "shuffle"
@@ -690,7 +720,11 @@ func TestCompiledKeepsHandlers(t *testing.T) {
 					c.click(t, "#home", "(home)")
 					p.click(t, "#home", "(home)")
 					what := st.step(r)
-					st.churn++
+					if i%2 == 0 {
+						// Every other step, so that one where only
+						// instances changed is filled.
+						st.churn++
+					}
 					c.note()
 					c.update(t)
 					p.update(t)
