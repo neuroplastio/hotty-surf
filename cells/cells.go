@@ -71,6 +71,14 @@ type Screen struct {
 	// hovered is the hovered chain (hover.go), the innermost element
 	// first, and hoverSpare the array of the one before.
 	hovered, hoverSpare []*html.Node
+	// ptrCol, ptrRow is the pointer's last cell, ptrIn whether the Screen
+	// has one (from Move, Press and Release until Focus(false)); rehit
+	// says that what is under it may have moved since the chain was set
+	// (a delta, a wheel, a resize, a key), and laying that a pass is
+	// under way (layOut): the next layout hits the cell again.
+	ptrCol, ptrRow int
+	ptrIn, rehit   bool
+	laying         int
 	// shown is what Lines or Cells last drew (Dirty): its cells, and
 	// the layout and scroll they came from.
 	shown       snapshot
@@ -150,6 +158,7 @@ func (c *Screen) Write(p []byte) (int, error) {
 			err = errMalformed
 		}
 		if err != nil {
+			c.rehit = true
 			c.flush()
 			return 0, err
 		}
@@ -157,6 +166,7 @@ func (c *Screen) Write(p []byte) (int, error) {
 			c.cutDrag() // the dragged element left the document
 		}
 	}
+	c.rehit = true
 	c.flush()
 	return len(p), nil
 }
@@ -165,7 +175,7 @@ func (c *Screen) Write(p []byte) (int, error) {
 // again.
 func (c *Screen) Resize(cols, rows int) {
 	c.cols, c.rows = max(cols, 1), max(rows, 1)
-	c.lay = nil
+	c.lay, c.rehit = nil, true
 }
 
 // Key presses a key on the Screen, named as hotty names keys. The focused
@@ -175,6 +185,7 @@ func (c *Screen) Resize(cols, rows int) {
 // Key, and keeps it if the surface doesn't take it either.
 func (c *Screen) Key(key string) (taken bool) {
 	taken = c.key(key)
+	c.rehit = true
 	c.flush()
 	return taken
 }
@@ -194,7 +205,7 @@ func (c *Screen) Paste(text string) (taken bool) {
 	if f.ed.Paste(text) {
 		c.edited(n, f)
 	}
-	c.lay = nil
+	c.lay, c.rehit = nil, true
 	c.flush()
 	return true
 }
@@ -212,6 +223,13 @@ func (c *Screen) Click(col, row int) (taken bool) {
 // Wheel scrolls what is under the cell at col, row by lines, down for a
 // positive number; taken says whether anything scrolled.
 func (c *Screen) Wheel(col, row, lines int) (taken bool) {
+	taken = c.wheel(col, row, lines)
+	c.rehit = true // what a still pointer is over scrolled
+	return taken
+}
+
+// wheel is Wheel's scroll.
+func (c *Screen) wheel(col, row, lines int) (taken bool) {
 	if c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
 		return false
 	}
@@ -250,7 +268,7 @@ func (c *Screen) Focus(in bool) {
 	switch {
 	case in && !c.active:
 		c.active = true
-		c.lay = nil
+		c.lay, c.rehit = nil, true
 		if n := c.remembered; n != nil && c.attached(n) && focusable(n) {
 			c.remembered = nil
 			c.focusTo(n, true)
@@ -258,7 +276,8 @@ func (c *Screen) Focus(in bool) {
 	case !in && c.active:
 		c.prefixed = false
 		c.cutDrag()
-		c.setHover(nil) // the pointer is no longer the Screen's
+		c.ptrIn = false // the pointer is no longer the Screen's
+		c.setHover(nil)
 		if c.body != nil {
 			n := c.focused
 			c.blur()
@@ -468,6 +487,7 @@ func (c *Screen) apply(m hotty.Message) error {
 func (c *Screen) del() {
 	c.cutDrag()
 	c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
+	c.hovered, c.tip = nil, nil
 	c.fields = map[*html.Node]*field{}
 	c.changed()
 }

@@ -120,11 +120,32 @@ type inh struct {
 }
 
 // layout is the document laid out at the Screen's width, made again after
-// anything changed.
+// anything changed, with the hovered chain what is under the pointer.
 func (c *Screen) layout() *layout {
+	l := c.layOut()
+	if !c.rehit || c.laying > 0 {
+		return l
+	}
+	// What is under a still pointer may have moved: the chain is hit
+	// again, once, on the layout as it is, as a host hits it after each
+	// pass (Blitz's refresh_hover), and laid out again where its looks
+	// change. A hover that moves what is under the pointer isn't chased.
+	c.rehit = false
+	c.setHover(c.pointed(l))
+	if c.lay == nil {
+		l = c.layOut()
+	}
+	return l
+}
+
+// layOut is the Screen's layout as its tree, its chain and its size give
+// it: the last pass's while nothing dropped it, else a new pass.
+func (c *Screen) layOut() *layout {
 	if c.lay != nil {
 		return c.lay
 	}
+	c.laying++
+	defer func() { c.laying-- }()
 	l := &layout{c: c, cv: &canvas{w: max(c.cols, 1)}}
 	boxes := 0
 	if c.kept != nil {
@@ -154,7 +175,7 @@ func (c *Screen) layout() *layout {
 		// Nothing reads a pass laid out again: its rows are the next's.
 		c.kept.used = l.cv.chunks
 		c.lay = nil
-		return c.layout()
+		return c.layOut()
 	}
 	if old := c.kept.canvas; old != nil {
 		c.kept.used = old.chunks
@@ -167,7 +188,7 @@ func (c *Screen) layout() *layout {
 		c.revealAfter, c.revealWhere = nil, ""
 		c.reveal(t, where)
 		if c.lay == nil {
-			return c.layout()
+			return c.layOut()
 		}
 		l = c.lay
 	}

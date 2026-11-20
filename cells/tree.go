@@ -48,7 +48,8 @@ func (c *Screen) load(name, doc string) error {
 			c.down = &pressed{}
 		}
 		c.clicks = clickRun{}
-		c.tip = nil
+		// The chain and its tooltip are kept, as the elements are: the
+		// next pass hits the pointer again (rehit).
 		c.revealAfter, c.revealWhere = nil, ""
 		c.ids, c.lay = nil, nil
 		return nil
@@ -56,7 +57,7 @@ func (c *Screen) load(name, doc string) error {
 	c.name, c.body = name, body
 	c.fields = map[*html.Node]*field{}
 	c.focused, c.remembered = nil, nil
-	c.hovered = nil // until the pointer moves over the new tree
+	c.hovered, c.tip = nil, nil // until the next pass hits the pointer on the new tree
 	c.scroll = 0
 	c.boxScroll = nil
 	c.changed()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -11,8 +12,10 @@ import (
 // CheckFresh says where the Screen's layout and its painting, as kept
 // from the passes before (laid, paint), differ from a pass that keeps
 // nothing: the canvas, the boxes, the fields' and the scrolled boxes'
-// places, the caret and the height, and Cells' grid; nil where they
-// don't. It leaves the Screen as it found it.
+// places, the caret and the height, and Cells' grid; and where the
+// hovered chain isn't what that pass has under the pointer, but where a
+// hover in it moves what is under the pointer (hoverMoves). nil where
+// none differs. It leaves the Screen as it found it.
 func CheckFresh(c *Screen) error {
 	if c.body == nil {
 		return nil
@@ -46,6 +49,9 @@ func CheckFresh(c *Screen) error {
 	c.shown, c.shownLay, c.spare, c.pending = snapshot{}, nil, snapshot{}, painted{}
 	f := c.layout()
 	fresh := c.paint(f, false)
+	if want := appendChain(nil, c.pointed(f)); !slices.Equal(want, c.hovered) && !hoverMoves(want) && !hoverMoves(c.hovered) {
+		return fmt.Errorf("hovered %s, under the pointer %s", chainNames(c.hovered), chainNames(want))
+	}
 	switch {
 	case l.height != f.height:
 		return fmt.Errorf("height %d, fresh %d", l.height, f.height)
@@ -105,4 +111,27 @@ func idOf2(n *html.Node) string {
 		return "-"
 	}
 	return "<" + n.Data + " id=" + attr(n, "id") + ">"
+}
+
+// hoverMoves says whether a hover in chain lays its element out other
+// than it is without it (a hover:hidden, a hover:p-1): what is under the
+// pointer moves with the chain, which the Screen hits only once
+// (layout).
+func hoverMoves(chain []*html.Node) bool {
+	for _, n := range chain {
+		a, b := styleOf(n, false), styleOf(n, true)
+		a.look, b.look = 0, 0
+		if a != b {
+			return true
+		}
+	}
+	return false
+}
+
+func chainNames(chain []*html.Node) string {
+	var s []string
+	for _, n := range chain {
+		s = append(s, idOf2(n))
+	}
+	return strings.Join(s, " ")
 }

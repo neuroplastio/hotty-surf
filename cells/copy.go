@@ -45,7 +45,7 @@ func (c *Screen) Cut() string {
 	if f.ed.Do(hotty.DeleteCharBackward) {
 		c.edited(n, f)
 	}
-	c.lay = nil
+	c.lay, c.rehit = nil, true
 	c.flush()
 	return text
 }

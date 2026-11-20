@@ -1,6 +1,7 @@
 package cells
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -60,8 +61,8 @@ func cellAt(t *testing.T, c *Screen, id string) Cell {
 }
 
 // The hovered chain: the element under the pointer and the elements
-// around it match hover:, the others don't; with a button down it stays
-// where the press was; off the Screen and on losing focus there is none.
+// around it match hover:, the others don't; with a button down it follows
+// the pointer; off the Screen and on losing focus there is none.
 func TestHoverChain(t *testing.T) {
 	c := hoverScreen(t, `<div id="root"><div id="out" class="hover:bg-accent"><p id="a" class="hover:text-primary">alpha</p></div>`+
 		`<p id="b" class="bg-muted hover:bg-secondary">beta</p><p id="plain">plain</p></div>`)
@@ -77,14 +78,18 @@ func TestHoverChain(t *testing.T) {
 	if got := cellAt(t, c, "a"); got.Fg != "" || got.Bg != "" {
 		t.Fatalf("#a left: %+v", got)
 	}
-	// A press on #b, the pointer moved to #a with it down: #b stays lit.
+	// A press on #b, the pointer moved to #a with it down: the hover
+	// follows the pointer, as a host's does.
 	col, row := cellIn(t, c, "b")
 	c.Press(col, row, 0, 0)
-	if got := over(t, c, "a"); got.Bg != "" {
-		t.Fatalf("over #a with a button down: %+v", got)
-	}
 	if got := cellAt(t, c, "b"); got.Bg != "secondary" {
 		t.Fatalf("#b, pressed: %+v", got)
+	}
+	if got := over(t, c, "a"); got.Bg != "accent" {
+		t.Fatalf("over #a with a button down: %+v", got)
+	}
+	if got := cellAt(t, c, "b"); got.Bg != "muted" {
+		t.Fatalf("#b, left with a button down: %+v", got)
 	}
 	col, row = cellIn(t, c, "a")
 	c.Release(col, row, 0)
@@ -316,5 +321,168 @@ func TestHoverPruned(t *testing.T) {
 	}
 	if err := CheckFresh(c); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// hoveredIDs are the ids of the hovered chain, innermost first, "-" for
+// an element with none.
+func hoveredIDs(c *Screen) string {
+	var s []string
+	for _, n := range c.hovered {
+		s = append(s, cmpOr(attr(n, "id"), "-"))
+	}
+	return strings.Join(s, " ")
+}
+
+func cmpOr(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
+}
+
+// holdFresh holds the Screen to a fresh pass, the chain to what is under the
+// pointer among it.
+func holdFresh(t *testing.T, c *Screen, at string) {
+	t.Helper()
+	if err := CheckFresh(c); err != nil {
+		t.Fatalf("%s: %v", at, err)
+	}
+}
+
+// What is under a still pointer moves, with a wheel, a delta, a resize, a
+// key that scrolls: the chain is what is under it after, as a host hits
+// the pointer again after each pass.
+func TestHoverFollowsWhatMoves(t *testing.T) {
+	var d strings.Builder
+	d.WriteString(`<div id="root">`)
+	for i := range 30 {
+		fmt.Fprintf(&d, `<p id="r%d" class="hover:bg-accent">row %d</p>`, i, i)
+	}
+	d.WriteString(`</div>`)
+	c := hoverScreen(t, d.String())
+	c.Move(3, 0, 0)
+	c.Wheel(3, 0, 1)
+	if got := c.Cells()[0][3]; got.Bg != "accent" || hoveredIDs(c) != "r1 root -" {
+		t.Fatalf("wheeled: %s, %+v", hoveredIDs(c), got)
+	}
+	holdFresh(t, c, "wheeled")
+	c.Write([]byte(hotty.Delta("v", []hotty.Op{hotty.OpRemove("r1")})))
+	if got := c.Cells()[0][3]; got.Bg != "accent" || hoveredIDs(c) != "r2 root -" {
+		t.Fatalf("the hovered row taken out: %s, %+v", hoveredIDs(c), got)
+	}
+	holdFresh(t, c, "the hovered row taken out")
+
+	c = hoverScreen(t, `<div id="root"><p id="a" class="hover:bg-accent">alpha</p><p id="z">zz</p></div>`)
+	over(t, c, "a")
+	c.Write([]byte(hotty.Delta("v", []hotty.Op{hotty.OpBefore("a", `<p id="n" class="hover:bg-secondary">new</p>`)})))
+	if got := c.Cells()[0][2]; got.Bg != "secondary" || cellAt(t, c, "a").Bg != "" || hoveredIDs(c) != "n root -" {
+		t.Fatalf("a row put in above: %s, %+v", hoveredIDs(c), got)
+	}
+	holdFresh(t, c, "a row put in above")
+	c.Write([]byte(hotty.Delta("v", []hotty.Op{hotty.OpReplace("n", `<p id="n" class="hover:bg-accent">newer</p>`)})))
+	if got := c.Cells()[0][2]; got.Bg != "accent" || c.hovered[0] != c.byID("n") {
+		t.Fatalf("the hovered replaced: %s, %+v", hoveredIDs(c), got)
+	}
+	holdFresh(t, c, "the hovered replaced")
+
+	c = hoverScreen(t, `<div id="root" class="flex"><span id="a" class="grow hover:bg-accent">aaaa</span><span id="b" class="grow hover:bg-secondary">bbbb</span></div>`)
+	c.Move(28, 0, 0)
+	c.Resize(50, 12)
+	if got := c.Cells()[0][28]; got.Bg != "secondary" || hoveredIDs(c) != "b root -" {
+		t.Fatalf("resized: %s, %+v", hoveredIDs(c), got)
+	}
+	holdFresh(t, c, "resized")
+	c.Resize(20, 12)
+	c.Cells()
+	if hoveredIDs(c) != "" {
+		t.Fatalf("resized narrower than the pointer's column: %s", hoveredIDs(c))
+	}
+}
+
+// CheckFresh holds the chain to what is under the pointer.
+func TestCheckFreshHoldsTheChain(t *testing.T) {
+	c := hoverScreen(t, `<div id="root"><p id="a" class="hover:bg-accent">alpha</p><p id="b">beta</p></div>`)
+	moveOver(t, c, "a")
+	c.setHover(c.byID("b"))
+	if err := CheckFresh(c); err == nil || !strings.Contains(err.Error(), "under the pointer") {
+		t.Fatalf("a chain not under the pointer: %v", err)
+	}
+}
+
+// A press, the focus lost and given back with the button still down: the
+// next move lights what it is over.
+func TestHoverAfterAPressAndTheFocus(t *testing.T) {
+	c := hoverScreen(t, `<div id="root"><p id="a" class="hover:bg-accent">alpha</p><p id="b" class="hover:bg-secondary">beta</p></div>`)
+	c.Focus(true)
+	col, row := cellIn(t, c, "a")
+	c.Press(col, row, 0, 0)
+	c.Focus(false)
+	if hoveredIDs(c) != "" || c.tip != nil {
+		t.Fatalf("the focus lost: %s", hoveredIDs(c))
+	}
+	c.Focus(true)
+	c.Cells()
+	if hoveredIDs(c) != "" {
+		t.Fatalf("the focus back, the pointer not moved: %s", hoveredIDs(c))
+	}
+	if got := over(t, c, "b"); got.Bg != "secondary" {
+		t.Fatalf("over #b: %+v, %s", got, hoveredIDs(c))
+	}
+}
+
+// A document again, of the same shape or another: the chain and the
+// tooltip are what is under the pointer in it, as on a fresh Screen with
+// the pointer there.
+func TestHoverNewDocument(t *testing.T) {
+	doc := `<div id="root"><p id="a" class="hover:bg-accent" data-tooltip="tip">alpha</p><p id="b">beta</p><p id="c">gamma</p></div>`
+	c := hoverScreen(t, doc)
+	col, row := moveOver(t, c, "a")
+	if c.tip == nil || c.Cells()[row][col].Bg != "accent" {
+		t.Fatalf("over #a: tip %v, %+v", c.tip != nil, c.Cells()[row][col])
+	}
+	want := c.Lines()
+	c.Write([]byte(hotty.Doc("v", doc)))
+	holdFresh(t, c, "the same document")
+	if got := c.Lines(); strings.Join(got, "\n") != strings.Join(want, "\n") || c.tip == nil {
+		t.Fatalf("the same document: tip %v\n%s\nwant\n%s", c.tip != nil, strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	f := hoverScreen(t, doc)
+	f.Move(col, row, 0)
+	if got := strings.Join(f.Lines(), "\n"); got != strings.Join(want, "\n") {
+		t.Fatalf("a fresh Screen, the pointer there:\n%s", got)
+	}
+	c.Write([]byte(hotty.Doc("v", `<div id="root"><p id="x" class="hover:bg-secondary">xx</p><p>more</p></div>`)))
+	holdFresh(t, c, "another document")
+	if c.Cells()[0][2].Bg != "secondary" || c.tip != nil {
+		t.Fatalf("another document: %s, %+v", hoveredIDs(c), c.Cells()[0][2])
+	}
+}
+
+// The tooltip is the chain's: it follows the pointer with a button down,
+// goes with the focus, and with its data-tooltip.
+func TestHoverTooltipIsTheChains(t *testing.T) {
+	c := hoverScreen(t, `<div id="root"><p>top</p><p>second</p><p id="a" data-tooltip="a tip">alpha</p><p id="b" data-tooltip="b tip">beta</p></div>`)
+	col, row := moveOver(t, c, "a")
+	c.Press(col, row, 0, 0)
+	moveOver(t, c, "b")
+	if c.tip != c.byID("b") {
+		t.Fatalf("moved to #b with a button down: tip %v", idOf2(c.tip))
+	}
+	c.Write([]byte(hotty.Delta("v", []hotty.Op{hotty.OpAttr("b", "data-tooltip", "")})))
+	c.Cells()
+	if c.tip != nil {
+		t.Fatalf("#b's tooltip taken away: tip %v", idOf2(c.tip))
+	}
+	holdFresh(t, c, "#b's tooltip taken away")
+	c.Focus(true)
+	c.Write([]byte(hotty.Delta("v", []hotty.Op{hotty.OpAttr("b", "data-tooltip", "again")})))
+	c.Cells()
+	if c.tip != c.byID("b") {
+		t.Fatalf("#b's tooltip back: tip %v", idOf2(c.tip))
+	}
+	c.Focus(false)
+	if c.tip != nil {
+		t.Fatalf("the focus lost: tip %v", idOf2(c.tip))
 	}
 }

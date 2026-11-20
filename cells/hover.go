@@ -9,7 +9,9 @@ import (
 )
 
 // The pointer's hover (:hover), as a browser keeps it: the innermost
-// element under the pointer and the elements around it (hovered). An
+// element under the pointer's last cell and the elements around it
+// (hovered), hit again after anything that may move what is under it
+// (rehit, layout), and the tooltip shown the chain's (tipOf). An
 // element in it matches its hover: classes, and the kit's :hover looks
 // the Screen mirrors (kitHoverColours, kitHoverLook). A change of the chain
 // forgets only what the elements that came into it or left it look like
@@ -23,30 +25,52 @@ func (c *Screen) hoverOn(n *html.Node) bool {
 }
 
 // setHover makes the hovered chain n's: n and the elements around it,
-// none for nil.
+// none for nil; and the tooltip shown its nearest data-tooltip's, as a
+// host shows one on [data-tooltip]:hover.
 func (c *Screen) setHover(n *html.Node) {
-	chain := c.hoverSpare[:0]
-	for a := n; a != nil; a = a.Parent {
-		if a.Type == html.ElementNode {
-			chain = append(chain, a)
-		}
-	}
+	chain := appendChain(c.hoverSpare[:0], n)
 	old := c.hovered
 	if slices.Equal(old, chain) {
 		c.hoverSpare = chain
-		return
-	}
-	c.hovered, c.hoverSpare = chain, old
-	for _, a := range old {
-		if !slices.Contains(chain, a) {
-			c.hoverChanged(a)
+	} else {
+		c.hovered, c.hoverSpare = chain, old
+		for _, a := range old {
+			if !slices.Contains(chain, a) {
+				c.hoverChanged(a)
+			}
+		}
+		for _, a := range chain {
+			if !slices.Contains(old, a) {
+				c.hoverChanged(a)
+			}
 		}
 	}
+	// Its data-tooltip may have changed with the chain the same.
+	if t := tipOf(c.hovered); t != c.tip {
+		c.tip, c.lay = t, nil
+	}
+}
+
+// appendChain appends n and the elements around it to dst, the innermost
+// first.
+func appendChain(dst []*html.Node, n *html.Node) []*html.Node {
+	for a := n; a != nil; a = a.Parent {
+		if a.Type == html.ElementNode {
+			dst = append(dst, a)
+		}
+	}
+	return dst
+}
+
+// tipOf is the element of chain whose tooltip shows: the innermost with
+// a data-tooltip, nil for none.
+func tipOf(chain []*html.Node) *html.Node {
 	for _, a := range chain {
-		if !slices.Contains(old, a) {
-			c.hoverChanged(a)
+		if attr(a, "data-tooltip") != "" {
+			return a
 		}
 	}
+	return nil
 }
 
 // pruneHover takes the elements no longer in the document out of the

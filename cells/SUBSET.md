@@ -152,7 +152,7 @@ What ui's stylesheet lays out, the Screen knows (`kit.go`):
 | `.avatar-group` | a row, a cell apart |
 | a Command's menu, a Combobox's list | an item its filter hid (`aria-hidden=true`) and a group with none left aren't drawn; with none left, its `data-empty` (or "No results found") is |
 | `.popover` | an open popover (`[data-popover]`, a select's, a combobox's or a dropdown menu's too) below its trigger is drawn over what follows, as wide as its content, and takes no rows; before its trigger, in the flow, with `data-side` `top` or `inline-start`, and beside it (a row) with `inline-start` or `inline-end`. `data-align` is not read |
-| `[data-tooltip]` (ui.Tooltip) | with the pointer over the element (`Move`, no button down; whether or not the surface hears hovers, as `:hover`), its text on one row beside it, a cell in from each end: above, or `data-side` `bottom`, `left`/`inline-start`, `right`/`inline-end`, on the other side where the screen has no room; over everything, inside the screen, cut with `…`. Reversed in Lines; `primary-foreground` on `primary` in Cells. Not on focus; `data-align` and `data-arrow` are not read |
+| `[data-tooltip]` (ui.Tooltip) | while the element is in the hovered chain (Hover; whether or not the surface hears hovers, as `:hover`), the innermost one's, its text on one row beside it, a cell in from each end: above, or `data-side` `bottom`, `left`/`inline-start`, `right`/`inline-end`, on the other side where the screen has no room; over everything, inside the screen, cut with `…`. Reversed in Lines; `primary-foreground` on `primary` in Cells. Not on focus; `data-align` and `data-arrow` are not read |
 
 ## The pointer
 
@@ -173,11 +173,16 @@ element with an id of the app's.
 ## Hover
 
 The Screen keeps the hovered chain a browser keeps for `:hover`: the
-innermost element under the pointer and the elements around it. A
-`Move` with no button down sets it; with a button down it stays where
-the `Press` was, until the `Release`; a `Move` off the Screen and
-`Focus(false)` clear it, a new document empties it, and an element a
-delta takes out leaves it.
+innermost element under the pointer and the elements around it. It is
+what is under the pointer's last cell (`Move`, `Press`, `Release`),
+with a button down or none, as a host's follows the pointer. Where what
+is under a still pointer moves (a delta, a new document, `Wheel`,
+`Resize`, a key, what a press or a release did), the Screen hits the
+cell again in its next pass, as a host hits it after each of its
+passes, once: a hover that moves what is under the pointer isn't
+chased. A `Move` off the Screen and `Focus(false)` clear it; after
+`Focus(false)`, a `Move` sets it again. `Wheel` doesn't move the
+pointer.
 
 - **`hover:` classes**: an element in the chain reads its `hover:`
   classes as it reads the same classes without the variant: colours,

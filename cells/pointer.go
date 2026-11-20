@@ -47,9 +47,7 @@ import (
 // click, as the terminal lost its release.
 func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 	c.cutDrag()
-	// The hover is where the press is, and stays there while a button is
-	// down.
-	c.setHover(c.hitAt(col, row))
+	c.point(col, row)
 	// A press of any button ends what an earlier one left: its click,
 	// whose release was lost, is no longer due.
 	c.down, c.held, c.pressing = nil, false, true
@@ -60,6 +58,7 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 		taken = c.secondary(col, row, mods)
 	}
 	c.held = taken
+	c.rehit = true // what the press did (the focus, a reveal) may move what is under it
 	c.flush()
 	return taken
 }
@@ -78,15 +77,12 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 // where a tooltip shows or goes; Dirty says when, so a program needn't
 // redraw on every motion.
 func (c *Screen) Move(col, row, mods int) (taken bool) {
+	c.point(col, row)
 	switch {
 	case c.drag != nil:
 		c.dragTo(hotty.EventDrag, col, row, mods)
 	case c.down == nil:
 		c.hoverAt(col, row)
-		c.tipAt(col, row)
-	}
-	if !c.pressing && c.drag == nil {
-		c.setHover(c.hitAt(col, row))
 	}
 	taken = c.held || !c.pressing && c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
 	c.flush()
@@ -104,6 +100,10 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 // or hears a Press before this Release.
 func (c *Screen) Release(col, row, mods int) (taken bool) {
 	taken, c.held, c.pressing = c.held, false, false
+	c.point(col, row)
+	// What the release does (a click's focus, a reveal) may move what is
+	// under it.
+	c.rehit = true
 	if d := c.drag; d != nil {
 		c.dragTo(hotty.EventDragEnd, col, row, mods)
 		c.drag = nil
@@ -111,13 +111,12 @@ func (c *Screen) Release(col, row, mods int) (taken bool) {
 			// A drag that ends elsewhere clicks nothing, and ends the run
 			// of clicks.
 			c.down, c.clicks = nil, clickRun{}
-			c.setHover(c.hitAt(col, row))
 			c.flush()
 			return taken
 		}
 	}
 	c.releaseAt(col, row, mods)
-	c.setHover(c.hitAt(col, row))
+	c.rehit = true
 	c.flush()
 	return taken
 }
@@ -356,16 +355,28 @@ func (c *Screen) hoverAt(col, row int) bool {
 	return true
 }
 
-// tipAt shows the tooltip of the element with one (data-tooltip) the
-// pointer is over at col, row, with no button down, as a host's :hover
-// does whether or not the surface hears hovers; off the Screen, or over
-// none, no tooltip.
-func (c *Screen) tipAt(col, row int) {
-	var tip *html.Node
-	if c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows {
-		tip = closest(c.hitAt(col, row), func(n *html.Node) bool { return attr(n, "data-tooltip") != "" })
+// point is the pointer at col, row, on the Screen or off it: the hovered
+// chain is what is under it, with a button down or none, as a host's
+// follows the pointer (Blitz's, on every move).
+func (c *Screen) point(col, row int) {
+	c.ptrCol, c.ptrRow, c.ptrIn = col, row, true
+	c.rehit = true
+	if c.body != nil {
+		c.layout()
 	}
-	if tip != c.tip {
-		c.tip, c.lay = tip, nil
+}
+
+// pointed is what the hovered chain starts at in l: the innermost
+// element drawn at the pointer's cell; nil with no pointer, off the
+// Screen or over none.
+func (c *Screen) pointed(l *layout) *html.Node {
+	col, row := c.ptrCol, c.ptrRow
+	if !c.ptrIn || c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
+		return nil
 	}
+	y := row + c.scroll
+	if y >= len(l.cv.rows) {
+		return nil
+	}
+	return l.cv.rows[y][col].own
 }
