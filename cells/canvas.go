@@ -25,22 +25,69 @@ type canvas struct {
 	w     int
 	rows  [][]cell
 	clips []rect
+	// free counts each row's cells that are no element's, which own
+	// fills: a row with none left it passes over (a block's ancestors
+	// mark the cells it marked).
+	free []int
+	// spare are cells the next rows take, made many rows at a time: at
+	// first as many as hint, the rows the last pass's canvas had. They
+	// come from used first, the chunks of a canvas no layout reads any
+	// more (kept.canvas), and are blanked as a row takes them. chunks are
+	// this canvas's, for the one that uses them next.
+	spare  []cell
+	hint   int
+	used   [][]cell
+	chunks [][]cell
 }
 
 func (cv *canvas) row(y int) []cell {
 	for len(cv.rows) <= y {
-		r := make([]cell, cv.w)
+		for len(cv.spare) < cv.w && len(cv.used) > 0 {
+			cv.spare = cv.used[0]
+			cv.chunks = append(cv.chunks, cv.spare)
+			cv.used = cv.used[1:]
+		}
+		if len(cv.spare) < cv.w {
+			cv.spare = make([]cell, cv.w*max(cv.hint-len(cv.rows), len(cv.rows), y+1-len(cv.rows), 1))
+			cv.chunks = append(cv.chunks, cv.spare)
+		}
+		r := cv.spare[:cv.w:cv.w]
+		cv.spare = cv.spare[cv.w:]
 		for i := range r {
-			r[i].s = " "
+			r[i] = cell{s: " "}
 		}
 		cv.rows = append(cv.rows, r)
+		cv.free = append(cv.free, cv.w)
 	}
 	return cv.rows[y]
+}
+
+// set puts k in cell x of row y, counting the row's free cells.
+func (cv *canvas) set(r []cell, x, y int, k cell) {
+	switch was := r[x].own; {
+	case was == nil && k.own != nil:
+		cv.free[y]--
+	case was != nil && k.own == nil:
+		cv.free[y]++
+	}
+	r[x] = k
 }
 
 // put draws one character at x, y, and says how many cells it took.
 func (cv *canvas) put(x, y int, ch string, w int, lk look, own *html.Node) {
 	if y < 0 || x < 0 || x+w > cv.w || w <= 0 {
+		return
+	}
+	if y < len(cv.rows) && len(cv.clips) == 0 && w == 1 {
+		// One cell, no clip: the common case.
+		r := cv.rows[y]
+		if r[x].s == "" && x > 0 {
+			r[x-1].s = " "
+		}
+		if x+1 < cv.w && r[x+1].s == "" {
+			r[x+1].s = " "
+		}
+		cv.set(r, x, y, cell{s: ch, look: lk, own: own})
 		return
 	}
 	for _, clip := range cv.clips {
@@ -57,10 +104,39 @@ func (cv *canvas) put(x, y int, ch string, w int, lk look, own *html.Node) {
 	if x+w < cv.w && r[x+w].s == "" {
 		r[x+w].s = " "
 	}
-	r[x] = cell{s: ch, look: lk, own: own}
+	cv.set(r, x, y, cell{s: ch, look: lk, own: own})
 	for i := 1; i < w; i++ {
-		r[x+i] = cell{look: lk, own: own}
+		cv.set(r, x+i, y, cell{look: lk, own: own})
 	}
+}
+
+// putRun puts each of cs, one cell wide, from x along row y: as many
+// puts, done at once where no clip or edge cuts them. A put's fix-ups for
+// a wide character it cuts in half are those of the run's ends: each
+// put's cell after it is the next put's.
+func (cv *canvas) putRun(x, y int, cs []cell) {
+	if y < 0 || x < 0 || x+len(cs) > cv.w || len(cv.clips) > 0 {
+		for i, k := range cs {
+			cv.put(x+i, y, k.s, 1, k.look, k.own)
+		}
+		return
+	}
+	r := cv.row(y)
+	end := x + len(cs)
+	if r[x].s == "" && x > 0 {
+		r[x-1].s = " "
+	}
+	if end < cv.w && r[end].s == "" {
+		r[end].s = " "
+	}
+	for i := x; i < end; i++ {
+		if was, now := r[i].own, cs[i-x].own; was == nil && now != nil {
+			cv.free[y]--
+		} else if was != nil && now == nil {
+			cv.free[y]++
+		}
+	}
+	copy(r[x:end], cs)
 }
 
 // own marks the cells of a rectangle as an element's where no element
@@ -68,6 +144,21 @@ func (cv *canvas) put(x, y int, ch string, w int, lk look, own *html.Node) {
 // block's to a click. Blocks are done after what is inside them, so each
 // cell is the innermost element's.
 func (cv *canvas) own(x, y, w, h int, n *html.Node) {
+	if len(cv.clips) == 0 {
+		for j := max(y, 0); j < y+h; j++ {
+			r := cv.row(j)
+			if cv.free[j] == 0 {
+				continue
+			}
+			for i := max(x, 0); i < x+w && i < cv.w; i++ {
+				if r[i].own == nil {
+					r[i].own = n
+					cv.free[j]--
+				}
+			}
+		}
+		return
+	}
 rowLoop:
 	for j := max(y, 0); j < y+h; j++ {
 		for _, clip := range cv.clips {
@@ -86,6 +177,7 @@ rowLoop:
 			}
 			if inside && r[i].own == nil {
 				r[i].own = n
+				cv.free[j]--
 			}
 		}
 	}

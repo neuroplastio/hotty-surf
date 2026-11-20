@@ -79,7 +79,9 @@ func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
 		// muted text around it (lookOf): where that holds, so do the
 		// looks, and only the roles change.
 		if m := k.nodes[n]; m == nil || !m.hasCol || m.inMuted && unmutes(m.fg) != unmutesNow(n) {
+			// Its look may change: its layouts, and what holds them.
 			c.relayout = true
+			k.unlayAll(n)
 		}
 		k.forgetColours(n)
 		return

@@ -78,14 +78,12 @@ type Cell struct {
 // where its role says it and a painter would dim it twice.
 func (c *Screen) Cells() [][]Cell {
 	l := c.layout()
-	out := c.cellsOf(l)
-	if c.shown.raw != nil && l == c.shownLay && c.scroll == c.shownScroll {
-		return out
+	if c.shown.raw == nil || l != c.shownLay || c.scroll != c.shownScroll {
+		c.show(c.paint(l, true), l)
 	}
-	// Dirty's snapshot is a copy of the grid, which is the caller's to
-	// keep and change: cheaper than making it again.
-	c.shown, c.shownLay, c.shownScroll = snapshot{raw: c.rawOf(l), cells: copyGrid(out)}, l, c.scroll
-	return out
+	// The grid is the caller's to keep and change: a copy of the one
+	// Dirty compares.
+	return copyGrid(c.shown.cells)
 }
 
 // Draw is Cells written into g at col, row, clipped to g, with no new
@@ -97,8 +95,7 @@ func (c *Screen) Cells() [][]Cell {
 func (c *Screen) Draw(g [][]Cell, col, row int) {
 	l := c.layout()
 	if c.shown.raw == nil || l != c.shownLay || c.scroll != c.shownScroll {
-		// The grid is the Screen's own, not a caller's: no copy.
-		c.shown, c.shownLay, c.shownScroll = snapshot{raw: c.rawOf(l), cells: c.cellsOf(l)}, l, c.scroll
+		c.show(c.paint(l, true), l)
 	}
 	for y, src := range c.shown.cells {
 		gy := row + y
@@ -141,7 +138,7 @@ func copyGrid(g [][]Cell) [][]Cell {
 // element's, or the nearest ancestor's that has them, or its look's.
 func cellOf(l *layout, k cell, rc *roleCache) Cell {
 	if k.own != rc.last || !rc.ok {
-		rc.fg, rc.bg = rolesAt(l, k.own, rc.memo)
+		rc.fg, rc.bg = rolesAt(l, k.own)
 		rc.last, rc.ok = k.own, true
 	}
 	fg, bg := rc.fg, rc.bg
@@ -156,39 +153,12 @@ func cellOf(l *layout, k cell, rc *roleCache) Cell {
 	return Cell{Text: k.s, Fg: fg, Bg: bg, Attr: attrOf(k.look)}
 }
 
-// roleCache is rolesAt's memo while a grid is made, and the last
-// element's roles: a run of cells is mostly one element's.
+// roleCache is the last element's roles while a grid is made: a run of
+// cells is mostly one element's.
 type roleCache struct {
-	memo   map[*html.Node][2]Role
 	last   *html.Node
 	ok     bool
 	fg, bg Role
-}
-
-// cellsOf is Cells' grid of l: also what Dirty compares, so a change that
-// shows only in the roles (a colour class, the selected band moving)
-// counts.
-func (c *Screen) cellsOf(l *layout) [][]Cell {
-	rc := &roleCache{memo: map[*html.Node][2]Role{}}
-	out := make([][]Cell, c.rows)
-	all := make([]Cell, c.rows*c.cols) // the grid in one array
-	for i := range out {
-		row := all[i*c.cols : (i+1)*c.cols : (i+1)*c.cols]
-		y := c.scroll + i
-		var src []cell
-		if y >= 0 && y < len(l.cv.rows) {
-			src = l.cv.rows[y]
-		}
-		for x := range row {
-			k := cell{s: " "}
-			if x < len(src) {
-				k = src[x]
-			}
-			row[x] = cellOf(l, k, rc)
-		}
-		out[i] = row
-	}
-	return out
 }
 
 // attrOf is a look as Cell's attributes; muted and a rule are roles there.
@@ -208,16 +178,19 @@ func attrOf(l look) Attr {
 // rolesAt are the roles of a cell drawn for n: its text's, its nearest
 // own or inherited colour, and its fill's, the nearest fill of n or an
 // element around it, as CSS paints a box's ground under what it holds.
-func rolesAt(l *layout, n *html.Node, memo map[*html.Node][2]Role) (fg, bg Role) {
+// They are kept until the colours of n or an element around it are
+// forgotten (forgetColours, forgetLooks), which forget n's.
+func rolesAt(l *layout, n *html.Node) (fg, bg Role) {
 	if n == nil {
 		return "", ""
 	}
-	if r, ok := memo[n]; ok {
-		return r[0], r[1]
+	m := l.memoOf(n)
+	if m.hasRoles {
+		return m.roles[0], m.roles[1]
 	}
 	fg, bg = l.colour(n)
 	if n.Parent != nil && (fg == "" || bg == "") {
-		pf, pb := rolesAt(l, n.Parent, memo)
+		pf, pb := rolesAt(l, n.Parent)
 		if fg == "" {
 			fg = pf
 		}
@@ -225,7 +198,8 @@ func rolesAt(l *layout, n *html.Node, memo map[*html.Node][2]Role) (fg, bg Role)
 			bg = pb
 		}
 	}
-	memo[n] = [2]Role{fg, bg}
+	m = l.memoOf(n)
+	m.roles, m.hasRoles = [2]Role{fg, bg}, true
 	return fg, bg
 }
 

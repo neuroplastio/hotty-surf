@@ -71,6 +71,9 @@ type layout struct {
 	// looked for.
 	active *html.Node
 	adDone bool
+	// p is what the pass's layouts share: the frames it records what it
+	// lays out in (laid.go), and its measuring layouts.
+	p *pass
 }
 
 type scrollBox struct {
@@ -122,29 +125,40 @@ func (c *Screen) layout() *layout {
 	if c.lay != nil {
 		return c.lay
 	}
-	l := &layout{
-		c:       c,
-		cv:      &canvas{w: max(c.cols, 1)},
-		boxes:   map[*html.Node]rect{},
-		fields:  map[*html.Node]rect{},
-		scrolls: map[*html.Node]scrollBox{},
+	l := &layout{c: c, cv: &canvas{w: max(c.cols, 1)}}
+	boxes := 0
+	if c.kept != nil {
+		// As many as the last pass's, which this one most likely has.
+		boxes = c.kept.boxes
 	}
+	l.boxes = make(map[*html.Node]rect, boxes)
+	l.fields, l.scrolls = map[*html.Node]rect{}, map[*html.Node]scrollBox{}
 	if c.kept == nil {
 		c.kept = &kept{nodes: map[*html.Node]*nodeMemo{}}
 	}
-	// A Screen's widths are its pass's: a field's value changes them
-	// without a change to the tree.
+	// A text's widths are its pass's.
 	c.kept.gen++
 	l.nodes, l.gen = c.kept.nodes, c.kept.gen
+	l.p = &pass{free: c.kept.frames}
+	c.kept.frames = nil
+	l.cv.hint = c.kept.rows
+	l.cv.used, c.kept.used = c.kept.used, nil
+	if old := c.kept.canvas; old != nil {
+		c.kept.used = old.chunks
+	}
+	c.kept.canvas = l.cv
+	c.kept.settle(l)
 	if c.body != nil {
 		l.height, _ = l.node(c.body, 0, 0, max(c.cols, 1), inh{})
 		l.drawOverlays()
 		l.drawTip()
 	}
+	c.kept.frames, c.kept.rows = l.p.free, len(l.cv.rows)
 	if l.adjusted {
 		c.lay = nil
 		return c.layout()
 	}
+	c.kept.boxes = len(l.boxes)
 	c.lay = l
 	if t := c.revealAfter; t != nil {
 		where := c.revealWhere
@@ -160,15 +174,10 @@ func (c *Screen) layout() *layout {
 	return l
 }
 
-// measure is the width n's content takes when nothing wraps.
+// measure is the width n's content takes when nothing wraps, kept as
+// node keeps a layout (laid).
 func (l *layout) measure(n *html.Node, in inh) int {
-	i := preIndex(in.pre)
-	if w, ok := l.widthOf(n, i); ok {
-		return w
-	}
-	m := &layout{c: l.c, measuring: true, widthOnly: true, nodes: l.nodes, gen: l.gen}
-	_, w := m.node(n, 0, 0, infinite, in)
-	l.setWidth(n, i, w)
+	_, w := l.measurer(true).node(n, 0, 0, infinite, in)
 	return w
 }
 
@@ -179,8 +188,7 @@ func (l *layout) measureText(k, n *html.Node, in inh) int {
 	if w, ok := l.widthOf(k, i); ok {
 		return w
 	}
-	m := &layout{c: l.c, measuring: true, widthOnly: true, nodes: l.nodes, gen: l.gen}
-	_, w := m.inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
+	_, w := l.measurer(true).inline([]*html.Node{k}, n, 0, 0, infinite, in, false)
 	l.setWidth(k, i, w)
 	return w
 }
@@ -221,7 +229,25 @@ func (l *layout) ext(n *html.Node, r rect) {
 	if l.cv == nil {
 		return
 	}
+	l.rec(oExt, n, r.x, r.y, r.w, r.h, 0)
 	l.boxes[n] = l.boxes[n].union(r)
+}
+
+// draw is the canvas's put, recorded (laid).
+func (l *layout) draw(x, y int, ch string, w int, lk look, own *html.Node) {
+	l.recPut(x, y, ch, w, lk, own)
+	l.cv.put(x, y, ch, w, lk, own)
+}
+
+// setHeight gives a column's growing item its rows (grow).
+func (l *layout) setHeight(n *html.Node, h int) {
+	if l.heights == nil {
+		l.heights = map[*html.Node]int{}
+	}
+	if l.grown == nil {
+		l.grown = map[*html.Node]bool{}
+	}
+	l.heights[n], l.grown[n] = h, true
 }
 
 // lookOf is the look of n's content: what it inherits, what its style
@@ -278,7 +304,8 @@ func (l *layout) activeItem() *html.Node {
 }
 
 // node lays n out as a block at x, y, w wide, and says how high it is and
-// how wide its content is.
+// how wide its content is. Where a pass laid it out with the same inputs
+// and nothing it read changed since, it does what that pass did (laid).
 func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 	st := l.style(n)
 	if n.Type != html.ElementNode || st.display == dNone && n != l.c.body {
@@ -287,9 +314,24 @@ func (l *layout) node(n *html.Node, x, y, w int, in inh) (h, used int) {
 	if n == l.c.body {
 		st = box{}
 	}
+	key := laidKey{mode: l.mode(), w: w, in: in}
+	if key.mode == mDrawn {
+		key.def, key.grown = l.definite(n, st), l.grown[n]
+	}
+	m := l.memoOf(n)
+	if r := l.laidOf(m, key); r != nil {
+		l.replay(r, x, y)
+		l.adopt(r, x, y)
+		return r.h, r.used
+	}
+	f := l.push(x, y, key.mode == mDrawn)
 	// Its margins (mt-*, mb-*): rows above and below its box.
 	h, used = l.box(n, st, x, y+st.marginT, w, in)
-	return h + st.marginT + st.marginB, used
+	h += st.marginT + st.marginB
+	r := l.pop(f, key, h, used)
+	keep(m, r)
+	l.adopt(r, x, y)
+	return h, used
 }
 
 // box lays n out, as node does, without its margins.
@@ -314,14 +356,14 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	}
 	if sep == "vertical" {
 		if l.cv != nil {
-			l.cv.put(x, y, "│", 1, in.look|lRule, n)
+			l.draw(x, y, "│", 1, in.look|lRule, n)
 		}
 		l.done(n, rect{x, y, 1, 1})
 		return 1, 1
 	}
 	if n.DataAtom == atom.Hr || sep == "horizontal" {
 		for i := 0; i < w && l.cv != nil; i++ {
-			l.cv.put(x+i, y, "─", 1, in.look|lRule, n)
+			l.draw(x+i, y, "─", 1, in.look|lRule, n)
 		}
 		l.done(n, rect{x, y, w, 1})
 		return 1, 1
@@ -333,7 +375,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		if l.cv != nil {
 			px := cx
 			for _, ch := range charsOf(m) {
-				l.cv.put(px, cy, ch.s, ch.w, in.look, n)
+				l.draw(px, cy, ch.s, ch.w, in.look, n)
 				px += ch.w
 			}
 		}
@@ -359,7 +401,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		l.done(n, rect{x, y, w, h})
 		return h, used
 	}
-	limit, bounded := scrollLimit(st.maxHeight, l.c.rows)
+	limit, bounded := scrollLimit(st.maxHeight, l.screenRows(st.maxHeight))
 	bounded = bounded && st.scrollY
 	def := l.definite(n, st)
 	if l.grown[n] && st.scrollY {
@@ -370,8 +412,12 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	offset := 0
 	if bounded {
 		offset = l.c.boxScroll[n]
+		if f := l.top(); f != nil {
+			f.scrolls = append(f.scrolls, scrollAt{n, offset})
+		}
 		cy -= offset
 		if l.cv != nil {
+			l.rec(oClip, nil, cx, originalY, cw, limit, 0)
 			l.cv.clips = append(l.cv.clips, rect{cx, originalY, cw, limit})
 		}
 	}
@@ -408,9 +454,13 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	}
 	if bounded {
 		if l.cv != nil {
+			l.rec(oUnclip, nil, 0, 0, 0, 0, 0)
 			l.cv.clips = l.cv.clips[:len(l.cv.clips)-1]
-			l.scrolls[n] = scrollBox{view: rect{cx, originalY, cw, min(ch, limit)}, content: ch}
+			view := rect{cx, originalY, cw, min(ch, limit)}
+			l.rec(oScroll, n, view.x, view.y, view.w, view.h, ch)
+			l.scrolls[n] = scrollBox{view: view, content: ch}
 			if maxOffset := max(ch-limit, 0); offset > maxOffset {
+				l.rec(oAdjust, n, 0, 0, 0, 0, maxOffset)
 				l.c.boxScroll[n] = maxOffset
 				l.adjusted = true
 			}
@@ -429,6 +479,18 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	return h, used
 }
 
+// screenRows is the Screen's height, as a length v in vh reads it ("" for
+// the height itself): the layout being recorded holds at that height
+// only (laid).
+func (l *layout) screenRows(v string) int {
+	if v == "" || strings.HasSuffix(v, "vh") {
+		if f := l.top(); f != nil {
+			f.rows = true
+		}
+	}
+	return l.c.rows
+}
+
 // definite is n's height where it has one, in rows, 0 where it is its
 // content's: h-screen (the Screen's), h-full (its parent's, the body's
 // the Screen's), h-[…] or an inline height, or the rows its column gave
@@ -440,7 +502,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 	if n == l.c.body || n.Parent == l.c.body && attr(n, "id") == "root" {
 		// The window, and the document's own root in it, which a host
 		// makes as high as the window.
-		return l.c.rows
+		return l.screenRows("")
 	}
 	if h, ok := l.heights[n]; ok {
 		return h
@@ -449,13 +511,13 @@ func (l *layout) definite(n *html.Node, st box) int {
 	switch st.height {
 	case "":
 	case "screen", "dvh", "svh", "lvh":
-		h = l.c.rows
+		h = l.screenRows("")
 	case "full", "100%":
 		if p := n.Parent; p != nil && p.Type == html.ElementNode {
 			h = l.definite(p, l.style(p))
 		}
 	default:
-		h, _ = scrollLimit(st.height, l.c.rows)
+		h, _ = scrollLimit(st.height, l.screenRows(st.height))
 	}
 	if h > 0 {
 		if l.heights == nil {
@@ -472,7 +534,7 @@ func (l *layout) definite(n *html.Node, st box) int {
 func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 	var growers []*html.Node
 	used, items := 0, 0
-	m := &layout{c: l.c, measuring: true, nodes: l.nodes, gen: l.gen}
+	m := l.measurer(false)
 	var run []*html.Node
 	flush := func() {
 		if len(run) > 0 {
@@ -507,16 +569,11 @@ func (l *layout) grow(n *html.Node, w int, in inh, fill, gap int) {
 		return
 	}
 	rest := max(fill-used-gap*max(items-1, 0), 0)
-	if l.heights == nil {
-		l.heights = map[*html.Node]int{}
-	}
-	if l.grown == nil {
-		l.grown = map[*html.Node]bool{}
-	}
 	for i, k := range growers {
 		share := rest / (len(growers) - i)
 		rest -= share
-		l.heights[k], l.grown[k] = share, true
+		l.rec(oHeight, k, 0, 0, 0, 0, share)
+		l.setHeight(k, share)
 	}
 }
 
@@ -544,6 +601,9 @@ func (l *layout) overlay(k *html.Node, x, y, w int, in inh) bool {
 		return false
 	}
 	if l.cv != nil {
+		if f := l.top(); f != nil && f.drawn {
+			f.ops = append(f.ops, lop{kind: oOverlay, n: k, x: int32(x - f.x), y: int32(y - f.y), w: int32(w), in: in})
+		}
 		l.overlays = append(l.overlays, overlay{n: k, x: x, y: y, w: w, in: in})
 	}
 	return true
@@ -556,12 +616,11 @@ func (l *layout) drawOverlays() {
 	for len(l.overlays) > 0 {
 		o := l.overlays[0]
 		l.overlays = l.overlays[1:]
-		m := &layout{c: l.c, measuring: true, nodes: l.nodes, gen: l.gen}
-		h, pw := m.node(o.n, 0, 0, o.w, o.in)
+		h, pw := l.measurer(false).node(o.n, 0, 0, o.w, o.in)
 		pw = max(min(pw, o.w), 1)
 		for j := o.y; j < o.y+h; j++ {
 			for i := o.x; i < o.x+pw; i++ {
-				l.cv.put(i, j, " ", 1, 0, o.n)
+				l.draw(i, j, " ", 1, 0, o.n)
 			}
 		}
 		l.node(o.n, o.x, o.y, pw, o.in)
@@ -618,7 +677,7 @@ func (l *layout) drawTip() {
 	x = max(0, min(x, c.cols-w))
 	g := displaywidth.StringGraphemes(text)
 	for g.Next() {
-		l.cv.put(x, y, g.Value(), g.Width(), lTip, n)
+		l.draw(x, y, g.Value(), g.Width(), lTip, n)
 		x += g.Width()
 	}
 }
@@ -628,6 +687,7 @@ func (l *layout) done(n *html.Node, r rect) {
 	if l.cv == nil {
 		return
 	}
+	l.rec(oDone, n, r.x, r.y, r.w, r.h, 0)
 	l.boxes[n] = r
 	l.cv.own(r.x, r.y, r.w, r.h, n)
 }
@@ -1005,7 +1065,7 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 		h += rh
 		if r.head && (i+1 == len(rows) || !rows[i+1].head) {
 			for k := 0; k < total && l.cv != nil; k++ {
-				l.cv.put(x+k, y+h, "─", 1, in.look|lRule, n)
+				l.draw(x+k, y+h, "─", 1, in.look|lRule, n)
 			}
 			h++
 		}
@@ -1160,7 +1220,7 @@ func (l *layout) paint(cs []char, x, y int, lk look, own, stop *html.Node) {
 	}
 	cx := x
 	for _, ch := range cs {
-		l.cv.put(cx, y, ch.s, ch.w, lk, own)
+		l.draw(cx, y, ch.s, ch.w, lk, own)
 		cx += ch.w
 	}
 	r := rect{x, y, cx - x, 1}
@@ -1186,7 +1246,11 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 		return append(ps, piece{kind: pBreak, own: n})
 	}
 	if tokens(n, "class", "chart-legend-indicator") && n.FirstChild == nil {
-		// The kit's swatch, drawn by its stylesheet.
+		// The kit's swatch, drawn by its stylesheet, which reads its
+		// figure.
+		if p := n.Parent; p != nil && p.Parent != nil && p.Parent.Parent != nil {
+			l.dependOn(p.Parent.Parent)
+		}
 		return append(ps, piece{kind: pWord, chars: charsOf(legendMark(n)), w: 1, look: l.lookOf(n, in.look, st), own: n})
 	}
 	if st.display == dAtom {
@@ -1289,17 +1353,17 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		}
 		return text("[ " + label + " ]")
 	case n.DataAtom == atom.Input && typ == "checkbox":
-		if l.c.field(n).checked {
+		if l.field(n).checked {
 			return text("[x]")
 		}
 		return text("[ ]")
 	case n.DataAtom == atom.Input && typ == "radio":
-		if l.c.field(n).checked {
+		if l.field(n).checked {
 			return text("(•)")
 		}
 		return text("( )")
 	case n.DataAtom == atom.Select:
-		v := l.c.field(n).ed.Value
+		v := l.field(n).ed.Value
 		label := ""
 		for _, o := range options(n) {
 			if o.value == v {
@@ -1343,15 +1407,16 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		return
 	}
 	r := rect{x, y, w, p.h}
+	l.rec(oField, n, r.x, r.y, r.w, r.h, 0)
 	l.fields[n] = r
 	for m := n; m != nil && m != stop; m = m.Parent {
 		l.ext(m, r)
 	}
-	f := l.c.field(n)
+	f := l.field(n)
 	base := p.look | lUnderline
 	for j := 0; j < p.h; j++ {
 		for i := 0; i < w; i++ {
-			l.cv.put(x+i, y+j, " ", 1, base, n)
+			l.draw(x+i, y+j, " ", 1, base, n)
 		}
 	}
 	focused := n == l.c.focused && l.c.active
@@ -1360,12 +1425,12 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 			cs := clip(charsOf(ph), w)
 			cx := x
 			for _, ch := range cs {
-				l.cv.put(cx, y, ch.s, ch.w, base|lMuted, n)
+				l.draw(cx, y, ch.s, ch.w, base|lMuted, n)
 				cx += ch.w
 			}
 		}
 		if focused {
-			l.caret, l.hasCaret = [2]int{x, y}, true
+			l.setCaret(x, y)
 		}
 		return
 	}
@@ -1382,14 +1447,14 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 					if cx+ch.w > x+w {
 						break
 					}
-					l.cv.put(cx, y+j, ch.s, ch.w, base, n)
+					l.draw(cx, y+j, ch.s, ch.w, base, n)
 					cx += ch.w
 				}
 			}
 		}
 		if focused {
 			row, col := f.ed.Cursor()
-			l.caret, l.hasCaret = [2]int{x + col, y + row - f.top}, true
+			l.setCaret(x+col, y+row-f.top)
 		}
 		return
 	}
@@ -1438,12 +1503,18 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		if cx+ch.w > x+w {
 			break
 		}
-		l.cv.put(cx, y, ch.s, ch.w, base, n)
+		l.draw(cx, y, ch.s, ch.w, base, n)
 		cx += ch.w
 	}
 	if focused {
-		l.caret, l.hasCaret = [2]int{x + caretCol - f.off, y}, true
+		l.setCaret(x+caretCol-f.off, y)
 	}
+}
+
+// setCaret puts the focused field's caret at x, y.
+func (l *layout) setCaret(x, y int) {
+	l.rec(oCaret, nil, x, y, 0, 0, 0)
+	l.caret, l.hasCaret = [2]int{x, y}, true
 }
 
 // clip is cs in w cells, ending in … where it was cut.
@@ -1572,17 +1643,61 @@ func (l *layout) kids(n *html.Node) []*html.Node {
 }
 
 // kept is what a layout pass knows of the tree that holds until it
-// changes (settle), node by node. A Screen's widths are its
-// pass's (gen): a field's value changes them without a change to the
-// tree.
+// changes (settle), node by node. A text's widths are its pass's (gen).
+// focus is what had the keyboard, which the laids draw (settle).
 type kept struct {
 	nodes map[*html.Node]*nodeMemo
 	gen   uint64
+	focus focusState
+	// boxes is how many the last pass drew, and rows how many rows its
+	// canvas had.
+	boxes, rows int
+	// frames are the last pass's, free, which the next records in.
+	frames []*frame
+	// canvas is the last pass's canvas, and used the chunks of the one
+	// before, which the next pass's rows take: no layout two passes old
+	// is read (a caller holds the layout it asked for only until it asks
+	// again).
+	canvas *canvas
+	used   [][]cell
+	// recoloured are the elements whose colours were forgotten since the
+	// last snapshot shown (paint), and recolourGen counts the forgetting.
+	recoloured  map[*html.Node]struct{}
+	recolourGen uint64
+}
+
+// focusState is what the layout reads of the keyboard: whether the
+// Screen has it, the focused element, and the item it names its active
+// one (activeItem).
+type focusState struct {
+	active        bool
+	focused, item *html.Node
+}
+
+// settle forgets the laids that l's pass can't use: those of what had
+// the keyboard or has it now, which draw it.
+func (k *kept) settle(l *layout) {
+	c := l.c
+	fs := focusState{active: c.active, focused: c.focused}
+	if c.body != nil {
+		fs.item = l.activeItem()
+	}
+	if fs == k.focus {
+		return
+	}
+	for _, n := range [...]*html.Node{k.focus.focused, k.focus.item, fs.focused, fs.item} {
+		if n != nil {
+			k.unlay(n)
+		}
+	}
+	k.focus = fs
 }
 
 // nodeMemo is what a pass knows of a node: an element's style, colours
 // and children, a text's pieces in each look it is laid out in (as
-// textPieces makes them after no pieces), and its widths as of wGen.
+// textPieces makes them after no pieces), and its widths as of wGen; an
+// element's laids (laid), and ver, which counts the changes under it
+// (unlay).
 type nodeMemo struct {
 	st      box
 	hasSt   bool
@@ -1598,9 +1713,40 @@ type nodeMemo struct {
 	// It is kept until the styles are forgotten: a look that comes to
 	// be muted lays the element out again, which sets it.
 	inMuted bool
+	laid    []*laid
+	ver     uint64
+	// roles are the element's roles in Cells (rolesAt): its colours, or
+	// the nearest ancestor's that has them.
+	roles    [2]Role
+	hasRoles bool
 }
 
-// forgetStyles forgets every node's style and children, and the widths
+// unlay forgets the laids of n and of the elements round it: something
+// under them changed.
+func (k *kept) unlay(n *html.Node) {
+	for a := n; a != nil; a = a.Parent {
+		if m := k.nodes[a]; m != nil {
+			m.laid = nil
+			m.ver++
+		}
+	}
+}
+
+// unlayAll forgets the laids of n, everything under it, and the elements
+// round it.
+func (k *kept) unlayAll(n *html.Node) {
+	walk(n, func(d *html.Node) {
+		if m := k.nodes[d]; m != nil {
+			m.laid = nil
+			m.ver++
+		}
+	})
+	if n.Parent != nil {
+		k.unlay(n.Parent)
+	}
+}
+
+// forgetStyles forgets every node's style and children, and the layouts
 // they make: an attribute changed, which any element's style may read
 // (kit, filtered, barLabels).
 func (k *kept) forgetStyles() {
@@ -1608,6 +1754,8 @@ func (k *kept) forgetStyles() {
 		m.hasSt, m.hasKids = false, false
 		m.kids = nil
 		m.inMuted = false
+		m.laid = nil
+		m.ver++
 	}
 	k.gen++
 }
@@ -1618,13 +1766,15 @@ func (k *kept) forgetStyles() {
 // everything under n's parent (n's descendants read their ancestors',
 // closest; its children their parent's, kitGrows; its siblings their
 // parent's children, barLabels; a legend's marks its figure's children,
-// legendMark).
+// legendMark). Their layouts go with them.
 func (k *kept) forgetStylesAround(n *html.Node) {
 	forget := func(d *html.Node) {
 		if m := k.nodes[d]; m != nil {
 			m.hasSt, m.hasKids = false, false
 			m.kids = nil
 			m.inMuted = false
+			m.laid = nil
+			m.ver++
 		}
 	}
 	top := n
@@ -1638,32 +1788,53 @@ func (k *kept) forgetStylesAround(n *html.Node) {
 	k.gen++
 }
 
-// forgetLooks forgets the colours of n and its descendants, and the
-// pieces of their texts.
+// forgetLooks forgets the colours of n and its descendants, the pieces of
+// their texts, and the layouts they are in.
 func (k *kept) forgetLooks(n *html.Node) {
+	k.recolour()
 	walk(n, func(d *html.Node) {
 		if m := k.nodes[d]; m != nil {
-			m.hasCol = false
+			m.hasCol, m.hasRoles = false, false
 			m.texts = nil
+			m.laid = nil
+			m.ver++
+			k.recoloured[d] = struct{}{}
 		}
 	})
+	if n.Parent != nil {
+		k.unlay(n.Parent)
+	}
 }
 
 // forgetColours forgets the colours of n and its descendants. Their
-// texts' pieces hold: they are kept by the look they were made in.
+// texts' pieces hold: they are kept by the look they were made in. So do
+// their layouts, which read no colour but where a look changes
+// (attrsChanged).
 func (k *kept) forgetColours(n *html.Node) {
+	k.recolour()
 	walk(n, func(d *html.Node) {
 		if m := k.nodes[d]; m != nil {
-			m.hasCol = false
+			m.hasCol, m.hasRoles = false, false
+			k.recoloured[d] = struct{}{}
 		}
 	})
 }
 
-// forgetText forgets a text's pieces.
+// recolour counts a forgetting of colours, and makes the set of the
+// elements it reaches.
+func (k *kept) recolour() {
+	k.recolourGen++
+	if k.recoloured == nil {
+		k.recoloured = map[*html.Node]struct{}{}
+	}
+}
+
+// forgetText forgets a text's pieces, and the layouts it is in.
 func (k *kept) forgetText(n *html.Node) {
 	if m := k.nodes[n]; m != nil {
 		m.texts = nil
 	}
+	k.unlay(n)
 }
 
 // item is a flex row's item: its element or text, its width, whether

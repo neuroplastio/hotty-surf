@@ -213,6 +213,24 @@ attributes return when the modal closes.
   delta forgets only what its ops reach of what the Screen keeps of the
   tree (styles, colours, texts' pieces), and one that swaps only colours
   keeps the layout.
+  - **Only what changed is laid out again** (cells/laid.go). A pass keeps
+    each element's layout: its size, and what it drew as ops from its top
+    left. The record is keyed by what the parent gives it: the width,
+    what it inherits, its definite height, whether it grew, and the mode.
+    The next pass replays the ops through the same canvas where the
+    element now is, wherever the key is the same and nothing it read has
+    changed. Changes under the element are its subtree's, forgotten with
+    the memos (unlay). Its fields' state, its scrolled boxes' offsets and
+    the Screen's height it read are checked against the record. So is
+    what it read beyond its subtree: a chart's label row, a legend's
+    figure. The focus is forgotten where it was and where it is.
+  - **Only the rows that changed are painted again** (cells/paint.go).
+    Each element's roles are kept until its colours or an ancestor's are
+    forgotten. A row whose cells are the ones shown, none of them of an
+    element recoloured since, is the row shown.
+  - `CheckFresh` (cells/export_test.go) holds both to a pass that keeps
+    nothing, and `TestIncrementalIsFresh` walks the stories and random
+    markup through every kind of step with it.
 
 ## Insides that other packages reach
 

@@ -73,6 +73,11 @@ type Screen struct {
 	shown       snapshot
 	shownLay    *layout
 	shownScroll int
+	shownKept   *kept
+	// spare is a snapshot no longer shown, whose arrays the next paint
+	// takes, and pending one Dirty painted, which the next draw shows.
+	spare   snapshot
+	pending painted
 	// tip is the element with a tooltip (data-tooltip) the pointer is
 	// over, whose tooltip the layout draws beside it (drawTip).
 	tip    *html.Node
@@ -295,42 +300,29 @@ func (c *Screen) Dirty() bool {
 	if c.lay != nil && c.lay == c.shownLay && c.scroll == c.shownScroll {
 		return false
 	}
-	if !c.visible().same(c.shown) {
+	l := c.layout()
+	s := c.paint(l, false)
+	if !s.same(c.shown) {
+		// The next draw shows it.
+		c.pending = painted{snap: s, lay: l, scroll: c.scroll, kept: c.kept, gen: c.kept.recolourGen}
 		return true
 	}
 	// Laid out again, the same: what was drawn is this layout's.
+	if !sameGrid(s, c.pending.snap) {
+		c.spare = s
+	}
 	c.shownLay, c.shownScroll = c.lay, c.scroll
+	c.kept.recoloured = nil
 	return false
 }
 
 // drew records l, at the scroll, as what Lines or Cells drew last
-// (Dirty), copying its cells only where it isn't the one recorded.
+// (Dirty), painting it only where it isn't the one recorded.
 func (c *Screen) drew(l *layout) {
 	if c.shown.raw != nil && l == c.shownLay && c.scroll == c.shownScroll {
 		return
 	}
-	c.shown, c.shownLay, c.shownScroll = c.visible(), l, c.scroll
-}
-
-// visible is a copy of the cells Lines and Cells draw: the rows from
-// the scroll, as wide as the Screen.
-func (c *Screen) visible() snapshot {
-	l := c.layout()
-	return snapshot{raw: c.rawOf(l), cells: c.cellsOf(l)}
-}
-
-// rawOf is a copy of l's cells Lines draws, the rows from the scroll.
-func (c *Screen) rawOf(l *layout) [][]cell {
-	raw := make([][]cell, c.rows)
-	all := make([]cell, c.rows*c.cols) // the copy in one array
-	for i := range raw {
-		row := all[i*c.cols : (i+1)*c.cols : (i+1)*c.cols]
-		if y := c.scroll + i; y >= 0 && y < len(l.cv.rows) {
-			copy(row, l.cv.rows[y])
-		}
-		raw[i] = row
-	}
-	return raw
+	c.show(c.paint(l, true), l)
 }
 
 // snapshot is what Lines and Cells drew: the cells Lines draws from, and

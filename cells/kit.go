@@ -332,7 +332,7 @@ const barW = 40
 
 func (l *layout) put(x, y int, s string, lk look, own *html.Node) {
 	if l.cv != nil {
-		l.cv.put(x, y, s, 1, lk, own)
+		l.draw(x, y, s, 1, lk, own)
 	}
 }
 
@@ -382,6 +382,10 @@ func (l *layout) chart(n *html.Node, x, y, w int, in inh) (h, used int, ok bool)
 	})
 	if len(bars) == 0 && len(lines) == 0 {
 		return 0, 0, false
+	}
+	if n.Parent != nil {
+		// Its labels are a row after it (chartLabels).
+		l.dependOn(n.Parent)
 	}
 	if labels := chartLabels(n); len(bars) > 0 && len(labels) > 0 && len(bars)%len(labels) == 0 && rects(n) {
 		// A bar chart: its bars are each series' in turn, one a label.
