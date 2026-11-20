@@ -2156,11 +2156,12 @@ func (s *Surface) OnFault(fn func(fault string))
 - **Per surface,** as methods: no process state that parallel tests
   share, no change to New's approved signature, no new type. An app
   turns it on where it makes its surfaces.
-- **The switch:** CheckCompiled sets what `rt.Peek.Check` set. A surfdev
-  build's default (on unless `HOTTY_SURF_COMPILE_CHECK=off`) yields to
-  an app's own call, made before or after the dev child takes the
-  surface: a surface made before `reload.Serve` is taken in Serve's
-  catch-up, after the app's call. surftest's Start turns it on.
+- **The switch:** CheckCompiled sets what surftest and a surfdev build
+  set. A surfdev build's default (on unless
+  `HOTTY_SURF_COMPILE_CHECK=off`) yields to an app's own call, made
+  before or after the dev child takes the surface: a surface made before
+  `reload.Serve` is taken in Serve's catch-up, after the app's call.
+  surftest's Start turns it on.
 - **The sink taps `fault()`**, which every fault goes through: a
   render's, the tree's (an unlabelled button, a Bind's key), Key's (a
   declined edit with no text editing linked) and Document's (a sheet
@@ -2175,13 +2176,18 @@ func (s *Surface) OnFault(fn func(fault string))
   alone changed, so "again after a render without it" would give it
   again after every idle update. Document is the surface's reset: a new
   host, a refused delta. The set is made only once OnFault is set.
-- **When fn runs:** at the end of the outermost driver call (Document,
-  Update, Event, Key, Focus, Blur), after what it sends is written and
-  the events a cells.Screen gave from inside that Write have run; on an
-  error return too. Never while the surface sends. Document's run
-  before it returns the document. fn is read again for each fault, so
-  OnFault(nil) inside it stops the rest. Each OnFault replaces the last
-  and starts anew.
+- **When fn runs:** at the end of the driver call that found the fault
+  (Document, Update, Event, Key, Focus, Blur), after what it sends is
+  written and the events a cells.Screen gave from inside that Write have
+  run; on an error return too. Never while the surface sends: an Event
+  from inside a Write leaves its faults to the call that wrote. Nothing
+  counts the calls under way, so a handler's panic the driver recovers
+  leaves OnFault working. Document's run before it returns the
+  document. fn is read again for each fault, so OnFault(nil) inside it
+  stops the rest. Each OnFault replaces the last and starts anew: one
+  set inside fn drops the rest of that call's faults, which the new fn
+  hears at the next render that finds them. Each fault is taken off the
+  list before fn hears it, so a panic in fn gives none twice.
 - **OnFault, not OnError:** the calls that render return an error for
   what they couldn't do, which the driver acts on (sends the document
   again). A fault is the app's bug the surface survived and rendered
@@ -2197,9 +2203,11 @@ func (s *Surface) OnFault(fn func(fault string))
   OnFault unset a fault costs one nil test. The release wasm grows about
   2.2 KB (hello: 2,481,672 to 2,483,871 bytes); leave isn't deferred,
   which cost 4.8 KB more. `BenchmarkCompiled` with the check off and
-  OnFault unset doesn't move (nothing changed, compiled, host, runs
-  alternated: 53–64 µs before, 54–64 µs after, the machine loaded). Set, a set lookup per fault
-  and a slice given at the end of the call. On, the check costs about
+  OnFault unset doesn't move: its allocations are the same in every
+  case (host, compiled: nav 504–505, hover 133, label 85, box 95,
+  nothing changed 127), and its times are within the noise of a loaded
+  machine. Set, a set lookup per fault and a slice given at the end of
+  the call. On, the check costs about
   what the kept instances would cost rendered plainly:
 
 | update (host) | plain | compiled | compiled, checked |
