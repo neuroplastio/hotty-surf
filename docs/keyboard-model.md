@@ -300,8 +300,9 @@ surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
 - **Outside a field** the give-backs reach the program too: a focused
   button no longer scrolls with the other platform's go-to-top and
   go-to-bottom keys (`super+arrow_up` and `super+arrow_down` under CUAKeys,
-  `ctrl+home` and `ctrl+end` under CocoaKeys). `home`, `end` and the page
-  keys still scroll.
+  `ctrl+home` and `ctrl+end` under CocoaKeys), where no group on the
+  element binds them: ReadlineKeys binds `ctrl+home` and `ctrl+end`.
+  `home`, `end` and the page keys still scroll.
 - **Order:** on one element, where two groups bind a key, the last read
   wins. A give-back only fills: it holds a key no group on the element
   binds, before it or after it. So ReadlineKeys keeps `ctrl+k` beside

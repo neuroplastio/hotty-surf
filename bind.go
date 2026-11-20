@@ -59,13 +59,13 @@ import (
 // different actions are a fault and the first stays; then the groups'
 // bindings, the last one read winning (Bind by Bind, option by option, a
 // group's bindings in their order), but a give-back, which holds only a
-// key no group binds. Then that binding's Yield or
-// Override decides whether it gives way to the program's keys around the
-// element (a surf.Key's declared key, a prefix, a ui.KeyScope's forwarded
-// key, on an element around it): a binding that yields is dropped, and
-// nothing under it on the element comes back. So a page's mod+k on its
-// main still reaches its handler from a field under ReadlineKeys, where
-// readline would delete to the line's end with ctrl+k.
+// key no group binds. Then that binding's Yield or Override decides
+// whether it gives way to the program's keys around the element (a
+// surf.Key's declared key, a prefix, a ui.KeyScope's forwarded key, on an
+// element around it): a binding that yields is dropped, and nothing under
+// it on the element comes back. So a page's mod+k on its main still
+// reaches its handler from a field under ReadlineKeys, where readline
+// would delete to the line's end with ctrl+k.
 //
 // These are faults, each binding dropped: an Action that isn't SPEC's,
 // or is program, default (Unbind's) or insert; a key that doesn't parse,
@@ -182,9 +182,10 @@ func ReadlineKeys() BindOption {
 // shortcuts hold, and the host's scrolling. Outside a field the
 // give-backs reach the program too: on a host whose mod is super, a
 // focused button no longer scrolls with super+arrow_up and
-// super+arrow_down, where the host did (home, end and the page keys
-// still scroll). Under it, Unbind gives a key back to CUAKeys' binding,
-// not to the host's platform.
+// super+arrow_down, where the host did, unless another group on the
+// element binds them (home, end and the page keys still scroll). Under
+// it, Unbind gives a key back to CUAKeys' binding, not to the host's
+// platform.
 //
 // Bind it once, on the outermost element of each surface's view, so
 // that every field inside has it, the kit's included: a field outside
@@ -219,7 +220,8 @@ func CUAKeys() BindOption {
 // What it leaves the host's, where it goes, how it layers, and Unbind
 // under it are as CUAKeys says, with CUAKeys and CocoaKeys swapped: on a
 // host whose mod is ctrl, ctrl+a stays select all, and a focused button
-// no longer scrolls with ctrl+home and ctrl+end.
+// no longer scrolls with ctrl+home and ctrl+end, unless another group on
+// the element binds them (ReadlineKeys does).
 // surf.Bind(surf.ReadlineKeys(), surf.CocoaKeys()) is macOS's keys where
 // they bind and readline's for the rest, ctrl+backspace among them.
 func CocoaKeys() BindOption {
@@ -349,12 +351,13 @@ func flattenIn(f *rt.Frame, id string, opts []BindOption, mode *modeOption, grou
 // binds in order: a direct one holds its key over the groups', two direct
 // ones of a key to different actions being a fault (the first stays);
 // among the groups' the last read wins, but a give-back (giveBack), which
-// only fills a key no group binds for real, in any order. A direct binding of a key a Key
-// handler declares (keys) is a fault, but to prefix, which gives fn the
-// key too; a group's is kept, unwritten (the program has the key), for
-// the field's own use of the key when the handler declines it. base is
-// CUAKeys' and CocoaKeys' bindings (rt.Handlers.Base), one per key, the last
-// read winning, whatever holds the key.
+// only fills a key no group binds for real, in any order. A direct
+// binding of a key a Key handler declares (keys) is a fault, but to
+// prefix, which gives fn the key too; a group's is kept, unwritten (the
+// program has the key), for the field's own use of the key when the
+// handler declines it. base is CUAKeys' and CocoaKeys' bindings
+// (rt.Handlers.Base), one per key, layered as the groups' are, a later
+// one winning but a give-back filling only, whatever holds the key.
 func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base []rt.Bind) {
 	if len(binds) == 0 {
 		return nil, nil
@@ -362,7 +365,9 @@ func bindsOf(f *rt.Frame, id string, keys []string, binds []rt.Bind) (out, base 
 	for _, b := range binds {
 		if b.Base {
 			if i := slices.IndexFunc(base, func(x rt.Bind) bool { return x.Key == b.Key }); i >= 0 {
-				base[i] = b
+				if !giveBack(b) || giveBack(base[i]) {
+					base[i] = b
+				}
 			} else {
 				base = append(base, b)
 			}
