@@ -1612,6 +1612,32 @@ func (k *kept) forgetStyles() {
 	k.gen++
 }
 
+// forgetStylesAround forgets the style and children of every node whose
+// style may read n's attributes, as forgetStyles does for all: n's
+// ancestors (which read their descendants', hasShown and kids), and
+// everything under n's parent (n's descendants read their ancestors',
+// closest; its children their parent's, kitGrows; its siblings their
+// parent's children, barLabels; a legend's marks its figure's children,
+// legendMark).
+func (k *kept) forgetStylesAround(n *html.Node) {
+	forget := func(d *html.Node) {
+		if m := k.nodes[d]; m != nil {
+			m.hasSt, m.hasKids = false, false
+			m.kids = nil
+			m.inMuted = false
+		}
+	}
+	top := n
+	if n.Parent != nil {
+		top = n.Parent
+	}
+	walk(top, forget)
+	for a := top.Parent; a != nil; a = a.Parent {
+		forget(a)
+	}
+	k.gen++
+}
+
 // forgetLooks forgets the colours of n and its descendants, and the
 // pieces of their texts.
 func (k *kept) forgetLooks(n *html.Node) {

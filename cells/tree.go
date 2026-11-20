@@ -85,7 +85,7 @@ func (c *Screen) attrsChanged(n *html.Node, was []html.Attribute) {
 		return
 	}
 	c.relayout = true
-	k.forgetStyles()
+	k.forgetStylesAround(n)
 	k.forgetLooks(n)
 }
 
