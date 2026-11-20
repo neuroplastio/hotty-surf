@@ -141,8 +141,6 @@ a program saves when it stops rendering for hover.
 
 ## Left
 
-- `Move`'s and `Dirty`'s doc comments say Lines changes by itself where
-  a tooltip shows or goes; it now changes too where a hover look does.
-  That is a contract's wording, so it goes through a pack.
 - Clicks, the surface's hover events and `At` still name the innermost
-  element, where a host's hit test passes over `pointer-events:none`.
+  element, where a host's hit test passes over `pointer-events:none`:
+  on the board, as a host-parity item.

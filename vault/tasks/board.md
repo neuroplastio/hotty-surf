@@ -132,6 +132,14 @@ the last release.
   reads its `hover:` classes and the kit's `:hover` looks. A program
   needn't add hover classes to its markup any more, so a compiled
   instance that isn't rendered again lights up as well.
+- [ ] **Host parity: what takes no pointer, for the rest of the
+  pointer** (journal 2026-11-20 cells-hover). The hovered chain and the
+  tooltip pass over `pointer-events:none` (takesPointer), as a host's
+  hit test does; a press, a click, a drag's target, the surface's hover
+  events and `At` still name the innermost element there, so a click on
+  a disabled kit button or behind a modal's inert reaches what a host's
+  wouldn't. It changes the events the Screen sends, with its own tests
+  and TestWalkGolden's golden again.
 
 ### Before v0.7.0
 
