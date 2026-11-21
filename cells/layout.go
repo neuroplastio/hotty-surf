@@ -941,6 +941,28 @@ func (l *layout) row(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		}
 	}
 	cx := x + lead
+	if st.itemsCenter && len(items) > 1 && l.cv != nil {
+		hs := make([]int, len(items))
+		m := layout{c: l.c, measuring: true, nodes: l.nodes, gen: l.gen, p: &pass{}}
+		for i, it := range items {
+			if it.n.Type == html.TextNode {
+				hs[i], _ = m.inline([]*html.Node{it.n}, n, cx, y, it.w, in, false)
+			} else {
+				hs[i], _ = m.node(it.n, cx, y, it.w, in)
+			}
+			h = max(h, hs[i])
+		}
+		for i, it := range items {
+			dy := (h - hs[i]) / 2
+			if it.n.Type == html.TextNode {
+				l.inline([]*html.Node{it.n}, n, cx, y+dy, it.w, in, false)
+			} else {
+				l.node(it.n, cx, y+dy, it.w, in)
+			}
+			cx += it.w + st.gapX + between[i]
+		}
+		return h, used
+	}
 	for i, it := range items {
 		var hh int
 		if it.n.Type == html.TextNode {
@@ -1104,7 +1126,10 @@ type piece struct {
 	look  look
 	own   *html.Node // the innermost element it is of
 	hard  bool       // a kept space, which a line may start with
-	full  bool       // a field as wide as its line
+	full    bool       // a field as wide as its line
+	boxed   bool       // drawn as a 3-row rounded box (╭─╮ / │…│ / ╰─╯)
+	tall    bool       // drawn as a 3-row filled block (lg filled buttons)
+	outline bool       // 1-row outline button with muted border brackets
 }
 
 const (
@@ -1354,9 +1379,11 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		return text("")
 	case n.DataAtom == atom.Button || n.DataAtom == atom.A ||
 		n.DataAtom == atom.Input && (typ == "button" || typ == "submit" || typ == "reset" || typ == "image"):
-		label := textOf(n)
+		label := ""
 		if n.DataAtom == atom.Input {
 			label = attr(n, "value")
+		} else {
+			label = buttonLabel(n)
 		}
 		if label == "" {
 			label = iconLabel(n)
@@ -1368,9 +1395,16 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		case "menuitem", "menuitemcheckbox", "menuitemradio", "option", "tab":
 			return text(" " + label + " ")
 		}
+		hasPopup := false
 		switch attr(n, "aria-haspopup") {
 		case "", "false":
 		default:
+			hasPopup = true
+		}
+		if tokens(n, "class", "btn") {
+			return btnPiece(n, p, label, hasPopup, text)
+		}
+		if hasPopup {
 			// It opens a menu or a list: the kit's chevron.
 			return text("[ " + label + " ▾ ]")
 		}
@@ -1422,6 +1456,18 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 	}
 	n := p.own
 	if !isTextField(n) {
+		if p.boxed && w >= 3 {
+			l.paintBoxedAtom(p, x, y, w, stop)
+			return
+		}
+		if p.tall && w >= 1 {
+			l.paintTallAtom(p, x, y, w, stop)
+			return
+		}
+		if p.outline && w >= 3 {
+			l.paintOutlineAtom(p, x, y, w, stop)
+			return
+		}
 		cs := p.chars
 		if widthOf(cs) > w {
 			cs = clip(cs, w)
@@ -1562,10 +1608,222 @@ func clip(cs []char, w int) []char {
 
 // glyphs are the icons a terminal has a character for that reads the same.
 var glyphs = map[string]string{
-	"x": "×", "plus": "+", "check": "✓", "ellipsis": "…", "search": "⌕",
-	"arrow-down": "↓", "arrow-up": "↑", "arrow-right": "→",
-	"chevron-down": "▾", "chevron-left": "‹", "chevron-right": "›",
+	"x": "×", "plus": "+", "minus": "−", "check": "✓", "ellipsis": "…",
+	"ellipsis-vertical": "⋮", "search": "⌕", "menu": "≡",
+	"arrow-left": "←", "arrow-right": "→", "arrow-up": "↑", "arrow-down": "↓",
+	"chevron-up": "▴", "chevron-down": "▾", "chevron-left": "‹", "chevron-right": "›",
 	"chevrons-left": "«", "chevrons-right": "»", "chevrons-up-down": "↕",
+	"settings": "⚙", "settings-2": "⚙", "trash": "×", "trash-2": "×",
+	"pencil": "✎", "play": "▶", "star": "★", "heart": "♥",
+	"info": "ⓘ", "circle-alert": "!", "triangle-alert": "!",
+	"external-link": "↗", "refresh-cw": "↻", "download": "↓", "upload": "↑",
+	"filter": "▽", "sun": "☀", "moon": "☾", "eye": "◉", "send": "➤",
+}
+
+// btnPiece formats a Basecoat .btn according to its data-variant and
+// data-size: filled pills (" Label ") for primary, secondary and
+// destructive; bracketed "[ Label ]" for outline; clean " Label " for
+// ghost; underlined Label for link. Primary buttons are bold.
+// paintBoxedAtom draws a 3-row rounded box (╭─╮ / │…│ / ╰─╯) for boxed
+// controls such as outline buttons. Border cells take lRule (border role),
+// interior cells take the control's own look and colour roles.
+func (l *layout) paintBoxedAtom(p piece, x, y, w int, stop *html.Node) {
+	n := p.own
+	border := p.look | lRule
+	if p.look&lReverse != 0 {
+		border = p.look
+	}
+	l.draw(x, y, "╭", 1, border, n)
+	l.draw(x, y+2, "╰", 1, border, n)
+	for i := 1; i < w-1; i++ {
+		l.draw(x+i, y, "─", 1, border, n)
+		l.draw(x+i, y+1, " ", 1, p.look, n)
+		l.draw(x+i, y+2, "─", 1, border, n)
+	}
+	l.draw(x+w-1, y, "╮", 1, border, n)
+	l.draw(x+w-1, y+2, "╯", 1, border, n)
+	l.draw(x, y+1, "│", 1, border, n)
+	l.draw(x+w-1, y+1, "│", 1, border, n)
+	inner := p.chars
+	if widthOf(inner) > w-2 {
+		inner = clip(inner, w-2)
+	}
+	cx := x + 1
+	for _, ch := range inner {
+		l.draw(cx, y+1, ch.s, ch.w, p.look, n)
+		cx += ch.w
+	}
+	r := rect{x, y, w, 3}
+	for m := n; m != nil && m != stop; m = m.Parent {
+		l.ext(m, r)
+	}
+}
+
+// paintTallAtom draws a 3-row filled block for lg filled buttons so all
+// lg buttons share the same 3-row height as lg outline buttons.
+func (l *layout) paintTallAtom(p piece, x, y, w int, stop *html.Node) {
+	n := p.own
+	for j := range 3 {
+		for i := range w {
+			l.draw(x+i, y+j, " ", 1, p.look, n)
+		}
+	}
+	inner := p.chars
+	if widthOf(inner) > w {
+		inner = clip(inner, w)
+	}
+	cx := x
+	for _, ch := range inner {
+		l.draw(cx, y+1, ch.s, ch.w, p.look, n)
+		cx += ch.w
+	}
+	r := rect{x, y, w, 3}
+	for m := n; m != nil && m != stop; m = m.Parent {
+		l.ext(m, r)
+	}
+}
+
+// paintOutlineAtom draws a 1-row outline button with border-coloured
+// brackets so it matches the height of other 1-row button variants.
+func (l *layout) paintOutlineAtom(p piece, x, y, w int, stop *html.Node) {
+	n := p.own
+	border := p.look | lRule
+	if p.look&lReverse != 0 {
+		border = p.look
+	}
+	l.draw(x, y, "[", 1, border, n)
+	for i := 1; i < w-1; i++ {
+		l.draw(x+i, y, " ", 1, p.look, n)
+	}
+	inner := p.chars
+	if widthOf(inner) > w-2 {
+		inner = clip(inner, w-2)
+	}
+	cx := x + 1
+	for _, ch := range inner {
+		l.draw(cx, y, ch.s, ch.w, p.look, n)
+		cx += ch.w
+	}
+	l.draw(x+w-1, y, "]", 1, border, n)
+	r := rect{x, y, w, 1}
+	for m := n; m != nil && m != stop; m = m.Parent {
+		l.ext(m, r)
+	}
+}
+
+// btnPiece formats a Basecoat .btn by variant and size:
+//   - xs: compact (tight padding, normal weight), 1 row.
+//   - sm / default: 1-space padding, 1 row (default primary is bold).
+//   - lg / icon-lg: 3 rows tall, 2-space padding, bold weight.
+//   - focused buttons also step up to bold so focus reads clearly in cells.
+func btnPiece(n *html.Node, p piece, label string, hasPopup bool, text func(string) piece) piece {
+	if hasPopup {
+		label += " ▾"
+	}
+	sz := attr(n, "data-size")
+	isXs := sz == "xs" || sz == "icon-xs"
+	isSm := sz == "sm" || sz == "icon-sm"
+	isLg := sz == "lg" || sz == "icon-lg"
+	iconOnly := strings.HasPrefix(sz, "icon")
+
+	if isLg || p.look&lReverse != 0 {
+		p.look |= lBold
+	}
+	pad := " "
+	switch {
+	case isXs:
+		pad = ""
+	case isLg:
+		pad = "  "
+	}
+
+	switch attr(n, "data-variant") {
+	case "", "primary":
+		if !isXs && !isSm {
+			p.look |= lBold
+		}
+		p.chars = charsOf(pad + label + pad)
+		p.w = widthOf(p.chars)
+		if isLg {
+			p.tall = true
+			p.h = 3
+		}
+	case "secondary", "destructive":
+		p.chars = charsOf(pad + label + pad)
+		p.w = widthOf(p.chars)
+		if isLg {
+			p.tall = true
+			p.h = 3
+		}
+	case "outline":
+		if isLg {
+			p.boxed = true
+			p.h = 3
+			innerPad := "  "
+			if iconOnly {
+				innerPad = " "
+			}
+			p.chars = charsOf(innerPad + label + innerPad)
+			p.w = widthOf(p.chars) + 2
+		} else {
+			p.outline = true
+			if iconOnly && (isXs || isSm) {
+				p.chars = charsOf(label)
+			} else {
+				p.chars = charsOf(pad + label + pad)
+			}
+			p.w = widthOf(p.chars) + 2
+		}
+	case "link":
+		p.chars = charsOf(label)
+		p.w = widthOf(p.chars)
+	default: // ghost
+		p.chars = charsOf(pad + label + pad)
+		p.w = widthOf(p.chars)
+	}
+	p.full = false
+	return p
+}
+
+// buttonLabel collects a button's text and any Lucide icon glyphs in
+// document order so icons beside labels (e.g. "+ New") stay visible in
+// cells. Returns "" if neither text nor a known icon glyph is present.
+func buttonLabel(n *html.Node) string {
+	var parts []string
+	var collect func(*html.Node)
+	collect = func(cur *html.Node) {
+		switch cur.Type {
+		case html.TextNode:
+			if s := strings.Join(strings.Fields(cur.Data), " "); s != "" {
+				parts = append(parts, s)
+			}
+			return
+		case html.ElementNode:
+			if cur != n && (has(cur, "hidden") || tokens(cur, "class", "sr-only") || tokens(cur, "class", "hidden")) {
+				return
+			}
+			if cur.Data == "svg" {
+				if g := svgGlyph(cur); g != "" {
+					parts = append(parts, g)
+				}
+				return
+			}
+		}
+		for c := cur.FirstChild; c != nil; c = c.NextSibling {
+			collect(c)
+		}
+	}
+	collect(n)
+	return strings.Join(parts, " ")
+}
+
+func svgGlyph(n *html.Node) string {
+	for _, cl := range strings.Fields(attr(n, "class")) {
+		if g, ok := glyphs[strings.TrimPrefix(cl, "lucide-")]; ok && cl != "lucide" {
+			return g
+		}
+	}
+	return ""
 }
 
 // iconLabel is the label of a control with no text, an icon's button: the
@@ -1576,11 +1834,7 @@ func iconLabel(n *html.Node) string {
 	var icon string
 	walk(n, func(c *html.Node) {
 		if icon == "" && c.Data == "svg" {
-			for _, cl := range strings.Fields(attr(c, "class")) {
-				if g, ok := glyphs[strings.TrimPrefix(cl, "lucide-")]; ok && cl != "lucide" {
-					icon = g
-				}
-			}
+			icon = svgGlyph(c)
 		}
 	})
 	if icon != "" {

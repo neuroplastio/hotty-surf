@@ -610,7 +610,7 @@
 
 == button/default
 
-  [ Save ]
+  [0;1m Save [0m
   [0;2mclicks: 0[0m
 
 
@@ -671,7 +671,7 @@
 
 == button/destructive
 
-  [ Delete ]
+   Delete
   [0;2mclicks: 0[0m
 
 
@@ -732,7 +732,7 @@
 
 == button/disabled
 
-  [0;2m[ Save ][0m
+  [0;1;2m Save [0m
   [0;2mclicks: 0[0m
 
 
@@ -793,16 +793,16 @@
 
 == button/every-variant-and-size
 
-  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
-  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
-  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
-  [ primary ] [ secondary ] [ destructive ] [ outline ] [ ghost ] [ link ]
-  [ + ] [ + ] [ + ] [ + ]
+  primary secondary destructive [0;2m[[0moutline[0;2m][0m ghost link
+   primary   secondary   destructive  [0;2m[[0m outline [0;2m][0m  ghost  link
+  [0;1m primary [0m  secondary   destructive  [0;2m[[0m outline [0;2m][0m  ghost  link
+  [0;1m           [0m [0;1m             [0m [0;1m               [0m [0;1;2m╭───────────╮[0m
+  [0;1m  primary  [0m [0;1m  secondary  [0m [0;1m  destructive  [0m [0;1;2m│[0;1m  outline  [0;1;2m│[0m [0;1m  ghost  [0m [0;1mlink[0m
+  [0;1m           [0m [0;1m             [0m [0;1m               [0m [0;1;2m╰───────────╯[0m
+                [0;1;2m╭───╮[0m
+  [0;2m[[0m+[0;2m][0m [0;2m[[0m+[0;2m][0m [0;2m[[0m + [0;2m][0m [0;1;2m│[0;1m + [0;1;2m│[0m
+                [0;1;2m╰───╯[0m
   [0;2mclicks: 0[0m
-
-
-
-
 
 
 
@@ -854,7 +854,7 @@
 
 == button/ghost-with-icon
 
-  [ New ] [ Settings ]
+   + New   Settings
   [0;2mclicks: 0[0m
 
 
@@ -918,7 +918,7 @@
   [0;1mCreate project[0m
   Deploy your new project in one click.
   [0;2;4mName of your project[0;4m                        [0m
-  [ Cancel ]                        [ Deploy ]
+  [0;2m[[0m Cancel [0;2m][0m                          [0;1m Deploy [0m
 
 
 
@@ -1647,7 +1647,7 @@
 
 == combobox/clear
 
-  [0;4mApple                                                  [0m [ Clear ] [ Open ▾ ]
+  [0;4mApple                                                      [0m [ Clear ] Open ▾
   fruit: a
 
 
@@ -1952,7 +1952,7 @@
 
 == command/dialog
 
-  [ Open the palette ]
+  [0;2m[[0m Open the palette [0;2m][0m
   [0;2mran: [0m
 
 
@@ -2074,7 +2074,7 @@
 
 == dialog/default
 
-  [ Rename ]
+  [0;2m[[0m Rename [0;2m][0m
   [0;2mopen: off[0m
 
 
@@ -2138,8 +2138,8 @@
   [0;1mRename[0m
   Give the project a new name.
   [0;4m                                                                            [0m
-  [ Save ]
-  [ × ]
+  [0;1m Save [0m
+   ×
   [0;2mopen: on[0m
 
 
@@ -2196,7 +2196,7 @@
 
 == dialog/with-alert
 
-  [ Delete ]
+  [0;1m Delete [0m
   alert: off
 
 
@@ -2257,7 +2257,7 @@
 
 == dialog/without-close-button
 
-  [ Open ]
+  [0;1m Open [0m
   open: off
 
 
@@ -2318,7 +2318,7 @@
 
 == drawer/bottom
 
-  [ Open drawer ]
+  [0;1m Open drawer [0m
   drawer: off
 
 
@@ -2379,7 +2379,7 @@
 
 == drawer/left
 
-  [ Open drawer ]
+  [0;1m Open drawer [0m
   drawer: off
 
 
@@ -2440,7 +2440,7 @@
 
 == drawer/right
 
-  [ Open drawer ]
+  [0;1m Open drawer [0m
   drawer: off
 
 
@@ -2501,7 +2501,7 @@
 
 == drawer/top
 
-  [ Open drawer ]
+  [0;1m Open drawer [0m
   drawer: off
 
 
@@ -2562,7 +2562,7 @@
 
 == dropdown-menu/checkbox-radio
 
-  [ Choices ▾ ]
+  [0;2m[[0m Choices ▾ [0;2m][0m
   checked: off
 
 
@@ -2623,7 +2623,7 @@
 
 == dropdown-menu/default
 
-  [ Account ▾ ]
+  [0;2m[[0m Account ▾ [0;2m][0m
   [0;2mran: [0m
 
 
@@ -2684,7 +2684,7 @@
 
 == dropdown-menu/end-aligned
 
-                                                                 [ Account ▾ ]
+                                                                 [0;2m[[0m Account ▾ [0;2m][0m
   [0;2mran: [0m
 
 
@@ -2747,7 +2747,7 @@
 
   [0;1mNo projects yet[0m
   Make your first project to start.
-  [ Create project ]
+  [0;1m Create project [0m
 
 
 
@@ -3296,7 +3296,7 @@
 
   [0;2;4mAdd a comment[0;4m                               [0m
   [0;4m                                            [0m
-  [ Post ]
+   Post
   [0;2mcomment: [0m
 
 
@@ -3662,7 +3662,7 @@
 
   [0;1mReports[0m
   Monthly reports for the team.
-  [ Open ]
+  [0;2m[[0m Open [0;2m][0m
 
 
 
@@ -4270,7 +4270,7 @@
 
 == popover/default
 
-  [ Open popover ]
+  [0;2m[[0m Open popover [0;2m][0m
 
 
 
@@ -4337,13 +4337,13 @@
 
 
                     Opens to the top.
-                    [ top ]
+                    [0;2m[[0m top [0;2m][0m
 
-                    [ bottom ]
+                    [0;2m[[0m bottom [0;2m][0m
 
-                    [ left ]
+                    [0;2m[[0m left [0;2m][0m
 
-                    [ right ]
+                    [0;2m[[0m right [0;2m][0m
 
 
 
@@ -4392,7 +4392,7 @@
 
 == popover/with-command
 
-  [ Go to… ]
+  [0;2m[[0m Go to… [0;2m][0m
   [0;2;4mType a command or s…[0m
   New note Ctrl+N
   Search notes
@@ -4941,7 +4941,7 @@
 
 == select/default
 
-  [ Pick a size ▾ ]
+  [ Pick a size ▾ ▾ ]
   [0;2msize: [0m
 
 
@@ -5002,7 +5002,7 @@
 
 == select/end-aligned
 
-                                                             [ Pick a size ▾ ]
+                                                           [ Pick a size ▾ ▾ ]
   size:
 
 
@@ -5063,7 +5063,7 @@
 
 == select/grouped
 
-  [ Apple ▾ ]
+  [ Apple ▾ ▾ ]
   [0;2mfruit: apple[0m
 
 
@@ -5124,7 +5124,7 @@
 
 == select/multiple
 
-  [ Pick sizes ▾ ]
+  [ Pick sizes ▾ ▾ ]
   sizes:
 
 
@@ -5734,7 +5734,7 @@ logged out.
 
 == toast/action
 
-  [ Delete ]
+  [0;1m Delete [0m
   action:
 
 
@@ -5795,7 +5795,7 @@ logged out.
 
 == toast/categories
 
-  [ Success ] [ Error ] [ Info ] [ Warning ]
+  [0;2m[[0m Success [0;2m][0m [0;2m[[0m Error [0;2m][0m [0;2m[[0m Info [0;2m][0m [0;2m[[0m Warning [0;2m][0m
 
 
 
@@ -5856,7 +5856,7 @@ logged out.
 
 == toast/default
 
-  [ Show a toast ]
+  [0;2m[[0m Show a toast [0;2m][0m
 
 
 
@@ -5920,8 +5920,8 @@ logged out.
   ran:
   [0;1mBuild finished[0m
   hotty-surf, 2 warnings
-  [ Open ][ Later ]
-  [ × ]
+   Open [0;2m[[0m Later [0;2m][0m
+   ×
 
 
 
@@ -5978,7 +5978,7 @@ logged out.
 
 == tooltip/default
 
-  [ Add ]
+  [0;1m Add [0m
 
 
 
@@ -6039,7 +6039,7 @@ logged out.
 
 == tooltip/sides
 
-  [ Add ]  [ Bottom ]  [ Left ]  [ Right ]
+  [0;1m Add [0m  [0;1m Bottom [0m  [0;1m Left [0m  [0;1m Right [0m
 
 
 
@@ -6099,7 +6099,7 @@ logged out.
 
 
 == probe
-[0;2mmuted primary [0;1;2mfg[0;2m [ Btn ][0m
+[0;2mmuted primary [0;1;2mfg[0;2m [0;1;2m Btn [0m
 [0;2ma warn[0m
 struck gone
 [0;2m────────────────────────────────────────────────────────────────────────────────[0m

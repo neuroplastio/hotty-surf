@@ -22,7 +22,7 @@ func attrOf(as []html.Attribute, k string) string {
 
 func paneText(a *App) string {
 	var b strings.Builder
-	for _, l := range a.lines() {
+	for _, l := range a.lines().lines {
 		for _, s := range l {
 			b.WriteString(s.text)
 		}
@@ -318,7 +318,7 @@ func TestListKeepsTheKeyboard(t *testing.T) {
 func TestEmptyFieldLineKept(t *testing.T) {
 	a := New()
 	a.show("field/fieldset")
-	ls := a.lines()
+	ls := a.lines().lines
 	last := ls[len(ls)-1]
 	if blank(last) || !strings.Contains(fmt.Sprint(last), "book-underline") {
 		t.Fatalf("the last line isn't City's empty field: %v", last)

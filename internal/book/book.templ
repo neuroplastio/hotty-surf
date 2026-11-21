@@ -105,17 +105,34 @@ templ preview(a *App) {
 
 templ cellsPreview(a *App) {
 	<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label="the story in cells">
-		{{ ls := a.lines() }}
+		{{ pv := a.lines() }}
 		{{ inert := a.inert(ctx) }}
 		{{ tab := a.cur.controls && !inert }}
 		<span class="book-edge" aria-label="Enter cells preview" if tab { tabindex="0" } { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }></span>
 		<div class="book-pane" if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
-			for _, l := range ls {
+			for _, l := range pv.lines {
 				<div class="book-line">
 					for _, sg := range l {
-						<span class={ sg.class }>{ sg.text }</span>
+						if sg.style != "" {
+							<span class={ sg.class } style={ templ.SafeCSS(sg.style) }>{ sg.text }</span>
+						} else {
+							<span class={ sg.class }>{ sg.text }</span>
+						}
 					}
 				</div>
+			}
+			for _, hb := range pv.hits {
+				<div
+					class="book-hit"
+					style={ hb.style() }
+					{ surf.On(ctx, "hit-"+hb.id,
+						surf.Click(func() { a.PaneClick(hb.col, hb.row) }),
+						surf.Hover(func(in bool) { a.PaneHover(hb.col, hb.row, in) }),
+					)... }
+				></div>
+			}
+			if pv.focus.has {
+				<div class="book-focus-ring" style={ pv.focus.style() }></div>
 			}
 		</div>
 		<span if tab { tabindex="0" } { surf.On(ctx, "book-pane-after", surf.Focus(a.Edge(false)))... }></span>

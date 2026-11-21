@@ -25,7 +25,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -36,6 +35,7 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/internal/devhook"
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/internal/stories"
@@ -55,7 +55,7 @@ var CSS = bookCSS + bookcode.Stylesheet()
 // The cells pane's size. A story is at most 28rem wide (max-w-md), which
 // cells takes as 56 columns.
 const (
-	paneCols = 56
+	paneCols = 96
 	paneRows = 40
 )
 
@@ -231,6 +231,12 @@ func (a *App) observeHandlers(f *rt.Frame, story *storybook.Story, ids []string)
 	}
 }
 
+var paneDone = func() chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}()
+
 // start puts the story on the pane's Screen, the first time the pane is
 // drawn or used: not before the book runs, whose live reload has to be
 // set up before a view renders.
@@ -239,6 +245,10 @@ func (sh *shown) start() {
 		return
 	}
 	sh.pane = surf.New("book-pane", sh.view, "")
+	// sh.pane is driven synchronously by book's own render (sh.pump), not by
+	// an independent driver goroutine; mark it done so devchild's live-reload
+	// handover never stalls 4s waiting on it.
+	devhook.Driver(sh.pane, paneDone)
 	sh.pane.Link(ui.Sheet())
 	sh.scr = cells.New(paneCols, paneRows, func(e hotty.Event) {
 		switch e.Kind {
@@ -577,37 +587,160 @@ func (a *App) takeRefocus() bool {
 	return r
 }
 
-// seg is a run of a line's cells in one look.
+// seg is a run of a line's cells in one look and colour pair.
 type seg struct {
 	text  string
 	class string
+	style string
 }
 
-var sgrRE = regexp.MustCompile("\x1b\\[([0-9;]*)m")
+// hitBox is the unified cell bounding box of one interactive element in the
+// trimmed cells preview, so multi-row controls (like 3-row lg buttons) get
+// one unified pointer target, hover, click, and :active press effect.
+type hitBox struct {
+	id         string
+	x, y, w, h int
+	col, row   int // untrimmed screen coordinates for Click/Move
+}
 
-// lines are the pane's lines as runs, the blank ones at the end left out.
-func (a *App) lines() [][]seg {
+func (h hitBox) style() templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf(
+		"left:%dch;top:calc(%d*var(--hotty-cell-h));width:%dch;height:calc(%d*var(--hotty-cell-h))",
+		h.x, h.y, h.w, h.h,
+	))
+}
+
+// focusRect is the bounding box in cell coordinates of the currently
+// focused (Reverse) element inside the trimmed cells preview.
+type focusRect struct {
+	has        bool
+	x, y, w, h int
+}
+
+func (f focusRect) style() templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf(
+		"left:%dch;top:calc(%d*var(--hotty-cell-h));width:%dch;height:calc(%d*var(--hotty-cell-h))",
+		f.x, f.y, f.w, f.h,
+	))
+}
+
+// paneView holds the trimmed cell lines, unified interactive hit boxes, and
+// unified focus ring for the cells preview.
+type paneView struct {
+	lines [][]seg
+	hits  []hitBox
+	focus focusRect
+}
+
+// lines are the pane's lines as runs from Cells (with colours and
+// attributes), the leading/trailing blank lines left out, plus unified hit
+// boxes and focus bounding box.
+func (a *App) lines() paneView {
 	sh := a.cur
 	if sh == nil {
-		return nil
+		return paneView{}
 	}
 	sh.pump()
-	ls := sh.scr.Lines()
-	out := make([][]seg, len(ls))
-	for i, l := range ls {
-		out[i] = segs(l)
+	grid := sh.scr.Cells()
+	out := make([][]seg, len(grid))
+	for i, row := range grid {
+		out[i] = rowSegs(row)
 	}
-	// The blank lines at the end go; a line of spaces with a look (an
-	// empty field, underlined) is no blank.
+	// The blank lines at the top and end go; a line of spaces with a look or
+	// fill (an empty field, underlined) is no blank.
+	trimTop := 0
+	for len(out) > 0 && blank(out[0]) {
+		out = out[1:]
+		trimTop++
+	}
 	for len(out) > 0 && blank(out[len(out)-1]) {
 		out = out[:len(out)-1]
 	}
-	return out
+	var pv paneView
+	pv.lines = out
+	minX, minY, maxX, maxY := 1<<30, 1<<30, -1, -1
+	byID := map[string]int{}
+	for r := trimTop; r < trimTop+len(out); r++ {
+		ry := r - trimTop
+		for c, cell := range grid[r] {
+			if cell.Attr&cells.Reverse != 0 {
+				if c < minX {
+					minX = c
+				}
+				if c > maxX {
+					maxX = c
+				}
+				if ry < minY {
+					minY = ry
+				}
+				if ry > maxY {
+					maxY = ry
+				}
+			}
+			if cell.Attr&cells.Dim != 0 {
+				continue
+			}
+			if id, _ := sh.scr.At(c, r); id != "" {
+				if idx, ok := byID[id]; ok {
+					hb := &pv.hits[idx]
+					if c < hb.x {
+						hb.w += hb.x - c
+						hb.x = c
+					}
+					if c >= hb.x+hb.w {
+						hb.w = c - hb.x + 1
+					}
+					if ry < hb.y {
+						hb.h += hb.y - ry
+						hb.y = ry
+					}
+					if ry >= hb.y+hb.h {
+						hb.h = ry - hb.y + 1
+					}
+				} else {
+					byID[id] = len(pv.hits)
+					pv.hits = append(pv.hits, hitBox{
+						id: id, x: c, y: ry, w: 1, h: 1, col: c, row: r,
+					})
+				}
+			}
+		}
+	}
+	if maxX >= minX && maxY >= minY {
+		pv.focus = focusRect{has: true, x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1}
+	}
+	return pv
+}
+
+// PaneClick delivers a pointer click on the cells preview to the cells
+// Screen, firing press/focus/release/click on the underlying story.
+func (a *App) PaneClick(col, row int) {
+	sh := a.cur
+	if sh == nil || sh.scr == nil {
+		return
+	}
+	sh.scr.Click(col, row)
+	sh.pump()
+}
+
+// PaneHover delivers pointer enter/leave on an interactive cells span to
+// the cells Screen so :hover colours, underlines and tooltips update live.
+func (a *App) PaneHover(col, row int, in bool) {
+	sh := a.cur
+	if sh == nil || sh.scr == nil {
+		return
+	}
+	if in {
+		sh.scr.Move(col, row, 0)
+	} else {
+		sh.scr.Move(-1, -1, 0)
+	}
+	sh.pump()
 }
 
 func blank(l []seg) bool {
 	for _, sg := range l {
-		if sg.class != "" || strings.TrimSpace(sg.text) != "" {
+		if sg.class != "" || sg.style != "" || strings.TrimSpace(sg.text) != "" {
 			return false
 		}
 	}
@@ -657,43 +790,97 @@ func hasControl(doc string) bool {
 	}
 }
 
-// segs is a line with SGR as runs, each with the classes of its look.
-func segs(l string) []seg {
-	var out []seg
-	class := ""
-	for len(l) > 0 {
-		loc := sgrRE.FindStringSubmatchIndex(l)
-		if loc == nil {
-			out = append(out, seg{l, class})
+// rowSegs groups a row of Cells into contiguous runs of equal attributes
+// and colour roles, trimmed of unstyled trailing spaces.
+func rowSegs(row []cells.Cell) []seg {
+	end := len(row)
+	for end > 0 {
+		c := row[end-1]
+		if c.Attr != 0 || c.Fg != "" || c.Bg != "" || (c.Text != "" && c.Text != " ") {
 			break
 		}
-		if loc[0] > 0 {
-			out = append(out, seg{l[:loc[0]], class})
-		}
-		class = looks(l[loc[2]:loc[3]])
-		l = l[loc[1]:]
+		end--
 	}
+	if end == 0 {
+		return nil
+	}
+	var out []seg
+	var buf strings.Builder
+	var curA cells.Attr
+	var curFg, curBg cells.Role
+	flush := func() {
+		if buf.Len() == 0 {
+			return
+		}
+		out = append(out, seg{
+			text:  buf.String(),
+			class: cellClasses(curA, curFg, curBg),
+			style: cellStyle(curA, curFg, curBg),
+		})
+		buf.Reset()
+	}
+	for i := 0; i < end; i++ {
+		c := row[i]
+		if c.Text == "" {
+			continue // second cell of a wide character
+		}
+		if buf.Len() > 0 && (c.Attr != curA || c.Fg != curFg || c.Bg != curBg) {
+			flush()
+		}
+		if buf.Len() == 0 {
+			curA, curFg, curBg = c.Attr, c.Fg, c.Bg
+		}
+		buf.WriteString(c.Text)
+	}
+	flush()
 	return out
 }
 
-// looks is the classes of an SGR's parameters.
-func looks(params string) string {
+func cellClasses(a cells.Attr, fg, bg cells.Role) string {
 	var cs []string
-	for _, p := range strings.Split(params, ";") {
-		switch p {
-		case "1":
-			cs = append(cs, "font-semibold")
-		case "2":
-			cs = append(cs, "text-muted-foreground")
-		case "3":
-			cs = append(cs, "book-italic")
-		case "4":
-			cs = append(cs, "book-underline")
-		case "7":
-			cs = append(cs, "book-rev")
-		}
+	if a&cells.Bold != 0 {
+		cs = append(cs, "font-semibold")
+	}
+	if a&cells.Dim != 0 {
+		cs = append(cs, "text-muted-foreground")
+	}
+	if a&cells.Italic != 0 {
+		cs = append(cs, "book-italic")
+	}
+	if a&cells.Underline != 0 {
+		cs = append(cs, "book-underline")
+	}
+	if a&cells.Strike != 0 {
+		cs = append(cs, "line-through")
 	}
 	return strings.Join(cs, " ")
+}
+
+func cellStyle(a cells.Attr, fg, bg cells.Role) string {
+	fgCSS := roleCSS(fg)
+	bgCSS := roleCSS(bg)
+	var parts []string
+	if fgCSS != "" {
+		parts = append(parts, "color:"+fgCSS)
+	}
+	if bgCSS != "" {
+		parts = append(parts, "background:"+bgCSS)
+	}
+	return strings.Join(parts, ";")
+}
+
+func roleCSS(r cells.Role) string {
+	if r == "" {
+		return ""
+	}
+	s := string(r)
+	if s == "selected" {
+		return "var(--accent)"
+	}
+	if name, pct, ok := strings.Cut(s, "/"); ok {
+		return "color-mix(in srgb, var(--" + name + ") " + pct + "%, transparent)"
+	}
+	return "var(--" + s + ")"
 }
 
 // paneErr is what went wrong in the pane, "" for nothing.

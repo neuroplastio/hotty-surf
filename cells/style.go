@@ -62,7 +62,8 @@ type box struct {
 	pre       bool // white space kept
 	between   bool // justify-between
 	end       bool // justify-end
-	center    bool // justify-center
+	center      bool // justify-center
+	itemsCenter bool // items-center: vertically centre items in a flex row
 	wrap      bool // flex-wrap: a row's items go on to more lines
 	look      look // what the element adds to its text's look
 	list      string
@@ -305,6 +306,8 @@ func (b *box) class(c string) {
 		b.end = true
 	case "justify-center":
 		b.center = true
+	case "items-center":
+		b.itemsCenter = true
 	case "font-semibold", "font-medium", "font-bold", "font-extrabold", "font-black":
 		b.look |= lBold
 	case "font-normal", "font-light":

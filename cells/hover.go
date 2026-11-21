@@ -229,6 +229,8 @@ func kitHoverColours(n *html.Node, dark bool) (fg, bg Role) {
 		switch variant {
 		case "", "primary":
 			return "", "primary/80"
+		case "secondary":
+			return "", "secondary/80"
 		case "outline":
 			if dark {
 				return "foreground", "input/50"
