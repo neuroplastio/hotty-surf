@@ -416,6 +416,23 @@ func TestOfferEdges(t *testing.T) {
 			t.Errorf("the Screen shows %q, from the surface's tree as it was after", l)
 		}
 	})
+	t.Run("a namespaced attribute", func(t *testing.T) {
+		// An icon's <use xlink:href>: its attribute's namespace is copied.
+		o := newOnScreen(t, "v", templ.Raw(`<svg><a xlink:href="#x"><use xlink:href="#y"></use></a></svg>`), "", 20, 2, true)
+		o.checked(t)
+		o.s.Document()
+		n := 0
+		walk(o.c.offer.body, func(k *html.Node) {
+			for _, a := range k.Attr {
+				if a.Key == "href" && a.Namespace == "xlink" {
+					n++
+				}
+			}
+		})
+		if n != 2 {
+			t.Errorf("the copy holds %d xlink:href, want 2", n)
+		}
+	})
 	t.Run("detached", func(t *testing.T) {
 		o := newOnScreen(t, "v", view, "", 20, 2, true)
 		o.s.Attach(nil, hotty.Caps{})
@@ -461,7 +478,8 @@ func TestOfferSparesTheParse(t *testing.T) {
 // parses as that tree the Screen draws as one that parsed it. Seeded with
 // FuzzParse's seeds and corpus and the kit's stories.
 func FuzzHandoff(f *testing.F) {
-	for _, s := range []string{`<div class="a">b<span>c</span></div>`, `<ul><li>a</li></ul>`, `<p>x &amp; y</p>`, `<svg><path d="M0"></path></svg>`, `<table><tbody><tr><td>1</td></tr></tbody></table>`} {
+	for _, s := range []string{`<div class="a">b<span>c</span></div>`, `<ul><li>a</li></ul>`, `<p>x &amp; y</p>`, `<svg><path d="M0"></path></svg>`, `<table><tbody><tr><td>1</td></tr></tbody></table>`,
+		`<svg><use xlink:href="#i"></use></svg>`} {
 		f.Add(s)
 	}
 	files, _ := filepath.Glob("../testdata/fuzz/FuzzParse/*")
