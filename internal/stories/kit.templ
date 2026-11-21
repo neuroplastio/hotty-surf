@@ -7,6 +7,7 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 )
 
 // The stories of the components L1 made: Button, Badge, Card, Kbd, Select,
@@ -171,7 +172,7 @@ templ count(s *kitState) {
 templ buttonDefault(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
-			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(s.click))}) {
+			@button.Render(button.Props{ID: "save", OnClick: s.click}) {
 				Save
 			}
 		</div>
@@ -182,7 +183,7 @@ templ buttonDefault(s *kitState) {
 templ bookButton(p *Button) {
 	<div class="flex flex-col gap-3">
 		<div>
-			@ui.Button(ui.ButtonProps{Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, Attrs: surf.On(ctx, "save", surf.Click(func() { p.Clicks++ }))}) {
+			@button.Render(button.Props{ID: "save", Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}) {
 				if p.Icon {
 					@ui.Icon("circle-plus", "")
 				}
@@ -256,7 +257,7 @@ func bookTabText(tab string) string {
 templ buttonDestructive(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
-			@ui.Button(ui.ButtonProps{Variant: ui.Destructive, Attrs: surf.On(ctx, "delete", surf.Click(s.click))}) {
+			@button.Render(button.Props{ID: "delete", Variant: ui.Destructive, OnClick: s.click}) {
 				Delete
 			}
 		</div>
@@ -267,11 +268,11 @@ templ buttonDestructive(s *kitState) {
 templ buttonGhostWithIcon(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div class="flex flex-row gap-2">
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Attrs: surf.On(ctx, "new", surf.Click(s.click))}) {
+			@button.Render(button.Props{ID: "new", Variant: ui.Ghost, OnClick: s.click}) {
 				@ui.Icon("plus", "")
 				New
 			}
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: labelled(surf.On(ctx, "settings", surf.Click(s.click)), "Settings")}) {
+			@button.Render(button.Props{ID: "settings", Variant: ui.Ghost, IconOnly: true, Label: "Settings", OnClick: s.click}) {
 				@ui.Icon("settings-2", "")
 			}
 		</div>
@@ -282,7 +283,7 @@ templ buttonGhostWithIcon(s *kitState) {
 templ buttonDisabled(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
-			@ui.Button(ui.ButtonProps{Disabled: true, Attrs: surf.On(ctx, "save", surf.Click(s.click))}) {
+			@button.Render(button.Props{ID: "save", Disabled: true, OnClick: s.click}) {
 				Save
 			}
 		</div>
@@ -316,7 +317,7 @@ templ buttonEvery(s *kitState) {
 		for _, z := range allSizes {
 			<div class="flex flex-row flex-wrap items-center gap-2">
 				for _, v := range allVariants {
-					@ui.Button(ui.ButtonProps{Size: z, Variant: v, Attrs: surf.On(ctx, "v-"+variantName(v)+"-"+sizeName(z), surf.Click(s.click))}) {
+					@button.Render(button.Props{Size: z, Variant: v, OnClick: s.click}) {
 						{ variantName(v) }
 					}
 				}
@@ -324,7 +325,7 @@ templ buttonEvery(s *kitState) {
 		}
 		<div class="flex flex-row flex-wrap items-center gap-2">
 			for _, z := range allSizes {
-				@ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: labelled(surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click)), "Add ("+sizeName(z)+")")}) {
+				@button.Render(button.Props{Size: z, IconOnly: true, Variant: ui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}) {
 					@ui.Icon("plus", "")
 				}
 			}

@@ -1625,14 +1625,12 @@ var glyphs = map[string]string{
 // destructive; bracketed "[ Label ]" for outline; clean " Label " for
 // ghost; underlined Label for link. Primary buttons are bold.
 // paintBoxedAtom draws a 3-row rounded box (╭─╮ / │…│ / ╰─╯) for boxed
-// controls such as outline buttons. Border cells take lRule (border role),
-// interior cells take the control's own look and colour roles.
+// controls such as outline buttons. Border cells take lMuted
+// (muted-foreground role) so the outline reads clearly without overpowering
+// the label; interior cells take the control's own look and colour roles.
 func (l *layout) paintBoxedAtom(p piece, x, y, w int, stop *html.Node) {
 	n := p.own
-	border := p.look | lRule
-	if p.look&lReverse != 0 {
-		border = p.look
-	}
+	border := p.look | lMuted
 	l.draw(x, y, "╭", 1, border, n)
 	l.draw(x, y+2, "╰", 1, border, n)
 	for i := 1; i < w-1; i++ {
@@ -1683,14 +1681,11 @@ func (l *layout) paintTallAtom(p piece, x, y, w int, stop *html.Node) {
 	}
 }
 
-// paintOutlineAtom draws a 1-row outline button with border-coloured
+// paintOutlineAtom draws a 1-row outline button with muted-foreground
 // brackets so it matches the height of other 1-row button variants.
 func (l *layout) paintOutlineAtom(p piece, x, y, w int, stop *html.Node) {
 	n := p.own
-	border := p.look | lRule
-	if p.look&lReverse != 0 {
-		border = p.look
-	}
+	border := p.look | lMuted
 	l.draw(x, y, "[", 1, border, n)
 	for i := 1; i < w-1; i++ {
 		l.draw(x+i, y, " ", 1, p.look, n)
@@ -1713,9 +1708,9 @@ func (l *layout) paintOutlineAtom(p piece, x, y, w int, stop *html.Node) {
 
 // btnPiece formats a Basecoat .btn by variant and size:
 //   - xs: compact (tight padding, normal weight), 1 row.
-//   - sm / default: 1-space padding, 1 row (default primary is bold).
+//   - sm: 1-space padding, normal weight, 1 row.
+//   - default: 1-space padding, bold weight, 1 row.
 //   - lg / icon-lg: 3 rows tall, 2-space padding, bold weight.
-//   - focused buttons also step up to bold so focus reads clearly in cells.
 func btnPiece(n *html.Node, p piece, label string, hasPopup bool, text func(string) piece) piece {
 	if hasPopup {
 		label += " ▾"
@@ -1726,7 +1721,7 @@ func btnPiece(n *html.Node, p piece, label string, hasPopup bool, text func(stri
 	isLg := sz == "lg" || sz == "icon-lg"
 	iconOnly := strings.HasPrefix(sz, "icon")
 
-	if isLg || p.look&lReverse != 0 {
+	if !isXs && !isSm {
 		p.look |= lBold
 	}
 	pad := " "
@@ -1739,9 +1734,6 @@ func btnPiece(n *html.Node, p piece, label string, hasPopup bool, text func(stri
 
 	switch attr(n, "data-variant") {
 	case "", "primary":
-		if !isXs && !isSm {
-			p.look |= lBold
-		}
 		p.chars = charsOf(pad + label + pad)
 		p.w = widthOf(p.chars)
 		if isLg {

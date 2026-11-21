@@ -68,7 +68,7 @@ templ sidebar(a *App) {
 			@a.nav.FilterInput("book-filter-input")
 		</div>
 		@a.nav.List("book-nav max-h-[40vh] overflow-y-auto px-2 pb-2 md:max-h-none md:flex-1")
-		<p class="book-hints text-muted-foreground">↑↓ story · / filter · Enter preview · n pane · r rendition · Esc list · t theme</p>
+		<p class="book-hints text-muted-foreground">↑↓ story · / filter · Enter preview · n pane · r mode · Esc list · t theme</p>
 	</aside>
 }
 
@@ -88,12 +88,19 @@ templ header(a *App) {
 templ preview(a *App) {
 	{{ a.model.Observe(a.model.Sel) }}
 	<div class="book-preview-area flex flex-col">
-		<nav class="book-renditions" role="tablist" aria-label="Rendition">
-			<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(!a.Cells) } { surf.On(ctx, "book-render-hotty", surf.Click(func() { a.setRendition(false) }), surf.Key(a.renditionKey))... }>hotty</button>
-			<button type="button" role="tab" tabindex="-1" aria-selected={ bstr(a.Cells) } { surf.On(ctx, "book-render-cells", surf.Click(func() { a.setRendition(true) }), surf.Key(a.renditionKey))... }>cells</button>
+		<nav class="book-renditions" role="tablist" aria-label="Mode">
+			for _, m := range ui.Modes {
+				<button
+					type="button"
+					role="tab"
+					tabindex="-1"
+					aria-selected={ bstr(a.mode() == m) }
+					{ surf.On(ctx, "book-render-"+m.String(), surf.Click(func() { a.setMode(m) }), surf.Key(a.modeKey))... }
+				>{ m.String() }</button>
+			}
 		</nav>
 		<section class="book-preview" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
-			if !a.Cells {
+			if a.mode() == ui.ModeHotty {
 				@a.cur.view
 				{{ _ = a.inert(ctx) }}
 			} else {
@@ -104,10 +111,10 @@ templ preview(a *App) {
 }
 
 templ cellsPreview(a *App) {
-	<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label="the story in cells">
+	<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label={ "the story in " + a.mode().String() }>
 		{{ pv := a.lines() }}
 		{{ inert := a.inert(ctx) }}
-		{{ tab := a.cur.controls && !inert }}
+		{{ tab := a.mode().Interactive() && a.cur.controls && !inert }}
 		<span class="book-edge" aria-label="Enter cells preview" if tab { tabindex="0" } { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }></span>
 		<div class="book-pane" if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
 			for _, l := range pv.lines {

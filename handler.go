@@ -30,7 +30,14 @@ import (
 // second's are dropped. A list gives each item an id of its own
 // ("row-"+item.ID).
 func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
-	a := templ.Attributes{"id": id}
+	f := rt.From(ctx)
+	if id == "" && f != nil {
+		id = f.AutoID()
+	}
+	a := templ.Attributes{}
+	if id != "" {
+		a["id"] = id
+	}
 	var on []string
 	for _, h := range hs {
 		switch h.kind {
@@ -49,7 +56,6 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	if len(on) > 0 {
 		a["data-on"] = strings.Join(on, " ")
 	}
-	f := rt.From(ctx)
 	if f == nil {
 		// Rendered outside a surface (a static render, a test of a
 		// component): the handlers go nowhere.

@@ -7,6 +7,7 @@ package rt
 import (
 	"context"
 	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -115,6 +116,7 @@ type Frame struct {
 	slots *Slots
 	gen   *slotGen
 	count int
+	autoN int
 	// Order is the ids the frame registered (Set), in the order of the
 	// render.
 	Order []string
@@ -298,6 +300,18 @@ func (f *Frame) slotsOf() *Slots {
 		f.gen = f.slots.current()
 	}
 	return f.slots
+}
+
+// AutoID allocates a render-order unique id for an anonymous surf.On call
+// (when the caller passes id == ""), avoiding any already-registered id.
+func (f *Frame) AutoID() string {
+	for {
+		f.autoN++
+		id := "h-" + strconv.Itoa(f.autoN)
+		if f.Get(id) == nil {
+			return id
+		}
+	}
 }
 
 // Get is the handlers registered under id in this frame, nil for none.

@@ -16,6 +16,7 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 )
 
 // The stories of the components L1 made: Button, Badge, Card, Kbd, Select,
@@ -197,7 +198,7 @@ func count(s *kitState) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(s.clicks))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 168, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 169, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -250,7 +251,7 @@ func buttonDefault(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(s.click))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Render(button.Props{ID: "save", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -316,7 +317,7 @@ func bookButton(p *Button) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 189, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 190, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -324,7 +325,7 @@ func bookButton(p *Button) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, Attrs: surf.On(ctx, "save", surf.Click(func() { p.Clicks++ }))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Render(button.Props{ID: "save", Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -386,7 +387,7 @@ func bookBadge(p *BadgeProps) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 207, Col: 71}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 208, Col: 71}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -442,7 +443,7 @@ func bookCard(p *Card) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 213, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 214, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -455,7 +456,7 @@ func bookCard(p *Card) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 213, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 214, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -644,7 +645,7 @@ func bookTabs(p *Tabs) templ.Component {
 				var templ_7745c5c3_Var22 string
 				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(bookTabText(p.Tab))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 239, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 240, Col: 49}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 				if templ_7745c5c3_Err != nil {
@@ -724,7 +725,7 @@ func buttonDestructive(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Destructive, Attrs: surf.On(ctx, "delete", surf.Click(s.click))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Render(button.Props{ID: "delete", Variant: ui.Destructive, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -787,7 +788,7 @@ func buttonGhostWithIcon(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Ghost, Attrs: surf.On(ctx, "new", surf.Click(s.click))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var26), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Render(button.Props{ID: "new", Variant: ui.Ghost, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var26), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -809,7 +810,7 @@ func buttonGhostWithIcon(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Ghost, IconOnly: true, Attrs: labelled(surf.On(ctx, "settings", surf.Click(s.click)), "Settings")}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Render(button.Props{ID: "settings", Variant: ui.Ghost, IconOnly: true, Label: "Settings", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -868,7 +869,7 @@ func buttonDisabled(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Disabled: true, Attrs: surf.On(ctx, "save", surf.Click(s.click))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Render(button.Props{ID: "save", Disabled: true, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -949,7 +950,7 @@ func buttonEvery(s *kitState) templ.Component {
 					var templ_7745c5c3_Var32 string
 					templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(variantName(v))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 320, Col: 22}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 321, Col: 22}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 					if templ_7745c5c3_Err != nil {
@@ -957,7 +958,7 @@ func buttonEvery(s *kitState) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Size: z, Variant: v, Attrs: surf.On(ctx, "v-"+variantName(v)+"-"+sizeName(z), surf.Click(s.click))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = button.Render(button.Props{Size: z, Variant: v, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -990,7 +991,7 @@ func buttonEvery(s *kitState) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Size: z, IconOnly: true, Variant: ui.Outline, Attrs: labelled(surf.On(ctx, "i-"+sizeName(z), surf.Click(s.click)), "Add ("+sizeName(z)+")")}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var33), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = button.Render(button.Props{Size: z, IconOnly: true, Variant: ui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var33), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1099,7 +1100,7 @@ func badgeEvery(s *kitState) templ.Component {
 				var templ_7745c5c3_Var38 string
 				templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(variantName(v))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 348, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 349, Col: 20}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 				if templ_7745c5c3_Err != nil {
@@ -1368,7 +1369,7 @@ func selectDefault(s *kitState) templ.Component {
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 410, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 411, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
@@ -1414,7 +1415,7 @@ func selectGrouped(s *kitState) templ.Component {
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 417, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 418, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
@@ -1460,7 +1461,7 @@ func selectMultiple(s *kitState) templ.Component {
 		var templ_7745c5c3_Var51 string
 		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(s.values, ","))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 424, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 425, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 		if templ_7745c5c3_Err != nil {
@@ -1506,7 +1507,7 @@ func selectEndAligned(s *kitState) templ.Component {
 		var templ_7745c5c3_Var53 string
 		templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 434, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 435, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 		if templ_7745c5c3_Err != nil {
@@ -1561,7 +1562,7 @@ func menuDefault(s *kitState) templ.Component {
 		var templ_7745c5c3_Var55 string
 		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 450, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 451, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 		if templ_7745c5c3_Err != nil {
@@ -1607,7 +1608,7 @@ func menuEndAligned(s *kitState) templ.Component {
 		var templ_7745c5c3_Var57 string
 		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 460, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 461, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
 		if templ_7745c5c3_Err != nil {
@@ -1665,7 +1666,7 @@ func menuChecks(s *kitState) templ.Component {
 		var templ_7745c5c3_Var59 string
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(onoff(s.checked))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 471, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 472, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 		if templ_7745c5c3_Err != nil {
@@ -1759,7 +1760,7 @@ func dialogBody(s *kitState) templ.Component {
 		var templ_7745c5c3_Var63 string
 		templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(onoff(s.open))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 486, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 487, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
 		if templ_7745c5c3_Err != nil {
@@ -1871,7 +1872,7 @@ func dialogNoClose(s *kitState) templ.Component {
 		var templ_7745c5c3_Var68 string
 		templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.JoinStringErrs(onoff(s.open))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 495, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 496, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var68))
 		if templ_7745c5c3_Err != nil {
@@ -2017,7 +2018,7 @@ func tabsDefault(s *kitState) templ.Component {
 			var templ_7745c5c3_Var74 string
 			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 520, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 521, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var74))
 			if templ_7745c5c3_Err != nil {
@@ -2041,7 +2042,7 @@ func tabsDefault(s *kitState) templ.Component {
 		var templ_7745c5c3_Var75 string
 		templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 522, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 523, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
 		if templ_7745c5c3_Err != nil {
@@ -2104,7 +2105,7 @@ func tabsMany(s *kitState) templ.Component {
 			var templ_7745c5c3_Var78 string
 			templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 538, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 539, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var78))
 			if templ_7745c5c3_Err != nil {
@@ -2127,7 +2128,7 @@ func tabsMany(s *kitState) templ.Component {
 		var templ_7745c5c3_Var79 string
 		templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.JoinStringErrs(s.value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 540, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 541, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var79))
 		if templ_7745c5c3_Err != nil {
@@ -2250,7 +2251,7 @@ func toastAction(s *kitState) templ.Component {
 		var templ_7745c5c3_Var84 string
 		templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 560, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 561, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var84))
 		if templ_7745c5c3_Err != nil {
@@ -2441,7 +2442,7 @@ func toastOwned(s *kitState) templ.Component {
 		var templ_7745c5c3_Var91 string
 		templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinStringErrs(s.ran)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 609, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `kit.templ`, Line: 610, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
 		if templ_7745c5c3_Err != nil {

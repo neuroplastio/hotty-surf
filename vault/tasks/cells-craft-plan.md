@@ -29,6 +29,24 @@ Phases 1–4 are **internal to `cells` and `ui` markup/rendering** (no exported 
 
 ---
 
+## Architecture: Self-Contained Component Packages & `ui.Mode`
+
+Every component is migrated one by one into its own self-contained package under `ui/<component>/` (starting with `ui/button/`), rendering for the four canonical `ui.Mode` renditions:
+
+| Mode | Interactive | Target |
+| --- | --- | --- |
+| `ui.ModeHotty` | Yes | HTML/CSS surfaces on a hotty host (`hottyterm`, `xterm-addon-hotty`, `hotty run`) |
+| `ui.ModeTUI` | Yes | Character-grid TUI in any terminal without a hotty host (`cells.Screen`) |
+| `ui.ModeANSI` | No | Non-interactive styled terminal output (static CLI cards, scrollback) |
+| `ui.ModePlain` | No | Non-interactive unstyled plain text (pipes, CI logs, agents) |
+
+Each component package owns:
+
+- `ui/<component>/<component>.templ` — `Props` (and `State` if stateful), `Hotty(p)`, `TUI(p)`, optional `ANSI(p)` / `Plain(p)`, and `Render(p)` (dispatching via `ui.ModeOf(ctx)`, falling back to `TUI(p)` for `ModeANSI` and `ModePlain` when not explicitly implemented).
+- `ui/<component>/<component>_test.go` — unit tests covering mode dispatch, keyboard/focus, and hover.
+- `cells.Screen` stays a clean, generic cell layout engine (flexbox, `items-center`, colour roles, `:hover`, pointer/focus, box-drawing primitives).
+- Subjective quality scores (`1/5`–`5/5`, per mode, maintainer-only) are tracked in [`vault/knowledge/component-scores.md`](../knowledge/component-scores.md).
+
 ## Phases
 
 ### Phase 1 — Box Chrome, Floating Overlays & Scrollbars

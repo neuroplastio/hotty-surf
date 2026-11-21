@@ -61,9 +61,9 @@ const (
 
 // State is what the book keeps across a live reload.
 type State struct {
-	ID    string             `msg:"id"` // the story shown
-	Book  storybook.DevState `msg:"book"`
-	Cells bool               `msg:"cells"`
+	ID   string             `msg:"id"` // the story shown
+	Book storybook.DevState `msg:"book"`
+	Mode uint8              `msg:"mode"`
 }
 
 // App is the book.
@@ -162,7 +162,7 @@ func (a *App) Save() *State {
 }
 
 func (a *App) Restore(s *State) {
-	a.Cells = s.Cells
+	a.Mode = s.Mode
 	a.model.Load(&s.Book)
 	if s.ID != "" {
 		a.show(s.ID)
@@ -240,11 +240,14 @@ var paneDone = func() chan struct{} {
 // start puts the story on the pane's Screen, the first time the pane is
 // drawn or used: not before the book runs, whose live reload has to be
 // set up before a view renders.
-func (sh *shown) start() {
+func (sh *shown) start(mode func() ui.Mode) {
 	if sh.pane != nil {
 		return
 	}
-	sh.pane = surf.New("book-pane", sh.view, "")
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return sh.view.Render(ui.WithMode(ctx, mode()), w)
+	})
+	sh.pane = surf.New("book-pane", view, "")
 	// sh.pane is driven synchronously by book's own render (sh.pump), not by
 	// an independent driver goroutine; mark it done so devchild's live-reload
 	// handover never stalls 4s waiting on it.
@@ -272,8 +275,8 @@ func (sh *shown) start() {
 
 // pump sends the pane's surface what changed in the view: its own
 // handlers' changes, and the preview's.
-func (sh *shown) pump() {
-	sh.start()
+func (sh *shown) pump(mode func() ui.Mode) {
+	sh.start(mode)
 	err := sh.pane.Update()
 	if err != nil && strings.Contains(err.Error(), hotty.ENOTARGET) {
 		// The Screen refused the element the surface asked to focus: it
@@ -318,7 +321,7 @@ func (a *App) startingList(ctx context.Context) bool {
 
 func (a *App) bookKey(k string) bool {
 	if k == "r" {
-		a.setRendition(!a.Cells)
+		a.stepMode(1)
 		return true
 	}
 	if k == "escape" && a.modalOpen {
@@ -351,23 +354,50 @@ func (a *App) bookKey(k string) bool {
 	return true
 }
 
-func (a *App) setRendition(cells bool) {
-	if a.Cells != cells && a.inPane {
-		a.PaneOutside()
+func (a *App) mode() ui.Mode {
+	m := ui.Mode(a.Mode)
+	if int(m) >= len(ui.Modes) {
+		return ui.ModeHotty
 	}
-	a.Cells = cells
+	return m
 }
 
-func (a *App) renditionKey(k string) bool {
+// paneMode returns the ui.Mode the cell-grid pane renders in (ModeTUI when the
+// book itself is on ModeHotty so tests inspecting paneText work directly).
+func (a *App) paneMode() ui.Mode {
+	if m := a.mode(); m != ui.ModeHotty {
+		return m
+	}
+	return ui.ModeTUI
+}
+
+func (a *App) setMode(m ui.Mode) {
+	if a.mode() != m && a.inPane {
+		a.PaneOutside()
+	}
+	a.Mode = uint8(m)
+}
+
+func (a *App) stepMode(delta int) {
+	n := len(ui.Modes)
+	cur := int(a.mode())
+	next := (cur + delta%n + n) % n
+	a.setMode(ui.Modes[next])
+}
+
+func (a *App) modeKey(k string) bool {
 	switch k {
-	case "arrow_left", "arrow_right":
-		a.setRendition(!a.Cells)
+	case "arrow_left":
+		a.stepMode(-1)
+		return true
+	case "arrow_right":
+		a.stepMode(1)
 		return true
 	case "home":
-		a.setRendition(false)
+		a.setMode(ui.Modes[0])
 		return true
 	case "end":
-		a.setRendition(true)
+		a.setMode(ui.Modes[len(ui.Modes)-1])
 		return true
 	}
 	return false
@@ -452,7 +482,7 @@ func (a *App) storyHTML() string {
 		return ""
 	}
 	var b strings.Builder
-	if err := a.model.Sel.HTML(nil).Render(context.Background(), &b); err != nil {
+	if err := a.model.Sel.HTML(nil).Render(ui.WithMode(context.Background(), a.mode()), &b); err != nil {
 		return "<!-- " + err.Error() + " -->"
 	}
 	return prettyHTML(b.String())
@@ -467,7 +497,7 @@ func (a *App) PaneKey(k string) bool {
 		// keyboard reaches every outermost Key handler (the list's too).
 		return false
 	}
-	sh.start()
+	sh.start(a.paneMode)
 	taken := sh.scr.Key(k)
 	if !taken {
 		var err error
@@ -476,7 +506,7 @@ func (a *App) PaneKey(k string) bool {
 			sh.err = err
 		}
 	}
-	sh.pump()
+	sh.pump(a.paneMode)
 	return taken
 }
 
@@ -490,10 +520,10 @@ func (a *App) PaneFocus(in bool) {
 		return
 	}
 	a.inPane = true
-	sh.start()
+	sh.start(a.paneMode)
 	sh.retried = false
 	sh.scr.Focus(true)
-	sh.pump()
+	sh.pump(a.paneMode)
 }
 
 // PaneOutside hears the keyboard leave the pane for elsewhere: a click
@@ -505,7 +535,7 @@ func (a *App) PaneOutside() {
 		return
 	}
 	sh.scr.Focus(false)
-	sh.pump()
+	sh.pump(a.paneMode)
 }
 
 // Edge is the keyboard on the empty element before the pane (back) or
@@ -520,7 +550,7 @@ func (a *App) Edge(back bool) func(bool) {
 		if !in || sh == nil {
 			return
 		}
-		sh.start()
+		sh.start(a.paneMode)
 		key := "tab"
 		if back == a.inPane {
 			key = "shift+tab"
@@ -540,7 +570,7 @@ func (a *App) Edge(back bool) func(bool) {
 		if !taken {
 			sh.scr.Focus(false)
 		}
-		sh.pump()
+		sh.pump(a.paneMode)
 		// Tab past the pane's last control goes on to the list, where Tab
 		// past the book's last element goes; Shift+Tab past its first
 		// stays on "in cells", the element before it.
@@ -640,11 +670,16 @@ func (a *App) lines() paneView {
 	if sh == nil {
 		return paneView{}
 	}
-	sh.pump()
+	sh.pump(a.paneMode)
+	mode := a.paneMode()
 	grid := sh.scr.Cells()
 	out := make([][]seg, len(grid))
 	for i, row := range grid {
-		out[i] = rowSegs(row)
+		if mode == ui.ModePlain {
+			out[i] = plainRowSegs(row)
+		} else {
+			out[i] = rowSegs(row)
+		}
 	}
 	// The blank lines at the top and end go; a line of spaces with a look or
 	// fill (an empty field, underlined) is no blank.
@@ -656,19 +691,54 @@ func (a *App) lines() paneView {
 	for len(out) > 0 && blank(out[len(out)-1]) {
 		out = out[:len(out)-1]
 	}
+	// Strip common leading blank columns (e.g. a story root's p-4 padding,
+	// which hotty mode also zeroes via `.book-preview > .p-4 { padding: 0 }`).
+	trimLeft := paneCols
+	for r := trimTop; r < trimTop+len(out); r++ {
+		row := grid[r]
+		lead := 0
+		for lead < len(row) {
+			c := row[lead]
+			if c.Attr != 0 || c.Fg != "" || c.Bg != "" || (c.Text != "" && c.Text != " ") {
+				break
+			}
+			lead++
+		}
+		if lead < len(row) && lead < trimLeft {
+			trimLeft = lead
+		}
+	}
+	if trimLeft >= paneCols {
+		trimLeft = 0
+	}
+	if trimLeft > 0 {
+		for i := range out {
+			row := grid[trimTop+i][trimLeft:]
+			if mode == ui.ModePlain {
+				out[i] = plainRowSegs(row)
+			} else {
+				out[i] = rowSegs(row)
+			}
+		}
+	}
 	var pv paneView
 	pv.lines = out
+	if !mode.Interactive() {
+		return pv
+	}
 	minX, minY, maxX, maxY := 1<<30, 1<<30, -1, -1
 	byID := map[string]int{}
 	for r := trimTop; r < trimTop+len(out); r++ {
 		ry := r - trimTop
-		for c, cell := range grid[r] {
+		for c := trimLeft; c < len(grid[r]); c++ {
+			cell := grid[r][c]
+			rx := c - trimLeft
 			if cell.Attr&cells.Reverse != 0 {
-				if c < minX {
-					minX = c
+				if rx < minX {
+					minX = rx
 				}
-				if c > maxX {
-					maxX = c
+				if rx > maxX {
+					maxX = rx
 				}
 				if ry < minY {
 					minY = ry
@@ -683,12 +753,12 @@ func (a *App) lines() paneView {
 			if id, _ := sh.scr.At(c, r); id != "" {
 				if idx, ok := byID[id]; ok {
 					hb := &pv.hits[idx]
-					if c < hb.x {
-						hb.w += hb.x - c
-						hb.x = c
+					if rx < hb.x {
+						hb.w += hb.x - rx
+						hb.x = rx
 					}
-					if c >= hb.x+hb.w {
-						hb.w = c - hb.x + 1
+					if rx >= hb.x+hb.w {
+						hb.w = rx - hb.x + 1
 					}
 					if ry < hb.y {
 						hb.h += hb.y - ry
@@ -700,7 +770,7 @@ func (a *App) lines() paneView {
 				} else {
 					byID[id] = len(pv.hits)
 					pv.hits = append(pv.hits, hitBox{
-						id: id, x: c, y: ry, w: 1, h: 1, col: c, row: r,
+						id: id, x: rx, y: ry, w: 1, h: 1, col: c, row: r,
 					})
 				}
 			}
@@ -720,7 +790,7 @@ func (a *App) PaneClick(col, row int) {
 		return
 	}
 	sh.scr.Click(col, row)
-	sh.pump()
+	sh.pump(a.paneMode)
 }
 
 // PaneHover delivers pointer enter/leave on an interactive cells span to
@@ -735,7 +805,7 @@ func (a *App) PaneHover(col, row int, in bool) {
 	} else {
 		sh.scr.Move(-1, -1, 0)
 	}
-	sh.pump()
+	sh.pump(a.paneMode)
 }
 
 func blank(l []seg) bool {
@@ -788,6 +858,24 @@ func hasControl(doc string) bool {
 			}
 		}
 	}
+}
+
+// plainRowSegs extracts unstyled plain text from a row of Cells, trimmed of
+// trailing spaces.
+func plainRowSegs(row []cells.Cell) []seg {
+	var b strings.Builder
+	for _, c := range row {
+		if c.Text == "" {
+			b.WriteByte(' ')
+		} else {
+			b.WriteString(c.Text)
+		}
+	}
+	s := strings.TrimRight(b.String(), " ")
+	if s == "" {
+		return nil
+	}
+	return []seg{{text: s}}
 }
 
 // rowSegs groups a row of Cells into contiguous runs of equal attributes

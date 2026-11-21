@@ -9,6 +9,7 @@ import (
 
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 func attrOf(as []html.Attribute, k string) string {
@@ -141,12 +142,20 @@ func TestRenditionsShareStoryState(t *testing.T) {
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	r.Key("r")
-	if !a.Cells || !strings.Contains(paneText(a), "Button") {
-		t.Fatalf("cells=%v; pane=%q", a.Cells, paneText(a))
+	if a.mode() != ui.ModeTUI || !strings.Contains(paneText(a), "Button") {
+		t.Fatalf("mode=%v; pane=%q", a.mode(), paneText(a))
 	}
 	r.Key("r")
-	if a.Cells || !strings.Contains(r.HTML(), "Button") {
-		t.Fatal("hotty rendition did not retain the story")
+	if a.mode() != ui.ModeANSI || !strings.Contains(paneText(a), "Button") {
+		t.Fatalf("mode=%v; pane=%q", a.mode(), paneText(a))
+	}
+	r.Key("r")
+	if a.mode() != ui.ModePlain || !strings.Contains(paneText(a), "Button") {
+		t.Fatalf("mode=%v; pane=%q", a.mode(), paneText(a))
+	}
+	r.Key("r")
+	if a.mode() != ui.ModeHotty || !strings.Contains(r.HTML(), "Button") {
+		t.Fatal("hotty mode did not retain the story")
 	}
 	var clicks string
 	for _, c := range a.model.Sel.Controls() {
@@ -155,7 +164,7 @@ func TestRenditionsShareStoryState(t *testing.T) {
 		}
 	}
 	if clicks != "1" {
-		t.Fatalf("click count after switching renditions: %q", clicks)
+		t.Fatalf("click count after switching modes: %q", clicks)
 	}
 }
 
@@ -268,7 +277,7 @@ func TestTabPastThePaneGoesToTheList(t *testing.T) {
 func TestNoControlsNoTab(t *testing.T) {
 	a := New()
 	a.show("chart/bar")
-	a.setRendition(true)
+	a.setMode(ui.ModeTUI)
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if a.cur.controls {
 		t.Fatal("chart/bar has controls")
