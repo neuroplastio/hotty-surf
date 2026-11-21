@@ -32,7 +32,8 @@ var HostOf func(w io.Writer) Host
 // A Wrapper is a writer of this module that hands each write on to
 // another (a driver's, which notes a refused delta): HostOf looks
 // through it to the writer it wraps. Its method takes a Seal, which no
-// module but this one can name, so no app's writer is one.
+// package outside neuroplast.io/hotty-surf can name, so no app's writer
+// is one.
 type Wrapper interface {
 	Wrapped(Seal) io.Writer
 }
