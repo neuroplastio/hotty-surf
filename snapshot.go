@@ -8,6 +8,7 @@ package surf
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/tinylib/msgp/msgp"
@@ -28,6 +29,22 @@ type snapshot struct {
 	Revs    map[string]int    `msg:"revs"`
 	Focused string            `msg:"focused"`
 	Asked   string            `msg:"asked"`
+	Sheets  []string          `msg:"sheets"`
+}
+
+func (s *Surface) sheetIDs() []string {
+	if len(s.sheets) == 0 {
+		return nil
+	}
+	ids := make([]string, len(s.sheets))
+	for i, sh := range s.sheets {
+		ids[i] = sh.ID
+	}
+	return ids
+}
+
+func (s *Surface) sheetsChanged() bool {
+	return s.hasAdoptedSheets && !slices.Equal(s.adoptedSheets, s.sheetIDs())
 }
 
 // snap encodes the surface as the host has it. It is written once per
@@ -41,7 +58,7 @@ func (s *Surface) snap(w *msgp.Writer) error {
 		return err
 	}
 	sn := snapshot{Name: s.name, Tree: tree.String(), IDs: s.ids, Next: s.nextID, Vals: s.vals,
-		Checked: s.checked, Revs: s.revs, Focused: s.focused, Asked: s.asked}
+		Checked: s.checked, Revs: s.revs, Focused: s.focused, Asked: s.asked, Sheets: s.sheetIDs()}
 	return sn.EncodeMsg(w)
 }
 
@@ -65,6 +82,7 @@ func (s *Surface) adopt(r *msgp.Reader) error {
 	}
 	s.reset()
 	s.prev, s.nextID, s.focused, s.asked = kids[0], sn.Next, sn.Focused, sn.Asked
+	s.adoptedSheets, s.hasAdoptedSheets = sn.Sheets, true
 	s.lastFocus = sn.Focused
 	for k, v := range sn.IDs {
 		s.ids[k] = v

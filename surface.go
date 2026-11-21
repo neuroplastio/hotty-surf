@@ -104,9 +104,11 @@ type Surface struct {
 	modalFocus   string          // first or last modal control to focus after an event
 	asked        string          // the element the last frame's Autofocus asked for
 	askDue       bool            // a Document's Autofocus, sent at the next Update
-	cssDue       bool            // the stylesheet changed (a dev reload): sent at the next Update
-	sheets       []Sheet         // the stylesheets documents link (Link)
-	sheetSent    map[string]bool // the sheets sent on the writer since Attach, by ID
+	cssDue           bool            // the stylesheet changed (a dev reload): sent at the next Update
+	sheets           []Sheet         // the stylesheets documents link (Link)
+	sheetSent        map[string]bool // the sheets sent on the writer since Attach, by ID
+	adoptedSheets    []string        // linked sheet IDs from an adopted dev-reload snapshot
+	hasAdoptedSheets bool            // true after Adopt until the next reset/Document
 	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
 	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
 	prefixed     bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)

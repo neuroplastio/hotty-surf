@@ -74,3 +74,61 @@ func TestAdopt(t *testing.T) {
 		t.Fatalf("the field's rev wasn't kept: %d", c.revs["f"])
 	}
 }
+
+// TestAdoptLinkedSheetsChanged: when a linked sheet's ID changes across a dev
+// reload, Peek.Tree returns nil so the driver sends a fresh Document (re-linking
+// the new sheet resource); when the sheet ID is unchanged, it stays on the
+// delta path.
+func TestAdoptLinkedSheetsChanged(t *testing.T) {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := io.WriteString(w, "<p>hi</p>")
+		return err
+	})
+	var out bytes.Buffer
+	a := New("s", view, "")
+	a.Link(Sheet{ID: "kit-v1", CSS: ".a{}"})
+	a.Attach(&out, hotty.Caps{})
+	if _, err := a.Document(); err != nil {
+		t.Fatal(err)
+	}
+	var b bytes.Buffer
+	w := msgp.NewWriter(&b)
+	if err := rt.Peek.Snapshot(a, w); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Same linked sheet ID: stays on delta path.
+	same := New("s", view, "")
+	same.Link(Sheet{ID: "kit-v1", CSS: ".a{}"})
+	if err := rt.Peek.Adopt(same, msgp.NewReader(bytes.NewReader(b.Bytes()))); err != nil {
+		t.Fatal(err)
+	}
+	if rt.Peek.Tree(same) == nil {
+		t.Fatal("unchanged linked sheet unexpectedly invalidated adopted tree")
+	}
+
+	// Changed linked sheet ID: forces a fresh Document so the new sheet is sent.
+	changed := New("s", view, "")
+	changed.Link(Sheet{ID: "kit-v2", CSS: ".a{color:red}"})
+	if err := rt.Peek.Adopt(changed, msgp.NewReader(bytes.NewReader(b.Bytes()))); err != nil {
+		t.Fatal(err)
+	}
+	if rt.Peek.Tree(changed) != nil {
+		t.Fatal("changed linked sheet did not invalidate adopted tree")
+	}
+	out.Reset()
+	changed.Attach(&out, hotty.Caps{})
+	doc, err := changed.Document()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), hotty.Res("kit-v2", "text/css", []byte(".a{color:red}"))) {
+		t.Fatalf("Document did not send updated sheet resource: %q", out.String())
+	}
+	if !strings.Contains(doc, `href="cid:kit-v2"`) {
+		t.Fatalf("Document did not link updated sheet: %q", doc)
+	}
+}

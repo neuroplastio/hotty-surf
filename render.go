@@ -39,7 +39,13 @@ type renderer struct {
 }
 
 func init() {
-	rt.Peek.Tree = func(s any) *html.Node { return s.(*Surface).prev }
+	rt.Peek.Tree = func(s any) *html.Node {
+		sf := s.(*Surface)
+		if sf.sheetsChanged() {
+			return nil
+		}
+		return sf.prev
+	}
 	rt.Peek.Focused = func(s any) string { return s.(*Surface).focused }
 	rt.Peek.Frame = func(s any) *rt.Frame { return s.(*Surface).frame }
 	rt.Peek.Scopes = func(s any) []*rt.KeyScope { return s.(*Surface).reached() }
@@ -88,6 +94,7 @@ func (s *Surface) reset() {
 	s.vals, s.checked, s.revs = map[string]string{}, map[string]bool{}, map[string]int{}
 	s.sels, s.pendingSel = map[string][2]int{}, map[string][2]int{}
 	s.pendingNative = map[string]hotty.FieldChange{}
+	s.adoptedSheets, s.hasAdoptedSheets = nil, false
 }
 
 var bodyCtx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}

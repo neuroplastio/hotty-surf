@@ -192,6 +192,29 @@ func (z *snapshot) DecodeMsg(dc *msgp.Reader) (err error) {
 				err = msgp.WrapError(err, "Asked")
 				return
 			}
+		case "sheets":
+			var zb0006 uint32
+			zb0006, err = dc.ReadArrayHeader()
+			if err != nil {
+				err = msgp.WrapError(err, "Sheets")
+				return
+			}
+			if zb0006 > zf18e7e2flimitArrays {
+				err = msgp.ErrLimitExceeded
+				return
+			}
+			if cap(z.Sheets) >= int(zb0006) {
+				z.Sheets = (z.Sheets)[:zb0006]
+			} else {
+				z.Sheets = make([]string, zb0006)
+			}
+			for za0009 := range z.Sheets {
+				z.Sheets[za0009], err = dc.ReadString()
+				if err != nil {
+					err = msgp.WrapError(err, "Sheets", za0009)
+					return
+				}
+			}
 		default:
 			err = dc.Skip()
 			if err != nil {
@@ -205,9 +228,9 @@ func (z *snapshot) DecodeMsg(dc *msgp.Reader) (err error) {
 
 // EncodeMsg implements msgp.Encodable
 func (z *snapshot) EncodeMsg(en *msgp.Writer) (err error) {
-	// map header, size 9
+	// map header, size 10
 	// write "name"
-	err = en.Append(0x89, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+	err = en.Append(0x8a, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
 	if err != nil {
 		return
 	}
@@ -344,6 +367,23 @@ func (z *snapshot) EncodeMsg(en *msgp.Writer) (err error) {
 		err = msgp.WrapError(err, "Asked")
 		return
 	}
+	// write "sheets"
+	err = en.Append(0xa6, 0x73, 0x68, 0x65, 0x65, 0x74, 0x73)
+	if err != nil {
+		return
+	}
+	err = en.WriteArrayHeader(uint32(len(z.Sheets)))
+	if err != nil {
+		err = msgp.WrapError(err, "Sheets")
+		return
+	}
+	for za0009 := range z.Sheets {
+		err = en.WriteString(z.Sheets[za0009])
+		if err != nil {
+			err = msgp.WrapError(err, "Sheets", za0009)
+			return
+		}
+	}
 	return
 }
 
@@ -377,6 +417,9 @@ func (z *snapshot) Msgsize() (s int) {
 			s += msgp.StringPrefixSize + len(za0007) + msgp.IntSize
 		}
 	}
-	s += 8 + msgp.StringPrefixSize + len(z.Focused) + 6 + msgp.StringPrefixSize + len(z.Asked)
+	s += 8 + msgp.StringPrefixSize + len(z.Focused) + 6 + msgp.StringPrefixSize + len(z.Asked) + 7 + msgp.ArrayHeaderSize
+	for za0009 := range z.Sheets {
+		s += msgp.StringPrefixSize + len(z.Sheets[za0009])
+	}
 	return
 }
