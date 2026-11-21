@@ -52,9 +52,10 @@ const (
 	nodeSlab = 512
 	attrSlab = 1024
 	minSlab  = 16
-	fillSlab = 64       // the most nodes a slab a fill takes holds (reserve)
-	svgCache = 256      // distinct <svg> markups kept, in each of svgs' two generations
-	svgMax   = 16 << 10 // the longest <svg> markup kept: an icon's, not a chart's
+	fillSlab = 64        // the most nodes a slab a fill takes holds (reserve)
+	svgCache = 256       // distinct <svg> markups kept, in each of svgs' two generations
+	svgBytes = 128 << 10 // the most markup each generation keeps the trees of
+	svgMax   = 4 << 10   // the longest <svg> markup kept: an icon's, not a chart's
 )
 
 // reserve makes room in the slabs for what src most likely takes, up to
@@ -510,27 +511,31 @@ func (p *parser) svgTree(top *html.Node, s string, i int) (int, bool) {
 // svgs are the trees of the <svg> markups the process's renders held, by
 // markup, which no render changes: each takes a copy (copyIn). A new
 // block is a new Surface, and its icons are those the blocks before it
-// parsed. It keeps two generations of at most svgCache each, and an
-// <svg> found in the older moves to the newer: when the newer is full,
-// it becomes the older, and what went unused for a generation is
-// forgotten. Surfaces render on their own goroutines, so it is locked.
+// parsed. It keeps two generations of at most svgCache markups and
+// svgBytes of them each, and an <svg> found in the older moves to the
+// newer: when the newer is full, it becomes the older, and what went
+// unused for a generation is forgotten. A tree takes about eight times
+// its markup, so the trees kept come to a few MB at most. Every key is
+// its own copy of the markup: a slice of a render would keep the render.
+// Surfaces render on their own goroutines, so it is locked. It unlocks
+// without defer, which costs TinyGo's wasm 1.8 KB.
 var svgs svgTrees
 
 type svgTrees struct {
 	mu       sync.Mutex
 	new, old map[string]*html.Node
+	bytes    int // the markup new's trees are of
 }
 
 func (c *svgTrees) get(src string) *html.Node {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	if t, ok := c.new[src]; ok {
-		return t
+	t, ok := c.new[src]
+	if !ok {
+		if t, ok = c.old[src]; ok {
+			c.add(strings.Clone(src), t)
+		}
 	}
-	t, ok := c.old[src]
-	if ok {
-		c.add(src, t)
-	}
+	c.mu.Unlock()
 	return t
 }
 
@@ -539,16 +544,18 @@ func (c *svgTrees) put(src string, t *html.Node) {
 	if len(src) > svgMax {
 		return
 	}
+	key := strings.Clone(src)
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.add(strings.Clone(src), t)
+	c.add(key, t)
+	c.mu.Unlock()
 }
 
 func (c *svgTrees) add(src string, t *html.Node) {
-	if c.new == nil || len(c.new) >= svgCache {
-		c.old, c.new = c.new, make(map[string]*html.Node, svgCache)
+	if c.new == nil || len(c.new) >= svgCache || c.bytes+len(src) > svgBytes {
+		c.old, c.new, c.bytes = c.new, make(map[string]*html.Node, svgCache), 0
 	}
 	c.new[src] = t
+	c.bytes += len(src)
 }
 
 // svgEnd is where the <svg> element at s[i] ends, after its </svg>: -1

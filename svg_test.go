@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"unsafe"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -115,10 +116,81 @@ func TestSvgsForgetTheUnused(t *testing.T) {
 	if n > 2*svgCache {
 		t.Errorf("svgs keeps %d trees, more than two generations of %d", n, svgCache)
 	}
-	chart := `<svg class="chart">` + strings.Repeat(`<rect x="1" y="2" width="3" height="4"></rect>`, svgMax/40) + `</svg>`
+	// Markup of the most an icon's length, each generation up to its
+	// bytes: no more than two generations' of them.
+	for i := range 3 * svgBytes / svgMax {
+		parse(fmt.Sprintf(`<svg data-i="%d"><path d="%s"></path></svg>`, i, strings.Repeat("M1,1L2,2", svgMax/8-8)))
+	}
+	svgs.mu.Lock()
+	bytes := 0
+	for _, gen := range []map[string]*html.Node{svgs.new, svgs.old} {
+		for k := range gen {
+			bytes += len(k)
+		}
+	}
+	svgs.mu.Unlock()
+	if bytes > 2*svgBytes {
+		t.Errorf("svgs keeps the trees of %d B of markup, more than two generations of %d", bytes, svgBytes)
+	}
+	// A small chart, 6 KB, is longer than any icon: its trees, about
+	// eight times its markup, are not kept.
+	chart := `<svg class="chart">` + strings.Repeat(`<rect x="1" y="2" width="3" height="4"></rect>`, 6<<10/46) + `</svg>`
 	parse(chart)
 	if svgs.get(chart) != nil {
-		t.Errorf("an <svg> of %d B, longer than an icon's %d, is kept", len(chart), svgMax)
+		t.Errorf("an <svg> of %d B, a chart's, is kept", len(chart))
+	}
+}
+
+// TestSvgKeysAreTheirOwn: a kept markup is a copy of its own, not a
+// slice of the render it was found in, which it would keep: after a
+// first parse, and after it moves from the older generation to the
+// newer.
+func TestSvgKeysAreTheirOwn(t *testing.T) {
+	x := icon(t.Name())
+	// pinned says whether x's key in gen lies in p's render.
+	pinned := func(p *parser, gen map[string]*html.Node) bool {
+		lo := uintptr(unsafe.Pointer(unsafe.StringData(p.src)))
+		for k := range gen {
+			if k == x {
+				a := uintptr(unsafe.Pointer(unsafe.StringData(k)))
+				return a >= lo && a < lo+uintptr(len(p.src))
+			}
+		}
+		t.Fatal("the icon isn't kept where it should be")
+		return false
+	}
+	var p parser
+	if !p.parse(newRoot(), pillWith(x)) {
+		t.Fatal("the fast parser gave the pill up")
+	}
+	svgs.mu.Lock()
+	first := pinned(&p, svgs.new)
+	svgs.mu.Unlock()
+	if first {
+		t.Error("a first parse's key is a slice of its render")
+	}
+	// Into the older generation, then found there by a render of its
+	// own, which moves it to the newer.
+	for i := 0; ; i++ {
+		svgs.mu.Lock()
+		_, old := svgs.old[x]
+		svgs.mu.Unlock()
+		if old {
+			break
+		}
+		if !p.parse(newRoot(), pillWith(icon(fmt.Sprintf("%s-%d", t.Name(), i)))) {
+			t.Fatal("the fast parser gave the pill up")
+		}
+	}
+	var q parser
+	if !q.parse(newRoot(), []byte(strings.Repeat(`<span class="pad">padding</span>`, 300)+string(pillWith(x)))) {
+		t.Fatal("the fast parser gave the render up")
+	}
+	svgs.mu.Lock()
+	promoted := pinned(&q, svgs.new)
+	svgs.mu.Unlock()
+	if promoted {
+		t.Errorf("a key moved to the newer generation is a slice of the %d B render it was found in", len(q.src))
 	}
 }
 
