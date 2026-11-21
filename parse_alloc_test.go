@@ -89,6 +89,13 @@ func TestParseSlabsFit(t *testing.T) {
 			if got > limit {
 				t.Errorf("a parse takes %d B, more than %d", got, limit)
 			}
+			if c.name == "pill" {
+				// The render's string and a slab of each, sized at once:
+				// none that grew one at a time from the smallest.
+				if n := testing.AllocsPerRun(50, func() { p.parse(newRoot(), src) }); n > 5 {
+					t.Errorf("a parse of the pill takes %.0f allocations, more than its root (2), its string and a slab of each", n)
+				}
+			}
 		})
 	}
 }
