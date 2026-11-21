@@ -32,19 +32,65 @@ type parser struct {
 	stack []*html.Node
 	base  int                   // the stack's open elements no end tag closes
 	svg   map[string]*html.Node // an <svg>'s markup → its tree, to clone
+	// fill is the size of the last slab of nodes and of attributes a
+	// fill took since the last whole parse (reserve), which the next a
+	// fill takes doubles: fills in a row share slabs, as they shared the
+	// room a whole slab left, with none as large as a document's.
+	fill [2]int
 }
 
-// slab sizes: the nodes and attributes a render takes are allocated this
-// many at a time.
+// slab sizes: the most nodes and attributes a render's slab holds. A
+// parse's first slab is sized to its markup (reserve), and one that runs
+// out takes one twice its size (grow), up to these.
 const (
 	nodeSlab = 512
 	attrSlab = 1024
+	minSlab  = 16
+	fillSlab = 64  // the most nodes a slab a fill takes holds (reserve)
 	svgCache = 256 // distinct <svg> markups kept
 )
 
+// reserve makes room in the slabs for what src most likely takes, up to
+// the slab sizes: a node at each '<' and one after the last (an
+// element's two tags have one each, and a text may follow each), and an
+// attribute at each '=' and one for each element (half the '<'), the id
+// number puts first. A slab with less room than that is set aside, and the
+// last tree still points into it: a whole parse's new one is the size
+// asked for; a fill's (fill) is at least twice the last a fill took, up
+// to fillSlab, so that fills in a row share one. It is an estimate, not a
+// bound (a text after a void element, <br>a, has no '<' of its own, and a
+// boolean attribute no '='): a slab that runs out grows. Two counts,
+// which strings.Count does many bytes at a time, cost less than one loop
+// over every byte.
+func (p *parser) reserve(src string, fill bool) {
+	lt := strings.Count(src, "<")
+	nodes := min(lt+1, nodeSlab)
+	attrs := min(strings.Count(src, "=")+lt/2+1, attrSlab)
+	if cap(p.nodes)-len(p.nodes) < nodes {
+		if fill {
+			nodes = max(nodes, grow(p.fill[0], fillSlab))
+			p.fill[0] = nodes
+		}
+		p.nodes = make([]html.Node, 0, nodes)
+	}
+	if cap(p.attrs)-len(p.attrs) < attrs {
+		if fill {
+			attrs = max(attrs, grow(p.fill[1], 2*fillSlab))
+			p.fill[1] = attrs
+		}
+		p.attrs = make([]html.Attribute, 0, attrs)
+	}
+}
+
+// grow is the size of the slab after one of size last that ran out: twice
+// it, from minSlab up to most.
+func grow(last, most int) int {
+	return min(max(2*last, minSlab), most)
+}
+
 func (p *parser) node() *html.Node {
 	if len(p.nodes) == cap(p.nodes) {
-		p.nodes = make([]html.Node, 0, nodeSlab)
+		p.nodes = make([]html.Node, 0, grow(cap(p.nodes), nodeSlab))
 	}
 	p.nodes = p.nodes[:len(p.nodes)+1]
 	return &p.nodes[len(p.nodes)-1]
@@ -56,7 +102,7 @@ func (p *parser) node() *html.Node {
 func (p *parser) attrList(n int) []html.Attribute {
 	n++
 	if cap(p.attrs)-len(p.attrs) < n {
-		p.attrs = make([]html.Attribute, 0, max(attrSlab, n))
+		p.attrs = make([]html.Attribute, 0, max(grow(cap(p.attrs), attrSlab), n))
 	}
 	i := len(p.attrs)
 	p.attrs = p.attrs[:i+n]
@@ -69,7 +115,8 @@ func (p *parser) attrList(n int) []html.Attribute {
 func (p *parser) parse(root *html.Node, b []byte) bool {
 	p.src = string(b)
 	// The slabs aren't reused: the last tree still points into them.
-	p.nodes, p.attrs = nil, nil
+	p.nodes, p.attrs, p.fill = nil, nil, [2]int{}
+	p.reserve(p.src, false)
 	p.stack = append(p.stack[:0], root)
 	p.base = 1
 	return p.run()
@@ -87,6 +134,9 @@ func (p *parser) parseIn(holder *html.Node, anc []*html.Node, b []byte) bool {
 		}
 	}
 	p.src = string(b)
+	// Into what the slabs have left where it is enough: a fill after a
+	// whole parse takes the room that parse didn't.
+	p.reserve(p.src, true)
 	p.stack = append(append(p.stack[:0], nil), anc...)
 	p.stack = append(p.stack, holder)
 	p.base = len(p.stack)
