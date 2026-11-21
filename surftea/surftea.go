@@ -38,6 +38,7 @@ package surftea
 
 import (
 	"html"
+	"io"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -45,6 +46,7 @@ import (
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/reload"
 )
 
@@ -287,6 +289,10 @@ func (c cellsOut) Write(p []byte) (int, error) {
 	}
 	return len(p), nil
 }
+
+// Wrapped is the Screen, which an in-process surface offers its tree
+// (rt.Wrapper).
+func (c cellsOut) Wrapped(rt.Seal) io.Writer { return c.h.scr }
 
 // startCells puts the surface on a Screen at the rectangle's size.
 func (h *Host) startCells() {

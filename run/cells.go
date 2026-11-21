@@ -4,12 +4,14 @@ package run
 
 import (
 	"bytes"
+	"io"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // cellsHost is a surface on a cells.Screen: the host inside the program.
@@ -40,6 +42,10 @@ func newCellsHost(s *surf.Surface, cols, rows int) *cellsHost {
 	})
 	return c
 }
+
+// Wrapped is the Screen, which an in-process surface offers its tree
+// (rt.Wrapper).
+func (c *cellsHost) Wrapped(rt.Seal) io.Writer { return c.scr }
 
 // start sends the surface's first document to the Screen.
 func (c *cellsHost) start() error {

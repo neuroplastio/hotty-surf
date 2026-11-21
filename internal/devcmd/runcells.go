@@ -1,6 +1,7 @@
 package devcmd
 
 import (
+	"io"
 	"strings"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -10,6 +11,7 @@ import (
 
 	"neuroplast.io/hotty-surf/cells"
 	"neuroplast.io/hotty-surf/internal/devwire"
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // cellsView is `hotty-surf run` in a terminal that is no hotty host: the
@@ -69,6 +71,10 @@ func (w devWriter) Write(p []byte) (int, error) {
 	}
 	return len(p), nil
 }
+
+// Wrapped is the report's Screen, which the report surface offers its
+// tree (rt.Wrapper).
+func (w devWriter) Wrapped(rt.Seal) io.Writer { return w.c.dev }
 
 // resize lays both out again at the terminal's size.
 func (c *cellsView) resize(cols, rows int) {

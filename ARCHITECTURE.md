@@ -255,6 +255,18 @@ attributes return when the modal closes.
 - a snapshot of the surface and its adoption by a new build, a
   stylesheet swap and the last document, for reload.
 
+It also holds `Host`, a host in the program's own process (a
+`cells.Screen`) that a surface's writer reaches, directly or through a
+wrapper of this module (`Wrapper`: run's, surftea's and the dev
+report's). cells sets `HostOf` in its `init`, and a surface asks it once
+per `Attach`. Document offers that host its tree as it renders the
+document, and the Screen copies the tree within the call: nodes,
+attribute lists cut to their length, and strings of its own. The
+commands still go on the wire whole. The Screen takes its copy for the
+next `a=doc` only when the name and the decoded payload are the
+offer's, and it drops the offer at any `a=doc` or `a=del`. So a new
+block in cells parses its document once, in surf, not twice.
+
 `internal/devhook` is the registry `surf.New` feeds in a `surfdev`
 build, so reload reaches every surface. `internal/input` splits terminal
 input into events, replies and keys.

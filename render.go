@@ -373,39 +373,53 @@ const cssID = "hotty-css"
 
 // documentOf is the whole document: the stylesheet, then the tree.
 func (s *Surface) documentOf(root *html.Node) (string, error) {
+	nodes, err := s.documentNodes(root)
+	if err != nil {
+		return "", err
+	}
+	return rendered(nodes)
+}
+
+// rendered is nodes as HTML, one after another.
+func rendered(nodes []*html.Node) (string, error) {
 	var b strings.Builder
+	for _, n := range nodes {
+		if err := html.Render(&b, n); err != nil {
+			return "", err
+		}
+	}
+	return b.String(), nil
+}
+
+// documentNodes are the document's nodes, in order: the sheets' links or
+// styles, the surface's own style, and root.
+func (s *Surface) documentNodes(root *html.Node) ([]*html.Node, error) {
+	nodes := make([]*html.Node, 0, len(s.sheets)+2)
 	for _, sh := range s.sheets {
 		var n *html.Node
 		if limit, _ := s.overLimit(sh); limit != "" {
 			// No room for it as a resource: the document carries it.
 			if strings.Contains(strings.ToLower(sh.CSS), "</style") {
-				return "", fmt.Errorf("surf: the sheet %q holds </style, which would end it early", sh.ID)
+				return nil, fmt.Errorf("surf: the sheet %q holds </style, which would end it early", sh.ID)
 			}
 			n = &html.Node{Type: html.ElementNode, Data: "style", DataAtom: atom.Style}
 			n.AppendChild(&html.Node{Type: html.TextNode, Data: sh.CSS})
 		} else {
 			n = &html.Node{Type: html.ElementNode, Data: "link", DataAtom: atom.Link, Attr: []html.Attribute{{Key: "rel", Val: "stylesheet"}, {Key: "href", Val: "cid:" + sh.ID}}}
 		}
-		if err := html.Render(&b, n); err != nil {
-			return "", err
-		}
+		nodes = append(nodes, n)
 	}
 	// With sheets linked, the surface's own sheet is there even empty, for
 	// a dev reload to restyle.
 	if s.css != "" || len(s.sheets) > 0 {
 		if strings.Contains(strings.ToLower(s.css), "</style") {
-			return "", fmt.Errorf("surf: the stylesheet holds </style, which would end it early")
+			return nil, fmt.Errorf("surf: the stylesheet holds </style, which would end it early")
 		}
 		st := &html.Node{Type: html.ElementNode, Data: "style", DataAtom: atom.Style, Attr: []html.Attribute{{Key: "id", Val: cssID}}}
 		st.AppendChild(&html.Node{Type: html.TextNode, Data: s.css})
-		if err := html.Render(&b, st); err != nil {
-			return "", err
-		}
+		nodes = append(nodes, st)
 	}
-	if err := html.Render(&b, root); err != nil {
-		return "", err
-	}
-	return b.String(), nil
+	return append(nodes, root), nil
 }
 
 // isField says whether n is a live field: a control whose value or state

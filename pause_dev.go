@@ -7,8 +7,8 @@ import "neuroplast.io/hotty-surf/internal/rt"
 func init() {
 	rt.Peek.Pause = func(s any) func() {
 		x := s.(*Surface)
-		out, platform := x.out, x.platform
-		x.out = nil
-		return func() { x.out, x.platform = out, platform }
+		out, host, platform := x.out, x.host, x.platform
+		x.out, x.host = nil, nil
+		return func() { x.out, x.host, x.platform = out, host, platform }
 	}
 }

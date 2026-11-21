@@ -113,6 +113,10 @@ type Screen struct {
 	queue    []hotty.Event
 	flushing bool
 
+	// offer is the tree the surface offered for the next document
+	// (offer.go), nil for none.
+	offer *offered
+
 	// What Write was given, read as one stream: a command may come in
 	// more than one Write.
 	sc  hotty.Scanner
@@ -488,7 +492,7 @@ func (c *Screen) apply(m hotty.Message) error {
 func (c *Screen) del() {
 	c.cutDrag()
 	c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
-	c.hovered, c.tip = nil, nil
+	c.hovered, c.tip, c.offer = nil, nil, nil
 	c.fields = map[*html.Node]*field{}
 	c.changed()
 }

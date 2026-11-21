@@ -115,6 +115,9 @@ type Surface struct {
 	textFaulted  bool            // the fault that the kit's text editing isn't linked was recorded
 	sending      bool
 	deferred     []hotty.Event
+	// host is the in-process host the writer reaches (rt.HostOf), which
+	// Document offers its tree, nil for none.
+	host rt.Host
 
 	r renderer
 }
@@ -160,6 +163,10 @@ func (s *Surface) Name() string {
 //     without Press. surftea's Place and run.App set both.
 func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 	s.out = w
+	s.host = nil
+	if rt.HostOf != nil && w != nil {
+		s.host = rt.HostOf(w)
+	}
 	s.platform = hotty.PlatformOf(caps)
 	s.editing = rt.Editing{}
 	// A compiled instance's keys are its platform's.

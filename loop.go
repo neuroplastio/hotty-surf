@@ -46,9 +46,18 @@ func (s *Surface) document() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	doc, err := s.documentOf(t.root)
+	nodes, err := s.documentNodes(t.root)
 	if err != nil {
 		return "", err
+	}
+	doc, err := rendered(nodes)
+	if err != nil {
+		return "", err
+	}
+	if s.host != nil {
+		// Lent for the call: the host copies what it keeps, before
+		// anything here writes the tree again.
+		s.host.OfferDocument(s.name, doc, nodes)
 	}
 	s.keep(t, f)
 	s.stops = append(s.stops[:0], f.Stops...)

@@ -16,8 +16,15 @@ import (
 // under a body of the Screen's own, changed by the deltas as a host changes
 // it (SPEC §5.1, §6.1).
 
-// load takes a document as the surface's whole tree.
+// load takes a document as the surface's whole tree: the tree its
+// surface offered for it (offer.go), or else the one it parses as.
 func (c *Screen) load(name, doc string) error {
+	if o := c.offer; o != nil {
+		c.offer = nil
+		if o.name == name && o.doc == doc {
+			return c.loadBody(name, o.body)
+		}
+	}
 	body := &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
 	nodes, err := html.ParseFragment(strings.NewReader(doc), body)
 	if err != nil {
@@ -26,6 +33,12 @@ func (c *Screen) load(name, doc string) error {
 	for _, n := range nodes {
 		body.AppendChild(n)
 	}
+	return c.loadBody(name, body)
+}
+
+// loadBody takes body, a tree of the Screen's own, as the surface's whole
+// tree.
+func (c *Screen) loadBody(name string, body *html.Node) error {
 	c.cutDrag()
 	if c.body != nil && c.name == name && c.kept != nil && sameShape(c.body, body) {
 		// The same elements with other text or attributes: the
