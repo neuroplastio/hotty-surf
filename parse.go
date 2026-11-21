@@ -37,6 +37,11 @@ type parser struct {
 	// fill takes doubles: fills in a row share slabs, as they shared the
 	// room a whole slab left, with none as large as a document's.
 	fill [2]int
+	// last is the size of the slab of nodes and of attributes the parse
+	// or the fill under way chose (reserve), or grew to, which a slab
+	// that runs out doubles (grow): a fill that rides the room a document
+	// left grows from its own size, not the document's.
+	last [2]int
 }
 
 // slab sizes: the most nodes and attributes a render's slab holds. A
@@ -59,24 +64,31 @@ const (
 // asked for; a fill's (fill) is at least twice the last a fill took, up
 // to fillSlab, so that fills in a row share one. It is an estimate, not a
 // bound (a text after a void element, <br>a, has no '<' of its own, and a
-// boolean attribute no '='): a slab that runs out grows. Two counts,
+// boolean attribute no '='): a slab that runs out takes one twice the size
+// this parse or fill chose (last), even where it rode the room a document
+// left, so a small fill that runs out never takes a document's. Two counts,
 // which strings.Count does many bytes at a time, cost less than one loop
 // over every byte.
 func (p *parser) reserve(src string, fill bool) {
 	lt := strings.Count(src, "<")
 	nodes := min(lt+1, nodeSlab)
 	attrs := min(strings.Count(src, "=")+lt/2+1, attrSlab)
+	if fill {
+		p.last = [2]int{max(nodes, p.fill[0]), max(attrs, p.fill[1])}
+	} else {
+		p.last = [2]int{nodes, attrs}
+	}
 	if cap(p.nodes)-len(p.nodes) < nodes {
 		if fill {
 			nodes = max(nodes, grow(p.fill[0], fillSlab))
-			p.fill[0] = nodes
+			p.fill[0], p.last[0] = nodes, nodes
 		}
 		p.nodes = make([]html.Node, 0, nodes)
 	}
 	if cap(p.attrs)-len(p.attrs) < attrs {
 		if fill {
 			attrs = max(attrs, grow(p.fill[1], 2*fillSlab))
-			p.fill[1] = attrs
+			p.fill[1], p.last[1] = attrs, attrs
 		}
 		p.attrs = make([]html.Attribute, 0, attrs)
 	}
@@ -90,7 +102,8 @@ func grow(last, most int) int {
 
 func (p *parser) node() *html.Node {
 	if len(p.nodes) == cap(p.nodes) {
-		p.nodes = make([]html.Node, 0, grow(cap(p.nodes), nodeSlab))
+		p.last[0] = grow(p.last[0], nodeSlab)
+		p.nodes = make([]html.Node, 0, p.last[0])
 	}
 	p.nodes = p.nodes[:len(p.nodes)+1]
 	return &p.nodes[len(p.nodes)-1]
@@ -102,7 +115,8 @@ func (p *parser) node() *html.Node {
 func (p *parser) attrList(n int) []html.Attribute {
 	n++
 	if cap(p.attrs)-len(p.attrs) < n {
-		p.attrs = make([]html.Attribute, 0, max(grow(cap(p.attrs), attrSlab), n))
+		p.last[1] = max(grow(p.last[1], attrSlab), n)
+		p.attrs = make([]html.Attribute, 0, p.last[1])
 	}
 	i := len(p.attrs)
 	p.attrs = p.attrs[:i+n]

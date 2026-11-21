@@ -93,6 +93,48 @@ func TestParseSlabsFit(t *testing.T) {
 	}
 }
 
+// A fill that rides the room a whole parse left, and runs out of it (its
+// estimate fits, what it takes doesn't: a text after a void element,
+// boolean attributes), grows from its own size, not the document's: for
+// every room the document leaves near the fill's estimate, the fill takes
+// a few KB, not a whole slab.
+func TestFillSlabsFitTheRoomLeft(t *testing.T) {
+	nodeSize, attrSize := int(unsafe.Sizeof(html.Node{})), int(unsafe.Sizeof(html.Attribute{}))
+	inst := []byte(`<span>a<br>b<br>c<br>d<input type="checkbox" checked disabled required></span>`)
+	var p parser
+	fill := func() *html.Node {
+		holder := &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div}
+		if !p.parseIn(holder, nil, inst) {
+			t.Fatal("the fast parser gave the fill up")
+		}
+		return holder
+	}
+	nodes, attrs := needs(fill())
+	limit := uint64(len(inst) + 3*(nodes*nodeSize+attrs*attrSize) + minSlab*(nodeSize+attrSize) + 256)
+	worst := uint64(0)
+	for k := range 12 {
+		for j := range 12 {
+			// 300 nodes whose estimate is exact, then a node's room for
+			// each <b></b> and an attribute's for each '=' in a text.
+			doc := strings.Repeat(`<p class="a" id="b">x</p>`, 150) + strings.Repeat(`<b></b>`, k) + strings.Repeat(`<i>=</i>`, j)
+			if !p.parse(newRoot(), []byte(doc)) {
+				t.Fatal("the fast parser gave the document up")
+			}
+			roomN, roomA := cap(p.nodes)-len(p.nodes), cap(p.attrs)-len(p.attrs)
+			var a, b runtime.MemStats
+			runtime.ReadMemStats(&a)
+			fill()
+			runtime.ReadMemStats(&b)
+			got := b.TotalAlloc - a.TotalAlloc
+			worst = max(worst, got)
+			if got > limit {
+				t.Errorf("with %d nodes' and %d attributes' room left, a fill takes %d B, more than %d", roomN, roomA, got, limit)
+			}
+		}
+	}
+	t.Logf("a fill of %d nodes, %d attributes' room after a document: at most %d B (%d allowed)", nodes, attrs, worst, limit)
+}
+
 // A fill after a whole parse takes slabs sized to its own markup, the
 // first as the later ones: not a whole slab where the parse left no room.
 func TestFillSlabsFit(t *testing.T) {
