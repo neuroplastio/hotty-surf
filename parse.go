@@ -2,6 +2,7 @@ package surf
 
 import (
 	"strings"
+	"sync"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -19,7 +20,8 @@ import (
 // unclosed tag, an entity without its semicolon) makes it give up, and
 // the render is parsed by x/net/html instead. An <svg> is parsed by
 // x/net/html too (foreign content has its own rules), once per distinct
-// markup: an icon's tree is cloned from the first.
+// markup in the process (svgs): an icon's tree is copied from the first,
+// whichever surface's render it was in.
 //
 // The surfparsecheck build tag parses every render both ways and panics
 // where they differ (parse_check.go): the examples' tests run with it.
@@ -30,8 +32,7 @@ type parser struct {
 	nodes []html.Node
 	attrs []html.Attribute
 	stack []*html.Node
-	base  int                   // the stack's open elements no end tag closes
-	svg   map[string]*html.Node // an <svg>'s markup → its tree, to clone
+	base  int // the stack's open elements no end tag closes
 	// fill is the size of the last slab of nodes and of attributes a
 	// fill took since the last whole parse (reserve), which the next a
 	// fill takes doubles: fills in a row share slabs, as they shared the
@@ -51,8 +52,9 @@ const (
 	nodeSlab = 512
 	attrSlab = 1024
 	minSlab  = 16
-	fillSlab = 64  // the most nodes a slab a fill takes holds (reserve)
-	svgCache = 256 // distinct <svg> markups kept
+	fillSlab = 64       // the most nodes a slab a fill takes holds (reserve)
+	svgCache = 256      // distinct <svg> markups kept, in each of svgs' two generations
+	svgMax   = 16 << 10 // the longest <svg> markup kept: an icon's, not a chart's
 )
 
 // reserve makes room in the slabs for what src most likely takes, up to
@@ -492,20 +494,61 @@ func (p *parser) svgTree(top *html.Node, s string, i int) (int, bool) {
 		return 0, false
 	}
 	src := s[i:end]
-	t, ok := p.svg[src]
-	if !ok {
+	t := svgs.get(src)
+	if t == nil {
 		kids, err := html.ParseFragment(strings.NewReader(src), bodyCtx)
 		if err != nil || len(kids) != 1 || kids[0].DataAtom != atom.Svg || kids[0].Namespace != "svg" {
 			return 0, false
 		}
 		t = kids[0]
-		if p.svg == nil || len(p.svg) >= svgCache {
-			p.svg = map[string]*html.Node{}
-		}
-		p.svg[strings.Clone(src)] = t
+		svgs.put(src, t)
 	}
-	top.AppendChild(clone(t))
+	top.AppendChild(p.copyIn(t))
 	return end, true
+}
+
+// svgs are the trees of the <svg> markups the process's renders held, by
+// markup, which no render changes: each takes a copy (copyIn). A new
+// block is a new Surface, and its icons are those the blocks before it
+// parsed. It keeps two generations of at most svgCache each, and an
+// <svg> found in the older moves to the newer: when the newer is full,
+// it becomes the older, and what went unused for a generation is
+// forgotten. Surfaces render on their own goroutines, so it is locked.
+var svgs svgTrees
+
+type svgTrees struct {
+	mu       sync.Mutex
+	new, old map[string]*html.Node
+}
+
+func (c *svgTrees) get(src string) *html.Node {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if t, ok := c.new[src]; ok {
+		return t
+	}
+	t, ok := c.old[src]
+	if ok {
+		c.add(src, t)
+	}
+	return t
+}
+
+// put keeps t as src's tree, where src is an icon's length or less.
+func (c *svgTrees) put(src string, t *html.Node) {
+	if len(src) > svgMax {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.add(strings.Clone(src), t)
+}
+
+func (c *svgTrees) add(src string, t *html.Node) {
+	if c.new == nil || len(c.new) >= svgCache {
+		c.old, c.new = c.new, make(map[string]*html.Node, svgCache)
+	}
+	c.new[src] = t
 }
 
 // svgEnd is where the <svg> element at s[i] ends, after its </svg>: -1
@@ -532,16 +575,18 @@ func svgEnd(s string, i int) int {
 	return -1
 }
 
-// clone is a deep copy of n, which a render may change (an id put first,
-// an empty class taken out) without touching n.
-func clone(n *html.Node) *html.Node {
-	c := &html.Node{Type: n.Type, DataAtom: n.DataAtom, Data: n.Data, Namespace: n.Namespace}
+// copyIn is a deep copy of n in the parse's slabs, which a render may
+// change (an id put first, an empty class taken out) without touching n:
+// each node's attributes have room for the id (attrList). Its strings are
+// n's, which nothing changes.
+func (p *parser) copyIn(n *html.Node) *html.Node {
+	c := p.node()
+	c.Type, c.DataAtom, c.Data, c.Namespace = n.Type, n.DataAtom, n.Data, n.Namespace
 	if len(n.Attr) > 0 {
-		c.Attr = make([]html.Attribute, len(n.Attr))
-		copy(c.Attr, n.Attr)
+		c.Attr = append(p.attrList(len(n.Attr)), n.Attr...)
 	}
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
-		c.AppendChild(clone(k))
+		c.AppendChild(p.copyIn(k))
 	}
 	return c
 }
