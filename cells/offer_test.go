@@ -322,7 +322,13 @@ func TestOfferIsTheTree(t *testing.T) {
 					act = walkStep(t, rr, o, cols, rows)
 				}
 				if len(h.diverged) > 0 {
-					t.Logf("%s: the wire parses as another tree, where the Screen shows the surface's: %s", name, h.diverged[0])
+					// A document's markup may parse as another tree (the
+					// wire's own divergence); a fragment's is the differ's.
+					if d := h.diverged[0]; strings.HasPrefix(d, "a fragment:") {
+						t.Errorf("%s: a delta's markup parses as another tree than its nodes: %s", name, d)
+					} else {
+						t.Logf("%s: the wire parses as another tree, where the Screen shows the surface's: %s", name, d)
+					}
 					break
 				}
 				taken += h.taken()
@@ -400,7 +406,11 @@ func TestDeltaOffersAreTheTree(t *testing.T) {
 			}
 			taken += h.taken()
 			if len(h.diverged) > 0 {
-				t.Logf("run %d: the wire parses as another tree, where the Screen shows the surface's: %s", run, h.diverged[0])
+				if d := h.diverged[0]; strings.HasPrefix(d, "a fragment:") {
+					t.Errorf("run %d: a delta's markup parses as another tree than its nodes: %s", run, d)
+				} else {
+					t.Logf("run %d: the wire parses as another tree, where the Screen shows the surface's: %s", run, d)
+				}
 				break
 			}
 			if !sameCells(t, fmt.Sprintf("run %d step %d (%s)", run, i, act), got.c.Cells(), want.c.Cells()) {
@@ -530,16 +540,10 @@ func TestDeltaOfferEdges(t *testing.T) {
 			t.Errorf("the Screen shows %q, from the surface's nodes as they were after", l)
 		}
 	})
-	t.Run("one copy for many", func(t *testing.T) {
-		// Every fragment's nodes in one array: a copy each, sharing it.
-		c, copies := screen(t, frag("x"), frag("y"), frag("z"))
-		size := unsafe.Sizeof(html.Node{})
-		for i := 1; i < len(copies); i++ {
-			// A <p> and its text a fragment, one after the other.
-			if uintptr(unsafe.Pointer(copies[i]))-uintptr(unsafe.Pointer(copies[i-1])) != 2*size {
-				t.Fatal("the fragments' copies aren't in one array")
-			}
-		}
+	t.Run("a fragment's nodes, capped", func(t *testing.T) {
+		// A copy a fragment, which shares no array with another's, is
+		// TestDeltaOffersRetainWhatAParseDoes's.
+		c, _ := screen(t, frag("x"), frag("y"), frag("z"))
 		if cap(c.frags.frags[0].nodes) != 1 {
 			t.Error("a fragment's nodes have room for the next's")
 		}

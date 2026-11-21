@@ -77,19 +77,18 @@ type offeredFragment struct {
 	nodes  []*html.Node
 }
 
-// OfferDelta takes a copy of each fragment's nodes, all in one copy, for
-// the ops of the next a=delta for name whose markup is the fragment's
-// (fragment). The nodes are lent for the call, as OfferDocument's are.
+// OfferDelta takes a copy of each fragment's nodes, a copy a fragment,
+// for the ops of the next a=delta for name whose markup is the
+// fragment's (fragment). The nodes are lent for the call, as
+// OfferDocument's are. A copy a fragment, not one for the delta: a node
+// a copy holds keeps its array and its strings, and a row a log keeps
+// would keep every other fragment of its delta (a status written again)
+// as long as it stays.
 func (h screenHost) OfferDelta(name string, frags []rt.Fragment) {
-	var all []*html.Node
-	for _, f := range frags {
-		all = append(all, f.Nodes...)
-	}
-	copies := copyNodes(all)
 	o := &offeredDelta{name: name, frags: make([]offeredFragment, len(frags))}
 	for i, f := range frags {
-		o.frags[i] = offeredFragment{markup: f.Markup, nodes: copies[:len(f.Nodes):len(f.Nodes)]}
-		copies = copies[len(f.Nodes):]
+		c := copyNodes(f.Nodes)
+		o.frags[i] = offeredFragment{markup: f.Markup, nodes: c[:len(c):len(c)]}
 	}
 	h.c.frags = o
 }
