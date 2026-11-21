@@ -42,7 +42,7 @@ Every component is migrated one by one into its own self-contained package under
 
 Each component package owns:
 
-- `ui/<component>/<component>.templ` — `Props` (and `State` if stateful), `Hotty(p)`, `TUI(p)`, optional `ANSI(p)` / `Plain(p)`, and `Render(p)` (dispatching via `ui.ModeOf(ctx)`, falling back to `TUI(p)` for `ModeANSI` and `ModePlain` when not explicitly implemented).
+- `ui/<component>/<component>.templ` — `Props` (and `State` if stateful), `Hotty(p)`, `TUI(p)`, optional `ANSI(p)` / `Plain(p)`, and `View(p)` (dispatching via `ui.ModeOf(ctx)`, falling back to `TUI(p)` for `ModeANSI` and `ModePlain` when not explicitly implemented).
 - `ui/<component>/<component>_test.go` — unit tests for stateful/interactive components (keyboard navigation, open/close, filtering, focus trapping); stateless components are covered by their stories in `hotty-surf book`.
 - `cells.Screen` stays a clean, generic cell layout engine (flexbox, `items-center`, colour roles, `:hover`, pointer/focus, box-drawing primitives).
 - Subjective quality scores (`1/5`–`5/5`, per mode, maintainer-only) are tracked in [`vault/knowledge/component-scores.md`](../knowledge/component-scores.md).

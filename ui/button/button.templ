@@ -5,8 +5,6 @@ package button
 
 import (
 	"context"
-	"maps"
-	"strings"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -39,9 +37,9 @@ type Props struct {
 	Class string
 }
 
-// Render dispatches to Hotty or TUI according to ui.ModeOf(ctx).
+// View dispatches to Hotty or TUI according to ui.ModeOf(ctx).
 // Modes without an explicit renderer (ModeANSI, ModePlain) fall back to TUI.
-templ Render(p Props) {
+templ View(p Props) {
 	switch ui.ModeOf(ctx) {
 	case ui.ModeHotty:
 		@Hotty(p) {
@@ -69,7 +67,7 @@ templ Hotty(p Props) {
 		if s := dataSize(p); s != "" {
 			data-size={ s }
 		}
-		class={ joinClass(Class, p.Class) }
+		class={ ui.JoinClass(Class, p.Class) }
 		{ attrs... }
 	>
 		{ children... }
@@ -95,7 +93,7 @@ templ TUI(p Props) {
 		if s := dataSize(p); s != "" {
 			data-size={ s }
 		}
-		class={ joinClass(Class, p.Class) }
+		class={ ui.JoinClass(Class, p.Class) }
 		{ attrs... }
 	>
 		{ children... }
@@ -103,28 +101,21 @@ templ TUI(p Props) {
 }
 
 func resolveAttrs(ctx context.Context, p Props, interactive bool) templ.Attributes {
-	var out templ.Attributes
+	var on templ.Attributes
 	if interactive {
 		if p.OnClick != nil {
-			out = surf.On(ctx, p.ID, surf.Click(p.OnClick))
+			on = surf.On(ctx, p.ID, surf.Click(p.OnClick))
 		} else if p.ID != "" {
-			out = surf.On(ctx, p.ID)
+			on = surf.On(ctx, p.ID)
+		} else if !p.Disabled && p.Attrs["id"] == nil {
+			on = surf.On(ctx, "")
 		}
 	}
-	if len(p.Attrs) > 0 {
-		if out == nil {
-			out = maps.Clone(p.Attrs)
-		} else {
-			maps.Copy(out, p.Attrs)
-		}
-	}
+	var aria templ.Attributes
 	if p.Label != "" {
-		if out == nil {
-			out = templ.Attributes{}
-		}
-		out["aria-label"] = p.Label
+		aria = templ.Attributes{"aria-label": p.Label}
 	}
-	return out
+	return ui.MergeAttrs(on, p.Attrs, aria)
 }
 
 func dataSize(p Props) string {
@@ -135,12 +126,4 @@ func dataSize(p Props) string {
 		return "icon"
 	}
 	return "icon-" + string(p.Size)
-}
-
-func joinClass(base, extra string) string {
-	extra = strings.TrimSpace(extra)
-	if extra == "" {
-		return base
-	}
-	return base + " " + extra
 }

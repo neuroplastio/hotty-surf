@@ -17,8 +17,6 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"context"
-	"maps"
-	"strings"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -51,9 +49,9 @@ type Props struct {
 	Class string
 }
 
-// Render dispatches to Hotty or TUI according to ui.ModeOf(ctx).
+// View dispatches to Hotty or TUI according to ui.ModeOf(ctx).
 // Modes without an explicit renderer (ModeANSI, ModePlain) fall back to TUI.
-func Render(p Props) templ.Component {
+func View(p Props) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -171,7 +169,7 @@ func Hotty(p Props) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Variant)).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 67, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 65, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 				if templ_7745c5c3_Err != nil {
@@ -190,7 +188,7 @@ func Hotty(p Props) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.NewAttributeExpression(s).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 70, Col: 16}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 68, Col: 16}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 				if templ_7745c5c3_Err != nil {
@@ -205,7 +203,7 @@ func Hotty(p Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var7 = []any{joinClass(Class, p.Class)}
+			var templ_7745c5c3_Var7 = []any{ui.JoinClass(Class, p.Class)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_ElementWriter, templ_7745c5c3_Var7...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -304,7 +302,7 @@ func TUI(p Props) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Variant)).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 93, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 91, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 				if templ_7745c5c3_Err != nil {
@@ -323,7 +321,7 @@ func TUI(p Props) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templruntime.NewAttributeExpression(s).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 96, Col: 16}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `button.templ`, Line: 94, Col: 16}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 				if templ_7745c5c3_Err != nil {
@@ -338,7 +336,7 @@ func TUI(p Props) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 = []any{joinClass(Class, p.Class)}
+			var templ_7745c5c3_Var12 = []any{ui.JoinClass(Class, p.Class)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_ElementWriter, templ_7745c5c3_Var12...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -387,28 +385,21 @@ func TUI(p Props) templ.Component {
 }
 
 func resolveAttrs(ctx context.Context, p Props, interactive bool) templ.Attributes {
-	var out templ.Attributes
+	var on templ.Attributes
 	if interactive {
 		if p.OnClick != nil {
-			out = surf.On(ctx, p.ID, surf.Click(p.OnClick))
+			on = surf.On(ctx, p.ID, surf.Click(p.OnClick))
 		} else if p.ID != "" {
-			out = surf.On(ctx, p.ID)
+			on = surf.On(ctx, p.ID)
+		} else if !p.Disabled && p.Attrs["id"] == nil {
+			on = surf.On(ctx, "")
 		}
 	}
-	if len(p.Attrs) > 0 {
-		if out == nil {
-			out = maps.Clone(p.Attrs)
-		} else {
-			maps.Copy(out, p.Attrs)
-		}
-	}
+	var aria templ.Attributes
 	if p.Label != "" {
-		if out == nil {
-			out = templ.Attributes{}
-		}
-		out["aria-label"] = p.Label
+		aria = templ.Attributes{"aria-label": p.Label}
 	}
-	return out
+	return ui.MergeAttrs(on, p.Attrs, aria)
 }
 
 func dataSize(p Props) string {
@@ -419,14 +410,6 @@ func dataSize(p Props) string {
 		return "icon"
 	}
 	return "icon-" + string(p.Size)
-}
-
-func joinClass(base, extra string) string {
-	extra = strings.TrimSpace(extra)
-	if extra == "" {
-		return base
-	}
-	return base + " " + extra
 }
 
 var _ = templruntime.GeneratedTemplate

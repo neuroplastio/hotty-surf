@@ -182,6 +182,9 @@
   outline: var(--hotty-px) solid var(--ring);
   outline-offset: var(--hotty-px);
 }
+.book-tip {
+  box-shadow: inset 0 0 0 var(--hotty-px) var(--ring);
+}
 .book-hit {
   position: absolute;
   cursor: pointer;

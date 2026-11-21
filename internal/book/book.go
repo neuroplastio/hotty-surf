@@ -108,6 +108,11 @@ type shown struct {
 	// retried is set once a refused focus was tried again (ENOTARGET):
 	// a second refusal leaves the keyboard where it is.
 	retried bool
+	// baseTop and baseLeft record the story's initial trimmed origin so
+	// floating tooltips that appear in trimmed padding rows/cols offset the
+	// pane negatively instead of shifting the underlying controls.
+	hasBase           bool
+	baseTop, baseLeft int
 }
 
 // New is a book of every story, showing the first.
@@ -657,9 +662,24 @@ func (f focusRect) style() templ.SafeCSS {
 // paneView holds the trimmed cell lines, unified interactive hit boxes, and
 // unified focus ring for the cells preview.
 type paneView struct {
-	lines [][]seg
-	hits  []hitBox
-	focus focusRect
+	lines        [][]seg
+	hits         []hitBox
+	focus        focusRect
+	offX, offY   int // negative cell offset when an overlay (tooltip) expands into trimmed padding
+}
+
+func (pv paneView) paneStyle() templ.SafeCSS {
+	if pv.offX == 0 && pv.offY == 0 {
+		return ""
+	}
+	var parts []string
+	if pv.offY != 0 {
+		parts = append(parts, fmt.Sprintf("margin-top:calc(%d*var(--hotty-cell-h))", pv.offY))
+	}
+	if pv.offX != 0 {
+		parts = append(parts, fmt.Sprintf("margin-left:%dch", pv.offX))
+	}
+	return templ.SafeCSS(strings.Join(parts, ";"))
 }
 
 // lines are the pane's lines as runs from Cells (with colours and
@@ -681,10 +701,12 @@ func (a *App) lines() paneView {
 			out[i] = rowSegs(row)
 		}
 	}
-	// The blank lines at the top and end go; a line of spaces with a look or
-	// fill (an empty field, underlined) is no blank.
+	// The blank lines at the top (at most 1 standard p-4 padding row, so
+	// intentional top breathing room like pt-12 for top tooltips stays) and
+	// end go; a line of spaces with a look or fill (an empty field,
+	// underlined) is no blank.
 	trimTop := 0
-	for len(out) > 0 && blank(out[0]) {
+	for len(out) > 0 && trimTop < 1 && blank(out[0]) {
 		out = out[1:]
 		trimTop++
 	}
@@ -723,6 +745,16 @@ func (a *App) lines() paneView {
 	}
 	var pv paneView
 	pv.lines = out
+	if !sh.hasBase {
+		sh.hasBase, sh.baseTop, sh.baseLeft = true, trimTop, trimLeft
+	} else {
+		if trimTop < sh.baseTop {
+			pv.offY = trimTop - sh.baseTop
+		}
+		if trimLeft < sh.baseLeft {
+			pv.offX = trimLeft - sh.baseLeft
+		}
+	}
 	if !mode.Interactive() {
 		return pv
 	}
@@ -940,6 +972,9 @@ func cellClasses(a cells.Attr, fg, bg cells.Role) string {
 	}
 	if a&cells.Strike != 0 {
 		cs = append(cs, "line-through")
+	}
+	if fg == "popover-foreground" && bg == "popover" {
+		cs = append(cs, "book-tip")
 	}
 	return strings.Join(cs, " ")
 }

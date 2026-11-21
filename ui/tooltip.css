@@ -1,0 +1,9 @@
+[data-tooltip]::before {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: var(--hotty-px) solid var(--ring);
+}
+
+[data-tooltip][data-arrow]::after {
+  background-color: var(--popover);
+}

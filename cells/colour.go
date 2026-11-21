@@ -145,7 +145,10 @@ func cellOf(l *layout, k cell, rc *roleCache) Cell {
 	fg, bg := rc.fg, rc.bg
 	switch {
 	case k.look&lTip != 0:
-		fg, bg = "primary-foreground", "primary" // Basecoat's tooltip
+		fg, bg = "popover-foreground", "popover"
+		if k.look&lMuted != 0 {
+			fg = "muted-foreground"
+		}
 	case k.look&lRule != 0:
 		fg = "border"
 	case k.look&lMuted != 0:

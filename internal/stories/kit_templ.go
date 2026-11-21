@@ -251,7 +251,7 @@ func buttonDefault(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = button.Render(button.Props{ID: "save", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.View(button.Props{ID: "save", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -325,7 +325,7 @@ func bookButton(p *Button) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = button.Render(button.Props{ID: "save", Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.View(button.Props{ID: "save", Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -725,7 +725,7 @@ func buttonDestructive(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = button.Render(button.Props{ID: "delete", Variant: ui.Destructive, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.View(button.Props{ID: "delete", Variant: ui.Destructive, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -788,7 +788,7 @@ func buttonGhostWithIcon(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = button.Render(button.Props{ID: "new", Variant: ui.Ghost, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var26), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.View(button.Props{ID: "new", Variant: ui.Ghost, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var26), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -810,7 +810,7 @@ func buttonGhostWithIcon(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = button.Render(button.Props{ID: "settings", Variant: ui.Ghost, IconOnly: true, Label: "Settings", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.View(button.Props{ID: "settings", Variant: ui.Ghost, IconOnly: true, Label: "Settings", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -869,7 +869,7 @@ func buttonDisabled(s *kitState) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = button.Render(button.Props{ID: "save", Disabled: true, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.View(button.Props{ID: "save", Disabled: true, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -958,7 +958,7 @@ func buttonEvery(s *kitState) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = button.Render(button.Props{Size: z, Variant: v, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = button.View(button.Props{Size: z, Variant: v, OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -991,7 +991,7 @@ func buttonEvery(s *kitState) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = button.Render(button.Props{Size: z, IconOnly: true, Variant: ui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var33), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = button.View(button.Props{Size: z, IconOnly: true, Variant: ui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var33), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -39,10 +39,10 @@ func TestTooltip(t *testing.T) {
 	}{
 		{"above", "", 10, []string{"", "        Save the file", "          [ Save ]"}},
 		{"below", "bottom", 10, []string{"", "", "          [ Save ]", "        Save the file"}},
-		{"left", "left", 20, []string{"", "", "      Save the file [ Save ]"}},
-		{"left, no room", "left", 10, []string{"", "", "          [ Save ] Save the file"}},
-		{"right", "right", 10, []string{"", "", "          [ Save ] Save the file"}},
-		{"right, no room", "right", 30, []string{"", "", "                Save the file [ Save ]"}},
+		{"left", "left", 20, []string{"", "", "     Save the file  [ Save ]"}},
+		{"left, no room", "left", 10, []string{"", "", "          [ Save ]  Save the file"}},
+		{"right", "right", 10, []string{"", "", "          [ Save ]  Save the file"}},
+		{"right, no room", "right", 30, []string{"", "", "               Save the file  [ Save ]"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			side := ""
@@ -67,8 +67,7 @@ func TestTooltip(t *testing.T) {
 }
 
 // A tooltip above the first row goes below; one wider than the screen is
-// cut, inside it; Cells names it in Basecoat's tooltip colours; Lines
-// draws it reversed.
+// cut, inside it; Cells names it in popover colours; Lines draws it reversed.
 func TestTooltipEdges(t *testing.T) {
 	c := tipScreen(t, `<span data-tooltip="a hint much longer than the screen is wide">x</span>`, 12, 3)
 	c.Move(0, 0, 0)
@@ -80,7 +79,7 @@ func TestTooltipEdges(t *testing.T) {
 		t.Errorf("Lines doesn't draw the tooltip reversed: %q", c.Lines()[1])
 	}
 	cell := c.Cells()[1][2]
-	if cell.Fg != "primary-foreground" || cell.Bg != "primary" {
+	if cell.Fg != "popover-foreground" || cell.Bg != "popover" {
 		t.Errorf("the tooltip's cell is %q on %q", cell.Fg, cell.Bg)
 	}
 }

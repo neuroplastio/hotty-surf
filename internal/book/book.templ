@@ -116,7 +116,7 @@ templ cellsPreview(a *App) {
 		{{ inert := a.inert(ctx) }}
 		{{ tab := a.mode().Interactive() && a.cur.controls && !inert }}
 		<span class="book-edge" aria-label="Enter cells preview" if tab { tabindex="0" } { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }></span>
-		<div class="book-pane" if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
+		<div class="book-pane" style={ pv.paneStyle() } if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
 			for _, l := range pv.lines {
 				<div class="book-line">
 					for _, sg := range l {

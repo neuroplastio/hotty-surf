@@ -11,7 +11,7 @@
 | avatar | — | no score | no score | no score | no score | |
 | badge | — | no score | no score | no score | no score | |
 | breadcrumb | — | no score | no score | no score | no score | |
-| button | `ui/button` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `Render`); size-consistent heights, bold `default`/`lg`, muted-foreground outline, unified hover/click/focus ring |
+| button | `ui/button` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `View`); size-consistent heights, bold `default`/`lg`, muted-foreground outline, unified hover/click/focus ring |
 | button-group | — | no score | no score | no score | no score | |
 | card | — | no score | no score | no score | no score | |
 | chart | — | no score | no score | no score | no score | |
@@ -44,4 +44,4 @@
 | tabs | — | no score | no score | no score | no score | |
 | textarea | — | no score | no score | no score | no score | |
 | toast | — | no score | no score | no score | no score | |
-| tooltip | — | no score | no score | no score | no score | |
+| tooltip | `ui/tooltip` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `View`) with typed `Side`/`Align`; popover theme + thin border in Hotty & TUI |

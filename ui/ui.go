@@ -47,7 +47,7 @@ const (
 // host's dialog) uses it as it is. A surface links the kit rather than
 // carry it: Surface.Link(Sheet()).
 func Stylesheet() string {
-	return kitCSS + navCSS + controlsCSS + sliderCSS + contextMenuCSS + toastCSS
+	return kitCSS + navCSS + controlsCSS + sliderCSS + contextMenuCSS + toastCSS + tooltipCSS
 }
 
 // Sheet is Stylesheet as a resource that documents link rather than carry
@@ -88,6 +88,9 @@ var navCSS string
 
 //go:embed controls.css
 var controlsCSS string
+
+//go:embed tooltip.css
+var tooltipCSS string
 
 // Icon is the icon named name, one of the kit's Lucide icons, as an inline
 // SVG. The kit has a subset of Lucide: the icons its own components use, and

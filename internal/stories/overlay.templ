@@ -3,8 +3,11 @@ package stories
 import (
 	"strconv"
 	"strings"
+
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/tooltip"
 )
 
 // The stories of B3's overlays: Popover and Command. Their data is made
@@ -132,18 +135,18 @@ templ sliderStory(s *overlayState, ranged bool) {
 
 templ tooltipStory(sides bool) {
 	<div class="flex gap-3 p-4">
-		@ui.Tooltip(ui.TooltipProps{Text:"Add to library"}) {
-			@ui.Button(ui.ButtonProps{}) { Add }
+		@tooltip.View(tooltip.Props{Text: "Add to library"}) {
+			@button.View(button.Props{}) { Add }
 		}
 		if sides {
-			@ui.Tooltip(ui.TooltipProps{Text:"Below", Side:"bottom", Arrow:true}) {
-				@ui.Button(ui.ButtonProps{}) { Bottom }
+			@tooltip.View(tooltip.Props{Text: "Below", Side: tooltip.Bottom, Arrow: true}) {
+				@button.View(button.Props{}) { Bottom }
 			}
-			@ui.Tooltip(ui.TooltipProps{Text:"Left", Side:"left"}) {
-				@ui.Button(ui.ButtonProps{}) { Left }
+			@tooltip.View(tooltip.Props{Text: "Left", Side: tooltip.Left}) {
+				@button.View(button.Props{}) { Left }
 			}
-			@ui.Tooltip(ui.TooltipProps{Text:"Right", Side:"right"}) {
-				@ui.Button(ui.ButtonProps{}) { Right }
+			@tooltip.View(tooltip.Props{Text: "Right", Side: tooltip.Right}) {
+				@button.View(button.Props{}) { Right }
 			}
 		}
 	</div>

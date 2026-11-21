@@ -654,8 +654,9 @@ func (l *layout) drawOverlays() {
 // (data-tooltip, ui.Tooltip's), as a host shows it on hover: its text, a
 // cell in from each end, on one row beside the element, on its side
 // (data-side: above unless it says otherwise; the other side where the
-// screen has no room, as a browser flips one), over everything else, inside the screen and cut
-// with an ellipsis where the screen is narrower.
+// screen has no room, as a browser flips one), aligned by data-align,
+// over everything else, inside the screen and cut with an ellipsis where
+// the screen is narrower.
 func (l *layout) drawTip() {
 	c := l.c
 	n := c.tip
@@ -673,18 +674,24 @@ func (l *layout) drawTip() {
 	w := displaywidth.String(text)
 	above, below := b.y-1, b.y+b.h
 	x, y := b.x+(b.w-w)/2, above
+	switch attr(n, "data-align") {
+	case "start":
+		x = b.x
+	case "end":
+		x = b.x + b.w - w
+	}
 	switch attr(n, "data-side") {
 	case "bottom":
 		y = below
 	case "left", "inline-start":
-		x, y = b.x-w, b.y
+		x, y = b.x-w-1, b.y
 		if x < 0 {
-			x = b.x + b.w
+			x = b.x + b.w + 1
 		}
 	case "right", "inline-end":
-		x, y = b.x+b.w, b.y
-		if x+w > c.cols && b.x-w >= 0 {
-			x = b.x - w
+		x, y = b.x+b.w+1, b.y
+		if x+w > c.cols && b.x-w-1 >= 0 {
+			x = b.x - w - 1
 		}
 	}
 	top, end := c.scroll, c.scroll+c.rows

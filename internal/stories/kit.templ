@@ -172,7 +172,7 @@ templ count(s *kitState) {
 templ buttonDefault(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
-			@button.Render(button.Props{ID: "save", OnClick: s.click}) {
+			@button.View(button.Props{ID: "save", OnClick: s.click}) {
 				Save
 			}
 		</div>
@@ -183,7 +183,7 @@ templ buttonDefault(s *kitState) {
 templ bookButton(p *Button) {
 	<div class="flex flex-col gap-3">
 		<div>
-			@button.Render(button.Props{ID: "save", Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}) {
+			@button.View(button.Props{ID: "save", Variant: bookVariant(p.Variant), Size: bookSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}) {
 				if p.Icon {
 					@ui.Icon("circle-plus", "")
 				}
@@ -257,7 +257,7 @@ func bookTabText(tab string) string {
 templ buttonDestructive(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
-			@button.Render(button.Props{ID: "delete", Variant: ui.Destructive, OnClick: s.click}) {
+			@button.View(button.Props{ID: "delete", Variant: ui.Destructive, OnClick: s.click}) {
 				Delete
 			}
 		</div>
@@ -268,11 +268,11 @@ templ buttonDestructive(s *kitState) {
 templ buttonGhostWithIcon(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div class="flex flex-row gap-2">
-			@button.Render(button.Props{ID: "new", Variant: ui.Ghost, OnClick: s.click}) {
+			@button.View(button.Props{ID: "new", Variant: ui.Ghost, OnClick: s.click}) {
 				@ui.Icon("plus", "")
 				New
 			}
-			@button.Render(button.Props{ID: "settings", Variant: ui.Ghost, IconOnly: true, Label: "Settings", OnClick: s.click}) {
+			@button.View(button.Props{ID: "settings", Variant: ui.Ghost, IconOnly: true, Label: "Settings", OnClick: s.click}) {
 				@ui.Icon("settings-2", "")
 			}
 		</div>
@@ -283,7 +283,7 @@ templ buttonGhostWithIcon(s *kitState) {
 templ buttonDisabled(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
 		<div>
-			@button.Render(button.Props{ID: "save", Disabled: true, OnClick: s.click}) {
+			@button.View(button.Props{ID: "save", Disabled: true, OnClick: s.click}) {
 				Save
 			}
 		</div>
@@ -317,7 +317,7 @@ templ buttonEvery(s *kitState) {
 		for _, z := range allSizes {
 			<div class="flex flex-row flex-wrap items-center gap-2">
 				for _, v := range allVariants {
-					@button.Render(button.Props{Size: z, Variant: v, OnClick: s.click}) {
+					@button.View(button.Props{Size: z, Variant: v, OnClick: s.click}) {
 						{ variantName(v) }
 					}
 				}
@@ -325,7 +325,7 @@ templ buttonEvery(s *kitState) {
 		}
 		<div class="flex flex-row flex-wrap items-center gap-2">
 			for _, z := range allSizes {
-				@button.Render(button.Props{Size: z, IconOnly: true, Variant: ui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}) {
+				@button.View(button.Props{Size: z, IconOnly: true, Variant: ui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}) {
 					@ui.Icon("plus", "")
 				}
 			}
