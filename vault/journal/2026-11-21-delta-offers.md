@@ -17,9 +17,13 @@ the Screen from the bytes surf had just rendered from its own nodes.
   markup. surf's differ collects them as it renders (`render`, `inner`)
   only where the surface has a host. The surface offers them as it
   writes the delta, lent for the call, as the document's nodes are.
-- **The copy, in cells, inside the call.** Every fragment's nodes are
-  copied in one `copyNodes`. Each fragment's list is capped at its
-  length.
+- **The copy, in cells, inside the call.** Each fragment gets a copy of
+  its own (`copyNodes`), its list capped at its length. One copy for the
+  whole delta shared arrays and a string buffer among its fragments, so
+  a row a log keeps kept every other fragment of its step, such as a
+  status written again. A verifier's probe showed it: after 400 steps a
+  Screen with offers held 11.2 MB where a parsing one held 420 KB. With
+  a copy a fragment it holds what a parse does.
 - **Taken by bytes.** The next `a=delta` for the surface takes the
   offer. Each op with markup (`fragment`) takes the next fragment's copy
   where its markup is that fragment's, byte for byte. From the first op
@@ -40,7 +44,7 @@ the Screen from the bytes surf had just rendered from its own nodes.
   steps: another document's markup, a part added, or random texts and
   attributes. That makes every op the differ writes. The Screen that
   takes offers is held to one that parses, cell for cell. 6,147
-  fragments were offered, and the Screen's trees took 17,812 of their
+  fragments were offered, and the Screen's trees took 17,545 of their
   nodes.
 - **TestOfferIsTheTree** (the stories' walks) counts the fragments
   taken as well.
@@ -52,7 +56,19 @@ the Screen from the bytes surf had just rendered from its own nodes.
   - a document between, and `a=del` and the delete of every surface;
   - a compressed delta;
   - nodes changed after the call;
-  - one array for every fragment's copies.
+  - each fragment's nodes capped.
+- **TestDeltaOffersRetainWhatAParseDoes.** A log appends a row each
+  step beside a 60-span status written again. Over 300 steps, the Screen
+  with offers keeps no more than 1.5 times what a parsing one keeps,
+  plus 64 KB: 359 KB against 358 KB. One copy for the delta keeps
+  8,433 KB.
+- **TestDeltaOffersThroughFill.** Compiled rows in a column and in a
+  tbody change at random through `fill` (fragments parsed in place by
+  `parseIn`, then `restop`). They're held to the oracle, with any
+  divergence an error, and to a parsing Screen node for node and cell
+  for cell. 780 fragments were offered, all taken.
+- A fragment's divergence fails TestOfferIsTheTree and
+  TestDeltaOffersAreTheTree. A document's is logged, as before.
 - **FuzzHandoff** takes two renders now: a document, then the delta to
   the next.
 - **TestDeltaOfferSparesTheParse.** Rows that come and go take 395 → 253
@@ -63,7 +79,8 @@ the Screen from the bytes surf had just rendered from its own nodes.
   - no name check;
   - an offer kept past another surface's delta, a document or `a=del`;
   - room left for the next fragment;
-  - no copy.
+  - no copy;
+  - one copy for the whole delta (the retention test).
 
 ## Measured
 
@@ -76,4 +93,7 @@ rough). The bench step is 12 rows written again, on a Screen.
 | step on a Screen | 254,750 B, 1,274 allocs | 254,577 B, 1,274 | 234,162 B, 1,170 |
 | new pill | 75,182 B, 672 allocs | 66,996 B, 408 | 66,996 B, 408 |
 
-hello.wasm under TinyGo: 2,503,141 to 2,504,013 B.
+hello.wasm under TinyGo: 2,503,141 to 2,504,013 B. That's the fragments'
+collection, which a browser build links but never runs, since a page's
+surface has no in-process host. Leaving it out would need a build tag
+on the differ, which isn't worth 872 B.
