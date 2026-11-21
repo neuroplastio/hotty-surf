@@ -63,6 +63,37 @@ func (h screenHost) OfferDocument(name, doc string, nodes []*html.Node) {
 	h.c.offer = &offered{name: name, doc: doc, body: body}
 }
 
+// offeredDelta is a delta's fragments as its surface offered them: the
+// surface's name, and each fragment's markup and its nodes' copies, of
+// which the ops before next took theirs (fragment).
+type offeredDelta struct {
+	name  string
+	frags []offeredFragment
+	next  int
+}
+
+type offeredFragment struct {
+	markup string
+	nodes  []*html.Node
+}
+
+// OfferDelta takes a copy of each fragment's nodes, all in one copy, for
+// the ops of the next a=delta for name whose markup is the fragment's
+// (fragment). The nodes are lent for the call, as OfferDocument's are.
+func (h screenHost) OfferDelta(name string, frags []rt.Fragment) {
+	var all []*html.Node
+	for _, f := range frags {
+		all = append(all, f.Nodes...)
+	}
+	copies := copyNodes(all)
+	o := &offeredDelta{name: name, frags: make([]offeredFragment, len(frags))}
+	for i, f := range frags {
+		o.frags[i] = offeredFragment{markup: f.Markup, nodes: copies[:len(f.Nodes):len(f.Nodes)]}
+		copies = copies[len(f.Nodes):]
+	}
+	h.c.frags = o
+}
+
 // copyNodes is a deep copy of ns: its nodes in one array, its attributes
 // in another, each node's list capped at its length (a set that adds one
 // moves the list rather than write over the next node's), and its strings

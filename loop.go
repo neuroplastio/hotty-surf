@@ -109,7 +109,7 @@ func (s *Surface) send() error {
 	if err != nil {
 		return err
 	}
-	d := differ{s: s}
+	d := differ{s: s, offer: s.host != nil}
 	if s.cssDue {
 		css := s.css
 		d.ops = append(d.ops, hotty.Op{Op: "text", Target: cssID, Value: &css})
@@ -162,6 +162,10 @@ func (s *Surface) send() error {
 	var cmds []string
 	if len(d.ops) > 0 {
 		cmds = append(cmds, hotty.Delta(s.name, d.ops))
+		if len(d.frags) > 0 {
+			// Lent for the call, as Document's nodes are.
+			s.host.OfferDelta(s.name, d.frags)
+		}
 	}
 	cmds = append(cmds, d.fields...)
 	for id, change := range s.pendingNative {

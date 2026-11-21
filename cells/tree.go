@@ -19,6 +19,7 @@ import (
 // load takes a document as the surface's whole tree: the tree its
 // surface offered for it (offer.go), or else the one it parses as.
 func (c *Screen) load(name, doc string) error {
+	c.frags = nil
 	if o := c.offer; o != nil {
 		c.offer = nil
 		if o.name == name && o.doc == doc {
@@ -268,7 +269,7 @@ func (c *Screen) op(o hotty.Op) error {
 			}
 		})
 		clear(t)
-		for _, n := range fragment(v, t) {
+		for _, n := range c.fragment(v, t) {
 			t.AppendChild(n)
 		}
 		c.adopt(t, old)
@@ -282,7 +283,7 @@ func (c *Screen) op(o hotty.Op) error {
 		if o.Op == "after" {
 			ref = t.NextSibling
 		}
-		for _, n := range fragment(v, p) {
+		for _, n := range c.fragment(v, p) {
 			p.InsertBefore(n, ref)
 		}
 		if o.Op == "replace" {
@@ -291,7 +292,7 @@ func (c *Screen) op(o hotty.Op) error {
 		c.reshaped, c.ids = true, nil
 	case "append", "prepend":
 		first := t.FirstChild
-		for _, n := range fragment(v, t) {
+		for _, n := range c.fragment(v, t) {
 			if o.Op == "append" || first == nil {
 				t.AppendChild(n)
 			} else {
@@ -363,6 +364,22 @@ func hidden(n *html.Node) bool {
 	// Whatever the pointer is over: a hover: class showing or hiding an
 	// element under it doesn't take its focus.
 	return closest(n, func(m *html.Node) bool { return styleOf(m, false).display == dNone }) != nil
+}
+
+// fragment is markup s as the children of ctx: the copy of the nodes its
+// surface offered for these bytes where it did (offer.go), or else
+// its parse.
+func (c *Screen) fragment(s string, ctx *html.Node) []*html.Node {
+	if o := c.taking; o != nil {
+		if o.next < len(o.frags) && o.frags[o.next].markup == s {
+			nodes := o.frags[o.next].nodes
+			o.next++
+			return nodes
+		}
+		// Other bytes than offered: the rest of the delta is parsed.
+		c.taking = nil
+	}
+	return fragment(s, ctx)
 }
 
 // fragment parses HTML as the children of ctx, so that rows and items

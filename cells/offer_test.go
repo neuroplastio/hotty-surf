@@ -39,6 +39,11 @@ type checked struct {
 	c        *Screen
 	offers   int
 	diverged []string
+	// frags are the fragments of deltas offered, and copies the nodes the
+	// Screen copied for them, the last delta's: taken says which of these
+	// the Screen's tree holds.
+	frags  int
+	copies []*html.Node
 }
 
 // check makes c's offers go through a checked, until the test ends.
@@ -75,6 +80,67 @@ func (h *checked) OfferDocument(name, doc string, nodes []*html.Node) {
 	if d := sameTrees(w, nodes, false); d != "" {
 		h.diverged = append(h.diverged, d)
 	}
+}
+
+func (h *checked) OfferDelta(name string, frags []rt.Fragment) {
+	h.t.Helper()
+	screenHost{h.c}.OfferDelta(name, frags)
+	h.copies = h.copies[:0]
+	for i, f := range frags {
+		h.frags++
+		got := h.c.frags.frags[i]
+		if got.markup != f.Markup {
+			h.t.Errorf("fragment %d's markup isn't the surface's", i)
+		}
+		if d := sameTrees(got.nodes, f.Nodes, true); d != "" {
+			h.t.Errorf("the Screen's copy of fragment %d isn't the surface's nodes: %s", i, d)
+		}
+		for _, n := range got.nodes {
+			if n.Parent != nil || n.PrevSibling != nil || n.NextSibling != nil {
+				h.t.Errorf("fragment %d's copy is linked to another node", i)
+			}
+		}
+		if cap(got.nodes) != len(got.nodes) {
+			h.t.Errorf("fragment %d's nodes have room for the next fragment's", i)
+		}
+		h.copies = append(h.copies, got.nodes...)
+		if len(f.Nodes) == 0 {
+			// An inner that empties its target.
+			if f.Markup != "" {
+				h.t.Errorf("fragment %d is %q, of no nodes", i, f.Markup)
+			}
+			continue
+		}
+		// Parsed where the surface's nodes stand: under their parent.
+		ctx := f.Nodes[0].Parent
+		if ctx == nil || ctx.Type != html.ElementNode {
+			ctx = &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
+		}
+		w, err := html.ParseFragment(strings.NewReader(f.Markup), ctx)
+		if err != nil {
+			h.t.Fatal(err)
+		}
+		if d := sameTrees(w, f.Nodes, false); d != "" {
+			h.diverged = append(h.diverged, "a fragment: "+d)
+		}
+	}
+}
+
+// taken is how many of the last delta's copied nodes the Screen's tree
+// holds, which it then forgets.
+func (h *checked) taken() int {
+	in := map[*html.Node]bool{}
+	if h.c.body != nil {
+		walk(h.c.body, func(n *html.Node) { in[n] = true })
+	}
+	n := 0
+	for _, k := range h.copies {
+		if in[k] {
+			n++
+		}
+	}
+	h.copies = h.copies[:0]
+	return n
 }
 
 func childrenOf(n *html.Node) []*html.Node {
@@ -229,6 +295,13 @@ func TestOfferIsTheTree(t *testing.T) {
 	if testing.Short() {
 		steps = 10
 	}
+	frags, taken := 0, 0
+	defer func() {
+		t.Logf("deltas offered %d fragments; the Screen's trees took %d of their nodes", frags, taken)
+		if frags == 0 || taken == 0 {
+			t.Error("no delta's fragment was offered and taken")
+		}
+	}()
 	for si, st := range stories.All() {
 		for k, css := range []string{"", ui.Stylesheet()} {
 			name := fmt.Sprintf("%s/%d", st.ID, k)
@@ -252,6 +325,7 @@ func TestOfferIsTheTree(t *testing.T) {
 					t.Logf("%s: the wire parses as another tree, where the Screen shows the surface's: %s", name, h.diverged[0])
 					break
 				}
+				taken += h.taken()
 				what := fmt.Sprintf("%s step %d (%s)", name, i, act)
 				if !sameCells(t, what, got.c.Cells(), want.c.Cells()) {
 					break
@@ -263,9 +337,231 @@ func TestOfferIsTheTree(t *testing.T) {
 					break
 				}
 			}
+			frags += h.frags
 			rt.HostOf = hostOf
 		}
 	}
+}
+
+// changing is a view of the markup cur holds, which a test changes
+// between renders.
+func changing(cur *string) templ.Component {
+	return templ.ComponentFunc(func(_ context.Context, w io.Writer) error {
+		_, err := io.WriteString(w, *cur)
+		return err
+	})
+}
+
+// TestDeltaOffersAreTheTree changes a surface's markup at random, which
+// makes deltas of every op surf's differ writes (inner, replace, before,
+// append), and holds each delta's offer to the oracle (checked), and the
+// Screen that takes the offers to one that parses, cell for cell.
+func TestDeltaOffersAreTheTree(t *testing.T) {
+	runs, steps := 60, 30
+	if testing.Short() {
+		runs = 15
+	}
+	frags, taken := 0, 0
+	for run := range runs {
+		r := rand.New(rand.NewPCG(uint64(run), 9))
+		doc := func() string { return strings.Replace(randomDoc(r), `id="root"`, `id="top"`, 1) }
+		cur := doc()
+		cols, rows := 30+r.IntN(50), 6+r.IntN(20)
+		got := newOnScreen(t, "v", changing(&cur), "", cols, rows, true)
+		h := got.checked(t)
+		want := newOnScreen(t, "v", changing(&cur), "", cols, rows, false)
+		got.document(t)
+		want.document(t)
+		for i := range steps {
+			var act string
+			switch k := r.IntN(6); {
+			case k == 0:
+				cur = doc()
+				act = "another document's markup"
+			case k == 1:
+				// Some of it: the same document with a part dropped.
+				if a, b, ok := strings.Cut(cur, `<div id="sc"`); ok {
+					cur = a + `<p id="cut">cut</p><div id="sc"` + b
+				}
+				act = "a part added"
+			default:
+				ns := parseDoc(cur)
+				mutate(r, ns, false)
+				cur = renderDoc(ns)
+				act = "texts and attributes"
+			}
+			for _, o := range []*onScreen{got, want} {
+				if err := o.s.Update(); err != nil {
+					t.Fatal(err)
+				}
+				if o.stale {
+					o.document(t)
+				}
+			}
+			taken += h.taken()
+			if len(h.diverged) > 0 {
+				t.Logf("run %d: the wire parses as another tree, where the Screen shows the surface's: %s", run, h.diverged[0])
+				break
+			}
+			if !sameCells(t, fmt.Sprintf("run %d step %d (%s)", run, i, act), got.c.Cells(), want.c.Cells()) {
+				break
+			}
+		}
+		frags += h.frags
+		rt.HostOf = hostOf
+	}
+	t.Logf("%d fragments offered; the Screen's trees took %d of their nodes", frags, taken)
+	if taken == 0 {
+		t.Error("no fragment was taken")
+	}
+}
+
+func TestDeltaOfferEdges(t *testing.T) {
+	const doc = `<div id="root"><div id="a"><p>old</p></div><div id="b"><p>old</p></div></div>`
+	p := func(text string) *html.Node {
+		n := &html.Node{Type: html.ElementNode, Data: "p", DataAtom: atom.P}
+		n.AppendChild(&html.Node{Type: html.TextNode, Data: text})
+		return n
+	}
+	frag := func(text string) rt.Fragment {
+		return rt.Fragment{Markup: "<p>" + text + "</p>", Nodes: []*html.Node{p(text)}}
+	}
+	// screen is a Screen showing doc, offered frags; copies are the
+	// copies it made, by fragment.
+	screen := func(t *testing.T, frags ...rt.Fragment) (*Screen, []*html.Node) {
+		c := New(30, 4, nil)
+		if _, err := c.Write([]byte(hotty.Doc("v", doc))); err != nil {
+			t.Fatal(err)
+		}
+		screenHost{c}.OfferDelta("v", frags)
+		var copies []*html.Node
+		for _, f := range c.frags.frags {
+			copies = append(copies, f.nodes[0])
+		}
+		return c, copies
+	}
+	write := func(t *testing.T, c *Screen, cmd string) {
+		t.Helper()
+		if _, err := c.Write([]byte(cmd)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	child := func(c *Screen, id string) *html.Node { return c.byID(id).FirstChild }
+	t.Run("taken in order, past other ops", func(t *testing.T) {
+		c, copies := screen(t, frag("x"), frag("y"))
+		write(t, c, hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>x</p>"), hotty.OpAttr("b", "class", "flex"), hotty.OpInner("b", "<p>y</p>")}))
+		if child(c, "a") != copies[0] || child(c, "b") != copies[1] {
+			t.Error("the delta didn't take its fragments' copies")
+		}
+		if c.frags != nil || c.taking != nil {
+			t.Error("the offer outlived its delta")
+		}
+	})
+	t.Run("the same delta twice", func(t *testing.T) {
+		c, copies := screen(t, frag("x"))
+		cmd := hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>x</p>")})
+		write(t, c, cmd)
+		write(t, c, cmd)
+		if child(c, "a") == copies[0] {
+			t.Error("the second delta took the first's copy")
+		}
+	})
+	t.Run("other bytes", func(t *testing.T) {
+		c, copies := screen(t, frag("x"), frag("y"))
+		// From the first op of other bytes, the rest is parsed, even an
+		// op of a fragment's bytes.
+		write(t, c, hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>z</p>"), hotty.OpInner("b", "<p>x</p>")}))
+		if child(c, "a") == copies[0] || child(c, "b") == copies[0] || !strings.Contains(c.Lines()[0], "z") {
+			t.Error("a delta of other bytes took the offer, or the rest of it after")
+		}
+	})
+	t.Run("another surface's delta", func(t *testing.T) {
+		c, _ := screen(t, frag("x"))
+		write(t, c, hotty.Delta("w", []hotty.Op{hotty.OpInner("a", "<p>x</p>")}))
+		if c.frags != nil {
+			t.Error("another surface's delta left the offer")
+		}
+	})
+	t.Run("another surface's offer", func(t *testing.T) {
+		c, copies := screen(t)
+		screenHost{c}.OfferDelta("w", []rt.Fragment{frag("x")})
+		copies = append(copies, c.frags.frags[0].nodes[0])
+		write(t, c, hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>x</p>")}))
+		if child(c, "a") == copies[0] {
+			t.Error("a delta took another surface's offer")
+		}
+	})
+	t.Run("a document between", func(t *testing.T) {
+		c, copies := screen(t, frag("x"))
+		write(t, c, hotty.Doc("v", doc))
+		write(t, c, hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>x</p>")}))
+		if child(c, "a") == copies[0] {
+			t.Error("the offer outlived a document")
+		}
+	})
+	t.Run("del", func(t *testing.T) {
+		for _, del := range []string{hotty.Del("v"), hotty.DelAll()} {
+			c, _ := screen(t, frag("x"))
+			write(t, c, del)
+			if c.frags != nil {
+				t.Errorf("%q kept the offer", del)
+			}
+		}
+	})
+	t.Run("compressed", func(t *testing.T) {
+		long := strings.Repeat("a long text, of some length ", 200)
+		c, copies := screen(t, frag(long))
+		cmd := hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>"+long+"</p>")})
+		if !strings.Contains(cmd, "o=z") {
+			t.Fatal("the delta isn't compressed")
+		}
+		write(t, c, cmd)
+		if child(c, "a") != copies[0] {
+			t.Error("a compressed delta didn't take its offer")
+		}
+	})
+	t.Run("lent", func(t *testing.T) {
+		f := frag("x")
+		c, _ := screen(t, f)
+		f.Nodes[0].FirstChild.Data = "changed"
+		f.Nodes[0].Attr = append(f.Nodes[0].Attr, html.Attribute{Key: "class", Val: "hidden"})
+		write(t, c, hotty.Delta("v", []hotty.Op{hotty.OpInner("a", "<p>x</p>")}))
+		if l := c.Lines()[0]; !strings.HasPrefix(l, "x ") {
+			t.Errorf("the Screen shows %q, from the surface's nodes as they were after", l)
+		}
+	})
+	t.Run("one copy for many", func(t *testing.T) {
+		// Every fragment's nodes in one array: a copy each, sharing it.
+		c, copies := screen(t, frag("x"), frag("y"), frag("z"))
+		size := unsafe.Sizeof(html.Node{})
+		for i := 1; i < len(copies); i++ {
+			// A <p> and its text a fragment, one after the other.
+			if uintptr(unsafe.Pointer(copies[i]))-uintptr(unsafe.Pointer(copies[i-1])) != 2*size {
+				t.Fatal("the fragments' copies aren't in one array")
+			}
+		}
+		if cap(c.frags.frags[0].nodes) != 1 {
+			t.Error("a fragment's nodes have room for the next's")
+		}
+	})
+}
+
+// parseDoc and renderDoc are markup as a body's children and back.
+func parseDoc(markup string) *html.Node {
+	body := &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
+	ns, _ := html.ParseFragment(strings.NewReader(markup), body)
+	for _, n := range ns {
+		body.AppendChild(n)
+	}
+	return body
+}
+
+func renderDoc(body *html.Node) string {
+	var b strings.Builder
+	for k := body.FirstChild; k != nil; k = k.NextSibling {
+		html.Render(&b, k)
+	}
+	return b.String()
 }
 
 // walkStep takes one random step on o, and says what it was.
@@ -473,15 +769,57 @@ func TestOfferSparesTheParse(t *testing.T) {
 	}
 }
 
-// FuzzHandoff: on any markup a surface renders, the Screen's copy of its
-// offer is its tree, sharing nothing (checked), and where the document
-// parses as that tree the Screen draws as one that parsed it. Seeded with
-// FuzzParse's seeds and corpus and the kit's stories.
-func FuzzHandoff(f *testing.F) {
-	for _, s := range []string{`<div class="a">b<span>c</span></div>`, `<ul><li>a</li></ul>`, `<p>x &amp; y</p>`, `<svg><path d="M0"></path></svg>`, `<table><tbody><tr><td>1</td></tr></tbody></table>`,
-		`<svg><use xlink:href="#i"></use></svg>`} {
-		f.Add(s)
+// TestDeltaOfferSparesTheParse: a step whose delta carries markup (rows
+// that come and go), offered, costs the Screen a copy of the rows where
+// it cost a parse.
+func TestDeltaOfferSparesTheParse(t *testing.T) {
+	var rows [2]string
+	for k := range rows {
+		var b strings.Builder
+		b.WriteString(`<div id="list" class="flex flex-col">`)
+		for i := range 8 + 4*k {
+			fmt.Fprintf(&b, `<div id="row%d" class="flex gap-1"><span class="text-(--pill)">●</span><b>row %d</b><span class="text-muted-foreground">%d of %d</span></div>`, i, i, i, 12)
+		}
+		b.WriteString(`</div>`)
+		rows[k] = b.String()
 	}
+	cost := func(offer bool) (allocs float64, bytes uint64) {
+		cur := rows[0]
+		o := newOnScreen(t, "v", changing(&cur), "", 50, 14, offer)
+		o.document(t)
+		i := 0
+		step := func() {
+			i++
+			cur = rows[i%2]
+			if err := o.s.Update(); err != nil || o.stale {
+				t.Fatal("the step was refused", err)
+			}
+		}
+		allocs = testing.AllocsPerRun(50, step)
+		var a, b runtime.MemStats
+		runtime.ReadMemStats(&a)
+		for range 50 {
+			step()
+		}
+		runtime.ReadMemStats(&b)
+		return allocs, (b.TotalAlloc - a.TotalAlloc) / 50
+	}
+	pa, pb := cost(false)
+	oa, ob := cost(true)
+	t.Logf("a step of rows that come and go: %.0f allocations, %d B parsed; %.0f, %d B offered", pa, pb, oa, ob)
+	if oa > pa*3/4 || ob > pb {
+		t.Errorf("an offered delta costs %.0f allocations and %d B, where a parse costs %.0f and %d B", oa, ob, pa, pb)
+	}
+}
+
+// FuzzHandoff: on any markup a surface renders, and any it renders next,
+// the Screen's copies of its offers, the document's and the delta's, are
+// its tree (checked), and where the wire parses as that tree the Screen
+// draws as one that parsed it. Seeded with FuzzParse's seeds and corpus
+// and the kit's stories, each followed by the next.
+func FuzzHandoff(f *testing.F) {
+	seeds := []string{`<div class="a">b<span>c</span></div>`, `<ul><li>a</li></ul>`, `<p>x &amp; y</p>`, `<svg><path d="M0"></path></svg>`, `<table><tbody><tr><td>1</td></tr></tbody></table>`,
+		`<svg><use xlink:href="#i"></use></svg>`}
 	files, _ := filepath.Glob("../testdata/fuzz/FuzzParse/*")
 	for _, p := range files {
 		b, err := os.ReadFile(p)
@@ -490,28 +828,40 @@ func FuzzHandoff(f *testing.F) {
 		}
 		if _, v, ok := strings.Cut(string(b), "\nstring("); ok {
 			if s, err := strconv.Unquote(strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(v), ")"))); err == nil {
-				f.Add(s)
+				seeds = append(seeds, s)
 			}
 		}
 	}
 	for _, st := range stories.All() {
-		f.Add(rootOf(storyMarkup(f, st)))
+		seeds = append(seeds, rootOf(storyMarkup(f, st)))
 	}
-	f.Fuzz(func(t *testing.T, src string) {
-		got := newOnScreen(t, "v", templ.Raw(src), "", 40, 8, true)
+	for i, s := range seeds {
+		f.Add(s, seeds[(i+1)%len(seeds)])
+	}
+	f.Fuzz(func(t *testing.T, first, next string) {
+		cur := first
+		got := newOnScreen(t, "v", changing(&cur), "", 40, 8, true)
 		h := got.checked(t)
-		doc, err := got.s.Document()
-		if err != nil {
+		want := newOnScreen(t, "v", changing(&cur), "", 40, 8, false)
+		if _, err := got.s.Document(); err != nil {
 			return
 		}
-		want := New(40, 8, nil)
-		got.c.Write([]byte(hotty.Doc("v", doc)))
-		want.Write([]byte(hotty.Doc("v", doc)))
-		if h.offers != 1 {
+		got.document(t)
+		want.document(t)
+		if h.offers != 2 {
 			t.Fatalf("%d offers", h.offers)
 		}
+		cur = next
+		for _, o := range []*onScreen{got, want} {
+			if err := o.s.Update(); err != nil {
+				return
+			}
+			if o.stale {
+				o.document(t)
+			}
+		}
 		if len(h.diverged) == 0 {
-			sameCells(t, strconv.Quote(src), got.c.Cells(), want.Cells())
+			sameCells(t, strconv.Quote(first)+" then "+strconv.Quote(next), got.c.Cells(), want.c.Cells())
 		}
 	})
 }

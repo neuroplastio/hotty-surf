@@ -116,6 +116,10 @@ type Screen struct {
 	// offer is the tree the surface offered for the next document
 	// (offer.go), nil for none.
 	offer *offered
+	// frags is the delta the surface offered its fragments for
+	// (OfferDelta), nil for none; taking is that offer while its delta
+	// is applied.
+	frags, taking *offeredDelta
 
 	// What Write was given, read as one stream: a command may come in
 	// more than one Write.
@@ -402,6 +406,15 @@ var errMalformed = errors.New("cells: a malformed hotty command")
 // shows one surface: the one its last document named.
 func (c *Screen) apply(m hotty.Message) error {
 	a, s := hotty.Get(m.Control, "a"), hotty.Get(m.Control, "s")
+	if a == "delta" {
+		// An a=delta ends the offer of fragments, whichever surface's it
+		// is, and takes it when it is its surface's.
+		if o := c.frags; o != nil && o.name == s && s == c.name {
+			c.taking = o
+			defer func() { c.taking = nil }()
+		}
+		c.frags = nil
+	}
 	if a == "doc" {
 		return c.load(s, string(m.Payload))
 	}
@@ -492,7 +505,7 @@ func (c *Screen) apply(m hotty.Message) error {
 func (c *Screen) del() {
 	c.cutDrag()
 	c.name, c.body, c.focused, c.remembered = "", nil, nil, nil
-	c.hovered, c.tip, c.offer = nil, nil, nil
+	c.hovered, c.tip, c.offer, c.frags = nil, nil, nil, nil
 	c.fields = map[*html.Node]*field{}
 	c.changed()
 }

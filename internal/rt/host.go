@@ -22,6 +22,22 @@ type Host interface {
 	// decodes, whatever it is, ends it, and so do an a=del of the
 	// surface and the next offer.
 	OfferDocument(name, doc string, nodes []*html.Node)
+	// OfferDelta offers the host the nodes of the delta for the surface
+	// name the surface writes next: each of frags is an op's markup, in
+	// the order of the ops that carry markup (inner, replace, before,
+	// append), and the nodes it renders. When the host next decodes a=delta
+	// for name, each op whose markup is the next fragment's, byte for
+	// byte, may take its copy of those nodes instead of parsing it; from
+	// the first op whose markup isn't, the host parses. That a=delta ends
+	// the offer, whatever it holds, and so do an a=doc, an a=del and the
+	// next offer.
+	OfferDelta(name string, frags []Fragment)
+}
+
+// A Fragment is an op's markup, and the nodes it is the rendering of.
+type Fragment struct {
+	Markup string
+	Nodes  []*html.Node
 }
 
 // HostOf is the in-process Host that writes to w reach, nil for none:

@@ -267,6 +267,12 @@ next `a=doc` only when the name and the decoded payload are the
 offer's, and it drops the offer at any `a=doc` or `a=del`. So a new
 block in cells parses its document once, in surf, not twice.
 
+A delta is offered the same way. Each op's markup goes with the nodes
+it renders, in the order of the ops that carry markup, all copied
+within the call. The next `a=delta` for the surface takes each op's
+copy where its markup is the fragment's, byte for byte. From the first
+op that isn't, it parses, and the delta ends the offer.
+
 `internal/devhook` is the registry `surf.New` feeds in a `surfdev`
 build, so reload reaches every surface. `internal/input` splits terminal
 input into events, replies and keys.

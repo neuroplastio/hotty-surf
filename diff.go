@@ -5,6 +5,8 @@ import (
 
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
+
+	"neuroplast.io/hotty-surf/internal/rt"
 )
 
 // differ says how the tree changed between two renders, as the ops of one
@@ -21,6 +23,10 @@ type differ struct {
 	fields []string
 	b      strings.Builder
 	moved  map[string]bool // taken out first (moves): their old parent doesn't remove them
+	// frags are the ops' markup and the nodes it renders, for an
+	// in-process host (rt.Host.OfferDelta); none where offer is false.
+	frags []rt.Fragment
+	offer bool
 }
 
 // moves takes out, first, each element the render moved to another
@@ -294,7 +300,15 @@ func (d *differ) inner(id string, n *html.Node) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		html.Render(&d.b, c)
 	}
-	d.ops = append(d.ops, hotty.OpInner(id, d.b.String()))
+	markup := d.b.String()
+	d.ops = append(d.ops, hotty.OpInner(id, markup))
+	if d.offer {
+		var nodes []*html.Node
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			nodes = append(nodes, c)
+		}
+		d.frags = append(d.frags, rt.Fragment{Markup: markup, Nodes: nodes})
+	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		d.s.fresh(c, true)
 	}
@@ -304,7 +318,11 @@ func (d *differ) inner(id string, n *html.Node) {
 func (d *differ) render(n *html.Node) string {
 	d.b.Reset()
 	html.Render(&d.b, n)
-	return d.b.String()
+	markup := d.b.String()
+	if d.offer {
+		d.frags = append(d.frags, rt.Fragment{Markup: markup, Nodes: []*html.Node{n}})
+	}
+	return markup
 }
 
 // inSelect says whether an option is a live select's, its own or its
