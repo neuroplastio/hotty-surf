@@ -1,6 +1,6 @@
 # What a Screen draws
 
-A `cells.Screen` lays a surface's document out in character cells. It has
+A `surftui.Screen` lays a surface's document out in character cells. It has
 to work, not look good: it reads the markup, a handful of classes and the
 inline `style`, never the stylesheet, and knows what the kit's stylesheet
 does for a few of its components. This is the subset (v0.7, L1 and L3).

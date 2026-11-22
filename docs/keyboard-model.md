@@ -35,7 +35,7 @@ component values and applies the changes its callbacks report.
 | Badge | None of its own. |
 | Breadcrumb | A step with a click handler or `href` is a link: Enter or Space activates it. Other steps have no keys of their own. |
 | Button | Enter or Space activates an enabled button; submit buttons also submit their form. |
-| Button group | Planned; its children have their own keys. |
+| Button group | None of its own; its children have their own keys (`surfui/buttongroup`). |
 | Card | None of its own; its children have their own keys. |
 | Chart | None of its own. |
 | Checkbox | Space toggles it; Enter submits its form when it belongs to one. |
@@ -78,9 +78,9 @@ passes a key to the application. Cells also implements native control
 editing, activation and navigation. Text fields resolve their keymap with
 `hotty.Resolve`; a host and cells must agree on the platform and on the
 ordered keymap. Readline-style editing (`hotty.TerminalKeys`) is
-`surf.Bind(surf.ReadlineKeys())` on the field or on what holds it, and a
-desktop's editing keys whatever the host's platform are `surf.CUAKeys()` or
-`surf.CocoaKeys()` (see Editing keymaps, below).
+`surf.Bind(surfkey.ReadlineKeys())` on the field or on what holds it, and a
+desktop's editing keys whatever the host's platform are `surfkey.CUAKeys()` or
+`surfkey.CocoaKeys()` (see Editing keymaps, below).
 
 ## B1 and B2 audit
 
@@ -153,31 +153,31 @@ the keys fn takes ahead of the element:
 
 `surf.Key` is for a control's own keyboard: a list's arrows, a grid, a
 field's completion. Shortcuts that a menu or a palette lists are
-`ui.KeyScope`'s, below.
+`surfui.KeyScope`'s, below.
 
 ## Keys that aren't the program's
 
 `surf.Key` gives keys to the program; `surf.Bind` gives them to the host,
 which does one of SPEC §10.2's actions with them, and no handler hears
-them. Bind's options are bindings, `surf.Action(action, keys...)`,
-`surf.Unbind(keys...)` and groups (the editing keymaps `surf.ReadlineKeys()`,
-`surf.CUAKeys()` and `surf.CocoaKeys()`, or an app's own `surf.Group`), and at
-most one of `surf.Yield()` or `surf.Override()` for all of them.
+them. Bind's options are bindings, `surfkey.Action(action, keys...)`,
+`surfkey.Unbind(keys...)` and groups (the editing keymaps `surfkey.ReadlineKeys()`,
+`surfkey.CUAKeys()` and `surfkey.CocoaKeys()`, or an app's own `surfkey.Group`), and at
+most one of `surfkey.Yield()` or `surfkey.Override()` for all of them.
 
 ```go
 // a palette's query: readline's ctrl+w, ctrl+u, alt+b, …
 surf.On(ctx, "query", surf.Input(a.setQuery),
-    surf.Bind(surf.ReadlineKeys()))
+    surf.Bind(surfkey.ReadlineKeys()))
 // readline without ctrl+k
-surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k"))
+surf.Bind(surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k"))
 // a pager: j and k scroll the log where the host scrolls it
-surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"),
-    surf.Action(hotty.ScrollUp, "k")))
+surf.On(ctx, "log", surf.Bind(surfkey.Action(hotty.ScrollDown, "j"),
+    surfkey.Action(hotty.ScrollUp, "k")))
 // the app's leader: mod+k and the keys after it reach its keymap
-surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
+surf.On(ctx, "main", surf.Bind(surfkey.Action(hotty.Prefix, "mod+k")))
 // an app's own group, made once and bound wherever it's needed
-var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
-    surf.Action(hotty.ScrollEnd, "shift+g"))
+var pager = surfkey.Group(surfkey.Action(hotty.ScrollDown, "j"),
+    surfkey.Action(hotty.ScrollEnd, "shift+g"))
 ```
 
 - **Edit actions** (`hotty.WordBackward`, …) go on a field or on what
@@ -233,14 +233,14 @@ var pager = surf.Group(surf.Action(hotty.ScrollDown, "j"),
   field: it gets ReadlineKeys, CUAKeys or CocoaKeys from a `surf.Bind` on an
   element around the component.
 - **Size.** The kit's own edit of a declined key on a text field
-  (`hottyedit`) is linked only by what edits text: ui's text components,
-  `ui.KeyScope` and `surf.Bind` (a pager's scroll-only Bind too). A
+  (`hottyedit`) is linked only by what edits text: surfui's text components,
+  `surfui.KeyScope` and `surf.Bind` (a pager's scroll-only Bind too). A
   plain `<input>` in an app with none of them edits nothing on a declined
   key, and that is a fault, once.
 
 ## Editing keymaps
 
-`surf.ReadlineKeys()`, `surf.CUAKeys()` and `surf.CocoaKeys()` are the
+`surfkey.ReadlineKeys()`, `surfkey.CUAKeys()` and `surfkey.CocoaKeys()` are the
 editing keymaps: groups of a text field's caret and delete keys.
 - **ReadlineKeys** is a terminal line's (`hotty.TerminalKeys`), over the
   host's default. Its source is GNU Readline's manual, "Bindable
@@ -263,7 +263,7 @@ editing keymaps: groups of a text field's caret and delete keys.
 They layer: one Bind can hold several, read in order, a later binding
 replacing an earlier one of the same key. A give-back (below) only fills
 a key no group on the element binds, whatever the order.
-`surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())` is the desktop's keys
+`surf.Bind(surfkey.ReadlineKeys(), surfkey.CUAKeys())` is the desktop's keys
 where they bind and readline's for the rest.
 
 A host's `mod` says which of CUA's and Cocoa's tables a field starts
@@ -272,16 +272,16 @@ it to the app, so an app can keep `super` as its `mod` and still edit
 as on Linux:
 
 ```go
-var keys surf.BindOption // nil: the host's own
+var keys surfkey.Option // nil: the host's own
 switch cfg.Keymap {
 case "cua":
-    keys = surf.CUAKeys()
+    keys = surfkey.CUAKeys()
 case "cocoa":
-    keys = surf.CocoaKeys()
+    keys = surfkey.CocoaKeys()
 }
 surf.On(ctx, "app", surf.Bind(keys))
 // the platform's keys where they bind, readline's for the rest
-surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
+surf.Bind(surfkey.ReadlineKeys(), surfkey.CUAKeys())
 ```
 
 - **What changes:** each binds its own keys and gives back the other
@@ -315,7 +315,7 @@ surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
   the Bind says `Override()`.
 - **Unbind under them** gives a key back to the keymap's binding, not
   to the host's platform: under CUAKeys,
-  `surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k"))` gives `ctrl+k` to
+  `surf.Bind(surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k"))` gives `ctrl+k` to
   the program, as on Linux, where the host's default on macOS would
   delete to the line's end.
 - **On a host and in cells** they are the same `data-keys`, about 450
@@ -325,7 +325,7 @@ surf.Bind(surf.ReadlineKeys(), surf.CUAKeys())
 
 ## Edit shortcuts
 
-`surf.CUAEditShortcuts()` and `surf.CocoaEditShortcuts()` choose a
+`surfkey.CUAEditShortcuts()` and `surfkey.CocoaEditShortcuts()` choose a
 field's edit shortcuts (select all, copy, cut, paste, undo, redo), as
 the editing keymaps choose its caret and delete keys: SPEC §10.2's
 where `mod` is `ctrl`, or where it is `super`, whatever the host's.
@@ -338,20 +338,20 @@ where `mod` is `ctrl`, or where it is `super`, whatever the host's.
 ```go
 // a setting: the caret keys and the edit shortcuts chosen apart,
 // on the outermost element; nil is the host's own
-var caret, edit surf.BindOption
+var caret, edit surfkey.Option
 switch cfg.Keymap {
 case "cua":
-    caret = surf.CUAKeys()
+    caret = surfkey.CUAKeys()
 case "cocoa":
-    caret = surf.CocoaKeys()
+    caret = surfkey.CocoaKeys()
 }
 switch cfg.EditShortcuts {
 case "cua":
-    edit = surf.CUAEditShortcuts()
+    edit = surfkey.CUAEditShortcuts()
 case "cocoa":
-    edit = surf.CocoaEditShortcuts()
+    edit = surfkey.CocoaEditShortcuts()
 }
-surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), caret, edit))
+surf.On(ctx, "app", surf.Bind(surfkey.ReadlineKeys(), caret, edit))
 ```
 
 - **The other platform's keys are given back:** from a field they go
@@ -392,14 +392,14 @@ surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), caret, edit))
   copies the field's selection with its own copy (SPEC §11). Offer it
   as a choice, and default to the host's (no group).
 - **Cells:** a Screen has no clipboard. The program copies on its own
-  key (`cells.Screen.Selection`, `cells.Screen.Cut`), so a cells
+  key (`surftui.Screen.Selection`, `surftui.Screen.Cut`), so a cells
   program makes that key follow the same setting.
 - **Keycaps:** `surf.Platform(ctx).Edit` stays the host's. An app that
   shows Copy's key, in a menu, shows the key of its own setting.
 
 ## Scoped overrides
 
-`ui.KeyScope` gives the keys and actions of its children to bindings:
+`surfui.KeyScope` gives the keys and actions of its children to bindings:
 each a key, a label, a name, whether it is disabled, and the `Run` that
 does it, as a menu item carries its `OnSelect`. A binding that takes a key
 prevents its default. If it declines, the next enclosing scope is tried,
@@ -408,14 +408,14 @@ named keep their existing defaults. The scope adds no HTML wrapper and
 never applies to controls on another surface.
 
 ```templ
-@ui.KeyScope([]ui.KeyBinding{
+@surfui.KeyScope([]surfui.KeyBinding{
     {Key: "arrow_down", Label: "Next log line", Name: "log.next",
         Run: a.nextLine},
     {Key: "mod+s", Label: "Save", Name: "save", Run: a.save,
         Disabled: !a.dirty},
     {Label: "About", Name: "about", Run: a.about},
 }) {
-    @ui.Select(&a.choice, ui.SelectProps{
+    @uiselect.View(&a.choice, uiselect.Props{
         Items: a.items, Value: a.value, OnChange: a.Choose,
     })
 }
@@ -459,7 +459,7 @@ on a host.
 A program that decides where a key goes before the surface hears it (a
 multiplexer, or cells) offers the key to the surface first when the
 surface has an overlay open (Overlays), when Chars says the focused
-element types it, when OwnKeys lists it, or when ui.Bindings binds it;
+element types it, when OwnKeys lists it, or when surfui.Bindings binds it;
 otherwise the key is its own. The surface then takes it or not (Key's
 taken), and an untaken key goes back to the program's keymap.
 
@@ -475,27 +475,27 @@ So are the keys an element that isn't a field binds to a scroll action
 a router's prefix is its own leader, and it ends the sequence with
 `Surface.Focus`. Sequences inside the surface (a prefix a Key handler
 takes) work where the driver offers every key to the surface first
-(`run`, `surftea`).
+(`surfapp`, `surftea`).
 
 ## Menus and palettes
 
 The labels serve the user's view of the keys too:
 
-- `ui.Bindings(s)` lists what a surface offers now, from its last render,
+- `surfui.Bindings(s)` lists what a surface offers now, from its last render,
   in render order, so a palette and a which-key level don't reorder as the
   focus moves. A Name is one action: listed once, and run as the binding
   of that name nearest the keyboard. A binding keeps its key only while
   the key reaches it. One a nearer scope's key shadows, whose scope the
   keyboard is outside, or which a focused plain text field takes itself
-  (its keymap's edit, `surf.ReadlineKeys`'s `ctrl+k` among them), is listed
+  (its keymap's edit, `surfkey.ReadlineKeys`'s `ctrl+k` among them), is listed
   without its key when it has a name (a pick still runs it), and left out
   when it has none. A `surf.Bind` is the host's action and is never one
   of them. An app's palette lists these.
-- `ui.HostMenu(s, label)` is the same list as hotty's menu (SPEC §10.7),
+- `surfui.HostMenu(s, label)` is the same list as hotty's menu (SPEC §10.7),
   for `hotty.Menu`. A host that takes menus shows its which-key level from
   it and lists the named items in its own palette. Keys come and go with
   the focus, so the menu is sent again when it changes.
-- `ui.Pick(s, name)` runs the action a pick names, as a host's menu sends
+- `surfui.Pick(s, name)` runs the action a pick names, as a host's menu sends
   it in a command event.
 
 A host's open native select list can retain every key until it closes;

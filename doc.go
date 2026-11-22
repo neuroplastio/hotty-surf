@@ -8,10 +8,10 @@
 // A [Surface] is one view on one hotty surface. It owns no terminal: it
 // writes hotty commands to the writer it is attached to and takes the
 // host's events from whoever reads the terminal. So the same Surface is a
-// whole app under package run, a part of another program's screen (a Bubble
+// whole app under package surfapp, a part of another program's screen (a Bubble
 // Tea program through surftea, a raw-mode program through hotty-go's
 // hottyterm), a test under surftest, and a picture in character cells under
-// package cells.
+// package surftui.
 //
 // Handlers are Go closures that the view registers as it renders, on an
 // element it names with [On]:
@@ -22,5 +22,6 @@
 // the Surface calls the closure the last render registered, then renders
 // again. Nothing in the host runs app code.
 //
-// The components an app builds its view from are in package ui.
+// Keymap options for [Bind] live in package surfkey, and the UI kit and its
+// components live under package surfui.
 package surf

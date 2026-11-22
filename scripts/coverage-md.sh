@@ -1,5 +1,5 @@
 #!/bin/sh
-# coverage-md.sh writes docs/coverage.md from ui/coverage.tsv, so the page
+# coverage-md.sh writes docs/coverage.md from surfui/coverage.tsv, so the page
 # and the matrix never drift. Edit the tsv, then run this:
 #
 #	sh scripts/coverage-md.sh [out]
@@ -36,7 +36,7 @@ Basecoat's 39 component files, how `ui` makes it, what it leans on in the
 host, its names, its stories and its tests.
 
 This page is written by `scripts/coverage-md.sh` from
-[`ui/coverage.tsv`](../ui/coverage.tsv), which the coverage test reads.
+[`surfui/coverage.tsv`](../surfui/coverage.tsv), which the coverage test reads.
 Edit the tsv, then run the script; don't edit this page.
 
 ## The columns
@@ -73,7 +73,7 @@ Edit the tsv, then run the script; don't edit this page.
   - `keys-cells`: the stories can be used by keyboard alone in the cells
     rendition.
 - **status**: `done`, its names approved and every story and test it
-  lists there, which the coverage test (ui/coverage_test.go) holds it
+  lists there, which the coverage test (surfui/coverage_test.go) holds it
   to; `port`, code exists to finish or move (markup, a behaviour, a
   story); `new`, nothing yet; `waits`, nothing until a decision outside
   the kit (a SPEC change), named in its notes.

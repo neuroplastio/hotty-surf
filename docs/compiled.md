@@ -13,7 +13,7 @@ A view renders whole on every update, and the surface sends the host only
 what changed. A long list pays for that each time: every row renders,
 and the whole tree is compared with the last. A compiled component skips
 both for rows whose props didn't change (gov NEIO-15). It works the same
-on a host and in a `cells.Screen`.
+on a host and in a `surftui.Screen`.
 
 ```go
 // Once, at package level.
@@ -84,7 +84,7 @@ props. It can't see inside a handler: one that closes over a value
 that isn't props runs stale with no fault (see the rules).
 
 It is on under `surftest`, which fails the test on a fault, and in a
-dev build (`hotty-surf dev`), unless `HOTTY_SURF_COMPILE_CHECK=off`.
+dev build (`hotty-surf run`), unless `HOTTY_SURF_COMPILE_CHECK=off`.
 An app's own `CheckCompiled` wins over a dev build's default.
 Elsewhere an app turns it on itself, in its own dev build or a gate,
 and hears what it finds:
@@ -105,7 +105,7 @@ and a view's side effects run twice: leave it off in a release.
 ## Chrome in cells
 
 A program that draws in cells itself (a tab strip, a frame around a
-pane) gives its chrome a `cells.Screen` the size of the place it goes,
+pane) gives its chrome a `surftui.Screen` the size of the place it goes,
 and draws it into its own grid with `Screen.Draw` each frame. A frame
 where nothing changed costs a copy. A surface on that Screen with
 compiled rows sends it only what changed, and the Screen forgets only

@@ -15,7 +15,7 @@ Basecoat's 39 component files, how `ui` makes it, what it leans on in the
 host, its names, its stories and its tests.
 
 This page is written by `scripts/coverage-md.sh` from
-[`ui/coverage.tsv`](../ui/coverage.tsv), which the coverage test reads.
+[`surfui/coverage.tsv`](../surfui/coverage.tsv), which the coverage test reads.
 Edit the tsv, then run the script; don't edit this page.
 
 ## The columns
@@ -52,7 +52,7 @@ Edit the tsv, then run the script; don't edit this page.
   - `keys-cells`: the stories can be used by keyboard alone in the cells
     rendition.
 - **status**: `done`, its names approved and every story and test it
-  lists there, which the coverage test (ui/coverage_test.go) holds it
+  lists there, which the coverage test (surfui/coverage_test.go) holds it
   to; `port`, code exists to finish or move (markup, a behaviour, a
   story); `new`, nothing yet; `waits`, nothing until a decision outside
   the kit (a SPEC change), named in its notes.
@@ -87,54 +87,53 @@ Edit the tsv, then run the script; don't edit this page.
 
 ## The counts
 
-Of 39 components:
+Of 38 components:
 
-- **markup:** 9 jinja, 29 css, 1 hand.
-- **behaviour:** 11 scripts translated (`accordion.js`, `combobox.js`, `command.js`, `drawer.js`, `dropdown-menu.js`, `popover.js`, `range.js`, `select.js`, `sidebar.js`, `tabs.js`, `toast.js`); 2 components by hand (chart, dialog); 26 with none.
-- **browser:** 18 components rely on a browser feature.
-- **status:** 23 done, 13 port, 3 new, 0 waits.
-- **tests:** render 9, spec 29, differential 11, keys-cells 22.
+- **markup:** 9 jinja, 28 css, 1 hand.
+- **behaviour:** 11 scripts translated (`accordion.js`, `combobox.js`, `command.js`, `drawer.js`, `dropdown-menu.js`, `popover.js`, `range.js`, `select.js`, `sidebar.js`, `tabs.js`, `toast.js`); 2 components by hand (chart, dialog); 25 with none.
+- **browser:** 17 components rely on a browser feature.
+- **status:** 35 done, 1 port, 2 new, 0 waits.
+- **tests:** render 1, spec 27, differential 2, keys-cells 21.
 
 ## The components
 
 | component | markup | behaviour | browser | api | stories | tests | status | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | accordion | css | `accordion.js` | `<details>` | `ui.Accordion`, `ui.AccordionProps`, `ui.AccordionItem` | `accordion/default`, `accordion/multiple`, `accordion/disabled` | `spec`, `differential`, `keys-cells` | new | the host toggles `<details>` and tells no one (SPEC §9): one-open needs a spec proposal (a toggle event) |
-| alert | css | - | - | `ui.Alert`, `ui.AlertProps` | `alert/default`, `alert/destructive` | `spec` | done | Default, Destructive; storybook css.go |
-| avatar | css | - | `<img>` | `ui.Avatar`, `ui.AvatarProps`, `ui.AvatarGroup`, `ui.AvatarGroupProps` | `avatar/default`, `avatar/sizes`, `avatar/badge`, `avatar/group` | `spec` | done | sizes sm, lg; an image comes from cid: or data: only (SPEC §7) |
-| badge | css | - | - | `ui.Badge`, `ui.BadgeProps` | `badge/default`, `badge/every-variant`, `badge/warning` | `spec` | done | Default (primary), Secondary, Outline, Destructive, Ghost, Link; the spike kit's Badge; a warning is an Outline badge in amber by class (badge/warning): Basecoat has no warning variant |
-| breadcrumb | css | - | - | `ui.Breadcrumb`, `ui.BreadcrumbProps`, `ui.BreadcrumbItem` | `breadcrumb/default` | `spec` | done | its links are hyperlinks, the terminal's (SPEC §9) |
-| button | css | - | - | `ui.Button`, `ui.ButtonProps` | `button/default`, `button/destructive`, `button/ghost-with-icon`, `button/disabled`, `button/every-variant-and-size` | `spec`, `keys-cells` | done | sizes: ui.Size (XSmall…Large) and IconOnly give all 8; storybook css.go |
-| button-group | css | - | - | `ui.ButtonGroup`, `ui.ButtonGroupProps`, `ui.ButtonGroupSeparator` | `button-group/default`, `button-group/vertical`, `button-group/with-menu` | `spec`, `keys-cells` | new | data-orientation vertical: no shared enum |
-| card | css | - | - | `ui.Card`, `ui.CardProps` | `card/default`, `card/small`, `card/stat` | `spec` | done | size sm; header, section, footer are plain elements (ui/doc.go); storybook css.go |
-| chart | hand | hand | `<canvas>`, `Chart.js` | `ui.Chart`, `ui.ChartProps`, `ui.ChartSeries` | `chart/bar`, `chart/line`, `chart/pie`, `chart/legend`, `chart/wide`, `chart/narrow` | `spec` | done | chart.js drives Chart.js on a canvas, and a surface runs no script: an SVG plot in Go, still, without the tooltip (no ChartState until a later pack); Type as chart.js's; its strokes scale with the plot, as Blitz lacks vector-effect; no keys, no differential |
-| checkbox | css | - | `<input type=checkbox>` | `ui.Checkbox`, `ui.CheckboxProps` | `checkbox/default`, `checkbox/disabled`, `checkbox/mixed` | `spec`, `keys-cells` | done | the host toggles it and sends change (SPEC §9); no mixed look in any host, so no Mixed (B1 review) |
+| alert | css | - | - | - | `alert/default` | `spec` | done | migrated to ui/alert; Default, Destructive |
+| avatar | css | - | `<img>` | - | `avatar/default` | `spec` | done | migrated to ui/avatar; sizes sm, lg; an image comes from cid: or data: only (SPEC §7) |
+| badge | css | - | - | - | `badge/default` | `spec` | done | migrated to ui/badge; Default (primary), Secondary, Outline, Destructive, Ghost, Link; amber warning by class |
+| breadcrumb | css | - | - | - | `breadcrumb/default` | `spec` | done | migrated to ui/breadcrumb; its links are hyperlinks, the terminal's (SPEC §9) |
+| button | css | - | - | - | `button/default` | `spec`, `keys-cells` | done | migrated to ui/button; sizes: ui.Size (XSmall…Large) and IconOnly |
+| button-group | css | - | - | - | `button-group/default` | `spec`, `keys-cells` | done | migrated to ui/buttongroup; horizontal, vertical, separator |
+| card | css | - | - | - | `card/default` | `spec` | done | migrated to ui/card; default, small, and stat cards |
+| chart | hand | hand | `<canvas>`, `Chart.js` | - | `chart/default` | `spec` | done | migrated to ui/chart |
+| checkbox | css | - | `<input type=checkbox>` | - | `checkbox/default` | `spec`, `keys-cells` | done | migrated to ui/checkbox; MDI glyphs in TUI, [ ]/[x] in ANSI/Plain |
 | collapsible | css | - | `<details>` | `ui.Collapsible`, `ui.CollapsibleProps` | `collapsible/default`, `collapsible/open` | `spec`, `keys-cells` | new | the host toggles it (SPEC §9); ::details-content and calc-size() unchecked in Blitz |
-| combobox | jinja | `combobox.js` | - | `ui.Combobox`, `ui.ComboboxProps`, `ui.ComboboxState` | `combobox/default`, `combobox/multiple`, `combobox/clear`, `combobox/grouped` | `render`, `differential`, `keys-cells` | port | combobox.js behavior in Go; SelectItem values and labels reused (K12); single and multiple API shapes and keyword matching are in the B3 pack |
-| command | jinja | `command.js` | `<dialog>` | `ui.Command`, `ui.CommandProps`, `ui.CommandState`, `ui.CommandDialog`, `ui.CommandDialogProps` | `command/default`, `command/empty`, `command/dialog` | `render`, `differential`, `keys-cells` | port | CommandDialog is a `<dialog>`, as dialog's; its items are MenuItem (kit rule K12), with Keywords added; replaces the spike's hand CommandBox |
-| dialog | jinja | hand | `<dialog>`, `showModal` | `ui.Dialog`, `ui.DialogProps`, `ui.AlertDialog`, `ui.AlertDialogProps` | `dialog/default`, `dialog/open`, `dialog/without-close-button`, `dialog/with-alert` | `render`, `differential`, `keys-cells` | port | Dialog follows the macro including optional close button; AlertDialog uses CSS structure with no macro; both share modal focus and Escape handling |
-| drawer | css | `drawer.js` | `<dialog>`, `showModal` | `ui.Drawer`, `ui.DrawerProps`, `ui.DrawerState` | `drawer/bottom`, `drawer/top`, `drawer/left`, `drawer/right` | `spec`, `differential`, `keys-cells` | port | no macro; Dialog modal behavior and drawer.js close transition in Go |
-| dropdown-menu | jinja | `dropdown-menu.js` | - | `ui.DropdownMenu`, `ui.DropdownMenuProps`, `ui.DropdownMenuState`, `ui.MenuItem` | `dropdown-menu/default`, `dropdown-menu/end-aligned`, `dropdown-menu/checkbox-radio` | `render`, `differential`, `keys-cells` | port | the macro's markup and dropdown-menu.js's keys, pointer, checkbox and radio behavior in Go; indicators adapted from the spike; no typeahead in 1.1.0 |
-| empty | css | - | - | `ui.Empty`, `ui.EmptyProps` | `empty/default`, `empty/with-icon` | `spec` | done | - |
-| field | css | - | - | `ui.Field`, `ui.FieldProps`, `ui.FieldSet`, `ui.FieldSetProps`, `ui.FieldSeparator`, `ui.FieldSeparatorProps` | `field/default`, `field/horizontal`, `field/fieldset`, `field/checkbox-group`, `field/separator` | `spec` | done | orientation horizontal, responsive; data-variant label, legend are not ui.Variant |
+| combobox | jinja | `combobox.js` | - | - | `combobox/default` | `keys-cells` | done | migrated to self-contained ui/combobox package |
+| command | jinja | `command.js` | `<dialog>` | - | `command/default` | `keys-cells` | done | migrated to ui/command |
+| dialog | jinja | hand | `<dialog>`, `showModal` | - | `dialog/default` | `keys-cells` | done | migrated to ui/dialog and ui/alertdialog |
+| drawer | css | `drawer.js` | `<dialog>`, `showModal` | - | `drawer/default` | `spec`, `keys-cells` | done | migrated to ui/drawer |
+| dropdown-menu | jinja | `dropdown-menu.js` | - | - | `dropdown-menu/default` | `keys-cells` | done | migrated to ui/menu |
+| empty | css | - | - | - | `empty/default` | `spec` | done | migrated to ui/empty |
+| field | css | - | - | - | `field/default` | `spec` | done | migrated to ui/field |
 | form | css | - | - | - | - | - | done | an @import of nine controls' files, no class of its own: nothing to wrap |
-| input | css | - | `<input>` | `ui.Input`, `ui.InputProps` | `input/default`, `input/date`, `input/time`, `input/invalid`, `input/disabled` | `spec`, `keys-cells` | port | "" or text and 11 more types; file is no control (SPEC §6.4); date and time stories prove Blitz or list a gap; not done until the looks pass proves date and time or lists them (blitz-gaps.md) |
-| input-group | css | - | - | `ui.InputGroup`, `ui.InputGroupProps`, `ui.InputGroupAddon`, `ui.InputGroupAddonProps` | `input-group/inline`, `input-group/block`, `input-group/textarea` | `spec`, `keys-cells` | done | an addon's data-align: inline-start (also ""), inline-end, block-start, block-end; its Input, Textarea or NativeSelect is bare (K9) |
-| item | css | - | - | `ui.Item`, `ui.ItemProps`, `ui.ItemGroup`, `ui.ItemGroupProps` | `item/default`, `item/variants`, `item/sizes`, `item/group` | `spec` | done | variant muted and size xs are not in ui.Variant, ui.Size |
-| kbd | css | - | - | `ui.Kbd` | `kbd/default` | `spec` | done | Kbd(keys) takes no Props (ui/ui.go); storybook css.go |
-| label | css | - | - | `ui.Label`, `ui.LabelProps` | `label/default`, `label/disabled` | `spec` | done | dims in a disabled Field (in-data-[disabled=true]) |
-| native-select | css | - | `<select>` | `ui.NativeSelect`, `ui.NativeSelectProps`, `ui.SelectItem` | `native-select/default`, `native-select/small`, `native-select/disabled` | `spec`, `keys-cells` | done | a host may show no list (SPEC §10.2), Blitz shows none: keys only; Blitz's ▾ is off (css-subset) |
-| popover | jinja | `popover.js` | - | `ui.Popover`, `ui.PopoverProps`, `ui.PopoverState` | `popover/default`, `popover/sides`, `popover/with-command` | `render`, `differential`, `keys-cells` | port | aria-hidden, not the popover attribute; data-side, data-align: no shared enum; replaces the spike's hand Popover |
-| progress | css | - | - | `ui.Progress`, `ui.ProgressProps` | `progress/default`, `progress/values` | `spec` | done | a span's width in a div, not `<progress>` (which Blitz lacks) |
-| radio | css | - | `<input type=radio>` | `ui.Radio`, `ui.RadioProps` | `radio/default`, `radio/disabled` | `spec`, `keys-cells` | done | the host checks it and sends change (SPEC §9) |
-| range | css | `range.js` | `<input type=range>` | `ui.Slider`, `ui.SliderProps`, `ui.RangeSlider`, `ui.RangeSliderProps` | `range/default`, `range/two-thumbs` | `spec`, `keys-cells` | port | hotty-a2ui stepping and drag adapted to a kit-owned track and thumbs; no native range behavior or spec change |
-| scrollbar | css | - | `::-webkit-scrollbar` | - | `scrollbar/default`, `scrollbar/small` | `spec` | done | a class, not a component: Class: "scrollbar" or "scrollbar-sm" on the element that scrolls (kit rule K16); whether Blitz draws ::-webkit-scrollbar is the looks pass's |
-| select | jinja | `select.js` | - | `ui.Select`, `ui.SelectProps`, `ui.SelectState`, `ui.SelectItem` | `select/default`, `select/multiple`, `select/grouped`, `select/end-aligned` | `render`, `differential`, `keys-cells` | port | the macro's markup and select.js single and multiple selection in Go; Align end addresses right-edge placement manually, automatic flipping remains a gap |
+| input | css | - | `<input>` | - | `input/default` | `spec`, `keys-cells` | done | migrated to ui/input |
+| input-group | css | - | - | - | `input-group/default` | `spec`, `keys-cells` | done | migrated to ui/inputgroup |
+| item | css | - | - | - | `item/default` | `spec` | done | migrated to ui/item; default, outline, muted, sizes, group |
+| kbd | css | - | - | - | `kbd/default` | `spec` | done | migrated to ui/kbd |
+| label | css | - | - | - | `label/default` | `spec` | done | migrated to ui/label; dims in a disabled Field (in-data-[disabled=true]) |
+| popover | jinja | `popover.js` | - | - | `popover/default` | `keys-cells` | done | migrated to ui/popover |
+| progress | css | - | - | - | `progress/default` | `spec` | done | migrated to ui/progress; a span's width in a div, not `<progress>` (which Blitz lacks) |
+| radio | css | - | `<input type=radio>` | - | `radio/default` | `spec`, `keys-cells` | done | migrated to ui/radio |
+| range | css | `range.js` | `<input type=range>` | - | `range/default` | `spec`, `keys-cells` | done | migrated to ui/slider |
+| scrollbar | css | - | `::-webkit-scrollbar` | - | - | - | done | CSS utility classes (scrollbar, scrollbar-sm), not a component; demonstrated in ui/textarea/story |
+| select | jinja | `select.js` | - | - | `select/default` | `keys-cells` | done | migrated to ui/select |
 | sidebar | jinja | `sidebar.js` | `<details>`, `inert` | `ui.Sidebar`, `ui.SidebarProps`, `ui.SidebarState`, `ui.SidebarItem` | `sidebar/default`, `sidebar/submenu`, `sidebar/right`, `sidebar/closed` | `render`, `differential`, `keys-cells` | port | markup generated; its breakpoint reads the window's width; inert unchecked in Blitz |
-| skeleton | css | - | `@keyframes` | `ui.Skeleton`, `ui.SkeletonProps` | `skeleton/default` | `spec` | done | animate-pulse; Blitz runs @keyframes (css-subset) |
-| switch | css | - | `<input type=checkbox>` | `ui.Switch`, `ui.SwitchProps` | `switch/default`, `switch/small`, `switch/disabled` | `spec`, `keys-cells` | done | role=switch; size sm; the spike's Controls draw it |
-| table | css | - | - | `ui.Table`, `ui.TableProps` | `table/default` | `spec` | done | its rows and cells are plain elements; sorting is the app's; storybook css.go |
-| tabs | jinja | `tabs.js` | - | `ui.Tabs`, `ui.TabsProps`, `ui.Tab` | `tabs/default`, `tabs/line`, `tabs/many`, `tabs/vertical` | `render`, `differential`, `keys-cells` | port | the macro's markup in templ, the shown tab's panel only (the children); tabs.js's ← → Home End, the keyboard following the selected tab; horizontal tabs with an optional line variant |
-| textarea | css | - | `<textarea>` | `ui.Textarea`, `ui.TextareaProps` | `textarea/default` | `spec`, `keys-cells` | done | field-sizing: content needs Blitz patch 0056 (blitz-gaps); storybook css.go |
-| toast | jinja | `toast.js` | - | `ui.Toaster`, `ui.ToasterState`, `ui.Toast`, `ui.ToastAction` | `toast/default`, `toast/categories`, `toast/action` | `render`, `differential`, `keys-cells` | port | macros and toast.js timers, pause, action and cancel in Go; leaving buttons disabled for focus fixup; kit.css has no .toaster or .toast rules |
-| tooltip | css | - | `:hover`, `attr()` | `ui.Tooltip`, `ui.TooltipProps` | `tooltip/default`, `tooltip/sides` | `spec` | port | the Basecoat attribute and CSS on a wrapper; hover only, hidden on focus; cells has no tooltip; attr() text renders in Blitz |
+| skeleton | css | - | `@keyframes` | - | `skeleton/default` | `spec` | done | migrated to ui/skeleton |
+| switch | css | - | `<input type=checkbox>` | - | `switch/default` | `spec`, `keys-cells` | done | migrated to ui/switch |
+| table | css | - | - | - | `table/default` | `spec` | done | migrated to ui/table |
+| tabs | jinja | `tabs.js` | - | - | `tabs/default` | `keys-cells` | done | migrated to ui/tabs |
+| textarea | css | - | `<textarea>` | - | `textarea/default` | `spec`, `keys-cells` | done | migrated to ui/textarea |
+| toast | jinja | `toast.js` | - | - | `toast/default` | `keys-cells` | done | migrated to ui/toast |
+| tooltip | css | - | `:hover`, `attr()` | - | `tooltip/default` | `spec` | done | migrated to self-contained ui/tooltip package |
