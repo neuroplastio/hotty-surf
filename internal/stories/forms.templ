@@ -3,10 +3,11 @@ package stories
 import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 	"neuroplast.io/hotty-surf/ui/checkbox"
+	"neuroplast.io/hotty-surf/ui/kbd"
 	"neuroplast.io/hotty-surf/ui/label"
 	"neuroplast.io/hotty-surf/ui/textarea"
-	"neuroplast.io/hotty-surf/ui/tooltip"
 )
 
 // B1's stories: the form components.
@@ -27,19 +28,6 @@ type Field struct {
 	Disabled bool
 }
 
-// Area is the editable state of a textarea story.
-type Area struct {
-	Value string
-	Placeholder string
-}
-
-// Check is the editable state of a checkbox story.
-type Check struct {
-	Checked bool
-	Mixed bool
-	Label string
-}
-
 func (s *formState) set(b bool)     { s.on = b }
 func (s *formState) typed(v string) { s.text = v }
 func (s *formState) chose(v string) { s.choice = v }
@@ -48,11 +36,6 @@ func init() {
 	form := func(f func(*formState) templ.Component, init formState) func() templ.Component {
 		return func() templ.Component { s := init; return f(&s) }
 	}
-	add(Story{ID: "checkbox/default", Doc: "Checkboxes (unchecked, checked, invalid, and disabled states)",
-		View: form(checkboxDefault, formState{}), Props: func() (any, templ.Component) {
-			p := &Check{Label: "Accept terms and conditions"}
-			return p, bookCheck(p)
-		}, Keys: []string{"tab", "space"}, Want: "accepted: on"})
 	add(Story{ID: "radio/default", Doc: "A group of three radios",
 		View: form(radioDefault, formState{choice: "comfortable"}), Keys: []string{"tab", "tab", "tab", "space"}, Want: "density: compact"})
 	add(Story{ID: "radio/disabled", Doc: "A group with one radio disabled",
@@ -82,11 +65,6 @@ func init() {
 			p := &Field{Label: "Name", Value: "Ada", Type: "text", Disabled: true}
 			return p, bookInput(p)
 		}, Keys: []string{"tab", "x"}, Want: "name: ada"})
-	add(Story{ID: "textarea/default", Doc: "Resizable textarea (both, vertical, none) and disabled state",
-		View: form(textareaDefault, formState{}),
-		Keys: []string{"tab", "h", "i"}, Want: "message: hi"})
-	add(Story{ID: "label/default", Doc: "Labels paired with enabled and disabled inputs",
-		View: form(labelDefault, formState{})})
 	add(Story{ID: "field/default", Doc: "A field: a label, an input and a description",
 		View: form(fieldDefault, formState{})})
 	add(Story{ID: "field/horizontal", Doc: "A horizontal field: a switch beside its label and description",
@@ -109,32 +87,10 @@ templ status(label, value string) {
 	<p class="text-sm text-muted-foreground">{ label }: { value }</p>
 }
 
-templ checkboxDefault(s *formState) {
-	<div class="flex flex-col gap-3 p-4">
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "terms", Checked: s.on, OnChange: s.set})
-			Accept terms and conditions
-		}
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "updates", Checked: true, Disabled: true})
-			Send product updates (disabled checked)
-		}
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "disabled-off", Disabled: true})
-			Disabled unchecked
-		}
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "invalid-cb", Invalid: true})
-			Required field (invalid)
-		}
-		@status("accepted", onoff(s.on))
-	</div>
-}
-
 templ radios(s *formState, disabled string) {
 	<div role="radiogroup" class="flex flex-col gap-3 p-4">
 		for _, d := range []string{"default", "comfortable", "compact"} {
-			@ui.Label(ui.LabelProps{}) {
+			@label.View(label.Props{}) {
 				@ui.Radio(ui.RadioProps{Name: "density", Checked: s.choice == d, Disabled: d == disabled,
 					Attrs: surf.On(ctx, "density-"+d, surf.Check(func(on bool) {
 						if on {
@@ -158,7 +114,7 @@ templ radioDisabled(s *formState) {
 
 templ switchDefault(s *formState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Label(ui.LabelProps{}) {
+		@label.View(label.Props{}) {
 			@ui.Switch(ui.SwitchProps{Checked: s.on, Attrs: surf.On(ctx, "airplane", surf.Check(s.set))})
 			Airplane mode
 		}
@@ -168,7 +124,7 @@ templ switchDefault(s *formState) {
 
 templ switchSmall(s *formState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Label(ui.LabelProps{}) {
+		@label.View(label.Props{}) {
 			@ui.Switch(ui.SwitchProps{Checked: s.on, Size: ui.Small, Attrs: surf.On(ctx, "notify", surf.Check(s.set))})
 			Notifications
 		}
@@ -178,7 +134,7 @@ templ switchSmall(s *formState) {
 
 templ switchDisabled(s *formState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Label(ui.LabelProps{}) {
+		@label.View(label.Props{}) {
 			@ui.Switch(ui.SwitchProps{Checked: s.on, Disabled: true, Attrs: surf.On(ctx, "airplane", surf.Check(s.set))})
 			Airplane mode
 		}
@@ -195,7 +151,7 @@ templ inputDefault(s *formState) {
 
 templ bookInput(p *Field) {
 	<div class="grid w-full max-w-sm gap-2">
-		@ui.Label(ui.LabelProps{For: "field"}) { { p.Label } }
+		@label.View(label.Props{For: "field"}) { { p.Label } }
 		@ui.Input(ui.InputProps{Type: p.Type, Value: p.Value, Placeholder: p.Placeholder, Invalid: p.Invalid, Disabled: p.Disabled, Attrs: surf.On(ctx, "field", surf.Input(func(v string) { p.Value = v }))})
 		if p.Invalid {
 			<p class="text-destructive text-sm">Enter a valid address.</p>
@@ -203,48 +159,6 @@ templ bookInput(p *Field) {
 			<p class="text-muted-foreground text-sm">We'll never share it.</p>
 		}
 	</div>
-}
-
-templ bookArea(p *Area) {
-	@textarea.View(textarea.Props{ID: "area", Value: p.Value, Placeholder: p.Placeholder, OnInput: func(v string) { p.Value = v }})
-}
-
-templ bookCheck(p *Check) {
-	<div class="flex flex-col gap-3 p-4">
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{
-				ID:       "check",
-				Checked:  p.Checked,
-				OnChange: func(v bool) { p.Checked, p.Mixed = v, false },
-				Attrs:    templ.Attributes{"aria-label": p.Label},
-			})
-			{ p.Label }
-		}
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "updates", Checked: true, Disabled: true})
-			Send product updates (disabled checked)
-		}
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "disabled-off", Disabled: true})
-			Disabled unchecked
-		}
-		@label.View(label.Props{}) {
-			@checkbox.View(checkbox.Props{ID: "invalid-cb", Invalid: true})
-			Required field (invalid)
-		}
-	</div>
-}
-
-func checkState(p *Check) string {
-	if p.Mixed { return "mixed" }
-	if p.Checked { return "true" }
-	return "false"
-}
-
-func checkDataState(p *Check) string {
-	if p.Mixed { return "indeterminate" }
-	if p.Checked { return "checked" }
-	return "unchecked"
 }
 
 templ inputDate(s *formState) {
@@ -276,52 +190,6 @@ templ inputDisabled(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.Input(ui.InputProps{Value: s.text, Disabled: true, Attrs: surf.On(ctx, "name", surf.Input(s.typed))})
 		@status("name", s.text)
-	</div>
-}
-
-templ textareaDefault(s *formState) {
-	<div class="flex flex-col gap-4 p-4">
-		<div class="flex flex-col gap-1">
-			<span class="text-xs text-muted-foreground">both + auto-grow (20–60 cols, 2–8 rows)</span>
-			@textarea.View(textarea.Props{ID: "message", Value: s.text, Placeholder: "Type multiple lines to auto-grow up to 8 rows...", Rows: 3, MinCols: 20, MaxCols: 60, MinRows: 2, MaxRows: 8, AutoGrow: true, OnInput: s.typed})
-			@status("message", s.text)
-		</div>
-		<div class="flex flex-col gap-1">
-			<span class="text-xs text-muted-foreground">vertical</span>
-			@textarea.View(textarea.Props{ID: "ta-vertical", Placeholder: "Vertical resize only", Rows: 3, Resize: textarea.ResizeVertical})
-		</div>
-		<div class="flex flex-col gap-1">
-			<span class="text-xs text-muted-foreground">none</span>
-			@textarea.View(textarea.Props{ID: "ta-none", Placeholder: "Fixed size", Rows: 2, Resize: textarea.ResizeNone})
-		</div>
-		<div class="flex flex-col gap-1">
-			<span class="text-xs text-muted-foreground">disabled</span>
-			@textarea.View(textarea.Props{ID: "ta-disabled", Placeholder: "Disabled textarea", Rows: 2, Disabled: true})
-		</div>
-	</div>
-}
-
-templ labelDefault(s *formState) {
-	<div class="flex flex-col gap-4 p-4 max-w-sm">
-		<div class="flex flex-col gap-2">
-			<div class="flex items-center gap-2">
-				@label.View(label.Props{For: "username"}) {
-					Username
-				}
-				@tooltip.View(tooltip.Props{Text: "Lowercase letters, numbers, and hyphens only", Side: tooltip.Right}) {
-					<span class="text-muted-foreground">
-						@ui.Icon("circle-help", "size-4")
-					</span>
-				}
-			</div>
-			@ui.Input(ui.InputProps{Value: s.text, Attrs: surf.On(ctx, "username", surf.Input(s.typed))})
-		</div>
-		@ui.Field(ui.FieldProps{Disabled: true}) {
-			@label.View(label.Props{For: "username-disabled"}) {
-				Disabled username
-			}
-			@ui.Input(ui.InputProps{Value: "ada", Disabled: true, Attrs: surf.On(ctx, "username-disabled")})
-		}
 	</div>
 }
 
@@ -370,11 +238,11 @@ templ fieldCheckboxGroup(s *formState) {
 			<legend data-variant="label">Show these items on the desktop</legend>
 			<div role="group" data-slot="checkbox-group">
 				@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
-					@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Attrs: surf.On(ctx, "disks", surf.Check(s.set))})
+					@checkbox.View(checkbox.Props{ID: "disks", Checked: s.on, OnChange: s.set})
 					<label for="disks">Hard disks</label>
 				}
 				@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
-					@ui.Checkbox(ui.CheckboxProps{Attrs: surf.On(ctx, "servers")})
+					@checkbox.View(checkbox.Props{ID: "servers"})
 					<label for="servers">Connected servers</label>
 				}
 			</div>
@@ -406,7 +274,7 @@ templ inputGroupInline(s *formState) {
 				@ui.Icon("search", "")
 			}
 			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "inline-end"}) {
-				@ui.Kbd("mod+k")
+				@kbd.View(kbd.Props{Keys: "mod+k"})
 			}
 		}
 		@status("search", s.text)
@@ -428,9 +296,9 @@ templ inputGroupBlock(s *formState) {
 templ inputGroupTextarea(s *formState) {
 	<div class="flex flex-col gap-3 p-4 max-w-sm">
 		@ui.InputGroup(ui.InputGroupProps{}) {
-			@ui.Textarea(ui.TextareaProps{Value: s.text, Placeholder: "Add a comment", Attrs: surf.On(ctx, "comment", surf.Input(s.typed))})
+			@textarea.View(textarea.Props{ID: "comment", Value: s.text, Placeholder: "Add a comment", OnInput: s.typed})
 			@ui.InputGroupAddon(ui.InputGroupAddonProps{Align: "block-end"}) {
-				@ui.Button(ui.ButtonProps{Size: ui.Small, Attrs: surf.On(ctx, "post", surf.Click(func() { s.text = "" }))}) {
+				@button.View(button.Props{ID: "post", Size: ui.Small, OnClick: func() { s.text = "" }}) {
 					Post
 				}
 			}

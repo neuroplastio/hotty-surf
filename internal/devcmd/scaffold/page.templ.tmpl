@@ -5,6 +5,7 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 )
 
 // Page is the view: a function of the state, rendered again after every
@@ -20,10 +21,10 @@ templ Page(a *App) {
 				Placeholder: "1",
 				Attrs:       surf.On(ctx, "by", surf.Input(a.SetBy)),
 			})
-			@ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
+			@button.View(button.Props{Attrs: templ.Attributes{"type": "submit"}}) {
 				Add
 			}
-			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "reset", surf.Click(a.Reset))}) {
+			@button.View(button.Props{ID: "reset", Variant: ui.Outline, OnClick: a.Reset}) {
 				Reset
 			}
 		</form>

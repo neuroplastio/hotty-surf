@@ -25,6 +25,49 @@ func (b *box) kit(n *html.Node) {
 		b.fx.fig = figAvatarImg
 		return
 	}
+	if attr(n, "data-mode") == "tui" {
+		switch {
+		case tokens(n, "class", "card"):
+			b.framed = true
+			b.padT, b.padB = max(b.padT, 1), max(b.padB, 1)
+			b.padL, b.padR = max(b.padL, 2), max(b.padR, 2)
+			b.display, b.column = dFlex, true
+			b.gapY = max(b.gapY, 1)
+		case tokens(n, "class", "alert"):
+			b.framed = true
+			b.padT, b.padB = max(b.padT, 1), max(b.padB, 1)
+			b.padL, b.padR = max(b.padL, 2), max(b.padR, 2)
+		case tokens(n, "class", "empty"):
+			b.framed = true
+			b.padT, b.padB = max(b.padT, 1), max(b.padB, 1)
+			b.padL, b.padR = max(b.padL, 2), max(b.padR, 2)
+			b.display, b.column = dFlex, true
+			b.gapY = max(b.gapY, 1)
+		case tokens(n, "class", "item-group"):
+			b.framed = true
+			b.padT, b.padB = max(b.padT, 1), max(b.padB, 1)
+			b.padL, b.padR = max(b.padL, 2), max(b.padR, 2)
+		case tokens(n, "class", "item"):
+			b.display, b.column = dFlex, false
+			b.gapX = max(b.gapX, 2)
+			b.itemsCenter = true
+			if attr(n, "data-variant") == "outline" {
+				b.framed = true
+				b.padT, b.padB = max(b.padT, 1), max(b.padB, 1)
+				b.padL, b.padR = max(b.padL, 2), max(b.padR, 2)
+			} else if attr(n, "data-variant") == "muted" {
+				b.padL, b.padR = max(b.padL, 1), max(b.padR, 1)
+			}
+		}
+	}
+	if n.DataAtom == atom.P && n.Parent != nil &&
+		(n.Parent.DataAtom == atom.Header || n.Parent.DataAtom == atom.Section) &&
+		closest(n.Parent, func(a *html.Node) bool {
+			return attr(a, "data-mode") == "tui" &&
+				(tokens(a, "class", "card") || tokens(a, "class", "empty") || tokens(a, "class", "item") || tokens(a, "class", "alert"))
+		}) != nil {
+		b.look |= lMuted
+	}
 	switch {
 	case tokens(n, "class", "field"):
 		// A column; a row by its data-orientation, its label growing.
@@ -72,6 +115,8 @@ func (b *box) kit(n *html.Node) {
 		switch {
 		case tokens(p, "class", "field") && horizontal(p) &&
 			(n.DataAtom == atom.Label || n.DataAtom == atom.Section):
+			b.grow = true
+		case tokens(p, "class", "item") && attr(p, "data-mode") == "tui" && n.DataAtom == atom.Section:
 			b.grow = true
 		}
 	}

@@ -12,6 +12,7 @@ import (
 	"neuroplast.io/hotty-surf/cells"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
 )
 
 // bindingsApp has two buttons: a in an inner scope inside an outer one,
@@ -25,7 +26,7 @@ func (a *bindingsApp) run(name string) func() bool {
 func (a *bindingsApp) view() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		btn := func(id string) templ.Component {
-			return with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, id, surf.Click(func() {}))}), templ.Raw(id))
+			return with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, id, surf.Click(func() {}))}), templ.Raw(id))
 		}
 		inner := with(ui.KeyScope([]ui.KeyBinding{
 			{Key: "enter", Label: "Open", Name: "open", Run: a.run("open")},
@@ -118,7 +119,7 @@ func TestBindingsOneName(t *testing.T) {
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		var rows []templ.Component
 		for _, id := range []string{"row-1", "row-2"} {
-			btn := with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, id, surf.Click(func() {}))}), templ.Raw(id))
+			btn := with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, id, surf.Click(func() {}))}), templ.Raw(id))
 			rows = append(rows, with(ui.KeyScope([]ui.KeyBinding{
 				{Key: "f2", Label: "Rename", Name: "rename", Run: func() bool { ran = append(ran, id); return true }},
 			}), btn))
@@ -143,7 +144,7 @@ func TestBindingDisabledKeyGoesOn(t *testing.T) {
 	var ran []string
 	run := func(name string) func() bool { return func() bool { ran = append(ran, name); return true } }
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		btn := with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "a", surf.Click(func() {}))}), templ.Raw("a"))
+		btn := with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "a", surf.Click(func() {}))}), templ.Raw("a"))
 		inner := with(ui.KeyScope([]ui.KeyBinding{{Key: "enter", Name: "inner", Disabled: true, Run: run("inner")}}), btn)
 		return with(ui.KeyScope([]ui.KeyBinding{{Key: "enter", Name: "outer", Run: run("outer")}}), inner).Render(ctx, w)
 	})

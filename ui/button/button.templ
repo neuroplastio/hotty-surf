@@ -118,7 +118,7 @@ func resolveAttrs(ctx context.Context, p Props, interactive bool) templ.Attribut
 	if p.Label != "" {
 		aria = templ.Attributes{"aria-label": p.Label}
 	}
-	return ui.MergeAttrs(on, p.Attrs, aria)
+	return ui.ScopeNativeAttrs(ctx, ui.MergeAttrs(on, p.Attrs, aria), "button")
 }
 
 func dataSize(p Props) string {

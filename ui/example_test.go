@@ -10,6 +10,7 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 // An app keeps its data and each component's state; a view passes both in.
@@ -22,16 +23,16 @@ import (
 func Example() {
 	type app struct {
 		size     string
-		sizeMenu ui.SelectState
+		sizeMenu uiselect.State
 		toasts   ui.ToasterState
 	}
 	a := &app{size: "m"}
-	sizes := []ui.SelectItem{
+	sizes := []uiselect.Item{
 		{Value: "s", Label: "Small"},
 		{Value: "m", Label: "Medium"},
 		{Value: "l", Label: "Large"},
 	}
-	view := ui.Select(&a.sizeMenu, ui.SelectProps{
+	view := uiselect.View(&a.sizeMenu, uiselect.Props{
 		ID:    "size",
 		Items: sizes,
 		Value: a.size,
@@ -44,19 +45,10 @@ func Example() {
 }
 
 // In templ, a scope around a control can take a key before its default:
-//
-//	@ui.KeyScope([]ui.KeyBinding{
-//	    {Key: "arrow_down", Label: "Next log line", Name: "log.next", Run: a.nextLine},
-//	    {Key: "mod+s", Label: "Save", Name: "save", Run: a.save, Disabled: !a.dirty},
-//	    {Label: "About", Name: "about", Run: a.about},
-//	}) {
-//	    @ui.Select(&a.sizeMenu, ui.SelectProps{Items: sizes,
-//	        Value: a.size, OnChange: a.setSize})
-//	}
 func ExampleKeyScope() {
 	nextLine := func() bool { return true }
-	var state ui.SelectState
-	child := ui.Select(&state, ui.SelectProps{Items: []ui.SelectItem{{Value: "a", Label: "A"}}, Placeholder: "Choose"})
+	var state uiselect.State
+	child := uiselect.View(&state, uiselect.Props{Items: []uiselect.Item{{Value: "a", Label: "A"}}, Placeholder: "Choose"})
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		return ui.KeyScope([]ui.KeyBinding{{Key: "arrow_down", Label: "Next log line", Name: "log.next", Run: nextLine}}).Render(templ.WithChildren(ctx, child), w)
 	})

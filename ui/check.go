@@ -92,18 +92,6 @@ func list[T ~string](vs []T) string {
 	return strings.Join(out, ", ")
 }
 
-// buttonSize is a button's data-size: its Size, or Basecoat's icon sizes
-// for IconOnly.
-func buttonSize(p ButtonProps) string {
-	if p.IconOnly {
-		if p.Size == Medium {
-			return "icon"
-		}
-		return "icon-" + string(p.Size)
-	}
-	return string(p.Size)
-}
-
 // join joins class names, leaving out the empty ones.
 func join(names ...string) string {
 	var b strings.Builder

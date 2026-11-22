@@ -9,6 +9,7 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
 )
 
 // Icon's doc names "plus": the kit has it. A name it hasn't is a fault
@@ -30,8 +31,8 @@ func TestIconNames(t *testing.T) {
 // is a button that submits nothing.
 func TestButtonType(t *testing.T) {
 	r := start(t, page(
-		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit", "id": "b", "aria-label": "b"}}),
-		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"id": "c", "aria-label": "c"}}),
+		uibutton.View(uibutton.Props{Attrs: templ.Attributes{"type": "submit", "id": "b", "aria-label": "b"}}),
+		uibutton.View(uibutton.Props{Attrs: templ.Attributes{"id": "c", "aria-label": "c"}}),
 	))
 	if got := attr(r.One("#b"), "type"); got != "submit" {
 		t.Errorf("Attrs{type: submit}: the button's type is %q", got)

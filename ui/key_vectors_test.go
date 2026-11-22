@@ -14,6 +14,11 @@ import (
 	"neuroplast.io/hotty-surf/cells"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/breadcrumb"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/checkbox"
+	"neuroplast.io/hotty-surf/ui/item"
+	"neuroplast.io/hotty-surf/ui/textarea"
 )
 
 // Each vector runs through the same Surface once with the protocol test
@@ -36,13 +41,13 @@ func (a *nativeKeyApp) view() templ.Component {
 		var c templ.Component
 		switch a.kind {
 		case "button":
-			c = with(ui.Button(ui.ButtonProps{Disabled: a.disabled, Attrs: click()}), templ.Raw("Go"))
+			c = with(uibutton.View(uibutton.Props{Disabled: a.disabled, Attrs: click()}), templ.Raw("Go"))
 		case "item":
-			c = with(ui.Item(ui.ItemProps{Attrs: click()}), templ.Raw("Go"))
+			c = with(item.View(item.Props{Attrs: click()}), templ.Raw("Go"))
 		case "breadcrumb":
-			c = ui.Breadcrumb(ui.BreadcrumbProps{Items: []ui.BreadcrumbItem{{Label: "Go", Attrs: click()}, {Label: "Here"}}})
+			c = breadcrumb.View(breadcrumb.Props{Items: []breadcrumb.Item{{Label: "Go", Attrs: click()}, {Label: "Here"}}})
 		case "checkbox":
-			c = ui.Checkbox(ui.CheckboxProps{Disabled: a.disabled, Checked: a.checked, Attrs: surf.On(ctx, "control", surf.Check(check))})
+			c = checkbox.View(checkbox.Props{Disabled: a.disabled, Checked: a.checked, Attrs: surf.On(ctx, "control", surf.Check(check))})
 		case "radio":
 			c = ui.Radio(ui.RadioProps{Name: "choice", Disabled: a.disabled, Checked: a.checked, Attrs: surf.On(ctx, "control", surf.Check(check))})
 		case "switch":
@@ -50,7 +55,7 @@ func (a *nativeKeyApp) view() templ.Component {
 		case "input":
 			c = ui.Input(ui.InputProps{Disabled: a.disabled, Value: a.value, Attrs: surf.On(ctx, "control", surf.Input(input))})
 		case "textarea":
-			c = ui.Textarea(ui.TextareaProps{Disabled: a.disabled, Value: a.value, Attrs: surf.On(ctx, "control", surf.Input(input))})
+			c = textarea.View(textarea.Props{Disabled: a.disabled, Value: a.value, Attrs: surf.On(ctx, "control", surf.Input(input))})
 		case "list":
 			items := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 				for i := range 3 {

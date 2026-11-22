@@ -44,6 +44,7 @@ import (
 	"neuroplast.io/hotty-surf/run"
 	"neuroplast.io/hotty-surf/ui"
 	bookcode "neuroplast.io/hotty-surf/ui/code"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 var kit = stories.Registry()
@@ -90,8 +91,9 @@ type App struct {
 	gripStart  [2]int
 	gripOrigin [2]int
 	gripping   bool
-	caretTick  uint
-	cols       int
+	caretTick   uint
+	cols        int
+	propSelects map[string]*uiselect.State
 }
 
 // own are the book's elements that take the keyboard: while one has it, a
@@ -129,7 +131,7 @@ func New() *App {
 	a := &App{all: stories.BookAll(), startFocus: true}
 	var ss []*storybook.Story
 	for _, st := range a.all {
-		ss = append(ss, storybook.Wrap(st.ID, st.Doc, st.View, st.Props))
+		ss = append(ss, storybook.Wrap(st.ID, st.Doc, st.Consolidated, st.Score, st.View, st.Props))
 	}
 	slices.SortStableFunc(ss, func(x, y *storybook.Story) int {
 		if c := storybook.GroupOrder(x.Group) - storybook.GroupOrder(y.Group); c != 0 {
@@ -327,7 +329,10 @@ func (sh *shown) start(mode func() ui.Mode) {
 		return
 	}
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return paneRoot(sh.view).Render(ui.WithMode(ctx, mode()), w)
+		m := mode()
+		ctx = ui.WithMode(ctx, m)
+		ctx = ui.WithKitty(ctx, m == ui.ModeTUI)
+		return paneRoot(sh.view).Render(ctx, w)
 	})
 	sh.pane = surf.New("book-pane", view, "")
 	// sh.pane is driven synchronously by book's own render (sh.pump), not by
@@ -537,13 +542,25 @@ func (a *App) setProp(path string) func(string) {
 	return func(value string) { a.model.Set(a.model.Sel, path, value) }
 }
 
-// controls and entries adapt the model data to the spike's kit parts.
-func (a *App) controls() []ui.Control {
-	var out []ui.Control
-	for _, c := range a.model.Sel.Controls() {
-		out = append(out, ui.Control{Name: c.Path, Kind: c.Kind, Value: c.Value, Options: c.Options})
+func (a *App) propSelect(path string) *uiselect.State {
+	if a.propSelects == nil {
+		a.propSelects = map[string]*uiselect.State{}
 	}
-	return out
+	key := a.ID + ":" + path
+	st := a.propSelects[key]
+	if st == nil {
+		st = &uiselect.State{}
+		a.propSelects[key] = st
+	}
+	return st
+}
+
+func propSelectItems(opts []string) []uiselect.Item {
+	items := make([]uiselect.Item, len(opts))
+	for i, o := range opts {
+		items[i] = uiselect.Item{Value: o, Label: o}
+	}
+	return items
 }
 
 func (a *App) entries() []ui.LogEntry {

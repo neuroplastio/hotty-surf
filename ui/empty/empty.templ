@@ -1,0 +1,42 @@
+// Package empty is hotty-surf's self-contained Empty state component, with
+// explicit renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package empty
+
+import "neuroplast.io/hotty-surf/ui"
+
+// Register registers empty's assets with r.
+func Register(r *ui.Registry) {}
+
+// Props configures an Empty state component.
+type Props struct {
+	Attrs templ.Attributes
+	Class string
+}
+
+// View dispatches to Hotty or TUI according to ui.ModeOf(ctx).
+templ View(p Props) {
+	switch ui.ModeOf(ctx) {
+	case ui.ModeHotty:
+		@Hotty(p) {
+			{ children... }
+		}
+	default:
+		@TUI(p) {
+			{ children... }
+		}
+	}
+}
+
+// Hotty renders Basecoat's empty state for a hotty host.
+templ Hotty(p Props) {
+	<div data-slot="empty" class={ ui.JoinClass("empty", p.Class) } { p.Attrs... }>
+		{ children... }
+	</div>
+}
+
+// TUI renders the empty state for cells.Screen.
+templ TUI(p Props) {
+	<div data-slot="empty" data-mode="tui" class={ ui.JoinClass("empty", p.Class) } { p.Attrs... }>
+		{ children... }
+	</div>
+}

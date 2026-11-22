@@ -10,35 +10,62 @@
 package stories
 
 import (
-	"slices"
-	"strings"
-
-	"github.com/a-h/templ"
-
+	"neuroplast.io/hotty-surf/internal/story"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/alert"
+	alertstory "neuroplast.io/hotty-surf/ui/alert/story"
 	"neuroplast.io/hotty-surf/ui/avatar"
+	avatarstory "neuroplast.io/hotty-surf/ui/avatar/story"
 	"neuroplast.io/hotty-surf/ui/badge"
+	badgestory "neuroplast.io/hotty-surf/ui/badge/story"
+	"neuroplast.io/hotty-surf/ui/breadcrumb"
+	breadcrumbstory "neuroplast.io/hotty-surf/ui/breadcrumb/story"
 	"neuroplast.io/hotty-surf/ui/button"
+	buttonstory "neuroplast.io/hotty-surf/ui/button/story"
+	"neuroplast.io/hotty-surf/ui/buttongroup"
+	buttongroupstory "neuroplast.io/hotty-surf/ui/buttongroup/story"
+	"neuroplast.io/hotty-surf/ui/card"
+	cardstory "neuroplast.io/hotty-surf/ui/card/story"
 	"neuroplast.io/hotty-surf/ui/checkbox"
+	checkboxstory "neuroplast.io/hotty-surf/ui/checkbox/story"
 	"neuroplast.io/hotty-surf/ui/combobox"
+	comboboxstory "neuroplast.io/hotty-surf/ui/combobox/story"
+	"neuroplast.io/hotty-surf/ui/empty"
+	emptystory "neuroplast.io/hotty-surf/ui/empty/story"
+	"neuroplast.io/hotty-surf/ui/item"
+	itemstory "neuroplast.io/hotty-surf/ui/item/story"
 	"neuroplast.io/hotty-surf/ui/kbd"
+	kbdstory "neuroplast.io/hotty-surf/ui/kbd/story"
 	"neuroplast.io/hotty-surf/ui/label"
+	labelstory "neuroplast.io/hotty-surf/ui/label/story"
 	"neuroplast.io/hotty-surf/ui/progress"
+	progressstory "neuroplast.io/hotty-surf/ui/progress/story"
 	uiselect "neuroplast.io/hotty-surf/ui/select"
+	selectstory "neuroplast.io/hotty-surf/ui/select/story"
 	"neuroplast.io/hotty-surf/ui/separator"
+	separatorstory "neuroplast.io/hotty-surf/ui/separator/story"
 	"neuroplast.io/hotty-surf/ui/skeleton"
+	skeletonstory "neuroplast.io/hotty-surf/ui/skeleton/story"
 	"neuroplast.io/hotty-surf/ui/textarea"
+	textareastory "neuroplast.io/hotty-surf/ui/textarea/story"
 	"neuroplast.io/hotty-surf/ui/tooltip"
+	tooltipstory "neuroplast.io/hotty-surf/ui/tooltip/story"
 )
 
 // Registry returns a ui.Registry with all story components registered.
 func Registry() *ui.Registry {
 	return ui.NewRegistry().Register(
+		alert.Register,
 		avatar.Register,
 		badge.Register,
+		breadcrumb.Register,
 		button.Register,
+		buttongroup.Register,
+		card.Register,
 		checkbox.Register,
 		combobox.Register,
+		empty.Register,
+		item.Register,
 		kbd.Register,
 		label.Register,
 		progress.Register,
@@ -50,61 +77,48 @@ func Registry() *ui.Registry {
 	)
 }
 
-// A Story is one component in one state.
-type Story struct {
-	// ID is <component>/<story>, the component as Basecoat's file names it
-	// (ui/coverage.tsv): "button/default", "dropdown-menu/end-aligned".
-	ID string
-	// Doc is a line about what it shows.
-	Doc string
-	// View makes a new view, with state of its own.
-	View func() templ.Component
-	// Props, when present, creates editable props and their shared view for
-	// the book. Stories without editable props leave it nil.
-	Props func() (any, templ.Component)
-	// Keys, pressed in cells from the first frame (Tab first, since
-	// nothing has the keyboard), use the story by keyboard alone; Want is
-	// text the cells' lines show afterwards. A story of a component that
-	// takes no keys has neither.
-	Keys []string
-	Want string
-	// Gap, when not "", is why Keys don't do what Want says yet: a limit
-	// of hotty's protocol or of a host, written as a proposal or a gap
-	// (never worked around in the kit). The test skips with it.
-	Gap string
+// Story is an alias for story.Story so callers can migrate incrementally.
+type Story = story.Story
+
+// Stories returns a story.Registry containing every registered story.
+func Stories() *story.Registry {
+	return reg
 }
 
-// Component is the story's component: its ID before the slash.
-func (s Story) Component() string {
-	c, _, _ := strings.Cut(s.ID, "/")
-	return c
-}
-
-var all []Story
+var reg = story.NewRegistry().Register(
+	alertstory.Register,
+	avatarstory.Register,
+	badgestory.Register,
+	breadcrumbstory.Register,
+	buttonstory.Register,
+	buttongroupstory.Register,
+	cardstory.Register,
+	checkboxstory.Register,
+	comboboxstory.Register,
+	emptystory.Register,
+	itemstory.Register,
+	kbdstory.Register,
+	labelstory.Register,
+	progressstory.Register,
+	selectstory.Register,
+	separatorstory.Register,
+	skeletonstory.Register,
+	textareastory.Register,
+	tooltipstory.Register,
+)
 
 func add(s Story) {
-	if slices.ContainsFunc(all, func(o Story) bool { return o.ID == s.ID }) {
-		panic("stories: two stories " + s.ID)
-	}
-	all = append(all, s)
+	reg.Add(s)
 }
 
 // All is every story, by ID.
 func All() []Story {
-	out := slices.Clone(all)
-	slices.SortStableFunc(out, func(a, b Story) int { return strings.Compare(a.ID, b.ID) })
-	return out
+	return reg.All()
 }
 
 // Of is the stories of a component, by ID.
 func Of(component string) []Story {
-	var out []Story
-	for _, s := range All() {
-		if s.Component() == component {
-			out = append(out, s)
-		}
-	}
-	return out
+	return reg.Of(component)
 }
 
 func onoff(b bool) string {
@@ -120,7 +134,7 @@ func onoff(b bool) string {
 // variants in the order its file lists them, as the spike's book did
 // (default, destructive, ghost with icon, …); the book sorts the rest.
 func BookAll() []Story {
-	return append(slices.Clone(all), bookStories...)
+	return append(reg.Ordered(), bookStories...)
 }
 
 var bookStories []Story

@@ -5,6 +5,9 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/badge"
+	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/label"
 )
 
 templ DetailsView(d *Details) {
@@ -19,7 +22,7 @@ templ DetailsView(d *Details) {
 			if len(c.Tags) > 0 {
 				<div class="flex flex-wrap gap-2 mt-1">
 					for _, t := range c.Tags {
-						@ui.Badge(ui.BadgeProps{Variant: ui.Secondary}) {
+						@badge.View(badge.Props{Variant: ui.Secondary}) {
 							{ t.Name }
 						}
 					}
@@ -59,7 +62,7 @@ templ DetailsView(d *Details) {
 		<form class="flex flex-col gap-3" { surf.On(ctx, "tag-form", surf.Submit(d.AddTag))... }>
 			<h2 class="text-sm font-semibold">Tag this commit</h2>
 			@ui.Field(ui.FieldProps{Invalid: d.Missing}) {
-				@ui.Label(ui.LabelProps{For: "tag-name"}) {
+				@label.View(label.Props{For: "tag-name"}) {
 					Name
 				}
 				@ui.Input(ui.InputProps{
@@ -73,7 +76,7 @@ templ DetailsView(d *Details) {
 				}
 			}
 			@ui.Field(ui.FieldProps{}) {
-				@ui.Label(ui.LabelProps{For: "tag-note"}) {
+				@label.View(label.Props{For: "tag-note"}) {
 					Note
 				}
 				@ui.Input(ui.InputProps{
@@ -82,7 +85,7 @@ templ DetailsView(d *Details) {
 					Attrs:       surf.On(ctx, "tag-note", surf.Input(d.SetTagNote)),
 				})
 			}
-			@ui.Button(ui.ButtonProps{Class: "w-fit", Attrs: templ.Attributes{"type": "submit"}}) {
+			@button.View(button.Props{Class: "w-fit", Attrs: templ.Attributes{"type": "submit"}}) {
 				@ui.Icon("plus", "")
 				Add tag
 			}

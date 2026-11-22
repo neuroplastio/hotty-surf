@@ -9,78 +9,13 @@ package stories
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"neuroplast.io/hotty-surf/ui"
-	"neuroplast.io/hotty-surf/ui/separator"
-)
-
-// SeparatorProps is the editable state of the separator story.
-type SeparatorProps struct {
-	Orientation string `enum:"horizontal,vertical"`
-}
+import "neuroplast.io/hotty-surf/ui"
 
 // Icons is the editable icon-gallery state.
 type Icons struct{ Class string }
 
 var bookIconNames = []string{
 	"arrow-down", "arrow-right", "arrow-up", "bell", "check", "chevron-down", "chevron-left", "chevron-right", "chevrons-left", "chevrons-right", "chevrons-up-down", "circle", "circle-alert", "circle-check-big", "circle-help", "circle-off", "circle-plus", "ellipsis", "eye-off", "folder", "hand", "inbox", "plus", "search", "settings-2", "timer", "user", "x",
-}
-
-func separatorDemo(p *SeparatorProps) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col gap-4 p-4\"><div class=\"flex flex-col gap-2 w-60 text-sm\"><span class=\"text-xs text-muted-foreground\">Horizontal</span> <span>Blog</span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = separator.View(separator.Props{Orientation: separator.Horizontal, Decorative: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<span>Docs</span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = separator.View(separator.Props{Orientation: separator.Horizontal, Decorative: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<span>Source</span></div><div class=\"flex flex-col gap-2 text-sm\"><span class=\"text-xs text-muted-foreground\">Vertical</span><div class=\"flex h-6 items-center gap-3\"><span>Blog</span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = separator.View(separator.Props{Orientation: separator.Vertical, Decorative: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<span>Docs</span>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = separator.View(separator.Props{Orientation: separator.Vertical, Decorative: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<span>Source</span></div></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
 }
 
 func iconsDemo(p *Icons) templ.Component {
@@ -100,12 +35,12 @@ func iconsDemo(p *Icons) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"book-icon-grid\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"book-icon-grid\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, name := range bookIconNames {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"flex flex-col items-center gap-1 rounded-md border p-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"flex flex-col items-center gap-1 rounded-md border p-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -113,25 +48,25 @@ func iconsDemo(p *Icons) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"text-muted-foreground text-xs\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<span class=\"text-muted-foreground text-xs\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(name)
+			var templ_7745c5c3_Var2 string
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_misc.templ`, Line: 48, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `book_misc.templ`, Line: 17, Col: 54}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -140,13 +75,8 @@ func iconsDemo(p *Icons) templ.Component {
 }
 
 func init() {
-	sep := func() (any, templ.Component) {
-		p := &SeparatorProps{Orientation: "vertical"}
-		return p, separatorDemo(p)
-	}
 	icons := func() (any, templ.Component) { p := &Icons{Class: "size-5"}; return p, iconsDemo(p) }
 	bookStories = append(bookStories,
-		Story{ID: "separator/default", Doc: "A horizontal or vertical separator", View: func() templ.Component { _, c := sep(); return c }, Props: sep},
 		Story{ID: "icons/default", Doc: "Lucide icons, as the kit ships them", View: func() templ.Component { _, c := icons(); return c }, Props: icons},
 	)
 }

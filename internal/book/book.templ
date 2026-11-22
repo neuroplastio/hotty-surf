@@ -8,7 +8,11 @@ import (
 	"neuroplast.io/hotty-surf"
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/checkbox"
 	"neuroplast.io/hotty-surf/ui/code"
+	"neuroplast.io/hotty-surf/ui/label"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 	"neuroplast.io/hotty-surf/ui/textarea"
 )
 
@@ -57,7 +61,7 @@ templ sidebar(a *App) {
 			<span class="text-sm text-muted-foreground">{ strconv.Itoa(len(a.model.Stories)) }</span>
 			{{ themeAttrs := surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme)) }}
 			{{ themeAttrs["title"] = "Theme (t)" }}
-			@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Size: ui.XSmall, Attrs: themeAttrs}) {
+			@button.View(button.Props{Variant: ui.Ghost, Size: ui.XSmall, Attrs: themeAttrs}) {
 				if a.model.Dark {
 					Light
 				} else {
@@ -80,10 +84,34 @@ templ header(a *App) {
 		if a.model.Sel.Doc != "" {
 			<span class="book-doc text-muted-foreground">{ a.model.Sel.Doc }</span>
 		}
-		{{ resetAttrs := noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory))) }}
-		{{ resetAttrs["title"] = "Props back as the story has them; events cleared" }}
-		@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.XSmall, Class: "book-reset", Attrs: resetAttrs}) { Reset }
+		<div class="book-header-end flex items-center gap-2">
+			@rating(a.model.Sel)
+			{{ resetAttrs := noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory))) }}
+			{{ resetAttrs["title"] = "Props back as the story has them; events cleared" }}
+			@button.View(button.Props{Variant: ui.Outline, Size: ui.XSmall, Attrs: resetAttrs}) { Reset }
+		</div>
 	</div>
+}
+
+templ rating(s *storybook.Story) {
+	if s.Dot != "red" {
+		<span class="book-stars" title={ starTitle(s.Score) } aria-label={ starTitle(s.Score) }>
+			for i := 1; i <= 5; i++ {
+				if i <= s.Score {
+					<span class="book-star-on">★</span>
+				} else {
+					<span class="book-star-off">☆</span>
+				}
+			}
+		</span>
+	}
+}
+
+func starTitle(score int) string {
+	if score <= 0 {
+		return "Unscored"
+	}
+	return strconv.Itoa(score) + "/5"
 }
 
 templ preview(a *App) {
@@ -214,8 +242,43 @@ templ props(a *App) {
 	if a.model.Sel.Props() == nil {
 		<p class="text-sm text-muted-foreground">No editable props for this story.</p>
 	} else {
-		@ui.Controls(ui.ControlsProps{ID: "book", Controls: a.controls(), OnChange: func(name, value string) { a.model.Set(a.model.Sel, name, value) }, Class: "book-controls"})
+		<div class="book-controls grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] items-center gap-x-3 gap-y-2 text-sm">
+			for _, c := range a.model.Sel.Controls() {
+				{{ id := ui.ControlID("book", c.Path) }}
+				@label.View(label.Props{For: id, Class: "text-muted-foreground truncate font-mono text-xs"}) {
+					{ c.Path }
+				}
+				@propControl(a, id, c)
+			}
+		</div>
 		@code.View(storybook.Pretty(a.model.Sel.Props()), "go", 1)
+	}
+}
+
+templ propControl(a *App, id string, c storybook.Control) {
+	switch c.Kind {
+		case "bool":
+			<div>
+				@checkbox.View(checkbox.Props{
+					ID:       id,
+					Checked:  c.Value == "true",
+					OnChange: func(v bool) { a.model.Set(a.model.Sel, c.Path, strconv.FormatBool(v)) },
+				})
+			</div>
+		case "enum":
+			@uiselect.View(a.propSelect(c.Path), uiselect.Props{
+				ID:       id,
+				Items:    propSelectItems(c.Options),
+				Value:    c.Value,
+				OnChange: a.setProp(c.Path),
+			})
+		default:
+			@ui.Input(ui.InputProps{
+				Type:  "text",
+				Value: c.Value,
+				Class: "h-8 w-full max-w-80 text-sm",
+				Attrs: surf.On(ctx, id, surf.Input(a.setProp(c.Path))),
+			})
 	}
 }
 

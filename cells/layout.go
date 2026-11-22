@@ -526,6 +526,26 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		}
 		used += 3 // space + ✓ + right pad
 	}
+	if st.framed && !l.measuring && l.cv != nil && h >= 2 && w >= 4 {
+		fw := w
+		bl := in.look | lRule
+		if tokens(n, "class", "alert") && attr(n, "data-variant") == "destructive" {
+			bl = in.look
+		}
+		l.draw(x, y, "╭", 1, bl, n)
+		l.draw(x+fw-1, y, "╮", 1, bl, n)
+		l.draw(x, y+h-1, "╰", 1, bl, n)
+		l.draw(x+fw-1, y+h-1, "╯", 1, bl, n)
+		for i := 1; i < fw-1; i++ {
+			l.draw(x+i, y, "─", 1, bl, n)
+			l.draw(x+i, y+h-1, "─", 1, bl, n)
+		}
+		for j := 1; j < h-1; j++ {
+			l.draw(x, y+j, "│", 1, bl, n)
+			l.draw(x+fw-1, y+j, "│", 1, bl, n)
+		}
+		used = max(used, fw)
+	}
 	if isKitTextarea(n) || tokens(n, "class", "select") || tokens(n, "class", "combobox") {
 		l.done(n, rect{x, y, used, h})
 	} else {
@@ -1401,8 +1421,7 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	st := l.style(n)
 	if n.Data == "svg" {
 		inBadge := closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", "badge") }) != nil
-		inTip := closest(n.Parent, func(a *html.Node) bool { return has(a, "data-tooltip") }) != nil
-		if inBadge || inTip {
+		if inBadge || svgInGlyphHost(n) {
 			if g := svgGlyph(n); g != "" {
 				cs := charsOf(g)
 				ps = append(ps, piece{kind: pWord, chars: cs, w: widthOf(cs), look: l.lookOf(n, in.look, st), own: n})
@@ -1909,9 +1928,22 @@ var glyphs = map[string]string{
 	"chevrons-left": "«", "chevrons-right": "»", "chevrons-up-down": "↕",
 	"settings": "⚙", "settings-2": "⚙", "trash": "×", "trash-2": "×",
 	"pencil": "✎", "play": "▶", "star": "★", "heart": "♥",
-	"info": "ⓘ", "circle-help": "?", "circle-alert": "!", "triangle-alert": "⚠",
-	"external-link": "↗", "refresh-cw": "↻", "download": "↓", "upload": "↑",
+	"info": "ⓘ", "circle-help": "?", "circle-alert": "!", "circle-check-big": "✓", "triangle-alert": "⚠",
+	"external-link": "↗", "trending-up": "↗", "trending-down": "↘", "refresh-cw": "↻", "download": "↓", "upload": "↑",
 	"filter": "▽", "sun": "☀", "moon": "☾", "eye": "◉", "send": "➤",
+	"inbox": "✉", "folder": "▤", "bell": "◈", "user": "◉",
+}
+
+func svgInGlyphHost(n *html.Node) bool {
+	return closest(n.Parent, func(a *html.Node) bool {
+		if tokens(a, "class", "badge") || has(a, "data-tooltip") {
+			return true
+		}
+		if attr(a, "data-mode") == "tui" {
+			return tokens(a, "class", "alert") || tokens(a, "class", "empty") || tokens(a, "class", "item")
+		}
+		return false
+	}) != nil
 }
 
 // btnPiece formats a Basecoat .btn according to its data-variant and

@@ -12,6 +12,7 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
 )
 
 // A CommandDialog takes the keyboard to its field when it opens. A search
@@ -26,7 +27,7 @@ func TestCommandDialog(t *testing.T) {
 		{Label: "Inbox", Keywords: "mail", OnSelect: func() { ran = "inbox" }},
 	}
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		if err := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "opener", surf.Click(func() { open = true }))}).
+		if err := uibutton.View(uibutton.Props{ID: "opener", OnClick: func() { open = true }}).
 			Render(templ.WithChildren(ctx, templ.Raw("Palette")), w); err != nil {
 			return err
 		}

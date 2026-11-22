@@ -12,6 +12,9 @@ import (
 	"neuroplast.io/hotty-surf/cells"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/checkbox"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 func TestKeyScopeShared(t *testing.T) {
@@ -19,19 +22,19 @@ func TestKeyScopeShared(t *testing.T) {
 		for _, kind := range []string{"button-take", "button-decline", "checkbox", "text", "compound", "nested", "nested-decline", "mod"} {
 			t.Run(mode+"/"+kind, func(t *testing.T) {
 				count, clicks, checked, value, changes := 0, 0, false, "a", 0
-				var sel ui.SelectState
+				var sel uiselect.State
 				view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					child := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 						var c templ.Component
 						switch kind {
 						case "button-take", "button-decline", "nested", "nested-decline", "mod":
-							c = with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "control", surf.Click(func() { clicks++ }))}), templ.Raw("Go"))
+							c = with(uibutton.View(uibutton.Props{ID: "control", OnClick: func() { clicks++ }}), templ.Raw("Go"))
 						case "checkbox":
-							c = ui.Checkbox(ui.CheckboxProps{Checked: checked, Attrs: surf.On(ctx, "control", surf.Check(func(v bool) { checked = v; changes++ }))})
+							c = checkbox.View(checkbox.Props{ID: "control", Checked: checked, OnChange: func(v bool) { checked = v; changes++ }})
 						case "text":
 							c = ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "control", surf.Input(func(v string) { value = v; changes++ }))})
 						case "compound":
-							c = ui.Select(&sel, ui.SelectProps{ID: "control", Value: value, Items: []ui.SelectItem{{Value: "a", Label: "A"}, {Value: "b", Label: "B"}}, OnChange: func(v string) { value = v }})
+							c = uiselect.View(&sel, uiselect.Props{ID: "control", Value: value, Items: []uiselect.Item{{Value: "a", Label: "A"}, {Value: "b", Label: "B"}}, OnChange: func(v string) { value = v }})
 						}
 						return c.Render(ctx, w)
 					})
@@ -159,7 +162,7 @@ func TestKeyScopeDialogEscape(t *testing.T) {
 					scoped := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 						body := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 							inside := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-								return with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "inside", surf.Click(func() {}))}), templ.Raw("Inside")).Render(ctx, w)
+								return with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "inside", surf.Click(func() {}))}), templ.Raw("Inside")).Render(ctx, w)
 							})
 							return with(ui.Dialog(ui.DialogProps{ID: "dialog", Open: open, OnClose: func() { open = false }}),
 								inside).Render(ctx, w)
@@ -209,8 +212,8 @@ func TestKeyScopeMultipleControlsAndPlainHTML(t *testing.T) {
 			taken, plain, kit := 0, 0, 0
 			view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 				children := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-					one := with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "one", surf.Click(func() { kit++ }))}), templ.Raw("One"))
-					two := with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "two", surf.Click(func() { kit++ }))}), templ.Raw("Two"))
+					one := with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "one", surf.Click(func() { kit++ }))}), templ.Raw("One"))
+					two := with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "two", surf.Click(func() { kit++ }))}), templ.Raw("Two"))
 					return templ.Join(one, two, button("plain", "Plain", func() { plain++ })).Render(ctx, w)
 				})
 				scope := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {

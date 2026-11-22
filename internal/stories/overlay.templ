@@ -2,50 +2,31 @@ package stories
 
 import (
 	"strconv"
-	"strings"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 	"neuroplast.io/hotty-surf/ui/button"
-	"neuroplast.io/hotty-surf/ui/combobox"
-	"neuroplast.io/hotty-surf/ui/tooltip"
+	"neuroplast.io/hotty-surf/ui/label"
 )
 
 // The stories of B3's overlays: Popover and Command. Their data is made
 // up.
 
 type overlayState struct {
-	pop   ui.PopoverState
-	sides [4]ui.PopoverState
-	width string
-	cmd   ui.CommandState
-	ran   string
-	open  bool
-	box      combobox.State
-	boxClear combobox.State
-	boxMulti combobox.State
-	value    string
-	clearVal string
-	values   []string
-	drawer ui.DrawerState
+	pop       ui.PopoverState
+	sides     [4]ui.PopoverState
+	width     string
+	cmd       ui.CommandState
+	ran       string
+	open      bool
+	drawer    ui.DrawerState
 	low, high float64
 }
 
 type bookPopoverProps struct {
 	Trigger string
-	Width string
-	pop ui.PopoverState
-}
-
-type bookComboboxProps struct {
-	Placeholder string
-	Value string
-	box    combobox.State
-}
-
-func fruitValue(v string) string {
-	if v == "" { return "none" }
-	return v
+	Width   string
+	pop     ui.PopoverState
 }
 
 // commands are the stories' command list: a few loose, two groups.
@@ -92,9 +73,6 @@ func init() {
 		}, Keys: []string{"tab", "enter"}, Want: "ran: ."})
 	add(Story{ID: "command/dialog", Doc: "A command palette its button opens; choosing an item closes it",
 		View: show(commandDialog), Keys: []string{"tab", "enter", "end", "enter"}, Want: "ran: Inbox"})
-	add(Story{ID: "combobox/default", Doc: "Searchable single (grouped), clearable, and multiple-chip comboboxes",
-		View: func() templ.Component { return comboboxShowcase(&overlayState{clearVal: "a"}) },
-		Keys: []string{"tab", "b", "a", "arrow_down", "enter"}, Want: "fruit: b"})
 	for _, side := range []string{"bottom", "top", "left", "right"} {
 		add(Story{ID: "drawer/"+side, Doc: "A modal drawer at the "+side,
 			View: show(func(s *overlayState) templ.Component { return drawerStory(s, side) }),
@@ -102,8 +80,6 @@ func init() {
 	}
 	add(Story{ID: "dialog/with-alert", Doc: "A modal confirmation with two actions",
 		View: show(alertDialogStory), Keys: []string{"tab", "enter", "escape"}, Want: "alert: off"})
-	add(Story{ID: "tooltip/default", Doc: "Tooltips on all four sides",
-		View: func() templ.Component { return tooltipStory(true) }})
 	add(Story{ID: "range/default", Doc: "A slider with a single thumb",
 		View: func() templ.Component { return sliderStory(&overlayState{high:20}, false) }, Keys: []string{"tab", "arrow_right"}, Want: "value: 25"})
 	add(Story{ID: "range/two-thumbs", Doc: "A range with independently adjustable ends",
@@ -122,32 +98,13 @@ templ sliderStory(s *overlayState, ranged bool) {
 	</div>
 }
 
-templ tooltipStory(sides bool) {
-	<div class="flex gap-3 p-4">
-		@tooltip.View(tooltip.Props{Text: "Add to library"}) {
-			@button.View(button.Props{}) { Add }
-		}
-		if sides {
-			@tooltip.View(tooltip.Props{Text: "Below", Side: tooltip.Bottom, Arrow: true}) {
-				@button.View(button.Props{}) { Bottom }
-			}
-			@tooltip.View(tooltip.Props{Text: "Left", Side: tooltip.Left}) {
-				@button.View(button.Props{}) { Left }
-			}
-			@tooltip.View(tooltip.Props{Text: "Right", Side: tooltip.Right}) {
-				@button.View(button.Props{}) { Right }
-			}
-		}
-	</div>
-}
-
 templ alertDialogStory(s *overlayState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "open-alert", surf.Click(func() { s.open = true }))}) { Delete }
+		@button.View(button.Props{Attrs: surf.On(ctx, "open-alert", surf.Click(func() { s.open = true }))}) { Delete }
 		@ui.AlertDialog(ui.AlertDialogProps{ID: "alert", Open: s.open, Title: "Delete item?", Description: "This cannot be undone.", OnClose: func() { s.open = false }}) {
 			<footer>
-				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "cancel-alert", surf.Click(func() { s.open = false }))}) { Cancel }
-				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "confirm-alert", surf.Click(func() { s.open = false }))}) { Delete }
+				@button.View(button.Props{Attrs: surf.On(ctx, "cancel-alert", surf.Click(func() { s.open = false }))}) { Cancel }
+				@button.View(button.Props{Attrs: surf.On(ctx, "confirm-alert", surf.Click(func() { s.open = false }))}) { Delete }
 			</footer>
 		}
 		<p>alert: { onoff(s.open) }</p>
@@ -156,42 +113,15 @@ templ alertDialogStory(s *overlayState) {
 
 templ drawerStory(s *overlayState, side string) {
 	<div class="p-4">
-		@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "open-drawer", surf.Click(func() { s.open=true }))}) { Open drawer }
+		@button.View(button.Props{Attrs: surf.On(ctx, "open-drawer", surf.Click(func() { s.open=true }))}) { Open drawer }
 		@ui.Drawer(&s.drawer, ui.DrawerProps{ID:"drawer", Side:side, Open:s.open, OnClose:func(){s.open=false}}) {
 			<header><h2>Drawer</h2><p>Content for this side.</p></header>
 			<section><p>Choose an action.</p></section>
 			<footer>
-				@ui.Button(ui.ButtonProps{Attrs:surf.On(ctx,"close-drawer",surf.Click(func(){s.open=false}))}) { Done }
+				@button.View(button.Props{Attrs:surf.On(ctx,"close-drawer",surf.Click(func(){s.open=false}))}) { Done }
 			</footer>
 		}
 		<p>drawer: { onoff(s.open) }</p>
-	</div>
-}
-
-var comboboxFruitItems = []combobox.Item{
-	{Value: "a", Label: "Apple"},
-	{Value: "b", Label: "Banana"},
-	{Value: "c", Label: "Cherry", Group: "More"},
-	{Value: "d", Label: "Date", Group: "More", Disabled: true},
-}
-
-templ comboboxShowcase(s *overlayState) {
-	<div class="p-4 flex flex-col gap-4">
-		<div class="flex flex-col gap-2">
-			<span class="text-xs text-muted-foreground">Default (grouped + disabled)</span>
-			@combobox.View(&s.box, combobox.Props{ID: "fruit", Placeholder: "Choose fruit", Value: s.value, Items: comboboxFruitItems, OnChange: func(v string) { s.value = v }})
-			<p class="text-sm text-muted-foreground">fruit: { fruitValue(s.value) }</p>
-		</div>
-		<div class="flex flex-col gap-2">
-			<span class="text-xs text-muted-foreground">Clearable</span>
-			@combobox.View(&s.boxClear, combobox.Props{ID: "fruit-clear", Placeholder: "Choose fruit", Clear: true, Value: s.clearVal, Items: comboboxFruitItems, OnChange: func(v string) { s.clearVal = v }})
-			<p class="text-sm text-muted-foreground">clear: { fruitValue(s.clearVal) }</p>
-		</div>
-		<div class="flex flex-col gap-2">
-			<span class="text-xs text-muted-foreground">Multiple (chips)</span>
-			@combobox.View(&s.boxMulti, combobox.Props{ID: "fruit-multi", Placeholder: "Choose fruits", Multiple: true, Values: s.values, Items: comboboxFruitItems, OnValuesChange: func(v []string) { s.values = v }})
-			<p class="text-sm text-muted-foreground">fruits: { strings.Join(s.values, ", ") }</p>
-		</div>
 	</div>
 }
 
@@ -200,7 +130,7 @@ templ bookPopover(p *bookPopoverProps) {
 		@ui.Popover(&p.pop, ui.PopoverProps{ID: "dimensions", Trigger: templ.Raw(templ.EscapeString(p.Trigger)), Class: "w-80"}) {
 			<header><h4>Dimensions</h4><p>Set the dimensions for the layer.</p></header>
 			@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
-				@ui.Label(ui.LabelProps{For: "width"}) { Width }
+				@label.View(label.Props{For: "width"}) { Width }
 				@ui.Input(ui.InputProps{Value: p.Width, Attrs: surf.On(ctx, "width", surf.Input(func(v string) { p.Width = v }))})
 			}
 		}
@@ -215,7 +145,7 @@ templ popoverDefault(s *overlayState) {
 				<p>Set the dimensions for the layer.</p>
 			</header>
 			@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
-				@ui.Label(ui.LabelProps{For: "width"}) {
+				@label.View(label.Props{For: "width"}) {
 					Width
 				}
 				@ui.Input(ui.InputProps{Value: s.width, Attrs: surf.On(ctx, "width", surf.Input(func(v string) { s.width = v }))})
@@ -255,7 +185,7 @@ templ commandDefault(s *overlayState) {
 templ commandDialog(s *overlayState) {
 	<div class="p-4 flex flex-col gap-3">
 		<div>
-			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Attrs: surf.On(ctx, "palette", surf.Click(func() { s.open = true }))}) {
+			@button.View(button.Props{Variant: ui.Outline, Attrs: surf.On(ctx, "palette", surf.Click(func() { s.open = true }))}) {
 				Open the palette
 			}
 		</div>

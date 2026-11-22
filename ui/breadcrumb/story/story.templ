@@ -1,0 +1,35 @@
+// Package story provides the storybook showcase for ui/breadcrumb.
+package story
+
+import (
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/story"
+	"neuroplast.io/hotty-surf/ui/breadcrumb"
+)
+
+type state struct {
+	page string
+}
+
+// Register adds breadcrumb's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "breadcrumb/default",
+		Doc:          "A trail of three steps; Enter on the first goes there",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{page: "Breadcrumb"}) },
+		Keys:         []string{"tab", "enter"},
+		Want:         "page: Home",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="p-4 grid gap-2">
+		@breadcrumb.View(breadcrumb.Props{Items: []breadcrumb.Item{
+			{Label: "Home", Attrs: surf.On(ctx, "home", surf.Click(func() { s.page = "Home" }))},
+			{Label: "Components", Attrs: surf.On(ctx, "components", surf.Click(func() { s.page = "Components" }))},
+			{Label: "Breadcrumb"},
+		}})
+		<p class="text-sm text-muted-foreground">page: { s.page }</p>
+	</div>
+}

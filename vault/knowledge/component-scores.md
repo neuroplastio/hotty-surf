@@ -7,13 +7,13 @@
 | Component | Package | Hotty | TUI | ANSI | Plain | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | accordion | — | no score | no score | no score | no score | |
-| alert | — | no score | no score | no score | no score | |
+| alert | `ui/alert` | no score | no score | no score | no score | Self-contained `ui/alert` |
 | avatar | `ui/avatar` | **4/5** | **4/5** | no score | no score | Self-contained `ui/avatar`; `Hue` tints, `Online` status dot, `Src` image support with Kitty graphics in TUI & overlapping group circles |
 | badge | `ui/badge` | **4/5** | **4/5** | no score | no score | Self-contained `ui/badge`; amber warning tint & `⚠` icon glyph in Hotty & TUI |
-| breadcrumb | — | no score | no score | no score | no score | |
+| breadcrumb | `ui/breadcrumb` | no score | no score | no score | no score | Self-contained `ui/breadcrumb` |
 | button | `ui/button` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `View`); size-consistent heights, bold `default`/`lg`, muted-foreground outline, unified hover/click/focus ring |
-| button-group | — | no score | no score | no score | no score | |
-| card | — | no score | no score | no score | no score | |
+| button-group | `ui/buttongroup` | no score | no score | no score | no score | Self-contained `ui/buttongroup` |
+| card | `ui/card` | no score | no score | no score | no score | Self-contained `ui/card` |
 | chart | — | no score | no score | no score | no score | |
 | checkbox | `ui/checkbox` | **5/5** | **5/5** | no score | no score | Self-contained `ui/checkbox`; MDI glyphs (`󰄱` / `󰱖`) in TUI, `[ ]` / `[x]` in ANSI & Plain, clickable label with `cursor: pointer` |
 | collapsible | — | no score | no score | no score | no score | |
@@ -22,12 +22,12 @@
 | dialog | — | no score | no score | no score | no score | |
 | drawer | — | no score | no score | no score | no score | |
 | dropdown-menu | — | no score | no score | no score | no score | |
-| empty | — | no score | no score | no score | no score | |
+| empty | `ui/empty` | no score | no score | no score | no score | Self-contained `ui/empty` |
 | field | — | no score | no score | no score | no score | |
 | form | — | no score | no score | no score | no score | CSS import only |
 | input | — | no score | no score | no score | no score | |
 | input-group | — | no score | no score | no score | no score | |
-| item | — | no score | no score | no score | no score | |
+| item | `ui/item` | no score | no score | no score | no score | Self-contained `ui/item` |
 | kbd | `ui/kbd` | **4/5** | **4/5** | no score | no score | Self-contained `ui/kbd`; modifier & special-key glyphs (`⌃`, `⌥`, `⇧`, `⌘`, `⎋`, `↵`, `⌫`, `⇥`) and muted TUI styling |
 | label | `ui/label` | **5/5** | **5/5** | no score | no score | Self-contained `ui/label`; paired with `circle-help` tooltip icon in story |
 | popover | — | no score | no score | no score | no score | |

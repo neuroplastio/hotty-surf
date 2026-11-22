@@ -32,8 +32,10 @@ type Story struct {
 	Group string
 	Name  string
 	Doc   string
-	// Dot is "" (migrated & scored), "yellow" (migrated, needs scoring), or "red" (legacy).
+	// Dot is "" (consolidated & scored), "yellow" (consolidated & unscored), or "red" (non-consolidated).
 	Dot string // one line, shown beside the name
+	// Score is the maintainer-assigned 1–5 star rating (0 = unscored).
+	Score int
 
 	id    string
 	props any                        // *P
@@ -69,34 +71,19 @@ func GroupOrder(group string) int {
 	}
 }
 
-// componentStatus maps migrated component IDs to their sidebar dot:
-// "" = migrated & scored, "yellow" = migrated & needs scoring; absent = "red" (legacy).
-var componentStatus = map[string]string{
-	"button":    "",
-	"tooltip":   "",
-	"textarea":  "",
-	"select":    "",
-	"combobox":  "",
-	"separator": "",
-	"kbd":       "",
-	"label":     "",
-	"badge":     "",
-	"skeleton":  "",
-	"progress":  "",
-	"avatar":    "",
-	"checkbox":  "",
-}
-
-func dotFor(component string) string {
-	if dot, ok := componentStatus[component]; ok {
-		return dot
+func dotFor(consolidated bool, score int) string {
+	if !consolidated {
+		return "red"
 	}
-	return "red"
+	if score <= 0 {
+		return "yellow"
+	}
+	return ""
 }
 
-// Wrap adapts an existing v0.7 story to the book's model. Its view is
+// Wrap adapts a story to the book's model. Its view is
 // made once per selection and shared by the preview and the cells pane.
-func Wrap(id, doc string, makeView func() templ.Component, makeProps func() (any, templ.Component)) *Story {
+func Wrap(id, doc string, consolidated bool, score int, makeView func() templ.Component, makeProps func() (any, templ.Component)) *Story {
 	group, name, _ := strings.Cut(id, "/")
 	family := "Display"
 	switch group {
@@ -117,7 +104,7 @@ func Wrap(id, doc string, makeView func() templ.Component, makeProps func() (any
 	if name != "" && name != "default" {
 		title += " / " + strings.ReplaceAll(name, "-", " ")
 	}
-	s := &Story{Group: family, Name: title, Doc: doc, Dot: dotFor(group), id: id}
+	s := &Story{Group: family, Name: title, Doc: doc, Dot: dotFor(consolidated, score), Score: score, id: id}
 	var view templ.Component
 	s.reset = func() {
 		if makeProps != nil {

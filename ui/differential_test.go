@@ -20,6 +20,7 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
 )
 
 // The differential tests: each case of ui/testdata/differential/<c>.json,
@@ -39,7 +40,6 @@ type subject struct {
 
 // subjects make each component's subject from a case's macro arguments.
 var subjects = map[string]func(t *testing.T, args map[string]any) subject{
-	"select":         selectSubject,
 	"dropdown-menu":  menuSubject,
 	"dropdown-check": menuCheckSubject,
 	"tabs":           tabsSubject,
@@ -73,7 +73,7 @@ func alertDialogSubject(_ *testing.T, _ map[string]any) subject {
 	p.OnClose = func() { p.Open = false }
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "alert-open", surf.Click(func() { p.Open = true }))})
+			open := uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "alert-open", surf.Click(func() { p.Open = true }))})
 			if err := open.Render(templ.WithChildren(ctx, templ.Raw("Open")), w); err != nil {
 				return err
 			}
@@ -91,7 +91,7 @@ func drawerSubject(_ *testing.T, args map[string]any) subject {
 	p.OnClose = func() { p.Open = false }
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "drawer-open", surf.Click(func() { p.Open = true }))})
+			open := uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "drawer-open", surf.Click(func() { p.Open = true }))})
 			if err := open.Render(templ.WithChildren(ctx, templ.Raw("Open")), w); err != nil {
 				return err
 			}
@@ -307,61 +307,6 @@ func canonEvents(es []map[string]any) string {
 	return string(b)
 }
 
-// selectSubject is a Select for select's macro arguments: id, items
-// (groups, separators, options with aria-disabled), placeholder and
-// selected.
-func selectSubject(t *testing.T, args map[string]any) subject {
-	p := ui.SelectProps{}
-	p.ID, _ = args["id"].(string)
-	p.Placeholder, _ = args["placeholder"].(string)
-	p.Value, _ = args["selected"].(string)
-	p.Multiple, _ = args["multiple"].(bool)
-	p.CloseOnSelect, _ = args["close_on_select"].(bool)
-	if values, ok := args["selected"].([]any); ok {
-		for _, value := range values {
-			if s, ok := value.(string); ok {
-				p.Values = append(p.Values, s)
-			}
-		}
-	}
-	var walk func(items []any, group string)
-	walk = func(items []any, group string) {
-		for _, x := range items {
-			it := x.(map[string]any)
-			switch it["type"] {
-			case "separator":
-			case "group":
-				walk(it["items"].([]any), it["label"].(string))
-			default:
-				v, _ := it["value"].(string)
-				l, _ := it["label"].(string)
-				attrs, _ := it["attrs"].(map[string]any)
-				p.Items = append(p.Items, ui.SelectItem{Value: v, Label: l, Group: group, Disabled: attrs["aria-disabled"] == "true"})
-			}
-		}
-	}
-	walk(args["items"].([]any), "")
-	// With no selected and no placeholder the macro chooses its first
-	// option (its default_option); ui's Value "" is none, so the app says
-	// it.
-	if _, ok := args["selected"]; !ok && !p.Multiple && p.Placeholder == "" && len(p.Items) > 0 {
-		p.Value = p.Items[0].Value
-	}
-	var heard []map[string]any
-	p.OnChange = func(v string) {
-		p.Value = v
-		heard = append(heard, map[string]any{"value": v})
-	}
-	p.OnValuesChange = func(v []string) { p.Values = v; heard = append(heard, map[string]any{"value": v}) }
-	var st ui.SelectState
-	return subject{
-		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			return ui.Select(&st, p).Render(ctx, w)
-		}),
-		events: func() []map[string]any { h := heard; heard = nil; return h },
-	}
-}
-
 // menuSubject is a DropdownMenu for dropdown_menu's macro arguments: id,
 // trigger (text), and items (groups, separators, items with aria-disabled
 // or data-variant in attrs). An item's OnSelect reports it by the id the
@@ -533,7 +478,7 @@ func dialogSubject(t *testing.T, args map[string]any) subject {
 	trigger, _ := args["trigger"].(string)
 	return subject{
 		view: templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-			open := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, p.ID+"-trigger", surf.Click(func() { p.Open = true }))})
+			open := uibutton.View(uibutton.Props{Attrs: surf.On(ctx, p.ID+"-trigger", surf.Click(func() { p.Open = true }))})
 			if err := open.Render(templ.WithChildren(ctx, templ.Raw(trigger)), w); err != nil {
 				return err
 			}

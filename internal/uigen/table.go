@@ -46,69 +46,7 @@ type Check struct {
 }
 
 var table = []Comp{
-	{
-		Name: "Button", File: "button", Tag: "button", Slot: "button", Class: "btn",
-		Doc: `is Basecoat's button, holding its children:
-
-	@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "save", surf.Click(a.Save))}) {
-		Save
-	}`,
-		AttrsDoc: `Attrs are more attributes for the button element: its handlers, surf.On(ctx, "save", surf.Click(a.Save)), and any other. A type here replaces type="button"; any other attribute it writes is a fault here.`,
-		Fields: []Field{
-			{"Variant", "Variant", "Variant is Primary, Secondary, Outline, Ghost, Destructive or Link."},
-			{"Size", "Size", "Size is Medium, XSmall, Small or Large."},
-			{"IconOnly", "bool", "IconOnly makes the button a square that holds only an icon."},
-			{"Disabled", "bool", ""},
-		},
-		Attrs: []Attr{
-			{Name: "type", Value: "button", IfUnset: true},
-			{Name: "disabled", Field: "Disabled"},
-			{Name: "data-variant", Field: "Variant"},
-			{Name: "data-size", Expr: "buttonSize(p)"},
-		},
-		Checks: []Check{{"Variant", "variant", "buttonVariants"}, {"Size", "size", "buttonSizes"}},
-	},
-	{
-		Name: "Badge", File: "badge", Tag: "span", Slot: "badge", Class: "badge",
-		Doc: "is Basecoat's badge, holding its children.",
-		Fields: []Field{
-			{"Variant", "Variant", "Variant is Primary, Secondary, Outline, Ghost, Destructive or Link."},
-		},
-		Attrs:  []Attr{{Name: "data-variant", Field: "Variant"}},
-		Checks: []Check{{"Variant", "variant", "badgeVariants"}},
-	},
-	{
-		Name: "Card", File: "card", Tag: "div", Slot: "card", Class: "card",
-		Doc: `is Basecoat's card. Its parts are plain elements in its children, as Basecoat's markup has them: <header> (an <h2> and a <p>), <section> and <footer>.`,
-		Fields: []Field{
-			{"Size", "Size", "Size is Medium or Small (data-size): Small draws its padding and gaps tighter."},
-		},
-		Attrs:  []Attr{{Name: "data-size", Field: "Size"}},
-		Checks: []Check{{"Size", "size", "cardSizes"}},
-	},
-
 	// Forms (B1).
-	{
-		Name: "Checkbox", File: "checkbox", Tag: "input", Void: true, Slot: "checkbox", Class: "input",
-		Doc: `is Basecoat's check box, a native one: the host toggles it, and a surf.Check handler in Attrs hears it. Its label is beside it, in a Label or a Field:
-
-	@ui.Label(ui.LabelProps{}) {
-		@ui.Checkbox(ui.CheckboxProps{Checked: a.done,
-			Attrs: surf.On(ctx, "done", surf.Check(a.setDone))})
-		Done
-	}`,
-		Fields: []Field{
-			{"Checked", "bool", "Checked is whether it is checked, which the surface sets on the host when it differs from what the host last reported."},
-			{"Disabled", "bool", ""},
-			{"Invalid", "bool", "Invalid marks it as failing its form's check (aria-invalid), in the destructive colour."},
-		},
-		Attrs: []Attr{
-			{Name: "type", Value: "checkbox"},
-			{Name: "checked", Field: "Checked"},
-			{Name: "disabled", Field: "Disabled"},
-			{Name: "aria-invalid", Field: "Invalid", Value: "true"},
-		},
-	},
 	{
 		Name: "Radio", File: "radio", Tag: "input", Void: true, Slot: "radio", Class: "input",
 		Doc: `is Basecoat's radio button, a native one: the host checks it, unchecking the others of its Name, and a surf.Check handler in Attrs hears it. A group of them goes in an element with role="radiogroup", which Basecoat lays out as a column. Each has its own surf.On id, and its handler knows the value it stands for.`,
@@ -168,29 +106,6 @@ var table = []Comp{
 		Checks: []Check{{"Type", "enum", "inputTypes"}},
 	},
 	{
-		Name: "Textarea", File: "textarea", Tag: "textarea", Text: "Value", Slot: "textarea", Class: "textarea", Bare: true,
-		Doc: `is Basecoat's textarea, a native one holding Value as its text: the host edits it, and a surf.Input handler in Attrs hears each edit. It is at least four lines high, and grows with its text where the host sizes a field to its content.`,
-		Fields: []Field{
-			{"Value", "string", "Value is its text, which the surface sets on the host whenever it differs from what the host last reported, as an Input's."},
-			{"Placeholder", "string", ""},
-			{"Disabled", "bool", ""},
-			{"Invalid", "bool", "Invalid marks it as failing its form's check (aria-invalid), in the destructive colour."},
-		},
-		Attrs: []Attr{
-			{Name: "placeholder", Field: "Placeholder"},
-			{Name: "disabled", Field: "Disabled"},
-			{Name: "aria-invalid", Field: "Invalid", Value: "true"},
-		},
-	},
-	{
-		Name: "Label", File: "label", Tag: "label", Slot: "label", Class: "label",
-		Doc: `is Basecoat's label, holding its children: its text, and the control it labels when that is inside it. It dims in a disabled Field (FieldProps.Disabled).`,
-		Fields: []Field{
-			{"For", "string", "For is the id of the control it labels when that isn't inside it: the id the control's surf.On gave it."},
-		},
-		Attrs: []Attr{{Name: "for", Field: "For"}},
-	},
-	{
 		Name: "Field", File: "field", Tag: "div", Slot: "field", Class: "field",
 		Doc: `is Basecoat's field: a control with its label, description and error, which are plain elements in its children, as Basecoat's markup has them. A <label> (or a Label), the control, a <p> describing it and a <p role="alert"> for its error; in a horizontal field, a <section> holds the label and the description beside the control:
 
@@ -237,54 +152,5 @@ var table = []Comp{
 		},
 		Attrs:  []Attr{{Name: "data-align", Field: "Align", Default: "inline-start"}},
 		Checks: []Check{{"Align", "enum", "addonAligns"}},
-	},
-
-	// Display (B2).
-	{
-		Name: "Alert", File: "alert", Tag: "div", Slot: "alert", Class: "alert",
-		Doc: `is Basecoat's alert (role="alert"). Its parts are plain elements in its children, as Basecoat's markup has them: an icon, its title (an <h2> or a <strong>), a <section> of <p>s or a list, and a <footer> for a button:
-
-	@ui.Alert(ui.AlertProps{Variant: ui.Destructive}) {
-		@ui.Icon("circle-alert", "")
-		<h2>Not saved</h2>
-		<section><p>The disk is full.</p></section>
-	}`,
-		Fields: []Field{
-			{"Variant", "Variant", "Variant is Primary (Basecoat's default) or Destructive."},
-		},
-		Attrs: []Attr{
-			{Name: "role", Value: "alert"},
-			{Name: "data-variant", Field: "Variant"},
-		},
-		Checks: []Check{{"Variant", "variant", "alertVariants"}},
-	},
-	{
-		Name: "Avatar", File: "avatar", Tag: "span", Slot: "avatar", Class: "avatar",
-		Doc: `is Basecoat's avatar: a round picture of someone. Its parts are plain elements in its children, as Basecoat's markup has them: an <img>, whose src is a cid: resource or a data: URL (SPEC §7, nothing else is fetched), a <span> with what shows until it has (initials, an icon), and a <span class="avatar-badge"> for a status dot:
-
-	@ui.Avatar(ui.AvatarProps{}) {
-		<img src={ "cid:" + u.ID } alt={ u.Name }/>
-		<span>{ u.Initials }</span>
-	}`,
-		Fields: []Field{
-			{"Size", "Size", "Size is Medium, Small or Large (data-size)."},
-		},
-		Attrs:  []Attr{{Name: "data-size", Field: "Size"}},
-		Checks: []Check{{"Size", "size", "avatarSizes"}},
-	},
-	{
-		Name: "AvatarGroup", File: "avatar", Tag: "div", Slot: "avatar-group", Class: "avatar-group",
-		Doc: `is Basecoat's avatar group: Avatars side by side, overlapping, in its children, and after them, if the group shows only some, a plain <span data-count> with the rest's count ("+3"), which Basecoat draws as one more avatar.`,
-	},
-	{
-		Name: "Empty", File: "empty", Tag: "div", Slot: "empty", Class: "empty",
-		Doc: `is Basecoat's empty state: what a view shows with nothing in it. Its parts are plain elements in its children, as Basecoat's markup has them: a <header> (a <figure> with an icon or an image, an <h3> and a <p>), then a <section> or a <footer> for its buttons.`,
-	},
-	{
-		Name: "ItemGroup", File: "item", Tag: "div", Slot: "item-group", Class: "item-group", Doc: `is Basecoat's item group: Items in a column, in its children, with a plain <hr> between two where a line parts them.`,
-	},
-	{
-		Name: "Skeleton", File: "skeleton", Tag: "div", Slot: "skeleton", Class: "skeleton",
-		Doc: `is Basecoat's skeleton: a muted, pulsing block standing for something still loading, its size in Class ("h-4 w-[250px]", "size-12 rounded-full").`,
 	},
 }

@@ -1,0 +1,74 @@
+// Package buttongroup is hotty-surf's self-contained ButtonGroup component,
+// with explicit renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package buttongroup
+
+import "neuroplast.io/hotty-surf/ui"
+
+// Register registers buttongroup's assets with r.
+func Register(r *ui.Registry) {}
+
+// Orientation is Horizontal (default) or Vertical.
+type Orientation string
+
+const (
+	Horizontal Orientation = ""
+	Vertical   Orientation = "vertical"
+)
+
+// Props configures a ButtonGroup container.
+type Props struct {
+	Orientation Orientation
+	Attrs       templ.Attributes
+	Class       string
+}
+
+// View dispatches to Hotty or TUI according to ui.ModeOf(ctx).
+templ View(p Props) {
+	switch ui.ModeOf(ctx) {
+	case ui.ModeHotty:
+		@Hotty(p) {
+			{ children... }
+		}
+	default:
+		@TUI(p) {
+			{ children... }
+		}
+	}
+}
+
+// Hotty renders Basecoat's button-group for a hotty host.
+templ Hotty(p Props) {
+	<div
+		role="group"
+		data-slot="button-group"
+		class={ ui.JoinClass("button-group", p.Class) }
+		{ ui.MergeAttrs(ui.OptAttr("data-orientation", p.Orientation), p.Attrs)... }
+	>
+		{ children... }
+	</div>
+}
+
+// TUI renders the button-group for cells.Screen.
+templ TUI(p Props) {
+	<div
+		role="group"
+		data-slot="button-group"
+		data-mode="tui"
+		class={ ui.JoinClass("button-group", tuiDirClass(p.Orientation), p.Class) }
+		{ ui.MergeAttrs(ui.OptAttr("data-orientation", p.Orientation), p.Attrs)... }
+	>
+		{ children... }
+	</div>
+}
+
+// Separator renders a divider between buttons inside a ButtonGroup.
+templ Separator() {
+	<hr role="separator"/>
+}
+
+func tuiDirClass(o Orientation) string {
+	if o == Vertical {
+		return "flex flex-col gap-1"
+	}
+	return "flex flex-row items-center gap-1"
+}

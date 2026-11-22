@@ -1,43 +1,12 @@
 package stories
 
-import (
-	"neuroplast.io/hotty-surf/ui"
-	"neuroplast.io/hotty-surf/ui/separator"
-)
-
-// SeparatorProps is the editable state of the separator story.
-type SeparatorProps struct {
-	Orientation string `enum:"horizontal,vertical"`
-}
+import "neuroplast.io/hotty-surf/ui"
 
 // Icons is the editable icon-gallery state.
 type Icons struct { Class string }
 
 var bookIconNames = []string{
 	"arrow-down", "arrow-right", "arrow-up", "bell", "check", "chevron-down", "chevron-left", "chevron-right", "chevrons-left", "chevrons-right", "chevrons-up-down", "circle", "circle-alert", "circle-check-big", "circle-help", "circle-off", "circle-plus", "ellipsis", "eye-off", "folder", "hand", "inbox", "plus", "search", "settings-2", "timer", "user", "x",
-}
-
-templ separatorDemo(p *SeparatorProps) {
-	<div class="flex flex-col gap-4 p-4">
-		<div class="flex flex-col gap-2 w-60 text-sm">
-			<span class="text-xs text-muted-foreground">Horizontal</span>
-			<span>Blog</span>
-			@separator.View(separator.Props{Orientation: separator.Horizontal, Decorative: true})
-			<span>Docs</span>
-			@separator.View(separator.Props{Orientation: separator.Horizontal, Decorative: true})
-			<span>Source</span>
-		</div>
-		<div class="flex flex-col gap-2 text-sm">
-			<span class="text-xs text-muted-foreground">Vertical</span>
-			<div class="flex h-6 items-center gap-3">
-				<span>Blog</span>
-				@separator.View(separator.Props{Orientation: separator.Vertical, Decorative: true})
-				<span>Docs</span>
-				@separator.View(separator.Props{Orientation: separator.Vertical, Decorative: true})
-				<span>Source</span>
-			</div>
-		</div>
-	</div>
 }
 
 templ iconsDemo(p *Icons) {
@@ -52,10 +21,8 @@ templ iconsDemo(p *Icons) {
 }
 
 func init() {
-	sep := func() (any, templ.Component) { p := &SeparatorProps{Orientation: "vertical"}; return p, separatorDemo(p) }
 	icons := func() (any, templ.Component) { p := &Icons{Class: "size-5"}; return p, iconsDemo(p) }
 	bookStories = append(bookStories,
-		Story{ID: "separator/default", Doc: "A horizontal or vertical separator", View: func() templ.Component { _, c := sep(); return c }, Props: sep},
 		Story{ID: "icons/default", Doc: "Lucide icons, as the kit ships them", View: func() templ.Component { _, c := icons(); return c }, Props: icons},
 	)
 }

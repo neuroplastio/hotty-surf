@@ -153,9 +153,9 @@ oracle:
 	  $(CAP) python3 -I gen/jinja2templ.py --testdata ../basecoat/jinja .
 
 # The kit's stylesheet, ui/kit.css: Basecoat's CSS (internal/basecoat) and the
-# Tailwind utilities, built by ui/style (node, npm install there first).
+# Tailwind utilities, built by ui/internal/style (node, npm install there first).
 kit:
-	cd ui/style && $(CAP) node build.mjs
+	cd ui/internal/style && $(CAP) node build.mjs
 
 # The page build -wasm writes and serve serves, in Chromium through
 # Playwright (scripts/browser): not in check, since it needs a browser.

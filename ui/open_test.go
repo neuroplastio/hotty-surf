@@ -11,6 +11,8 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 // openApp has one overlay of each kind, and can drop the popover from the
@@ -19,7 +21,7 @@ type openApp struct {
 	menu    ui.DropdownMenuState
 	inMenu  ui.DropdownMenuState
 	ctxMenu ui.ContextMenuState
-	sel     ui.SelectState
+	sel     uiselect.State
 	pop     ui.PopoverState
 	dialog  bool
 	noPop   bool
@@ -28,12 +30,12 @@ type openApp struct {
 func (a *openApp) view() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		items := []ui.MenuItem{{Label: "One", OnSelect: func() {}}}
-		row := with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "row", surf.Click(func() {}))}), templ.Raw("Row"))
+		row := with(uibutton.View(uibutton.Props{ID: "row", OnClick: func() {}}), templ.Raw("Row"))
 		parts := []templ.Component{
 			templ.Raw(`<p id="outside" tabindex="0">Outside</p>`),
 			ui.DropdownMenu(&a.menu, ui.DropdownMenuProps{ID: "m", Trigger: templ.Raw("Menu"), Items: items}),
 			with(ui.ContextMenu(&a.ctxMenu, ui.ContextMenuProps{ID: "cm", Items: items}), row),
-			ui.Select(&a.sel, ui.SelectProps{ID: "size", Placeholder: "Size", Items: []ui.SelectItem{{Value: "s", Label: "Small"}}}),
+			uiselect.View(&a.sel, uiselect.Props{ID: "size", Placeholder: "Size", Items: []uiselect.Item{{Value: "s", Label: "Small"}}}),
 		}
 		if !a.noPop {
 			parts = append(parts, ui.Popover(&a.pop, ui.PopoverProps{ID: "p", Trigger: templ.Raw("Pop")}))

@@ -1,0 +1,57 @@
+// Package story provides the storybook showcase for ui/kbd.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/story"
+	"neuroplast.io/hotty-surf/ui/kbd"
+)
+
+// Props is the editable state for the Kbd storybook controls.
+type Props struct {
+	Keys string
+}
+
+// Register adds kbd's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "kbd/default",
+		Doc:          "Shortcuts as the host's platform writes them",
+		Consolidated: true,
+		Score:        4,
+		View:         func() templ.Component { return showcase() },
+		Props: func() (any, templ.Component) {
+			p := &Props{Keys: "ctrl+k"}
+			return p, editable(p)
+		},
+	})
+}
+
+templ editable(p *Props) {
+	<div class="flex flex-col gap-4 p-4">
+		<p class="text-muted-foreground flex items-center gap-1 text-sm">
+			Press
+			@kbd.View(kbd.Props{Keys: p.Keys})
+			to open the palette.
+		</p>
+		@showcase()
+	</div>
+}
+
+templ showcase() {
+	<div class="flex flex-col gap-3 p-4">
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			@kbd.View(kbd.Props{Keys: "mod+k"})
+			@kbd.View(kbd.Props{Keys: "mod+shift+p"})
+			@kbd.View(kbd.Props{Keys: "escape"})
+			@kbd.View(kbd.Props{Keys: "enter"})
+			@kbd.View(kbd.Props{Keys: "backspace"})
+			@kbd.View(kbd.Props{Keys: "tab"})
+		</div>
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			@kbd.View(kbd.Props{Keys: "super+k"})
+			@kbd.View(kbd.Props{Keys: "super+shift+p"})
+			@kbd.View(kbd.Props{Keys: "alt+super+i"})
+			@kbd.View(kbd.Props{Keys: "ctrl+alt+delete"})
+		</div>
+	</div>
+}

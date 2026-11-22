@@ -61,8 +61,25 @@
 .book-crumb, .book-doc {
   font-size: 0.75rem;
 }
-.book-reset {
+.book-header-end {
   margin-left: auto;
+  flex-shrink: 0;
+}
+.book-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.0625rem;
+  font-size: 0.875rem;
+  line-height: 1;
+  user-select: none;
+  cursor: default;
+}
+.book-star-on {
+  color: #eab308;
+}
+.book-star-off {
+  color: var(--muted-foreground);
+  opacity: 0.5;
 }
 .book-preview-area {
   flex: 1 1 0;

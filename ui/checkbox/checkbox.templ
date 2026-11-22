@@ -83,9 +83,10 @@ func resolveAttrs(ctx context.Context, p Props) templ.Attributes {
 	} else if p.ID != "" {
 		on = surf.On(ctx, p.ID)
 	}
-	return ui.MergeAttrs(
+	merged := ui.MergeAttrs(
 		on,
 		ui.OptAttr("aria-invalid", p.Invalid),
 		p.Attrs,
 	)
+	return ui.ScopeNativeAttrs(ctx, merged, "checkbox")
 }

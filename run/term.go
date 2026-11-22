@@ -13,6 +13,7 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottyterm"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
 )
 
 // app runs s in the process's terminal: on the alternate screen, as a
@@ -45,6 +46,7 @@ func app(ctx context.Context, s *surf.Surface) error {
 	if native {
 		return host(ctx, t, s, winch)
 	}
+	ui.SetKittyDefault(t.KittyGraphics(ctx))
 	return inCells(ctx, t, s, winch)
 }
 

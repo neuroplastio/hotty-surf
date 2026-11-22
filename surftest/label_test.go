@@ -10,6 +10,7 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 // faultsOf starts view and returns the faults its first render records.
@@ -47,7 +48,7 @@ func TestNamedButtons(t *testing.T) {
 // The fault names where the author finds a button with no id of its own,
 // and says what a kit component with no Attrs can do.
 func TestUnnamedButtons(t *testing.T) {
-	var sel ui.SelectState
+	var sel uiselect.State
 	var menu ui.DropdownMenuState
 	for _, c := range []struct {
 		name string
@@ -55,8 +56,8 @@ func TestUnnamedButtons(t *testing.T) {
 		want string
 	}{
 		{"in an app's element", raw(`<ul id="todo-list"><li><button><svg></svg></button></li></ul>`), "(in #todo-list)"},
-		{"a Select with nothing chosen", ui.Select(&sel, ui.SelectProps{ID: "size",
-			Items: []ui.SelectItem{{Value: "s", Label: "Small"}}}), "takes a Placeholder"},
+		{"a Select with nothing chosen", uiselect.View(&sel, uiselect.Props{ID: "size",
+			Items: []uiselect.Item{{Value: "s", Label: "Small"}}}), "takes a Placeholder"},
 		{"a menu with an icon alone", ui.DropdownMenu(&menu, ui.DropdownMenuProps{ID: "more",
 			Trigger: ui.Icon("ellipsis", ""), Items: []ui.MenuItem{{Label: "Edit"}}}), `<span class="sr-only">`},
 	} {

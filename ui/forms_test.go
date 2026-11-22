@@ -11,33 +11,29 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/label"
+	"neuroplast.io/hotty-surf/ui/textarea"
 )
 
 // An attribute a component writes itself is a fault in its Attrs (kit
-// rule K3): templ would write both, and the first would win. Button's
-// type is the one Attrs replaces.
+// rule K3): templ would write both, and the first would win.
 func TestAttrsFaults(t *testing.T) {
 	f := &faults{T: t}
 	view := templ.Join(
 		ui.Input(ui.InputProps{Attrs: templ.Attributes{"value": "x", "class": "w-8"}}),
-		ui.Checkbox(ui.CheckboxProps{Attrs: templ.Attributes{"type": "radio"}}),
-		ui.Badge(ui.BadgeProps{Attrs: templ.Attributes{"data-slot": "x"}}),
-		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}),
+		ui.Radio(ui.RadioProps{Attrs: templ.Attributes{"type": "checkbox"}}),
 		ui.FieldSeparator(ui.FieldSeparatorProps{Attrs: templ.Attributes{"class": "my-2"}}),
 	)
 	surftest.Start(f, surf.New("t", view, ui.Stylesheet()))
 	all := strings.Join(f.got, "\n")
 	for _, w := range []string{
 		"ui.Input: Attrs has value", "ui.Input: Attrs has class, which the component writes itself (use Class)",
-		"ui.Checkbox: Attrs has type", "ui.Badge: Attrs has data-slot",
+		"ui.Radio: Attrs has type",
 		"ui.FieldSeparator: Attrs has class",
 	} {
 		if !strings.Contains(all, w) {
 			t.Errorf("no fault %q in %q", w, all)
 		}
-	}
-	if strings.Contains(all, "ui.Button") {
-		t.Errorf("Button's type is Attrs' to replace, but: %q", all)
 	}
 }
 
@@ -55,8 +51,8 @@ func TestInputGroupBareControl(t *testing.T) {
 				return err
 			}
 			// A label in the group holds a control of its own: not the group's.
-			return ui.Label(ui.LabelProps{}).Render(templ.WithChildren(ctx,
-				ui.Textarea(ui.TextareaProps{Attrs: templ.Attributes{"id": "nested"}})), w)
+			return label.View(label.Props{}).Render(templ.WithChildren(ctx,
+				textarea.View(textarea.Props{ID: "nested"})), w)
 		})
 		return ui.InputGroup(ui.InputGroupProps{}).Render(templ.WithChildren(ctx, kids), w)
 	})

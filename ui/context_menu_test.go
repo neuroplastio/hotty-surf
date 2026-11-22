@@ -11,6 +11,7 @@ import (
 	"neuroplast.io/hotty-surf/internal/rt"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uibutton "neuroplast.io/hotty-surf/ui/button"
 )
 
 // ctxApp has two rows, each with a context menu, and an element outside.
@@ -29,7 +30,7 @@ func (a *ctxApp) view() templ.Component {
 			}
 		}
 		row := func(id string) templ.Component {
-			return with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, id, surf.Click(func() {}))}), templ.Raw(id))
+			return with(uibutton.View(uibutton.Props{ID: id, OnClick: func() {}}), templ.Raw(id))
 		}
 		return page(
 			templ.Raw(`<p id="outside" tabindex="0">Outside</p>`),

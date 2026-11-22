@@ -4,39 +4,36 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"os"
 	"strings"
+	"sync/atomic"
 )
 
 type kittyKey struct{}
 
-// WithKitty explicitly overrides Kitty graphics protocol support detection on ctx.
+var kittyDefault atomic.Bool
+
+// SetKittyDefault records the process-level Kitty graphics capability probed
+// from the terminal via hottyterm.Term.KittyGraphics (called by run when
+// falling back to cells/TUI mode).
+func SetKittyDefault(supported bool) {
+	kittyDefault.Store(supported)
+}
+
+// WithKitty explicitly overrides Kitty graphics protocol support on ctx.
 func WithKitty(ctx context.Context, supported bool) context.Context {
 	return context.WithValue(ctx, kittyKey{}, supported)
 }
 
 // SupportsKitty reports whether the target terminal supports the Kitty graphics
-// protocol (used by TUI components like Avatar to render crisp inline images
-// when available, falling back to text/initials otherwise).
+// protocol. It checks an explicit WithKitty context value first, then falls
+// back to the terminal probe recorded by SetKittyDefault.
 func SupportsKitty(ctx context.Context) bool {
 	if ctx != nil {
 		if v, ok := ctx.Value(kittyKey{}).(bool); ok {
 			return v
 		}
 	}
-	if os.Getenv("KITTY_WINDOW_ID") != "" {
-		return true
-	}
-	term := strings.ToLower(os.Getenv("TERM"))
-	if strings.Contains(term, "kitty") || strings.Contains(term, "ghostty") {
-		return true
-	}
-	prog := strings.ToLower(os.Getenv("TERM_PROGRAM"))
-	switch prog {
-	case "ghostty", "wezterm", "hottyterm", "iterm.app", "kitty":
-		return true
-	}
-	return os.Getenv("HOTTY_SURF_HOTTY") != ""
+	return kittyDefault.Load()
 }
 
 // KittyImageSequence encodes PNG bytes as a Kitty Graphics Protocol APC escape

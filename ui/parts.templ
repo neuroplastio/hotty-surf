@@ -1,11 +1,12 @@
 package ui
 
-// The icons and keys: the markup their exported functions (ui.go) return.
-
 import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/keycap"
 )
+
+// The icons: the markup Icon (ui.go) returns, plus unexported kbd for
+// not-yet-migrated Tier 5 menu/command templates.
 
 templ icon(name, class string) {
 	{{ checkIcon(ctx, name) }}
@@ -13,9 +14,6 @@ templ icon(name, class string) {
 		@templ.Raw(icons[name])
 	</svg>
 }
-
-
-
 
 templ kbd(keys string) {
 	<kbd data-slot="kbd" class="kbd">{ keycap.Text(surf.Platform(ctx), keys) }</kbd>

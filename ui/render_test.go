@@ -187,46 +187,6 @@ func lineDiff(want, got string) string {
 	return b.String()
 }
 
-func TestRenderSelect(t *testing.T) {
-	var st ui.SelectState
-	runRender(t, "select", []renderCase{{
-		name: "default",
-		ui: ui.Select(&st, ui.SelectProps{ID: "size", Value: "m", Items: []ui.SelectItem{
-			{Value: "s", Label: "Small"}, {Value: "m", Label: "Medium"},
-		}}),
-		macro: "select",
-		// select.js marks the select it started.
-		drop: []string{"div#size@data-select-initialized"},
-		args: map[string]any{"id": "size", "selected": "m", "items": []any{
-			map[string]any{"value": "s", "label": "Small"}, map[string]any{"value": "m", "label": "Medium"},
-		}},
-	}})
-}
-
-func TestRenderSelectGrouped(t *testing.T) {
-	var st ui.SelectState
-	runRender(t, "select", []renderCase{{
-		name: "grouped",
-		ui: ui.Select(&st, ui.SelectProps{ID: "fruit", Placeholder: "Pick one", Items: []ui.SelectItem{
-			{Value: "apple", Label: "Apple", Group: "Fruits"}, {Value: "banana", Label: "Banana", Group: "Fruits"},
-			{Value: "leek", Label: "Leek", Group: "Vegetables", Disabled: true}, {Value: "none", Label: "None"},
-		}}),
-		macro: "select",
-		// select.js marks the select it started, and dims the
-		// placeholder it shows.
-		drop: []string{"div#fruit@data-select-initialized", "span@class~text-muted-foreground"},
-		args: map[string]any{"id": "fruit", "placeholder": "Pick one", "items": []any{
-			map[string]any{"type": "group", "label": "Fruits", "items": []any{
-				map[string]any{"value": "apple", "label": "Apple"}, map[string]any{"value": "banana", "label": "Banana"}}},
-			map[string]any{"type": "separator"},
-			map[string]any{"type": "group", "label": "Vegetables", "items": []any{
-				map[string]any{"value": "leek", "label": "Leek", "attrs": map[string]any{"aria-disabled": "true"}}}},
-			map[string]any{"type": "separator"},
-			map[string]any{"value": "none", "label": "None"},
-		}},
-	}})
-}
-
 func TestRenderDropdownMenu(t *testing.T) {
 	var st ui.DropdownMenuState
 	runRender(t, "dropdown-menu", []renderCase{{

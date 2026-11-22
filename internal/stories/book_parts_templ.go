@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 	"neuroplast.io/hotty-surf/ui/code"
 )
 
@@ -243,9 +243,9 @@ func logDemo(p *LogDemo) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.Small, Attrs: surf.On(ctx, "demo-add", surf.Click(func() {
+		templ_7745c5c3_Err = button.View(button.Props{ID: "demo-add", Variant: ui.Outline, Size: ui.Small, OnClick: func() {
 			p.Entries = append(p.Entries, ui.LogEntry{At: time.Now(), Kind: "act", Text: "event " + strconv.Itoa(len(p.Entries)+1), KindClass: code.TokenClass("keyword")})
-		}))}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
+		}}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

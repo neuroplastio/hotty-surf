@@ -9,6 +9,7 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 // TestOwnKeysKit locks K32: a kit control declares its keys on the
@@ -48,8 +49,14 @@ func TestOwnKeysKit(t *testing.T) {
 			want:  []string{"enter", "arrow_down", "arrow_up", "home", "end"},
 		},
 		{
-			name:  "Select trigger",
-			view:  func() templ.Component { return (&selectApp{}).view() },
+			name: "Select trigger",
+			view: func() templ.Component {
+				var st uiselect.State
+				return uiselect.View(&st, uiselect.Props{
+					ID: "size", Placeholder: "Size",
+					Items: []uiselect.Item{{Value: "s", Label: "Small"}, {Value: "m", Label: "Medium"}},
+				})
+			},
 			focus: func(r *surftest.Rig) { r.Click("#size-trigger") }, // opens it
 			want:  []string{"enter"},
 		},

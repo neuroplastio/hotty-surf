@@ -1,0 +1,91 @@
+// Package story provides the storybook showcase for ui/checkbox.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/story"
+	"neuroplast.io/hotty-surf/ui/checkbox"
+	"neuroplast.io/hotty-surf/ui/label"
+)
+
+// Props is the editable state for the Checkbox storybook controls.
+type Props struct {
+	Checked bool
+	Mixed   bool
+	Label   string
+}
+
+type state struct {
+	on bool
+}
+
+func onoff(b bool) string {
+	if b {
+		return "on"
+	}
+	return "off"
+}
+
+// Register adds checkbox's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "checkbox/default",
+		Doc:          "Checkboxes (unchecked, checked, invalid, and disabled states)",
+		Consolidated: true,
+		Score:        5,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Label: "Accept terms and conditions"}
+			return p, editable(p)
+		},
+		Keys: []string{"tab", "space"},
+		Want: "accepted: on",
+	})
+}
+
+templ editable(p *Props) {
+	<div class="flex flex-col gap-3 p-4">
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{
+				ID:       "check",
+				Checked:  p.Checked,
+				OnChange: func(v bool) { p.Checked, p.Mixed = v, false },
+				Attrs:    templ.Attributes{"aria-label": p.Label},
+			})
+			{ p.Label }
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "updates", Checked: true, Disabled: true})
+			Send product updates (disabled checked)
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "disabled-off", Disabled: true})
+			Disabled unchecked
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "invalid-cb", Invalid: true})
+			Required field (invalid)
+		}
+	</div>
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-3 p-4">
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "terms", Checked: s.on, OnChange: func(b bool) { s.on = b }})
+			Accept terms and conditions
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "updates", Checked: true, Disabled: true})
+			Send product updates (disabled checked)
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "disabled-off", Disabled: true})
+			Disabled unchecked
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "invalid-cb", Invalid: true})
+			Required field (invalid)
+		}
+		<p class="text-sm text-muted-foreground">accepted: { onoff(s.on) }</p>
+	</div>
+}

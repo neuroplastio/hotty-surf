@@ -196,7 +196,7 @@ func TestBookSourceIncludesComponents(t *testing.T) {
 		names = append(names, src.Title)
 	}
 	joined := strings.Join(names, ", ")
-	if !strings.Contains(joined, "ui.Alert") || !strings.Contains(joined, "ui.Icon") {
+	if !strings.Contains(joined, "alert.View") || !strings.Contains(joined, "ui.Icon") {
 		t.Fatalf("component sources missing: %s", joined)
 	}
 }
@@ -234,7 +234,7 @@ func TestTabThroughThePane(t *testing.T) {
 	if !a.PaneKey("space") {
 		t.Fatal("space in the pane wasn't taken")
 	}
-	if !strings.Contains(paneText(a), "[x] Hard disks") {
+	if !strings.Contains(paneText(a), "\U000f0c52 Hard disks") {
 		t.Fatalf("space didn't check the box:\n%s", paneText(a))
 	}
 	after(true) // Tab in the pane

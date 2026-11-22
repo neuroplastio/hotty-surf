@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 	"neuroplast.io/hotty-surf/ui/code"
 )
 
@@ -85,9 +85,9 @@ func clearBookLog(p *LogDemo) func() {
 templ logDemo(p *LogDemo) {
 	<div class="flex w-full max-w-xl flex-col gap-3">
 		<div>
-			@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.Small, Attrs: surf.On(ctx, "demo-add", surf.Click(func() {
+			@button.View(button.Props{ID: "demo-add", Variant: ui.Outline, Size: ui.Small, OnClick: func() {
 				p.Entries = append(p.Entries, ui.LogEntry{At: time.Now(), Kind: "act", Text: "event " + strconv.Itoa(len(p.Entries)+1), KindClass: code.TokenClass("keyword")})
-			}))}) { Add an event }
+			}}) { Add an event }
 		</div>
 		@ui.EventLog(ui.EventLogProps{ID: "demo", Entries: p.Entries, OnClear: clearBookLog(p), Empty: "Nothing yet: add an event."})
 	</div>

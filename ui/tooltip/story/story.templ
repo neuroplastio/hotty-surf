@@ -1,0 +1,36 @@
+// Package story provides the storybook showcase for ui/tooltip.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/story"
+	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/tooltip"
+)
+
+// Register adds tooltip's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "tooltip/default",
+		Doc:          "Tooltips on all four sides",
+		Consolidated: true,
+		Score:        5,
+		View:         func() templ.Component { return showcase() },
+	})
+}
+
+templ showcase() {
+	<div class="flex gap-3 p-4">
+		@tooltip.View(tooltip.Props{Text: "Add to library"}) {
+			@button.View(button.Props{}) { Add }
+		}
+		@tooltip.View(tooltip.Props{Text: "Below", Side: tooltip.Bottom, Arrow: true}) {
+			@button.View(button.Props{}) { Bottom }
+		}
+		@tooltip.View(tooltip.Props{Text: "Left", Side: tooltip.Left}) {
+			@button.View(button.Props{}) { Left }
+		}
+		@tooltip.View(tooltip.Props{Text: "Right", Side: tooltip.Right}) {
+			@button.View(button.Props{}) { Right }
+		}
+	</div>
+}

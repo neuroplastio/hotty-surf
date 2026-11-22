@@ -1,0 +1,72 @@
+// Package story provides the storybook showcase for ui/select.
+package story
+
+import (
+	"strings"
+
+	"neuroplast.io/hotty-surf/internal/story"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
+)
+
+type state struct {
+	sel      uiselect.State
+	selGroup uiselect.State
+	selMulti uiselect.State
+	selEnd   uiselect.State
+	value    string
+	value2   string
+	value3   string
+	values   []string
+}
+
+var sizeItems = []uiselect.Item{
+	{Value: "s", Label: "Small"},
+	{Value: "m", Label: "Medium"},
+	{Value: "l", Label: "Large"},
+}
+
+var fruitItems = []uiselect.Item{
+	{Value: "apple", Label: "Apple", Group: "Fruits"},
+	{Value: "banana", Label: "Banana", Group: "Fruits"},
+	{Value: "carrot", Label: "Carrot", Group: "Vegetables"},
+	{Value: "leek", Label: "Leek", Group: "Vegetables", Disabled: true},
+}
+
+// Register adds select's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "select/default",
+		Doc:          "Default, grouped, multiple, and end-aligned selects",
+		Consolidated: true,
+		Score:        5,
+		View:         func() templ.Component { return showcase(&state{value2: "apple"}) },
+		Keys:         []string{"tab", "enter", "arrow_down", "arrow_down", "enter"},
+		Want:         "size: m",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4 w-full">
+		<div class="flex flex-wrap gap-4 items-start">
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">Default</span>
+				@uiselect.View(&s.sel, uiselect.Props{ID: "size", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", OnChange: func(v string) { s.value = v }})
+				<p class="text-sm text-muted-foreground">size: { s.value }</p>
+			</div>
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">Grouped + disabled</span>
+				@uiselect.View(&s.selGroup, uiselect.Props{ID: "fruit", Items: fruitItems, Value: s.value2, OnChange: func(v string) { s.value2 = v }})
+				<p class="text-sm text-muted-foreground">fruit: { s.value2 }</p>
+			</div>
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">Multiple</span>
+				@uiselect.View(&s.selMulti, uiselect.Props{ID: "sizes", Items: sizeItems, Multiple: true, Values: s.values, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { s.values = v }})
+				<p class="text-sm text-muted-foreground">sizes: { strings.Join(s.values, ",") }</p>
+			</div>
+		</div>
+		<div class="flex flex-row items-center justify-between w-full">
+			<span class="text-xs text-muted-foreground">End-aligned</span>
+			@uiselect.View(&s.selEnd, uiselect.Props{ID: "edge", Items: sizeItems, Value: s.value3, Placeholder: "Pick a size", Align: uiselect.AlignEnd, OnChange: func(v string) { s.value3 = v }})
+		</div>
+	</div>
+}

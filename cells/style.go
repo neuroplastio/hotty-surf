@@ -59,6 +59,7 @@ type box struct {
 	padR      int
 	padB      int
 	padL      int
+	framed    bool // TUI rounded border box (╭─╮ / │…│ / ╰─╯)
 	grow      bool // flex-1, grow: takes a flex row's room left
 	full      bool // w-full: a field or a button as wide as its line
 	pre       bool // white space kept
@@ -116,8 +117,27 @@ func factsOf(n *html.Node) facts {
 				break
 			}
 		}
+		if n.Parent != nil && tokens(n.Parent, "class", "button-group") && attr(n.Parent, "data-orientation") != "vertical" {
+			f.sep = "vertical"
+		}
 	}
 	f.marker = marker(n)
+	if f.marker == "" && n.DataAtom == atom.Li && closest(n.Parent, func(a *html.Node) bool {
+		return tokens(a, "class", "alert") && attr(a, "data-mode") == "tui"
+	}) != nil {
+		f.marker = "• "
+	}
+	if f.marker == "" && n.DataAtom == atom.H2 && n.Parent != nil &&
+		tokens(n.Parent, "class", "alert") && attr(n.Parent, "data-mode") == "tui" {
+		for k := n.Parent.FirstChild; k != nil; k = k.NextSibling {
+			if k.Type == html.ElementNode && k.Data == "svg" {
+				if g := svgGlyph(k); g != "" {
+					f.marker = g + " "
+					break
+				}
+			}
+		}
+	}
 	f.empty, f.hasEmpty = empty(n)
 	f.fig = figureOf(n)
 	f.grows = kitGrows(n)
@@ -155,9 +175,12 @@ var inlines = map[atom.Atom]bool{
 // :hover look (kitHoverLook).
 func styleOf(n *html.Node, hov bool) box {
 	var b box
-	if n.Data == "svg" && svgGlyph(n) != "" &&
-		(closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", "badge") }) != nil ||
-			closest(n.Parent, func(a *html.Node) bool { return has(a, "data-tooltip") }) != nil) {
+	if n.Data == "svg" && svgGlyph(n) != "" && svgInGlyphHost(n) {
+		if n.Parent != nil && tokens(n.Parent, "class", "alert") && attr(n.Parent, "data-mode") == "tui" {
+			// Drawn inline as h2's marker so the icon sits beside the alert title.
+			b.display = dNone
+			return b
+		}
 		b.display = dInline
 		return b
 	}

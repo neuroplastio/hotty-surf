@@ -191,10 +191,3 @@ var controlsCSS string
 func Icon(name, class string) templ.Component {
 	return icon(name, class)
 }
-
-// Kbd is a shortcut as the host's platform writes it, in Basecoat's kbd:
-// keys are hotty's names joined by "+", where mod is the host's modifier, so
-// "mod+shift+p" is Ctrl+Shift+P where mod is ctrl and ⇧⌘P where it is super.
-func Kbd(keys string) templ.Component {
-	return kbd(keys)
-}

@@ -1,48 +1,27 @@
 package stories
 
 import (
-	"bytes"
-	"encoding/base64"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 
-	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
-	"neuroplast.io/hotty-surf/ui/avatar"
-	"neuroplast.io/hotty-surf/ui/progress"
-	"neuroplast.io/hotty-surf/ui/skeleton"
+	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/card"
+	"neuroplast.io/hotty-surf/ui/textarea"
 )
 
-// The stories of B2's display components: Alert, Avatar, Breadcrumb,
-// Card's sizes, Chart, Empty, Item, Progress, Skeleton and Table, and
-// Basecoat's scrollbar classes. Their data is made up.
+// The remaining legacy B2 display stories: Chart, Table, and Basecoat's
+// scrollbar classes.
 
-type displayState struct {
-	page string
-	pct  float64
-}
-
-// Alert is the editable state of an alert story.
-type Alert struct {
-	Variant string `enum:"default,destructive"`
-	Title string
-	Text string
-	Icon bool
-}
+type displayState struct{}
 
 // Table is the editable state of a sortable invoice table story.
 type Table struct {
 	Caption bool
-	Sort string `enum:"invoice,status,amount"`
+	Sort    string `enum:"invoice,status,amount"`
 }
-
-func (s *displayState) goTo(p string) func() { return func() { s.page = p } }
 
 // named is the aria-label that names a chart (kit rule K18).
 func named(l string) templ.Attributes { return templ.Attributes{"aria-label": l} }
@@ -57,193 +36,20 @@ func logText() string {
 
 func init() {
 	show := func(f func(*displayState) templ.Component) func() templ.Component {
-		return func() templ.Component { return f(&displayState{page: "Breadcrumb"}) }
+		return func() templ.Component { return f(&displayState{}) }
 	}
-	add(Story{ID: "alert/default", Doc: "An alert with an icon, a title and a description", View: show(alertDefault), Props: func() (any, templ.Component) {
-		p := &Alert{Variant: "default", Title: "Heads up!", Text: "You can add components to your app.", Icon: true}
-		return p, bookAlert(p)
-	}})
-	add(Story{ID: "alert/destructive", Doc: "A destructive alert with a list", View: show(alertDestructive), Props: func() (any, templ.Component) {
-		p := &Alert{Variant: "destructive", Title: "Unable to process your payment.", Text: "Check your card and try again.", Icon: true}
-		return p, bookAlert(p)
-	}})
-	add(Story{ID: "avatar/default", Doc: "Avatars in all sizes, with status badges, and as an overlapping group", View: show(avatarDefault)})
-	add(Story{ID: "breadcrumb/default", Doc: "A trail of three steps; Enter on the first goes there",
-		View: show(breadcrumbDefault), Keys: []string{"tab", "enter"}, Want: "page: Home"})
-	add(Story{ID: "card/small", Doc: "A small card (CardProps.Size)", View: show(cardSmall)})
 	add(Story{ID: "chart/bar", Doc: "A bar chart of two series", View: show(chartBar)})
 	add(Story{ID: "chart/line", Doc: "A line chart of two series", View: show(chartLine)})
 	add(Story{ID: "chart/pie", Doc: "A pie of five slices, its labels beside their colours", View: show(chartPie)})
 	add(Story{ID: "chart/legend", Doc: "Bar charts of two series and of one, with their legends", View: show(chartLegend)})
 	add(Story{ID: "chart/wide", Doc: "A short, wide line chart of a month by day (Aspect 3), labelled every fifth day", View: show(chartWide)})
 	add(Story{ID: "chart/narrow", Doc: "A bar chart in a narrow card: its long labels are cut, not widening it", View: show(chartNarrow)})
-	add(Story{ID: "card/stat", Doc: "Cards as a dashboard's stats: a label, a number and its change (Card, Badge and Icon)", View: show(cardStat)})
-	add(Story{ID: "empty/default", Doc: "An empty state with a title, a description and a button", View: show(emptyDefault)})
-	add(Story{ID: "empty/with-icon", Doc: "An empty state with an icon", View: show(emptyWithIcon)})
-	add(Story{ID: "item/default", Doc: "An item with an icon, a title, a description and a button", View: show(itemDefault)})
-	add(Story{ID: "item/variants", Doc: "An item of each variant: default, Outline and Muted", View: show(itemVariants)})
-	add(Story{ID: "item/sizes", Doc: "An outline item of each size", View: show(itemSizes)})
-	add(Story{ID: "item/group", Doc: "Three items in a group, a line between two; each a link, and Enter on the first opens it",
-		View: show(itemGroup), Keys: []string{"tab", "enter"}, Want: "page: Ada Lovelace"})
-	add(Story{ID: "progress/default", Doc: "Progress bars at 0, 25, 50, 75 and 100%", View: show(progressDefault)})
 	add(Story{ID: "scrollbar/default", Doc: "A plain box of twenty lines that scrolls, with Basecoat's scrollbar class", View: show(scrollbarDefault)})
 	add(Story{ID: "scrollbar/small", Doc: "A Textarea of twenty lines with the scrollbar-sm class", View: show(scrollbarSmall)})
-	add(Story{ID: "skeleton/default", Doc: "A skeleton of a round picture and two lines", View: show(skeletonDefault)})
 	add(Story{ID: "table/default", Doc: "A table of invoices with a selected row, a footer and a caption", View: show(tableDefault), Props: func() (any, templ.Component) {
 		p := &Table{Caption: true, Sort: "invoice"}
 		return p, bookTable(p)
 	}})
-}
-
-templ alertDefault(s *displayState) {
-	<div class="p-4 max-w-md">
-		@ui.Alert(ui.AlertProps{}) {
-			@ui.Icon("circle-check-big", "")
-			<h2>Your changes are saved</h2>
-			<section>
-				<p>They show on every device within a minute.</p>
-			</section>
-		}
-	</div>
-}
-
-templ bookAlert(p *Alert) {
-	@ui.Alert(ui.AlertProps{Variant: alertVariant(p.Variant), Class: "max-w-lg"}) {
-		if p.Icon {
-			@ui.Icon("circle-help", "")
-		}
-		<h2>{ p.Title }</h2>
-		<section>{ p.Text }</section>
-	}
-}
-
-func alertVariant(v string) ui.Variant {
-	if v == "destructive" {
-		return ui.Destructive
-	}
-	return ui.Primary
-}
-
-templ alertDestructive(s *displayState) {
-	<div class="p-4 max-w-md">
-		@ui.Alert(ui.AlertProps{Variant: ui.Destructive}) {
-			@ui.Icon("circle-alert", "")
-			<h2>The payment failed</h2>
-			<section>
-				<p>Check the card's details and try again.</p>
-				<ul>
-					<li>The card number</li>
-					<li>The expiry date</li>
-				</ul>
-			</section>
-		}
-	</div>
-}
-
-var (
-	avatarImgOnce sync.Once
-	avatarImg1    string
-	avatarImg2    string
-)
-
-func sampleAvatarImages() (string, string) {
-	avatarImgOnce.Do(func() {
-		avatarImg1 = makeAvatarPNG(color.RGBA{244, 114, 182, 255}, color.RGBA{99, 102, 241, 255})
-		avatarImg2 = makeAvatarPNG(color.RGBA{45, 212, 191, 255}, color.RGBA{59, 130, 246, 255})
-	})
-	return avatarImg1, avatarImg2
-}
-
-func makeAvatarPNG(c1, c2 color.RGBA) string {
-	const sz = 48
-	img := image.NewRGBA(image.Rect(0, 0, sz, sz))
-	for y := range sz {
-		for x := range sz {
-			t := float64(x+y) / float64(2*(sz-1))
-			r := uint8(float64(c1.R)*(1-t) + float64(c2.R)*t)
-			g := uint8(float64(c1.G)*(1-t) + float64(c2.G)*t)
-			b := uint8(float64(c1.B)*(1-t) + float64(c2.B)*t)
-			// Draw a crisp stylized silhouette (head + shoulders) in soft white.
-			dx, dy := float64(x)-24, float64(y)-18
-			sdx, sdy := float64(x)-24, float64(y)-44
-			if dx*dx+dy*dy <= 7.5*7.5 || (sdx*sdx/(16*16)+sdy*sdy/(14*14)) <= 1 {
-				r = uint8(float64(r)*0.25 + 255*0.75)
-				g = uint8(float64(g)*0.25 + 255*0.75)
-				b = uint8(float64(b)*0.25 + 255*0.75)
-			}
-			img.SetRGBA(x, y, color.RGBA{r, g, b, 255})
-		}
-	}
-	var buf bytes.Buffer
-	_ = png.Encode(&buf, img)
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
-}
-
-templ avatarDefault(s *displayState) {
-	{{ img1, img2 := sampleAvatarImages() }}
-	<div class="p-4 flex flex-col gap-4">
-		<div class="flex items-center gap-4">
-			@avatar.View(avatar.Props{Size: ui.Small, Src: img1, Alt: "Ada Lovelace", Hue: avatar.HueCoral}) {
-				<span>AL</span>
-			}
-			@avatar.View(avatar.Props{Size: ui.Medium, Src: img2, Alt: "Grace Hopper", Hue: avatar.HueTeal, Online: true}) {
-				<span>GH</span>
-			}
-			@avatar.View(avatar.Props{Size: ui.Large, Src: img1, Alt: "Margaret Hamilton", Hue: avatar.HueViolet}) {
-				<span>MH</span>
-			}
-		</div>
-		<div class="flex items-center gap-4">
-			@avatar.View(avatar.Props{Size: ui.Small, Hue: avatar.HueCoral}) {
-				<span>AL</span>
-			}
-			@avatar.View(avatar.Props{Size: ui.Medium, Hue: avatar.HueAmber, Online: true}) {
-				<span>MK</span>
-			}
-			@avatar.View(avatar.Props{Size: ui.Large, Hue: avatar.HueBlue, Online: true}) {
-				<span>RT</span>
-			}
-		</div>
-		<div>
-			@avatar.Group(avatar.GroupProps{}) {
-				@avatar.View(avatar.Props{Src: img1, Alt: "AL", Hue: avatar.HueCoral}) {
-					<span>AL</span>
-				}
-				@avatar.View(avatar.Props{Src: img2, Alt: "GH", Hue: avatar.HueTeal}) {
-					<span>GH</span>
-				}
-				@avatar.View(avatar.Props{Hue: avatar.HueGold}) {
-					<span>MK</span>
-				}
-				<span data-count>+4</span>
-			}
-		</div>
-	</div>
-}
-
-templ breadcrumbDefault(s *displayState) {
-	<div class="p-4 grid gap-2">
-		@ui.Breadcrumb(ui.BreadcrumbProps{Items: []ui.BreadcrumbItem{
-			{Label: "Home", Attrs: surf.On(ctx, "home", surf.Click(s.goTo("Home")))},
-			{Label: "Components", Attrs: surf.On(ctx, "components", surf.Click(s.goTo("Components")))},
-			{Label: "Breadcrumb"},
-		}})
-		<p class="text-sm text-muted-foreground">page: { s.page }</p>
-	</div>
-}
-
-templ cardSmall(s *displayState) {
-	<div class="p-4 max-w-sm">
-		@ui.Card(ui.CardProps{Size: ui.Small}) {
-			<header>
-				<h2>Storage</h2>
-				<p>4.2 GB of 10 GB used.</p>
-			</header>
-			<section>
-				@ui.Progress(ui.ProgressProps{Value: 42})
-			</section>
-		}
-	</div>
 }
 
 var (
@@ -303,7 +109,7 @@ templ chartWide(s *displayState) {
 
 templ chartNarrow(s *displayState) {
 	<div class="p-4" style="width: 16rem;">
-		@ui.Card(ui.CardProps{Size: ui.Small}) {
+		@card.View(card.Props{Size: ui.Small}) {
 			<header>
 				<h2>By channel</h2>
 			</header>
@@ -312,145 +118,6 @@ templ chartNarrow(s *displayState) {
 					Series: []ui.ChartSeries{{Label: "Orders", Values: []float64{412, 676, 233, 98}}}, Attrs: named("Orders by channel")})
 			</section>
 		}
-	</div>
-}
-
-// stat is one of card/stat's cards.
-templ stat(label, value, change string, up bool) {
-	<div style="flex: 1 1 12rem;">
-		@ui.Card(ui.CardProps{Size: ui.Small}) {
-			<header>
-				<p>{ label }</p>
-				<h2 class="text-xl font-semibold">{ value }</h2>
-			</header>
-			<footer class="flex flex-row items-center gap-2 text-sm">
-				@ui.Badge(ui.BadgeProps{Variant: ui.Outline}) {
-					if up {
-						@ui.Icon("trending-up", "")
-					} else {
-						@ui.Icon("trending-down", "")
-					}
-					{ change }
-				}
-				<span class="text-muted-foreground">from last month</span>
-			</footer>
-		}
-	</div>
-}
-
-templ cardStat(s *displayState) {
-	<div class="p-4 flex flex-row flex-wrap gap-4">
-		@stat("Revenue", "$12,480", "+12.5%", true)
-		@stat("Orders", "1,419", "+4.1%", true)
-		@stat("Returns", "23", "-8.0%", false)
-	</div>
-}
-
-templ emptyDefault(s *displayState) {
-	<div class="p-4">
-		@ui.Empty(ui.EmptyProps{}) {
-			<header>
-				<h3>No projects yet</h3>
-				<p>Make your first project to start.</p>
-			</header>
-			<section>
-				@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "create")}) {
-					Create project
-				}
-			</section>
-		}
-	</div>
-}
-
-templ emptyWithIcon(s *displayState) {
-	<div class="p-4">
-		@ui.Empty(ui.EmptyProps{}) {
-			<header>
-				<figure>
-					@ui.Icon("inbox", "")
-				</figure>
-				<h3>No messages</h3>
-				<p>Messages you get show here.</p>
-			</header>
-		}
-	</div>
-}
-
-templ itemBody(icon, title, text string) {
-	<figure>
-		@ui.Icon(icon, "")
-	</figure>
-	<section>
-		<h3>{ title }</h3>
-		<p>{ text }</p>
-	</section>
-}
-
-templ itemDefault(s *displayState) {
-	<div class="p-4 max-w-md">
-		@ui.Item(ui.ItemProps{}) {
-			@itemBody("folder", "Reports", "Monthly reports for the team.")
-			<aside>
-				@ui.Button(ui.ButtonProps{Variant: ui.Outline, Size: ui.Small, Attrs: surf.On(ctx, "open")}) {
-					Open
-				}
-			</aside>
-		}
-	</div>
-}
-
-templ itemVariants(s *displayState) {
-	<div class="p-4 max-w-md grid gap-4">
-		@ui.Item(ui.ItemProps{}) {
-			@itemBody("bell", "Default", "No border, no background.")
-		}
-		@ui.Item(ui.ItemProps{Variant: ui.Outline}) {
-			@itemBody("bell", "Outline", "A border.")
-		}
-		@ui.Item(ui.ItemProps{Muted: true}) {
-			@itemBody("bell", "Muted", "The muted background.")
-		}
-	</div>
-}
-
-templ itemSizes(s *displayState) {
-	<div class="p-4 max-w-md grid gap-4">
-		for _, z := range []ui.Size{ui.Medium, ui.Small, ui.XSmall} {
-			@ui.Item(ui.ItemProps{Variant: ui.Outline, Size: z}) {
-				@itemBody("user", "Ada Lovelace", "ada@example.com")
-			}
-		}
-	</div>
-}
-
-templ itemGroup(s *displayState) {
-	<div class="p-4 max-w-md grid gap-2">
-		@ui.ItemGroup(ui.ItemGroupProps{}) {
-			for i, n := range []string{"Ada Lovelace", "Grace Hopper", "Mary Kenneth Keller"} {
-				if i > 0 {
-					<hr/>
-				}
-				@ui.Item(ui.ItemProps{Attrs: surf.On(ctx, "person-"+strconv.Itoa(i), surf.Click(s.goTo(n)))}) {
-					@itemBody("user", n, "Opens their page.")
-				}
-			}
-		}
-		<p class="text-sm text-muted-foreground">page: { s.page }</p>
-	</div>
-}
-
-templ progressDefault(s *displayState) {
-	<div class="p-4 max-w-sm flex flex-col gap-4">
-		<div class="flex flex-col gap-2">
-			<span class="text-xs text-muted-foreground">With percentage</span>
-			for _, v := range []float64{0, 25, 50, 75, 100} {
-				@progress.View(progress.Props{Value: v, ShowValue: true})
-			}
-		</div>
-		<div class="flex flex-col gap-2">
-			<span class="text-xs text-muted-foreground">Animated (indeterminate)</span>
-			@progress.View(progress.Props{Indeterminate: true})
-		</div>
 	</div>
 }
 
@@ -470,31 +137,7 @@ templ scrollbarDefault(s *displayState) {
 
 templ scrollbarSmall(s *displayState) {
 	<div class="p-4 max-w-sm">
-		@ui.Textarea(ui.TextareaProps{Value: logText(), Class: "scrollbar-sm", Attrs: templ.Attributes{"style": "height: 12rem;"}})
-	</div>
-}
-
-templ skeletonDefault(s *displayState) {
-	<div class="p-4 flex flex-col gap-4 max-w-sm">
-		<div class="card p-4 flex flex-col gap-3">
-			<div class="flex items-center gap-3">
-				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 2.5rem; height: 2.5rem; border-radius: 9999px;"}})
-				<div class="flex flex-col gap-2 flex-1">
-					@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 140px; height: 1rem;"}})
-					@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 90px; height: 0.75rem;"}})
-				</div>
-			</div>
-			@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 100%; height: 6rem; border-radius: 0.5rem;"}})
-			<div class="flex flex-col gap-2">
-				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 100%; height: 0.875rem;"}})
-				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 85%; height: 0.875rem;"}})
-				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 60%; height: 0.875rem;"}})
-			</div>
-			<div class="flex items-center gap-2">
-				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 5rem; height: 2rem; border-radius: 0.375rem;"}})
-				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 4rem; height: 2rem; border-radius: 0.375rem;"}})
-			</div>
-		</div>
+		@textarea.View(textarea.Props{Value: logText(), Class: "scrollbar-sm", Attrs: templ.Attributes{"style": "height: 12rem;"}})
 	</div>
 }
 
@@ -562,7 +205,7 @@ templ bookTable(p *Table) {
 		<thead><tr>
 			for _, col := range []string{"invoice", "status", "amount"} {
 				<th>
-					@ui.Button(ui.ButtonProps{Variant: ui.Ghost, Attrs: surf.On(ctx, "th-"+col, surf.Click(func() { p.Sort = col }))}) {
+					@button.View(button.Props{ID: "th-" + col, Variant: ui.Ghost, OnClick: func() { p.Sort = col }}) {
 						{ col }
 						if p.Sort == col {
 							@ui.Icon("arrow-down", "size-3.5")

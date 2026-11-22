@@ -76,40 +76,56 @@ func (s *Story) Sources() []Source {
 	return s.propTypes(out, render, seen)
 }
 
-// storySources finds a v0.7 story's registration and its templ render.
-// Those registrations wrap their render functions in closures, so the
-// closure's program counter alone cannot name the original component.
+// storySources finds a story's registration and its templ render in either
+// ui/<component>/story/story.templ or internal/stories/*.templ.
 func storySources(id string) []Source {
 	if demo := demoSources(id); len(demo) > 0 {
 		return demo
 	}
+	var files []string
+	comp, _, _ := strings.Cut(id, "/")
+	for _, pkg := range []string{comp, strings.ReplaceAll(comp, "-", "")} {
+		candidate := filepath.Join(root, "ui", pkg, "story", "story.templ")
+		if _, err := os.Stat(candidate); err == nil {
+			files = append(files, candidate)
+			break
+		}
+	}
 	dir := filepath.Join(root, "internal", "stories")
 	entries, _ := os.ReadDir(dir)
-	needle := `ID: "` + id + `"`
-	render := regexp.MustCompile(`View:\s*(?:\w+\()?([a-zA-Z_]\w*)`)
-	propsRender := regexp.MustCompile(`return\s+\w+\s*,\s*([a-zA-Z_]\w*)\(`)
 	for _, e := range entries {
-		if !strings.HasSuffix(e.Name(), ".templ") {
-			continue
+		if strings.HasSuffix(e.Name(), ".templ") {
+			files = append(files, filepath.Join(dir, e.Name()))
 		}
-		file := filepath.Join(dir, e.Name())
+	}
+	needle := regexp.MustCompile(`ID:\s*"` + regexp.QuoteMeta(id) + `"`)
+	render := regexp.MustCompile(`View:\s*(?:func\(\)\s*templ\.Component\s*\{\s*return\s*|\w+\()?([a-zA-Z_]\w*)`)
+	propsRender := regexp.MustCompile(`return\s+\w+\s*,\s*([a-zA-Z_]\w*)\(`)
+	for _, file := range files {
 		text, ok := read(file)
 		if !ok {
 			continue
 		}
-		at := strings.Index(text, needle)
-		if at < 0 {
+		loc := needle.FindStringIndex(text)
+		if loc == nil {
 			continue
 		}
-		start := strings.LastIndex(text[:at], "add(Story{")
+		at := loc[0]
+		start := strings.LastIndex(text[:at], "r.Add(story.Story{")
+		if start < 0 {
+			start = strings.LastIndex(text[:at], "add(Story{")
+		}
 		if start < 0 {
 			continue
 		}
-		end := strings.Index(text[at:], "})")
-		if end < 0 {
+		end := strings.Index(text[at:], "\t})")
+		if end >= 0 {
+			end += at + 3
+		} else if e2 := strings.Index(text[at:], "})"); e2 >= 0 {
+			end = at + e2 + 2
+		} else {
 			continue
 		}
-		end += at + 2
 		code := text[start:end]
 		out := []Source{{Title: "story", Path: rel(file), Line: 1 + strings.Count(text[:start], "\n"), Lang: "go", Code: code}}
 		m := render.FindStringSubmatch(code)
@@ -120,7 +136,7 @@ func storySources(id string) []Source {
 			if src, ok := templBlock(file, m[1]); ok {
 				src.Title = "render: " + m[1]
 				out = append(out, src)
-				out = refs(out, out[1:], dir, map[string]bool{}, 1)
+				out = refs(out, out[1:], filepath.Dir(file), map[string]bool{}, 1)
 			}
 		}
 		return out
@@ -142,8 +158,6 @@ func demoSources(id string) []Source {
 		file, render = "book_shell.templ", "iconButtonsDemo"
 	case strings.HasPrefix(id, "symbols/"):
 		file, render = "book_shell.templ", "symbolsDemo"
-	case strings.HasPrefix(id, "separator/"):
-		file, render = "book_misc.templ", "separatorDemo"
 	case strings.HasPrefix(id, "icons/"):
 		file, render = "book_misc.templ", "iconsDemo"
 	case strings.HasPrefix(id, "tabs-demo/"):

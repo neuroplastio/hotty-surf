@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
 )
 
 templ Details(a *App) {
@@ -18,7 +18,7 @@ templ Details(a *App) {
 			{ surf.On(ctx, "note", surf.Input(a.SetNote))... }
 		/>
 		<div class="flex gap-2">
-			@ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "star", surf.Click(a.Star))}) {
+			@button.View(button.Props{ID: "star", OnClick: a.Star}) {
 				Star
 			}
 		</div>
