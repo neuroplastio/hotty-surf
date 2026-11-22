@@ -25,6 +25,7 @@ import (
 	"slices"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 	"neuroplast.io/hotty-go"
 )
 
@@ -66,6 +67,8 @@ type Screen struct {
 	held     bool // a press the Screen took is down
 	pressing bool // a press of any button is down, the Screen's or not
 	drag     *dragging
+	resizing *fieldResize
+	textSel  *fieldSelect
 	hoverID  string
 	hoverOut bool
 	// hovered is the hovered chain (hover.go), the innermost element
@@ -248,6 +251,27 @@ func (c *Screen) wheel(col, row, lines int) (taken bool) {
 		hit = l.cv.rows[y][col].own
 	}
 	for n := hit; n != nil; n = n.Parent {
+		if n.DataAtom == atom.Textarea {
+			if r, ok := l.fields[n]; ok {
+				f := c.field(n)
+				innerW := r.w
+				if isKitTextarea(n) && r.w >= 4 {
+					innerW = r.w - 2
+				}
+				f.ed.Width, f.ed.Rows = innerW, r.h
+				total := len(f.ed.Wrap())
+				if total > r.h {
+					old := f.top
+					to := max(min(old+lines, total-r.h), 0)
+					if to != old {
+						f.top = to
+						f.scrolled = true
+						c.lay, c.rehit = nil, true
+						return true
+					}
+				}
+			}
+		}
 		if box, ok := l.scrolls[n]; ok {
 			old := c.boxScroll[n]
 			to := max(min(old+lines, box.content-box.view.h), 0)

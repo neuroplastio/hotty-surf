@@ -84,6 +84,10 @@ type App struct {
 	startFocus bool
 	wantFocus  string
 	modalOpen  bool
+	gripStart  [2]int
+	gripOrigin [2]int
+	gripping   bool
+	caretTick  uint
 }
 
 // own are the book's elements that take the keyboard: while one has it, a
@@ -242,6 +246,15 @@ var paneDone = func() chan struct{} {
 	return ch
 }()
 
+// paneKeys are CUA editing keys declared on #book-pane so the host forwards
+// them to PaneKey (and into cells.Screen) rather than intercepting them.
+var paneKeys = []string{
+	"ctrl+a", "ctrl+backspace", "ctrl+delete",
+	"ctrl+left", "ctrl+right", "ctrl+shift+left", "ctrl+shift+right",
+	"ctrl+home", "ctrl+end", "ctrl+shift+home", "ctrl+shift+end",
+	"ctrl+z", "ctrl+y", "ctrl+shift+z",
+}
+
 // start puts the story on the pane's Screen, the first time the pane is
 // drawn or used: not before the book runs, whose live reload has to be
 // set up before a view renders.
@@ -250,7 +263,7 @@ func (sh *shown) start(mode func() ui.Mode) {
 		return
 	}
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		return sh.view.Render(ui.WithMode(ctx, mode()), w)
+		return paneRoot(sh.view).Render(ui.WithMode(ctx, mode()), w)
 	})
 	sh.pane = surf.New("book-pane", view, "")
 	// sh.pane is driven synchronously by book's own render (sh.pump), not by
@@ -503,7 +516,10 @@ func (a *App) PaneKey(k string) bool {
 		return false
 	}
 	sh.start(a.paneMode)
-	taken := sh.scr.Key(k)
+	// surf.Key normalizes the platform modifier to "mod+"; cells.Screen
+	// expects physical key names ("ctrl+").
+	ck := strings.Replace(k, "mod+", "ctrl+", 1)
+	taken := sh.scr.Key(ck)
 	if !taken {
 		var err error
 		taken, err = sh.pane.Key(k)
@@ -512,6 +528,9 @@ func (a *App) PaneKey(k string) bool {
 		}
 	}
 	sh.pump(a.paneMode)
+	if taken {
+		a.caretTick++
+	}
 	return taken
 }
 
@@ -633,15 +652,43 @@ type seg struct {
 // trimmed cells preview, so multi-row controls (like 3-row lg buttons) get
 // one unified pointer target, hover, click, and :active press effect.
 type hitBox struct {
-	id         string
-	x, y, w, h int
-	col, row   int // untrimmed screen coordinates for Click/Move
+	id               string
+	x, y, w, h       int
+	col, row         int // untrimmed screen coordinates for Click/Move
+	isText           bool
+	disabled         bool
+	focused          bool
+	hasGrip          bool
+	gripCol, gripRow int
+	resizeMode       string
 }
 
 func (h hitBox) style() templ.SafeCSS {
 	return templ.SafeCSS(fmt.Sprintf(
 		"left:%dch;top:calc(%d*var(--hotty-cell-h));width:%dch;height:calc(%d*var(--hotty-cell-h))",
 		h.x, h.y, h.w, h.h,
+	))
+}
+
+func (h hitBox) gripStyle() templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf(
+		"left:%dch;top:calc(%d*var(--hotty-cell-h));width:1ch;height:var(--hotty-cell-h)",
+		h.x+h.w-1, h.y+h.h-1,
+	))
+}
+
+// caretPos is the blinking I-beam caret position in cell coordinates inside
+// the trimmed cells preview.
+type caretPos struct {
+	has  bool
+	x, y int
+	alt  bool // toggles class on each keystroke so CSS restarts the blink (solid while typing)
+}
+
+func (c caretPos) style() templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf(
+		"left:%dch;top:calc(%d*var(--hotty-cell-h))",
+		c.x, c.y,
 	))
 }
 
@@ -662,10 +709,11 @@ func (f focusRect) style() templ.SafeCSS {
 // paneView holds the trimmed cell lines, unified interactive hit boxes, and
 // unified focus ring for the cells preview.
 type paneView struct {
-	lines        [][]seg
-	hits         []hitBox
-	focus        focusRect
-	offX, offY   int // negative cell offset when an overlay (tooltip) expands into trimmed padding
+	lines      [][]seg
+	hits       []hitBox
+	focus      focusRect
+	caret      caretPos
+	offX, offY int // negative cell offset when an overlay (tooltip) expands into trimmed padding
 }
 
 func (pv paneView) paneStyle() templ.SafeCSS {
@@ -698,7 +746,7 @@ func (a *App) lines() paneView {
 		if mode == ui.ModePlain {
 			out[i] = plainRowSegs(row)
 		} else {
-			out[i] = rowSegs(row)
+			out[i] = rowSegs(row, false)
 		}
 	}
 	// The blank lines at the top (at most 1 standard p-4 padding row, so
@@ -733,14 +781,12 @@ func (a *App) lines() paneView {
 	if trimLeft >= paneCols {
 		trimLeft = 0
 	}
-	if trimLeft > 0 {
-		for i := range out {
-			row := grid[trimTop+i][trimLeft:]
-			if mode == ui.ModePlain {
-				out[i] = plainRowSegs(row)
-			} else {
-				out[i] = rowSegs(row)
-			}
+	for i := range out {
+		row := grid[trimTop+i][trimLeft:]
+		if mode == ui.ModePlain {
+			out[i] = plainRowSegs(row)
+		} else {
+			out[i] = rowSegs(row, mode == ui.ModeTUI)
 		}
 	}
 	var pv paneView
@@ -779,12 +825,15 @@ func (a *App) lines() paneView {
 					maxY = ry
 				}
 			}
-			if cell.Attr&cells.Dim != 0 {
+			if cell.Attr&cells.Dim != 0 && cell.Bg != "input/30" {
 				continue
 			}
-			if id, _ := sh.scr.At(c, r); id != "" {
+			if id, _ := sh.scr.At(c, r); id != "" && id != "book-pane-cua" {
 				if idx, ok := byID[id]; ok {
 					hb := &pv.hits[idx]
+					if cell.Attr&cells.Dim != 0 {
+						hb.disabled = true
+					}
 					if rx < hb.x {
 						hb.w += hb.x - rx
 						hb.x = rx
@@ -803,25 +852,113 @@ func (a *App) lines() paneView {
 					byID[id] = len(pv.hits)
 					pv.hits = append(pv.hits, hitBox{
 						id: id, x: rx, y: ry, w: 1, h: 1, col: c, row: r,
+						disabled: cell.Attr&cells.Dim != 0,
 					})
 				}
 			}
 		}
 	}
-	if maxX >= minX && maxY >= minY {
+	if col, row, ok := sh.scr.Cursor(); ok && a.inPane {
+		cx, cy := col-trimLeft, row-trimTop
+		if cx >= 0 && cy >= 0 && cy < len(out) {
+			pv.caret = caretPos{has: true, x: cx, y: cy, alt: a.caretTick%2 == 1}
+		}
+	}
+	for i := range pv.hits {
+		hb := &pv.hits[i]
+		hb.focused = a.inPane && sh.focus == hb.id
+		if hb.h >= 2 {
+			brRow := trimTop + hb.y + hb.h - 1
+			brCol := trimLeft + hb.x + hb.w - 1
+			if brRow < len(grid) && brCol < len(grid[brRow]) {
+				br := grid[brRow][brCol]
+				if br.Text == "◢" {
+					hb.isText = true
+					hb.hasGrip = true
+					hb.gripCol, hb.gripRow = brCol, brRow
+					hb.resizeMode = sh.scr.ResizeMode(brCol, brRow)
+				} else if br.Bg == "input/30" || (pv.caret.has && hb.focused) {
+					hb.isText = true
+				}
+			}
+		}
+	}
+	if maxX >= minX && maxY >= minY && !pv.caret.has {
 		pv.focus = focusRect{has: true, x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1}
 	}
 	return pv
 }
 
 // PaneClick delivers a pointer click on the cells preview to the cells
-// Screen, firing press/focus/release/click on the underlying story.
+// Screen, firing press/focus/release/click on the underlying story and
+// giving the pane keyboard focus when a control takes focus.
 func (a *App) PaneClick(col, row int) {
 	sh := a.cur
 	if sh == nil || sh.scr == nil {
 		return
 	}
+	sh.scr.Focus(true)
 	sh.scr.Click(col, row)
+	sh.pump(a.paneMode)
+	if sh.focus != "" {
+		a.inPane = true
+		a.refocus = true
+		a.caretTick++
+	}
+}
+
+// PaneTextDrag forwards pointer press/move/release inside a TUI textarea
+// (click, shift+click, double-click word, triple-click line, drag-to-select)
+// with exact cell coordinates and modifiers.
+func (a *App) PaneTextDrag(col, row, w, h int, d surf.DragEvent) {
+	sh := a.cur
+	if sh == nil || sh.scr == nil {
+		return
+	}
+	dx := max(0, min(d.X, w-1))
+	dy := max(0, min(d.Y, h-1))
+	if !d.HasX {
+		dx = 0
+	}
+	if !d.HasY {
+		dy = 0
+	}
+	sc, sr := col+dx, row+dy
+	switch {
+	case d.Start:
+		sh.scr.Focus(true)
+		sh.scr.Press(sc, sr, d.Mods, 0)
+		a.inPane = true
+		a.refocus = true
+		a.caretTick++
+	case d.End:
+		sh.scr.Release(sc, sr, d.Mods)
+	default:
+		sh.scr.Move(sc, sr, d.Mods)
+		a.caretTick++
+	}
+	sh.pump(a.paneMode)
+}
+
+// PaneGripDrag forwards a drag of a textarea's corner resize grip to the
+// cells Screen so the textarea resizes 1:1 with the pointer.
+func (a *App) PaneGripDrag(col, row int, d surf.DragEvent) {
+	sh := a.cur
+	if sh == nil || sh.scr == nil {
+		return
+	}
+	switch {
+	case d.Start:
+		a.gripping = true
+		a.gripStart = [2]int{d.Col, d.Row}
+		a.gripOrigin = [2]int{col, row}
+		sh.scr.Press(col, row, 0, 0)
+	case d.End:
+		a.gripping = false
+		sh.scr.Release(a.gripOrigin[0]+d.Col-a.gripStart[0], a.gripOrigin[1]+d.Row-a.gripStart[1], 0)
+	default:
+		sh.scr.Move(a.gripOrigin[0]+d.Col-a.gripStart[0], a.gripOrigin[1]+d.Row-a.gripStart[1], 0)
+	}
 	sh.pump(a.paneMode)
 }
 
@@ -911,8 +1048,10 @@ func plainRowSegs(row []cells.Cell) []seg {
 }
 
 // rowSegs groups a row of Cells into contiguous runs of equal attributes
-// and colour roles, trimmed of unstyled trailing spaces.
-func rowSegs(row []cells.Cell) []seg {
+// and colour roles, trimmed of unstyled trailing spaces. When hideGrip is
+// true (interactive TUI preview), the raw ◢ cell glyph is blanked so the
+// pixel-aligned .book-grip SVG overlay renders cleanly in its place.
+func rowSegs(row []cells.Cell, hideGrip bool) []seg {
 	end := len(row)
 	for end > 0 {
 		c := row[end-1]
@@ -944,13 +1083,17 @@ func rowSegs(row []cells.Cell) []seg {
 		if c.Text == "" {
 			continue // second cell of a wide character
 		}
+		txt := c.Text
+		if hideGrip && txt == "◢" {
+			txt = " "
+		}
 		if buf.Len() > 0 && (c.Attr != curA || c.Fg != curFg || c.Bg != curBg) {
 			flush()
 		}
 		if buf.Len() == 0 {
 			curA, curFg, curBg = c.Attr, c.Fg, c.Bg
 		}
-		buf.WriteString(c.Text)
+		buf.WriteString(txt)
 	}
 	flush()
 	return out

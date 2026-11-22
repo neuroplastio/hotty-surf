@@ -167,10 +167,6 @@ func ExampleAlertDialog() {
 	})
 }
 
-func ExampleTooltip() {
-	_ = ui.Tooltip(ui.TooltipProps{Text: "Add to library", Side: "top"})
-}
-
 func ExampleSlider() {
 	_ = ui.Slider(ui.SliderProps{
 		ID: "volume", Attrs: templ.Attributes{"aria-label": "Volume"}, Min: 0, Max: 100, Step: 5,

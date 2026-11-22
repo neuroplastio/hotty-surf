@@ -337,6 +337,8 @@ type DragEvent struct {
 	// and "" over nothing that takes a drag (a gap, outside the surface)
 	// and at an End the host cut short.
 	Over string
+	// Mods is the modifier keys held during the drag (hotty.ModShift, etc.).
+	Mods int
 	// Drag is where the pointer is, as hotty-go reads the host's detail:
 	// its cell (Col, Row, counted from the surface's top left and going
 	// on past its edges), its step in ID's box (X, Y) and its step in

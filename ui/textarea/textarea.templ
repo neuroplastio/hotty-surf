@@ -1,0 +1,275 @@
+// Package textarea is hotty-surf's self-contained Textarea component, with
+// explicit renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package textarea
+
+import (
+	"context"
+	"fmt"
+	"sync"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/ui"
+)
+
+// Class is the textarea's root CSS class.
+const Class = "textarea"
+
+// Resize controls which axes the user can resize the textarea along.
+type Resize string
+
+const (
+	// ResizeBoth allows resizing along both axes (default, like a web textarea).
+	ResizeBoth Resize = ""
+	// ResizeVertical allows resizing height only.
+	ResizeVertical Resize = "vertical"
+	// ResizeHorizontal allows resizing width only.
+	ResizeHorizontal Resize = "horizontal"
+	// ResizeNone disables user resizing.
+	ResizeNone Resize = "none"
+)
+
+// Props are a Textarea's attributes.
+type Props struct {
+	// ID is an optional element id. When omitted, an automatic render-order id
+	// is allocated.
+	ID          string
+	Value       string
+	Placeholder string
+	// Rows is the visible line height (default 4 when <= 0).
+	Rows int
+	// Cols is an optional column width hint (default 36 when <= 0).
+	Cols int
+	// MinCols, MaxCols, MinRows, MaxRows bound user resizing (0 = default min
+	// 12 cols / 2 rows, unbounded max).
+	MinCols int
+	MaxCols int
+	MinRows int
+	MaxRows int
+	// Resize controls user resizing: ResizeBoth (default), ResizeVertical,
+	// ResizeHorizontal, or ResizeNone.
+	Resize   Resize
+	Disabled bool
+	Invalid  bool
+	// OnInput is called whenever the textarea's value changes.
+	OnInput func(string)
+	// Attrs are additional attributes for the textarea element.
+	Attrs templ.Attributes
+	// Class adds extra CSS classes after Class.
+	Class string
+}
+
+// View dispatches to Hotty or TUI according to ui.ModeOf(ctx).
+templ View(p Props) {
+	switch ui.ModeOf(ctx) {
+	case ui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's native <textarea> for a hotty host, with a
+// draggable corner resize handle when Resize != ResizeNone and !Disabled.
+templ Hotty(p Props) {
+	{{ attrs, id := resolveAttrs(ctx, p, false) }}
+	{{ resizable := p.Resize != ResizeNone && !p.Disabled && id != "" }}
+	<div class="textarea-wrap" style={ hottyWrapStyle(ctx, id, p) }>
+		<textarea
+			data-slot="textarea"
+			disabled?={ p.Disabled }
+			class={ ui.JoinClass(Class, p.Class) }
+			{ attrs... }
+		>{ p.Value }</textarea>
+		if resizable {
+			<div
+				class="textarea-grip"
+				if p.Resize != "" {
+					data-resize={ string(p.Resize) }
+				}
+				data-steps="1 1"
+				{ surf.On(ctx, id+"-grip", surf.Drag(hottyGripDrag(ctx, id, p)))... }
+			>
+				@templ.Raw(GripSVG)
+			</div>
+			if hottyDragging(ctx, id) {
+				<div
+					class="textarea-drag-overlay"
+					if p.Resize != "" {
+						data-resize={ string(p.Resize) }
+					}
+					data-steps="200 100"
+					{ surf.On(ctx, id+"-drag", surf.Drop(func(surf.DragEvent) {}))... }
+				></div>
+			}
+		}
+	</div>
+}
+
+// TUI renders the multiline textarea for cells.Screen, with web-like input
+// framing, blinking I-beam caret, and draggable corner resize grip.
+templ TUI(p Props) {
+	{{ attrs, _ := resolveAttrs(ctx, p, true) }}
+	<textarea
+		data-slot="textarea"
+		data-mode="tui"
+		disabled?={ p.Disabled }
+		class={ ui.JoinClass(Class, p.Class) }
+		{ attrs... }
+	>{ p.Value }</textarea>
+}
+
+func resolveAttrs(ctx context.Context, p Props, tui bool) (templ.Attributes, string) {
+	var on templ.Attributes
+	if p.OnInput != nil && !p.Disabled {
+		on = surf.On(ctx, p.ID, surf.Input(p.OnInput))
+	} else if p.ID != "" {
+		on = surf.On(ctx, p.ID)
+	} else if p.Attrs["id"] == nil {
+		on = surf.On(ctx, "")
+	}
+	merged := ui.MergeAttrs(
+		on,
+		ui.OptAttr("data-resize", p.Resize),
+		ui.OptAttr("rows", p.Rows),
+		ui.OptAttr("cols", p.Cols),
+		ui.OptAttr("placeholder", p.Placeholder),
+		ui.OptAttr("aria-invalid", p.Invalid),
+		p.Attrs,
+	)
+	if tui {
+		merged = ui.MergeAttrs(
+			merged,
+			ui.OptAttr("data-min-cols", p.MinCols),
+			ui.OptAttr("data-max-cols", p.MaxCols),
+			ui.OptAttr("data-min-rows", p.MinRows),
+			ui.OptAttr("data-max-rows", p.MaxRows),
+		)
+	}
+	id, _ := merged["id"].(string)
+	return merged, id
+}
+
+type hottySizeKey struct {
+	s  *surf.Surface
+	id string
+}
+
+type hottySize struct {
+	cols, rows         int
+	startCol, startRow int
+	origCols, origRows int
+	dragging           bool
+}
+
+var (
+	hottyMu    sync.Mutex
+	hottySizes = map[hottySizeKey]*hottySize{}
+)
+
+func hottyDragging(ctx context.Context, id string) bool {
+	s := surf.Of(ctx)
+	if s == nil || id == "" {
+		return false
+	}
+	hottyMu.Lock()
+	sz := hottySizes[hottySizeKey{s: s, id: id}]
+	drag := sz != nil && sz.dragging
+	hottyMu.Unlock()
+	return drag
+}
+
+func clampSize(v, lo, hi int) int {
+	if v < lo {
+		v = lo
+	}
+	if hi > 0 && v > hi {
+		v = hi
+	}
+	return v
+}
+
+func minColsOf(p Props) int {
+	if p.MinCols > 0 {
+		return p.MinCols
+	}
+	return 12
+}
+
+func minRowsOf(p Props) int {
+	if p.MinRows > 0 {
+		return p.MinRows
+	}
+	return 2
+}
+
+func hottyWrapStyle(ctx context.Context, id string, p Props) templ.SafeCSS {
+	cols := p.Cols
+	if cols <= 0 {
+		cols = 36
+	}
+	rows := p.Rows
+	if rows <= 0 {
+		rows = 4
+	}
+	if s := surf.Of(ctx); s != nil && id != "" {
+		hottyMu.Lock()
+		if sz := hottySizes[hottySizeKey{s: s, id: id}]; sz != nil {
+			if sz.cols > 0 {
+				cols = sz.cols
+			}
+			if sz.rows > 0 {
+				rows = sz.rows
+			}
+		}
+		hottyMu.Unlock()
+	}
+	cols = clampSize(cols, minColsOf(p), p.MaxCols)
+	rows = clampSize(rows, minRowsOf(p), p.MaxRows)
+	return templ.SafeCSS(fmt.Sprintf("width:%dch;height:calc(%d*var(--hotty-cell-h,1.5rem))", cols, rows))
+}
+
+func hottyGripDrag(ctx context.Context, id string, p Props) func(surf.DragEvent) {
+	s := surf.Of(ctx)
+	return func(d surf.DragEvent) {
+		if s == nil || id == "" {
+			return
+		}
+		key := hottySizeKey{s: s, id: id}
+		hottyMu.Lock()
+		defer hottyMu.Unlock()
+		sz := hottySizes[key]
+		if sz == nil {
+			sz = &hottySize{}
+			hottySizes[key] = sz
+		}
+		if d.Start {
+			sz.dragging = true
+			sz.startCol, sz.startRow = d.Col, d.Row
+			sz.origCols, sz.origRows = sz.cols, sz.rows
+			if sz.origCols <= 0 {
+				if p.Cols > 0 {
+					sz.origCols = p.Cols
+				} else {
+					sz.origCols = 36
+				}
+			}
+			if sz.origRows <= 0 {
+				if p.Rows > 0 {
+					sz.origRows = p.Rows
+				} else {
+					sz.origRows = 4
+				}
+			}
+			return
+		}
+		if d.End {
+			sz.dragging = false
+		}
+		if p.Resize != ResizeVertical {
+			sz.cols = clampSize(sz.origCols+(d.Col-sz.startCol), minColsOf(p), p.MaxCols)
+		}
+		if p.Resize != ResizeHorizontal {
+			sz.rows = clampSize(sz.origRows+(d.Row-sz.startRow), minRowsOf(p), p.MaxRows)
+		}
+	}
+}

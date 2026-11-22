@@ -9,11 +9,12 @@ import (
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
 	"neuroplast.io/hotty-surf/ui"
 	"neuroplast.io/hotty-surf/ui/code"
+	"neuroplast.io/hotty-surf/ui/textarea"
 )
 
 templ View(a *App) {
 	{{ a.sync() }}
-	<div class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book", surf.Key(a.bookKey))... }>
+	<div class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book", surf.Key(a.bookKey), surf.Bind(surf.CUAKeys()))... }>
 		@sidebar(a)
 		<main class="book-main flex flex-col">
 			if a.cur != nil {
@@ -38,7 +39,7 @@ templ View(a *App) {
 			}
 		</main>
 		if a.takeRefocus() {
-			{{ surf.Autofocus(ctx, "book-pane") }}
+			{{ surf.Refocus(ctx, "book-pane") }}
 		}
 		if target := a.focusRequest(ctx); target != "" {
 			{{ surf.Autofocus(ctx, target) }}
@@ -110,13 +111,19 @@ templ preview(a *App) {
 	</div>
 }
 
+templ paneRoot(c templ.Component) {
+	<div { surf.On(ctx, "book-pane-cua", surf.Bind(surf.CUAKeys()))... }>
+		@c
+	</div>
+}
+
 templ cellsPreview(a *App) {
 	<div id="book-cells" class="book-cells flex flex-col gap-2" aria-label={ "the story in " + a.mode().String() }>
 		{{ pv := a.lines() }}
 		{{ inert := a.inert(ctx) }}
 		{{ tab := a.mode().Interactive() && a.cur.controls && !inert }}
 		<span class="book-edge" aria-label="Enter cells preview" if tab { tabindex="0" } { surf.On(ctx, "book-pane-before", surf.Focus(a.Edge(true)))... }></span>
-		<div class="book-pane" style={ pv.paneStyle() } if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside))... }>
+		<div class={ "book-pane", templ.KV("book-pane-gripping", a.gripping) } style={ pv.paneStyle() } data-steps="96 40" if tab { tabindex="0" } { surf.On(ctx, "book-pane", surf.Key(a.PaneKey, paneKeys...), surf.Focus(a.PaneFocus), surf.Outside(a.PaneOutside), surf.Drop(func(surf.DragEvent) {}))... }>
 			for _, l := range pv.lines {
 				<div class="book-line">
 					for _, sg := range l {
@@ -129,14 +136,47 @@ templ cellsPreview(a *App) {
 				</div>
 			}
 			for _, hb := range pv.hits {
-				<div
-					class="book-hit"
-					style={ hb.style() }
-					{ surf.On(ctx, "hit-"+hb.id,
-						surf.Click(func() { a.PaneClick(hb.col, hb.row) }),
-						surf.Hover(func(in bool) { a.PaneHover(hb.col, hb.row, in) }),
-					)... }
-				></div>
+				if hb.isText && hb.disabled {
+					<div
+						class="book-hit book-hit-text book-hit-disabled"
+						style={ hb.style() }
+					></div>
+				} else if hb.isText {
+					<div
+						class={ "book-hit book-hit-text", templ.KV("book-hit-focused", hb.focused) }
+						style={ hb.style() }
+						data-steps={ strconv.Itoa(hb.w) + " " + strconv.Itoa(hb.h) }
+						{ surf.On(ctx, "hit-"+hb.id,
+							surf.Drag(func(d surf.DragEvent) { a.PaneTextDrag(hb.col, hb.row, hb.w, hb.h, d) }),
+							surf.Hover(func(in bool) { a.PaneHover(hb.col, hb.row, in) }),
+						)... }
+					></div>
+				} else {
+					<div
+						class="book-hit"
+						style={ hb.style() }
+						{ surf.On(ctx, "hit-"+hb.id,
+							surf.Click(func() { a.PaneClick(hb.col, hb.row) }),
+							surf.Hover(func(in bool) { a.PaneHover(hb.col, hb.row, in) }),
+						)... }
+					></div>
+				}
+				if hb.hasGrip {
+					<div
+						class="book-grip"
+						data-resize={ hb.resizeMode }
+						style={ hb.gripStyle() }
+						data-steps="1 1"
+						{ surf.On(ctx, "grip-"+hb.id,
+							surf.Drag(func(d surf.DragEvent) { a.PaneGripDrag(hb.gripCol, hb.gripRow, d) }),
+						)... }
+					>
+						@templ.Raw(textarea.GripSVG)
+					</div>
+				}
+			}
+			if pv.caret.has {
+				<div class={ "book-caret", templ.KV("book-caret-b", pv.caret.alt), templ.KV("book-caret-a", !pv.caret.alt) } style={ pv.caret.style() }></div>
 			}
 			if pv.focus.has {
 				<div class="book-focus-ring" style={ pv.focus.style() }></div>

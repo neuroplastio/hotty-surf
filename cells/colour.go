@@ -144,6 +144,8 @@ func cellOf(l *layout, k cell, rc *roleCache) Cell {
 	}
 	fg, bg := rc.fg, rc.bg
 	switch {
+	case k.look&lSel != 0:
+		fg, bg = "primary-foreground", "primary"
 	case k.look&lTip != 0:
 		fg, bg = "popover-foreground", "popover"
 		if k.look&lMuted != 0 {
@@ -286,6 +288,8 @@ func kitColours(n *html.Node, dark bool) (fg, bg Role) {
 				return "", "input/30"
 			}
 		}
+	case cls("textarea"):
+		return "foreground", "input/30"
 	case cls("alert"):
 		if variant == "destructive" {
 			return "destructive", "card"

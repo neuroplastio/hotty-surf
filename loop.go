@@ -421,7 +421,7 @@ func (s *Surface) secondary(e hotty.Event) bool {
 func (s *Surface) dragged(e hotty.Event) bool {
 	on := s.frame
 	ran := false
-	d := DragEvent{Over: e.Target}
+	d := DragEvent{Over: e.Target, Mods: e.Mods}
 	// An active modal confines the pointer as it does the keyboard: a drag
 	// of an element behind it (one that began before it opened) ends
 	// without a word and isn't lifted (no dragging class), and a Drop

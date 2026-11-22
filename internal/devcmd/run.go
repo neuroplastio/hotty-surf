@@ -58,10 +58,10 @@ func Run(ctx context.Context, dir, sock string) error {
 	// cold, half a minute): a line says what is happening until the app
 	// draws over it.
 	if err := t.Send(ansi.SetModeAltScreenSaveCursor, ansi.HideCursor, ansi.EraseEntireScreen,
-		ansi.CursorHomePosition, "Building "+filepath.Base(dir)+"…"); err != nil {
+		ansi.CursorHomePosition, "\x1b[>1u", "Building "+filepath.Base(dir)+"…"); err != nil {
 		return err
 	}
-	defer t.Send(ansi.ShowCursor, ansi.ResetModeAltScreenSaveCursor)
+	defer t.Send("\x1b[<u", ansi.ShowCursor, ansi.ResetModeAltScreenSaveCursor)
 	if !native {
 		// The app in cells: clicks, the wheel and pastes are run's to
 		// read.

@@ -33,10 +33,10 @@ func app(ctx context.Context, s *surf.Surface) error {
 	defer restore()
 	native := t.Detect(ctx)
 	// The terminal's own modes are x/ansi's sequences, not hotty's.
-	if err := t.Send(ansi.SetModeAltScreenSaveCursor, ansi.HideCursor, ansi.EraseEntireScreen); err != nil {
+	if err := t.Send(ansi.SetModeAltScreenSaveCursor, ansi.HideCursor, ansi.EraseEntireScreen, "\x1b[>1u"); err != nil {
 		return err
 	}
-	defer t.Send(ansi.ShowCursor, ansi.ResetModeAltScreenSaveCursor)
+	defer t.Send("\x1b[<u", ansi.ShowCursor, ansi.ResetModeAltScreenSaveCursor)
 	winch := make(chan os.Signal, 1)
 	signal.Notify(winch, syscall.SIGWINCH)
 	defer signal.Stop(winch)

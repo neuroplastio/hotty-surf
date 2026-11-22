@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"maps"
 	"strings"
 
@@ -23,6 +24,16 @@ func MergeAttrs(sets ...templ.Attributes) templ.Attributes {
 		maps.Copy(out, s)
 	}
 	return out
+}
+
+// OptAttr returns templ.Attributes{key: fmt.Sprint(val)} when val is not the
+// zero value of T, or nil.
+func OptAttr[T comparable](key string, val T) templ.Attributes {
+	var zero T
+	if val == zero {
+		return nil
+	}
+	return templ.Attributes{key: fmt.Sprint(val)}
 }
 
 // JoinClass joins non-empty, whitespace-trimmed CSS class strings with spaces.

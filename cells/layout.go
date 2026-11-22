@@ -421,7 +421,11 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	if fh, fu, ok := l.figure(n, st.fx.fig, cx, cy, cw, in); ok {
 		h = st.padT + fh + st.padB
 		used += st.padL + fu + st.padR
+		if isKitTextarea(n) {
+		l.done(n, rect{x, y, used, h})
+	} else {
 		l.done(n, rect{x, y, w, h})
+	}
 		return h, used
 	}
 	limit, bounded := scrollLimit(st.maxHeight, l.screenRows(st.maxHeight))
@@ -498,7 +502,11 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	if h == 0 && st.fx.marker != "" {
 		h = 1
 	}
-	l.done(n, rect{x, y, w, h})
+	if isKitTextarea(n) {
+		l.done(n, rect{x, y, used, h})
+	} else {
+		l.done(n, rect{x, y, w, h})
+	}
 	return h, used
 }
 
@@ -1310,7 +1318,9 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	}
 	if st.display == dAtom {
 		p := l.atom(n, st, in)
-		p.full = p.full || fill && isField(n)
+		if !isKitTextarea(n) {
+			p.full = p.full || fill && isField(n)
+		}
 		if p.w > 0 || p.full {
 			ps = append(ps, p)
 		}
@@ -1445,12 +1455,27 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		p.w = v
 	}
 	if n.DataAtom == atom.Textarea {
-		p.h = 2
+		if isKitTextarea(n) {
+			p.h, p.w = 4, 36
+			p.full = false
+		} else {
+			p.h = 2
+		}
 		if v, err := strconv.Atoi(attr(n, "rows")); err == nil && v > 0 {
 			p.h = v
 		}
 		if v, err := strconv.Atoi(attr(n, "cols")); err == nil && v > 0 {
 			p.w = v
+			p.full = false
+		}
+		if f := l.c.fields[n]; f != nil {
+			if f.rows > 0 {
+				p.h = f.rows
+			}
+			if f.cols > 0 {
+				p.w = f.cols
+				p.full = false
+			}
 		}
 	}
 	return p
@@ -1489,66 +1514,140 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		l.ext(m, r)
 	}
 	f := l.field(n)
-	base := p.look | lUnderline
+	kitTA := isKitTextarea(n)
+	base := p.look
+	if !kitTA {
+		base |= lUnderline
+	}
 	for j := 0; j < p.h; j++ {
 		for i := 0; i < w; i++ {
 			l.draw(x+i, y+j, " ", 1, base, n)
 		}
 	}
+	drawGrip := func() {
+		if textareaResizable(n) && w >= 4 {
+			l.draw(x+w-1, y+p.h-1, "◢", 1, p.look|lMuted, n)
+		}
+	}
 	focused := n == l.c.focused && l.c.active
+	padX := 0
+	innerW := w
+	if kitTA && w >= 4 {
+		padX = 1
+		innerW = w - 2
+	}
 	if f.ed.Value == "" {
 		if ph := attr(n, "placeholder"); ph != "" {
-			cs := clip(charsOf(ph), w)
-			cx := x
+			cs := clip(charsOf(ph), innerW)
+			cx := x + padX
 			for _, ch := range cs {
 				l.draw(cx, y, ch.s, ch.w, base|lMuted, n)
 				cx += ch.w
 			}
 		}
+		drawGrip()
 		if focused {
-			l.setCaret(x, y)
+			l.setCaret(x+padX, y)
 		}
 		return
 	}
 	chars := graphemesOf(f.ed.Value)
+	selLo, selHi := f.ed.Selection()
+	hasSel := focused && selHi > selLo
 	if n.DataAtom == atom.Textarea {
-		f.ed.Width, f.ed.Rows = w, p.h
+		f.ed.Width, f.ed.Rows = innerW, p.h
 		rows := f.ed.Wrap()
-		f.top = f.ed.Scroll(f.top)
+		if !f.scrolled {
+			f.top = f.ed.Scroll(f.top)
+		} else {
+			f.top = max(0, min(f.top, max(len(rows)-p.h, 0)))
+		}
 		for j := 0; j < p.h && f.top+j < len(rows); j++ {
 			rw := rows[f.top+j]
-			cx := x
-			for _, g := range chars[rw.Start:rw.End] {
+			cx := x + padX
+			for gi := rw.Start; gi < rw.End; gi++ {
+				g := chars[gi]
+				lk := base
+				if hasSel && gi >= selLo && gi < selHi {
+					lk |= lSel
+				}
 				for _, ch := range charsOf(g) {
-					if cx+ch.w > x+w {
+					if cx+ch.w > x+padX+innerW {
 						break
 					}
-					l.draw(cx, y+j, ch.s, ch.w, base, n)
+					l.draw(cx, y+j, ch.s, ch.w, lk, n)
 					cx += ch.w
 				}
 			}
+			// Show a 1-cell selection indicator for selected newlines (so
+			// selected blank lines and line endings read clearly in TUI).
+			if hasSel && rw.End < len(chars) && chars[rw.End] == "\n" && rw.End >= selLo && rw.End < selHi && cx < x+padX+innerW {
+				l.draw(cx, y+j, " ", 1, base|lSel, n)
+			}
 		}
+		if kitTA && w >= 4 && len(rows) > p.h {
+			barH := p.h
+			if textareaResizable(n) && barH > 1 {
+				barH--
+			}
+			total := len(rows)
+			size := max(1, (barH*barH+total/2)/total)
+			at := 0
+			if last := total - p.h; last > 0 {
+				at = (f.top*(barH-size) + last/2) / last
+			}
+			thumbLook := p.look | lMuted
+			if focused {
+				thumbLook = p.look
+			}
+			trackLook := p.look | lRule
+			for j := range barH {
+				if j >= at && j < at+size {
+					l.draw(x+w-1, y+j, "┃", 1, thumbLook, n)
+				} else {
+					l.draw(x+w-1, y+j, "│", 1, trackLook, n)
+				}
+			}
+		}
+		drawGrip()
 		if focused {
 			row, col := f.ed.Cursor()
-			l.setCaret(x+col, y+row-f.top)
+			l.setCaret(x+padX+col, y+row-f.top)
 		}
 		return
 	}
 	// An input: one line, scrolled along to keep the caret in view.
-	var cs []char
+	type cellChar struct {
+		char
+		sel bool
+	}
+	var cs []cellChar
 	caretCol := 0
 	for i, g := range chars {
 		if i == f.ed.Caret {
-			caretCol = widthOf(cs)
+			caretCol = len(cs)
 		}
+		isSel := hasSel && i >= selLo && i < selHi
 		if f.ed.Password {
-			cs = append(cs, char{"•", 1})
+			cs = append(cs, cellChar{char{"•", 1}, isSel})
 		} else {
-			cs = append(cs, charsOf(g)...)
+			for _, ch := range charsOf(g) {
+				cs = append(cs, cellChar{ch, isSel})
+			}
 		}
 	}
 	if f.ed.Caret >= len(chars) {
-		caretCol = widthOf(cs)
+		caretCol = 0
+		for _, ch := range cs {
+			caretCol += ch.w
+		}
+	} else {
+		// Recompute display width up to caretCol.
+		w0 := 0
+		for _, ch := range cs[:caretCol] {
+			w0 += ch.w
+		}
+		caretCol = w0
 	}
 	if focused {
 		if caretCol < f.off {
@@ -1579,7 +1678,11 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		if cx+ch.w > x+w {
 			break
 		}
-		l.draw(cx, y, ch.s, ch.w, base, n)
+		lk := base
+		if ch.sel {
+			lk |= lSel
+		}
+		l.draw(cx, y, ch.s, ch.w, lk, n)
 		cx += ch.w
 	}
 	if focused {

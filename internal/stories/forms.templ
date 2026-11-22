@@ -3,6 +3,7 @@ package stories
 import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/textarea"
 )
 
 // B1's stories: the form components.
@@ -86,11 +87,14 @@ func init() {
 			p := &Field{Label: "Name", Value: "Ada", Type: "text", Disabled: true}
 			return p, bookInput(p)
 		}, Keys: []string{"tab", "x"}, Want: "name: ada"})
-	add(Story{ID: "textarea/default", Doc: "A textarea with a placeholder",
+	add(Story{ID: "textarea/default", Doc: "A resizable textarea with a placeholder",
 		View: form(textareaDefault, formState{}), Props: func() (any, templ.Component) {
 			p := &Area{Placeholder: "Type your message here."}
 			return p, bookArea(p)
 		}, Keys: []string{"tab", "h", "i"}, Want: "message: hi"})
+	add(Story{ID: "textarea/resize", Doc: "Resize modes (both, vertical, none) plus disabled state",
+		View: form(textareaResize, formState{text: "Drag the corner grip to resize."}),
+		Keys: []string{"tab"}, Want: "Drag the corner grip to resize."})
 	add(Story{ID: "label/default", Doc: "A label for an input beside it (For)",
 		View: form(labelDefault, formState{})})
 	add(Story{ID: "label/disabled", Doc: "A label dimmed in a disabled Field (FieldProps.Disabled)",
@@ -218,7 +222,7 @@ templ bookInput(p *Field) {
 }
 
 templ bookArea(p *Area) {
-	@ui.Textarea(ui.TextareaProps{Value: p.Value, Placeholder: p.Placeholder, Attrs: surf.On(ctx, "area", surf.Input(func(v string) { p.Value = v }))})
+	@textarea.View(textarea.Props{ID: "area", Value: p.Value, Placeholder: p.Placeholder, OnInput: func(v string) { p.Value = v }})
 }
 
 templ bookCheck(p *Check) {
@@ -273,9 +277,30 @@ templ inputDisabled(s *formState) {
 }
 
 templ textareaDefault(s *formState) {
-	<div class="flex flex-col gap-3 p-4 max-w-sm">
-		@ui.Textarea(ui.TextareaProps{Value: s.text, Placeholder: "Type your message here.", Attrs: surf.On(ctx, "message", surf.Input(s.typed))})
+	<div class="flex flex-col gap-3 p-4">
+		@textarea.View(textarea.Props{ID: "message", Value: s.text, Placeholder: "Type your message here.", OnInput: s.typed})
 		@status("message", s.text)
+	</div>
+}
+
+templ textareaResize(s *formState) {
+	<div class="flex flex-col gap-4 p-4">
+		<div class="flex flex-col gap-1">
+			<span class="text-xs text-muted-foreground">both (20–60 cols, 2–8 rows)</span>
+			@textarea.View(textarea.Props{Value: s.text, Rows: 3, MinCols: 20, MaxCols: 60, MinRows: 2, MaxRows: 8, OnInput: s.typed})
+		</div>
+		<div class="flex flex-col gap-1">
+			<span class="text-xs text-muted-foreground">vertical</span>
+			@textarea.View(textarea.Props{Placeholder: "Vertical resize only", Rows: 3, Resize: textarea.ResizeVertical})
+		</div>
+		<div class="flex flex-col gap-1">
+			<span class="text-xs text-muted-foreground">none</span>
+			@textarea.View(textarea.Props{Placeholder: "Fixed size", Rows: 2, Resize: textarea.ResizeNone})
+		</div>
+		<div class="flex flex-col gap-1">
+			<span class="text-xs text-muted-foreground">disabled</span>
+			@textarea.View(textarea.Props{Placeholder: "Disabled textarea", Rows: 2, Disabled: true})
+		</div>
 	</div>
 }
 

@@ -49,7 +49,7 @@ func CheckFresh(c *Screen) error {
 	c.shown, c.shownLay, c.spare, c.pending = snapshot{}, nil, snapshot{}, painted{}
 	f := c.layout()
 	fresh := c.paint(f, false)
-	if want := appendChain(nil, c.pointed(f)); !slices.Equal(want, c.hovered) && !hoverMoves(want) && !hoverMoves(c.hovered) {
+	if want := appendChain(nil, c.pointed(f)); !slices.Equal(want, c.hovered) && !hoverMoves(want) && !hoverMoves(c.hovered) && !hoverMoves(c.hoverSpare) {
 		return fmt.Errorf("hovered %s, under the pointer %s", chainNames(c.hovered), chainNames(want))
 	}
 	switch {

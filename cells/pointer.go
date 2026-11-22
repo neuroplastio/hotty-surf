@@ -5,8 +5,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/rt"
@@ -47,13 +50,19 @@ import (
 // click, as the terminal lost its release.
 func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 	c.cutDrag()
+	c.resizing = nil
+	c.textSel = nil
 	c.point(col, row)
 	// A press of any button ends what an earlier one left: its click,
 	// whose release was lost, is no longer due.
 	c.down, c.held, c.pressing = nil, false, true
 	switch button {
 	case 0:
-		taken = c.pressAt(col, row, mods)
+		if c.startResize(col, row) {
+			taken = true
+		} else {
+			taken = c.pressAt(col, row, mods)
+		}
 	case 2:
 		taken = c.secondary(col, row, mods)
 	}
@@ -78,6 +87,20 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 // :hover) and where a tooltip shows or goes, with a button down or none;
 // Dirty says when, so a program needn't redraw on every motion.
 func (c *Screen) Move(col, row, mods int) (taken bool) {
+	if c.resizing != nil {
+		c.resizeTo(col, row)
+		c.point(col, row)
+		c.rehit = true
+		c.flush()
+		return true
+	}
+	if c.textSel != nil {
+		c.extendTextSelect(col, row)
+		c.point(col, row)
+		c.rehit = true
+		c.flush()
+		return true
+	}
 	c.point(col, row)
 	switch {
 	case c.drag != nil:
@@ -100,6 +123,24 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 // focus (Focus(false)), takes a new document, loses the dragged element,
 // or hears a Press before this Release.
 func (c *Screen) Release(col, row, mods int) (taken bool) {
+	if c.resizing != nil {
+		c.point(col, row)
+		c.resizeTo(col, row)
+		c.resizing = nil
+		taken, c.held, c.pressing = c.held, false, false
+		c.rehit = true
+		c.flush()
+		return taken
+	}
+	if c.textSel != nil {
+		c.point(col, row)
+		c.extendTextSelect(col, row)
+		c.textSel = nil
+		taken, c.held, c.pressing = c.held, false, false
+		c.rehit = true
+		c.flush()
+		return taken
+	}
 	taken, c.held, c.pressing = c.held, false, false
 	c.point(col, row)
 	// What the release does (a click's focus, a reveal) may move what is
@@ -146,6 +187,7 @@ func (c *Screen) At(col, row int) (id string, area hotty.Area) {
 // cutDrag ends a drag under way short (SPEC §9.1): a dragend with no
 // target, the steps as they last were, no drop and no click.
 func (c *Screen) cutDrag() {
+	c.resizing, c.textSel = nil, nil
 	d := c.drag
 	if d == nil {
 		return
@@ -153,6 +195,297 @@ func (c *Screen) cutDrag() {
 	c.drag, c.down, c.held = nil, nil, false
 	g := hotty.Drag{Col: d.c, Row: d.r, X: d.x, Y: d.y, HasX: d.sx > 0, HasY: d.sy > 0}
 	c.emit(hotty.Event{Kind: hotty.EventDragEnd, Drag: &g})
+}
+
+// fieldResize tracks a live drag of a textarea's bottom-right resize grip.
+type fieldResize struct {
+	n        *html.Node
+	col, row int
+	rows     int
+	cols     int
+	mode     string
+}
+
+func isKitTextarea(n *html.Node) bool {
+	return n != nil && n.DataAtom == atom.Textarea && (tokens(n, "class", "textarea") || attr(n, "data-slot") == "textarea")
+}
+
+func textareaResizable(n *html.Node) bool {
+	if !isKitTextarea(n) || disabled(n) {
+		return false
+	}
+	return attr(n, "data-resize") != "none"
+}
+
+// ResizeMode reports the resize axis ("both", "vertical", "horizontal") of the
+// textarea whose corner grip is at col, row, or "" if none.
+func (c *Screen) ResizeMode(col, row int) string {
+	if c.body == nil {
+		return ""
+	}
+	l := c.layout()
+	y := row + c.scroll
+	for n, r := range l.fields {
+		if !textareaResizable(n) || r.w < 4 {
+			continue
+		}
+		if col == r.x+r.w-1 && y == r.y+r.h-1 {
+			if m := attr(n, "data-resize"); m != "" {
+				return m
+			}
+			return "both"
+		}
+	}
+	return ""
+}
+
+func (c *Screen) startResize(col, row int) bool {
+	if c.body == nil {
+		return false
+	}
+	l := c.layout()
+	y := row + c.scroll
+	for n, r := range l.fields {
+		if !textareaResizable(n) || r.w < 4 {
+			continue
+		}
+		if col == r.x+r.w-1 && y == r.y+r.h-1 {
+			c.resizing = &fieldResize{
+				n:    n,
+				col:  col,
+				row:  row,
+				rows: r.h,
+				cols: r.w,
+				mode: attr(n, "data-resize"),
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func attrPosInt(n *html.Node, key string) int {
+	v, err := strconv.Atoi(attr(n, key))
+	if err != nil || v <= 0 {
+		return 0
+	}
+	return v
+}
+
+func (c *Screen) resizeTo(col, row int) {
+	z := c.resizing
+	if z == nil || !c.attached(z.n) {
+		c.resizing = nil
+		return
+	}
+	f := c.field(z.n)
+	changed := false
+	if z.mode != "horizontal" {
+		minR := attrPosInt(z.n, "data-min-rows")
+		if minR == 0 {
+			minR = 2
+		}
+		maxR := max(minR, c.rows-2)
+		if mr := attrPosInt(z.n, "data-max-rows"); mr > 0 && mr < maxR {
+			maxR = max(minR, mr)
+		}
+		nr := max(minR, min(z.rows+(row-z.row), maxR))
+		if f.rows != nr {
+			f.rows = nr
+			changed = true
+		}
+	}
+	if z.mode != "vertical" {
+		minC := attrPosInt(z.n, "data-min-cols")
+		if minC == 0 {
+			minC = 12
+		}
+		maxC := max(minC, c.cols-2)
+		if mc := attrPosInt(z.n, "data-max-cols"); mc > 0 && mc < maxC {
+			maxC = max(minC, mc)
+		}
+		nc := max(minC, min(z.cols+(col-z.col), maxC))
+		if f.cols != nc {
+			f.cols = nc
+			changed = true
+		}
+	}
+	if changed {
+		c.lay = nil
+	}
+}
+
+// fieldSelect tracks pointer-driven caret placement and selection in a text
+// field or textarea (click, shift+click, double-click word, triple-click line,
+// and drag-to-select).
+type fieldSelect struct {
+	n      *html.Node
+	anchor int
+	anchorEnd int
+	mode   int // 1 = char, 2 = word, 3 = line
+}
+
+func (c *Screen) startTextSelect(n *html.Node, col, row, mods int) {
+	f := c.field(n)
+	chars := graphemesOf(f.ed.Value)
+	idx := c.fieldIndexAt(n, col, row)
+	clicks := c.count(n)
+	switch {
+	case mods&hotty.ModShift != 0:
+		a, ok := f.ed.Anchor()
+		if !ok {
+			a = f.ed.Caret
+		}
+		f.ed.Select(a, idx)
+		c.textSel = &fieldSelect{n: n, anchor: a, anchorEnd: a, mode: 1}
+	case clicks == 2:
+		lo, hi := wordBounds(chars, idx)
+		f.ed.Select(lo, hi)
+		c.textSel = &fieldSelect{n: n, anchor: lo, anchorEnd: hi, mode: 2}
+	case clicks >= 3:
+		lo, hi := lineBounds(chars, idx)
+		f.ed.Select(lo, hi)
+		c.textSel = &fieldSelect{n: n, anchor: lo, anchorEnd: hi, mode: 3}
+	default:
+		f.ed.Select(idx, idx)
+		c.textSel = &fieldSelect{n: n, anchor: idx, anchorEnd: idx, mode: 1}
+	}
+}
+
+func (c *Screen) extendTextSelect(col, row int) {
+	ts := c.textSel
+	if ts == nil || !c.attached(ts.n) {
+		c.textSel = nil
+		return
+	}
+	f := c.field(ts.n)
+	chars := graphemesOf(f.ed.Value)
+	idx := c.fieldIndexAt(ts.n, col, row)
+	switch ts.mode {
+	case 2:
+		lo, hi := wordBounds(chars, idx)
+		if idx < ts.anchor {
+			f.ed.Select(ts.anchorEnd, lo)
+		} else {
+			f.ed.Select(ts.anchor, hi)
+		}
+	case 3:
+		lo, hi := lineBounds(chars, idx)
+		if idx < ts.anchor {
+			f.ed.Select(ts.anchorEnd, lo)
+		} else {
+			f.ed.Select(ts.anchor, hi)
+		}
+	default:
+		f.ed.Select(ts.anchor, idx)
+	}
+	c.lay = nil
+}
+
+func (c *Screen) fieldIndexAt(n *html.Node, col, row int) int {
+	l := c.layout()
+	r, ok := l.fields[n]
+	if !ok {
+		return 0
+	}
+	f := c.field(n)
+	chars := graphemesOf(f.ed.Value)
+	if len(chars) == 0 {
+		return 0
+	}
+	padX := 0
+	innerW := r.w
+	if isKitTextarea(n) && r.w >= 4 {
+		padX = 1
+		innerW = r.w - 2
+	}
+	localX := max(0, col-(r.x+padX))
+	if n.DataAtom == atom.Textarea {
+		f.ed.Width, f.ed.Rows = innerW, r.h
+		rows := f.ed.Wrap()
+		if len(rows) == 0 {
+			return 0
+		}
+		localY := row + c.scroll - r.y
+		vi := max(0, min(f.top+localY, len(rows)-1))
+		rw := rows[vi]
+		end := rw.End
+		if end > rw.Start && chars[end-1] == "\n" {
+			end--
+		}
+		cx := 0
+		for gi := rw.Start; gi < end; gi++ {
+			gw := widthOf(charsOf(chars[gi]))
+			if localX < cx+gw {
+				return gi
+			}
+			cx += gw
+		}
+		return end
+	}
+	// Single-line input.
+	target := f.off + localX
+	cx := 0
+	for gi, g := range chars {
+		gw := 1
+		if !f.ed.Password {
+			gw = widthOf(charsOf(g))
+		}
+		if target < cx+gw {
+			return gi
+		}
+		cx += gw
+	}
+	return len(chars)
+}
+
+func isWordChar(g string) bool {
+	r, _ := utf8.DecodeRuneInString(g)
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_'
+}
+
+func wordBounds(chars []string, idx int) (lo, hi int) {
+	n := len(chars)
+	if n == 0 {
+		return 0, 0
+	}
+	if idx >= n {
+		idx = n - 1
+	}
+	if idx < 0 {
+		idx = 0
+	}
+	word := isWordChar(chars[idx])
+	lo, hi = idx, idx+1
+	for lo > 0 && isWordChar(chars[lo-1]) == word && chars[lo-1] != "\n" {
+		lo--
+	}
+	for hi < n && isWordChar(chars[hi]) == word && chars[hi] != "\n" {
+		hi++
+	}
+	return lo, hi
+}
+
+func lineBounds(chars []string, idx int) (lo, hi int) {
+	n := len(chars)
+	if n == 0 {
+		return 0, 0
+	}
+	if idx > n {
+		idx = n
+	}
+	if idx < 0 {
+		idx = 0
+	}
+	lo = idx
+	for lo > 0 && chars[lo-1] != "\n" {
+		lo--
+	}
+	hi = idx
+	for hi < n && chars[hi] != "\n" {
+		hi++
+	}
+	return lo, hi
 }
 
 // pressed is a primary press whose release may click: the innermost

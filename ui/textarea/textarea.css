@@ -1,0 +1,53 @@
+.textarea {
+  min-height: 5rem;
+  cursor: text;
+  overflow-y: auto;
+  field-sizing: fixed;
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted-foreground) transparent;
+}
+.textarea-wrap {
+  position: relative;
+  display: block;
+  width: 36ch;
+}
+.textarea-wrap > .textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  resize: none;
+}
+.textarea-grip {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 2px;
+  color: var(--muted-foreground);
+  cursor: nwse-resize;
+}
+.textarea-grip:hover {
+  color: var(--foreground);
+}
+.textarea-grip[data-resize="vertical"] {
+  cursor: ns-resize;
+}
+.textarea-grip[data-resize="horizontal"] {
+  cursor: ew-resize;
+}
+.textarea-drag-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  cursor: nwse-resize;
+}
+.textarea-drag-overlay[data-resize="vertical"] {
+  cursor: ns-resize;
+}
+.textarea-drag-overlay[data-resize="horizontal"] {
+  cursor: ew-resize;
+}

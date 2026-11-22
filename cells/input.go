@@ -26,6 +26,9 @@ type field struct {
 	committed string // the value the last change said, or the markup's
 	off       int    // an input's first column shown
 	top       int    // a textarea's first row shown
+	scrolled  bool   // user scrolled textarea via wheel; cleared on next key/edit
+	rows      int    // user-resized textarea height (0 = default)
+	cols      int    // user-resized textarea width (0 = default)
 	def       string // the markup's default when last read (defaultOf)
 }
 
@@ -633,6 +636,7 @@ func (c *Screen) fieldKey(el *html.Node, key string) bool {
 		}
 	}
 	before := fieldSelection(f)
+	f.scrolled = false
 	a, changed := f.ed.Key(km, key)
 	switch {
 	case a == "":
@@ -845,7 +849,7 @@ func (c *Screen) pressAt(col, row, mods int) bool {
 	if f != nil {
 		if isTextField(f) && target == hit {
 			// Against the cells clicked: focus scrolls an input to its caret.
-			c.caretAt(f, col, row+c.scroll)
+			c.startTextSelect(f, col, row, mods)
 		}
 		c.active = true
 		c.focusTo(f, true)

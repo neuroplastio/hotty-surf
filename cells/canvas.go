@@ -215,7 +215,7 @@ func (cv *canvas) line(y int, cols int) string {
 // text-muted-foreground's faint are Dim, and Strike isn't drawn.
 func lineLook(l look) look {
 	dim := l&(lDim|lMuted|lRule|lFaint) != 0
-	if l&lTip != 0 {
+	if l&(lTip|lSel) != 0 {
 		l |= lReverse
 	}
 	l &= lBold | lItalic | lUnderline | lReverse

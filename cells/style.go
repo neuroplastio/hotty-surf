@@ -44,6 +44,8 @@ const (
 	// lTip is a tooltip's text (drawTip): Lines draws it reversed, and
 	// Cells in the kit's tooltip colours.
 	lTip
+	// lSel is selected text inside a focused input or textarea.
+	lSel
 )
 
 // box is what the layout reads of an element.

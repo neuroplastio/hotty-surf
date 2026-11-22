@@ -42,6 +42,6 @@
 | switch | — | no score | no score | no score | no score | |
 | table | — | no score | no score | no score | no score | |
 | tabs | — | no score | no score | no score | no score | |
-| textarea | — | no score | no score | no score | no score | |
+| textarea | `ui/textarea` | no score | no score | no score | no score | Self-contained package (`Hotty`, `TUI`, `View`); typed `Resize`, web-like frame, blinking I-beam caret, draggable corner grip |
 | toast | — | no score | no score | no score | no score | |
 | tooltip | `ui/tooltip` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `View`) with typed `Side`/`Align`; popover theme + thin border in Hotty & TUI |

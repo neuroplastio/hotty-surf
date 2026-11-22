@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"golang.org/x/net/html"
+	"neuroplast.io/hotty-go"
 
+	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/stories"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
@@ -438,5 +440,30 @@ func TestVariantOrder(t *testing.T) {
 	want := "Button, Button / destructive, Button / ghost with icon, Button / disabled, Button / every variant and size"
 	if strings.Join(got, ", ") != want {
 		t.Fatalf("Button's stories: %s\nwant: %s", strings.Join(got, ", "), want)
+	}
+}
+
+func TestBookTUICUAKeys(t *testing.T) {
+	a := New()
+	a.show("textarea/resize")
+	a.setMode(ui.ModeTUI)
+	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
+	// Focus #book-pane via the real surface (as clicking a TUI textarea does).
+	a.PaneTextDrag(2, 2, 36, 3, surf.DragEvent{Start: true, Drag: hotty.Drag{X: 2, Y: 0, HasX: true, HasY: true}})
+	r.Update()
+	pane := r.One("#book-pane")
+	t.Logf("#book-pane attrs: %+v", pane.Attr)
+	if !r.Key("ctrl+a") {
+		t.Fatalf("r.Key(ctrl+a) not taken; inPane=%v focus=%q", a.inPane, a.cur.focus)
+	}
+	if got := a.cur.scr.Selection(); got != "Drag the corner grip to resize." {
+		t.Fatalf("after r.Key(ctrl+a), selection = %q", got)
+	}
+	r.Key("arrow_right")
+	if !r.Key("ctrl+backspace") {
+		t.Fatalf("r.Key(ctrl+backspace) not taken")
+	}
+	if got := paneText(a); strings.Contains(got, "resize.") {
+		t.Fatalf("after r.Key(ctrl+backspace), pane still has resize.:\n%s", got)
 	}
 }
