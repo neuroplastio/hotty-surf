@@ -493,3 +493,7 @@ func bstr(b bool) string {
 	}
 	return "false"
 }
+
+func writeJSONText(b *strings.Builder, value string) {
+	b.WriteString(strconv.Quote(value))
+}

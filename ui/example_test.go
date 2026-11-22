@@ -140,18 +140,6 @@ func ExampleContextMenu() {
 	_ = surf.New("pane", view, ui.Stylesheet())
 }
 
-func ExampleCombobox() {
-	var state ui.ComboboxState
-	value := ""
-	_ = ui.Combobox(&state, ui.ComboboxProps{
-		Items:       []ui.SelectItem{{Value: "apple", Label: "Apple"}},
-		Value:       value,
-		Placeholder: "Choose fruit",
-		InputAttrs:  templ.Attributes{"aria-label": "Choose fruit"},
-		OnChange:    func(v string) { value = v },
-	})
-}
-
 func ExampleDrawer() {
 	var state ui.DrawerState
 	open := true

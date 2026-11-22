@@ -1,6 +1,8 @@
 package ui_test
 
 import (
+	"context"
+	"io"
 	"strings"
 	"testing"
 
@@ -9,7 +11,25 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/combobox"
 )
+
+type comboboxApp struct {
+	st    combobox.State
+	value string
+}
+
+func (a *comboboxApp) view() templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return combobox.View(&a.st, combobox.Props{
+			ID:          "fruit",
+			Placeholder: "Choose fruit",
+			Value:       a.value,
+			Items:       []combobox.Item{{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"}},
+			OnChange:    func(v string) { a.value = v },
+		}).Render(ctx, w)
+	})
+}
 
 // DropdownMenu's keys are its trigger's, where the keyboard is (K32): the
 // handler is registered there with them, and the root declares none, so
