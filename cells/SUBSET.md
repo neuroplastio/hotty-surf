@@ -186,7 +186,10 @@ pointer.
 
 The chain starts at the innermost element under the pointer that takes
 it, as a host's hit test passes over what has `pointer-events:none`,
-which inherits: an inline `pointer-events` (`none`, `auto`), a modal's
+which inherits: an inline `pointer-events` (`none`, `auto`; `initial`
+is `auto`, and `inherit`, `unset` and `revert` are the parent's, over
+what follows too; the declarations cascade, an `!important` one over a
+plain one, else the last), a modal's
 inert (`data-hotty-modal-inert`), `pointer-events-none` and
 `pointer-events-auto`, and the kit's rules: a disabled `.btn`, tab,
 accordion summary, sidebar item, a `.select`'s button, a dialog's own

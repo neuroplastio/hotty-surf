@@ -609,7 +609,7 @@ func TestHoverTooltipIsTheChains(t *testing.T) {
 	}
 }
 
-// A pointer-events:none rule of the kit's sheet, mirrored (kitPointer):
+// A pointer-events:none rule of ui's sheets (kit.css, toast.css), mirrored (kitPointer):
 // with the pointer over #h, the chain starts at want.
 type pointerCase struct {
 	selector, doc, want string
@@ -653,8 +653,8 @@ var pointerCases = []pointerCase{
 	{`.combobox>svg,.combobox-trigger-icon`, `<div class="combobox"><span id="h" class="combobox-trigger-icon">v</span></div>`, ""},
 }
 
-// The pointer-events:none rules of the kit's sheet the chain doesn't
-// read, and why.
+// The pointer-events:none rules of ui's sheets (kit.css, toast.css) the
+// chain doesn't read, and why.
 var pointerNotRead = map[string]string{
 	`.accordion>details>summary>svg:last-child`: "an icon is its control's glyph (iconLabel), not an element drawn",
 	`.badge>svg`: "an icon",
@@ -679,16 +679,18 @@ var pointerNotRead = map[string]string{
 // long to list as its selector: it starts so.
 const fieldDisabledRule = `:is(.field>input[type=text]:not(:is(.command>header input,.dialog>*>header input))`
 
+var pointerNone = regexp.MustCompile(`(?i)pointer-events\s*:\s*none`)
+
 // pointerRules are the selectors of the rules in sheet that set
 // pointer-events:none.
 func pointerRules(sheet string) []string {
 	var out []string
 	for i := 0; ; {
-		j := strings.Index(sheet[i:], "pointer-events:none")
-		if j < 0 {
+		m := pointerNone.FindStringIndex(sheet[i:])
+		if m == nil {
 			return out
 		}
-		j += i
+		j := i + m[0]
 		a := strings.LastIndexByte(sheet[:j], '}')
 		b := strings.IndexByte(sheet[a+1:], '{')
 		out = append(out, strings.TrimSpace(sheet[a+1:a+1+b]))
@@ -696,10 +698,11 @@ func pointerRules(sheet string) []string {
 	}
 }
 
-// An element the kit's sheet, a modal or its own style takes the pointer
-// from isn't hovered: the chain starts at the nearest one around it that
-// takes it, as a host's hit test passes over it. Every pointer-events:none
-// rule of the sheet is mirrored or named as not read.
+// An element ui's sheets (kit.css, toast.css), a modal or its own style
+// takes the pointer from isn't hovered: the chain starts at the nearest
+// one around it that takes it, as a host's hit test passes over it.
+// Every pointer-events:none rule of the sheets is mirrored or named as
+// not read.
 func TestHoverTakesNoPointer(t *testing.T) {
 	listed := map[string]bool{}
 	for _, pc := range pointerCases {
@@ -720,6 +723,10 @@ func TestHoverTakesNoPointer(t *testing.T) {
 		pointerCase{fieldDisabledRule, `<div class="field"><input id="h" type="text" disabled value="abc"></div>`, ""},
 		pointerCase{"a modal's inert", `<div data-hotty-modal-inert style="pointer-events:none!important"><p id="h" class="hover:bg-accent">behind</p></div>`, "p"},
 		pointerCase{"a modal's inert over its own auto", `<p id="h" data-hotty-modal-inert style="pointer-events:auto;pointer-events:none!important" class="hover:bg-accent">behind</p>`, "p"},
+		pointerCase{"a modal's inert over its own !important auto", `<p id="h" data-hotty-modal-inert style="pointer-events:auto!important;pointer-events:none!important" class="hover:bg-accent">behind</p>`, "p"},
+		pointerCase{"initial inside none", `<div style="pointer-events:none"><p id="h" style="pointer-events:initial">back</p></div>`, "h"},
+		pointerCase{"inherit over a class", `<p id="h" class="pointer-events-none" style="pointer-events:inherit">back</p>`, "h"},
+		pointerCase{"any case", `<p id="h" style="POINTER-EVENTS : NONE !IMPORTANT">through</p>`, "p"},
 		pointerCase{"the last inline declaration", `<p id="h" style="pointer-events:auto;pointer-events:none">through</p>`, "p"},
 		pointerCase{"an !important one over a later one", `<p id="h" style="pointer-events:none!important;pointer-events:auto">through</p>`, "p"},
 		pointerCase{"a class", `<div class="pointer-events-none"><p id="h">through</p></div>`, "p"},
