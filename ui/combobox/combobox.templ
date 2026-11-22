@@ -111,10 +111,13 @@ templ comboboxBox(v *comboboxView, tui bool) {
 		)... }
 	>
 		if v.p.Multiple {
-			<div class="combobox-chips">
+			<div class={ "combobox-chips", templ.KV("flex flex-wrap items-center gap-1", tui) }>
 				for i, value := range v.p.Values {
-					<span class="combobox-chip" data-value={ value }>
+					<span class={ "combobox-chip", templ.KV("bg-accent text-accent-foreground px-1", tui) } data-value={ value }>
 						<span>{ v.label(value) }</span>
+						if tui {
+							<span> </span>
+						}
 						<button
 							type="button"
 							class="combobox-chip-remove btn"
@@ -133,6 +136,22 @@ templ comboboxBox(v *comboboxView, tui bool) {
 					</span>
 				}
 				@comboboxInput(v, tui)
+			</div>
+		} else if v.p.Clear && tui {
+			<div class="flex items-center gap-1">
+				@comboboxInput(v, true)
+				if v.p.Value != "" || v.st.text != "" {
+					<button
+						type="button"
+						class="btn"
+						data-variant="secondary"
+						data-size="sm"
+						data-clear
+						aria-label="Clear selection"
+						disabled?={ v.p.Disabled }
+						{ ui.ScopeNativeAttrs(ctx, surf.On(ctx, v.id+"-clear", surf.Click(v.clear)), "button")... }
+					>×</button>
+				}
 			</div>
 		} else if v.p.Clear {
 			<div class="input-group">

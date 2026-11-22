@@ -133,10 +133,18 @@ func (c *Screen) Release(col, row, mods int) (taken bool) {
 		return taken
 	}
 	if c.textSel != nil {
+		ts := c.textSel
 		c.point(col, row)
-		c.extendTextSelect(col, row)
+		if ts.moved {
+			c.extendTextSelect(col, row)
+		}
 		c.textSel = nil
 		taken, c.held, c.pressing = c.held, false, false
+		if !ts.moved {
+			c.releaseAt(col, row, mods)
+		} else {
+			c.down = nil
+		}
 		c.rehit = true
 		c.flush()
 		return taken
@@ -323,10 +331,11 @@ func (c *Screen) resizeTo(col, row int) {
 // field or textarea (click, shift+click, double-click word, triple-click line,
 // and drag-to-select).
 type fieldSelect struct {
-	n      *html.Node
-	anchor int
+	n         *html.Node
+	anchor    int
 	anchorEnd int
-	mode   int // 1 = char, 2 = word, 3 = line
+	mode      int // 1 = char, 2 = word, 3 = line
+	moved     bool
 }
 
 func (c *Screen) startTextSelect(n *html.Node, col, row, mods int) {
@@ -362,6 +371,7 @@ func (c *Screen) extendTextSelect(col, row int) {
 		c.textSel = nil
 		return
 	}
+	ts.moved = true
 	f := c.field(ts.n)
 	chars := graphemesOf(f.ed.Value)
 	idx := c.fieldIndexAt(ts.n, col, row)

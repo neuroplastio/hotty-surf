@@ -130,6 +130,9 @@ func empty(n *html.Node) (string, bool) {
 // kitGrows says whether a control grows in its flex row: an input
 // group's field.
 func kitGrows(n *html.Node) bool {
+	if isTUICombobox(n) {
+		return false
+	}
 	p := n.Parent
 	return p != nil && tokens(p, "class", "input-group") && isTextField(n)
 }
