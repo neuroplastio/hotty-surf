@@ -16,9 +16,17 @@ import (
 	"github.com/a-h/templ"
 
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/avatar"
+	"neuroplast.io/hotty-surf/ui/badge"
 	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/checkbox"
 	"neuroplast.io/hotty-surf/ui/combobox"
+	"neuroplast.io/hotty-surf/ui/kbd"
+	"neuroplast.io/hotty-surf/ui/label"
+	"neuroplast.io/hotty-surf/ui/progress"
 	uiselect "neuroplast.io/hotty-surf/ui/select"
+	"neuroplast.io/hotty-surf/ui/separator"
+	"neuroplast.io/hotty-surf/ui/skeleton"
 	"neuroplast.io/hotty-surf/ui/textarea"
 	"neuroplast.io/hotty-surf/ui/tooltip"
 )
@@ -26,11 +34,19 @@ import (
 // Registry returns a ui.Registry with all story components registered.
 func Registry() *ui.Registry {
 	return ui.NewRegistry().Register(
+		avatar.Register,
+		badge.Register,
 		button.Register,
-		tooltip.Register,
-		textarea.Register,
-		uiselect.Register,
+		checkbox.Register,
 		combobox.Register,
+		kbd.Register,
+		label.Register,
+		progress.Register,
+		uiselect.Register,
+		separator.Register,
+		skeleton.Register,
+		textarea.Register,
+		tooltip.Register,
 	)
 }
 

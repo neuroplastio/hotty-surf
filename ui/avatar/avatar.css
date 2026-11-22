@@ -1,0 +1,27 @@
+.avatar[data-hue="amber"] {
+  background-color: color-mix(in oklab, var(--color-amber-500) 22%, var(--background));
+  color: var(--color-amber-600);
+}
+.dark .avatar[data-hue="amber"] {
+  color: var(--color-amber-400);
+}
+.avatar[data-hue="chart-1"] {
+  background-color: color-mix(in oklab, var(--chart-1) 22%, var(--background));
+  color: var(--chart-1);
+}
+.avatar[data-hue="chart-2"] {
+  background-color: color-mix(in oklab, var(--chart-2) 22%, var(--background));
+  color: var(--chart-2);
+}
+.avatar[data-hue="chart-3"] {
+  background-color: color-mix(in oklab, var(--chart-3) 22%, var(--background));
+  color: var(--chart-3);
+}
+.avatar[data-hue="chart-4"] {
+  background-color: color-mix(in oklab, var(--chart-4) 22%, var(--background));
+  color: var(--chart-4);
+}
+.avatar[data-hue="chart-5"] {
+  background-color: color-mix(in oklab, var(--chart-5) 22%, var(--background));
+  color: var(--chart-5);
+}

@@ -155,6 +155,12 @@ var inlines = map[atom.Atom]bool{
 // :hover look (kitHoverLook).
 func styleOf(n *html.Node, hov bool) box {
 	var b box
+	if n.Data == "svg" && svgGlyph(n) != "" &&
+		(closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", "badge") }) != nil ||
+			closest(n.Parent, func(a *html.Node) bool { return has(a, "data-tooltip") }) != nil) {
+		b.display = dInline
+		return b
+	}
 	if skipped[n.DataAtom] || n.Type != html.ElementNode {
 		b.display = dNone
 		return b

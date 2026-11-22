@@ -46,6 +46,9 @@ templ (l *NavList) item(it NavItem) {
 		class={ join("nav-item flex w-full items-center rounded-md px-2 py-1 text-left text-sm", navItemClass(it.ID == l.Current)) }
 		{ surf.On(ctx, l.ItemID(it.ID), surf.Click(func() { l.selectItem(it.ID) }), surf.Key(l.Keys, navItemKeys...), surf.Focus(func(in bool) { if in { l.in = "list" } else { l.in = "" } }))... }
 	>
-		<span class="truncate">{ it.Label }</span>
+		<span class="truncate flex-1">{ it.Label }</span>
+		if it.Dot != "" {
+			<span class={ "nav-dot", "nav-dot-" + it.Dot } aria-hidden="true"></span>
+		}
 	</button>
 }

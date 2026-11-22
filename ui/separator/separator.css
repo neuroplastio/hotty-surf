@@ -1,0 +1,14 @@
+.separator {
+  flex-shrink: 0;
+  background: var(--border);
+}
+.separator[data-orientation="horizontal"],
+.separator:not([data-orientation]) {
+  height: 1px;
+  width: 100%;
+}
+.separator[data-orientation="vertical"] {
+  width: 1px;
+  height: 100%;
+  min-height: 1rem;
+}

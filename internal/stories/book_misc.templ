@@ -1,6 +1,9 @@
 package stories
 
-import "neuroplast.io/hotty-surf/ui"
+import (
+	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/separator"
+)
 
 // SeparatorProps is the editable state of the separator story.
 type SeparatorProps struct {
@@ -15,12 +18,25 @@ var bookIconNames = []string{
 }
 
 templ separatorDemo(p *SeparatorProps) {
-	<div class={ "flex gap-3 text-sm", templ.KV("flex-col w-60", p.Orientation == "horizontal"), templ.KV("h-6 items-center", p.Orientation == "vertical") }>
-		<span>Blog</span>
-		<div data-slot="separator" role="none" data-orientation={ p.Orientation } class="book-separator"></div>
-		<span>Docs</span>
-		<div data-slot="separator" role="none" data-orientation={ p.Orientation } class="book-separator"></div>
-		<span>Source</span>
+	<div class="flex flex-col gap-4 p-4">
+		<div class="flex flex-col gap-2 w-60 text-sm">
+			<span class="text-xs text-muted-foreground">Horizontal</span>
+			<span>Blog</span>
+			@separator.View(separator.Props{Orientation: separator.Horizontal, Decorative: true})
+			<span>Docs</span>
+			@separator.View(separator.Props{Orientation: separator.Horizontal, Decorative: true})
+			<span>Source</span>
+		</div>
+		<div class="flex flex-col gap-2 text-sm">
+			<span class="text-xs text-muted-foreground">Vertical</span>
+			<div class="flex h-6 items-center gap-3">
+				<span>Blog</span>
+				@separator.View(separator.Props{Orientation: separator.Vertical, Decorative: true})
+				<span>Docs</span>
+				@separator.View(separator.Props{Orientation: separator.Vertical, Decorative: true})
+				<span>Source</span>
+			</div>
+		</div>
 	</div>
 }
 

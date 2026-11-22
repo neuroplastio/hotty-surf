@@ -1,0 +1,115 @@
+// Package progress is hotty-surf's self-contained Progress component, with
+// explicit renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package progress
+
+import (
+	_ "embed"
+	"math"
+	"strconv"
+
+	"neuroplast.io/hotty-surf/ui"
+)
+
+//go:embed progress.css
+var css string
+
+// Register registers progress's assets with r.
+func Register(r *ui.Registry) { r.CSS("progress", css) }
+
+// Props configures a Progress bar (0–100).
+type Props struct {
+	Value         float64
+	ShowValue     bool
+	Indeterminate bool
+	Attrs         templ.Attributes
+	Class         string
+}
+
+// View dispatches to Hotty or TUI according to ui.ModeOf(ctx).
+templ View(p Props) {
+	switch ui.ModeOf(ctx) {
+	case ui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's progress bar with optional percentage label and
+// indeterminate animation.
+templ Hotty(p Props) {
+	{{ v := clamp(p.Value) }}
+	if p.ShowValue && !p.Indeterminate {
+		<div class="progress-row">
+			@bar(p, v, false)
+			<span class="progress-value">{ formatPct(v) }</span>
+		</div>
+	} else {
+		@bar(p, v, false)
+	}
+}
+
+// TUI renders a smooth horizontal progress bar (━ / ─) for cells.Screen,
+// with optional percentage label.
+templ TUI(p Props) {
+	{{ v := clamp(p.Value) }}
+	if p.ShowValue && !p.Indeterminate {
+		<div class="flex items-center gap-2">
+			@bar(p, v, true)
+			<span class="text-xs text-muted-foreground shrink-0" style="width: 32px;">{ formatPct(v) }</span>
+		</div>
+	} else {
+		@bar(p, v, true)
+	}
+}
+
+templ bar(p Props, v float64, tui bool) {
+	<div
+		data-slot="progress"
+		if tui {
+			data-mode="tui"
+		}
+		if p.Indeterminate {
+			data-indeterminate="true"
+		}
+		role="progressbar"
+		aria-valuemin="0"
+		aria-valuemax="100"
+		if !p.Indeterminate {
+			aria-valuenow={ formatVal(v) }
+		}
+		class={ ui.JoinClass("progress", tuiTrackClass(tui), p.Class) }
+		{ p.Attrs... }
+	>
+		if p.Indeterminate {
+			<span></span>
+		} else {
+			<span style={ "width: " + formatVal(v) + "%" }></span>
+		}
+	</div>
+}
+
+func tuiTrackClass(tui bool) string {
+	if tui {
+		return "bg-secondary"
+	}
+	return ""
+}
+
+func clamp(v float64) float64 {
+	if math.IsNaN(v) || v < 0 {
+		return 0
+	}
+	if v > 100 {
+		return 100
+	}
+	return v
+}
+
+func formatVal(v float64) string {
+	return strconv.FormatFloat(v, 'f', -1, 64)
+}
+
+func formatPct(v float64) string {
+	return strconv.Itoa(int(math.Round(v))) + "%"
+}

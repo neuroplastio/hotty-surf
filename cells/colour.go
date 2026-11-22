@@ -389,6 +389,10 @@ func classRole(c, prefix string) (Role, bool) {
 	}
 	name, op, _ := strings.Cut(s, "/")
 	if !tokenNames[name] {
+		switch name {
+		case "amber-400", "amber-500", "amber-600":
+			return Role("color-"+name) + opacity("/"+op), true
+		}
 		return "", false
 	}
 	return Role(name) + opacity("/"+op), true

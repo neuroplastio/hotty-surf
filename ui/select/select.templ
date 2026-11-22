@@ -146,7 +146,7 @@ templ selectBox(v *selectView, tui bool) {
 					aria-multiselectable="true"
 				}
 				aria-labelledby={ v.id + "-trigger" }
-				{ surf.On(ctx, v.id+"-listbox", surf.Hover(v.leave))... }
+				id={ v.id + "-listbox" }
 			>
 				for _, e := range v.entries {
 					switch e.kind {
@@ -510,12 +510,6 @@ func (v *selectView) hover(i int) func(bool) {
 		if over && v.st.open {
 			v.st.active = v.pos(i)
 		}
-	}
-}
-
-func (v *selectView) leave(over bool) {
-	if !over && v.st.open {
-		v.st.active = v.pos(v.chosen)
 	}
 }
 

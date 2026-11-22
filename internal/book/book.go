@@ -28,6 +28,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
@@ -90,6 +91,7 @@ type App struct {
 	gripOrigin [2]int
 	gripping   bool
 	caretTick  uint
+	cols       int
 }
 
 // own are the book's elements that take the keyboard: while one has it, a
@@ -119,6 +121,7 @@ type shown struct {
 	// pane negatively instead of shifting the underlying controls.
 	hasBase           bool
 	baseTop, baseLeft int
+	imgs              map[string]imgMeta
 }
 
 // New is a book of every story, showing the first.
@@ -129,6 +132,9 @@ func New() *App {
 		ss = append(ss, storybook.Wrap(st.ID, st.Doc, st.View, st.Props))
 	}
 	slices.SortStableFunc(ss, func(x, y *storybook.Story) int {
+		if c := storybook.GroupOrder(x.Group) - storybook.GroupOrder(y.Group); c != 0 {
+			return c
+		}
 		if c := strings.Compare(x.Group, y.Group); c != 0 {
 			return c
 		}
@@ -164,7 +170,62 @@ func Main(ctx context.Context) error {
 	a := New()
 	s := newSurface("book", View(a))
 	reload.Keep(a.Save, a.Restore)
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go a.watchHost(runCtx, s)
 	return run.App(ctx, s)
+}
+
+func (a *App) paneWidth() int {
+	if a.cols > 0 {
+		return a.cols
+	}
+	return paneCols
+}
+
+func (a *App) paneSteps() string {
+	return fmt.Sprintf("%d %d", a.paneWidth(), paneRows)
+}
+
+func (a *App) syncPlacedCols(s *surf.Surface) bool {
+	if s == nil {
+		return false
+	}
+	w, _ := devhook.Area(s)
+	if w <= 0 {
+		return false
+	}
+	// Sidebar (~24ch) + preview horizontal padding (~6ch).
+	cols := max(w-30, 60)
+	if cols == a.cols {
+		return false
+	}
+	a.cols = cols
+	if a.cur != nil && a.cur.scr != nil {
+		a.cur.scr.Resize(cols, paneRows)
+	}
+	return true
+}
+
+func (a *App) watchHost(ctx context.Context, s *surf.Surface) {
+	tick := time.NewTicker(80 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+			s.Do(func() {
+				a.syncPlacedCols(s)
+				if a.mode() == ui.ModeHotty || a.cur == nil || a.cur.scr == nil {
+					return
+				}
+				if a.ID == "progress/default" {
+					a.cur.scr.Resize(a.paneWidth(), paneRows)
+				}
+			})
+		}
+	}
 }
 
 func (a *App) Save() *State {
@@ -289,6 +350,7 @@ func (sh *shown) start(mode func() ui.Mode) {
 	doc, err := sh.pane.Document()
 	if err == nil {
 		sh.controls = hasControl(doc)
+		sh.imgs = avatarImages(doc)
 		_, err = sh.scr.Write([]byte(hotty.Doc(sh.pane.Name(), doc)))
 	}
 	sh.err = err
@@ -328,7 +390,7 @@ func (a *App) sync() {
 			a.nav.Groups = append(a.nav.Groups, ui.NavGroup{Name: st.Group})
 			n++
 		}
-		a.nav.Groups[n-1].Items = append(a.nav.Groups[n-1].Items, ui.NavItem{ID: st.ID(), Label: st.Name})
+		a.nav.Groups[n-1].Items = append(a.nav.Groups[n-1].Items, ui.NavItem{ID: st.ID(), Label: st.Name, Dot: st.Dot})
 	}
 	a.nav.Current, a.nav.Filter = a.ID, a.model.Filter
 }
@@ -714,9 +776,93 @@ func (f focusRect) style() templ.SafeCSS {
 
 // paneView holds the trimmed cell lines, unified interactive hit boxes, and
 // unified focus ring for the cells preview.
+type imgMeta struct {
+	src     string
+	size    string
+	inGroup bool
+	online  bool
+}
+
+type imgBox struct {
+	id         string
+	src        string
+	size       string
+	inGroup    bool
+	online     bool
+	x, y, w, h int
+}
+
+func (im imgBox) style() templ.SafeCSS {
+	d := "1.55"
+	if im.inGroup {
+		d = "1.45"
+	} else {
+		switch im.size {
+		case "sm":
+			d = "1.15"
+		case "lg":
+			d = "1.95"
+		}
+	}
+	dia := fmt.Sprintf("calc(%s*var(--hotty-cell-h))", d)
+	left := fmt.Sprintf("calc(%dch + (%dch - %s)/2)", im.x, im.w, dia)
+	top := fmt.Sprintf("calc((%d + %d/2)*var(--hotty-cell-h) - %s/2)", im.y, im.h, dia)
+	ring := ""
+	if im.inGroup {
+		ring = ";box-shadow:0 0 0 2px var(--background)"
+	}
+	return templ.SafeCSS(fmt.Sprintf("left:%s;top:%s;width:%s;height:%s%s", left, top, dia, dia, ring))
+}
+
+func avatarImages(doc string) map[string]imgMeta {
+	if !strings.Contains(doc, "data-avatar-img") {
+		return nil
+	}
+	root, err := html.Parse(strings.NewReader(doc))
+	if err != nil {
+		return nil
+	}
+	var out map[string]imgMeta
+	var walk func(*html.Node, bool)
+	walk = func(n *html.Node, inGroup bool) {
+		if n.Type == html.ElementNode {
+			var id, src, sz string
+			var online bool
+			for _, a := range n.Attr {
+				switch a.Key {
+				case "id":
+					id = a.Val
+				case "data-avatar-img":
+					src = a.Val
+				case "data-size":
+					sz = a.Val
+				case "data-online":
+					online = a.Val == "true"
+				case "data-slot":
+					if a.Val == "avatar-group" {
+						inGroup = true
+					}
+				}
+			}
+			if id != "" && src != "" {
+				if out == nil {
+					out = map[string]imgMeta{}
+				}
+				out[id] = imgMeta{src: src, size: sz, inGroup: inGroup, online: online}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c, inGroup)
+		}
+	}
+	walk(root, false)
+	return out
+}
+
 type paneView struct {
 	lines      [][]seg
 	hits       []hitBox
+	imgs       []imgBox
 	focus      focusRect
 	caret      caretPos
 	offX, offY int // negative cell offset when an overlay (tooltip) expands into trimmed padding
@@ -745,6 +891,10 @@ func (a *App) lines() paneView {
 		return paneView{}
 	}
 	sh.pump(a.paneMode)
+	cols := a.paneWidth()
+	if sh.scr != nil {
+		sh.scr.Resize(cols, paneRows)
+	}
 	mode := a.paneMode()
 	grid := sh.scr.Cells()
 	out := make([][]seg, len(grid))
@@ -764,12 +914,23 @@ func (a *App) lines() paneView {
 		out = out[1:]
 		trimTop++
 	}
-	for len(out) > 0 && blank(out[len(out)-1]) {
+	rowHasImg := func(r int) bool {
+		if len(sh.imgs) == 0 {
+			return false
+		}
+		for c := range grid[r] {
+			if id, _ := sh.scr.At(c, r); sh.imgs[id].src != "" {
+				return true
+			}
+		}
+		return false
+	}
+	for len(out) > 0 && blank(out[len(out)-1]) && !rowHasImg(trimTop+len(out)-1) {
 		out = out[:len(out)-1]
 	}
 	// Strip common leading blank columns (e.g. a story root's p-4 padding,
 	// which hotty mode also zeroes via `.book-preview > .p-4 { padding: 0 }`).
-	trimLeft := paneCols
+	trimLeft := cols
 	for r := trimTop; r < trimTop+len(out); r++ {
 		row := grid[r]
 		lead := 0
@@ -784,7 +945,7 @@ func (a *App) lines() paneView {
 			trimLeft = lead
 		}
 	}
-	if trimLeft >= paneCols {
+	if trimLeft >= cols {
 		trimLeft = 0
 	}
 	for i := range out {
@@ -812,12 +973,13 @@ func (a *App) lines() paneView {
 	}
 	minX, minY, maxX, maxY := 1<<30, 1<<30, -1, -1
 	byID := map[string]int{}
+	imgByID := map[string]int{}
 	for r := trimTop; r < trimTop+len(out); r++ {
 		ry := r - trimTop
 		for c := trimLeft; c < len(grid[r]); c++ {
 			cell := grid[r][c]
 			rx := c - trimLeft
-			if cell.Attr&cells.Reverse != 0 {
+			if cell.Attr&cells.Reverse != 0 && cell.Bg != "input/30" {
 				if rx < minX {
 					minX = rx
 				}
@@ -835,6 +997,29 @@ func (a *App) lines() paneView {
 				continue
 			}
 			if id, _ := sh.scr.At(c, r); id != "" && id != "book-pane-cua" {
+				if meta, isImg := sh.imgs[id]; isImg {
+					if idx, ok := imgByID[id]; ok {
+						im := &pv.imgs[idx]
+						if rx < im.x {
+							im.w += im.x - rx
+							im.x = rx
+						}
+						if ry < im.y {
+							im.h += im.y - ry
+							im.y = ry
+						}
+						if rx+1 > im.x+im.w {
+							im.w = rx + 1 - im.x
+						}
+						if ry+1 > im.y+im.h {
+							im.h = ry + 1 - im.y
+						}
+					} else {
+						imgByID[id] = len(pv.imgs)
+						pv.imgs = append(pv.imgs, imgBox{id: id, src: meta.src, size: meta.size, inGroup: meta.inGroup, online: meta.online, x: rx, y: ry, w: 1, h: 1})
+					}
+					continue
+				}
 				if idx, ok := byID[id]; ok {
 					hb := &pv.hits[idx]
 					if cell.Attr&cells.Dim != 0 {
@@ -1128,6 +1313,12 @@ func cellClasses(a cells.Attr, fg, bg cells.Role) string {
 func cellStyle(a cells.Attr, fg, bg cells.Role) string {
 	fgCSS := roleCSS(fg)
 	bgCSS := roleCSS(bg)
+	if a&cells.Reverse != 0 && bg == "input/30" {
+		fgCSS, bgCSS = bgCSS, fgCSS
+		if bgCSS == "" {
+			bgCSS = "var(--foreground)"
+		}
+	}
 	var parts []string
 	if a&cells.Dim != 0 {
 		base := fgCSS

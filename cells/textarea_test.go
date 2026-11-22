@@ -162,23 +162,27 @@ line8</textarea>`
 	if _, err := c.Write([]byte(hotty.Doc("ta", doc))); err != nil {
 		t.Fatal(err)
 	}
-	// Overflowing 8 lines in 4 rows: rightmost col (19) has ┃ thumb / │ track on rows 0..2, ◢ on row 3.
+	// Overflowing 8 lines in 4 rows: rightmost col (19) has ▴ at row 0, solid
+	// reverse thumb at row 1, ▾ at row 2, and ◢ grip at row 3.
 	grid := c.Cells()
 	if got := grid[3][19].Text; got != "◢" {
 		t.Fatalf("grip at (19,3) = %q, want ◢", got)
 	}
-	hasThumb, hasTrack := false, false
-	for r := range 3 {
-		switch grid[r][19].Text {
-		case "┃":
-			hasThumb = true
-		case "│":
-			hasTrack = true
-		}
+	if grid[0][19].Text != "▴" || grid[2][19].Text != "▾" {
+		t.Fatalf("expected ▴/▾ arrows at rows 0 and 2; got %q and %q", grid[0][19].Text, grid[2][19].Text)
 	}
-	if !hasThumb || !hasTrack {
-		t.Fatalf("expected ┃ thumb and │ track in col 19 rows 0..2; got %q %q %q", grid[0][19].Text, grid[1][19].Text, grid[2][19].Text)
+	if grid[1][19].Attr&Reverse == 0 {
+		t.Fatalf("expected reverse-video thumb at (19,1); got %+v", grid[1][19])
 	}
+	// Clicking ▴ scrolls up toward line1; clicking ▾ scrolls back down.
+	if !c.Press(19, 0, 0, 0) {
+		t.Fatal("Press on ▴ arrow was not taken")
+	}
+	c.Release(19, 0, 0)
+	if !c.Press(19, 2, 0, 0) {
+		t.Fatal("Press on ▾ arrow was not taken")
+	}
+	c.Release(19, 2, 0)
 	// Wheel up scrolls the textarea toward line1, then wheel down scrolls back.
 	if !c.Wheel(5, 1, -2) {
 		t.Fatal("Wheel up on overflowing textarea was not taken")

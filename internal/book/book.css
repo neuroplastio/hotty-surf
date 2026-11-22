@@ -214,6 +214,28 @@
 .book-pane-gripping .book-hit {
   pointer-events: none;
 }
+.book-tui-img-wrap {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+.book-tui-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  object-fit: cover;
+  display: block;
+}
+.book-tui-img-dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: var(--chart-2);
+  box-shadow: 0 0 0 2px var(--background);
+}
 .book-grip {
   position: absolute;
   display: flex;

@@ -57,6 +57,8 @@ type NavItem struct {
 	ID string
 	// Label is its visible text.
 	Label string
+	// Dot displays a subtle status dot on the right ("red", "yellow", or "").
+	Dot string
 }
 
 // ItemID is the named item's element ID.

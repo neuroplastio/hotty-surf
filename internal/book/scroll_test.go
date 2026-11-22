@@ -67,7 +67,8 @@ func TestInspectorScrollKeepsTabsVisibleInCells(t *testing.T) {
 			if row+2 >= len(lines) {
 				t.Fatalf("no visible inspector below tabs: %v", lines)
 			}
-			if !c.Wheel(5, row+2, 5) {
+			col := max(strings.Index(line, "Source"), 5)
+			if !c.Wheel(col, row+2, 5) {
 				t.Fatalf("inspector did not scroll at row %d:\n%s", row+2, strings.Join(lines, "\n"))
 			}
 			after := c.Lines()

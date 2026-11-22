@@ -293,7 +293,11 @@ func (l *layout) lookOf(n *html.Node, in look, st box) look {
 		// active one (a menu's, a list's), drawn in its place.
 		ad := l.activeItem()
 		if n == ad || n == l.c.focused && ad == nil {
-			lk |= lReverse
+			if n.DataAtom == atom.Input && attr(n, "type") == "checkbox" && attr(n, "data-mode") == "tui" {
+				lk |= lBold
+			} else {
+				lk |= lReverse
+			}
 		}
 	}
 	// Dim while disabled; the chosen tab among tabs drawn alike; a
@@ -917,7 +921,7 @@ func (l *layout) children(n *html.Node, x, y, w int, in inh, items bool, gap int
 // hasBlock says whether an inline element holds a block, which makes it
 // one.
 func (l *layout) hasBlock(n *html.Node) bool {
-	if isAtom(n) {
+	if isAtom(n) || n.Data == "svg" {
 		return false
 	}
 	for k := n.FirstChild; k != nil; k = k.NextSibling {
@@ -1395,6 +1399,20 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 		return ps
 	}
 	st := l.style(n)
+	if n.Data == "svg" {
+		inBadge := closest(n.Parent, func(a *html.Node) bool { return tokens(a, "class", "badge") }) != nil
+		inTip := closest(n.Parent, func(a *html.Node) bool { return has(a, "data-tooltip") }) != nil
+		if inBadge || inTip {
+			if g := svgGlyph(n); g != "" {
+				cs := charsOf(g)
+				ps = append(ps, piece{kind: pWord, chars: cs, w: widthOf(cs), look: l.lookOf(n, in.look, st), own: n})
+				if inBadge {
+					ps = append(ps, piece{kind: pSpace, chars: []char{{" ", 1}}, w: 1, look: in.look, own: n})
+				}
+				return ps
+			}
+		}
+	}
 	if st.display == dNone {
 		return ps
 	}
@@ -1520,6 +1538,12 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		}
 		return text("[ " + label + " ]")
 	case n.DataAtom == atom.Input && typ == "checkbox":
+		if attr(n, "data-mode") == "tui" {
+			if l.field(n).checked {
+				return text("\U000f0c52") // mdi checkbox-outline
+			}
+			return text("\U000f0131") // mdi checkbox-blank-outline
+		}
 		if l.field(n).checked {
 			return text("[x]")
 		}
@@ -1564,6 +1588,20 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 		if f := l.c.fields[n]; f != nil {
 			if f.rows > 0 {
 				p.h = f.rows
+			} else if attr(n, "data-autogrow") == "true" && f.ed.Value != "" {
+				innerW := p.w
+				if isKitTextarea(n) && p.w >= 4 {
+					innerW = p.w - 2
+				}
+				f.ed.Width, f.ed.Rows = max(innerW, 1), p.h
+				need := len(f.ed.Wrap())
+				maxR := attrPosInt(n, "data-max-rows")
+				if maxR == 0 {
+					maxR = 12
+				}
+				if need > p.h {
+					p.h = min(need, maxR)
+				}
 			}
 			if f.cols > 0 {
 				p.w = f.cols
@@ -1642,11 +1680,32 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 	}
 	if f.ed.Value == "" {
 		if ph := attr(n, "placeholder"); ph != "" {
-			cs := clip(charsOf(ph), innerW)
-			cx := x + padX
-			for _, ch := range cs {
-				l.draw(cx, y, ch.s, ch.w, base|lMuted, n)
-				cx += ch.w
+			if n.DataAtom == atom.Textarea {
+				phEd := f.ed
+				phEd.Value = ph
+				phEd.Width, phEd.Rows = innerW, p.h
+				phChars := graphemesOf(ph)
+				phRows := phEd.Wrap()
+				for j := 0; j < p.h && j < len(phRows); j++ {
+					rw := phRows[j]
+					cx := x + padX
+					for gi := rw.Start; gi < rw.End; gi++ {
+						for _, ch := range charsOf(phChars[gi]) {
+							if cx+ch.w > x+padX+innerW {
+								break
+							}
+							l.draw(cx, y+j, ch.s, ch.w, base|lMuted, n)
+							cx += ch.w
+						}
+					}
+				}
+			} else {
+				cs := clip(charsOf(ph), innerW)
+				cx := x + padX
+				for _, ch := range cs {
+					l.draw(cx, y, ch.s, ch.w, base|lMuted, n)
+					cx += ch.w
+				}
 			}
 		}
 		drawGrip()
@@ -1695,28 +1754,48 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 				barH--
 			}
 			total := len(rows)
-			size := max(1, (barH*barH+total/2)/total)
-			at := 0
-			if last := total - p.h; last > 0 {
-				at = (f.top*(barH-size) + last/2) / last
-			}
-			thumbLook := p.look | lMuted
+			last := total - p.h
+			thumbLook := (p.look | lMuted) | lReverse
 			if focused {
-				thumbLook = p.look
+				thumbLook = p.look | lReverse
 			}
 			trackLook := p.look | lRule
-			for j := range barH {
+			trackStart, trackH := 0, barH
+			if barH >= 3 {
+				upLook := p.look | lMuted
+				if f.top == 0 {
+					upLook = trackLook
+				}
+				downLook := p.look | lMuted
+				if f.top >= last {
+					downLook = trackLook
+				}
+				l.draw(x+w-1, y, "▴", 1, upLook, n)
+				l.draw(x+w-1, y+barH-1, "▾", 1, downLook, n)
+				trackStart, trackH = 1, barH-2
+			}
+			size := max(1, (trackH*p.h+total/2)/total)
+			if size > trackH {
+				size = trackH
+			}
+			at := 0
+			if last > 0 && trackH > size {
+				at = (f.top*(trackH-size) + last/2) / last
+			}
+			for j := range trackH {
 				if j >= at && j < at+size {
-					l.draw(x+w-1, y+j, "┃", 1, thumbLook, n)
+					l.draw(x+w-1, y+trackStart+j, " ", 1, thumbLook, n)
 				} else {
-					l.draw(x+w-1, y+j, "│", 1, trackLook, n)
+					l.draw(x+w-1, y+trackStart+j, "·", 1, trackLook, n)
 				}
 			}
 		}
 		drawGrip()
 		if focused {
 			row, col := f.ed.Cursor()
-			l.setCaret(x+padX+col, y+row-f.top)
+			if row >= f.top && row < f.top+p.h {
+				l.setCaret(x+padX+col, y+row-f.top)
+			}
 		}
 		return
 	}
@@ -1830,7 +1909,7 @@ var glyphs = map[string]string{
 	"chevrons-left": "«", "chevrons-right": "»", "chevrons-up-down": "↕",
 	"settings": "⚙", "settings-2": "⚙", "trash": "×", "trash-2": "×",
 	"pencil": "✎", "play": "▶", "star": "★", "heart": "♥",
-	"info": "ⓘ", "circle-alert": "!", "triangle-alert": "!",
+	"info": "ⓘ", "circle-help": "?", "circle-alert": "!", "triangle-alert": "⚠",
 	"external-link": "↗", "refresh-cw": "↻", "download": "↓", "upload": "↑",
 	"filter": "▽", "sun": "☀", "moon": "☾", "eye": "◉", "send": "➤",
 }

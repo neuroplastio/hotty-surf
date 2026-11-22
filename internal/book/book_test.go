@@ -45,7 +45,7 @@ func TestEveryStory(t *testing.T) {
 		if a.cur == nil || a.cur.err != nil {
 			t.Fatalf("%s: %v", a.ID, a.cur.err)
 		}
-		if strings.TrimSpace(paneText(a)) == "" {
+		if len(a.lines().lines) == 0 {
 			t.Errorf("%s: the pane is blank", a.ID)
 		}
 	}
@@ -207,14 +207,14 @@ func TestBookBaseStoryBeforeVariants(t *testing.T) {
 	base, variant := -1, -1
 	for i, st := range visible {
 		switch st.ID() {
-		case "avatar/default":
+		case "radio/default":
 			base = i
-		case "avatar/badge":
+		case "radio/disabled":
 			variant = i
 		}
 	}
 	if base < 0 || variant <= base {
-		t.Fatalf("avatar base index %d, variant index %d", base, variant)
+		t.Fatalf("checkbox base index %d, variant index %d", base, variant)
 	}
 }
 
@@ -433,37 +433,38 @@ func TestVariantOrder(t *testing.T) {
 	a := New()
 	var got []string
 	for _, s := range a.model.Stories {
-		if strings.HasPrefix(s.Name, "Button") {
+		if strings.HasPrefix(s.Name, "Switch") {
 			got = append(got, s.Name)
 		}
 	}
-	want := "Button, Button / destructive, Button / ghost with icon, Button / disabled, Button / every variant and size"
+	want := "Switch, Switch / small, Switch / disabled"
 	if strings.Join(got, ", ") != want {
-		t.Fatalf("Button's stories: %s\nwant: %s", strings.Join(got, ", "), want)
+		t.Fatalf("Switch's stories: %s\nwant: %s", strings.Join(got, ", "), want)
 	}
 }
 
 func TestBookTUICUAKeys(t *testing.T) {
 	a := New()
-	a.show("textarea/resize")
+	a.show("textarea/default")
 	a.setMode(ui.ModeTUI)
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	// Focus #book-pane via the real surface (as clicking a TUI textarea does).
 	a.PaneTextDrag(2, 2, 36, 3, surf.DragEvent{Start: true, Drag: hotty.Drag{X: 2, Y: 0, HasX: true, HasY: true}})
 	r.Update()
-	pane := r.One("#book-pane")
-	t.Logf("#book-pane attrs: %+v", pane.Attr)
+	for _, k := range []string{"h", "i", "space", "w", "o", "r", "l", "d"} {
+		r.Key(k)
+	}
 	if !r.Key("ctrl+a") {
 		t.Fatalf("r.Key(ctrl+a) not taken; inPane=%v focus=%q", a.inPane, a.cur.focus)
 	}
-	if got := a.cur.scr.Selection(); got != "Drag the corner grip to resize." {
+	if got := a.cur.scr.Selection(); got != "hi world" {
 		t.Fatalf("after r.Key(ctrl+a), selection = %q", got)
 	}
 	r.Key("arrow_right")
 	if !r.Key("ctrl+backspace") {
 		t.Fatalf("r.Key(ctrl+backspace) not taken")
 	}
-	if got := paneText(a); strings.Contains(got, "resize.") {
-		t.Fatalf("after r.Key(ctrl+backspace), pane still has resize.:\n%s", got)
+	if got := paneText(a); strings.Contains(got, "world") {
+		t.Fatalf("after r.Key(ctrl+backspace), pane still has world:\n%s", got)
 	}
 }

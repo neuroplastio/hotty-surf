@@ -1,0 +1,4 @@
+.label:has(input[data-slot="checkbox"]:not(:disabled)),
+input[data-slot="checkbox"]:not(:disabled) {
+  cursor: pointer;
+}

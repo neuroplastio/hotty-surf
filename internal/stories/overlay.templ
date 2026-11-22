@@ -21,9 +21,12 @@ type overlayState struct {
 	cmd   ui.CommandState
 	ran   string
 	open  bool
-	box    combobox.State
-	value string
-	values []string
+	box      combobox.State
+	boxClear combobox.State
+	boxMulti combobox.State
+	value    string
+	clearVal string
+	values   []string
 	drawer ui.DrawerState
 	low, high float64
 }
@@ -89,22 +92,9 @@ func init() {
 		}, Keys: []string{"tab", "enter"}, Want: "ran: ."})
 	add(Story{ID: "command/dialog", Doc: "A command palette its button opens; choosing an item closes it",
 		View: show(commandDialog), Keys: []string{"tab", "enter", "end", "enter"}, Want: "ran: Inbox"})
-	add(Story{ID: "combobox/default", Doc: "Search and choose a fruit by its value",
-		View: show(func(s *overlayState) templ.Component { return comboboxStory(s, false, false) }),
-		Props: func() (any, templ.Component) {
-			p := &bookComboboxProps{Placeholder:"Choose fruit"}
-			return p, bookCombobox(p)
-		},
+	add(Story{ID: "combobox/default", Doc: "Searchable single (grouped), clearable, and multiple-chip comboboxes",
+		View: func() templ.Component { return comboboxShowcase(&overlayState{clearVal: "a"}) },
 		Keys: []string{"tab", "b", "a", "arrow_down", "enter"}, Want: "fruit: b"})
-	add(Story{ID: "combobox/multiple", Doc: "Choose several fruits and remove them as chips",
-		View: show(func(s *overlayState) templ.Component { return comboboxStory(s, true, false) }),
-		Keys: []string{"tab", "arrow_down", "enter", "arrow_down", "enter"}, Want: "fruits: a, b"})
-	add(Story{ID: "combobox/clear", Doc: "Clear a single selection",
-		View: func() templ.Component { return comboboxStory(&overlayState{value:"a"}, false, true) },
-		Keys: []string{"tab", "tab", "enter"}, Want: "fruit: none"})
-	add(Story{ID: "combobox/grouped", Doc: "Find a fruit in a group",
-		View: show(func(s *overlayState) templ.Component { return comboboxStory(s, false, false) }),
-		Keys: []string{"tab", "c", "h", "arrow_down", "enter"}, Want: "fruit: c"})
 	for _, side := range []string{"bottom", "top", "left", "right"} {
 		add(Story{ID: "drawer/"+side, Doc: "A modal drawer at the "+side,
 			View: show(func(s *overlayState) templ.Component { return drawerStory(s, side) }),
@@ -112,9 +102,7 @@ func init() {
 	}
 	add(Story{ID: "dialog/with-alert", Doc: "A modal confirmation with two actions",
 		View: show(alertDialogStory), Keys: []string{"tab", "enter", "escape"}, Want: "alert: off"})
-	add(Story{ID: "tooltip/default", Doc: "A tooltip shown when its button is hovered",
-		View: func() templ.Component { return tooltipStory(false) }})
-	add(Story{ID: "tooltip/sides", Doc: "Tooltips on four sides",
+	add(Story{ID: "tooltip/default", Doc: "Tooltips on all four sides",
 		View: func() templ.Component { return tooltipStory(true) }})
 	add(Story{ID: "range/default", Doc: "A slider with a single thumb",
 		View: func() templ.Component { return sliderStory(&overlayState{high:20}, false) }, Keys: []string{"tab", "arrow_right"}, Want: "value: 25"})
@@ -180,28 +168,30 @@ templ drawerStory(s *overlayState, side string) {
 	</div>
 }
 
-templ bookCombobox(p *bookComboboxProps) {
-	<div class="p-4 flex flex-col gap-3">
-		@combobox.View(&p.box, combobox.Props{ID: "fruit", Placeholder: p.Placeholder, Value: p.Value,
-			Items: []combobox.Item{{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"},
-				{Value: "c", Label: "Cherry", Group: "More"}},
-			OnChange: func(v string) { p.Value = v }})
-		<p>fruit: { fruitValue(p.Value) }</p>
-	</div>
+var comboboxFruitItems = []combobox.Item{
+	{Value: "a", Label: "Apple"},
+	{Value: "b", Label: "Banana"},
+	{Value: "c", Label: "Cherry", Group: "More"},
+	{Value: "d", Label: "Date", Group: "More", Disabled: true},
 }
 
-templ comboboxStory(s *overlayState, multiple, clear bool) {
-	<div class="p-4 flex flex-col gap-3">
-		@combobox.View(&s.box, combobox.Props{ID: "fruit", Placeholder: "Choose fruit", Multiple: multiple, Clear: clear,
-			Value: s.value, Values: s.values, Items: []combobox.Item{
-				{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"},
-				{Value: "c", Label: "Cherry", Group: "More"}, {Value: "d", Label: "Date", Group: "More", Disabled: true},
-			}, OnChange: func(v string) { s.value = v }, OnValuesChange: func(v []string) { s.values = v }})
-		if multiple {
-			<p>fruits: { strings.Join(s.values, ", ") }</p>
-		} else {
-			<p>fruit: { fruitValue(s.value) }</p>
-		}
+templ comboboxShowcase(s *overlayState) {
+	<div class="p-4 flex flex-col gap-4">
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Default (grouped + disabled)</span>
+			@combobox.View(&s.box, combobox.Props{ID: "fruit", Placeholder: "Choose fruit", Value: s.value, Items: comboboxFruitItems, OnChange: func(v string) { s.value = v }})
+			<p class="text-sm text-muted-foreground">fruit: { fruitValue(s.value) }</p>
+		</div>
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Clearable</span>
+			@combobox.View(&s.boxClear, combobox.Props{ID: "fruit-clear", Placeholder: "Choose fruit", Clear: true, Value: s.clearVal, Items: comboboxFruitItems, OnChange: func(v string) { s.clearVal = v }})
+			<p class="text-sm text-muted-foreground">clear: { fruitValue(s.clearVal) }</p>
+		</div>
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Multiple (chips)</span>
+			@combobox.View(&s.boxMulti, combobox.Props{ID: "fruit-multi", Placeholder: "Choose fruits", Multiple: true, Values: s.values, Items: comboboxFruitItems, OnValuesChange: func(v []string) { s.values = v }})
+			<p class="text-sm text-muted-foreground">fruits: { strings.Join(s.values, ", ") }</p>
+		</div>
 	</div>
 }
 

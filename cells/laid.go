@@ -61,8 +61,9 @@ type laid struct {
 	h, used int
 	// rows is the Screen's height where the layout read it, 0 where it
 	// didn't (screenRows).
-	rows int
-	ops  []lop
+	rows     int
+	animated bool
+	ops      []lop
 	// cells are the runs' (oRun).
 	cells   []cell
 	fields  []fieldAt
@@ -120,10 +121,11 @@ type lop struct {
 // with its own: what a measurement reads, the layout that asked for it
 // reads too.
 type frame struct {
-	x, y    int
-	drawn   bool
-	rows    bool // it read the Screen's height
-	ops     []lop
+	x, y     int
+	drawn    bool
+	rows     bool // it read the Screen's height
+	animated bool // it drew time-varying content (indeterminate progress, pulsing skeleton)
+	ops      []lop
 	fields  []*html.Node
 	scrolls []scrollAt
 	deps    []depAt
@@ -187,10 +189,18 @@ func (l *layout) push(x, y int, drawn bool) *frame {
 	return f
 }
 
+// markAnimated marks the current layout frame as time-varying so it is not
+// reused from the incremental layout cache on subsequent frames.
+func (l *layout) markAnimated() {
+	if f := l.top(); f != nil {
+		f.animated = true
+	}
+}
+
 // pop ends f, the innermost frame, as a laid.
 func (l *layout) pop(f *frame, key laidKey, h, used int) *laid {
 	l.p.frames = l.p.frames[:len(l.p.frames)-1]
-	r := &laid{key: key, h: h, used: used}
+	r := &laid{key: key, h: h, used: used, animated: f.animated}
 	if f.rows {
 		r.rows = l.c.rows
 	}
@@ -219,6 +229,7 @@ func (l *layout) pop(f *frame, key laidKey, h, used int) *laid {
 	}
 	f.ops, f.fields, f.scrolls, f.deps = f.ops[:0], f.fields[:0], f.scrolls[:0], f.deps[:0]
 	f.rows = false
+	f.animated = false
 	l.p.free = append(l.p.free, f)
 	return r
 }
@@ -286,6 +297,7 @@ func (l *layout) adopt(r *laid, x, y int) {
 	f.scrolls = append(f.scrolls, r.scrolls...)
 	f.deps = append(f.deps, r.deps...)
 	f.rows = f.rows || r.rows != 0
+	f.animated = f.animated || r.animated
 }
 
 // field is the Screen's field(n), read by the layout being recorded.
@@ -328,6 +340,9 @@ func (l *layout) laidOf(m *nodeMemo, key laidKey) *laid {
 
 // holds says whether what r read from outside its subtree is as it was.
 func (l *layout) holds(r *laid) bool {
+	if r.animated {
+		return false
+	}
 	if r.rows != 0 && r.rows != l.c.rows {
 		return false
 	}

@@ -3,7 +3,10 @@ package stories
 import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/checkbox"
+	"neuroplast.io/hotty-surf/ui/label"
 	"neuroplast.io/hotty-surf/ui/textarea"
+	"neuroplast.io/hotty-surf/ui/tooltip"
 )
 
 // B1's stories: the form components.
@@ -45,19 +48,11 @@ func init() {
 	form := func(f func(*formState) templ.Component, init formState) func() templ.Component {
 		return func() templ.Component { s := init; return f(&s) }
 	}
-	add(Story{ID: "checkbox/default", Doc: "A check box with its label",
+	add(Story{ID: "checkbox/default", Doc: "Checkboxes (unchecked, checked, invalid, and disabled states)",
 		View: form(checkboxDefault, formState{}), Props: func() (any, templ.Component) {
 			p := &Check{Label: "Accept terms and conditions"}
 			return p, bookCheck(p)
 		}, Keys: []string{"tab", "space"}, Want: "accepted: on"})
-	add(Story{ID: "checkbox/mixed", Doc: "A mixed checkbox", View: func() templ.Component {
-		return bookCheck(&Check{Mixed: true, Label: "Select all"})
-	}, Props: func() (any, templ.Component) {
-		p := &Check{Mixed: true, Label: "Select all"}
-		return p, bookCheck(p)
-	}, Keys: []string{"tab", "space"}, Want: "Select all", Gap: "The kit's native checkbox has no mixed-state rendition yet."})
-	add(Story{ID: "checkbox/disabled", Doc: "A check box that can't change",
-		View: form(checkboxDisabled, formState{on: true}), Keys: []string{"tab", "space"}, Want: "accepted: on"})
 	add(Story{ID: "radio/default", Doc: "A group of three radios",
 		View: form(radioDefault, formState{choice: "comfortable"}), Keys: []string{"tab", "tab", "tab", "space"}, Want: "density: compact"})
 	add(Story{ID: "radio/disabled", Doc: "A group with one radio disabled",
@@ -87,18 +82,11 @@ func init() {
 			p := &Field{Label: "Name", Value: "Ada", Type: "text", Disabled: true}
 			return p, bookInput(p)
 		}, Keys: []string{"tab", "x"}, Want: "name: ada"})
-	add(Story{ID: "textarea/default", Doc: "A resizable textarea with a placeholder",
-		View: form(textareaDefault, formState{}), Props: func() (any, templ.Component) {
-			p := &Area{Placeholder: "Type your message here."}
-			return p, bookArea(p)
-		}, Keys: []string{"tab", "h", "i"}, Want: "message: hi"})
-	add(Story{ID: "textarea/resize", Doc: "Resize modes (both, vertical, none) plus disabled state",
-		View: form(textareaResize, formState{text: "Drag the corner grip to resize."}),
-		Keys: []string{"tab"}, Want: "Drag the corner grip to resize."})
-	add(Story{ID: "label/default", Doc: "A label for an input beside it (For)",
+	add(Story{ID: "textarea/default", Doc: "Resizable textarea (both, vertical, none) and disabled state",
+		View: form(textareaDefault, formState{}),
+		Keys: []string{"tab", "h", "i"}, Want: "message: hi"})
+	add(Story{ID: "label/default", Doc: "Labels paired with enabled and disabled inputs",
 		View: form(labelDefault, formState{})})
-	add(Story{ID: "label/disabled", Doc: "A label dimmed in a disabled Field (FieldProps.Disabled)",
-		View: form(labelDisabled, formState{})})
 	add(Story{ID: "field/default", Doc: "A field: a label, an input and a description",
 		View: form(fieldDefault, formState{})})
 	add(Story{ID: "field/horizontal", Doc: "A horizontal field: a switch beside its label and description",
@@ -123,19 +111,21 @@ templ status(label, value string) {
 
 templ checkboxDefault(s *formState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Label(ui.LabelProps{}) {
-			@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Attrs: surf.On(ctx, "terms", surf.Check(s.set))})
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "terms", Checked: s.on, OnChange: s.set})
 			Accept terms and conditions
 		}
-		@status("accepted", onoff(s.on))
-	</div>
-}
-
-templ checkboxDisabled(s *formState) {
-	<div class="flex flex-col gap-3 p-4">
-		@ui.Label(ui.LabelProps{}) {
-			@ui.Checkbox(ui.CheckboxProps{Checked: s.on, Disabled: true, Attrs: surf.On(ctx, "terms", surf.Check(s.set))})
-			Accept terms and conditions
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "updates", Checked: true, Disabled: true})
+			Send product updates (disabled checked)
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "disabled-off", Disabled: true})
+			Disabled unchecked
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "invalid-cb", Invalid: true})
+			Required field (invalid)
 		}
 		@status("accepted", onoff(s.on))
 	</div>
@@ -220,10 +210,29 @@ templ bookArea(p *Area) {
 }
 
 templ bookCheck(p *Check) {
-	@ui.Label(ui.LabelProps{}) {
-		<input data-slot="checkbox" type="checkbox" aria-label={ p.Label } aria-checked={ checkState(p) } data-state={ checkDataState(p) } class="input" checked?={ p.Checked } { surf.On(ctx, "check", surf.Check(func(v bool) { p.Checked, p.Mixed = v, false }))... }/>
-		{ p.Label }
-	}
+	<div class="flex flex-col gap-3 p-4">
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{
+				ID:       "check",
+				Checked:  p.Checked,
+				OnChange: func(v bool) { p.Checked, p.Mixed = v, false },
+				Attrs:    templ.Attributes{"aria-label": p.Label},
+			})
+			{ p.Label }
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "updates", Checked: true, Disabled: true})
+			Send product updates (disabled checked)
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "disabled-off", Disabled: true})
+			Disabled unchecked
+		}
+		@label.View(label.Props{}) {
+			@checkbox.View(checkbox.Props{ID: "invalid-cb", Invalid: true})
+			Required field (invalid)
+		}
+	</div>
 }
 
 func checkState(p *Check) string {
@@ -271,49 +280,47 @@ templ inputDisabled(s *formState) {
 }
 
 templ textareaDefault(s *formState) {
-	<div class="flex flex-col gap-3 p-4">
-		@textarea.View(textarea.Props{ID: "message", Value: s.text, Placeholder: "Type your message here.", OnInput: s.typed})
-		@status("message", s.text)
-	</div>
-}
-
-templ textareaResize(s *formState) {
 	<div class="flex flex-col gap-4 p-4">
 		<div class="flex flex-col gap-1">
-			<span class="text-xs text-muted-foreground">both (20–60 cols, 2–8 rows)</span>
-			@textarea.View(textarea.Props{Value: s.text, Rows: 3, MinCols: 20, MaxCols: 60, MinRows: 2, MaxRows: 8, OnInput: s.typed})
+			<span class="text-xs text-muted-foreground">both + auto-grow (20–60 cols, 2–8 rows)</span>
+			@textarea.View(textarea.Props{ID: "message", Value: s.text, Placeholder: "Type multiple lines to auto-grow up to 8 rows...", Rows: 3, MinCols: 20, MaxCols: 60, MinRows: 2, MaxRows: 8, AutoGrow: true, OnInput: s.typed})
+			@status("message", s.text)
 		</div>
 		<div class="flex flex-col gap-1">
 			<span class="text-xs text-muted-foreground">vertical</span>
-			@textarea.View(textarea.Props{Placeholder: "Vertical resize only", Rows: 3, Resize: textarea.ResizeVertical})
+			@textarea.View(textarea.Props{ID: "ta-vertical", Placeholder: "Vertical resize only", Rows: 3, Resize: textarea.ResizeVertical})
 		</div>
 		<div class="flex flex-col gap-1">
 			<span class="text-xs text-muted-foreground">none</span>
-			@textarea.View(textarea.Props{Placeholder: "Fixed size", Rows: 2, Resize: textarea.ResizeNone})
+			@textarea.View(textarea.Props{ID: "ta-none", Placeholder: "Fixed size", Rows: 2, Resize: textarea.ResizeNone})
 		</div>
 		<div class="flex flex-col gap-1">
 			<span class="text-xs text-muted-foreground">disabled</span>
-			@textarea.View(textarea.Props{Placeholder: "Disabled textarea", Rows: 2, Disabled: true})
+			@textarea.View(textarea.Props{ID: "ta-disabled", Placeholder: "Disabled textarea", Rows: 2, Disabled: true})
 		</div>
 	</div>
 }
 
 templ labelDefault(s *formState) {
-	<div class="flex flex-col gap-2 p-4 max-w-sm">
-		@ui.Label(ui.LabelProps{For: "username"}) {
-			Username
-		}
-		@ui.Input(ui.InputProps{Value: s.text, Attrs: surf.On(ctx, "username", surf.Input(s.typed))})
-	</div>
-}
-
-templ labelDisabled(s *formState) {
-	<div class="p-4 max-w-sm">
+	<div class="flex flex-col gap-4 p-4 max-w-sm">
+		<div class="flex flex-col gap-2">
+			<div class="flex items-center gap-2">
+				@label.View(label.Props{For: "username"}) {
+					Username
+				}
+				@tooltip.View(tooltip.Props{Text: "Lowercase letters, numbers, and hyphens only", Side: tooltip.Right}) {
+					<span class="text-muted-foreground">
+						@ui.Icon("circle-help", "size-4")
+					</span>
+				}
+			</div>
+			@ui.Input(ui.InputProps{Value: s.text, Attrs: surf.On(ctx, "username", surf.Input(s.typed))})
+		</div>
 		@ui.Field(ui.FieldProps{Disabled: true}) {
-			@ui.Label(ui.LabelProps{For: "username"}) {
-				Username
+			@label.View(label.Props{For: "username-disabled"}) {
+				Disabled username
 			}
-			@ui.Input(ui.InputProps{Value: "ada", Disabled: true, Attrs: surf.On(ctx, "username")})
+			@ui.Input(ui.InputProps{Value: "ada", Disabled: true, Attrs: surf.On(ctx, "username-disabled")})
 		}
 	</div>
 }

@@ -1,13 +1,22 @@
 package stories
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/avatar"
+	"neuroplast.io/hotty-surf/ui/progress"
+	"neuroplast.io/hotty-surf/ui/skeleton"
 )
 
 // The stories of B2's display components: Alert, Avatar, Breadcrumb,
@@ -16,6 +25,7 @@ import (
 
 type displayState struct {
 	page string
+	pct  float64
 }
 
 // Alert is the editable state of an alert story.
@@ -57,10 +67,7 @@ func init() {
 		p := &Alert{Variant: "destructive", Title: "Unable to process your payment.", Text: "Check your card and try again.", Icon: true}
 		return p, bookAlert(p)
 	}})
-	add(Story{ID: "avatar/default", Doc: "An avatar's initials, as it shows without its image", View: show(avatarDefault)})
-	add(Story{ID: "avatar/sizes", Doc: "An avatar of each size", View: show(avatarSizes)})
-	add(Story{ID: "avatar/badge", Doc: "An avatar with a status dot", View: show(avatarBadge)})
-	add(Story{ID: "avatar/group", Doc: "Three avatars overlapping, and the count of the rest", View: show(avatarGroup)})
+	add(Story{ID: "avatar/default", Doc: "Avatars in all sizes, with status badges, and as an overlapping group", View: show(avatarDefault)})
 	add(Story{ID: "breadcrumb/default", Doc: "A trail of three steps; Enter on the first goes there",
 		View: show(breadcrumbDefault), Keys: []string{"tab", "enter"}, Want: "page: Home"})
 	add(Story{ID: "card/small", Doc: "A small card (CardProps.Size)", View: show(cardSmall)})
@@ -78,8 +85,7 @@ func init() {
 	add(Story{ID: "item/sizes", Doc: "An outline item of each size", View: show(itemSizes)})
 	add(Story{ID: "item/group", Doc: "Three items in a group, a line between two; each a link, and Enter on the first opens it",
 		View: show(itemGroup), Keys: []string{"tab", "enter"}, Want: "page: Ada Lovelace"})
-	add(Story{ID: "progress/default", Doc: "A progress bar at 60%", View: show(progressDefault)})
-	add(Story{ID: "progress/values", Doc: "Progress at 0, 25, 50, 75 and 100%", View: show(progressValues)})
+	add(Story{ID: "progress/default", Doc: "Progress bars at 0, 25, 50, 75 and 100%", View: show(progressDefault)})
 	add(Story{ID: "scrollbar/default", Doc: "A plain box of twenty lines that scrolls, with Basecoat's scrollbar class", View: show(scrollbarDefault)})
 	add(Story{ID: "scrollbar/small", Doc: "A Textarea of twenty lines with the scrollbar-sm class", View: show(scrollbarSmall)})
 	add(Story{ID: "skeleton/default", Doc: "A skeleton of a round picture and two lines", View: show(skeletonDefault)})
@@ -134,47 +140,84 @@ templ alertDestructive(s *displayState) {
 	</div>
 }
 
-templ avatarDefault(s *displayState) {
-	<div class="p-4">
-		@ui.Avatar(ui.AvatarProps{}) {
-			<span>AL</span>
-		}
-	</div>
+var (
+	avatarImgOnce sync.Once
+	avatarImg1    string
+	avatarImg2    string
+)
+
+func sampleAvatarImages() (string, string) {
+	avatarImgOnce.Do(func() {
+		avatarImg1 = makeAvatarPNG(color.RGBA{244, 114, 182, 255}, color.RGBA{99, 102, 241, 255})
+		avatarImg2 = makeAvatarPNG(color.RGBA{45, 212, 191, 255}, color.RGBA{59, 130, 246, 255})
+	})
+	return avatarImg1, avatarImg2
 }
 
-templ avatarSizes(s *displayState) {
-	<div class="p-4 flex items-center gap-4">
-		for _, z := range []ui.Size{ui.Small, ui.Medium, ui.Large} {
-			@ui.Avatar(ui.AvatarProps{Size: z}) {
+func makeAvatarPNG(c1, c2 color.RGBA) string {
+	const sz = 48
+	img := image.NewRGBA(image.Rect(0, 0, sz, sz))
+	for y := range sz {
+		for x := range sz {
+			t := float64(x+y) / float64(2*(sz-1))
+			r := uint8(float64(c1.R)*(1-t) + float64(c2.R)*t)
+			g := uint8(float64(c1.G)*(1-t) + float64(c2.G)*t)
+			b := uint8(float64(c1.B)*(1-t) + float64(c2.B)*t)
+			// Draw a crisp stylized silhouette (head + shoulders) in soft white.
+			dx, dy := float64(x)-24, float64(y)-18
+			sdx, sdy := float64(x)-24, float64(y)-44
+			if dx*dx+dy*dy <= 7.5*7.5 || (sdx*sdx/(16*16)+sdy*sdy/(14*14)) <= 1 {
+				r = uint8(float64(r)*0.25 + 255*0.75)
+				g = uint8(float64(g)*0.25 + 255*0.75)
+				b = uint8(float64(b)*0.25 + 255*0.75)
+			}
+			img.SetRGBA(x, y, color.RGBA{r, g, b, 255})
+		}
+	}
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
+}
+
+templ avatarDefault(s *displayState) {
+	{{ img1, img2 := sampleAvatarImages() }}
+	<div class="p-4 flex flex-col gap-4">
+		<div class="flex items-center gap-4">
+			@avatar.View(avatar.Props{Size: ui.Small, Src: img1, Alt: "Ada Lovelace", Hue: avatar.HueCoral}) {
+				<span>AL</span>
+			}
+			@avatar.View(avatar.Props{Size: ui.Medium, Src: img2, Alt: "Grace Hopper", Hue: avatar.HueTeal, Online: true}) {
 				<span>GH</span>
 			}
-		}
-	</div>
-}
-
-templ avatarBadge(s *displayState) {
-	<div class="p-4 flex items-center gap-4">
-		@ui.Avatar(ui.AvatarProps{}) {
-			<span>MK</span>
-			<span class="avatar-badge" style="background-color: var(--chart-2);"></span>
-		}
-		@ui.Avatar(ui.AvatarProps{Size: ui.Large}) {
-			<span>RT</span>
-			<span class="avatar-badge" style="background-color: var(--chart-2);"></span>
-		}
-	</div>
-}
-
-templ avatarGroup(s *displayState) {
-	<div class="p-4">
-		@ui.AvatarGroup(ui.AvatarGroupProps{}) {
-			for _, n := range []string{"AL", "GH", "MK"} {
-				@ui.Avatar(ui.AvatarProps{}) {
-					<span>{ n }</span>
-				}
+			@avatar.View(avatar.Props{Size: ui.Large, Src: img1, Alt: "Margaret Hamilton", Hue: avatar.HueViolet}) {
+				<span>MH</span>
 			}
-			<span data-count>+4</span>
-		}
+		</div>
+		<div class="flex items-center gap-4">
+			@avatar.View(avatar.Props{Size: ui.Small, Hue: avatar.HueCoral}) {
+				<span>AL</span>
+			}
+			@avatar.View(avatar.Props{Size: ui.Medium, Hue: avatar.HueAmber, Online: true}) {
+				<span>MK</span>
+			}
+			@avatar.View(avatar.Props{Size: ui.Large, Hue: avatar.HueBlue, Online: true}) {
+				<span>RT</span>
+			}
+		</div>
+		<div>
+			@avatar.Group(avatar.GroupProps{}) {
+				@avatar.View(avatar.Props{Src: img1, Alt: "AL", Hue: avatar.HueCoral}) {
+					<span>AL</span>
+				}
+				@avatar.View(avatar.Props{Src: img2, Alt: "GH", Hue: avatar.HueTeal}) {
+					<span>GH</span>
+				}
+				@avatar.View(avatar.Props{Hue: avatar.HueGold}) {
+					<span>MK</span>
+				}
+				<span data-count>+4</span>
+			}
+		</div>
 	</div>
 }
 
@@ -397,16 +440,17 @@ templ itemGroup(s *displayState) {
 }
 
 templ progressDefault(s *displayState) {
-	<div class="p-4 max-w-sm">
-		@ui.Progress(ui.ProgressProps{Value: 60})
-	</div>
-}
-
-templ progressValues(s *displayState) {
-	<div class="p-4 max-w-sm grid gap-4">
-		for _, v := range []float64{0, 25, 50, 75, 100} {
-			@ui.Progress(ui.ProgressProps{Value: v})
-		}
+	<div class="p-4 max-w-sm flex flex-col gap-4">
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">With percentage</span>
+			for _, v := range []float64{0, 25, 50, 75, 100} {
+				@progress.View(progress.Props{Value: v, ShowValue: true})
+			}
+		</div>
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Animated (indeterminate)</span>
+			@progress.View(progress.Props{Indeterminate: true})
+		</div>
 	</div>
 }
 
@@ -431,11 +475,25 @@ templ scrollbarSmall(s *displayState) {
 }
 
 templ skeletonDefault(s *displayState) {
-	<div class="p-4 flex items-center gap-4">
-		@ui.Skeleton(ui.SkeletonProps{Attrs: templ.Attributes{"style": "width: 3rem; height: 3rem; border-radius: 9999px;"}})
-		<div class="grid gap-2">
-			@ui.Skeleton(ui.SkeletonProps{Attrs: templ.Attributes{"style": "width: 250px; height: 1rem;"}})
-			@ui.Skeleton(ui.SkeletonProps{Attrs: templ.Attributes{"style": "width: 200px; height: 1rem;"}})
+	<div class="p-4 flex flex-col gap-4 max-w-sm">
+		<div class="card p-4 flex flex-col gap-3">
+			<div class="flex items-center gap-3">
+				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 2.5rem; height: 2.5rem; border-radius: 9999px;"}})
+				<div class="flex flex-col gap-2 flex-1">
+					@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 140px; height: 1rem;"}})
+					@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 90px; height: 0.75rem;"}})
+				</div>
+			</div>
+			@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 100%; height: 6rem; border-radius: 0.5rem;"}})
+			<div class="flex flex-col gap-2">
+				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 100%; height: 0.875rem;"}})
+				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 85%; height: 0.875rem;"}})
+				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 60%; height: 0.875rem;"}})
+			</div>
+			<div class="flex items-center gap-2">
+				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 5rem; height: 2rem; border-radius: 0.375rem;"}})
+				@skeleton.View(skeleton.Props{Attrs: templ.Attributes{"style": "width: 4rem; height: 2rem; border-radius: 0.375rem;"}})
+			</div>
 		</div>
 	</div>
 }

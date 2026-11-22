@@ -7,7 +7,9 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/badge"
 	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/kbd"
 	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
@@ -15,16 +17,21 @@ import (
 // DropdownMenu, Dialog, Tabs and Toaster.
 
 type kitState struct {
-	clicks int
-	value  string
-	values []string
-	checked bool
-	theme string
-	ran    string
-	open   bool
-	sel    uiselect.State
-	menu   ui.DropdownMenuState
-	toasts ui.ToasterState
+	clicks   int
+	value    string
+	value2   string
+	value3   string
+	values   []string
+	checked  bool
+	theme    string
+	ran      string
+	open     bool
+	sel      uiselect.State
+	selGroup uiselect.State
+	selMulti uiselect.State
+	selEnd   uiselect.State
+	menu     ui.DropdownMenuState
+	toasts   ui.ToasterState
 }
 
 // labelled names an icon-only button, which has no text of its own: its
@@ -81,40 +88,15 @@ func init() {
 			return f(s)
 		}
 	}
-	add(Story{ID: "button/default", Doc: "A primary button",
-		View: kit(buttonDefault, nil), Props: func() (any, templ.Component) {
-			p := &Button{Label: "Button", Variant: "primary", Size: "default"}
-			return p, bookButton(p)
-		}, Keys: []string{"tab", "enter", "space"}, Want: "clicks: 2"})
-	add(Story{ID: "button/destructive", Doc: "A destructive button",
-		View: kit(buttonDestructive, nil), Props: func() (any, templ.Component) {
-			p := &Button{Label: "Delete", Variant: "destructive", Size: "default"}
-			return p, bookButton(p)
-		}, Keys: []string{"tab", "enter"}, Want: "clicks: 1"})
-	add(Story{ID: "button/ghost-with-icon", Doc: "A ghost button with an icon, and an icon-only one",
-		View: kit(buttonGhostWithIcon, nil), Props: func() (any, templ.Component) {
-			p := &Button{Label: "New", Variant: "ghost", Size: "sm", Icon: true}
-			return p, bookButton(p)
-		}, Keys: []string{"tab", "tab", "enter"}, Want: "clicks: 1"})
-	add(Story{ID: "button/disabled", Doc: "A disabled button, which Tab passes over",
-		View: kit(buttonDisabled, nil), Props: func() (any, templ.Component) {
-			p := &Button{Label: "Saving…", Variant: "primary", Size: "default", Disabled: true}
-			return p, bookButton(p)
-		}, Keys: []string{"tab", "enter"}, Want: "clicks: 0"})
-	add(Story{ID: "button/every-variant-and-size", Doc: "Each variant, and each size with and without IconOnly",
+	add(Story{ID: "button/default", Doc: "Variants, sizes, icons, and disabled state",
 		View: kit(buttonEvery, nil), Props: func() (any, templ.Component) {
-			p := &Button{}
-			return p, buttonEvery(&kitState{})
-		}, Keys: []string{"tab", "enter"}, Want: "clicks: 1"})
-	add(Story{ID: "badge/default", Doc: "A badge", View: kit(badgeDefault, nil), Props: func() (any, templ.Component) {
+			p := &Button{Label: "Button", Variant: "primary", Size: "default"}
+			return p, bookButtonShowcase(p, &kitState{})
+		}, Keys: []string{"tab", "enter", "space"}, Want: "clicks: 2"})
+	add(Story{ID: "badge/default", Doc: "All badge variants plus custom warning style", View: kit(badgeDefault, nil), Props: func() (any, templ.Component) {
 		p := &BadgeProps{Variant: "default", Label: "Badge"}
 		return p, bookBadge(p)
 	}})
-	add(Story{ID: "badge/every-variant", Doc: "A badge of each variant", View: kit(badgeEvery, nil), Props: func() (any, templ.Component) {
-		p := &BadgeProps{}
-		return p, badgeEvery(&kitState{})
-	}})
-	add(Story{ID: "badge/warning", Doc: "A warning: Basecoat has no such variant, so an Outline badge in amber, by class", View: kit(badgeWarning, nil)})
 	add(Story{ID: "card/default", Doc: "A card with a header, a section and a footer", View: kit(cardDefault, nil), Props: func() (any, templ.Component) {
 		p := &Card{Title: "Sign up", Description: "Enter your email below.", Size: "default", Footer: true}
 		return p, bookCard(p)
@@ -123,14 +105,9 @@ func init() {
 		p := &Kbd{Keys: "ctrl+k"}
 		return p, bookKbd(p)
 	}})
-	add(Story{ID: "select/default", Doc: "A select with a placeholder",
-		View: kit(selectDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
-	add(Story{ID: "select/multiple", Doc: "Select several sizes",
-		View: kit(selectMultiple, nil), Keys: []string{"tab", "enter", "arrow_down", "enter", "arrow_down", "enter"}, Want: "sizes: s,m"})
-	add(Story{ID: "select/end-aligned", Doc: "A select aligned to the right edge",
-		View: kit(selectEndAligned, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "size: s"})
-	add(Story{ID: "select/grouped", Doc: "A select with groups and a disabled option",
-		View: kit(selectGrouped, func(s *kitState) { s.value = "apple" }), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "fruit: banana"})
+	add(Story{ID: "select/default", Doc: "Default, grouped, multiple, and end-aligned selects",
+		View: kit(selectDefault, func(s *kitState) { s.value2 = "apple" }),
+		Keys: []string{"tab", "enter", "arrow_down", "arrow_down", "enter"}, Want: "size: m"})
 	add(Story{ID: "dropdown-menu/default", Doc: "A menu with an icon, a shortcut, a disabled item and a group",
 		View: kit(menuDefault, nil), Keys: []string{"tab", "enter", "arrow_down", "enter"}, Want: "ran: profile"})
 	add(Story{ID: "dropdown-menu/end-aligned", Doc: "A menu aligned to its trigger's end",
@@ -205,8 +182,11 @@ func bookSize(v string) ui.Size {
 }
 
 templ bookBadge(p *BadgeProps) {
-	<div class="p-4">
-		@ui.Badge(ui.BadgeProps{Variant: bookVariant(p.Variant)}) { { p.Label } }
+	<div class="flex flex-col gap-4 p-4">
+		<div>
+			@badge.View(badge.Props{Variant: bookVariant(p.Variant)}) { { p.Label } }
+		</div>
+		@badgeDefault(&kitState{})
 	</div>
 }
 
@@ -227,11 +207,14 @@ templ bookCard(p *Card) {
 }
 
 templ bookKbd(p *Kbd) {
-	<p class="text-muted-foreground flex items-center gap-1 text-sm">
-		Press
-		@ui.Kbd(p.Keys)
-		to open the palette.
-	</p>
+	<div class="flex flex-col gap-4 p-4">
+		<p class="text-muted-foreground flex items-center gap-1 text-sm">
+			Press
+			@kbd.View(kbd.Props{Keys: p.Keys})
+			to open the palette.
+		</p>
+		@kbdDefault(&kitState{})
+	</div>
 }
 
 templ bookTabs(p *Tabs) {
@@ -336,30 +319,21 @@ templ buttonEvery(s *kitState) {
 }
 
 templ badgeDefault(s *kitState) {
-	<div class="p-4">
-		@ui.Badge(ui.BadgeProps{}) {
-			Badge
-		}
-	</div>
-}
-
-templ badgeEvery(s *kitState) {
-	<div class="flex flex-row flex-wrap gap-2 p-4">
-		for _, v := range allVariants {
-			@ui.Badge(ui.BadgeProps{Variant: v}) {
-				{ variantName(v) }
+	<div class="flex flex-col gap-3">
+		<div class="flex flex-row flex-wrap gap-2">
+			for _, v := range allVariants {
+				@badge.View(badge.Props{Variant: v}) {
+					{ variantName(v) }
+				}
 			}
-		}
-	</div>
-}
-
-templ badgeWarning(s *kitState) {
-	<div class="flex flex-row flex-wrap items-center gap-2 p-4">
-		@ui.Badge(ui.BadgeProps{Variant: ui.Outline, Class: "border-amber-500/50 text-amber-600 dark:text-amber-400"}) {
-			@ui.Icon("triangle-alert", "")
-			Low stock
-		}
-		<span class="text-sm text-muted-foreground">3 left</span>
+		</div>
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			@badge.View(badge.Props{Variant: ui.Outline, Class: "border-amber-500/50 text-amber-600 dark:text-amber-400"}) {
+				@ui.Icon("triangle-alert", "")
+				Low stock
+			}
+			<span class="text-sm text-muted-foreground">3 left</span>
+		</div>
 	</div>
 }
 
@@ -386,10 +360,21 @@ templ cardDefault(s *kitState) {
 }
 
 templ kbdDefault(s *kitState) {
-	<div class="flex flex-row gap-2 p-4">
-		@ui.Kbd("mod+k")
-		@ui.Kbd("mod+shift+p")
-		@ui.Kbd("escape")
+	<div class="flex flex-col gap-3 p-4">
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			@kbd.View(kbd.Props{Keys: "mod+k"})
+			@kbd.View(kbd.Props{Keys: "mod+shift+p"})
+			@kbd.View(kbd.Props{Keys: "escape"})
+			@kbd.View(kbd.Props{Keys: "enter"})
+			@kbd.View(kbd.Props{Keys: "backspace"})
+			@kbd.View(kbd.Props{Keys: "tab"})
+		</div>
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			@kbd.View(kbd.Props{Keys: "super+k"})
+			@kbd.View(kbd.Props{Keys: "super+shift+p"})
+			@kbd.View(kbd.Props{Keys: "alt+super+i"})
+			@kbd.View(kbd.Props{Keys: "ctrl+alt+delete"})
+		</div>
 	</div>
 }
 
@@ -406,34 +391,37 @@ var fruitItems = []uiselect.Item{
 	{Value: "leek", Label: "Leek", Group: "Vegetables", Disabled: true},
 }
 
+templ bookButtonShowcase(p *Button, s *kitState) {
+	<div class="flex flex-col gap-4 p-4">
+		@bookButton(p)
+		<hr role="separator" class="border-border"/>
+		@buttonEvery(s)
+	</div>
+}
+
 templ selectDefault(s *kitState) {
-	<div class="flex flex-col gap-3 p-4">
-		@uiselect.View(&s.sel, uiselect.Props{ID: "size", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", OnChange: s.choose})
-		<p class="text-sm text-muted-foreground">size: { s.value }</p>
-	</div>
-}
-
-templ selectGrouped(s *kitState) {
-	<div class="flex flex-col gap-3 p-4">
-		@uiselect.View(&s.sel, uiselect.Props{ID: "fruit", Items: fruitItems, Value: s.value, OnChange: s.choose})
-		<p class="text-sm text-muted-foreground">fruit: { s.value }</p>
-	</div>
-}
-
-templ selectMultiple(s *kitState) {
-	<div class="flex flex-col gap-3 p-4">
-		@uiselect.View(&s.sel, uiselect.Props{ID: "sizes", Items: sizeItems, Multiple: true, Values: s.values, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { s.values = v }})
-		<p>sizes: { strings.Join(s.values, ",") }</p>
-	</div>
-}
-
-templ selectEndAligned(s *kitState) {
-	<div class="p-4">
-		<div class="flex flex-row justify-between">
-			<span></span>
-			@uiselect.View(&s.sel, uiselect.Props{ID: "edge", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", Align: uiselect.AlignEnd, OnChange: s.choose})
+	<div class="flex flex-col gap-4 p-4 w-full">
+		<div class="flex flex-wrap gap-4 items-start">
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">Default</span>
+				@uiselect.View(&s.sel, uiselect.Props{ID: "size", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", OnChange: s.choose})
+				<p class="text-sm text-muted-foreground">size: { s.value }</p>
+			</div>
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">Grouped + disabled</span>
+				@uiselect.View(&s.selGroup, uiselect.Props{ID: "fruit", Items: fruitItems, Value: s.value2, OnChange: func(v string) { s.value2 = v }})
+				<p class="text-sm text-muted-foreground">fruit: { s.value2 }</p>
+			</div>
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground">Multiple</span>
+				@uiselect.View(&s.selMulti, uiselect.Props{ID: "sizes", Items: sizeItems, Multiple: true, Values: s.values, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { s.values = v }})
+				<p class="text-sm text-muted-foreground">sizes: { strings.Join(s.values, ",") }</p>
+			</div>
 		</div>
-		<p>size: { s.value }</p>
+		<div class="flex flex-row items-center justify-between w-full">
+			<span class="text-xs text-muted-foreground">End-aligned</span>
+			@uiselect.View(&s.selEnd, uiselect.Props{ID: "edge", Items: sizeItems, Value: s.value3, Placeholder: "Pick a size", Align: uiselect.AlignEnd, OnChange: func(v string) { s.value3 = v }})
+		</div>
 	</div>
 }
 

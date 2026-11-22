@@ -28,9 +28,12 @@ import (
 // value the render reads and the component's handlers change), and the
 // render.
 type Story struct {
+	// Group is the sidebar section (Inputs, Overlays, Navigation, Feedback, Display, Book).
 	Group string
 	Name  string
-	Doc   string // one line, shown beside the name
+	Doc   string
+	// Dot is "" (migrated & scored), "yellow" (migrated, needs scoring), or "red" (legacy).
+	Dot string // one line, shown beside the name
 
 	id    string
 	props any                        // *P
@@ -46,26 +49,75 @@ type Story struct {
 // registry is every story Add made, in order.
 var registry []*Story
 
+// GroupOrder returns the display order of sidebar categories.
+func GroupOrder(group string) int {
+	switch group {
+	case "Inputs":
+		return 0
+	case "Overlays":
+		return 1
+	case "Navigation":
+		return 2
+	case "Feedback":
+		return 3
+	case "Display":
+		return 4
+	case "Book":
+		return 5
+	default:
+		return 6
+	}
+}
+
+// componentStatus maps migrated component IDs to their sidebar dot:
+// "" = migrated & scored, "yellow" = migrated & needs scoring; absent = "red" (legacy).
+var componentStatus = map[string]string{
+	"button":    "",
+	"tooltip":   "",
+	"textarea":  "",
+	"select":    "",
+	"combobox":  "",
+	"separator": "",
+	"kbd":       "",
+	"label":     "",
+	"badge":     "",
+	"skeleton":  "",
+	"progress":  "",
+	"avatar":    "",
+	"checkbox":  "",
+}
+
+func dotFor(component string) string {
+	if dot, ok := componentStatus[component]; ok {
+		return dot
+	}
+	return "red"
+}
+
 // Wrap adapts an existing v0.7 story to the book's model. Its view is
 // made once per selection and shared by the preview and the cells pane.
 func Wrap(id, doc string, makeView func() templ.Component, makeProps func() (any, templ.Component)) *Story {
 	group, name, _ := strings.Cut(id, "/")
-	family := "Components"
+	family := "Display"
 	switch group {
-	case "alert", "avatar", "badge", "button", "card", "chart", "code", "controls", "event-log", "icons", "separator", "icon-button", "symbols", "empty", "item", "kbd", "progress", "scrollbar", "skeleton", "table":
-		family = "Display"
-	case "checkbox", "field", "input", "input-group", "label", "native-select", "radio", "select", "switch", "textarea":
-		family = "Forms"
-	case "breadcrumb", "tabs", "nav-list", "tabs-demo", "list-item":
-		family = "Navigation"
-	case "dialog", "dropdown-menu", "toast":
+	case "button", "button-group", "icon-button", "input", "input-group", "textarea", "checkbox", "radio", "switch", "select", "combobox", "slider", "range", "label", "field":
+		family = "Inputs"
+	case "tooltip", "popover", "dropdown-menu", "command", "dialog", "alert-dialog", "drawer":
 		family = "Overlays"
+	case "tabs", "breadcrumb", "nav-list", "list-item":
+		family = "Navigation"
+	case "alert", "toast", "progress", "skeleton", "empty":
+		family = "Feedback"
+	case "card", "table", "badge", "avatar", "chart", "code", "item", "kbd", "separator", "scrollbar":
+		family = "Display"
+	case "icons", "symbols", "controls", "event-log", "tabs-demo":
+		family = "Book"
 	}
 	title := titlePart(group)
 	if name != "" && name != "default" {
 		title += " / " + strings.ReplaceAll(name, "-", " ")
 	}
-	s := &Story{Group: family, Name: title, Doc: doc, id: id}
+	s := &Story{Group: family, Name: title, Doc: doc, Dot: dotFor(group), id: id}
 	var view templ.Component
 	s.reset = func() {
 		if makeProps != nil {

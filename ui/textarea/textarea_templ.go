@@ -17,7 +17,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
@@ -63,11 +65,13 @@ type Props struct {
 	// Cols is an optional column width hint (default 36 when <= 0).
 	Cols int
 	// MinCols, MaxCols, MinRows, MaxRows bound user resizing (0 = default min
-	// 12 cols / 2 rows, unbounded max).
-	MinCols int
-	MaxCols int
-	MinRows int
-	MaxRows int
+	// 12 cols / 2 rows, unbounded max). When AutoGrow is true, height expands
+	// with content up to MaxRows (default 12 when <= 0).
+	MinCols  int
+	MaxCols  int
+	MinRows  int
+	MaxRows  int
+	AutoGrow bool
 	// Resize controls user resizing: ResizeBoth (default), ResizeVertical,
 	// ResizeHorizontal, or ResizeNone.
 	Resize   Resize
@@ -146,7 +150,7 @@ func Hotty(p Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(hottyWrapStyle(ctx, id, p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 91, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 95, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -213,7 +217,7 @@ func Hotty(p Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 97, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 101, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -240,7 +244,7 @@ func Hotty(p Props) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Resize)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 102, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 106, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 					if templ_7745c5c3_Err != nil {
@@ -298,7 +302,7 @@ func Hotty(p Props) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Resize)).Resolve(ctx)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 113, Col: 36}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 117, Col: 36}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 						if templ_7745c5c3_Err != nil {
@@ -418,7 +422,7 @@ func TUI(p Props) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 133, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 137, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -466,6 +470,7 @@ func resolveAttrs(ctx context.Context, p Props, tui bool) (templ.Attributes, str
 			ui.OptAttr("data-max-cols", p.MaxCols),
 			ui.OptAttr("data-min-rows", p.MinRows),
 			ui.OptAttr("data-max-rows", p.MaxRows),
+			ui.OptAttr("data-autogrow", p.AutoGrow),
 		)
 	}
 	id, _ := merged["id"].(string)
@@ -525,6 +530,31 @@ func minRowsOf(p Props) int {
 	return 2
 }
 
+func autoGrowRows(p Props, cols int) int {
+	rows := p.Rows
+	if rows <= 0 {
+		rows = 4
+	}
+	if !p.AutoGrow || p.Value == "" {
+		return rows
+	}
+	innerW := max(cols-2, 1)
+	needed := 0
+	for line := range strings.SplitSeq(p.Value, "\n") {
+		n := utf8.RuneCountInString(line)
+		if n == 0 {
+			needed++
+		} else {
+			needed += (n + innerW - 1) / innerW
+		}
+	}
+	maxRows := p.MaxRows
+	if maxRows <= 0 {
+		maxRows = 12
+	}
+	return clampSize(max(rows, needed+1), minRowsOf(p), maxRows)
+}
+
 func hottyWrapStyle(ctx context.Context, id string, p Props) templ.SafeCSS {
 	cols := p.Cols
 	if cols <= 0 {
@@ -534,6 +564,7 @@ func hottyWrapStyle(ctx context.Context, id string, p Props) templ.SafeCSS {
 	if rows <= 0 {
 		rows = 4
 	}
+	manualRows := false
 	if s := surf.Of(ctx); s != nil && id != "" {
 		hottyMu.Lock()
 		if sz := hottySizes[hottySizeKey{s: s, id: id}]; sz != nil {
@@ -542,12 +573,17 @@ func hottyWrapStyle(ctx context.Context, id string, p Props) templ.SafeCSS {
 			}
 			if sz.rows > 0 {
 				rows = sz.rows
+				manualRows = true
 			}
 		}
 		hottyMu.Unlock()
 	}
 	cols = clampSize(cols, minColsOf(p), p.MaxCols)
-	rows = clampSize(rows, minRowsOf(p), p.MaxRows)
+	if !manualRows && p.AutoGrow {
+		rows = autoGrowRows(p, cols)
+	} else {
+		rows = clampSize(rows, minRowsOf(p), p.MaxRows)
+	}
 	return templ.SafeCSS(fmt.Sprintf("width:%dch;height:calc(%d*var(--hotty-cell-h,1.5rem))", cols, rows))
 }
 

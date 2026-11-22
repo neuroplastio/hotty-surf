@@ -58,7 +58,7 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 	c.down, c.held, c.pressing = nil, false, true
 	switch button {
 	case 0:
-		if c.startResize(col, row) {
+		if c.startResize(col, row) || c.pressTextareaScrollbar(col, row) {
 			taken = true
 		} else {
 			taken = c.pressAt(col, row, mods)
@@ -179,10 +179,25 @@ func (c *Screen) Release(col, row, mods int) (taken bool) {
 // carry that began outside the surface (which half: row < area.Row +
 // area.H/2), or the element under a press the program keeps for itself.
 func (c *Screen) At(col, row int) (id string, area hotty.Area) {
-	n := closest(c.hitAt(col, row), func(n *html.Node) bool {
-		v, ok := get(n, "id")
-		return ok && v != "" && !rt.RuntimeID(v)
-	})
+	hit := c.hitAt(col, row)
+	var n *html.Node
+	for cur := hit; cur != nil && cur != c.body; cur = cur.Parent {
+		if v, ok := get(cur, "id"); ok && v != "" && !rt.RuntimeID(v) {
+			n = cur
+			break
+		}
+		if cur.DataAtom == atom.Label {
+			if ctl := c.labelled(cur); ctl != nil && !disabled(ctl) && ctl.DataAtom == atom.Input {
+				typ := attr(ctl, "type")
+				if typ == "checkbox" || typ == "radio" {
+					if v, ok := get(ctl, "id"); ok && v != "" && !rt.RuntimeID(v) {
+						n = ctl
+						break
+					}
+				}
+			}
+		}
+	}
 	if n == nil || n == c.body {
 		return "", hotty.Area{}
 	}
@@ -249,6 +264,56 @@ func (c *Screen) ResizeMode(col, row int) string {
 		}
 	}
 	return ""
+}
+
+func (c *Screen) pressTextareaScrollbar(col, row int) bool {
+	if c.body == nil {
+		return false
+	}
+	l := c.layout()
+	y := row + c.scroll
+	for n, r := range l.fields {
+		if !isKitTextarea(n) || r.w < 4 || col != r.x+r.w-1 || y < r.y || y >= r.y+r.h {
+			continue
+		}
+		barH := r.h
+		if textareaResizable(n) && barH > 1 {
+			barH--
+		}
+		if y >= r.y+barH {
+			continue
+		}
+		f := c.field(n)
+		f.ed.Width, f.ed.Rows = max(r.w-2, 1), r.h
+		total := len(f.ed.Wrap())
+		last := total - r.h
+		if last <= 0 {
+			continue
+		}
+		rel := y - r.y
+		next := f.top
+		switch {
+		case barH >= 3 && rel == 0:
+			next = max(0, f.top-1)
+		case barH >= 3 && rel == barH-1:
+			next = min(last, f.top+1)
+		default:
+			trackH := barH
+			pos := rel
+			if barH >= 3 {
+				trackH = barH - 2
+				pos = rel - 1
+			}
+			if trackH > 1 {
+				next = (pos*last + (trackH-1)/2) / (trackH - 1)
+			}
+		}
+		f.top = max(0, min(next, last))
+		f.scrolled = true
+		c.lay = nil
+		return true
+	}
+	return false
 }
 
 func (c *Screen) startResize(col, row int) bool {

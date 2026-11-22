@@ -8,16 +8,16 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | accordion | — | no score | no score | no score | no score | |
 | alert | — | no score | no score | no score | no score | |
-| avatar | — | no score | no score | no score | no score | |
-| badge | — | no score | no score | no score | no score | |
+| avatar | `ui/avatar` | **4/5** | **4/5** | no score | no score | Self-contained `ui/avatar`; `Hue` tints, `Online` status dot, `Src` image support with Kitty graphics in TUI & overlapping group circles |
+| badge | `ui/badge` | **4/5** | **4/5** | no score | no score | Self-contained `ui/badge`; amber warning tint & `⚠` icon glyph in Hotty & TUI |
 | breadcrumb | — | no score | no score | no score | no score | |
 | button | `ui/button` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `View`); size-consistent heights, bold `default`/`lg`, muted-foreground outline, unified hover/click/focus ring |
 | button-group | — | no score | no score | no score | no score | |
 | card | — | no score | no score | no score | no score | |
 | chart | — | no score | no score | no score | no score | |
-| checkbox | — | no score | no score | no score | no score | |
+| checkbox | `ui/checkbox` | **5/5** | **5/5** | no score | no score | Self-contained `ui/checkbox`; MDI glyphs (`󰄱` / `󰱖`) in TUI, `[ ]` / `[x]` in ANSI & Plain, clickable label with `cursor: pointer` |
 | collapsible | — | no score | no score | no score | no score | |
-| combobox | `ui/combobox` | no score | no score | no score | no score | |
+| combobox | `ui/combobox` | **4/5** | **4/5** | no score | no score | Self-contained `ui/combobox` with Go-side filtering, `ui.KeyMap` (`ResolveTextKeys` + `BindKeys`), and select-like TUI pill |
 | command | — | no score | no score | no score | no score | |
 | dialog | — | no score | no score | no score | no score | |
 | drawer | — | no score | no score | no score | no score | |
@@ -28,19 +28,20 @@
 | input | — | no score | no score | no score | no score | |
 | input-group | — | no score | no score | no score | no score | |
 | item | — | no score | no score | no score | no score | |
-| kbd | — | no score | no score | no score | no score | |
-| label | — | no score | no score | no score | no score | |
+| kbd | `ui/kbd` | **4/5** | **4/5** | no score | no score | Self-contained `ui/kbd`; modifier & special-key glyphs (`⌃`, `⌥`, `⇧`, `⌘`, `⎋`, `↵`, `⌫`, `⇥`) and muted TUI styling |
+| label | `ui/label` | **5/5** | **5/5** | no score | no score | Self-contained `ui/label`; paired with `circle-help` tooltip icon in story |
 | popover | — | no score | no score | no score | no score | |
-| progress | — | no score | no score | no score | no score | |
+| progress | `ui/progress` | **4/5** | **4/5** | no score | no score | Self-contained `ui/progress`; percentage indicator, indeterminate animation, seamless TUI bar |
 | radio | — | no score | no score | no score | no score | |
 | range | — | no score | no score | no score | no score | |
 | scrollbar | — | no score | no score | no score | no score | CSS utility class |
-| select | `ui/select` | no score | no score | no score | no score | |
+| select | `ui/select` | **5/5** | **5/5** | no score | no score | Self-contained `ui/select`; consistent trigger width, persistent hover highlight, TUI pill + rounded popover + right-aligned `✓` |
+| separator | `ui/separator` | **4/5** | **4/5** | no score | no score | Self-contained `ui/separator` with horizontal/vertical orientations |
 | sidebar | — | no score | no score | no score | no score | |
-| skeleton | — | no score | no score | no score | no score | |
+| skeleton | `ui/skeleton` | **4/5** | **4/5** | no score | no score | Self-contained `ui/skeleton`; high-fidelity card story, `%` width support in TUI (`░` hatch); note: needs a spinner (to add later) |
 | switch | — | no score | no score | no score | no score | |
 | table | — | no score | no score | no score | no score | |
 | tabs | — | no score | no score | no score | no score | |
-| textarea | `ui/textarea` | no score | no score | no score | no score | Self-contained package (`Hotty`, `TUI`, `View`); typed `Resize`, web-like frame, blinking I-beam caret, draggable corner grip |
+| textarea | `ui/textarea` | **4/5** | **4/5** | no score | no score | Self-contained `ui/textarea`; typed `Resize`, `AutoGrow`, scrollbar with `▴`/`▾` arrows; note: mouse-wheel scrolling in Hotty needs `hotty-blitz` wheel event support (and TUI preview inside `book` falls back to terminal arrow emulation for the same reason) |
 | toast | — | no score | no score | no score | no score | |
 | tooltip | `ui/tooltip` | **5/5** | **5/5** | **5/5** | **5/5** | Self-contained package (`Hotty`, `TUI`, `View`) with typed `Side`/`Align`; popover theme + thin border in Hotty & TUI |

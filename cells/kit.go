@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -17,6 +18,11 @@ import (
 // kit reads what the kit's stylesheet lays out for n.
 func (b *box) kit(n *html.Node) {
 	if b.display == dNone || b.display == dAtom {
+		return
+	}
+	if has(n, "data-avatar-img") {
+		b.display = dBlock
+		b.fx.fig = figAvatarImg
 		return
 	}
 	switch {
@@ -205,13 +211,37 @@ func (l *layout) figure(n *html.Node, fig figKind, x, y, w int, in inh) (h, used
 	case figSlider:
 		return l.slider(n, x, y, w, in), min(w, 40), true
 	case figBar:
-		return l.bar(n, x, y, w, in), min(w, barW), true
+		used := min(w, barW)
+		if attr(n, "data-mode") == "tui" {
+			used = w
+		}
+		return l.bar(n, x, y, w, in), used, true
 	case figSkeleton:
-		cw := min(max(pxCols(styleValue(n, "width")), 1), w)
+		cw := skeletonCols(styleValue(n, "width"), w)
 		rh := max(pxRows(styleValue(n, "height")), 1)
 		for r := range rh {
 			for c := range cw {
 				l.put(x+c, y+r, "░", in.look|lMuted, n)
+			}
+		}
+		return rh, cw, true
+	case figAvatarImg:
+		inGroup := closest(n.Parent, func(a *html.Node) bool { return attr(a, "data-slot") == "avatar-group" }) != nil
+		cw, rh := 4, 2
+		if inGroup {
+			cw, rh = 3, 1
+		} else {
+			switch attr(n, "data-size") {
+			case "sm":
+				cw, rh = 3, 2
+			case "lg":
+				cw, rh = 5, 2
+			}
+		}
+		cw = min(cw, w)
+		for r := range rh {
+			for c := range cw {
+				l.put(x+c, y+r, " ", in.look, n)
 			}
 		}
 		return rh, cw, true
@@ -235,6 +265,7 @@ const (
 	figSlider
 	figBar
 	figSkeleton
+	figAvatarImg
 	figChart
 	figCrumb
 )
@@ -248,6 +279,8 @@ func figureOf(n *html.Node) figKind {
 		return figBar
 	case tokens(n, "class", "skeleton"):
 		return figSkeleton
+	case has(n, "data-avatar-img"):
+		return figAvatarImg
 	case tokens(n, "class", "chart"):
 		return figChart
 	case n.DataAtom == atom.Li && attr(n, "role") == "presentation" &&
@@ -255,6 +288,16 @@ func figureOf(n *html.Node) figKind {
 		return figCrumb
 	}
 	return figNone
+}
+
+func skeletonCols(v string, avail int) int {
+	v = strings.TrimSpace(v)
+	if s, ok := strings.CutSuffix(v, "%"); ok {
+		if pct, err := strconv.ParseFloat(strings.TrimSpace(s), 64); err == nil && pct > 0 {
+			return max(1, min(int(math.Round(float64(avail)*pct/100)), avail))
+		}
+	}
+	return min(max(pxCols(v), 1), avail)
 }
 
 // slider follows the cells range presentation: two thumbs with a filled
@@ -345,6 +388,35 @@ func (l *layout) bar(n *html.Node, x, y, w int, in inh) int {
 	lo, hi := num(attr(n, "aria-valuemin"), 0), num(attr(n, "aria-valuemax"), 100)
 	v := num(attr(n, "aria-valuenow"), lo)
 	bw := min(w, barW)
+	if attr(n, "data-mode") == "tui" {
+		bw = w
+		if attr(n, "data-indeterminate") == "true" {
+			l.markAnimated()
+			seg := max(bw/3, 3)
+			total := bw + seg
+			start := int((time.Now().UnixMilli()/60)%int64(total)) - seg
+			for i := range bw {
+				if i >= start && i < start+seg {
+					l.put(x+i, y, " ", in.look|lSel, n)
+				} else {
+					l.put(x+i, y, " ", in.look, n)
+				}
+			}
+			return 1
+		}
+		full := 0
+		if hi > lo {
+			full = int(math.Round(math.Max(0, math.Min(1, (v-lo)/(hi-lo))) * float64(bw)))
+		}
+		for i := range bw {
+			if i < full {
+				l.put(x+i, y, " ", in.look|lSel, n)
+			} else {
+				l.put(x+i, y, " ", in.look, n)
+			}
+		}
+		return 1
+	}
 	full := 0
 	if hi > lo {
 		full = int(math.Round(math.Max(0, math.Min(1, (v-lo)/(hi-lo))) * float64(bw)))
