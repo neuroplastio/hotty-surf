@@ -4,10 +4,17 @@ package tooltip
 
 import (
 	"context"
+	_ "embed"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
+
+//go:embed tooltip.css
+var css string
+
+// Register registers tooltip's assets with r.
+func Register(r *ui.Registry) { r.CSS("tooltip", css) }
 
 // Side is where the tooltip sits beside its target.
 type Side string

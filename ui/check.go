@@ -18,7 +18,6 @@ var (
 	badgeVariants     = []Variant{Primary, Secondary, Outline, Ghost, Destructive, Link}
 	buttonSizes       = []Size{Medium, XSmall, Small, Large}
 	switchSizes       = []Size{Medium, Small}
-	nativeSelectSizes = []Size{Medium, Small}
 	inputTypes        = []string{"", "text", "email", "password", "number", "tel", "url", "search", "date", "datetime-local", "month", "week", "time"}
 	fieldOrientations = []string{"", "vertical", "horizontal", "responsive"}
 	addonAligns       = []string{"", "inline-start", "inline-end", "block-start", "block-end"}

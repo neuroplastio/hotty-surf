@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"neuroplast.io/hotty-surf/ui"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 //go:generate msgp -marshal=false -tests=false
@@ -34,10 +35,11 @@ type State struct {
 // App is the app's state and its handlers. The view (page.templ) reads it.
 type App struct {
 	State
+	digest uiselect.State
 	toasts ui.ToasterState
 }
 
-var digests = []ui.SelectItem{
+var digests = []uiselect.Item{
 	{Value: "daily", Label: "Daily"},
 	{Value: "weekly", Label: "Weekly"},
 	{Value: "never", Label: "Never"},

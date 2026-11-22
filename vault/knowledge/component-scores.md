@@ -17,7 +17,7 @@
 | chart | — | no score | no score | no score | no score | |
 | checkbox | — | no score | no score | no score | no score | |
 | collapsible | — | no score | no score | no score | no score | |
-| combobox | — | no score | no score | no score | no score | |
+| combobox | `ui/combobox` | no score | no score | no score | no score | |
 | command | — | no score | no score | no score | no score | |
 | dialog | — | no score | no score | no score | no score | |
 | drawer | — | no score | no score | no score | no score | |

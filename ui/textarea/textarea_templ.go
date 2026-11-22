@@ -28,6 +28,12 @@ import (
 //go:embed grip.svg
 var GripSVG string
 
+//go:embed textarea.css
+var css string
+
+// Register registers textarea's assets with r.
+func Register(r *ui.Registry) { r.CSS("textarea", css) }
+
 // Class is the textarea's root CSS class.
 const Class = "textarea"
 
@@ -67,6 +73,9 @@ type Props struct {
 	Resize   Resize
 	Disabled bool
 	Invalid  bool
+	// Keys overrides host text-editing actions (e.g. ui.Action(hotty.WordBackward))
+	// on top of any ui.WithKeys context bindings.
+	Keys ui.KeyMap
 	// OnInput is called whenever the textarea's value changes.
 	OnInput func(string)
 	// Attrs are additional attributes for the textarea element.
@@ -137,7 +146,7 @@ func Hotty(p Props) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(hottyWrapStyle(ctx, id, p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 82, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 91, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -204,7 +213,7 @@ func Hotty(p Props) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 88, Col: 12}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 97, Col: 12}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -231,7 +240,7 @@ func Hotty(p Props) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Resize)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 93, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 102, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 					if templ_7745c5c3_Err != nil {
@@ -289,7 +298,7 @@ func Hotty(p Props) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(p.Resize)).Resolve(ctx)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 104, Col: 36}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 113, Col: 36}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 						if templ_7745c5c3_Err != nil {
@@ -409,7 +418,7 @@ func TUI(p Props) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 124, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `textarea.templ`, Line: 133, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -424,9 +433,18 @@ func TUI(p Props) templ.Component {
 }
 
 func resolveAttrs(ctx context.Context, p Props, tui bool) (templ.Attributes, string) {
-	var on templ.Attributes
+	var handlers []surf.Handler
 	if p.OnInput != nil && !p.Disabled {
-		on = surf.On(ctx, p.ID, surf.Input(p.OnInput))
+		handlers = append(handlers, surf.Input(p.OnInput))
+	}
+	if !p.Disabled {
+		if b, ok := ui.BindKeys(ctx, p.Keys); ok {
+			handlers = append(handlers, b)
+		}
+	}
+	var on templ.Attributes
+	if len(handlers) > 0 {
+		on = surf.On(ctx, p.ID, handlers...)
 	} else if p.ID != "" {
 		on = surf.On(ctx, p.ID)
 	} else if p.Attrs["id"] == nil {

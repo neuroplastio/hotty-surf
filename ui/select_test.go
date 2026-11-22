@@ -344,11 +344,3 @@ func TestSelectMultipleEscapesHiddenValues(t *testing.T) {
 	r := start(t, ui.Select(&st, ui.SelectProps{ID: "select", Items: []ui.SelectItem{{Value: value, Label: "A"}}, Multiple: true, Values: []string{value}}))
 	want(t, r, "input[type=hidden]", "value", `["a\"b\n"]`)
 }
-
-func TestNativeSelectAllowsDuplicateValues(t *testing.T) {
-	p := ui.NativeSelectProps{Items: []ui.SelectItem{{Value: "a", Label: "One"}, {Value: "a", Label: "Two"}}, Value: "a"}
-	r := start(t, ui.NativeSelect(p))
-	if len(r.Find("option[value=a]")) != 2 {
-		t.Fatal("duplicate native options were lost")
-	}
-}

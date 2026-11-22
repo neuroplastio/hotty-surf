@@ -17,6 +17,12 @@ import (
 //go:embed grip.svg
 var GripSVG string
 
+//go:embed textarea.css
+var css string
+
+// Register registers textarea's assets with r.
+func Register(r *ui.Registry) { r.CSS("textarea", css) }
+
 // Class is the textarea's root CSS class.
 const Class = "textarea"
 
@@ -56,6 +62,9 @@ type Props struct {
 	Resize   Resize
 	Disabled bool
 	Invalid  bool
+	// Keys overrides host text-editing actions (e.g. ui.Action(hotty.WordBackward))
+	// on top of any ui.WithKeys context bindings.
+	Keys ui.KeyMap
 	// OnInput is called whenever the textarea's value changes.
 	OnInput func(string)
 	// Attrs are additional attributes for the textarea element.
@@ -125,9 +134,18 @@ templ TUI(p Props) {
 }
 
 func resolveAttrs(ctx context.Context, p Props, tui bool) (templ.Attributes, string) {
-	var on templ.Attributes
+	var handlers []surf.Handler
 	if p.OnInput != nil && !p.Disabled {
-		on = surf.On(ctx, p.ID, surf.Input(p.OnInput))
+		handlers = append(handlers, surf.Input(p.OnInput))
+	}
+	if !p.Disabled {
+		if b, ok := ui.BindKeys(ctx, p.Keys); ok {
+			handlers = append(handlers, b)
+		}
+	}
+	var on templ.Attributes
+	if len(handlers) > 0 {
+		on = surf.On(ctx, p.ID, handlers...)
 	} else if p.ID != "" {
 		on = surf.On(ctx, p.ID)
 	} else if p.Attrs["id"] == nil {

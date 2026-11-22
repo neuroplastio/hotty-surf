@@ -14,7 +14,25 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
+
+	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/combobox"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
+	"neuroplast.io/hotty-surf/ui/textarea"
+	"neuroplast.io/hotty-surf/ui/tooltip"
 )
+
+// Registry returns a ui.Registry with all story components registered.
+func Registry() *ui.Registry {
+	return ui.NewRegistry().Register(
+		button.Register,
+		tooltip.Register,
+		textarea.Register,
+		uiselect.Register,
+		combobox.Register,
+	)
+}
 
 // A Story is one component in one state.
 type Story struct {

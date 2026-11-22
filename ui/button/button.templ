@@ -13,6 +13,9 @@ import (
 // Class is the button's root CSS class.
 const Class = "btn"
 
+// Register registers button's assets with r.
+func Register(r *ui.Registry) {}
+
 // Props are a Button's attributes. Its zero value is a medium Primary button.
 type Props struct {
 	// ID is an optional element id. When omitted and OnClick is set,

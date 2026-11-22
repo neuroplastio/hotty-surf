@@ -3,6 +3,7 @@ package main
 import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 templ Page(a *App) {
@@ -69,11 +70,12 @@ templ Page(a *App) {
 					@switchField(a.Form.EmailMe, "email-me", "Email me", "News about your account.", a.SetEmailMe)
 					@switchField(a.Form.Push, "push", "Push", "Alerts on your devices.", a.SetPush)
 					@ui.Field(ui.FieldProps{Orientation: "horizontal"}) {
-						<label for="digest">Digest</label>
-						@ui.NativeSelect(ui.NativeSelectProps{
-							Items: digests,
-							Value: a.Form.Digest,
-							Attrs: surf.On(ctx, "digest", surf.Input(a.SetDigest)),
+						<label for="digest-trigger">Digest</label>
+						@uiselect.View(&a.digest, uiselect.Props{
+							ID:       "digest",
+							Items:    digests,
+							Value:    a.Form.Digest,
+							OnChange: a.SetDigest,
 						})
 					}
 				}

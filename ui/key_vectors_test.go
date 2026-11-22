@@ -63,8 +63,6 @@ func (a *nativeKeyApp) view() templ.Component {
 				return nil
 			})
 			c = with(ui.List(ui.ListProps{Attrs: templ.Attributes{"aria-label": "Rows"}, OnChange: func(i int) { a.value = strconv.Itoa(i) }}), items)
-		case "native-select":
-			c = ui.NativeSelect(ui.NativeSelectProps{Disabled: a.disabled, Value: a.value, Items: []ui.SelectItem{{Value: "a", Label: "Alpha"}, {Value: "b", Label: "Beta"}}, Attrs: surf.On(ctx, "control", surf.Input(input))})
 		}
 		return templ.Join(templ.Raw(`<p id="vector-outside" tabindex="0">Outside</p>`), c).Render(ctx, w)
 	})
@@ -94,8 +92,6 @@ func TestNativeKeyVectors(t *testing.T) {
 		{"textarea", false, "", []string{"tab", "a", "enter", "b"}, []string{"/false/0", "a/false/0", "a\n/false/0", "a\nb/false/0"}},
 		{"textarea", true, "", []string{"tab", "a"}, []string{"/false/0", "/false/0"}},
 		{"list", false, "", []string{"tab", "arrow_down", "arrow_down", "arrow_down", "home", "enter"}, []string{"/false/0", "1/false/0", "2/false/0", "2/false/0", "0/false/0", "0/false/1"}},
-		{"native-select", false, "a", []string{"tab", "arrow_down", "home"}, []string{"a/false/0", "b/false/0", "a/false/0"}},
-		{"native-select", true, "a", []string{"tab", "arrow_down"}, []string{"a/false/0", "a/false/0"}},
 	}
 	for _, v := range vectors {
 		name := v.kind

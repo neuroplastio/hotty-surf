@@ -290,6 +290,8 @@ func kitColours(n *html.Node, dark bool) (fg, bg Role) {
 		}
 	case cls("textarea"):
 		return "foreground", "input/30"
+	case n.DataAtom == atom.Input && attr(n, "role") == "combobox" && attr(n, "data-mode") == "tui":
+		return "secondary-foreground", "secondary"
 	case cls("alert"):
 		if variant == "destructive" {
 			return "destructive", "card"

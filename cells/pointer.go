@@ -210,6 +210,10 @@ func isKitTextarea(n *html.Node) bool {
 	return n != nil && n.DataAtom == atom.Textarea && (tokens(n, "class", "textarea") || attr(n, "data-slot") == "textarea")
 }
 
+func isTUICombobox(n *html.Node) bool {
+	return n != nil && n.DataAtom == atom.Input && attr(n, "role") == "combobox" && attr(n, "data-mode") == "tui"
+}
+
 func textareaResizable(n *html.Node) bool {
 	if !isKitTextarea(n) || disabled(n) {
 		return false
@@ -398,6 +402,9 @@ func (c *Screen) fieldIndexAt(n *html.Node, col, row int) int {
 	if isKitTextarea(n) && r.w >= 4 {
 		padX = 1
 		innerW = r.w - 2
+	} else if isTUICombobox(n) && r.w >= 5 {
+		padX = 1
+		innerW = r.w - 4
 	}
 	localX := max(0, col-(r.x+padX))
 	if n.DataAtom == atom.Textarea {

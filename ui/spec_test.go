@@ -11,7 +11,6 @@ import (
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/internal/stories"
-	"neuroplast.io/hotty-surf/ui"
 )
 
 // TestSpec is the spec test of ui/coverage.tsv: in every story, each class
@@ -21,9 +20,10 @@ import (
 // draw as nothing at all, which no other test sees.
 func TestSpec(t *testing.T) {
 	css := kitSelectors()
+	sheet := stories.Registry().Stylesheet()
 	for _, st := range stories.All() {
 		t.Run(st.ID, func(t *testing.T) {
-			doc, err := surf.New("story", st.View(), ui.Stylesheet()).Document()
+			doc, err := surf.New("story", st.View(), sheet).Document()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -60,7 +60,7 @@ var (
 // stylesheet.
 func kitSelectors() selectors {
 	kitOnce.Do(func() {
-		css := ui.Stylesheet()
+		css := stories.Registry().Stylesheet()
 		kitSel = selectors{classes: map[string]bool{}, values: map[string]bool{}}
 		for _, m := range classRe.FindAllStringSubmatch(css, -1) {
 			kitSel.classes[unescape(m[1])] = true

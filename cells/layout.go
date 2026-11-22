@@ -522,7 +522,7 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		}
 		used += 3 // space + ✓ + right pad
 	}
-	if isKitTextarea(n) || tokens(n, "class", "select") {
+	if isKitTextarea(n) || tokens(n, "class", "select") || tokens(n, "class", "combobox") {
 		l.done(n, rect{x, y, used, h})
 	} else {
 		l.done(n, rect{x, y, w, h})
@@ -687,7 +687,11 @@ func (l *layout) drawTUIPopover(o overlay) {
 	var tb rect
 	if o.n.Parent != nil {
 		for ch := o.n.Parent.FirstChild; ch != nil; ch = ch.NextSibling {
-			if ch.Type == html.ElementNode && ch.DataAtom == atom.Button {
+			if ch.Type != html.ElementNode || ch == o.n {
+				continue
+			}
+			if ch.DataAtom == atom.Button || ch.DataAtom == atom.Input ||
+				tokens(ch, "class", "input-group") || tokens(ch, "class", "combobox-chips") {
 				if r, ok := l.boxes[ch]; ok {
 					tb = r
 					break
@@ -1407,7 +1411,7 @@ func (l *layout) pieces(ps []piece, n *html.Node, in inh, fill bool) []piece {
 	}
 	if st.display == dAtom {
 		p := l.atom(n, st, in)
-		if !isKitTextarea(n) {
+		if !isKitTextarea(n) && !isTUICombobox(n) {
 			p.full = p.full || fill && isField(n)
 		}
 		if p.w > 0 || p.full {
@@ -1567,6 +1571,10 @@ func (l *layout) atom(n *html.Node, st box, in inh) piece {
 			}
 		}
 	}
+	if isTUICombobox(n) {
+		p.w = max(attrPosInt(n, "data-min-w"), 12) + 4 // " " + text + " ▾ "
+		p.full = false
+	}
 	return p
 }
 
@@ -1604,8 +1612,9 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 	}
 	f := l.field(n)
 	kitTA := isKitTextarea(n)
+	tuiCB := isTUICombobox(n)
 	base := p.look
-	if !kitTA {
+	if !kitTA && !tuiCB {
 		base |= lUnderline
 	}
 	for j := 0; j < p.h; j++ {
@@ -1617,6 +1626,9 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		if textareaResizable(n) && w >= 4 {
 			l.draw(x+w-1, y+p.h-1, "◢", 1, p.look|lMuted, n)
 		}
+		if tuiCB && w >= 5 {
+			l.draw(x+w-2, y, "▾", 1, p.look|lMuted, n)
+		}
 	}
 	focused := n == l.c.focused && l.c.active
 	padX := 0
@@ -1624,6 +1636,9 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 	if kitTA && w >= 4 {
 		padX = 1
 		innerW = w - 2
+	} else if tuiCB && w >= 5 {
+		padX = 1
+		innerW = w - 4
 	}
 	if f.ed.Value == "" {
 		if ph := attr(n, "placeholder"); ph != "" {
@@ -1742,8 +1757,8 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		if caretCol < f.off {
 			f.off = caretCol
 		}
-		if caretCol >= f.off+w {
-			f.off = caretCol - w + 1
+		if caretCol >= f.off+innerW {
+			f.off = caretCol - innerW + 1
 		}
 	} else {
 		f.off = 0
@@ -1758,13 +1773,13 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		skip += ch.w
 	}
 	f.off = skip
-	cx := x
+	cx := x + padX
 	for _, ch := range cs {
 		if skip > 0 {
 			skip -= ch.w
 			continue
 		}
-		if cx+ch.w > x+w {
+		if cx+ch.w > x+padX+innerW {
 			break
 		}
 		lk := base
@@ -1774,8 +1789,9 @@ func (l *layout) paintAtom(p piece, x, y, w int, stop *html.Node) {
 		l.draw(cx, y, ch.s, ch.w, lk, n)
 		cx += ch.w
 	}
+	drawGrip()
 	if focused {
-		l.setCaret(x+caretCol-f.off, y)
+		l.setCaret(x+padX+caretCol-f.off, y)
 	}
 }
 

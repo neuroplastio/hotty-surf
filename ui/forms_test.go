@@ -23,14 +23,13 @@ func TestAttrsFaults(t *testing.T) {
 		ui.Checkbox(ui.CheckboxProps{Attrs: templ.Attributes{"type": "radio"}}),
 		ui.Badge(ui.BadgeProps{Attrs: templ.Attributes{"data-slot": "x"}}),
 		ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}),
-		ui.NativeSelect(ui.NativeSelectProps{Items: []ui.SelectItem{{}}, Attrs: templ.Attributes{"disabled": true}}),
 		ui.FieldSeparator(ui.FieldSeparatorProps{Attrs: templ.Attributes{"class": "my-2"}}),
 	)
 	surftest.Start(f, surf.New("t", view, ui.Stylesheet()))
 	all := strings.Join(f.got, "\n")
 	for _, w := range []string{
 		"ui.Input: Attrs has value", "ui.Input: Attrs has class, which the component writes itself (use Class)",
-		"ui.Checkbox: Attrs has type", "ui.Badge: Attrs has data-slot", "ui.NativeSelect: Attrs has disabled",
+		"ui.Checkbox: Attrs has type", "ui.Badge: Attrs has data-slot",
 		"ui.FieldSeparator: Attrs has class",
 	} {
 		if !strings.Contains(all, w) {
@@ -39,17 +38,6 @@ func TestAttrsFaults(t *testing.T) {
 	}
 	if strings.Contains(all, "ui.Button") {
 		t.Errorf("Button's type is Attrs' to replace, but: %q", all)
-	}
-}
-
-// A NativeSelect's Value is one of its items' (kit rule K6).
-func TestNativeSelectValueFault(t *testing.T) {
-	f := &faults{T: t}
-	surftest.Start(f, surf.New("t", ui.NativeSelect(ui.NativeSelectProps{
-		Items: []ui.SelectItem{{Value: "a", Label: "A"}}, Value: "b",
-	}), ui.Stylesheet()))
-	if all := strings.Join(f.got, "\n"); !strings.Contains(all, `ui.NativeSelect: Value "b" is no item's`) {
-		t.Errorf("no fault for a Value no item has in %q", all)
 	}
 }
 
@@ -105,16 +93,6 @@ func TestFieldSeparatorWord(t *testing.T) {
 		if n != want {
 			t.Errorf("separator #%s has %d spans, want %d", id, n, want)
 		}
-	}
-}
-
-// A NativeSelect with no items yet (its options load later) holds nothing
-// for the host to keep: Value "" is no fault.
-func TestNativeSelectEmpty(t *testing.T) {
-	f := &faults{T: t}
-	surftest.Start(f, surf.New("t", ui.NativeSelect(ui.NativeSelectProps{}), ui.Stylesheet()))
-	if len(f.got) > 0 {
-		t.Errorf("an empty select faults: %q", f.got)
 	}
 }
 

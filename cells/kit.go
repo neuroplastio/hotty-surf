@@ -118,7 +118,7 @@ func empty(n *html.Node) (string, bool) {
 	default:
 		return "", false
 	}
-	if closest(n, func(a *html.Node) bool { return tokens(a, "class", in) }) == nil || hasShown(n, item) {
+	if inTUIPopover(n) || closest(n, func(a *html.Node) bool { return tokens(a, "class", in) }) == nil || hasShown(n, item) {
 		return "", false
 	}
 	if s, ok := get(n, "data-empty"); ok {

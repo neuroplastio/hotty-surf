@@ -16,7 +16,7 @@ import (
 
 func TestKeyScopeShared(t *testing.T) {
 	for _, mode := range []string{"host", "cells"} {
-		for _, kind := range []string{"button-take", "button-decline", "checkbox", "select", "text", "compound", "nested", "nested-decline", "mod"} {
+		for _, kind := range []string{"button-take", "button-decline", "checkbox", "text", "compound", "nested", "nested-decline", "mod"} {
 			t.Run(mode+"/"+kind, func(t *testing.T) {
 				count, clicks, checked, value, changes := 0, 0, false, "a", 0
 				var sel ui.SelectState
@@ -28,8 +28,6 @@ func TestKeyScopeShared(t *testing.T) {
 							c = with(ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "control", surf.Click(func() { clicks++ }))}), templ.Raw("Go"))
 						case "checkbox":
 							c = ui.Checkbox(ui.CheckboxProps{Checked: checked, Attrs: surf.On(ctx, "control", surf.Check(func(v bool) { checked = v; changes++ }))})
-						case "select":
-							c = ui.NativeSelect(ui.NativeSelectProps{Value: value, Items: []ui.SelectItem{{Value: "a", Label: "A"}, {Value: "b", Label: "B"}}, Attrs: surf.On(ctx, "control", surf.Input(func(v string) { value = v; changes++ }))})
 						case "text":
 							c = ui.Input(ui.InputProps{Value: value, Attrs: surf.On(ctx, "control", surf.Input(func(v string) { value = v; changes++ }))})
 						case "compound":

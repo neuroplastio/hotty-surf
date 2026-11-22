@@ -5,6 +5,9 @@ import (
 	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf"
 )
 
 // Action is a semantic keyboard action for interactive kit components.
@@ -180,4 +183,45 @@ func isBarePrintable(k string) bool {
 	}
 	r, size := utf8.DecodeRuneInString(k)
 	return size == len(k) && r >= 0x20 && r != 0x7f
+}
+
+// BindKeys returns a surf.Bind handler for any host text-editing actions
+// (converted from hotty.Action, e.g. ui.Action(hotty.WordBackward)) present
+// in ctx's KeyMap or local overrides. Widget-only actions (ui.ActDown, etc.)
+// are ignored. Returns a no-op Handler when no host actions are bound.
+func BindKeys(ctx context.Context, local KeyMap) (surf.Handler, bool) {
+	km := KeysOf(ctx)
+	for a, ks := range local {
+		km[a] = ks
+	}
+	var opts []surf.BindOption
+	for a, ks := range km {
+		ha := hotty.Action(a)
+		if !isHostEditAction(ha) || len(ks) == 0 {
+			continue
+		}
+		opts = append(opts, surf.Action(ha, ks...))
+	}
+	if len(opts) == 0 {
+		return surf.Handler{}, false
+	}
+	return surf.Bind(surf.Group(opts...)), true
+}
+
+func isHostEditAction(a hotty.Action) bool {
+	switch a {
+	case hotty.CharBackward, hotty.CharForward,
+		hotty.WordBackward, hotty.WordForward,
+		hotty.LineStart, hotty.LineEnd,
+		hotty.DeleteCharBackward, hotty.DeleteCharForward,
+		hotty.DeleteWordBackward, hotty.DeleteWordForward,
+		hotty.DeleteToLineStart, hotty.DeleteToLineEnd,
+		hotty.LinePrevious, hotty.LineNext,
+		hotty.PageUp, hotty.PageDown,
+		hotty.InputStart, hotty.InputEnd,
+		hotty.SelectAll, hotty.Newline, hotty.Submit,
+		hotty.Copy, hotty.Cut, hotty.Paste, hotty.Undo, hotty.Redo:
+		return true
+	}
+	return false
 }

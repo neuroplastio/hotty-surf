@@ -208,6 +208,16 @@ func scopeTextAttrs(ctx context.Context, attrs templ.Attributes) templ.Attribute
 	return applyScope(ctx, attrs, "text")
 }
 
+// ScopeNativeAttrs attaches KeyScope metadata for a native control kind (e.g. "button").
+func ScopeNativeAttrs(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
+	return scopeNativeAttrs(ctx, attrs, kind)
+}
+
+// ScopeCompoundAttrs attaches KeyScope metadata for a compound text input (Combobox, Command).
+func ScopeCompoundAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
+	return scopeCompoundAttrs(ctx, attrs)
+}
+
 func scopeNativeAttrs(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
 	return applyScope(ctx, attrs, kind)
 }

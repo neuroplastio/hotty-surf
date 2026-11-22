@@ -2,45 +2,6 @@ package ui
 
 import "strings"
 
-// The form components with parts of their own (css.go): a native select's
-// options, a field separator's word.
-
-templ nativeSelect(p NativeSelectProps) {
-	{{ checkSize(ctx, "NativeSelect", p.Size, nativeSelectSizes) }}
-	{{ checkAttrs(ctx, "NativeSelect", p.Attrs, "class", "data-slot", "data-size=Size", "disabled=Disabled", "aria-invalid=Invalid") }}
-	{{ checkChoice(ctx, p) }}
-	<select
-		data-slot="native-select"
-		if p.Size != "" {
-			data-size={ string(p.Size) }
-		}
-		disabled?={ p.Disabled }
-		if p.Invalid {
-			aria-invalid="true"
-		}
-		class={ join(bare(ctx, "select"), p.Class) }
-		{ scopeNativeAttrs(ctx, p.Attrs, "select")... }
-	>
-		for _, g := range optionGroups(p.Items) {
-			if g.label == "" {
-				for _, it := range g.items {
-					@nativeOption(it, p.Value)
-				}
-			} else {
-				<optgroup label={ g.label }>
-					for _, it := range g.items {
-						@nativeOption(it, p.Value)
-					}
-				</optgroup>
-			}
-		}
-	</select>
-}
-
-templ nativeOption(it SelectItem, value string) {
-	<option value={ it.Value } selected?={ it.Value == value } disabled?={ it.Disabled }>{ it.Label }</option>
-}
-
 // fieldSeparator writes the separator, with its children (rendered) in a
 // span, or none: an empty span would cut a gap in the line.
 templ fieldSeparator(p FieldSeparatorProps, word string) {

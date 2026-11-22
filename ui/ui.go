@@ -2,6 +2,8 @@ package ui
 
 import (
 	_ "embed"
+	"slices"
+	"strings"
 	"sync"
 
 	"github.com/a-h/templ"
@@ -46,24 +48,86 @@ const (
 // doesn't. A surface with no CSS of its own (a dev tool's error surface, a
 // host's dialog) uses it as it is. A surface links the kit rather than
 // carry it: Surface.Link(Sheet()).
-func Stylesheet() string {
-	return kitCSS + navCSS + controlsCSS + sliderCSS + contextMenuCSS + toastCSS + tooltipCSS + textareaCSS + selectCSS
+type cssEntry struct {
+	name string
+	css  string
 }
 
-// Sheet is Stylesheet as a resource that documents link rather than carry
-// (surf.Surface.Link): sent once on a connection rather than in every
-// document of every surface. Its ID is "hotty-surf-kit-" and 8 hex digits
-// of the sheet's FNV-1a hash, so a kit with other CSS has another ID. An
-// app links it, and New takes only its own CSS:
-//
-//	s := surf.New("hello", Page(a), appCSS)
-//	s.Link(ui.Sheet())
-func Sheet() surf.Sheet {
-	return kitSheet()
+// Registry collects component assets (such as stylesheets) explicitly
+// registered via each component package's Register(r *ui.Registry) function.
+type Registry struct {
+	mu      sync.RWMutex
+	css     []cssEntry
+	hasHash bool
+	sheet   surf.Sheet
 }
 
-var kitSheet = sync.OnceValue(func() surf.Sheet {
-	css := Stylesheet()
+// NewRegistry returns an empty component Registry.
+func NewRegistry() *Registry { return &Registry{} }
+
+// DefaultRegistry is the kit's default Registry used by Stylesheet() and Sheet().
+var DefaultRegistry = NewRegistry()
+
+// Register calls each component's Register function on r and returns r.
+func (r *Registry) Register(fns ...func(*Registry)) *Registry {
+	for _, fn := range fns {
+		if fn != nil {
+			fn(r)
+		}
+	}
+	return r
+}
+
+// CSS registers a component's embedded stylesheet under name.
+// Entries are emitted in name order so Sheet()'s hash is deterministic.
+func (r *Registry) CSS(name, css string) {
+	if css == "" {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.hasHash = false
+	for i := range r.css {
+		if r.css[i].name == name {
+			r.css[i].css = css
+			return
+		}
+	}
+	r.css = append(r.css, cssEntry{name: name, css: css})
+	slices.SortFunc(r.css, func(a, b cssEntry) int {
+		return strings.Compare(a.name, b.name)
+	})
+}
+
+// Stylesheet returns the kit's base CSS plus all stylesheets registered on r.
+func (r *Registry) Stylesheet() string {
+	var b strings.Builder
+	b.WriteString(kitCSS)
+	b.WriteString(navCSS)
+	b.WriteString(controlsCSS)
+	b.WriteString(sliderCSS)
+	b.WriteString(contextMenuCSS)
+	b.WriteString(toastCSS)
+	r.mu.RLock()
+	for _, e := range r.css {
+		b.WriteByte('\n')
+		b.WriteString(e.css)
+	}
+	r.mu.RUnlock()
+	return b.String()
+}
+
+// Sheet returns r.Stylesheet() as a linkable surf.Sheet with an FNV-1a ID.
+func (r *Registry) Sheet() surf.Sheet {
+	r.mu.RLock()
+	if r.hasHash {
+		s := r.sheet
+		r.mu.RUnlock()
+		return s
+	}
+	r.mu.RUnlock()
+
+	css := r.Stylesheet()
 	// FNV-1a, 32 bits: a name that changes with the CSS, not a secret.
 	h := uint32(2166136261)
 	for i := 0; i < len(css); i++ {
@@ -74,8 +138,26 @@ var kitSheet = sync.OnceValue(func() surf.Sheet {
 	for i := len(id) - 1; h != 0; i, h = i-1, h>>4 {
 		id[i] = digits[h&15]
 	}
-	return surf.Sheet{ID: string(id), CSS: css}
-})
+	s := surf.Sheet{ID: string(id), CSS: css}
+
+	r.mu.Lock()
+	r.sheet = s
+	r.hasHash = true
+	r.mu.Unlock()
+	return s
+}
+
+func Stylesheet() string { return DefaultRegistry.Stylesheet() }
+
+// Sheet is Stylesheet as a resource that documents link rather than carry
+// (surf.Surface.Link): sent once on a connection rather than in every
+// document of every surface. Its ID is "hotty-surf-kit-" and 8 hex digits
+// of the sheet's FNV-1a hash, so a kit with other CSS has another ID. An
+// app links it, and New takes only its own CSS:
+//
+//	s := surf.New("hello", Page(a), appCSS)
+//	s.Link(ui.Sheet())
+func Sheet() surf.Sheet { return DefaultRegistry.Sheet() }
 
 // kitCSS is Basecoat 1.1.0's theme and components and the kit's Tailwind
 // utilities, as the spike's kit built them (kit.css).
@@ -88,15 +170,6 @@ var navCSS string
 
 //go:embed controls.css
 var controlsCSS string
-
-//go:embed tooltip/tooltip.css
-var tooltipCSS string
-
-//go:embed textarea/textarea.css
-var textareaCSS string
-
-//go:embed select/select.css
-var selectCSS string
 
 // Icon is the icon named name, one of the kit's Lucide icons, as an inline
 // SVG. The kit has a subset of Lucide: the icons its own components use, and

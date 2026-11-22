@@ -19,6 +19,12 @@ import (
 //go:embed chevron.svg
 var chevronSVG string
 
+//go:embed select.css
+var css string
+
+// Register registers select's assets with r.
+func Register(r *ui.Registry) { r.CSS("select", css) }
+
 // Align places the dropdown popover along its trigger.
 type Align string
 

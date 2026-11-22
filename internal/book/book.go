@@ -45,6 +45,8 @@ import (
 	bookcode "neuroplast.io/hotty-surf/ui/code"
 )
 
+var kit = stories.Registry()
+
 //go:embed book.css
 var bookCSS string
 
@@ -249,7 +251,8 @@ var paneDone = func() chan struct{} {
 // paneKeys are CUA editing keys declared on #book-pane so the host forwards
 // them to PaneKey (and into cells.Screen) rather than intercepting them.
 var paneKeys = []string{
-	"ctrl+a", "ctrl+backspace", "ctrl+delete",
+	"ctrl+a", "ctrl+c", "ctrl+x", "ctrl+v",
+	"ctrl+backspace", "ctrl+delete",
 	"ctrl+left", "ctrl+right", "ctrl+shift+left", "ctrl+shift+right",
 	"ctrl+home", "ctrl+end", "ctrl+shift+home", "ctrl+shift+end",
 	"ctrl+z", "ctrl+y", "ctrl+shift+z",
@@ -270,7 +273,7 @@ func (sh *shown) start(mode func() ui.Mode) {
 	// an independent driver goroutine; mark it done so devchild's live-reload
 	// handover never stalls 4s waiting on it.
 	devhook.Driver(sh.pane, paneDone)
-	sh.pane.Link(ui.Sheet())
+	sh.pane.Link(kit.Sheet())
 	sh.scr = cells.New(paneCols, paneRows, func(e hotty.Event) {
 		switch e.Kind {
 		case hotty.EventFocus:
@@ -338,6 +341,9 @@ func (a *App) startingList(ctx context.Context) bool {
 }
 
 func (a *App) bookKey(k string) bool {
+	if k == "mod+c" || k == "ctrl+c" {
+		return true
+	}
 	if k == "r" {
 		a.stepMode(1)
 		return true
@@ -1182,6 +1188,6 @@ func itoa(i int) string {
 // linked rather than carried (ui.Sheet), then by CSS.
 func newSurface(name string, view templ.Component) *surf.Surface {
 	s := surf.New(name, view, CSS)
-	s.Link(ui.Sheet())
+	s.Link(kit.Sheet())
 	return s
 }

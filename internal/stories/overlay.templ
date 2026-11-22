@@ -7,6 +7,7 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 	"neuroplast.io/hotty-surf/ui/button"
+	"neuroplast.io/hotty-surf/ui/combobox"
 	"neuroplast.io/hotty-surf/ui/tooltip"
 )
 
@@ -20,7 +21,7 @@ type overlayState struct {
 	cmd   ui.CommandState
 	ran   string
 	open  bool
-	box ui.ComboboxState
+	box    combobox.State
 	value string
 	values []string
 	drawer ui.DrawerState
@@ -36,7 +37,7 @@ type bookPopoverProps struct {
 type bookComboboxProps struct {
 	Placeholder string
 	Value string
-	box ui.ComboboxState
+	box    combobox.State
 }
 
 func fruitValue(v string) string {
@@ -181,21 +182,21 @@ templ drawerStory(s *overlayState, side string) {
 
 templ bookCombobox(p *bookComboboxProps) {
 	<div class="p-4 flex flex-col gap-3">
-		@ui.Combobox(&p.box, ui.ComboboxProps{ID:"fruit", Placeholder:p.Placeholder, Value:p.Value,
-			Items:[]ui.SelectItem{{Value:"a", Label:"Apple"}, {Value:"b", Label:"Banana"},
-				{Value:"c", Label:"Cherry", Group:"More"}},
-			OnChange:func(v string) { p.Value=v }})
+		@combobox.View(&p.box, combobox.Props{ID: "fruit", Placeholder: p.Placeholder, Value: p.Value,
+			Items: []combobox.Item{{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"},
+				{Value: "c", Label: "Cherry", Group: "More"}},
+			OnChange: func(v string) { p.Value = v }})
 		<p>fruit: { fruitValue(p.Value) }</p>
 	</div>
 }
 
 templ comboboxStory(s *overlayState, multiple, clear bool) {
 	<div class="p-4 flex flex-col gap-3">
-		@ui.Combobox(&s.box, ui.ComboboxProps{ID:"fruit", Placeholder:"Choose fruit", Multiple:multiple, Clear:clear,
-			Value:s.value, Values:s.values, Items:[]ui.SelectItem{
-				{Value:"a", Label:"Apple"}, {Value:"b", Label:"Banana"},
-				{Value:"c", Label:"Cherry", Group:"More"}, {Value:"d", Label:"Date", Group:"More", Disabled:true},
-			}, OnChange:func(v string) { s.value=v }, OnValuesChange:func(v []string) { s.values=v }})
+		@combobox.View(&s.box, combobox.Props{ID: "fruit", Placeholder: "Choose fruit", Multiple: multiple, Clear: clear,
+			Value: s.value, Values: s.values, Items: []combobox.Item{
+				{Value: "a", Label: "Apple"}, {Value: "b", Label: "Banana"},
+				{Value: "c", Label: "Cherry", Group: "More"}, {Value: "d", Label: "Date", Group: "More", Disabled: true},
+			}, OnChange: func(v string) { s.value = v }, OnValuesChange: func(v []string) { s.values = v }})
 		if multiple {
 			<p>fruits: { strings.Join(s.values, ", ") }</p>
 		} else {
