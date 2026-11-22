@@ -1,0 +1,74 @@
+// Package story provides the storybook showcase for ui/menu.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/menu"
+)
+
+type state struct {
+	m1      menu.DropdownState
+	m2      menu.DropdownState
+	m3      menu.DropdownState
+	ran     string
+	checked bool
+	theme   string
+}
+
+func onoff(b bool) string {
+	if b {
+		return "on"
+	}
+	return "off"
+}
+
+func (s *state) run(v string) func() { return func() { s.ran = v } }
+
+func (s *state) items() []menu.Item {
+	return []menu.Item{
+		{Label: "Profile", Icon: "settings-2", Keys: "mod+p", OnSelect: s.run("profile")},
+		{Label: "Billing", Disabled: true, OnSelect: s.run("billing")},
+		{Label: "Team", OnSelect: s.run("team")},
+		{Label: "Delete", Group: "Danger", Variant: surfui.Destructive, OnSelect: s.run("delete")},
+	}
+}
+
+func (s *state) checkItems() []menu.Item {
+	return []menu.Item{
+		{Label: "Show toolbar", Role: "menuitemcheckbox", Checked: s.checked, OnCheckedChange: func(v bool) { s.checked = v }},
+		{Label: "Light", Group: "Theme", Role: "menuitemradio", Checked: s.theme == "light", OnCheckedChange: func(v bool) {
+			if v {
+				s.theme = "light"
+			}
+		}},
+		{Label: "Dark", Group: "Theme", Role: "menuitemradio", Checked: s.theme == "dark", OnCheckedChange: func(v bool) {
+			if v {
+				s.theme = "dark"
+			}
+		}},
+	}
+}
+
+// Register adds menu's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "dropdown-menu/default",
+		Doc:          "Dropdown menus with icons, shortcuts, groups, end alignment, checkboxes, and radios",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{theme: "dark"}) },
+		Keys:         []string{"tab", "enter", "arrow_down", "enter"},
+		Want:         "ran: profile",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4">
+		<div class="flex flex-wrap items-center gap-4">
+			@menu.Dropdown(&s.m1, menu.DropdownProps{ID: "account", Trigger: templ.Raw("Account"), Items: s.items()})
+			@menu.Dropdown(&s.m2, menu.DropdownProps{ID: "checks", Trigger: templ.Raw("View"), Items: s.checkItems()})
+			@menu.Dropdown(&s.m3, menu.DropdownProps{ID: "end-menu", Align: "end", Trigger: templ.Raw("End-aligned"), Items: s.items()})
+		</div>
+		<p class="text-sm text-muted-foreground">ran: { s.ran } · toolbar: { onoff(s.checked) } · theme: { s.theme }</p>
+	</div>
+}

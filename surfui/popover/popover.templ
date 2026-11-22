@@ -1,0 +1,166 @@
+// Package popover is hotty-surf's self-contained Popover component.
+package popover
+
+import (
+	"context"
+	"io"
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers popover's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Popover component.
+type Props struct {
+	ID      string
+	Trigger templ.Component
+	Side    string
+	Align   string
+	Class   string
+}
+
+// State holds whether a Popover is open across renders.
+type State struct {
+	open    bool
+	focus   bool
+	focusAt uint64
+}
+
+// Open opens the popover.
+func (st *State) Open() { st.open = true }
+
+// Close closes the popover and returns focus to its trigger.
+func (st *State) Close() {
+	if st.open {
+		st.open, st.focus, st.focusAt = false, true, 0
+	}
+}
+
+// View renders a Popover, clearing any outer InputGroup context.
+func View(st *State, p Props) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return util.ScopedGroup(popoverMarkup(newView(st, p)), false).Render(ctx, w)
+	})
+}
+
+type view struct {
+	st     *State
+	p      Props
+	id     string
+	popups *util.Popup
+	n      uint64
+}
+
+func newView(st *State, p Props) *view {
+	id := p.ID
+	if id == "" {
+		id = "popover"
+	}
+	return &view{st: st, p: p, id: id}
+}
+
+func (v *view) start(ctx context.Context) string {
+	if f := rt.From(ctx); f != nil {
+		v.n = f.N()
+	}
+	v.popups = util.Popups(ctx)
+	v.popups.Track(ctx, v.st, v.id, v.st.open, v.shut)
+	return ""
+}
+
+func (v *view) shut() { v.st.open = false }
+
+func (v *view) open() {
+	v.st.open = true
+	v.popups.Opened(v.st, v.shut)
+}
+
+func (v *view) close(focus bool) {
+	if !v.st.open {
+		return
+	}
+	v.st.open = false
+	v.popups.Closed(v.st)
+	if focus {
+		v.st.focus, v.st.focusAt = true, v.n+1
+	}
+}
+
+func (v *view) toggle() {
+	if v.st.open {
+		v.close(true)
+	} else {
+		v.open()
+	}
+}
+
+func (v *view) key(k string) bool {
+	if k != "escape" || !v.st.open {
+		return false
+	}
+	v.close(true)
+	return true
+}
+
+func (v *view) outside() { v.close(false) }
+
+func (v *view) refocus() bool {
+	if !v.st.focus || v.n < v.st.focusAt {
+		return false
+	}
+	v.st.focus = false
+	return true
+}
+
+func (v *view) rootAttrs(ctx context.Context) templ.Attributes {
+	if !v.st.open {
+		return util.KitOn(ctx, v.id, surf.Key(v.key))
+	}
+	return util.KitOn(ctx, v.id, surf.Key(v.key), surf.Outside(v.outside))
+}
+
+templ popoverMarkup(v *view) {
+	{{ v.start(ctx) }}
+	<div
+		class={ util.JoinClass("popover", v.p.Class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		data-popover-initialized="true"
+		{ v.rootAttrs(ctx)... }
+	>
+		<button
+			type="button"
+			aria-expanded={ strconv.FormatBool(v.st.open) }
+			aria-controls={ v.id + "-popover" }
+			class="btn"
+			data-variant="outline"
+			{ util.ScopeAttrs(ctx, surf.On(ctx, v.id+"-trigger", surf.Click(v.toggle)))... }
+		>
+			if v.p.Trigger != nil {
+				@util.Plain(v.p.Trigger)
+			}
+		</button>
+		<div
+			id={ v.id + "-popover" }
+			data-popover
+			aria-hidden={ strconv.FormatBool(!v.st.open) }
+			if v.p.Side != "" {
+				data-side={ v.p.Side }
+			}
+			if v.p.Align != "" {
+				data-align={ v.p.Align }
+			}
+		>
+			{ children... }
+		</div>
+		if v.refocus() {
+			{{ surf.Autofocus(ctx, v.id+"-trigger") }}
+		}
+	</div>
+}

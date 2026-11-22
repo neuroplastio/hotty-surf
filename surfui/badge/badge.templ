@@ -1,0 +1,55 @@
+// Package badge is hotty-surf's self-contained Badge component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package badge
+
+import (
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers badge's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Badge component.
+type Props struct {
+	Variant surfui.Variant
+	Attrs   templ.Attributes
+	Class   string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p) {
+			{ children... }
+		}
+	default:
+		@TUI(p) {
+			{ children... }
+		}
+	}
+}
+
+// Hotty renders Basecoat's badge for a hotty host.
+templ Hotty(p Props) {
+	<span
+		data-slot="badge"
+		class={ util.JoinClass("badge", p.Class) }
+		{ util.MergeAttrs(util.OptAttr("data-variant", p.Variant), p.Attrs)... }
+	>
+		{ children... }
+	</span>
+}
+
+// TUI renders the badge for cells.Screen.
+templ TUI(p Props) {
+	<span
+		data-slot="badge"
+		data-mode="tui"
+		class={ util.JoinClass("badge", p.Class) }
+		{ util.MergeAttrs(util.OptAttr("data-variant", p.Variant), p.Attrs)... }
+	>
+		{ children... }
+	</span>
+}

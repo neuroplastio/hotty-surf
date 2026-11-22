@@ -1,0 +1,84 @@
+// Package story provides the storybook showcase for ui/alert.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/alert"
+)
+
+// Props is the editable state for the Alert storybook controls.
+type Props struct {
+	Variant string `enum:"default,destructive"`
+	Title   string
+	Text    string
+	Icon    bool
+}
+
+func alertVariant(v string) surfui.Variant {
+	if v == "destructive" {
+		return surfui.Destructive
+	}
+	return surfui.Primary
+}
+
+// Register adds alert's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "alert/default",
+		Doc:          "Default and destructive alerts with icons, titles, and lists",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase() },
+		Props: func() (any, templ.Component) {
+			p := &Props{Variant: "default", Title: "Heads up!", Text: "You can add components to your app.", Icon: true}
+			return p, editable(p)
+		},
+	})
+}
+
+templ editable(p *Props) {
+	<div class="p-4 flex flex-col gap-4 max-w-lg">
+		@alert.View(alert.Props{Variant: alertVariant(p.Variant)}) {
+			if p.Icon {
+				@icon.View("circle-help", "")
+			}
+			<h2>{ p.Title }</h2>
+			<section>{ p.Text }</section>
+		}
+		@alert.View(alert.Props{Variant: surfui.Destructive}) {
+			@icon.View("circle-alert", "")
+			<h2>The payment failed</h2>
+			<section>
+				<p>Check the card's details and try again.</p>
+				<ul>
+					<li>The card number</li>
+					<li>The expiry date</li>
+				</ul>
+			</section>
+		}
+	</div>
+}
+
+templ showcase() {
+	<div class="p-4 flex flex-col gap-4 max-w-md">
+		@alert.View(alert.Props{}) {
+			@icon.View("circle-check-big", "")
+			<h2>Your changes are saved</h2>
+			<section>
+				<p>They show on every device within a minute.</p>
+			</section>
+		}
+		@alert.View(alert.Props{Variant: surfui.Destructive}) {
+			@icon.View("circle-alert", "")
+			<h2>The payment failed</h2>
+			<section>
+				<p>Check the card's details and try again.</p>
+				<ul>
+					<li>The card number</li>
+					<li>The expiry date</li>
+				</ul>
+			</section>
+		}
+	</div>
+}

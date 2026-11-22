@@ -1,0 +1,122 @@
+// Package field is hotty-surf's self-contained Field, FieldSet, and Separator
+// component, with explicit renderers for Hotty and TUI modes.
+package field
+
+import (
+	"bytes"
+	"context"
+	"io"
+	"strings"
+
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers field's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Orientation lays out a Field vertically (default), horizontally, or responsively.
+type Orientation string
+
+const (
+	Vertical   Orientation = ""
+	Horizontal Orientation = "horizontal"
+	Responsive Orientation = "responsive"
+)
+
+// Props configures a Field wrapper.
+type Props struct {
+	Orientation Orientation
+	Invalid     bool
+	Disabled    bool
+	Attrs       templ.Attributes
+	Class       string
+}
+
+// SetProps configures a FieldSet container.
+type SetProps struct {
+	Attrs templ.Attributes
+	Class string
+}
+
+// SeparatorProps configures a Field Separator divider.
+type SeparatorProps struct {
+	Attrs templ.Attributes
+	Class string
+}
+
+// View renders a Field, clearing any outer InputGroup context.
+func View(p Props) templ.Component {
+	return util.ScopedGroup(viewInner(p), false)
+}
+
+templ viewInner(p Props) {
+	<div
+		data-slot="field"
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		if p.Orientation != "" {
+			data-orientation={ string(p.Orientation) }
+		}
+		if p.Invalid {
+			data-invalid="true"
+		}
+		if p.Disabled {
+			data-disabled="true"
+		}
+		class={ util.JoinClass("field", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// Set renders a FieldSet, clearing any outer InputGroup context.
+func Set(p SetProps) templ.Component {
+	return util.ScopedGroup(setInner(p), false)
+}
+
+templ setInner(p SetProps) {
+	<fieldset
+		data-slot="fieldset"
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		class={ util.JoinClass("fieldset", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</fieldset>
+}
+
+// Separator renders a horizontal rule with an optional centered label.
+func Separator(p SeparatorProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		var buf bytes.Buffer
+		if kids := templ.GetChildren(ctx); kids != nil {
+			if err := kids.Render(util.OutOfGroup(ctx), &buf); err != nil {
+				return err
+			}
+		}
+		return separatorInner(p, buf.String()).Render(ctx, w)
+	})
+}
+
+templ separatorInner(p SeparatorProps, word string) {
+	<div
+		data-slot="field-separator"
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		class={ util.JoinClass("field-separator", p.Class) }
+		{ p.Attrs... }
+	>
+		<hr role="separator"/>
+		if strings.TrimSpace(word) != "" {
+			<span>
+				@templ.Raw(word)
+			</span>
+		}
+	</div>
+}

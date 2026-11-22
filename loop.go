@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // The loop: what the driver's calls do. Every call runs on the driver's

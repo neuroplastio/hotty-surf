@@ -1,0 +1,67 @@
+// Package iconbutton is hotty-surf's self-contained shell IconButton component.
+package iconbutton
+
+import (
+	"context"
+	"strings"
+
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/symbol"
+)
+
+// Register registers iconbutton's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a shell IconButton.
+type Props struct {
+	Shape symbol.Shape
+	Attrs templ.Attributes
+	Class string
+}
+
+func checkName(ctx context.Context, attrs templ.Attributes) string {
+	for key, raw := range attrs {
+		if !strings.EqualFold(key, "aria-label") && !strings.EqualFold(key, "aria-labelledby") {
+			continue
+		}
+		if value, ok := raw.(string); ok && strings.TrimSpace(value) != "" {
+			return ""
+		}
+	}
+	rt.Fault(ctx, "iconbutton.View: Attrs must give the button an accessible name")
+	return ""
+}
+
+func disableIfDisabled(ctx context.Context, attrs templ.Attributes) string {
+	var id string
+	disabled := false
+	for key, value := range attrs {
+		if strings.EqualFold(key, "id") {
+			id, _ = value.(string)
+		}
+		if strings.EqualFold(key, "disabled") && value != nil && value != false {
+			disabled = true
+		}
+	}
+	if disabled {
+		if f := rt.From(ctx); f != nil && f.Get(id) != nil {
+			f.Get(id).Click = nil
+		}
+	}
+	return ""
+}
+
+// View renders a symbol-only shell icon button.
+templ View(p Props) {
+	{{ checkName(ctx, p.Attrs) }}
+	{{ disableIfDisabled(ctx, p.Attrs) }}
+	<button
+		type="button"
+		class={ util.JoinClass("flex w-6.5 cursor-default items-center justify-center border-0 bg-transparent p-0 text-inherit outline-offset-0 focus-visible:outline-2 focus-visible:outline-sidebar-ring", p.Class) }
+		{ util.ScopeNativeAttrs(ctx, p.Attrs, "button")... }
+	>
+		@symbol.View(p.Shape, "size-4")
+	</button>
+}

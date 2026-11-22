@@ -1,0 +1,33 @@
+// Package story provides the storybook showcase for ui/progress.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/progress"
+)
+
+// Register adds progress's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "progress/default",
+		Doc:          "Progress bars at 0, 25, 50, 75 and 100%",
+		Consolidated: true,
+		Score:        4,
+		View:         func() templ.Component { return showcase() },
+	})
+}
+
+templ showcase() {
+	<div class="p-4 max-w-sm flex flex-col gap-4">
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">With percentage</span>
+			for _, v := range []float64{0, 25, 50, 75, 100} {
+				@progress.View(progress.Props{Value: v, ShowValue: true})
+			}
+		</div>
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Animated (indeterminate)</span>
+			@progress.View(progress.Props{Indeterminate: true})
+		</div>
+	</div>
+}

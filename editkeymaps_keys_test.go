@@ -11,10 +11,11 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottytest"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/surfkey"
+	"neuroplast.io/hotty-surf/surftui"
 )
 
-// keyRig types keys into a surface on a test host or on a cells.Screen,
+// keyRig types keys into a surface on a test host or on a surftui.Screen,
 // and says what a field holds and which keys reached the program.
 type keyRig struct {
 	t     *testing.T
@@ -28,12 +29,12 @@ type keyRig struct {
 // editPage is an app element binding app around a query field binding
 // query, then a button; a keyless Key on the app element hears what
 // reaches the program from either.
-func editPage(app, query []surf.BindOption, heard *[]string, value *string) *surf.Surface {
+func editPage(app, query []surfkey.Option, heard *[]string, value *string) *surf.Surface {
 	return editPageOf("text", app, query, heard, value)
 }
 
 // editPageOf is editPage with a query field of the input type typ.
-func editPageOf(typ string, app, query []surf.BindOption, heard *[]string, value *string) *surf.Surface {
+func editPageOf(typ string, app, query []surfkey.Option, heard *[]string, value *string) *surf.Surface {
 	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
 		hear := surf.Key(func(k string) bool { *heard = append(*heard, k); return true })
 		fmt.Fprintf(w, `<div%s><input type="`+typ+`"%s/><button%s>b</button></div>`,
@@ -44,9 +45,9 @@ func editPageOf(typ string, app, query []surf.BindOption, heard *[]string, value
 	return surf.New("t", v, "")
 }
 
-// rigs are the same page on a test host of caps and on a cells.Screen
+// rigs are the same page on a test host of caps and on a surftui.Screen
 // (whose platform is the zero Platform's: mod is ctrl).
-func rigs(t *testing.T, caps hotty.Caps, app, query []surf.BindOption) map[string]func() *keyRig {
+func rigs(t *testing.T, caps hotty.Caps, app, query []surfkey.Option) map[string]func() *keyRig {
 	return rigsOf(t, caps, func(heard *[]string, v *string) *surf.Surface { return editPage(app, query, heard, v) })
 }
 
@@ -74,7 +75,7 @@ func rigsOf(t *testing.T, caps hotty.Caps, page func(heard *[]string, value *str
 			var heard []string
 			var v string
 			s := page(&heard, &v)
-			scr := cells.New(80, 5, func(e hotty.Event) {
+			scr := surftui.New(80, 5, func(e hotty.Event) {
 				if err := s.Event(e); err != nil {
 					t.Error(err)
 				}
@@ -148,7 +149,7 @@ func (r *keyRig) press(k string) (heard bool) {
 // (where the host's own default would delete to the line's end), and the
 // host's select all is still mod's.
 func TestCUAOnASuperHost(t *testing.T) {
-	for name, rig := range rigs(t, hotty.Caps{Mod: "super"}, []surf.BindOption{surf.CUAKeys()}, nil) {
+	for name, rig := range rigs(t, hotty.Caps{Mod: "super"}, []surfkey.Option{surfkey.CUAKeys()}, nil) {
 		t.Run(name, func(t *testing.T) {
 			r := rig()
 			r.focus("q")
@@ -175,7 +176,7 @@ func TestCUAOnASuperHost(t *testing.T) {
 // CocoaKeys where mod is ctrl (cells, and a host): ctrl+backspace reaches the
 // program, as on macOS, and ctrl+k deletes to the line's end.
 func TestCocoaOnACtrlHost(t *testing.T) {
-	for name, rig := range rigs(t, hotty.Caps{}, []surf.BindOption{surf.CocoaKeys()}, nil) {
+	for name, rig := range rigs(t, hotty.Caps{}, []surfkey.Option{surfkey.CocoaKeys()}, nil) {
 		t.Run(name, func(t *testing.T) {
 			r := rig()
 			r.focus("q")
@@ -193,9 +194,9 @@ func TestCocoaOnACtrlHost(t *testing.T) {
 }
 
 // ReadlineKeys without ctrl+k on the query, under CUAKeys on a super host:
-// ctrl+k reaches the program, as on Linux, on the host and in cells.
+// ctrl+k reaches the program, as on Linux, on the host and in surftui.
 func TestReadlineUnbindUnderCUA(t *testing.T) {
-	for name, rig := range rigs(t, hotty.Caps{Mod: "super"}, []surf.BindOption{surf.CUAKeys()}, []surf.BindOption{surf.ReadlineKeys(), surf.Unbind("ctrl+k")}) {
+	for name, rig := range rigs(t, hotty.Caps{Mod: "super"}, []surfkey.Option{surfkey.CUAKeys()}, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k")}) {
 		t.Run(name, func(t *testing.T) {
 			r := rig()
 			r.focus("q")
@@ -214,7 +215,7 @@ func TestReadlineUnbindUnderCUA(t *testing.T) {
 // Unbind of a key CocoaKeys gives back, in a field where mod is ctrl: the
 // key reaches the program, as on macOS, not the host's word delete.
 func TestUnbindUnderCocoa(t *testing.T) {
-	for name, rig := range rigs(t, hotty.Caps{}, []surf.BindOption{surf.CocoaKeys()}, []surf.BindOption{surf.Unbind("ctrl+backspace")}) {
+	for name, rig := range rigs(t, hotty.Caps{}, []surfkey.Option{surfkey.CocoaKeys()}, []surfkey.Option{surfkey.Unbind("ctrl+backspace")}) {
 		t.Run(name, func(t *testing.T) {
 			r := rig()
 			r.focus("q")
@@ -231,7 +232,7 @@ func TestUnbindUnderCocoa(t *testing.T) {
 // only leaves it unused (the keymap is pinned in
 // TestEditingKeymapsOutsideAField); a Screen hands it on.
 func TestCUAGivesBackFromAButton(t *testing.T) {
-	for name, rig := range rigs(t, hotty.Caps{Mod: "super"}, []surf.BindOption{surf.CUAKeys()}, nil) {
+	for name, rig := range rigs(t, hotty.Caps{Mod: "super"}, []surfkey.Option{surfkey.CUAKeys()}, nil) {
 		t.Run(name, func(t *testing.T) {
 			r := rig()
 			r.focus("b")
@@ -255,12 +256,12 @@ func TestCUAGivesBackFromAButton(t *testing.T) {
 // CocoaKeys', CUAKeys' give-back), on a host whose mod is ctrl, on one
 // whose mod is super, and on a Screen.
 func TestEditingKeymapsFillInEitherOrder(t *testing.T) {
-	groups := map[string]surf.BindOption{"ReadlineKeys": surf.ReadlineKeys(), "CUAKeys": surf.CUAKeys(), "CocoaKeys": surf.CocoaKeys()}
+	groups := map[string]surfkey.Option{"ReadlineKeys": surfkey.ReadlineKeys(), "CUAKeys": surfkey.CUAKeys(), "CocoaKeys": surfkey.CocoaKeys()}
 	pairs := [][2]string{{"ReadlineKeys", "CUAKeys"}, {"ReadlineKeys", "CocoaKeys"}, {"CUAKeys", "CocoaKeys"}}
 	for _, caps := range []hotty.Caps{{}, {Mod: "super"}} {
 		for _, p := range pairs {
 			for _, order := range [][2]string{p, {p[1], p[0]}} {
-				app := []surf.BindOption{groups[order[0]], groups[order[1]]}
+				app := []surfkey.Option{groups[order[0]], groups[order[1]]}
 				for name, rig := range rigs(t, caps, app, nil) {
 					if name == "cells" && caps.Mod == "super" {
 						continue // a Screen's mod is ctrl: run once
@@ -298,15 +299,15 @@ func TestReadlineThenThePlatform(t *testing.T) {
 	cases := []struct {
 		name     string
 		caps     hotty.Caps
-		platform surf.BindOption
+		platform surfkey.Option
 		back     string // a give-back readline doesn't bind, or none
 	}{
-		{"Linux", hotty.Caps{}, surf.CUAKeys(), "super+arrow_up"},
-		{"macOS, CUAKeys", hotty.Caps{Mod: "super"}, surf.CUAKeys(), "super+arrow_up"},
-		{"macOS, CocoaKeys", hotty.Caps{Mod: "super"}, surf.CocoaKeys(), ""},
+		{"Linux", hotty.Caps{}, surfkey.CUAKeys(), "super+arrow_up"},
+		{"macOS, CUAKeys", hotty.Caps{Mod: "super"}, surfkey.CUAKeys(), "super+arrow_up"},
+		{"macOS, CocoaKeys", hotty.Caps{Mod: "super"}, surfkey.CocoaKeys(), ""},
 	}
 	for _, c := range cases {
-		for name, rig := range rigs(t, c.caps, []surf.BindOption{surf.ReadlineKeys(), c.platform}, nil) {
+		for name, rig := range rigs(t, c.caps, []surfkey.Option{surfkey.ReadlineKeys(), c.platform}, nil) {
 			if name == "cells" && c.caps.Mod == "super" {
 				continue
 			}

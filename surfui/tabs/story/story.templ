@@ -1,0 +1,99 @@
+// Package story provides the storybook showcase for ui/tabs.
+package story
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/card"
+	"neuroplast.io/hotty-surf/surfui/tabs"
+)
+
+// Props is the editable state for the Tabs storybook controls.
+type Props struct {
+	Tab  string `enum:"account,password,team"`
+	Line bool
+}
+
+type state struct {
+	tab  string
+	many string
+}
+
+func tabText(tab string) string {
+	switch tab {
+	case "account":
+		return "Make changes to your account here. Click save when you're done."
+	case "password":
+		return "Change your password here. After saving, you'll be logged out."
+	}
+	return "Invite your team and pick what they can see."
+}
+
+func manyTabs() []tabs.Tab {
+	var ts []tabs.Tab
+	for i := 1; i <= 8; i++ {
+		n := strconv.Itoa(i)
+		ts = append(ts, tabs.Tab{Value: "t" + n, Label: "Tab " + n, Disabled: i == 4})
+	}
+	return ts
+}
+
+// Register adds tabs' stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "tabs/default",
+		Doc:          "Default, underlined, and many tabs with a disabled tab",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{tab: "account", many: "t1"}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Tab: "account"}
+			return p, editable(p, &state{many: "t1"})
+		},
+		Keys: []string{"tab", "arrow_right"},
+		Want: "tab: password",
+	})
+}
+
+templ editable(p *Props, s *state) {
+	<div class="flex flex-col gap-4 p-4 max-w-md">
+		@tabs.View(tabs.Props{
+			ID:        "story-tabs",
+			Label:     "Example",
+			Line:      p.Line,
+			Value:     p.Tab,
+			ListClass: "w-full",
+			Tabs: []tabs.Tab{
+				{Value: "account", Label: "Account"},
+				{Value: "password", Label: "Password"},
+				{Value: "team", Label: "Team"},
+			},
+			OnChange: func(v string) { p.Tab = v },
+		}) {
+			@card.View(card.Props{}) {
+				<section class="text-sm">{ tabText(p.Tab) }</section>
+			}
+		}
+		@tabs.View(tabs.Props{ID: "many", Value: s.many, OnChange: func(v string) { s.many = v }, Tabs: manyTabs()}) {
+			<p class="text-sm">Panel { s.many }.</p>
+		}
+	</div>
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4 max-w-md">
+		@tabs.View(tabs.Props{
+			ID:    "settings",
+			Value: s.tab,
+			Tabs: []tabs.Tab{
+				{Value: "account", Label: "Account"},
+				{Value: "password", Label: "Password"},
+				{Value: "team", Label: "Team"},
+			},
+			OnChange: func(v string) { s.tab = v },
+		}) {
+			<p>The { s.tab } settings.</p>
+		}
+		<p class="text-sm text-muted-foreground">tab: { s.tab }</p>
+	</div>
+}

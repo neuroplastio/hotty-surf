@@ -1,0 +1,197 @@
+// Package tabs is hotty-surf's self-contained Tabs component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package tabs
+
+import (
+	"context"
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers tabs' assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Tabs component.
+type Props struct {
+	ID         string
+	Label      string
+	Line       bool
+	ListClass  string
+	PanelClass string
+	Tabs       []Tab
+	Value      string
+	OnChange   func(value string)
+	Class      string
+}
+
+// Tab is one tab in a Tabs list.
+type Tab struct {
+	Value, Label string
+	Disabled     bool
+}
+
+// View renders Basecoat's tabs, clearing any outer InputGroup context.
+func View(p Props) templ.Component {
+	return util.ScopedGroup(tabsMarkup(newView(p)), false)
+}
+
+type view struct {
+	p   Props
+	id  string
+	sel int
+}
+
+func newView(p Props) *view {
+	id := p.ID
+	if id == "" {
+		id = "tabs"
+	}
+	v := &view{p: p, id: id, sel: -1}
+	for i, t := range p.Tabs {
+		if t.Value == p.Value && !t.Disabled {
+			v.sel = i
+			break
+		}
+	}
+	if v.sel < 0 {
+		for i, t := range p.Tabs {
+			if !t.Disabled {
+				v.sel = i
+				break
+			}
+		}
+	}
+	return v
+}
+
+func (v *view) tabID(i int) string   { return v.id + "-tab-" + strconv.Itoa(i+1) }
+func (v *view) panelID(i int) string { return v.id + "-panel-" + strconv.Itoa(i+1) }
+
+func (v *view) tabindex(i int) string {
+	if i == v.sel {
+		return "0"
+	}
+	return "-1"
+}
+
+func (v *view) choose(i int) {
+	if v.p.Tabs[i].Disabled || v.p.OnChange == nil {
+		return
+	}
+	if i != v.sel {
+		v.p.OnChange(v.p.Tabs[i].Value)
+	}
+}
+
+func (v *view) handlers(i int) []surf.Handler {
+	hs := []surf.Handler{surf.Click(func() { v.choose(i) })}
+	if i == v.sel {
+		hs = append(hs, surf.Key(v.key(i), "arrow_left", "arrow_right", "home", "end"))
+	}
+	return hs
+}
+
+func (v *view) key(from int) func(string) bool {
+	return func(k string) bool {
+		var on []int
+		cur := -1
+		for i, t := range v.p.Tabs {
+			if t.Disabled {
+				continue
+			}
+			if i == from {
+				cur = len(on)
+			}
+			on = append(on, i)
+		}
+		if cur < 0 {
+			return false
+		}
+		n := len(on)
+		var next int
+		switch k {
+		case "arrow_right":
+			next = on[(cur+1)%n]
+		case "arrow_left":
+			next = on[(cur-1+n)%n]
+		case "home":
+			next = on[0]
+		case "end":
+			next = on[n-1]
+		default:
+			return false
+		}
+		v.choose(next)
+		return true
+	}
+}
+
+func (v *view) follow(ctx context.Context) string {
+	f := rt.From(ctx)
+	if f == nil || v.sel < 0 || f.Focused() == v.tabID(v.sel) {
+		return ""
+	}
+	for i := range v.p.Tabs {
+		if f.Focused() == v.tabID(i) {
+			surf.Autofocus(ctx, v.tabID(v.sel))
+			break
+		}
+	}
+	return ""
+}
+
+templ tabsMarkup(v *view) {
+	<div
+		class={ util.JoinClass("tabs", v.p.Class) }
+		id={ v.id }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		data-tabs-initialized="true"
+	>
+		<nav
+			role="tablist"
+			aria-orientation="horizontal"
+			if v.p.Label != "" {
+				aria-label={ v.p.Label }
+			}
+			if v.p.Line {
+				data-variant="line"
+			}
+			if v.p.ListClass != "" {
+				class={ v.p.ListClass }
+			}
+		>
+			for i, t := range v.p.Tabs {
+				<button
+					type="button"
+					role="tab"
+					aria-controls={ v.panelID(i) }
+					aria-selected={ strconv.FormatBool(i == v.sel) }
+					tabindex={ v.tabindex(i) }
+					disabled?={ t.Disabled }
+					{ util.ScopeAttrs(ctx, util.KitOn(ctx, v.tabID(i), v.handlers(i)...))... }
+				>{ t.Label }</button>
+			}
+		</nav>
+		if v.sel >= 0 {
+			<div
+				role="tabpanel"
+				id={ v.panelID(v.sel) }
+				aria-labelledby={ v.tabID(v.sel) }
+				tabindex="-1"
+				aria-selected="true"
+				if v.p.PanelClass != "" {
+					class={ v.p.PanelClass }
+				}
+			>
+				{ children... }
+			</div>
+		}
+		{{ v.follow(ctx) }}
+	</div>
+}

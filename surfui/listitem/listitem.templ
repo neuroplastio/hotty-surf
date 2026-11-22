@@ -1,0 +1,439 @@
+// Package listitem is hotty-surf's self-contained single-selection List and
+// ListItem component (with Title, Subtitle, and Detail helpers).
+package listitem
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"slices"
+	"strconv"
+	"strings"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers listitem's assets with r.
+func Register(r *surfui.Registry) {}
+
+// ListProps configures a single-selection List.
+type ListProps struct {
+	OnChange func(index int)
+	Attrs    templ.Attributes
+	Class    string
+}
+
+// Props configures a ListItem inside a List.
+type Props struct {
+	Selected bool
+	Active   bool
+	Leading  templ.Component
+	Trailing templ.Component
+	Attrs    templ.Attributes
+	Class    string
+}
+
+// TextProps configures Title, Subtitle, or Detail spans inside a ListItem.
+type TextProps struct {
+	Attrs templ.Attributes
+	Class string
+}
+
+// List renders a single-selection listbox of Item children.
+func List(p ListProps) templ.Component {
+	return util.ScopedGroup(templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		if !hasName(p.Attrs) {
+			rt.Fault(ctx, "listitem.List: Attrs must give the list an accessible name (aria-label or aria-labelledby)")
+		}
+		base := attrString(p.Attrs, "id")
+		if base == "" {
+			base = "list"
+		}
+		var v *listMemo
+		f := rt.From(ctx)
+		if f != nil {
+			ls, _ := f.Memo()[listsKey].(*listsSeen)
+			if ls == nil {
+				ls = &listsSeen{}
+				f.Memo()[listsKey] = ls
+			}
+			if ls.n != f.N() || ls.seen == nil {
+				ls.n, ls.seen = f.N(), map[string]bool{}
+			}
+			if ls.seen[base] && !f.Shadow {
+				rt.Fault(ctx, fmt.Sprintf("listitem.List: two lists with id %q: give each its own through Attrs (surf.On)", base))
+			}
+			ls.seen[base] = true
+			k := "surfui.list:" + base
+			v, _ = f.Memo()[k].(*listMemo)
+			if v == nil {
+				v = &listMemo{}
+				f.Memo()[k] = v
+			}
+		} else {
+			v = &listMemo{}
+			v.tag = fmt.Sprintf("ui-list-%p-", v)
+		}
+		if f != nil && f.Shadow {
+			c := *v
+			c.items = nil
+			v = &c
+		}
+		v.base, v.onChange, v.items = base, p.OnChange, v.items[:0]
+		var body bytes.Buffer
+		if kids := templ.GetChildren(ctx); kids != nil {
+			if err := kids.Render(context.WithValue(templ.ClearChildren(ctx), listKey{}, v), &body); err != nil {
+				return err
+			}
+		}
+		if n := v.selectedCount(); n > 1 {
+			rt.Fault(ctx, fmt.Sprintf("listitem.List: %d items are Selected (a List selects at most one)", n))
+		}
+		if i := v.selectedIndex(); i < 0 {
+			v.selected = ""
+		} else if v.items[i].id != v.selected {
+			v.selected = v.items[i].id
+			if !v.items[i].disabled {
+				v.current = v.items[i].id
+			}
+		}
+		out := body.String()
+		if f == nil {
+			out = stopTabindex(out, v.tag, len(v.items), v.stop())
+		} else if i := v.stop(); i >= 0 {
+			f.Stops = append(f.Stops, v.items[i].id)
+		}
+		if ask := v.focus; ask != "" {
+			v.focus = ""
+			if i := v.index(ask); i >= 0 && !v.items[i].disabled {
+				surf.Autofocus(ctx, ask)
+			}
+		}
+		return listBox(p, out).Render(ctx, w)
+	}), false)
+}
+
+func stopTabindex(body, tag string, n, stop int) string {
+	mark := `tabindex="` + tag
+	var b strings.Builder
+	b.Grow(len(body))
+	seen := make([]bool, n)
+	for {
+		at := strings.Index(body, mark)
+		if at < 0 {
+			b.WriteString(body)
+			return b.String()
+		}
+		rest := body[at+len(mark):]
+		end := strings.IndexByte(rest, '"')
+		i, err := strconv.Atoi(rest[:max(end, 0)])
+		if end < 0 || err != nil || i < 0 || i >= n || seen[i] {
+			b.WriteString(body[:at+len(mark)])
+			body = rest
+			continue
+		}
+		seen[i] = true
+		val := "-1"
+		if i == stop {
+			val = "0"
+		}
+		b.WriteString(body[:at])
+		b.WriteString(`tabindex="`)
+		b.WriteString(val)
+		b.WriteByte('"')
+		body = rest[end+1:]
+	}
+}
+
+type listKey struct{}
+
+const listsKey = "surfui.lists"
+
+type listsSeen struct {
+	n    uint64
+	seen map[string]bool
+}
+
+type listRow struct {
+	id                 string
+	selected, disabled bool
+}
+
+type listMemo struct {
+	current  string
+	focused  string
+	focus    string
+	selected string
+	base     string
+	tag      string
+	onChange func(index int)
+	items    []listRow
+}
+
+func (v *listMemo) index(id string) int {
+	for i, it := range v.items {
+		if it.id == id {
+			return i
+		}
+	}
+	return -1
+}
+
+func (v *listMemo) selectedCount() int {
+	n := 0
+	for _, it := range v.items {
+		if it.selected {
+			n++
+		}
+	}
+	return n
+}
+
+func (v *listMemo) selectedIndex() int {
+	for i, it := range v.items {
+		if it.selected {
+			return i
+		}
+	}
+	return -1
+}
+
+func (v *listMemo) stop() int {
+	if i := v.index(v.current); i >= 0 && !v.items[i].disabled {
+		return i
+	}
+	if i := v.selectedIndex(); i >= 0 && !v.items[i].disabled {
+		return i
+	}
+	for i, it := range v.items {
+		if !it.disabled {
+			return i
+		}
+	}
+	return -1
+}
+
+func (v *listMemo) choose(i int) {
+	if i < 0 || v.items[i].disabled || v.onChange == nil || i == v.selectedIndex() {
+		return
+	}
+	v.onChange(i)
+}
+
+func (v *listMemo) key(id string) func(string) bool {
+	return func(k string) bool {
+		i := v.index(id)
+		if i < 0 || v.focused != id {
+			return false
+		}
+		var on []int
+		cur := -1
+		for j, it := range v.items {
+			if it.disabled {
+				continue
+			}
+			if j == i {
+				cur = len(on)
+			}
+			on = append(on, j)
+		}
+		if cur < 0 {
+			return false
+		}
+		var next int
+		switch k {
+		case "arrow_down":
+			next = on[min(cur+1, len(on)-1)]
+		case "arrow_up":
+			next = on[max(cur-1, 0)]
+		case "home":
+			next = on[0]
+		case "end":
+			next = on[len(on)-1]
+		default:
+			return false
+		}
+		if next == i {
+			return true
+		}
+		v.choose(next)
+		v.current, v.focus, v.focused = v.items[next].id, v.items[next].id, v.items[next].id
+		return true
+	}
+}
+
+var listItemKeys = []string{"arrow_up", "arrow_down", "home", "end"}
+
+func listItemAttrs(ctx context.Context, p Props) templ.Attributes {
+	a := make(templ.Attributes, len(p.Attrs)+3)
+	for k, val := range p.Attrs {
+		a[k] = val
+	}
+	v, _ := rt.Value(ctx, listKey{}).(*listMemo)
+	if v == nil {
+		rt.Fault(ctx, "listitem.View: outside a List (an option needs its listbox)")
+		a["tabindex"] = "-1"
+		return a
+	}
+	id := attrString(p.Attrs, "id")
+	disabled := attrOn(p.Attrs, "disabled")
+	if id == "" {
+		rt.Volatile(ctx, "listitem.View without an id")
+		id = v.base + "-item-" + strconv.Itoa(len(v.items))
+		a["id"] = id
+	}
+	row := listRow{id: id, selected: p.Selected, disabled: disabled}
+	f := rt.From(ctx)
+	if f == nil {
+		a["tabindex"] = v.tag + strconv.Itoa(len(v.items))
+		v.items = append(v.items, row)
+		return a
+	}
+	rt.Register(ctx, func(ctx context.Context) {
+		if v, _ := ctx.Value(listKey{}).(*listMemo); v != nil {
+			v.items = append(v.items, row)
+		}
+	})
+	a["tabindex"] = "-1"
+	h := f.Get(id)
+	if h == nil {
+		util.KitOn(ctx, id)
+		h = f.Get(id)
+	}
+	if disabled {
+		h.Click = nil
+		return a
+	}
+	click := h.Click
+	h.Click = func() {
+		v.choose(v.index(id))
+		v.current = id
+		if click != nil {
+			click()
+		}
+	}
+	focus := h.Focus
+	h.Focus = func(in bool) {
+		if in {
+			v.focused, v.current = id, id
+		} else if v.focused == id {
+			v.focused = ""
+		}
+		if focus != nil {
+			focus(in)
+		}
+	}
+	if len(h.Key) == 0 {
+		h.KitKey = true
+	}
+	h.Key = append([]func(string) bool{v.key(id)}, h.Key...)
+	for _, k := range listItemKeys {
+		if !slices.Contains(h.Keys, k) {
+			h.Keys = append(h.Keys, k)
+		}
+	}
+	a["data-on"] = addWord(attrString(a, "data-on"), "click")
+	return util.ScopeAttrs(ctx, a)
+}
+
+func attrString(attrs templ.Attributes, name string) string {
+	for k, val := range attrs {
+		if strings.EqualFold(k, name) {
+			s, _ := val.(string)
+			return s
+		}
+	}
+	return ""
+}
+
+func attrOn(attrs templ.Attributes, name string) bool {
+	for k, val := range attrs {
+		if strings.EqualFold(k, name) {
+			return val != nil && val != false
+		}
+	}
+	return false
+}
+
+func hasName(attrs templ.Attributes) bool {
+	return strings.TrimSpace(attrString(attrs, "aria-label")) != "" ||
+		strings.TrimSpace(attrString(attrs, "aria-labelledby")) != ""
+}
+
+func addWord(list, w string) string {
+	for _, x := range strings.Fields(list) {
+		if x == w {
+			return list
+		}
+	}
+	return strings.TrimSpace(list + " " + w)
+}
+
+const itemBase = "relative flex min-h-16 w-full cursor-default items-start rounded-sm border-0 px-2.5 pt-1.5 text-left font-[inherit] outline-offset-0 transition-colors duration-300 ease-out focus-visible:outline-2 focus-visible:outline-sidebar-ring"
+
+func itemClass(p Props) string {
+	switch {
+	case p.Selected:
+		return util.JoinClass(itemBase, "bg-accent")
+	case p.Active:
+		return util.JoinClass(itemBase, "bg-sidebar-accent")
+	}
+	return util.JoinClass(itemBase, "bg-transparent hover:bg-sidebar-accent")
+}
+
+func barClass(selected bool) string {
+	const base = "absolute top-1/2 left-0 w-0.5 -translate-y-1/2 rounded-full bg-sidebar-primary transition-[height,opacity] duration-300 ease-out"
+	if selected {
+		return util.JoinClass(base, "h-11 opacity-100")
+	}
+	return util.JoinClass(base, "h-0 opacity-0")
+}
+
+// View renders one selectable option inside a List.
+templ View(p Props) {
+	<button
+		type="button"
+		role="option"
+		aria-selected={ strconv.FormatBool(p.Selected) }
+		class={ util.JoinClass(itemClass(p), p.Class) }
+		{ listItemAttrs(ctx, p)... }
+	>
+		<span aria-hidden="true" class={ barClass(p.Selected) }></span>
+		if p.Leading != nil {
+			@p.Leading
+		}
+		<span class="flex min-w-0 flex-1 flex-col">
+			{ children... }
+		</span>
+		if p.Trailing != nil {
+			<span class="ml-1.5 self-center">
+				@p.Trailing
+			</span>
+		}
+	</button>
+}
+
+templ listBox(p ListProps, body string) {
+	<div role="listbox" aria-multiselectable="false" class={ util.JoinClass("flex flex-col gap-0.5 px-1.5", p.Class) } { p.Attrs... }>
+		@templ.Raw(body)
+	</div>
+}
+
+// Title renders the truncated bold title line of a ListItem.
+templ Title(p TextProps) {
+	<span class={ util.JoinClass("truncate text-base leading-4 font-bold text-sidebar-foreground", p.Class) } { p.Attrs... }>{ children... }</span>
+}
+
+// Subtitle renders the truncated muted subtitle line of a ListItem.
+templ Subtitle(p TextProps) {
+	<span class={ util.JoinClass("truncate text-xs leading-5", p.Class) } { p.Attrs... }>{ children... }</span>
+}
+
+// Detail renders the truncated plain detail line of a ListItem.
+templ Detail(p TextProps) {
+	<span class={ util.JoinClass("truncate text-xs leading-5 text-sidebar-foreground", p.Class) } { p.Attrs... }>{ children... }</span>
+}

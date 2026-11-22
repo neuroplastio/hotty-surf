@@ -14,9 +14,11 @@ import (
 	"github.com/a-h/templ"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 	"neuroplast.io/hotty-surf/surftest"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/listitem"
 )
 
 // A made-up list, in the shapes compiled instances come in: rows of
@@ -92,7 +94,7 @@ func rowView(p rowProps) templ.Component {
 			fmt.Fprintf(w, `<input type="text"%s value="%s">`, onAttrs(ctx, "in-"+p.Key, surf.Input(func(v string) { a.typed[p.Key] = v })), p.Title)
 		}
 		if p.Kit {
-			err := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "kit-"+p.Key, surf.Click(func() {}))}).Render(templ.WithChildren(ctx, templ.Raw("Go")), w)
+			err := button.View(button.Props{Attrs: surf.On(ctx, "kit-"+p.Key, surf.Click(func() {}))}).Render(templ.WithChildren(ctx, templ.Raw("Go")), w)
 			if err != nil {
 				return err
 			}
@@ -133,13 +135,13 @@ func (a *listApp) view(compiled bool) templ.Component {
 			keys = []string{"j"}
 		}
 		fmt.Fprintf(w, `<div%s>`, onAttrs(ctx, "outer", surf.Key(func(string) bool { return false }, keys...)))
-		var bindings []ui.KeyBinding
+		var bindings []surfui.KeyBinding
 		if a.bind {
-			bindings = append(bindings, ui.KeyBinding{Key: "mod+s", Label: "Save", Run: func() bool { return true }})
+			bindings = append(bindings, surfui.KeyBinding{Key: "mod+s", Label: "Save", Run: func() bool { return true }})
 		}
 		inner := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			if a.kitFirst {
-				if err := ui.Button(ui.ButtonProps{Attrs: surf.On(ctx, "first", surf.Click(func() {}))}).Render(templ.WithChildren(ctx, templ.Raw("First")), w); err != nil {
+				if err := button.View(button.Props{Attrs: surf.On(ctx, "first", surf.Click(func() {}))}).Render(templ.WithChildren(ctx, templ.Raw("First")), w); err != nil {
 					return err
 				}
 			}
@@ -173,7 +175,7 @@ func (a *listApp) view(compiled bool) templ.Component {
 			}
 			return nil
 		})
-		if err := ui.KeyScope(bindings).Render(templ.WithChildren(ctx, inner), w); err != nil {
+		if err := surfui.KeyScope(bindings).Render(templ.WithChildren(ctx, inner), w); err != nil {
 			return err
 		}
 		io.WriteString(w, `</div>`)
@@ -472,7 +474,7 @@ func listRowView(p listRowProps) templ.Component {
 		if _, err := io.WriteString(w, `<div class="row">`); err != nil {
 			return err
 		}
-		if err := ui.ListItem(ui.ListItemProps{Selected: p.Sel, Attrs: a}).Render(templ.WithChildren(ctx, body), w); err != nil {
+		if err := listitem.View(listitem.Props{Selected: p.Sel, Attrs: a}).Render(templ.WithChildren(ctx, body), w); err != nil {
 			return err
 		}
 		_, err := io.WriteString(w, `</div>`)
@@ -495,7 +497,7 @@ func (a *pickApp) view(compiled bool) templ.Component {
 			}
 			return nil
 		})
-		return ui.List(ui.ListProps{OnChange: func(i int) { a.sel = i }, Attrs: templ.Attributes{"id": "picks", "aria-label": "Picks"}}).Render(templ.WithChildren(ctx, rows), w)
+		return listitem.List(listitem.ListProps{OnChange: func(i int) { a.sel = i }, Attrs: templ.Attributes{"id": "picks", "aria-label": "Picks"}}).Render(templ.WithChildren(ctx, rows), w)
 	})
 }
 

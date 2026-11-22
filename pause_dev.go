@@ -2,7 +2,7 @@
 
 package surf
 
-import "neuroplast.io/hotty-surf/internal/rt"
+import "neuroplast.io/hotty-surf/internal/core/rt"
 
 func init() {
 	rt.Peek.Pause = func(s any) func() {

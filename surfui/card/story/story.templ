@@ -1,0 +1,138 @@
+// Package story provides the storybook showcase for ui/card.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/badge"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/card"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/label"
+	"neuroplast.io/hotty-surf/surfui/progress"
+)
+
+// Props is the editable state for the Card storybook controls.
+type Props struct {
+	Title       string
+	Description string
+	Size        string `enum:"default,sm"`
+	Footer      bool
+}
+
+type state struct {
+	value  string
+	clicks int
+}
+
+func toSize(v string) surfui.Size {
+	if v == "default" {
+		return surfui.Medium
+	}
+	return surfui.Size(v)
+}
+
+// Register adds card's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "card/default",
+		Doc:          "Default, small, and stat cards",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Title: "Sign up", Description: "Enter your email below.", Size: "default", Footer: true}
+			return p, editable(p)
+		},
+	})
+}
+
+templ editable(p *Props) {
+	<div class="flex flex-col gap-4 p-4">
+		@card.View(card.Props{Size: toSize(p.Size), Class: "max-w-sm"}) {
+			<header><h2>{ p.Title }</h2><p>{ p.Description }</p></header>
+			<section>
+				@label.View(label.Props{For: "card-email"}) { Email }
+				@input.View(input.Props{ID: "card-email", Type: "email", Placeholder: "m@example.com"})
+			</section>
+			if p.Footer {
+				<footer class="flex gap-2">
+					@button.View(button.Props{ID: "card-cancel", Variant: surfui.Outline}) { Cancel }
+					@button.View(button.Props{ID: "card-ok"}) { Sign up }
+				</footer>
+			}
+		}
+		@cardSmall()
+		@cardStat()
+	</div>
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4">
+		<div class="max-w-sm">
+			@card.View(card.Props{}) {
+				<header>
+					<h2>Create project</h2>
+					<p>Deploy your new project in one click.</p>
+				</header>
+				<section>
+					@input.View(input.Props{ID: "name", Value: s.value, Placeholder: "Name of your project", OnInput: func(v string) { s.value = v }})
+				</section>
+				<footer class="flex flex-row justify-between">
+					@button.View(button.Props{ID: "cancel", Variant: surfui.Outline, OnClick: func() { s.clicks++ }}) {
+						Cancel
+					}
+					@button.View(button.Props{ID: "deploy", OnClick: func() { s.clicks++ }}) {
+						Deploy
+					}
+				</footer>
+			}
+		</div>
+		@cardSmall()
+		@cardStat()
+	</div>
+}
+
+templ cardSmall() {
+	<div class="max-w-sm">
+		@card.View(card.Props{Size: surfui.Small}) {
+			<header>
+				<h2>Storage</h2>
+				<p>4.2 GB of 10 GB used.</p>
+			</header>
+			<section>
+				@progress.View(progress.Props{Value: 42, ShowValue: true})
+			</section>
+		}
+	</div>
+}
+
+templ stat(lbl, value, change string, up bool) {
+	<div style="flex: 1 1 12rem;">
+		@card.View(card.Props{Size: surfui.Small}) {
+			<header>
+				<p>{ lbl }</p>
+				<h2 class="text-xl font-semibold">{ value }</h2>
+			</header>
+			<footer class="flex flex-row items-center gap-2 text-sm">
+				@badge.View(badge.Props{Variant: surfui.Outline}) {
+					if up {
+						@icon.View("trending-up", "")
+					} else {
+						@icon.View("trending-down", "")
+					}
+					{ change }
+				}
+				<span class="text-muted-foreground">from last month</span>
+			</footer>
+		}
+	</div>
+}
+
+templ cardStat() {
+	<div class="flex flex-row flex-wrap gap-4">
+		@stat("Revenue", "$12,480", "+12.5%", true)
+		@stat("Orders", "1,419", "+4.1%", true)
+		@stat("Returns", "23", "-8.0%", false)
+	</div>
+}

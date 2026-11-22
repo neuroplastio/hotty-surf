@@ -1,0 +1,55 @@
+// Package story provides the storybook showcase for ui/listitem.
+package story
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/symbol"
+	"neuroplast.io/hotty-surf/surfui/listitem"
+)
+
+// Props is the editable state for the ListItem storybook controls.
+type Props struct {
+	Selected int
+	Active   int
+}
+
+var rowNames = []string{"hotty-storybook", "nav-editor", "core-arch"}
+
+// Register adds listitem's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "list-item/default",
+		Doc:          "List items with selection and an active row",
+		Consolidated: true,
+		BookOnly:     true,
+		View:         func() templ.Component { return showcase(&Props{Selected: 1, Active: 0}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Selected: 1, Active: 0}
+			return p, showcase(p)
+		},
+	})
+}
+
+templ rowIcon() {
+	<span class="relative mr-2 flex self-center">
+		@symbol.View(symbol.ShapeTerminal, "size-4")
+	</span>
+}
+
+templ showcase(p *Props) {
+	<div class="p-4">
+		<div class="bg-sidebar text-sidebar-foreground w-72 rounded-md py-2">
+			@listitem.List(listitem.ListProps{Attrs: templ.Attributes{"aria-label": "Sessions"}, OnChange: func(i int) { p.Selected = i }}) {
+				for i, name := range rowNames {
+					@listitem.View(listitem.Props{Selected: p.Selected == i, Active: p.Active == i, Leading: rowIcon(), Attrs: surf.On(ctx, "row-"+strconv.Itoa(i))}) {
+						@listitem.Title(listitem.TextProps{}) { { name } }
+						@listitem.Subtitle(listitem.TextProps{}) { p-70{ strconv.Itoa(i) } }
+					}
+				}
+			}
+		</div>
+	</div>
+}

@@ -1,0 +1,296 @@
+// Package navlist is hotty-surf's self-contained filterable navigation list component.
+package navlist
+
+import (
+	"context"
+	_ "embed"
+	"strconv"
+	"strings"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+//go:embed navlist.css
+var css string
+
+// Register registers navlist's CSS with r.
+func Register(r *surfui.Registry) { r.CSS("navlist", css) }
+
+// NavList is a grouped navigation list of buttons with a separately placed filter.
+type NavList struct {
+	ID          string
+	Label       string
+	Groups      []Group
+	Current     string
+	Filter      string
+	Placeholder string
+	FilterLabel string
+	Empty       string
+	OnSelect    func(id string)
+	OnFilter    func(v string)
+
+	in    string
+	focus string
+	mod   string
+}
+
+// Group is a group of navigation items. An empty Name has no heading.
+type Group struct {
+	Name  string
+	Items []Item
+}
+
+// Item is one navigation button.
+type Item struct {
+	ID    string
+	Label string
+	Dot   string
+}
+
+// ItemID returns the element ID for item.
+func (l *NavList) ItemID(item string) string { return l.ID + "-item-" + item }
+
+// FilterID returns the element ID for the filter input.
+func (l *NavList) FilterID() string { return l.ID + "-filter" }
+
+func (l *NavList) shownGroups() []Group {
+	if strings.TrimSpace(l.Filter) == "" {
+		return l.Groups
+	}
+	var out []Group
+	for _, g := range l.Groups {
+		var items []Item
+		for _, it := range g.Items {
+			if Fuzzy(g.Name+" "+it.Label, l.Filter) {
+				items = append(items, it)
+			}
+		}
+		if len(items) > 0 {
+			out = append(out, Group{Name: g.Name, Items: items})
+		}
+	}
+	return out
+}
+
+func (l *NavList) shown() []Item {
+	var out []Item
+	for _, g := range l.shownGroups() {
+		out = append(out, g.Items...)
+	}
+	return out
+}
+
+func (l *NavList) selectItem(item string) {
+	if item == l.Current {
+		return
+	}
+	l.Current = item
+	if l.OnSelect != nil {
+		l.OnSelect(item)
+	}
+}
+
+func (l *NavList) setFilter(v string) {
+	l.Filter = v
+	if l.OnFilter != nil {
+		l.OnFilter(v)
+	}
+	items := l.shown()
+	for _, it := range items {
+		if it.ID == l.Current {
+			return
+		}
+	}
+	if len(items) > 0 {
+		l.selectItem(items[0].ID)
+	}
+}
+
+func (l *NavList) move(step int) {
+	items := l.shown()
+	if len(items) == 0 {
+		return
+	}
+	i := -1
+	for j, it := range items {
+		if it.ID == l.Current {
+			i = j
+		}
+	}
+	switch {
+	case i < 0 && step > 0:
+		i = 0
+	case i < 0:
+		i = len(items) - 1
+	default:
+		i = max(0, min(len(items)-1, i+step))
+	}
+	l.selectItem(items[i].ID)
+}
+
+var (
+	navFilterKeys = []string{"arrow_up", "arrow_down", "page_up", "page_down", "ctrl+n", "ctrl+p", "enter"}
+	navItemKeys   = []string{"arrow_up", "arrow_down", "page_up", "page_down", "home", "end", "enter"}
+)
+
+// Keys handles keyboard navigation while the filter or an item has focus.
+func (l *NavList) Keys(k string) bool {
+	if l.in == "" {
+		return false
+	}
+	if l.mod != "super" && strings.HasPrefix(k, "mod+") {
+		k = "ctrl+" + strings.TrimPrefix(k, "mod+")
+	}
+	switch k {
+	case "arrow_down", "ctrl+n":
+		l.move(1)
+	case "arrow_up", "ctrl+p":
+		l.move(-1)
+	case "page_down":
+		l.move(10)
+	case "page_up":
+		l.move(-10)
+	case "home":
+		l.move(-len(l.shown()))
+	case "end":
+		l.move(len(l.shown()))
+	case "escape":
+		if l.in != "filter" || l.Filter == "" {
+			return false
+		}
+		l.setFilter("")
+		return true
+	default:
+		return false
+	}
+	if l.in == "list" {
+		l.focus = l.Current
+	}
+	return true
+}
+
+// FocusList focuses the currently selected item on the next render.
+func (l *NavList) FocusList(ctx context.Context) {
+	id := l.ItemID(l.Current)
+	surf.Autofocus(ctx, id)
+	if f := rt.From(ctx); f != nil {
+		f.Reveal = id
+	}
+	l.in = "list"
+}
+
+// FocusFilter focuses the filter input on the next render.
+func (l *NavList) FocusFilter(ctx context.Context) {
+	surf.Autofocus(ctx, l.FilterID())
+	l.in = "filter"
+}
+
+func (l *NavList) track(ctx context.Context) string {
+	if f := rt.From(ctx); f != nil {
+		l.mod = f.Platform.Mod
+		switch {
+		case f.Focused() == l.FilterID():
+			l.in = "filter"
+		case strings.HasPrefix(f.Focused(), l.ID+"-item-"):
+			l.in = "list"
+		case f.Focused() != "":
+			l.in = ""
+		}
+	}
+	if l.focus != "" {
+		surf.Autofocus(ctx, l.ItemID(l.focus))
+		if f := rt.From(ctx); f != nil {
+			f.Reveal = l.ItemID(l.focus)
+		}
+		l.focus, l.in = "", "list"
+	}
+	return ""
+}
+
+// Fuzzy reports whether search's UTF-8 bytes occur in value in order (case-insensitive).
+func Fuzzy(value, search string) bool {
+	s := strings.ToLower(strings.TrimSpace(search))
+	v := strings.ToLower(value)
+	j := 0
+	for i := 0; i < len(v) && j < len(s); i++ {
+		if v[i] == s[j] {
+			j++
+		}
+	}
+	return j == len(s)
+}
+
+func roving(current bool) string {
+	if current {
+		return "0"
+	}
+	return "-1"
+}
+
+func navItemClass(current bool) string {
+	if current {
+		return "bg-accent text-accent-foreground font-medium"
+	}
+	return "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+}
+
+// FilterInput renders the filter input field.
+templ (l *NavList) FilterInput(class string) {
+	<input
+		type="text"
+		class={ util.JoinClass("input", class) }
+		placeholder={ l.Placeholder }
+		aria-label={ l.FilterLabel }
+		value={ l.Filter }
+		{ util.ScopeTextAttrs(ctx, surf.On(ctx, l.FilterID(), surf.Input(l.setFilter), surf.Key(l.Keys, navFilterKeys...), surf.Focus(func(in bool) {
+			if in {
+				l.in = "filter"
+			} else {
+				l.in = ""
+			}
+		})))... }
+	/>
+}
+
+// List renders the filtered groups and navigation buttons.
+templ (l *NavList) List(class string) {
+	{{ l.track(ctx) }}
+	{{ groups := l.shownGroups() }}
+	<nav aria-label={ l.Label } class={ util.JoinClass("nav-list", class) }>
+		for _, g := range groups {
+			if g.Name != "" {
+				<div class="nav-group text-muted-foreground px-2 pt-3 pb-1 text-xs font-medium">{ g.Name }</div>
+			}
+			for _, it := range g.Items {
+				@l.item(it)
+			}
+		}
+		if len(groups) == 0 && l.Empty != "" {
+			<p class="text-muted-foreground px-2 py-3 text-sm">{ l.Empty }</p>
+		}
+	</nav>
+}
+
+templ (l *NavList) item(it Item) {
+	<button
+		type="button"
+		tabindex={ roving(it.ID == l.Current) }
+		aria-current={ strconv.FormatBool(it.ID == l.Current) }
+		class={ util.JoinClass("nav-item flex w-full items-center rounded-md px-2 py-1 text-left text-sm", navItemClass(it.ID == l.Current)) }
+		{ surf.On(ctx, l.ItemID(it.ID), surf.Click(func() { l.selectItem(it.ID) }), surf.Key(l.Keys, navItemKeys...), surf.Focus(func(in bool) {
+			if in {
+				l.in = "list"
+			} else {
+				l.in = ""
+			}
+		}))... }
+	>
+		<span class="truncate flex-1">{ it.Label }</span>
+		if it.Dot != "" {
+			<span class={ "nav-dot", "nav-dot-" + it.Dot } aria-hidden="true"></span>
+		}
+	</button>
+}

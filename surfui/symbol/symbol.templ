@@ -1,0 +1,16 @@
+// Package symbol is hotty-surf's self-contained Material Symbols component.
+package symbol
+
+import "neuroplast.io/hotty-surf/surfui"
+
+// Register registers symbol's assets with r (currently none; kept for uniform registration).
+func Register(r *surfui.Registry) {}
+
+// View draws s as a filled 24-unit SVG path in the text's color; class
+// sizes or styles it. It is decorative: its containing control supplies
+// the accessible name. The caller supplies a size class.
+templ View(s Shape, class string) {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" class={ class }>
+		<path d={ string(s) }></path>
+	</svg>
+}

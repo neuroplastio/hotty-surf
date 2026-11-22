@@ -15,7 +15,7 @@ import (
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftea"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // model is the program: its own list on the left, the details surface on the
@@ -31,7 +31,7 @@ type model struct {
 func newModel(sess *hottytea.Session) *model {
 	d := &Details{Commits: demoCommits()}
 	s := surf.New("commit", DetailsView(d), CSS)
-	s.Link(ui.Sheet())
+	s.Link(surfui.Sheet())
 	return &model{sess: sess, details: s, host: surftea.New(s, sess), d: d}
 }
 

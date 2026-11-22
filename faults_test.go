@@ -12,9 +12,9 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/cells"
-	"neuroplast.io/hotty-surf/internal/keydefault"
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/internal/core/keydefault"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // faultRowProps is a compiled row's: a number it draws, ids it registers
@@ -431,7 +431,7 @@ func TestCheckCompiled(t *testing.T) {
 	}
 }
 
-// A cells.Screen gives the surface events from inside its Write: fn runs
+// A surftui.Screen gives the surface events from inside its Write: fn runs
 // once, at the end of the call that wrote, never while the surface sends.
 func TestOnFaultReentrant(t *testing.T) {
 	renders := 0
@@ -452,7 +452,7 @@ func TestOnFaultReentrant(t *testing.T) {
 		}
 		heard = append(heard, f)
 	})
-	screen := cells.New(20, 2, func(e hotty.Event) {
+	screen := surftui.New(20, 2, func(e hotty.Event) {
 		if s.sending {
 			reentered = true
 		}

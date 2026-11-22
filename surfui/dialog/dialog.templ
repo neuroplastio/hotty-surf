@@ -1,0 +1,84 @@
+// Package dialog is hotty-surf's self-contained modal Dialog component.
+package dialog
+
+import (
+	"context"
+	"io"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/internal/modal"
+)
+
+// Register registers dialog's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a modal Dialog.
+type Props struct {
+	ID              string
+	Open            bool
+	Title           string
+	Description     string
+	HideCloseButton bool
+	OnClose         func()
+	Class           string
+}
+
+// View renders a modal Dialog when Open is true.
+func View(p Props) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return dialogMarkup(p, templ.GetChildren(ctx)).Render(templ.ClearChildren(ctx), w)
+	})
+}
+
+templ dialogMarkup(p Props, children templ.Component) {
+	{{ d := modal.New(ctx, p.ID, p.Open, p.OnClose) }}
+	if p.Open {
+		{{ body, err := d.Body(ctx, children) }}
+		if err != nil {
+			{{ return err }}
+		}
+		<dialog
+			class={ util.JoinClass("dialog", p.Class) }
+			if surfui.ModeOf(ctx) != surfui.ModeHotty {
+				data-mode="tui"
+			}
+			if p.Title != "" {
+				aria-labelledby={ d.ID + "-title" }
+			}
+			if p.Description != "" {
+				aria-describedby={ d.ID + "-description" }
+			}
+			open
+			{ util.KitOn(ctx, d.ID, surf.Key(d.Key))... }
+		>
+			<div { surf.On(ctx, d.ID+"-content", surf.Focus(d.Focus), surf.Outside(d.Outside))... }>
+				if p.Title != "" || p.Description != "" {
+					<header>
+						if p.Title != "" {
+							<h2 id={ d.ID + "-title" }>{ p.Title }</h2>
+						}
+						if p.Description != "" {
+							<p id={ d.ID + "-description" }>{ p.Description }</p>
+						}
+					</header>
+				}
+				@templ.Raw(body)
+				if !p.HideCloseButton {
+					<button
+						type="button"
+						class="btn"
+						data-variant="ghost"
+						data-size="icon-sm"
+						aria-label="Close dialog"
+						{ util.ScopeNativeAttrs(ctx, surf.On(ctx, d.ID+"-close", surf.Click(d.Dismiss)), "button")... }
+					>
+						@icon.View("x", "")
+					</button>
+				}
+			</div>
+		</dialog>
+	}
+}

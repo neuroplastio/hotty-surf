@@ -9,7 +9,7 @@ import (
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftea"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 var page templ.Component // the surface's view
@@ -66,7 +66,7 @@ func (m *model) View() tea.View {
 func ExampleNew() {
 	sess := hottytea.New()
 	s := surf.New("files", page, "")
-	s.Link(ui.Sheet()) // the kit's sheet, sent once rather than in every document
+	s.Link(surfui.Sheet()) // the kit's sheet, sent once rather than in every document
 	m := &model{sess: sess, files: surftea.New(s, sess)}
 	p := tea.NewProgram(m, tea.WithOutput(sess.WatchFile(os.Stdout)))
 	sess.Attach(p.Send)

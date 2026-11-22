@@ -11,7 +11,11 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfkey"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/popover"
 )
 
 // counter is an app's state; its view is usually a .templ file (see
@@ -35,7 +39,7 @@ func (c *counter) view() templ.Component {
 // keys while it has the keyboard, and updates it when work is pending.
 func ExampleNew() {
 	c := &counter{}
-	s := surf.New("counter", c.view(), ui.Stylesheet())
+	s := surf.New("counter", c.view(), surfui.Stylesheet())
 
 	var caps hotty.Caps              // from detection (hotty-go's Detector)
 	events := make(chan hotty.Event) // the host's events naming "counter"
@@ -97,10 +101,10 @@ func (a *todo) view() templ.Component {
 		io.WriteString(w, ">")
 		title := surf.On(ctx, "title", surf.Input(func(v string) { a.draft = v }))
 		title["name"] = "title"
-		if err := ui.Input(ui.InputProps{Value: a.draft, Attrs: title}).Render(ctx, w); err != nil {
+		if err := input.View(input.Props{Value: a.draft, Attrs: title}).Render(ctx, w); err != nil {
 			return err
 		}
-		add := ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}})
+		add := button.View(button.Props{Attrs: templ.Attributes{"type": "submit"}})
 		if err := add.Render(templ.WithChildren(ctx, templ.Raw("Add")), w); err != nil {
 			return err
 		}
@@ -115,8 +119,8 @@ func (a *todo) view() templ.Component {
 // needs no surf.On. In a .templ the view is
 //
 //	<form { surf.On(ctx, "add", surf.Submit(a.Add))... }>
-//		@ui.Input(ui.InputProps{Value: a.draft, Attrs: …})
-//		@ui.Button(ui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
+//		@surfui.Input(surfui.InputProps{Value: a.draft, Attrs: …})
+//		@surfui.Button(surfui.ButtonProps{Attrs: templ.Attributes{"type": "submit"}}) {
 //			Add
 //		}
 //	</form>
@@ -128,7 +132,7 @@ func (a *todo) view() templ.Component {
 //	r.Value("input[name=title]") // "", and the task is in the list
 func ExampleSubmit() {
 	a := &todo{}
-	_ = surf.New("todo", a.view(), ui.Stylesheet())
+	_ = surf.New("todo", a.view(), surfui.Stylesheet())
 }
 
 // A list the user reorders by drag. Each row is dragged and dropped on,
@@ -197,9 +201,9 @@ func ExampleSecondary() {
 
 // A program with several surfaces on one connection sends the kit's sheet
 // once and links it from each; an app with one surface lets the surface
-// send it (ui.Sheet as it is).
+// send it (surfui.Sheet as it is).
 func ExampleSurface_Link() {
-	kit := ui.Sheet()
+	kit := surfui.Sheet()
 	os.Stdout.WriteString(hotty.Res(kit.ID, "text/css", []byte(kit.CSS)))
 	for _, name := range []string{"left", "right"} {
 		s := surf.New(name, templ.Raw(`<p>hi</p>`), "")
@@ -324,8 +328,8 @@ func ExampleSurface_OwnKeys() {
 // the surface's output through a buffer of its own: after Update,
 // Overlays says an overlay is opening before the host is sent it.
 func ExampleSurface_Overlays() {
-	var st ui.PopoverState
-	s := surf.New("tool", ui.Popover(&st, ui.PopoverProps{ID: "filter", Trigger: templ.Raw("Filter")}), ui.Stylesheet())
+	var st popover.State
+	s := surf.New("tool", popover.View(&st, popover.Props{ID: "filter", Trigger: templ.Raw("Filter")}), surfui.Stylesheet())
 	var out bytes.Buffer
 	s.Attach(&out, hotty.Caps{})
 	if _, err := s.Document(); err != nil {
@@ -359,8 +363,8 @@ func attrList(a templ.Attributes) string {
 // ends with Surface.Focus. The surface writes the bindings into data-keys.
 func ExampleBind() {
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		main := surf.On(ctx, "main", surf.Bind(surf.Action(hotty.Prefix, "mod+k")))
-		log := surf.On(ctx, "log", surf.Bind(surf.Action(hotty.ScrollDown, "j"), surf.Action(hotty.ScrollUp, "k")))
+		main := surf.On(ctx, "main", surf.Bind(surfkey.Action(hotty.Prefix, "mod+k")))
+		log := surf.On(ctx, "log", surf.Bind(surfkey.Action(hotty.ScrollDown, "j"), surfkey.Action(hotty.ScrollUp, "k")))
 		_, err := fmt.Fprintf(w, `<main%s><pre%s tabindex="0">…</pre></main>`, attrList(main), attrList(log))
 		return err
 	})
@@ -384,7 +388,7 @@ func ExampleBind() {
 func ExampleReadlineKeys() {
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		rows := func(key string) bool { return key == "arrow_up" || key == "arrow_down" }
-		q := surf.On(ctx, "query", surf.Input(func(string) {}), surf.Bind(surf.ReadlineKeys()),
+		q := surf.On(ctx, "query", surf.Input(func(string) {}), surf.Bind(surfkey.ReadlineKeys()),
 			surf.Key(rows, "arrow_up", "arrow_down"))
 		_, err := fmt.Fprintf(w, `<input%s>`, attrList(q))
 		return err
@@ -410,7 +414,7 @@ func ExampleReadlineKeys() {
 // still selects all, as the host's edit shortcut.
 func ExampleCUAKeys() {
 	keysOn(hotty.Caps{Mod: "super"}, func(ctx context.Context) string {
-		app := surf.On(ctx, "app", surf.Bind(surf.CUAKeys()))
+		app := surf.On(ctx, "app", surf.Bind(surfkey.CUAKeys()))
 		return `<div` + attrList(app) + `><input id="query"></div>`
 	}, "app")
 	// Output: app: ctrl+a=program ctrl+arrow_left=word-backward ctrl+arrow_right=word-forward ctrl+b=program ctrl+backspace=delete-word-backward ctrl+d=program ctrl+delete=delete-word-forward ctrl+e=program ctrl+end=input-end ctrl+f=program ctrl+h=program ctrl+home=input-start ctrl+k=program ctrl+n=program ctrl+p=program super+arrow_down=program super+arrow_left=program super+arrow_right=program super+arrow_up=program super+backspace=program
@@ -421,7 +425,7 @@ func ExampleCUAKeys() {
 // program. ctrl+a, the host's select all, isn't CocoaKeys' here.
 func ExampleCocoaKeys() {
 	keysOn(hotty.Caps{}, func(ctx context.Context) string {
-		app := surf.On(ctx, "app", surf.Bind(surf.CocoaKeys()))
+		app := surf.On(ctx, "app", surf.Bind(surfkey.CocoaKeys()))
 		return `<div` + attrList(app) + `><input id="query"></div>`
 	}, "app")
 	// Output: app: ctrl+arrow_left=program ctrl+arrow_right=program ctrl+b=char-backward ctrl+backspace=program ctrl+d=delete-char-forward ctrl+delete=program ctrl+e=line-end ctrl+end=program ctrl+f=char-forward ctrl+h=delete-char-backward ctrl+home=program ctrl+k=delete-to-line-end ctrl+n=line-next ctrl+p=line-previous super+arrow_down=input-end super+arrow_left=line-start super+arrow_right=line-end super+arrow_up=input-start super+backspace=delete-to-line-start
@@ -433,8 +437,8 @@ func ExampleCocoaKeys() {
 // gives back the Mac's.
 func ExampleCUAEditShortcuts() {
 	keysOn(hotty.Caps{Mod: "super"}, func(ctx context.Context) string {
-		app := surf.On(ctx, "app", surf.Bind(surf.ReadlineKeys(), surf.CUAKeys(),
-			surf.CUAEditShortcuts()))
+		app := surf.On(ctx, "app", surf.Bind(surfkey.ReadlineKeys(), surfkey.CUAKeys(),
+			surfkey.CUAEditShortcuts()))
 		return `<div` + attrList(app) + `><input id="query"></div>`
 	}, "query")
 	// Output: query: ctrl+a=select-all ctrl+c=copy ctrl+shift+z=redo ctrl+v=paste ctrl+x=cut ctrl+y=redo ctrl+z=undo super+a=program super+c=program super+shift+z=program super+v=program super+x=program super+z=program
@@ -446,7 +450,7 @@ func ExampleCUAEditShortcuts() {
 // app element.
 func ExampleCocoaEditShortcuts() {
 	keysOn(hotty.Caps{}, func(ctx context.Context) string {
-		app := surf.On(ctx, "app", surf.Bind(surf.CocoaKeys(), surf.CocoaEditShortcuts()))
+		app := surf.On(ctx, "app", surf.Bind(surfkey.CocoaKeys(), surfkey.CocoaEditShortcuts()))
 		return `<div` + attrList(app) + `><input id="query"></div>`
 	}, "query")
 	// Output: query: ctrl+c=program ctrl+shift+z=program ctrl+v=program ctrl+x=program ctrl+y=program ctrl+z=program super+a=select-all super+c=copy super+shift+z=redo super+v=paste super+x=cut super+z=undo
@@ -485,15 +489,15 @@ func keysOn(caps hotty.Caps, view func(ctx context.Context) string, ids ...strin
 // Action binds keys to one action: here a list scrolls with j and k.
 func ExampleAction() {
 	keysOf(func(ctx context.Context) string {
-		return `<ul` + attrList(surf.On(ctx, "rows", surf.Bind(surf.Action(hotty.ScrollDown, "j"), surf.Action(hotty.ScrollUp, "k")))) + ` tabindex="0"></ul>`
+		return `<ul` + attrList(surf.On(ctx, "rows", surf.Bind(surfkey.Action(hotty.ScrollDown, "j"), surfkey.Action(hotty.ScrollUp, "k")))) + ` tabindex="0"></ul>`
 	}, "rows")
 	// Output: rows: j=scroll-down k=scroll-up
 }
 
 // pager is an app's group: a pager's keys, defined once.
-var pager = surf.Group(
-	surf.Action(hotty.ScrollDown, "j"),
-	surf.Action(hotty.ScrollEnd, "shift+g"),
+var pager = surfkey.Group(
+	surfkey.Action(hotty.ScrollDown, "j"),
+	surfkey.Action(hotty.ScrollEnd, "shift+g"),
 )
 
 // A group is bound whole, wherever it's needed.
@@ -507,11 +511,11 @@ func ExampleGroup() {
 // A group yields: the page declares alt+b on its main, so a field under
 // a word-moving group leaves alt+b to the page. Override binds it anyway.
 func ExampleOverride() {
-	words := surf.Group(surf.Action(hotty.WordBackward, "alt+b"), surf.Action(hotty.WordForward, "alt+f"))
+	words := surfkey.Group(surfkey.Action(hotty.WordBackward, "alt+b"), surfkey.Action(hotty.WordForward, "alt+f"))
 	keysOf(func(ctx context.Context) string {
 		main := surf.On(ctx, "main", surf.Key(func(string) bool { return true }, "alt+b"))
 		a := surf.On(ctx, "a", surf.Bind(words))
-		b := surf.On(ctx, "b", surf.Bind(words, surf.Override()))
+		b := surf.On(ctx, "b", surf.Bind(words, surfkey.Override()))
 		return `<main` + attrList(main) + `><input` + attrList(a) + `><input` + attrList(b) + `></main>`
 	}, "a", "b")
 	// Output:
@@ -524,8 +528,8 @@ func ExampleOverride() {
 func ExampleYield() {
 	keysOf(func(ctx context.Context) string {
 		main := surf.On(ctx, "main", surf.Key(func(string) bool { return true }, "ctrl+e"))
-		a := surf.On(ctx, "a", surf.Bind(surf.Action(hotty.LineEnd, "ctrl+e")))
-		b := surf.On(ctx, "b", surf.Bind(surf.Action(hotty.LineEnd, "ctrl+e"), surf.Yield()))
+		a := surf.On(ctx, "a", surf.Bind(surfkey.Action(hotty.LineEnd, "ctrl+e")))
+		b := surf.On(ctx, "b", surf.Bind(surfkey.Action(hotty.LineEnd, "ctrl+e"), surfkey.Yield()))
 		return `<main` + attrList(main) + `><input` + attrList(a) + `><input` + attrList(b) + `></main>`
 	}, "a", "b")
 	// Output:

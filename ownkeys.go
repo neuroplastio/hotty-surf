@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // The keys a native control uses (SPEC §10.2), each also with shift.

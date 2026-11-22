@@ -2,7 +2,7 @@
 
 package surf
 
-import "neuroplast.io/hotty-surf/internal/devhook"
+import "neuroplast.io/hotty-surf/internal/dev/hook"
 
 // register hands s to package reload, in a dev build, so that a live
 // reload reaches it wherever it was made.

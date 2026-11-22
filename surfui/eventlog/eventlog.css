@@ -1,0 +1,3 @@
+.kit-event-log-header { display: flex; align-items: center; }
+.kit-event-log-header button { margin-left: auto; }
+.kit-event-log-empty { font-style: italic; }

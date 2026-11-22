@@ -1,0 +1,71 @@
+// Package icon is hotty-surf's self-contained Lucide icon component.
+package icon
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+)
+
+// Register registers icon's assets with r (currently none; kept for uniform registration).
+func Register(r *surfui.Registry) {}
+
+// Names returns all shipped Lucide icon names in ascending order.
+func Names() []string { return iconNames() }
+
+func checkIcon(ctx context.Context, name string) string {
+	if _, ok := icons[name]; !ok {
+		rt.Fault(ctx, fmt.Sprintf("icon.View: no icon %q (the kit has %s)", name, strings.Join(iconNames(), ", ")))
+	}
+	return ""
+}
+
+func join(names ...string) string {
+	var b strings.Builder
+	for _, n := range names {
+		if n == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(n)
+	}
+	return b.String()
+}
+
+// lucideClass is the class lucide-react gives an icon: its component's
+// name in kebab case, which for Settings2 has no dash before the digit.
+func lucideClass(name string) string {
+	if name == "settings-2" {
+		return "settings2"
+	}
+	return name
+}
+
+// View is the icon named name, one of the kit's Lucide icons, as an inline
+// SVG. The kit has a subset of Lucide: the icons its own components use, and
+// a set an app commonly needs, which apps draw with: archive, arrow-down,
+// arrow-left, arrow-right, arrow-up, arrow-up-down, bell, bookmark,
+// calendar, check, chevron-down, chevron-left, chevron-right, chevron-up,
+// chevrons-left, chevrons-right, chevrons-up-down, circle, circle-alert,
+// circle-check-big, circle-help, circle-off, circle-plus, circle-x, clock,
+// code, copy, download, ellipsis, ellipsis-vertical, external-link, eye,
+// eye-off, file, file-plus, file-text, filter, folder, folder-open,
+// folder-plus, git-branch, globe, hand, heart, house, image, inbox, info,
+// layout-grid, link, list, lock, lock-open, log-in, log-out, mail, menu,
+// message-square, minus, moon, panel-left, paperclip, pause, pencil, play,
+// plus, refresh-cw, save, search, send, settings, settings-2, share-2,
+// sparkles, square, star, sun, tag, terminal, timer, trash, trash-2,
+// trending-down, trending-up, triangle-alert, upload, user, user-plus, users
+// and x. Another name is a fault. In a button or a badge the kit sizes it;
+// class is for the app's own (one its stylesheet has), or "".
+templ View(name, class string) {
+	{{ checkIcon(ctx, name) }}
+	<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={ join("lucide lucide-"+lucideClass(name), class) }>
+		@templ.Raw(icons[name])
+	</svg>
+}

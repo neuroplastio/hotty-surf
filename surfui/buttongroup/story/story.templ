@@ -1,0 +1,52 @@
+// Package story provides the storybook showcase for ui/buttongroup.
+package story
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/buttongroup"
+)
+
+type state struct {
+	clicks int
+}
+
+func (s *state) click() { s.clicks++ }
+
+// Register adds buttongroup's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "button-group/default",
+		Doc:          "Horizontal and vertical button groups with separators",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Keys:         []string{"tab", "enter"},
+		Want:         "clicks: 1",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4">
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Horizontal</span>
+			@buttongroup.View(buttongroup.Props{}) {
+				@button.View(button.Props{ID: "bg-archive", Variant: surfui.Outline, OnClick: s.click}) { Archive }
+				@button.View(button.Props{ID: "bg-report", Variant: surfui.Outline, OnClick: s.click}) { Report }
+				@buttongroup.Separator()
+				@button.View(button.Props{ID: "bg-snooze", Variant: surfui.Outline, OnClick: s.click}) { Snooze }
+			}
+		</div>
+		<div class="flex flex-col gap-2 items-start">
+			<span class="text-xs text-muted-foreground">Vertical</span>
+			@buttongroup.View(buttongroup.Props{Orientation: buttongroup.Vertical}) {
+				@button.View(button.Props{ID: "bg-up", Variant: surfui.Outline, Size: surfui.Small, OnClick: s.click}) { Top }
+				@button.View(button.Props{ID: "bg-mid", Variant: surfui.Outline, Size: surfui.Small, OnClick: s.click}) { Middle }
+				@button.View(button.Props{ID: "bg-bot", Variant: surfui.Outline, Size: surfui.Small, OnClick: s.click}) { Bottom }
+			}
+		</div>
+		<p class="text-sm text-muted-foreground">clicks: { strconv.Itoa(s.clicks) }</p>
+	</div>
+}

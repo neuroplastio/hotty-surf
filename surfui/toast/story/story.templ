@@ -1,0 +1,77 @@
+// Package story provides the storybook showcase for ui/toast.
+package story
+
+import (
+	"time"
+
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/toast"
+)
+
+type state struct {
+	toasts toast.State
+	ran    string
+}
+
+// Register adds toast's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "toast/default",
+		Doc:          "Toasts by category, with actions, and countdown bar",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Keys:         []string{"tab", "enter"},
+		Want:         "Event created",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4">
+		<div class="flex flex-row flex-wrap gap-2">
+			@button.View(button.Props{ID: "show", Variant: surfui.Outline, OnClick: func() {
+				s.toasts.Show(toast.Toast{Title: "Event created", Description: "Sunday, at nine."})
+			}}) {
+				Default
+			}
+			@button.View(button.Props{ID: "success", Variant: surfui.Outline, OnClick: func() {
+				s.toasts.Show(toast.Toast{Title: "Saved", Category: "success"})
+			}}) {
+				Success
+			}
+			@button.View(button.Props{ID: "error", Variant: surfui.Outline, OnClick: func() {
+				s.toasts.Show(toast.Toast{Title: "Couldn't save", Category: "error"})
+			}}) {
+				Error
+			}
+			@button.View(button.Props{ID: "info", Variant: surfui.Outline, OnClick: func() {
+				s.toasts.Show(toast.Toast{Title: "A new version", Category: "info"})
+			}}) {
+				Info
+			}
+			@button.View(button.Props{ID: "warning", Variant: surfui.Outline, OnClick: func() {
+				s.toasts.Show(toast.Toast{Title: "Disk nearly full", Category: "warning"})
+			}}) {
+				Warning
+			}
+			@button.View(button.Props{ID: "show-action", Variant: surfui.Outline, OnClick: func() {
+				s.toasts.Show(toast.Toast{
+					ID: "build", Title: "Build finished", Description: "hotty-surf, 2 warnings",
+					Duration: -1, Countdown: time.Now().Add(8 * time.Second),
+					Actions: []toast.Action{
+						{Label: "Undo", OnSelect: func() { s.ran = "undone" }},
+						{Label: "Later", Variant: surfui.Outline, OnSelect: func() { s.ran = "later" }},
+					},
+					OnClose: func() { s.ran = "closed"; s.toasts.Remove("build") },
+				})
+			}}) {
+				With action
+			}
+		</div>
+		if s.ran != "" {
+			<p class="text-sm text-muted-foreground">action: { s.ran }</p>
+		}
+		@toast.View(&s.toasts, toast.Props{})
+	</div>
+}

@@ -11,14 +11,15 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
-	"neuroplast.io/hotty-surf/internal/rt"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/listitem"
 )
 
 // The cost targets' scenes (api/notes.md, "Compiled components"), with
 // made-up data: a nav of 8 workspaces of 6 tabs in a program's row shape
-// (a ui.List's items under a ui.KeyScope, each row a drag source with a
+// (a surfui.List's items under a surfui.KeyScope, each row a drag source with a
 // press, a secondary press and an item), a strip of 20 pills, and a box.
 // Each runs compiled and as a plain view, on a host and on a Screen.
 
@@ -70,12 +71,12 @@ func navRowView(p navRow) templ.Component {
 		item := surf.On(ctx, id+"-item", surf.Click(func() { m.cur = key }), surf.Secondary(func(hotty.Cell, hotty.Area) {}))
 		body := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			fmt.Fprintf(w, `<span class="row-head flex"><span class="whitespace-pre">%s</span><span class="row-lead text-muted-foreground">%s</span>`, strings.Repeat(nbsp, p.Indent*2), p.Lead)
-			if err := ui.ItemTitle(ui.ItemTitleProps{Class: "truncate"}).Render(templ.WithChildren(ctx, templ.Raw(templ.EscapeString(p.Title))), w); err != nil {
+			if err := listitem.Title(listitem.TextProps{Class: "truncate"}).Render(templ.WithChildren(ctx, templ.Raw(templ.EscapeString(p.Title))), w); err != nil {
 				return err
 			}
 			io.WriteString(w, `</span>`)
 			if p.Origin != "" {
-				return ui.ItemSubtitle(ui.ItemSubtitleProps{Class: "text-muted-foreground"}).Render(templ.WithChildren(ctx, templ.Raw(templ.EscapeString(p.Origin))), w)
+				return listitem.Subtitle(listitem.TextProps{Class: "text-muted-foreground"}).Render(templ.WithChildren(ctx, templ.Raw(templ.EscapeString(p.Origin))), w)
 			}
 			return nil
 		})
@@ -83,7 +84,7 @@ func navRowView(p navRow) templ.Component {
 		if p.Dim {
 			cls = "opacity-50"
 		}
-		if err := ui.ListItem(ui.ListItemProps{Selected: p.Sel, Attrs: item, Class: cls}).Render(templ.WithChildren(ctx, body), w); err != nil {
+		if err := listitem.View(listitem.Props{Selected: p.Sel, Attrs: item, Class: cls}).Render(templ.WithChildren(ctx, body), w); err != nil {
 			return err
 		}
 		if p.Sel {
@@ -95,7 +96,7 @@ func navRowView(p navRow) templ.Component {
 }
 
 func navView(m *navModel) templ.Component {
-	bindings := []ui.KeyBinding{{Key: "mod+k", Label: "Find", Run: func() bool { return true }}}
+	bindings := []surfui.KeyBinding{{Key: "mod+k", Label: "Find", Run: func() bool { return true }}}
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		rows := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			for _, p := range m.rows {
@@ -112,11 +113,11 @@ func navView(m *navModel) templ.Component {
 		})
 		list := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			io.WriteString(w, `<div class="flex flex-col"><div class="overflow-y-auto">`)
-			err := ui.List(ui.ListProps{OnChange: func(int) {}, Attrs: templ.Attributes{"id": "nav", "aria-label": "Workspaces"}}).Render(templ.WithChildren(ctx, rows), w)
+			err := listitem.List(listitem.ListProps{OnChange: func(int) {}, Attrs: templ.Attributes{"id": "nav", "aria-label": "Workspaces"}}).Render(templ.WithChildren(ctx, rows), w)
 			io.WriteString(w, `</div></div>`)
 			return err
 		})
-		return ui.KeyScope(bindings).Render(templ.WithChildren(ctx, list), w)
+		return surfui.KeyScope(bindings).Render(templ.WithChildren(ctx, list), w)
 	})
 }
 
@@ -261,7 +262,7 @@ func BenchmarkCompiled(b *testing.B) {
 		for _, mode := range []string{"plain", "compiled"} {
 			b.Run(sc.name+"/host/"+mode, func(b *testing.B) {
 				v, step := sc.view(mode == "compiled")
-				s := surf.New("z", v, ui.Stylesheet())
+				s := surf.New("z", v, surfui.Stylesheet())
 				s.Attach(io.Discard, hotty.Caps{})
 				if _, err := s.Document(); err != nil {
 					b.Fatal(err)
@@ -280,8 +281,8 @@ func BenchmarkCompiled(b *testing.B) {
 			})
 			b.Run(sc.name+"/cells/"+mode, func(b *testing.B) {
 				v, step := sc.view(mode == "compiled")
-				s := surf.New("z", v, ui.Stylesheet())
-				c := cells.New(sc.cols, sc.rows, func(e hotty.Event) { s.Event(e) })
+				s := surf.New("z", v, surfui.Stylesheet())
+				c := surftui.New(sc.cols, sc.rows, func(e hotty.Event) { s.Event(e) })
 				s.Attach(c, hotty.Caps{})
 				doc, err := s.Document()
 				if err != nil {
@@ -289,9 +290,9 @@ func BenchmarkCompiled(b *testing.B) {
 				}
 				c.Write([]byte(hotty.Doc("z", doc)))
 				// A program's grid, which Draw writes into.
-				g := make([][]cells.Cell, sc.rows+2)
+				g := make([][]surftui.Cell, sc.rows+2)
 				for y := range g {
-					g[y] = make([]cells.Cell, sc.cols+4)
+					g[y] = make([]surftui.Cell, sc.cols+4)
 				}
 				c.Draw(g, 0, 0)
 				for i := range 2 {
@@ -319,7 +320,7 @@ func BenchmarkCompiled(b *testing.B) {
 func TestCompiledScenesKeep(t *testing.T) {
 	for _, sc := range scenes() {
 		v, step := sc.view(true)
-		s := surf.New("z", v, ui.Stylesheet())
+		s := surf.New("z", v, surfui.Stylesheet())
 		s.Attach(io.Discard, hotty.Caps{})
 		if _, err := s.Document(); err != nil {
 			t.Fatal(err)

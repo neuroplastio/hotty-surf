@@ -1,0 +1,73 @@
+// Package story provides the storybook showcase for ui/popover.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/field"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/label"
+	"neuroplast.io/hotty-surf/surfui/popover"
+)
+
+// Props is the editable state for the Popover storybook controls.
+type Props struct {
+	Trigger string
+	Width   string
+	pop     popover.State
+}
+
+type state struct {
+	pop   popover.State
+	sides [4]popover.State
+	width string
+}
+
+// Register adds popover's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "popover/default",
+		Doc:          "Popovers with forms and placement on all four sides",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{width: "100%"}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Trigger: "Open popover", Width: "100%"}
+			return p, editable(p, &state{width: "100%"})
+		},
+		Keys: []string{"tab", "enter"},
+		Want: "Dimensions",
+	})
+}
+
+templ editable(p *Props, s *state) {
+	<div class="p-4 flex flex-col gap-4">
+		@popover.View(&p.pop, popover.Props{ID: "dimensions", Trigger: templ.Raw(templ.EscapeString(p.Trigger)), Class: "w-80"}) {
+			<header><h4>Dimensions</h4><p>Set the dimensions for the layer.</p></header>
+			@field.View(field.Props{Orientation: field.Horizontal}) {
+				@label.View(label.Props{For: "width"}) { Width }
+				@input.View(input.Props{ID: "width", Value: p.Width, OnInput: func(v string) { p.Width = v }})
+			}
+		}
+		<div class="flex flex-wrap gap-2">
+			for i, side := range []string{"top", "bottom", "left", "right"} {
+				@popover.View(&s.sides[i], popover.Props{ID: "side-" + side, Side: side, Trigger: templ.Raw(side)}) {
+					<p>Opens to the { side }.</p>
+				}
+			}
+		</div>
+	</div>
+}
+
+templ showcase(s *state) {
+	<div class="p-4 flex flex-col gap-4">
+		@popover.View(&s.pop, popover.Props{ID: "dimensions", Trigger: templ.Raw("Open popover"), Class: "w-80"}) {
+			<header>
+				<h4>Dimensions</h4>
+				<p>Set the dimensions for the layer.</p>
+			</header>
+			@field.View(field.Props{Orientation: field.Horizontal}) {
+				@label.View(label.Props{For: "width"}) { Width }
+				@input.View(input.Props{ID: "width", Value: s.width, OnInput: func(v string) { s.width = v }})
+			}
+		}
+	</div>
+}

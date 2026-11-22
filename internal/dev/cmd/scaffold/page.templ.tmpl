@@ -1,0 +1,34 @@
+package main
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/input"
+)
+
+// Page is the view: a function of the state, rendered again after every
+// event.
+templ Page(a *App) {
+	<main class="flex flex-col gap-4 p-4">
+		<h1 class="text-lg font-semibold">APPNAME</h1>
+		<p class="text-sm text-muted-foreground">Count: { strconv.Itoa(a.Count) }</p>
+		// A form's Submit hears Enter in its field and its submit button.
+		<form class="flex gap-2" { surf.On(ctx, "add", surf.Submit(a.Add))... }>
+			@input.View(input.Props{
+				ID:          "by",
+				Value:       a.By,
+				Placeholder: "1",
+				OnInput:     a.SetBy,
+			})
+			@button.View(button.Props{Attrs: templ.Attributes{"type": "submit"}}) {
+				Add
+			}
+			@button.View(button.Props{ID: "reset", Variant: surfui.Outline, OnClick: a.Reset}) {
+				Reset
+			}
+		</form>
+	</main>
+}

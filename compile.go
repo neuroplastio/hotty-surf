@@ -13,7 +13,7 @@ import (
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // A Compiled is a component compiled for reuse (gov NEIO-15). Each

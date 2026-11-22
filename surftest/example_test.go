@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 var page templ.Component // the app's view
@@ -16,7 +16,7 @@ var page templ.Component // the app's view
 func Example() {
 	var t *testing.T // the test's
 
-	r := surftest.Start(t, surf.New("tasks", page, ui.Stylesheet()), surftest.Size(120, 40))
+	r := surftest.Start(t, surf.New("tasks", page, surfui.Stylesheet()), surftest.Size(120, 40))
 	r.Type("input[name=title]", "Write the docs")
 	r.Key("enter") // the field's form submits: its surf.Submit adds the task
 	if len(r.Find("li:text(Write the docs)")) != 1 {
@@ -36,7 +36,7 @@ func ExampleLint() {
 func ExampleRig_DragStep() {
 	var t *testing.T // the test's
 
-	r := surftest.Start(t, surf.New("list", page, ui.Stylesheet()))
+	r := surftest.Start(t, surf.New("list", page, surfui.Stylesheet()))
 	r.DragStep("#row-a", "#row-c", 0, 1) // released over the bottom half of c
 	if rows := r.Find("li"); attr(rows[len(rows)-1], "id") != "row-a" {
 		t.Fatal("a isn't last")
@@ -47,7 +47,7 @@ func ExampleRig_DragStep() {
 func ExampleRig_Secondary() {
 	var t *testing.T // the test's
 
-	r := surftest.Start(t, surf.New("list", page, ui.Stylesheet()))
+	r := surftest.Start(t, surf.New("list", page, surfui.Stylesheet()))
 	r.Secondary("#row-a")
 	r.Click("[role=menuitem]:text(Rename)")
 }
@@ -56,7 +56,7 @@ func ExampleRig_Secondary() {
 func ExampleRig_DoubleClick() {
 	var t *testing.T // the test's
 
-	r := surftest.Start(t, surf.New("list", page, ui.Stylesheet()))
+	r := surftest.Start(t, surf.New("list", page, surfui.Stylesheet()))
 	r.DoubleClick("#row-a")
 }
 

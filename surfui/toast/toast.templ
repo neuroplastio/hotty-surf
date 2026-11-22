@@ -1,0 +1,454 @@
+// Package toast is hotty-surf's self-contained Toaster and Toast component.
+package toast
+
+import (
+	"context"
+	_ "embed"
+	"fmt"
+	"slices"
+	"strconv"
+	"time"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/icon"
+)
+
+//go:embed toast.css
+var css string
+
+// Register registers toast's CSS with r.
+func Register(r *surfui.Registry) { r.CSS("toast", css) }
+
+// Toast is a short notice that goes away automatically or when removed.
+type Toast struct {
+	ID                 string
+	Title, Description string
+	Category           string
+	Duration           time.Duration
+	Actions            []Action
+	OnClick            func()
+	Focused            bool
+	Countdown          time.Time
+	OnClose            func()
+}
+
+// Action is a toast footer button.
+type Action struct {
+	Label    string
+	Variant  surfui.Variant
+	OnSelect func()
+}
+
+// State holds the active toasts for a Toaster.
+type State struct {
+	toasts  []*shownToast
+	next    int
+	paused  bool
+	onLeave func()
+}
+
+// Props configures a Toaster container.
+type Props struct {
+	OnLeave func()
+	Class   string
+}
+
+type shownToast struct {
+	Toast
+	n       int
+	hidden  bool
+	left    time.Duration
+	since   time.Time
+	timer   *time.Timer
+	s       *surf.Surface
+	bar     int
+	barFrom float64
+	barLife time.Duration
+	barAt   time.Time
+}
+
+var nowFn = time.Now
+
+const (
+	maxBarSteps = 1200
+	toastLeave  = 300 * time.Millisecond
+)
+
+var toastCategories = []string{"", "success", "error", "info", "warning"}
+
+// Show adds a toast or updates an existing toast with the same ID.
+func (st *State) Show(t Toast) {
+	if old := st.byID(t.ID); old != nil {
+		st.update(old, t)
+		return
+	}
+	st.next++
+	shown := &shownToast{Toast: t, n: st.next, left: lifetime(t)}
+	shown.runBar(1)
+	st.toasts = append(st.toasts, shown)
+}
+
+// Remove closes the toast with the given ID.
+func (st *State) Remove(id string) {
+	if t := st.byID(id); t != nil {
+		st.close(t)
+	}
+}
+
+func (st *State) byID(id string) *shownToast {
+	if id == "" {
+		return nil
+	}
+	for _, t := range st.toasts {
+		if t.ID == id && !t.hidden {
+			return t
+		}
+	}
+	return nil
+}
+
+func (st *State) update(old *shownToast, t Toast) {
+	if t.Duration != old.Duration {
+		st.stop(old)
+		old.left = lifetime(t)
+	}
+	if t.Focused {
+		st.stop(old)
+	}
+	switch {
+	case t.Focused && !old.Focused:
+		old.barFrom = old.barNow()
+		old.bar++
+		t.Countdown = old.Countdown
+	case t.Focused:
+		t.Countdown = old.Countdown
+	case old.Focused:
+		from := old.barFrom
+		old.Toast.Countdown = t.Countdown
+		old.runBar(from)
+	case !t.Countdown.Equal(old.Countdown):
+		old.Toast.Countdown = t.Countdown
+		old.runBar(1)
+	}
+	old.Toast = t
+	st.resume(old)
+}
+
+func (t *shownToast) runBar(from float64) {
+	t.bar++
+	t.barFrom = from
+	t.barAt = nowFn()
+	t.barLife = max(t.Countdown.Sub(t.barAt), 0)
+}
+
+func (t *shownToast) barNow() float64 {
+	if t.barLife <= 0 {
+		return 0
+	}
+	gone := nowFn().Sub(t.barAt)
+	return t.barFrom * max(0, 1-float64(gone)/float64(t.barLife))
+}
+
+func lifetime(t Toast) time.Duration {
+	switch {
+	case t.Duration < 0:
+		return -1
+	case t.Duration == 0 && t.Category == "error":
+		return 5000 * time.Millisecond
+	case t.Duration == 0:
+		return 3000 * time.Millisecond
+	}
+	return t.Duration
+}
+
+// View renders the Toaster and its active toasts.
+func View(st *State, p Props) templ.Component {
+	return toasterMarkup(st, p)
+}
+
+func (st *State) start(ctx context.Context, p Props) string {
+	st.onLeave = p.OnLeave
+	s := surf.Of(ctx)
+	if s == nil {
+		return ""
+	}
+	for _, t := range st.toasts {
+		if t.s == nil {
+			t.s = s
+			st.resume(t)
+		}
+	}
+	return ""
+}
+
+func (st *State) arm(t *shownToast) {
+	if t.left < 0 || t.hidden || t.s == nil {
+		return
+	}
+	t.since = time.Now()
+	s := t.s
+	var timer *time.Timer
+	timer = time.AfterFunc(t.left, func() {
+		s.Do(func() {
+			if t.timer == timer {
+				st.close(t)
+			}
+		})
+	})
+	t.timer = timer
+}
+
+func (st *State) close(t *shownToast) {
+	if t.hidden {
+		return
+	}
+	if t.timer != nil {
+		t.timer.Stop()
+		t.timer = nil
+	}
+	t.hidden = true
+	if t.s == nil {
+		st.remove(t)
+		return
+	}
+	s := t.s
+	time.AfterFunc(toastLeave, func() { s.Do(func() { st.remove(t) }) })
+}
+
+func (st *State) choose(t *shownToast, action *Action) {
+	if t.hidden {
+		return
+	}
+	if action != nil && action.OnSelect != nil {
+		action.OnSelect()
+	}
+	st.close(t)
+}
+
+func (t *shownToast) dismiss() bool {
+	return t.Duration < 0 && t.OnClose == nil && !slices.ContainsFunc(t.Actions, func(a Action) bool { return a.Variant == surfui.Outline })
+}
+
+func (st *State) closeAsked(t *shownToast) {
+	if !t.hidden && t.OnClose != nil {
+		t.OnClose()
+	}
+}
+
+func (st *State) bodyKey(t *shownToast) func(string) bool {
+	return func(k string) bool {
+		if k != "enter" && k != "space" || t.hidden || t.OnClick == nil {
+			return false
+		}
+		t.OnClick()
+		return true
+	}
+}
+
+func (st *State) click(t *shownToast) {
+	if !t.hidden && t.OnClick != nil {
+		t.OnClick()
+	}
+}
+
+func (t *shownToast) barStyle() templ.SafeCSS {
+	cut := (1 - t.barFrom) / 2
+	if t.Focused {
+		return templ.SafeCSS("--toast-bar-cut:" + strconv.FormatFloat(cut, 'f', 4, 64))
+	}
+	steps := min(maxBarSteps, max(1, int(t.barLife/(100*time.Millisecond))))
+	return templ.SafeCSS(fmt.Sprintf("--toast-bar-life:%dms;--toast-bar-steps:%d;--toast-bar-cut:%s",
+		t.barLife.Milliseconds(), steps, strconv.FormatFloat(cut, 'f', 4, 64)))
+}
+
+func (t *shownToast) barID() string { return t.id() + "-bar-" + strconv.Itoa(t.bar) }
+
+func (st *State) remove(t *shownToast) {
+	st.toasts = slices.DeleteFunc(st.toasts, func(x *shownToast) bool { return x == t })
+}
+
+func (st *State) hover(over bool) {
+	if over == st.paused {
+		return
+	}
+	st.paused = over
+	for _, t := range st.toasts {
+		if over {
+			st.stop(t)
+		} else {
+			st.resume(t)
+		}
+	}
+	if !over && st.onLeave != nil {
+		st.onLeave()
+	}
+}
+
+func (st *State) stop(t *shownToast) {
+	if t.timer == nil {
+		return
+	}
+	t.timer.Stop()
+	t.timer = nil
+	t.left = max(t.left-time.Since(t.since), 0)
+}
+
+func (st *State) resume(t *shownToast) {
+	if st.paused || t.Focused || t.left < 0 || t.hidden || t.timer != nil || t.s == nil {
+		return
+	}
+	if t.left > 0 {
+		st.arm(t)
+	} else {
+		st.close(t)
+	}
+}
+
+func (t *shownToast) category() string {
+	if t.Category == "" {
+		return "success"
+	}
+	return t.Category
+}
+
+func (t *shownToast) role() string {
+	if t.Category == "error" {
+		return "alert"
+	}
+	return "status"
+}
+
+func (t *shownToast) id() string { return "toast-" + strconv.Itoa(t.n) }
+
+func (t *shownToast) duration() string {
+	switch {
+	case t.Duration < 0:
+		return "-1"
+	case t.Duration > 0:
+		return strconv.FormatInt(t.Duration.Milliseconds(), 10)
+	}
+	return ""
+}
+
+func checkToast(ctx context.Context, t *shownToast) string {
+	for _, action := range t.Actions {
+		if action.Label == "" {
+			rt.Fault(ctx, "toast.Action: Label is required")
+		}
+	}
+	if t.OnClose != nil && t.ID == "" {
+		rt.Fault(ctx, "toast.Toast: OnClose needs an ID: the app removes the toast")
+	}
+	if !slices.Contains(toastCategories, t.Category) {
+		rt.Fault(ctx, fmt.Sprintf("toast.Toast: unknown category %q", t.Category))
+	}
+	return ""
+}
+
+var toastIcons = map[string]string{
+	"success": `<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>`,
+	"error":   `<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>`,
+	"info":    `<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`,
+	"warning": `<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>`,
+}
+
+templ toasterMarkup(st *State, p Props) {
+	{{ st.start(ctx, p) }}
+	<div
+		class={ util.JoinClass("toaster", p.Class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		data-toaster-initialized="true"
+		{ surf.On(ctx, "toaster", surf.Hover(st.hover))... }
+	>
+		for _, t := range st.toasts {
+			@toastItem(st, t)
+		}
+	</div>
+}
+
+templ toastItem(st *State, t *shownToast) {
+	{{ checkToast(ctx, t) }}
+	<div
+		id={ t.id() }
+		class="toast"
+		role={ t.role() }
+		aria-atomic="true"
+		aria-hidden={ strconv.FormatBool(t.hidden) }
+		data-category={ t.category() }
+		if d := t.duration(); d != "" {
+			data-duration={ d }
+		}
+		if t.Focused {
+			data-focused
+		}
+		if !t.Countdown.IsZero() {
+			data-bar
+		}
+		if t.OnClose != nil {
+			data-close
+		}
+		data-toast-initialized="true"
+	>
+		if !t.Countdown.IsZero() {
+			<div id={ t.barID() } class={ "toast-bar", templ.KV("still", t.Focused) } style={ t.barStyle() } aria-hidden="true"></div>
+		}
+		<div
+			class="toast-content"
+			if t.OnClick != nil {
+				tabindex="0"
+				{ surf.On(ctx, t.id()+"-body", surf.Click(func() { st.click(t) }), surf.Key(st.bodyKey(t)))... }
+			}
+		>
+			if svg, ok := toastIcons[t.category()]; ok {
+				@templ.Raw(svg)
+			}
+			<section>
+				if t.Title != "" {
+					<h2>{ t.Title }</h2>
+				}
+				if t.Description != "" {
+					<p>{ t.Description }</p>
+				}
+			</section>
+			if len(t.Actions) > 0 || t.dismiss() {
+				<footer>
+					for i := range t.Actions {
+						@toastButton(st, t, i)
+					}
+					if t.dismiss() {
+						<button type="button" class="btn" data-variant="outline" data-size="sm" data-toast-cancel disabled?={ t.hidden } { util.ScopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-dismiss", surf.Click(func() { st.choose(t, nil) })), "button")... }>Dismiss</button>
+					}
+				</footer>
+			}
+		</div>
+		if t.OnClose != nil {
+			<button type="button" class="btn toast-close" data-variant="ghost" data-size="icon-sm" aria-label="Dismiss" disabled?={ t.hidden } { util.ScopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-close", surf.Click(func() { st.closeAsked(t) })), "button")... }>
+				@icon.View("x", "")
+			</button>
+		}
+	</div>
+}
+
+templ toastButton(st *State, t *shownToast, i int) {
+	{{ a := &t.Actions[i] }}
+	<button
+		type="button"
+		class="btn"
+		if a.Variant != surfui.Primary {
+			data-variant={ string(a.Variant) }
+		}
+		data-size="sm"
+		if a.Variant == surfui.Outline {
+			data-toast-cancel
+		} else {
+			data-toast-action
+		}
+		disabled?={ t.hidden }
+		{ util.ScopeNativeAttrs(ctx, surf.On(ctx, t.id()+"-actions-"+strconv.Itoa(i+1), surf.Click(func() { st.choose(t, a) })), "button")... }
+	>{ a.Label }</button>
+}

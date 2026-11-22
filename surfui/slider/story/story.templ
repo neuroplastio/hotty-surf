@@ -1,0 +1,59 @@
+// Package story provides the storybook showcase for ui/slider.
+package story
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/slider"
+)
+
+type state struct {
+	val       float64
+	low, high float64
+}
+
+// Register adds slider's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "range/default",
+		Doc:          "Single-thumb slider and two-thumb range slider",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{val: 20, low: 20, high: 70}) },
+		Keys:         []string{"tab", "arrow_right"},
+		Want:         "value: 25",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4 max-w-md">
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Single thumb</span>
+			@slider.View(slider.Props{
+				ID:       "volume",
+				Attrs:    templ.Attributes{"aria-label": "Volume"},
+				Min:      0,
+				Max:      100,
+				Step:     5,
+				Value:    s.val,
+				OnChange: func(v float64) { s.val = v },
+			})
+			<p class="text-sm text-muted-foreground">value: { strconv.FormatFloat(s.val, 'f', -1, 64) }</p>
+		</div>
+		<div class="flex flex-col gap-2">
+			<span class="text-xs text-muted-foreground">Two thumbs (range)</span>
+			@slider.Range(slider.RangeProps{
+				ID:         "price",
+				StartAttrs: templ.Attributes{"aria-label": "Price, start"},
+				EndAttrs:   templ.Attributes{"aria-label": "Price, end"},
+				Min:        0,
+				Max:        100,
+				Step:       5,
+				Start:      s.low,
+				End:        s.high,
+				OnChange:   func(a, b float64) { s.low, s.high = a, b },
+			})
+			<p class="text-sm text-muted-foreground">range: { strconv.FormatFloat(s.low, 'f', -1, 64) }–{ strconv.FormatFloat(s.high, 'f', -1, 64) }</p>
+		</div>
+	</div>
+}

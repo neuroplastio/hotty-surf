@@ -1,0 +1,119 @@
+// Package breadcrumb is hotty-surf's self-contained Breadcrumb component, with
+// explicit renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package breadcrumb
+
+import (
+	_ "embed"
+	"strings"
+
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/icon"
+)
+
+//go:embed breadcrumb.css
+var css string
+
+// Register registers breadcrumb's assets with r.
+func Register(r *surfui.Registry) { r.CSS("breadcrumb", css) }
+
+// Item is one step in a Breadcrumb trail.
+type Item struct {
+	Label string
+	Attrs templ.Attributes
+}
+
+// Props configures a Breadcrumb component.
+type Props struct {
+	Items []Item
+	Attrs templ.Attributes
+	Class string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's breadcrumb for a hotty host.
+templ Hotty(p Props) {
+	@renderBreadcrumb(p, false)
+}
+
+// TUI renders the breadcrumb for cells.Screen.
+templ TUI(p Props) {
+	@renderBreadcrumb(p, true)
+}
+
+templ renderBreadcrumb(p Props, tui bool) {
+	<nav
+		aria-label="breadcrumb"
+		data-slot="breadcrumb"
+		if tui {
+			data-mode="tui"
+		}
+		class={ util.JoinClass("breadcrumb", p.Class) }
+		{ p.Attrs... }
+	>
+		<ol>
+			for i, it := range p.Items {
+				if i > 0 {
+					<li role="presentation" aria-hidden="true">
+						@icon.View("chevron-right", "")
+					</li>
+				}
+				<li>
+					if i == len(p.Items)-1 {
+						<span aria-current="page" if tui { class="font-semibold" } { it.Attrs... }>{ it.Label }</span>
+					} else if isLinked(it.Attrs) {
+						<a
+							role="link"
+							if tui {
+								class="text-muted-foreground"
+							}
+							if needsTabIndex(it.Attrs) {
+								tabindex="0"
+							}
+							{ it.Attrs... }
+						>{ it.Label }</a>
+					} else {
+						<span if tui { class="text-muted-foreground" } { it.Attrs... }>{ it.Label }</span>
+					}
+				</li>
+			}
+		</ol>
+	</nav>
+}
+
+func isLinked(a templ.Attributes) bool {
+	if a == nil {
+		return false
+	}
+	if _, ok := a["href"]; ok {
+		return true
+	}
+	if on, ok := a["data-on"].(string); ok {
+		for _, tok := range strings.Fields(on) {
+			if tok == "click" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func needsTabIndex(a templ.Attributes) bool {
+	if a == nil {
+		return false
+	}
+	if _, ok := a["href"]; ok {
+		return false
+	}
+	_, hasTab := a["tabindex"]
+	return !hasTab
+}

@@ -1,0 +1,39 @@
+component	markup	behaviour	browser	api	stories	tests	status	notes
+accordion	css	accordion.js	<details>	ui.Accordion,ui.AccordionProps,ui.AccordionItem	accordion/default,accordion/multiple,accordion/disabled	spec,differential,keys-cells	new	the host toggles <details> and tells no one (SPEC §9): one-open needs a spec proposal (a toggle event)
+alert	css	-	-	-	alert/default	spec	done	migrated to ui/alert; Default, Destructive
+avatar	css	-	<img>	-	avatar/default	spec	done	migrated to ui/avatar; sizes sm, lg; an image comes from cid: or data: only (SPEC §7)
+badge	css	-	-	-	badge/default	spec	done	migrated to ui/badge; Default (primary), Secondary, Outline, Destructive, Ghost, Link; amber warning by class
+breadcrumb	css	-	-	-	breadcrumb/default	spec	done	migrated to ui/breadcrumb; its links are hyperlinks, the terminal's (SPEC §9)
+button	css	-	-	-	button/default	spec,keys-cells	done	migrated to ui/button; sizes: ui.Size (XSmall…Large) and IconOnly
+button-group	css	-	-	-	button-group/default	spec,keys-cells	done	migrated to ui/buttongroup; horizontal, vertical, separator
+card	css	-	-	-	card/default	spec	done	migrated to ui/card; default, small, and stat cards
+chart	hand	hand	<canvas>, Chart.js	-	chart/default	spec	done	migrated to ui/chart
+checkbox	css	-	<input type=checkbox>	-	checkbox/default	spec,keys-cells	done	migrated to ui/checkbox; MDI glyphs in TUI, [ ]/[x] in ANSI/Plain
+collapsible	css	-	<details>	ui.Collapsible,ui.CollapsibleProps	collapsible/default,collapsible/open	spec,keys-cells	new	the host toggles it (SPEC §9); ::details-content and calc-size() unchecked in Blitz
+combobox	jinja	combobox.js	-	-	combobox/default	keys-cells	done	migrated to self-contained ui/combobox package
+command	jinja	command.js	<dialog>	-	command/default	keys-cells	done	migrated to ui/command
+dialog	jinja	hand	<dialog>, showModal	-	dialog/default	keys-cells	done	migrated to ui/dialog and ui/alertdialog
+drawer	css	drawer.js	<dialog>, showModal	-	drawer/default	spec,keys-cells	done	migrated to ui/drawer
+dropdown-menu	jinja	dropdown-menu.js	-	-	dropdown-menu/default	keys-cells	done	migrated to ui/menu
+empty	css	-	-	-	empty/default	spec	done	migrated to ui/empty
+field	css	-	-	-	field/default	spec	done	migrated to ui/field
+form	css	-	-	-	-	-	done	an @import of nine controls' files, no class of its own: nothing to wrap
+input	css	-	<input>	-	input/default	spec,keys-cells	done	migrated to ui/input
+input-group	css	-	-	-	input-group/default	spec,keys-cells	done	migrated to ui/inputgroup
+item	css	-	-	-	item/default	spec	done	migrated to ui/item; default, outline, muted, sizes, group
+kbd	css	-	-	-	kbd/default	spec	done	migrated to ui/kbd
+label	css	-	-	-	label/default	spec	done	migrated to ui/label; dims in a disabled Field (in-data-[disabled=true])
+popover	jinja	popover.js	-	-	popover/default	keys-cells	done	migrated to ui/popover
+progress	css	-	-	-	progress/default	spec	done	migrated to ui/progress; a span's width in a div, not <progress> (which Blitz lacks)
+radio	css	-	<input type=radio>	-	radio/default	spec,keys-cells	done	migrated to ui/radio
+range	css	range.js	<input type=range>	-	range/default	spec,keys-cells	done	migrated to ui/slider
+scrollbar	css	-	::-webkit-scrollbar	-	-	-	done	CSS utility classes (scrollbar, scrollbar-sm), not a component; demonstrated in ui/textarea/story
+select	jinja	select.js	-	-	select/default	keys-cells	done	migrated to ui/select
+sidebar	jinja	sidebar.js	<details>, inert	ui.Sidebar,ui.SidebarProps,ui.SidebarState,ui.SidebarItem	sidebar/default,sidebar/submenu,sidebar/right,sidebar/closed	render,differential,keys-cells	port	markup generated; its breakpoint reads the window's width; inert unchecked in Blitz
+skeleton	css	-	@keyframes	-	skeleton/default	spec	done	migrated to ui/skeleton
+switch	css	-	<input type=checkbox>	-	switch/default	spec,keys-cells	done	migrated to ui/switch
+table	css	-	-	-	table/default	spec	done	migrated to ui/table
+tabs	jinja	tabs.js	-	-	tabs/default	keys-cells	done	migrated to ui/tabs
+textarea	css	-	<textarea>	-	textarea/default	spec,keys-cells	done	migrated to ui/textarea
+toast	jinja	toast.js	-	-	toast/default	keys-cells	done	migrated to ui/toast
+tooltip	css	-	:hover, attr()	-	tooltip/default	spec	done	migrated to self-contained ui/tooltip package

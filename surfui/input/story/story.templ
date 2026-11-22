@@ -1,0 +1,84 @@
+// Package story provides the storybook showcase for ui/input.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/field"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/label"
+)
+
+// Props is the editable state for the Input storybook controls.
+type Props struct {
+	Label       string
+	Value       string
+	Placeholder string
+	Type        string `enum:"text,email,password,number,search"`
+	Invalid     bool
+	Disabled    bool
+}
+
+type state struct {
+	name  string
+	date  string
+	time  string
+	email string
+}
+
+// Register adds input's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "input/default",
+		Doc:          "Text, date, time, invalid, and disabled inputs",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{date: "2026-11-17", time: "09:30", email: "ada@"}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Label: "Email", Placeholder: "m@example.com", Type: "email"}
+			return p, editable(p)
+		},
+		Keys: []string{"tab", "a", "d", "a"},
+		Want: "name: ada",
+	})
+}
+
+templ editable(p *Props) {
+	<div class="flex flex-col gap-4 p-4 max-w-sm">
+		<div class="grid w-full gap-2">
+			@label.View(label.Props{For: "field"}) { { p.Label } }
+			@input.View(input.Props{
+				ID:          "field",
+				Type:        p.Type,
+				Value:       p.Value,
+				Placeholder: p.Placeholder,
+				Invalid:     p.Invalid,
+				Disabled:    p.Disabled,
+				OnInput:     func(v string) { p.Value = v },
+			})
+			if p.Invalid {
+				<p class="text-destructive text-sm">Enter a valid address.</p>
+			} else {
+				<p class="text-muted-foreground text-sm">We'll never share it.</p>
+			}
+		</div>
+		@showcase(&state{date: "2026-11-17", time: "09:30", email: "ada@"})
+	</div>
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 max-w-sm">
+		<div class="flex flex-col gap-1">
+			@input.View(input.Props{ID: "name", Value: s.name, Placeholder: "Name", OnInput: func(v string) { s.name = v }})
+			<p class="text-sm text-muted-foreground">name: { s.name }</p>
+		</div>
+		<div class="flex flex-row gap-3">
+			@input.View(input.Props{ID: "date", Type: "date", Value: s.date, OnInput: func(v string) { s.date = v }})
+			@input.View(input.Props{ID: "time", Type: "time", Value: s.time, OnInput: func(v string) { s.time = v }})
+		</div>
+		@field.View(field.Props{Invalid: true}) {
+			@label.View(label.Props{For: "email"}) { Email }
+			@input.View(input.Props{ID: "email", Type: "email", Value: s.email, Invalid: true, OnInput: func(v string) { s.email = v }})
+			<p role="alert">Enter a whole address, with a domain.</p>
+		}
+		@input.View(input.Props{ID: "disabled-name", Value: "Ada", Disabled: true})
+	</div>
+}

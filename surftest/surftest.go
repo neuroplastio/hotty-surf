@@ -37,9 +37,9 @@ import (
 	"neuroplast.io/hotty-go/hottytest"
 	"neuroplast.io/hotty-surf"
 
-	"neuroplast.io/hotty-surf/internal/input"
-	"neuroplast.io/hotty-surf/internal/rt"
-	"neuroplast.io/hotty-surf/lint"
+	"neuroplast.io/hotty-surf/internal/core/input"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/internal/dev/lint"
 )
 
 // Start starts s on a test host and checks its first frame. A reply from the

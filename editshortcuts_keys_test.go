@@ -6,6 +6,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 // eachRig runs f on a test host where mod is ctrl, one where it is super,
@@ -41,7 +42,7 @@ func selectAll(cocoa bool) string {
 // a Screen, which has no clipboard, hands it to the program.
 func TestCUAEditShortcutsNothingSelected(t *testing.T) {
 	page := func(heard *[]string, v *string) *surf.Surface {
-		return editPage([]surf.BindOption{surf.CUAEditShortcuts()}, nil, heard, v)
+		return editPage([]surfkey.Option{surfkey.CUAEditShortcuts()}, nil, heard, v)
 	}
 	eachRig(t, page, func(t *testing.T, r *keyRig, where string) {
 		r.focus("q")
@@ -67,12 +68,12 @@ func TestCUAEditShortcutsNothingSelected(t *testing.T) {
 // do, so they reach the program, under either group.
 func TestEditShortcutsPassword(t *testing.T) {
 	for _, cocoa := range []bool{false, true} {
-		group := surf.CUAEditShortcuts()
+		group := surfkey.CUAEditShortcuts()
 		if cocoa {
-			group = surf.CocoaEditShortcuts()
+			group = surfkey.CocoaEditShortcuts()
 		}
 		page := func(heard *[]string, v *string) *surf.Surface {
-			return editPageOf("password", []surf.BindOption{group}, nil, heard, v)
+			return editPageOf("password", []surfkey.Option{group}, nil, heard, v)
 		}
 		eachRig(t, page, func(t *testing.T, r *keyRig, where string) {
 			r.focus("q")
@@ -103,9 +104,9 @@ func TestEditShortcutsPassword(t *testing.T) {
 // back, reaches the program even with text selected. With CocoaKeys on
 // the same element, ctrl+a goes to the line's start, in either order.
 func TestCocoaEditShortcutsKeys(t *testing.T) {
-	for _, opts := range [][]surf.BindOption{
-		{surf.CocoaKeys(), surf.CocoaEditShortcuts()},
-		{surf.CocoaEditShortcuts(), surf.CocoaKeys()},
+	for _, opts := range [][]surfkey.Option{
+		{surfkey.CocoaKeys(), surfkey.CocoaEditShortcuts()},
+		{surfkey.CocoaEditShortcuts(), surfkey.CocoaKeys()},
 	} {
 		page := func(heard *[]string, v *string) *surf.Surface { return editPage(opts, nil, heard, v) }
 		eachRig(t, page, func(t *testing.T, r *keyRig, where string) {

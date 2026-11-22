@@ -8,6 +8,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 // A palette, with made-up data: a query field under ReadlineKeys, the
@@ -19,8 +20,8 @@ func BenchmarkPaletteKeymaps(b *testing.B) {
 			query := ""
 			v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
 				fmt.Fprintf(w, `<div%s><input type="text"%s/><ul>`,
-					on("app", surf.Bind(surf.CUAKeys())),
-					on("q", surf.Bind(surf.ReadlineKeys()), surf.Input(func(s string) { query = s })))
+					on("app", surf.Bind(surfkey.CUAKeys())),
+					on("q", surf.Bind(surfkey.ReadlineKeys()), surf.Input(func(s string) { query = s })))
 				for i := range 40 {
 					if len(query)%2 == 0 || i%2 == 0 {
 						fmt.Fprintf(w, `<li><button%s>row %d</button></li>`, on(fmt.Sprintf("r%d", i), surf.Click(func() {})), i)

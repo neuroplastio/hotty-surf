@@ -10,7 +10,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/surftui"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -204,7 +204,7 @@ func TestBlurInCells(t *testing.T) {
 			surf.Outside(func() { heard = append(heard, "outside") })))
 	})
 	s := surf.New("t", v, "")
-	scr := cells.New(20, 3, func(e hotty.Event) {
+	scr := surftui.New(20, 3, func(e hotty.Event) {
 		if err := s.Event(e); err != nil {
 			t.Error(err)
 		}

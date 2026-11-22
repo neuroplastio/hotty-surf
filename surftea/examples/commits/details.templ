@@ -4,10 +4,14 @@ import (
 	"strconv"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/ui"
-	"neuroplast.io/hotty-surf/ui/badge"
-	"neuroplast.io/hotty-surf/ui/button"
-	"neuroplast.io/hotty-surf/ui/label"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/badge"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/field"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/label"
+	"neuroplast.io/hotty-surf/surfui/table"
 )
 
 templ DetailsView(d *Details) {
@@ -22,7 +26,7 @@ templ DetailsView(d *Details) {
 			if len(c.Tags) > 0 {
 				<div class="flex flex-wrap gap-2 mt-1">
 					for _, t := range c.Tags {
-						@badge.View(badge.Props{Variant: ui.Secondary}) {
+						@badge.View(badge.Props{Variant: surfui.Secondary}) {
 							{ t.Name }
 						}
 					}
@@ -34,7 +38,7 @@ templ DetailsView(d *Details) {
 		}
 		<section class="flex flex-col gap-2">
 			<h2 class="text-sm font-semibold">{ strconv.Itoa(len(c.Files)) } files changed</h2>
-			@ui.Table(ui.TableProps{}) {
+			@table.View(table.Props{}) {
 				<tbody>
 					for _, f := range c.Files {
 						<tr>
@@ -61,32 +65,34 @@ templ DetailsView(d *Details) {
 		}
 		<form class="flex flex-col gap-3" { surf.On(ctx, "tag-form", surf.Submit(d.AddTag))... }>
 			<h2 class="text-sm font-semibold">Tag this commit</h2>
-			@ui.Field(ui.FieldProps{Invalid: d.Missing}) {
+			@field.View(field.Props{Invalid: d.Missing}) {
 				@label.View(label.Props{For: "tag-name"}) {
 					Name
 				}
-				@ui.Input(ui.InputProps{
+				@input.View(input.Props{
+					ID:          "tag-name",
 					Value:       d.TagName,
 					Placeholder: "v1.0.0",
 					Invalid:     d.Missing,
-					Attrs:       surf.On(ctx, "tag-name", surf.Input(d.SetTagName)),
+					OnInput:     d.SetTagName,
 				})
 				if d.Missing {
 					<p class="text-sm text-destructive">A tag needs a name.</p>
 				}
 			}
-			@ui.Field(ui.FieldProps{}) {
+			@field.View(field.Props{}) {
 				@label.View(label.Props{For: "tag-note"}) {
 					Note
 				}
-				@ui.Input(ui.InputProps{
+				@input.View(input.Props{
+					ID:          "tag-note",
 					Value:       d.TagNote,
 					Placeholder: "Optional",
-					Attrs:       surf.On(ctx, "tag-note", surf.Input(d.SetTagNote)),
+					OnInput:     d.SetTagNote,
 				})
 			}
 			@button.View(button.Props{Class: "w-fit", Attrs: templ.Attributes{"type": "submit"}}) {
-				@ui.Icon("plus", "")
+				@icon.View("plus", "")
 				Add tag
 			}
 		</form>

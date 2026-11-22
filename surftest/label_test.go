@@ -9,15 +9,17 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
-	"neuroplast.io/hotty-surf/ui"
-	uiselect "neuroplast.io/hotty-surf/ui/select"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/menu"
+	uiselect "neuroplast.io/hotty-surf/surfui/select"
 )
 
 // faultsOf starts view and returns the faults its first render records.
 func faultsOf(t *testing.T, view templ.Component) []string {
 	t.Helper()
 	f := &faults{T: t}
-	surftest.Start(f, surf.New("t", view, ui.Stylesheet()))
+	surftest.Start(f, surf.New("t", view, surfui.Stylesheet()))
 	return f.got
 }
 
@@ -49,7 +51,7 @@ func TestNamedButtons(t *testing.T) {
 // and says what a kit component with no Attrs can do.
 func TestUnnamedButtons(t *testing.T) {
 	var sel uiselect.State
-	var menu ui.DropdownMenuState
+	var m menu.DropdownState
 	for _, c := range []struct {
 		name string
 		view templ.Component
@@ -58,8 +60,8 @@ func TestUnnamedButtons(t *testing.T) {
 		{"in an app's element", raw(`<ul id="todo-list"><li><button><svg></svg></button></li></ul>`), "(in #todo-list)"},
 		{"a Select with nothing chosen", uiselect.View(&sel, uiselect.Props{ID: "size",
 			Items: []uiselect.Item{{Value: "s", Label: "Small"}}}), "takes a Placeholder"},
-		{"a menu with an icon alone", ui.DropdownMenu(&menu, ui.DropdownMenuProps{ID: "more",
-			Trigger: ui.Icon("ellipsis", ""), Items: []ui.MenuItem{{Label: "Edit"}}}), `<span class="sr-only">`},
+		{"a menu with an icon alone", menu.Dropdown(&m, menu.DropdownProps{ID: "more",
+			Trigger: icon.View("ellipsis", ""), Items: []menu.Item{{Label: "Edit"}}}), `<span class="sr-only">`},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			got := faultsOf(t, c.view)

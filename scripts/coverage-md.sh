@@ -9,7 +9,7 @@
 set -eu
 
 root=$(cd "$(dirname "$0")/.." && pwd)
-tsv=$root/ui/coverage.tsv
+tsv=$root/surfui/coverage.tsv
 out=${1:-$root/docs/coverage.md}
 
 [ -r "$tsv" ] || { echo "coverage-md: no $tsv" >&2; exit 1; }

@@ -1,0 +1,55 @@
+// Package label is hotty-surf's self-contained Label component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package label
+
+import (
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers label's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Label component.
+type Props struct {
+	For   string
+	Attrs templ.Attributes
+	Class string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p) {
+			{ children... }
+		}
+	default:
+		@TUI(p) {
+			{ children... }
+		}
+	}
+}
+
+// Hotty renders Basecoat's <label> for a hotty host.
+templ Hotty(p Props) {
+	<label
+		data-slot="label"
+		class={ util.JoinClass("label", p.Class) }
+		{ util.MergeAttrs(util.OptAttr("for", p.For), p.Attrs)... }
+	>
+		{ children... }
+	</label>
+}
+
+// TUI renders the label for cells.Screen.
+templ TUI(p Props) {
+	<label
+		data-slot="label"
+		data-mode="tui"
+		class={ util.JoinClass("label", p.Class) }
+		{ util.MergeAttrs(util.OptAttr("for", p.For), p.Attrs)... }
+	>
+		{ children... }
+	</label>
+}

@@ -56,7 +56,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/devcmd"
+	"neuroplast.io/hotty-surf/internal/dev/cmd"
 )
 
 // help is the command table of the package doc.

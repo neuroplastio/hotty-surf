@@ -1,0 +1,50 @@
+// Package story provides the storybook showcase for ui/alertdialog.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/alertdialog"
+	"neuroplast.io/hotty-surf/surfui/button"
+)
+
+type state struct {
+	open bool
+}
+
+func onoff(b bool) string {
+	if b {
+		return "on"
+	}
+	return "off"
+}
+
+// Register adds alertdialog's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "alert-dialog/default",
+		Doc:          "A modal confirmation alert dialog with cancel and destructive actions",
+		Consolidated: true,
+		BookOnly:     true,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Keys:         []string{"tab", "enter", "escape"},
+		Want:         "alert: off",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-3 p-4">
+		<div>
+			@button.View(button.Props{ID: "open-alert", Variant: surfui.Destructive, OnClick: func() { s.open = true }}) {
+				Delete item
+			}
+		</div>
+		@alertdialog.View(alertdialog.Props{ID: "alert", Open: s.open, Title: "Delete item?", Description: "This cannot be undone.", OnClose: func() { s.open = false }}) {
+			<footer>
+				@button.View(button.Props{ID: "cancel-alert", Variant: surfui.Outline, OnClick: func() { s.open = false }}) { Cancel }
+				@button.View(button.Props{ID: "confirm-alert", Variant: surfui.Destructive, OnClick: func() { s.open = false }}) { Delete }
+			</footer>
+		}
+		<p class="text-sm text-muted-foreground">alert: { onoff(s.open) }</p>
+	</div>
+}

@@ -1,0 +1,116 @@
+package surftui_test
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/a-h/templ"
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/surfui"
+)
+
+var page templ.Component // the app's view
+
+// A surface in a plain terminal: the Screen is its host, and the program
+// draws the Screen's lines where the surface goes.
+func ExampleNew() {
+	s := surf.New("files", page, surfui.Stylesheet())
+	c := surftui.New(80, 24, func(e hotty.Event) { s.Event(e) })
+	s.Attach(c, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		return
+	}
+	c.Write([]byte(hotty.Doc(s.Name(), doc)))
+
+	if !c.Key("arrow_down") {
+		if taken, _ := s.Key("arrow_down"); !taken {
+			// the program's own key
+		}
+	}
+	for _, l := range c.Lines() {
+		fmt.Println(l)
+	}
+}
+
+// The terminal's mouse in cells: the program hands the Screen each
+// press, motion and release at its own cells, and the surface's Click,
+// Drag, Drop, Secondary and Hover handlers hear them as on a host.
+func ExampleScreen_Press() {
+	s := surf.New("list", page, surfui.Stylesheet())
+	c := surftui.New(80, 24, func(e hotty.Event) { s.Event(e) })
+	s.Attach(c, hotty.Caps{})
+
+	c.Press(4, 2, 0, 0)              // a row's drag handle: dragstart
+	c.Move(4, 7, 0)                  // over another row: drag
+	c.Release(4, 7, 0)               // dragend, and that row's Drop
+	c.Press(4, 3, 0, 2)              // a secondary press: surf.Secondary
+	c.Move(10, 5, 0)                 // no button down: a hover
+	c.Press(4, 3, hotty.ModShift, 0) // a shift-click …
+	c.Release(4, 3, hotty.ModShift)
+
+	// A carry that began outside the surface: which row, and which half.
+	if id, a := c.At(4, 6); id != "" {
+		lower := 6 >= a.Row+a.H/2
+		_ = lower
+	}
+}
+
+// A program with a theme of its own paints the cells itself: each role is
+// a colour of the kit's, named as its CSS variable, which the program
+// already maps to its theme when it writes the kit's variables.
+func ExampleScreen_Cells() {
+	c := surftui.New(80, 24, nil)
+	theme := map[surftui.Role]string{"primary": "#7aa2f7", "destructive": "#f7768e"}
+	paint := func(r surftui.Role) (colour string, pct int) {
+		name, p, tinted := strings.Cut(string(r), "/")
+		pct = 100
+		if tinted {
+			pct, _ = strconv.Atoi(p)
+		}
+		return theme[surftui.Role(name)], pct // "" for the terminal's own
+	}
+	for y, row := range c.Cells() {
+		for x, cell := range row {
+			if cell.Text == "" {
+				continue // a wide character's second cell
+			}
+			fg, _ := paint(cell.Fg)
+			bg, alpha := paint(cell.Bg) // a tint: alpha percent over the ground
+			_, _, _, _, _ = x, y, fg, bg, alpha
+		}
+	}
+}
+
+// Chrome a program draws itself: a status line of its own, laid out by a
+// Screen the size of the place it goes, drawn into the program's frame
+// grid at that place each frame. A frame where nothing changed costs a
+// copy; Dirty says whether one did.
+func ExampleScreen_Draw() {
+	frame := make([][]surftui.Cell, 3)
+	for y := range frame {
+		frame[y] = make([]surftui.Cell, 20)
+		for x := range frame[y] {
+			frame[y][x] = surftui.Cell{Text: "."}
+		}
+	}
+	status := surftui.New(16, 1, nil)
+	status.Write([]byte(hotty.Doc("status", `<div class="flex"><span class="grow">main</span><span>3 jobs</span></div>`)))
+	status.Draw(frame, 2, 1)
+	for _, row := range frame {
+		var b strings.Builder
+		for _, c := range row {
+			b.WriteString(c.Text)
+		}
+		fmt.Println(b.String())
+	}
+	fmt.Println(status.Dirty())
+	// Output:
+	// ....................
+	// ..main      3 jobs..
+	// ....................
+	// false
+}

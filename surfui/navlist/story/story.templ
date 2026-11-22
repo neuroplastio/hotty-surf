@@ -1,0 +1,47 @@
+// Package story provides the storybook showcase for ui/navlist.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/navlist"
+)
+
+type state struct {
+	nav navlist.NavList
+}
+
+func newState() *state {
+	return &state{
+		nav: navlist.NavList{
+			ID:          "demo",
+			Label:       "Settings",
+			Placeholder: "Filter (type here)",
+			FilterLabel: "Filter settings",
+			Empty:       "Nothing matches.",
+			Current:     "profile",
+			Groups: []navlist.Group{
+				{Name: "Account", Items: []navlist.Item{{ID: "profile", Label: "Profile"}, {ID: "password", Label: "Password"}, {ID: "sessions", Label: "Sessions"}}},
+				{Name: "Workspace", Items: []navlist.Item{{ID: "members", Label: "Members"}, {ID: "billing", Label: "Billing"}, {ID: "danger", Label: "Danger zone"}}},
+			},
+		},
+	}
+}
+
+// Register adds navlist's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "nav-list/default",
+		Doc:          "Grouped navigation list with fuzzy filter and keyboard navigation",
+		Consolidated: true,
+		BookOnly:     true,
+		View:         func() templ.Component { return showcase(newState()) },
+	})
+}
+
+templ showcase(s *state) {
+	<div class="p-4 flex flex-col gap-2 max-w-xs">
+		@s.nav.FilterInput("")
+		@s.nav.List("border rounded-md p-2")
+		<p class="text-sm text-muted-foreground">selected: { s.nav.Current }</p>
+	</div>
+}

@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // differ says how the tree changed between two renders, as the ops of one

@@ -1,0 +1,59 @@
+// Package story provides the storybook showcase for ui/command.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/command"
+)
+
+type state struct {
+	cmd    command.State
+	dlgCmd command.State
+	open   bool
+	ran    string
+}
+
+func (s *state) commands() []command.Item {
+	run := func(v string) func() { return func() { s.ran = v } }
+	return []command.Item{
+		{Label: "New note", Icon: "plus", Keys: "mod+n", OnSelect: run("New note")},
+		{Label: "Search notes", Icon: "search", Keywords: "find, lookup", OnSelect: run("Search notes")},
+		{Label: "Archive", Icon: "folder", Disabled: true},
+		{Label: "Profile", Icon: "user", Group: "Settings", Keys: "mod+p", OnSelect: run("Profile")},
+		{Label: "Notifications", Icon: "bell", Group: "Settings", Keywords: "alerts", OnSelect: run("Notifications")},
+		{Label: "Inbox", Icon: "inbox", Group: "Settings", OnSelect: run("Inbox")},
+	}
+}
+
+// Register adds command's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "command/default",
+		Doc:          "Searchable command palette (inline and modal dialog)",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Keys:         []string{"tab", "arrow_down", "arrow_down", "enter"},
+		Want:         "ran: Profile.",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="p-4 flex flex-col gap-4">
+		<div class="max-w-md" style="border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+			@command.View(&s.cmd, command.Props{Items: s.commands()})
+		</div>
+		<div>
+			@button.View(button.Props{ID: "palette", Variant: surfui.Outline, OnClick: func() { s.open = true }}) {
+				Open command dialog
+			}
+		</div>
+		@command.Dialog(&s.dlgCmd, command.DialogProps{
+			Open:    s.open,
+			Items:   s.commands(),
+			OnClose: func() { s.open = false; s.dlgCmd.Search("") },
+		})
+		<p class="text-sm text-muted-foreground">ran: { s.ran }.</p>
+	</div>
+}

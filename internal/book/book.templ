@@ -6,25 +6,29 @@ import (
 	"strconv"
 
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfkey"
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
-	"neuroplast.io/hotty-surf/ui"
-	"neuroplast.io/hotty-surf/ui/button"
-	"neuroplast.io/hotty-surf/ui/checkbox"
-	"neuroplast.io/hotty-surf/ui/code"
-	"neuroplast.io/hotty-surf/ui/label"
-	uiselect "neuroplast.io/hotty-surf/ui/select"
-	"neuroplast.io/hotty-surf/ui/textarea"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/checkbox"
+	"neuroplast.io/hotty-surf/surfui/code"
+	"neuroplast.io/hotty-surf/surfui/eventlog"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/label"
+	uiselect "neuroplast.io/hotty-surf/surfui/select"
+	"neuroplast.io/hotty-surf/surfui/tabs"
+	"neuroplast.io/hotty-surf/surfui/textarea"
 )
 
 templ View(a *App) {
 	{{ a.sync() }}
-	<div class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book", surf.Key(a.bookKey), surf.Bind(surf.CUAKeys()))... }>
+	<div class={ "book flex", templ.KV("dark", a.model.Dark), templ.KV("light", !a.model.Dark) } { surf.On(ctx, "book", surf.Key(a.bookKey), surf.Bind(surfkey.CUAKeys()))... }>
 		@sidebar(a)
 		<main class="book-main flex flex-col">
 			if a.cur != nil {
 				@header(a)
 				@preview(a)
-				@ui.Tabs(ui.TabsProps{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel overflow-auto max-h-[40vh]", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []ui.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
+				@tabs.View(tabs.Props{ID: "book-tabs", Label: "Story", Line: true, ListClass: "book-tabs-list", PanelClass: "book-tabs-panel overflow-auto max-h-[40vh]", Value: a.model.Tab, OnChange: a.model.SetTab, Tabs: []tabs.Tab{{Value: storybook.TabSource, Label: "Source"}, {Value: storybook.TabProps, Label: "Props"}, {Value: storybook.TabEvents, Label: "Events"}, {Value: storybook.TabHTML, Label: "HTML"}}}) {
 					<div class="book-panel" tabindex="-1" { surf.On(ctx, "book-panel", surf.Focus(func(bool) {}))... }>
 						switch a.model.Tab {
 							case storybook.TabSource:
@@ -32,7 +36,7 @@ templ View(a *App) {
 							case storybook.TabProps:
 								@props(a)
 							case storybook.TabEvents:
-								@ui.EventLog(ui.EventLogProps{ID: "book", Entries: a.entries(), OnClear: a.clearEvents, Empty: "Nothing yet: use the component, and what it does shows here."})
+								@eventlog.View(eventlog.Props{ID: "book", Entries: a.entries(), OnClear: a.clearEvents, Empty: "Nothing yet: use the component, and what it does shows here."})
 							case storybook.TabHTML:
 								@htmlTab(a)
 						}
@@ -61,7 +65,7 @@ templ sidebar(a *App) {
 			<span class="text-sm text-muted-foreground">{ strconv.Itoa(len(a.model.Stories)) }</span>
 			{{ themeAttrs := surf.On(ctx, "book-theme", surf.Click(a.model.ToggleTheme)) }}
 			{{ themeAttrs["title"] = "Theme (t)" }}
-			@button.View(button.Props{Variant: ui.Ghost, Size: ui.XSmall, Attrs: themeAttrs}) {
+			@button.View(button.Props{Variant: surfui.Ghost, Size: surfui.XSmall, Attrs: themeAttrs}) {
 				if a.model.Dark {
 					Light
 				} else {
@@ -88,7 +92,7 @@ templ header(a *App) {
 			@rating(a.model.Sel)
 			{{ resetAttrs := noTab(surf.On(ctx, "book-reset", surf.Click(a.resetStory))) }}
 			{{ resetAttrs["title"] = "Props back as the story has them; events cleared" }}
-			@button.View(button.Props{Variant: ui.Outline, Size: ui.XSmall, Attrs: resetAttrs}) { Reset }
+			@button.View(button.Props{Variant: surfui.Outline, Size: surfui.XSmall, Attrs: resetAttrs}) { Reset }
 		</div>
 	</div>
 }
@@ -118,7 +122,7 @@ templ preview(a *App) {
 	{{ a.model.Observe(a.model.Sel) }}
 	<div class="book-preview-area flex flex-col">
 		<nav class="book-renditions" role="tablist" aria-label="Mode">
-			for _, m := range ui.Modes {
+			for _, m := range surfui.Modes {
 				<button
 					type="button"
 					role="tab"
@@ -129,7 +133,7 @@ templ preview(a *App) {
 			}
 		</nav>
 		<section class="book-preview" aria-label="Preview" data-hotty-modal-root tabindex="-1" { surf.On(ctx, "book-preview", surf.Focus(func(bool) {}))... }>
-			if a.mode() == ui.ModeHotty {
+			if a.mode() == surfui.ModeHotty {
 				@a.cur.view
 				{{ _ = a.inert(ctx) }}
 			} else {
@@ -140,7 +144,7 @@ templ preview(a *App) {
 }
 
 templ paneRoot(c templ.Component) {
-	<div { surf.On(ctx, "book-pane-cua", surf.Bind(surf.CUAKeys()))... }>
+	<div { surf.On(ctx, "book-pane-cua", surf.Bind(surfkey.CUAKeys()))... }>
 		@c
 	</div>
 }
@@ -244,7 +248,7 @@ templ props(a *App) {
 	} else {
 		<div class="book-controls grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] items-center gap-x-3 gap-y-2 text-sm">
 			for _, c := range a.model.Sel.Controls() {
-				{{ id := ui.ControlID("book", c.Path) }}
+				{{ id := propControlID(c.Path) }}
 				@label.View(label.Props{For: id, Class: "text-muted-foreground truncate font-mono text-xs"}) {
 					{ c.Path }
 				}
@@ -273,11 +277,12 @@ templ propControl(a *App, id string, c storybook.Control) {
 				OnChange: a.setProp(c.Path),
 			})
 		default:
-			@ui.Input(ui.InputProps{
-				Type:  "text",
-				Value: c.Value,
-				Class: "h-8 w-full max-w-80 text-sm",
-				Attrs: surf.On(ctx, id, surf.Input(a.setProp(c.Path))),
+			@input.View(input.Props{
+				ID:      id,
+				Type:    "text",
+				Value:   c.Value,
+				Class:   "h-8 w-full max-w-80 text-sm",
+				OnInput: a.setProp(c.Path),
 			})
 	}
 }

@@ -10,7 +10,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/surftui"
 )
 
 // TaskRow is a component of one props value: what it draws, by value.
@@ -50,7 +50,7 @@ func ExampleCompile() {
 		return err
 	})
 	s := surf.New("tasks", view, "")
-	screen := cells.New(12, 3, func(e hotty.Event) { s.Event(e) })
+	screen := surftui.New(12, 3, func(e hotty.Event) { s.Event(e) })
 	s.Attach(screen, hotty.Caps{})
 	doc, err := s.Document()
 	if err != nil {
@@ -84,7 +84,7 @@ func ExampleCompiled_With() {
 		return err
 	})
 	s := surf.New("tasks", view, "")
-	screen := cells.New(12, 2, func(e hotty.Event) { s.Event(e) })
+	screen := surftui.New(12, 2, func(e hotty.Event) { s.Event(e) })
 	s.Attach(screen, hotty.Caps{})
 	doc, err := s.Document()
 	if err != nil {

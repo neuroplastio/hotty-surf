@@ -1,0 +1,90 @@
+// Package input is hotty-surf's self-contained Input component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package input
+
+import (
+	"context"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers input's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures an Input text field.
+type Props struct {
+	ID          string
+	Type        string
+	Value       string
+	Placeholder string
+	Disabled    bool
+	Invalid     bool
+	OnInput     func(string)
+	Attrs       templ.Attributes
+	Class       string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's text input for a hotty host.
+templ Hotty(p Props) {
+	<input
+		data-slot="input"
+		if p.Type != "" {
+			type={ p.Type }
+		}
+		value={ p.Value }
+		if p.Placeholder != "" {
+			placeholder={ p.Placeholder }
+		}
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ util.JoinClass(util.BareClass(ctx, "input"), p.Class) }
+		{ util.ScopeTextAttrs(ctx, inputAttrs(ctx, p))... }
+	/>
+}
+
+// TUI renders the text input for cells.Screen.
+templ TUI(p Props) {
+	<input
+		data-slot="input"
+		data-mode="tui"
+		if p.Type != "" {
+			type={ p.Type }
+		}
+		value={ p.Value }
+		if p.Placeholder != "" {
+			placeholder={ p.Placeholder }
+		}
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ util.JoinClass(util.BareClass(ctx, "input"), p.Class) }
+		{ util.ScopeTextAttrs(ctx, inputAttrs(ctx, p))... }
+	/>
+}
+
+func inputAttrs(ctx context.Context, p Props) templ.Attributes {
+	var base templ.Attributes
+	if p.ID != "" || p.OnInput != nil {
+		if p.OnInput != nil {
+			base = surf.On(ctx, p.ID, surf.Input(p.OnInput))
+		} else {
+			base = surf.On(ctx, p.ID)
+		}
+	}
+	return util.MergeAttrs(base, p.Attrs)
+}

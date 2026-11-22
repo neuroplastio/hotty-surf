@@ -2,7 +2,7 @@ package surf
 
 import (
 	"golang.org/x/net/html"
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 const modalGuard = "data-hotty-modal-guard"

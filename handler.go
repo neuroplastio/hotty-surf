@@ -9,7 +9,8 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 // On names an element id and registers its handlers for this render. It
@@ -110,7 +111,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 				}
 			}
 		case kindBind:
-			binds = flatten(f, id, h.fn.([]BindOption), binds)
+			binds = flatten(f, id, h.fn.([]surfkey.Option), binds)
 		case kindFocus:
 			e.Focus = h.fn.(func(bool))
 		case kindOutside:

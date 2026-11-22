@@ -1,0 +1,68 @@
+// Package story provides the storybook showcase for ui/radio.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui/label"
+	"neuroplast.io/hotty-surf/surfui/radio"
+)
+
+type state struct {
+	choice string
+	dis    string
+}
+
+// Register adds radio's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "radio/default",
+		Doc:          "Radio groups with default selection and a disabled option",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{choice: "comfortable", dis: "comfortable"}) },
+		Keys:         []string{"tab", "tab", "tab", "space"},
+		Want:         "density: compact",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4">
+		<div role="radiogroup" class="flex flex-col gap-3">
+			<span class="text-xs text-muted-foreground">Default</span>
+			for _, d := range []string{"default", "comfortable", "compact"} {
+				@label.View(label.Props{}) {
+					@radio.View(radio.Props{
+						ID:      "density-" + d,
+						Name:    "density",
+						Checked: s.choice == d,
+						OnChange: func(on bool) {
+							if on {
+								s.choice = d
+							}
+						},
+					})
+					{ d }
+				}
+			}
+			<p class="text-sm text-muted-foreground">density: { s.choice }</p>
+		</div>
+		<div role="radiogroup" class="flex flex-col gap-3">
+			<span class="text-xs text-muted-foreground">With disabled option</span>
+			for _, d := range []string{"default", "comfortable", "compact"} {
+				@label.View(label.Props{}) {
+					@radio.View(radio.Props{
+						ID:       "density-dis-" + d,
+						Name:     "density-dis",
+						Checked:  s.dis == d,
+						Disabled: d == "compact",
+						OnChange: func(on bool) {
+							if on {
+								s.dis = d
+							}
+						},
+					})
+					{ d }
+				}
+			}
+		</div>
+	</div>
+}

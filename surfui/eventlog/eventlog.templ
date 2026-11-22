@@ -1,0 +1,71 @@
+// Package eventlog is hotty-surf's self-contained EventLog component.
+package eventlog
+
+import (
+	_ "embed"
+	"strconv"
+	"time"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+//go:embed eventlog.css
+var css string
+
+// Register registers eventlog's CSS with r.
+func Register(r *surfui.Registry) { r.CSS("eventlog", css) }
+
+// Entry is one event in an EventLog.
+type Entry struct {
+	At        time.Time
+	Kind      string
+	Text      string
+	KindClass string
+}
+
+// Props configures an EventLog.
+type Props struct {
+	ID      string
+	Entries []Entry
+	OnClear func()
+	Empty   string
+}
+
+func logKindClass(class string) string {
+	if class == "" {
+		return "text-muted-foreground"
+	}
+	return class
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return "1 " + one
+	}
+	return strconv.Itoa(n) + " " + many
+}
+
+// View renders entries newest first, or Empty when there are none.
+templ View(p Props) {
+	if len(p.Entries) == 0 {
+		<p class="kit-event-log-empty text-muted-foreground text-sm italic">{ p.Empty }</p>
+	} else {
+		<div class="kit-event-log-header mb-2 flex items-center">
+			<span class="text-muted-foreground text-xs">{ plural(len(p.Entries), "event", "events") }, the newest first</span>
+			if p.OnClear != nil {
+				<button type="button" class="btn ml-auto" data-variant="ghost" data-size="xs" { surf.On(ctx, p.ID+"-clear", surf.Click(p.OnClear))... }>Clear</button>
+			}
+		</div>
+		<ol class="flex flex-col gap-1 font-mono text-xs">
+			for i := len(p.Entries) - 1; i >= 0; i-- {
+				<li class="flex gap-2">
+					<span class="text-muted-foreground shrink-0">{ p.Entries[i].At.Format("15:04:05.000") }</span>
+					<span class={ util.JoinClass("shrink-0", logKindClass(p.Entries[i].KindClass)) }>{ p.Entries[i].Kind }</span>
+					<span class="min-w-0 break-words">{ p.Entries[i].Text }</span>
+				</li>
+			}
+		</ol>
+	}
+}

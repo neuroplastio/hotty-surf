@@ -1,0 +1,128 @@
+// Package story provides the storybook showcase for ui/table.
+package story
+
+import (
+	"slices"
+	"strings"
+
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/table"
+)
+
+// Props is the editable state for the Table storybook controls.
+type Props struct {
+	Caption bool
+	Sort    string `enum:"invoice,status,amount"`
+}
+
+type invoice struct{ id, status, method, amount string }
+
+var invoices = []invoice{
+	{"INV001", "Paid", "Credit card", "$250.00"},
+	{"INV002", "Pending", "Bank transfer", "$150.00"},
+	{"INV003", "Unpaid", "Credit card", "$350.00"},
+	{"INV004", "Paid", "Credit card", "$450.00"},
+	{"INV005", "Paid", "PayPal", "$550.00"},
+}
+
+func sortedInvoices(by string) []invoice {
+	out := slices.Clone(invoices)
+	slices.SortStableFunc(out, func(a, b invoice) int {
+		switch by {
+		case "status":
+			return strings.Compare(a.status, b.status)
+		case "amount":
+			return strings.Compare(a.amount, b.amount)
+		default:
+			return strings.Compare(a.id, b.id)
+		}
+	})
+	return out
+}
+
+// Register adds table's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "table/default",
+		Doc:          "A sortable table of invoices with a selected row, footer, and caption",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase() },
+		Props: func() (any, templ.Component) {
+			p := &Props{Caption: true, Sort: "invoice"}
+			return p, editable(p)
+		},
+	})
+}
+
+templ editable(p *Props) {
+	<div class="p-4 max-w-md">
+		@table.View(table.Props{}) {
+			if p.Caption {
+				<caption>A list of your recent invoices.</caption>
+			}
+			<thead>
+				<tr>
+					for _, col := range []string{"invoice", "status", "amount"} {
+						<th>
+							@button.View(button.Props{ID: "th-" + col, Variant: surfui.Ghost, OnClick: func() { p.Sort = col }}) {
+								{ col }
+								if p.Sort == col {
+									@icon.View("arrow-down", "size-3.5")
+								}
+							}
+						</th>
+					}
+					<th>Method</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, row := range sortedInvoices(p.Sort) {
+					<tr
+						if i == 1 {
+							data-state="selected"
+						}
+					>
+						<td class="font-medium">{ row.id }</td>
+						<td>{ row.status }</td>
+						<td>{ row.amount }</td>
+						<td>{ row.method }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr><td colspan="2">Total</td><td>$1,750.00</td><td></td></tr>
+			</tfoot>
+		}
+	</div>
+}
+
+templ showcase() {
+	<div class="p-4 max-w-md">
+		@table.View(table.Props{}) {
+			<caption>Recent invoices.</caption>
+			<thead>
+				<tr><th>Invoice</th><th>Status</th><th>Method</th><th style="text-align: right;">Amount</th></tr>
+			</thead>
+			<tbody>
+				for i, v := range invoices[:3] {
+					<tr
+						if i == 1 {
+							data-state="selected"
+						}
+					>
+						<td class="font-medium">{ v.id }</td>
+						<td>{ v.status }</td>
+						<td>{ v.method }</td>
+						<td style="text-align: right;">{ v.amount }</td>
+					</tr>
+				}
+			</tbody>
+			<tfoot>
+				<tr><td colspan="3">Total</td><td style="text-align: right;">$750.00</td></tr>
+			</tfoot>
+		}
+	</div>
+}

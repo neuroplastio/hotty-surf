@@ -15,7 +15,7 @@ import (
 	"golang.org/x/net/html/atom"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // The render: the view's HTML, parsed into a tree under a #root, every

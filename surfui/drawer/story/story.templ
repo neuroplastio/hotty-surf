@@ -1,0 +1,54 @@
+// Package story provides the storybook showcase for ui/drawer.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/drawer"
+)
+
+type state struct {
+	st   drawer.State
+	open bool
+	side string
+}
+
+func onoff(b bool) string {
+	if b {
+		return "on"
+	}
+	return "off"
+}
+
+// Register adds drawer's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "drawer/default",
+		Doc:          "Modal drawers sliding from bottom, top, left, or right",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{side: "bottom"}) },
+		Keys:         []string{"tab", "enter", "escape"},
+		Want:         "drawer: off",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-3 p-4">
+		<div class="flex flex-wrap gap-2">
+			for _, side := range []string{"bottom", "top", "left", "right"} {
+				@button.View(button.Props{ID: "open-" + side, Variant: surfui.Outline, OnClick: func() { s.side = side; s.open = true }}) {
+					{ side }
+				}
+			}
+		</div>
+		@drawer.View(&s.st, drawer.Props{ID: "drawer", Side: s.side, Open: s.open, OnClose: func() { s.open = false }}) {
+			<header><h2>Drawer ({ s.side })</h2><p>Content for this side.</p></header>
+			<section><p>Choose an action.</p></section>
+			<footer>
+				@button.View(button.Props{ID: "close-drawer", OnClick: func() { s.open = false }}) { Done }
+			</footer>
+		}
+		<p class="text-sm text-muted-foreground">drawer: { onoff(s.open) }</p>
+	</div>
+}

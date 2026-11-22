@@ -12,7 +12,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/surftui"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -49,14 +49,14 @@ func TestClicks(t *testing.T) {
 	}
 }
 
-// A cells.Screen counts a double click, and Clicks hears it.
+// A surftui.Screen counts a double click, and Clicks hears it.
 func TestClicksInCells(t *testing.T) {
 	var heard []int
 	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
 		fmt.Fprintf(w, `<button%s>Row</button>`, on("row", surf.Clicks(func(n int) { heard = append(heard, n) })))
 	})
 	s := surf.New("t", v, "")
-	scr := cells.New(20, 3, func(e hotty.Event) {
+	scr := surftui.New(20, 3, func(e hotty.Event) {
 		if err := s.Event(e); err != nil {
 			t.Error(err)
 		}
@@ -145,7 +145,7 @@ func (f *faultT) Error(args ...any) { f.got = append(f.got, fmt.Sprint(args...))
 
 // Where the caret is after Refocus gives a field holding text the
 // keyboard back (SPEC §10.1 doesn't say): a key vector, on the test host
-// and in cells. Tab leaves the query for a stop, the stop's Focus asks for
+// and in surftui. Tab leaves the query for a stop, the stop's Focus asks for
 // Refocus, and a typed x shows where the caret went. Recorded, not
 // required: hosts differ, and a SPEC note would settle it.
 func TestRefocusCaretVector(t *testing.T) {
@@ -176,7 +176,7 @@ func TestRefocusCaretVector(t *testing.T) {
 				r := surftest.Start(t, s)
 				key = func(k string) { r.Key(k) }
 			} else {
-				c := cells.New(40, 3, func(e hotty.Event) {
+				c := surftui.New(40, 3, func(e hotty.Event) {
 					if err := s.Event(e); err != nil {
 						t.Fatal(err)
 					}

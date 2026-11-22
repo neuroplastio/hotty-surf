@@ -12,7 +12,9 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/keybind"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 var (
@@ -42,8 +44,8 @@ func bindPageOn(t *testing.T, caps hotty.Caps, markup string, ons func(ctx conte
 // and CocoaKeys' fourteen, each giving back the other's, made once a
 // process, and filtered once for a frame without a surface's.
 func TestEditingKeymapTables(t *testing.T) {
-	tabs := editingTables()
-	if tabs != editingTables() {
+	tabs := keybind.EditingTables()
+	if tabs != keybind.EditingTables() {
 		t.Error("the tables were made twice")
 	}
 	for i, want := range [2]int{6, 14} {
@@ -63,12 +65,12 @@ func TestEditingKeymapTables(t *testing.T) {
 		}
 	}
 	f := &rt.Frame{Platform: hotty.PlatformOf(superHost)}
-	a, b := cuaBinds(f), cuaBinds(f)
+	a, b := keybind.CUABinds(f), keybind.CUABinds(f)
 	if len(a) != 20 || &a[0] != &b[0] {
 		t.Errorf("CUAKeys on a super host: %d bindings, made once: %v", len(a), &a[0] == &b[0])
 	}
 	held := func(b rt.Bind) bool { return b.Held }
-	if c := cuaBinds(&rt.Frame{}); len(c) != 20 || slices.IndexFunc(c, held) < 0 || c[slices.IndexFunc(c, held)].Key != "ctrl+a" || len(slices.DeleteFunc(slices.Clone(c), held)) != 19 {
+	if c := keybind.CUABinds(&rt.Frame{}); len(c) != 20 || slices.IndexFunc(c, held) < 0 || c[slices.IndexFunc(c, held)].Key != "ctrl+a" || len(slices.DeleteFunc(slices.Clone(c), held)) != 19 {
 		t.Errorf("CUAKeys on the zero platform: %v, want 20 with ctrl+a held (select all's)", c)
 	}
 }
@@ -97,9 +99,9 @@ func TestEditingKeymapsResolve(t *testing.T) {
 		}
 		for i, km := range []struct {
 			name string
-			opt  BindOption
+			opt  surfkey.Option
 			mod  string
-		}{{"CUAKeys", CUAKeys(), "ctrl"}, {"CocoaKeys", CocoaKeys(), "super"}} {
+		}{{"CUAKeys", surfkey.CUAKeys(), "ctrl"}, {"CocoaKeys", surfkey.CocoaKeys(), "super"}} {
 			t.Run(fmt.Sprintf("%s on %q %v", km.name, host.Mod, caps.Edit != nil), func(t *testing.T) {
 				s := bindPageOn(t, caps, `<div%s><textarea id="f"></textarea></div>`, func(ctx context.Context) []templ.Attributes {
 					return []templ.Attributes{On(ctx, "app", Bind(km.opt))}
@@ -115,7 +117,7 @@ func TestEditingKeymapsResolve(t *testing.T) {
 				on := hotty.Resolve(host, true, wire)
 				theirs := hotty.Resolve(hotty.Platform{Mod: km.mod, Edit: none}, true)
 				base := hotty.Resolve(host, true)
-				for _, b := range editingTables()[i] {
+				for _, b := range keybind.EditingTables()[i] {
 					want := theirs.Lookup(b.Key)
 					if held(b.Key) {
 						want = base.Lookup(b.Key)
@@ -141,44 +143,44 @@ func TestEditingKeymapsCompose(t *testing.T) {
 		name      string
 		caps      hotty.Caps
 		app, main []Handler
-		field     []BindOption
+		field     []surfkey.Option
 		has, not  []string // in the field's data-keys
 	}{
-		{"a nearer readline keeps ctrl+k", superHost, []Handler{Bind(CUAKeys())}, nil, []BindOption{ReadlineKeys()},
+		{"a nearer readline keeps ctrl+k", superHost, []Handler{Bind(surfkey.CUAKeys())}, nil, []surfkey.Option{surfkey.ReadlineKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "ctrl+backspace=delete-word-backward"}, nil},
-		{"a page's key stays the page's", superHost, nil, []Handler{Key(take, "ctrl+k", "ctrl+backspace")}, []BindOption{CUAKeys()},
+		{"a page's key stays the page's", superHost, nil, []Handler{Key(take, "ctrl+k", "ctrl+backspace")}, []surfkey.Option{surfkey.CUAKeys()},
 			[]string{"ctrl+delete=delete-word-forward"}, []string{"ctrl+k=program", "ctrl+backspace=delete-word-backward"}},
-		{"override takes a page's key", superHost, nil, []Handler{Key(take, "ctrl+backspace")}, []BindOption{CUAKeys(), Override()},
+		{"override takes a page's key", superHost, nil, []Handler{Key(take, "ctrl+backspace")}, []surfkey.Option{surfkey.CUAKeys(), surfkey.Override()},
 			[]string{"ctrl+backspace=delete-word-backward"}, nil},
-		{"readline, then CUAKeys", superHost, nil, nil, []BindOption{ReadlineKeys(), CUAKeys()},
+		{"readline, then CUAKeys", superHost, nil, nil, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.CUAKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "ctrl+w=delete-word-backward", "super+arrow_left=program"}, []string{"ctrl+k=program"}},
-		{"readline, then CUAKeys, unbind", superHost, nil, nil, []BindOption{ReadlineKeys(), CUAKeys(), Unbind("ctrl+k")},
+		{"readline, then CUAKeys, unbind", superHost, nil, nil, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.CUAKeys(), surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=program"}, []string{"ctrl+k=default", "ctrl+k=delete-to-line-end"}},
-		{"CUAKeys, then readline", superHost, nil, nil, []BindOption{CUAKeys(), ReadlineKeys()},
+		{"CUAKeys, then readline", superHost, nil, nil, []surfkey.Option{surfkey.CUAKeys(), surfkey.ReadlineKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "super+arrow_left=program"}, nil},
-		{"unbind on the element", superHost, nil, nil, []BindOption{CUAKeys(), Unbind("ctrl+k")},
+		{"unbind on the element", superHost, nil, nil, []surfkey.Option{surfkey.CUAKeys(), surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=program"}, []string{"ctrl+k=default"}},
-		{"unbind before the group", superHost, nil, nil, []BindOption{Unbind("ctrl+k"), CUAKeys()},
+		{"unbind before the group", superHost, nil, nil, []surfkey.Option{surfkey.Unbind("ctrl+k"), surfkey.CUAKeys()},
 			[]string{"ctrl+k=program"}, []string{"ctrl+k=default"}},
-		{"readline without ctrl+k, under CUAKeys", superHost, []Handler{Bind(CUAKeys())}, nil, []BindOption{ReadlineKeys(), Unbind("ctrl+k")},
+		{"readline without ctrl+k, under CUAKeys", superHost, []Handler{Bind(surfkey.CUAKeys())}, nil, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=program", "ctrl+w=delete-word-backward"}, []string{"ctrl+k=default", "ctrl+k=delete-to-line-end"}},
-		{"unbind of one of CocoaKeys' own", ctrlHost, []Handler{Bind(CocoaKeys())}, nil, []BindOption{ReadlineKeys(), Unbind("ctrl+k")},
+		{"unbind of one of CocoaKeys' own", ctrlHost, []Handler{Bind(surfkey.CocoaKeys())}, nil, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=delete-to-line-end"}, []string{"ctrl+k=default"}},
-		{"unbind of a key CocoaKeys gives back", ctrlHost, []Handler{Bind(CocoaKeys())}, nil, []BindOption{Unbind("ctrl+backspace")},
+		{"unbind of a key CocoaKeys gives back", ctrlHost, []Handler{Bind(surfkey.CocoaKeys())}, nil, []surfkey.Option{surfkey.Unbind("ctrl+backspace")},
 			[]string{"ctrl+backspace=program"}, []string{"ctrl+backspace=default"}},
-		{"unbind of a key neither holds", superHost, []Handler{Bind(CUAKeys())}, nil, []BindOption{ReadlineKeys(), Unbind("ctrl+w")},
+		{"unbind of a key neither holds", superHost, []Handler{Bind(surfkey.CUAKeys())}, nil, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+w")},
 			[]string{"ctrl+w=default"}, nil},
-		{"the nearer keymap is the one unbind goes back to", superHost, []Handler{Bind(CUAKeys())}, []Handler{Bind(CocoaKeys())}, []BindOption{ReadlineKeys(), Unbind("ctrl+k")},
+		{"the nearer keymap is the one unbind goes back to", superHost, []Handler{Bind(surfkey.CUAKeys())}, []Handler{Bind(surfkey.CocoaKeys())}, []surfkey.Option{surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=delete-to-line-end"}, []string{"ctrl+k=program", "ctrl+k=default"}},
-		{"unbind under CocoaKeys, then CUAKeys", superHost, []Handler{Bind(CocoaKeys(), CUAKeys())}, nil, []BindOption{Unbind("ctrl+k")},
+		{"unbind under CocoaKeys, then CUAKeys", superHost, []Handler{Bind(surfkey.CocoaKeys(), surfkey.CUAKeys())}, nil, []surfkey.Option{surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=delete-to-line-end"}, []string{"ctrl+k=program", "ctrl+k=default"}},
-		{"unbind under CUAKeys, then CocoaKeys", superHost, []Handler{Bind(CUAKeys(), CocoaKeys())}, nil, []BindOption{Unbind("ctrl+k")},
+		{"unbind under CUAKeys, then CocoaKeys", superHost, []Handler{Bind(surfkey.CUAKeys(), surfkey.CocoaKeys())}, nil, []surfkey.Option{surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=delete-to-line-end"}, []string{"ctrl+k=program", "ctrl+k=default"}},
-		{"unbind of ctrl+backspace under CUAKeys, then CocoaKeys", superHost, []Handler{Bind(CUAKeys(), CocoaKeys())}, nil, []BindOption{Unbind("ctrl+backspace")},
+		{"unbind of ctrl+backspace under CUAKeys, then CocoaKeys", superHost, []Handler{Bind(surfkey.CUAKeys(), surfkey.CocoaKeys())}, nil, []surfkey.Option{surfkey.Unbind("ctrl+backspace")},
 			[]string{"ctrl+backspace=delete-word-backward"}, []string{"ctrl+backspace=program", "ctrl+backspace=default"}},
-		{"unbind on the element under CocoaKeys, then CUAKeys", superHost, nil, nil, []BindOption{CocoaKeys(), CUAKeys(), Unbind("ctrl+k")},
+		{"unbind on the element under CocoaKeys, then CUAKeys", superHost, nil, nil, []surfkey.Option{surfkey.CocoaKeys(), surfkey.CUAKeys(), surfkey.Unbind("ctrl+k")},
 			[]string{"ctrl+k=delete-to-line-end"}, []string{"ctrl+k=program", "ctrl+k=default"}},
-		{"both in one Bind: their keys together", superHost, nil, nil, []BindOption{CUAKeys(), CocoaKeys()},
+		{"both in one Bind: their keys together", superHost, nil, nil, []surfkey.Option{surfkey.CUAKeys(), surfkey.CocoaKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "ctrl+backspace=delete-word-backward"}, []string{"ctrl+k=program", "ctrl+backspace=program"}},
 	}
 	for _, c := range cases {
@@ -213,7 +215,7 @@ func TestEditingKeymapsLeaveEditShortcuts(t *testing.T) {
 		want bool
 	}{{ctrlHost, false}, {hotty.Caps{Edit: map[string][]string{"select-all": {"ctrl+shift+a"}}}, true}} {
 		s := bindPageOn(t, c.caps, `<div%s><input id="f"></div>`, func(ctx context.Context) []templ.Attributes {
-			return []templ.Attributes{On(ctx, "app", Bind(CocoaKeys()))}
+			return []templ.Attributes{On(ctx, "app", Bind(surfkey.CocoaKeys()))}
 		})
 		got := bindings(s, "app")
 		if slices.Contains(got, "ctrl+a=line-start") != c.want || slices.ContainsFunc(got, func(b string) bool { return strings.HasPrefix(b, "ctrl+c=") }) {
@@ -227,13 +229,13 @@ func TestEditingKeymapsLeaveEditShortcuts(t *testing.T) {
 // the program (the host's super+arrow_up no longer scrolls from it).
 func TestEditingKeymapsOutsideAField(t *testing.T) {
 	s := bindPageOn(t, superHost, `<button%s>b</button>`, func(ctx context.Context) []templ.Attributes {
-		return []templ.Attributes{On(ctx, "b", Bind(CUAKeys()))}
+		return []templ.Attributes{On(ctx, "b", Bind(surfkey.CUAKeys()))}
 	})
 	if len(s.faults) != 1 || hasAttr(s.byID["b"], "data-keys") {
 		t.Errorf("on a button: faults %q, data-keys %q", s.faults, attr(s.byID["b"], "data-keys"))
 	}
 	s = bindPageOn(t, superHost, `<div%s><button id="b">b</button></div>`, func(ctx context.Context) []templ.Attributes {
-		return []templ.Attributes{On(ctx, "app", Bind(CUAKeys()))}
+		return []templ.Attributes{On(ctx, "app", Bind(surfkey.CUAKeys()))}
 	})
 	if len(s.faults) > 0 {
 		t.Fatalf("faults %q", s.faults)
@@ -251,9 +253,9 @@ func TestEditingKeymapAloneRepaints(t *testing.T) {
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		var app []Handler
 		if on {
-			app = append(app, Bind(CUAKeys()))
+			app = append(app, Bind(surfkey.CUAKeys()))
 		}
-		fmt.Fprintf(w, `<div%s><input%s></div>`, attrsOf(On(ctx, "app", app...)), attrsOf(On(ctx, "f", Bind(ReadlineKeys(), Unbind("ctrl+k")))))
+		fmt.Fprintf(w, `<div%s><input%s></div>`, attrsOf(On(ctx, "app", app...)), attrsOf(On(ctx, "f", Bind(surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k")))))
 		return nil
 	}), "")
 	s.Attach(io.Discard, superHost)
@@ -281,14 +283,14 @@ func TestEditingKeymapsLayer(t *testing.T) {
 	cases := []struct {
 		name     string
 		caps     hotty.Caps
-		opts     []BindOption
+		opts     []surfkey.Option
 		has, not []string
 	}{
-		{"CUAKeys, then ReadlineKeys", superHost, []BindOption{CUAKeys(), ReadlineKeys()},
+		{"CUAKeys, then ReadlineKeys", superHost, []surfkey.Option{surfkey.CUAKeys(), surfkey.ReadlineKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "ctrl+w=delete-word-backward", "super+arrow_left=program"}, []string{"ctrl+k=program"}},
-		{"CocoaKeys, then ReadlineKeys", ctrlHost, []BindOption{CocoaKeys(), ReadlineKeys()},
+		{"CocoaKeys, then ReadlineKeys", ctrlHost, []surfkey.Option{surfkey.CocoaKeys(), surfkey.ReadlineKeys()},
 			[]string{"ctrl+backspace=delete-word-backward", "ctrl+w=delete-word-backward", "super+arrow_left=line-start"}, []string{"ctrl+backspace=program"}},
-		{"CocoaKeys, then CUAKeys", superHost, []BindOption{CocoaKeys(), CUAKeys()},
+		{"CocoaKeys, then CUAKeys", superHost, []surfkey.Option{surfkey.CocoaKeys(), surfkey.CUAKeys()},
 			[]string{"ctrl+k=delete-to-line-end", "ctrl+backspace=delete-word-backward"}, []string{"ctrl+k=program", "ctrl+backspace=program"}},
 	}
 	for _, c := range cases {
@@ -319,7 +321,7 @@ func TestEditingKeymapsLayer(t *testing.T) {
 // Attach, which may bring another platform, makes them anew.
 func TestEditingKeymapsOncePerPlatform(t *testing.T) {
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div%s><input id="f"></div>`, attrsOf(On(ctx, "app", Bind(CUAKeys()))))
+		fmt.Fprintf(w, `<div%s><input id="f"></div>`, attrsOf(On(ctx, "app", Bind(surfkey.CUAKeys()))))
 		return nil
 	}), "")
 	s.Attach(io.Discard, superHost)
@@ -351,7 +353,7 @@ func TestEditingKeymapsOncePerPlatform(t *testing.T) {
 // order of each pair, on a host whose mod is ctrl (a cells Screen's
 // platform) and on one whose mod is super, as a field resolves the wire.
 func TestEditingKeymapsFill(t *testing.T) {
-	groups := map[string]BindOption{"ReadlineKeys": ReadlineKeys(), "CUAKeys": CUAKeys(), "CocoaKeys": CocoaKeys()}
+	groups := map[string]surfkey.Option{"ReadlineKeys": surfkey.ReadlineKeys(), "CUAKeys": surfkey.CUAKeys(), "CocoaKeys": surfkey.CocoaKeys()}
 	pairs := [][2]string{{"ReadlineKeys", "CUAKeys"}, {"ReadlineKeys", "CocoaKeys"}, {"CUAKeys", "CocoaKeys"}}
 	for _, caps := range []hotty.Caps{ctrlHost, superHost} {
 		host := hotty.PlatformOf(caps)
@@ -364,7 +366,7 @@ func TestEditingKeymapsFill(t *testing.T) {
 					var keys []string
 					for _, name := range order {
 						var binds []rt.Bind
-						binds = flatten(f, "app", []BindOption{groups[name]}, binds)
+						binds = flatten(f, "app", []surfkey.Option{groups[name]}, binds)
 						for _, b := range binds {
 							if b.Held {
 								continue // the host's edit shortcuts'
@@ -405,7 +407,7 @@ func TestEditingKeymapsFill(t *testing.T) {
 // read as super+a.
 func TestReadlineKeysOncePerPlatform(t *testing.T) {
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div><input%s></div>`, attrsOf(On(ctx, "f", Bind(ReadlineKeys()))))
+		fmt.Fprintf(w, `<div><input%s></div>`, attrsOf(On(ctx, "f", Bind(surfkey.ReadlineKeys()))))
 		return nil
 	}), "")
 	s.Attach(io.Discard, ctrlHost)

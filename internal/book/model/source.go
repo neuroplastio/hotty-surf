@@ -79,13 +79,21 @@ func (s *Story) Sources() []Source {
 // storySources finds a story's registration and its templ render in either
 // ui/<component>/story/story.templ or internal/stories/*.templ.
 func storySources(id string) []Source {
-	if demo := demoSources(id); len(demo) > 0 {
-		return demo
-	}
 	var files []string
 	comp, _, _ := strings.Cut(id, "/")
-	for _, pkg := range []string{comp, strings.ReplaceAll(comp, "-", "")} {
-		candidate := filepath.Join(root, "ui", pkg, "story", "story.templ")
+	pkgs := []string{comp, strings.ReplaceAll(comp, "-", "")}
+	switch comp {
+	case "dropdown-menu":
+		pkgs = append(pkgs, "menu")
+	case "range":
+		pkgs = append(pkgs, "slider")
+	case "icons":
+		pkgs = append(pkgs, "icon")
+	case "symbols":
+		pkgs = append(pkgs, "symbol")
+	}
+	for _, pkg := range pkgs {
+		candidate := filepath.Join(root, "surfui", pkg, "story", "story.templ")
 		if _, err := os.Stat(candidate); err == nil {
 			files = append(files, candidate)
 			break
@@ -142,64 +150,6 @@ func storySources(id string) []Source {
 		return out
 	}
 	return nil
-}
-
-// demoSources finds the book-only demonstrations, whose registrations use
-// loops to share the spike's variant data instead of a separate add call.
-func demoSources(id string) []Source {
-	dir := filepath.Join(root, "internal", "stories")
-	var file, render string
-	switch {
-	case strings.HasPrefix(id, "code/"):
-		file, render = "book_code.go", "codeDemo"
-	case strings.HasPrefix(id, "list-item/"):
-		file, render = "book_shell.templ", "rowsDemo"
-	case strings.HasPrefix(id, "icon-button/"):
-		file, render = "book_shell.templ", "iconButtonsDemo"
-	case strings.HasPrefix(id, "symbols/"):
-		file, render = "book_shell.templ", "symbolsDemo"
-	case strings.HasPrefix(id, "icons/"):
-		file, render = "book_misc.templ", "iconsDemo"
-	case strings.HasPrefix(id, "tabs-demo/"):
-		file, render = "book_parts.templ", "tabsDemo"
-	case strings.HasPrefix(id, "nav-list/"):
-		file, render = "book_parts.templ", "navDemo"
-	case strings.HasPrefix(id, "controls/"):
-		file, render = "book_parts.templ", "controlsDemo"
-	case strings.HasPrefix(id, "event-log/"):
-		file, render = "book_parts.templ", "logDemo"
-	default:
-		return nil
-	}
-	path := filepath.Join(dir, file)
-	text, ok := read(path)
-	if !ok {
-		return nil
-	}
-	at := strings.Index(text, `"`+id+`"`)
-	if at < 0 {
-		return nil
-	}
-	start := strings.LastIndex(text[:at], "\n") + 1
-	end := strings.Index(text[at:], "\n")
-	if end < 0 {
-		end = len(text)
-	} else {
-		end += at
-	}
-	out := []Source{{Title: "story", Path: rel(path), Line: 1 + strings.Count(text[:start], "\n"), Lang: "go", Code: strings.TrimSpace(text[start:end])}}
-	var src Source
-	if strings.HasSuffix(file, ".templ") {
-		src, ok = templBlock(path, render)
-	} else {
-		src, ok = goDecl(path, render)
-	}
-	if ok {
-		src.Title = "render: " + render
-		out = append(out, src)
-		out = refs(out, out[1:], dir, map[string]bool{}, 1)
-	}
-	return out
 }
 
 // propTypes adds the module's types the props hold (a field's type, through

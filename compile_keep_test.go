@@ -17,19 +17,22 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/surfkey"
+	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 	"neuroplast.io/hotty-surf/surftest"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/listitem"
 )
 
 // A kept instance's handlers are the last frame's own, carried into the
 // new frame as they are. A made-up board three compiled levels deep
-// (board, columns, cards) beside a ui.List of compiled items runs
+// (board, columns, cards) beside a surfui.List of compiled items runs
 // compiled and plain in lockstep, on a host and on a Screen, through
 // random steps: cards that change, move between columns and out of the
 // board, come twice and go, take the focus, and are typed in, and
-// columns that bind surf.CUAKeys around their cards' fields, which
+// columns that bind surfkey.CUAKeys around their cards' fields, which
 // Unbind a key, or stop binding it. Every
 // handler closes over its props and writes them to a log, so a handler
 // kept past a change of its props shows as a log that isn't the plain
@@ -53,7 +56,7 @@ type kCol struct {
 	Cards      [4]kCard
 	N          int
 	Plain      bool
-	// Edit binds surf.CUAKeys around the column's cards, so that a field's
+	// Edit binds surfkey.CUAKeys around the column's cards, so that a field's
 	// Unbind in it goes back to CUAKeys' binding (layout's base).
 	Edit bool
 }
@@ -86,11 +89,11 @@ func kCardView(p kCard) templ.Component {
 		if p.Field {
 			fmt.Fprintf(w, `<input type="text"%s value="%s">`, onAttrs(ctx, "in-"+key,
 				surf.Input(func(v string) { l.add("input " + key + " " + title + " " + v) }),
-				surf.Bind(surf.ReadlineKeys(), surf.Unbind("ctrl+k"))), title)
+				surf.Bind(surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k"))), title)
 		}
 		if p.Kit {
 			a := surf.On(ctx, "kit-"+key, surf.Click(func() { l.add("kit " + key + " " + badge) }))
-			if err := ui.Button(ui.ButtonProps{Attrs: a}).Render(templ.WithChildren(ctx, templ.Raw("Go")), w); err != nil {
+			if err := button.View(button.Props{Attrs: a}).Render(templ.WithChildren(ctx, templ.Raw("Go")), w); err != nil {
 				return err
 			}
 		}
@@ -114,7 +117,7 @@ func kColView(p kCol) templ.Component {
 		title, l := p.Title, kLogOf(p)
 		edit := ""
 		if p.Edit {
-			edit = onAttrs(ctx, "edit-"+p.Key, surf.Bind(surf.CUAKeys()))
+			edit = onAttrs(ctx, "edit-"+p.Key, surf.Bind(surfkey.CUAKeys()))
 		}
 		fmt.Fprintf(w, `<section class="flex flex-col"%s><button%s>{%s}</button>`, edit, onAttrs(ctx, "col-"+p.Key,
 			surf.Click(func() {
@@ -169,7 +172,7 @@ func kItemView(p kCard) templ.Component {
 		key, title, l := p.ID, p.Title, p.L
 		a := surf.On(ctx, "item-"+key, surf.Click(func() { l.add("item " + key + " " + title) }))
 		body := templ.Raw(templ.EscapeString("<" + key + "> " + title))
-		return ui.ListItem(ui.ListItemProps{Selected: p.Sel, Attrs: a}).Render(templ.WithChildren(ctx, body), w)
+		return listitem.View(listitem.Props{Selected: p.Sel, Attrs: a}).Render(templ.WithChildren(ctx, body), w)
 	})
 }
 
@@ -178,7 +181,7 @@ type keepState struct {
 	loose []kCard
 	cols  [3]kCol
 	bind  bool
-	// edit binds surf.CUAKeys around the board: where only cards
+	// edit binds surfkey.CUAKeys around the board: where only cards
 	// changed, the board is filled alone, and its fields' Unbind goes
 	// back to CUAKeys' binding all the same.
 	edit bool
@@ -190,9 +193,9 @@ type keepState struct {
 
 func (st *keepState) view(l *kLog, plain bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		var bindings []ui.KeyBinding
+		var bindings []surfui.KeyBinding
 		if st.bind {
-			bindings = append(bindings, ui.KeyBinding{Key: "mod+s", Label: "Save", Run: func() bool { return true }})
+			bindings = append(bindings, surfui.KeyBinding{Key: "mod+s", Label: "Save", Run: func() bool { return true }})
 		}
 		inner := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 			// Where the keyboard rests between steps: a step that makes a
@@ -219,7 +222,7 @@ func (st *keepState) view(l *kLog, plain bool) templ.Component {
 				}
 				return nil
 			})
-			err := ui.List(ui.ListProps{OnChange: func(int) {}, Attrs: templ.Attributes{"id": "loose", "aria-label": "Loose"}}).Render(templ.WithChildren(ctx, items), w)
+			err := listitem.List(listitem.ListProps{OnChange: func(int) {}, Attrs: templ.Attributes{"id": "loose", "aria-label": "Loose"}}).Render(templ.WithChildren(ctx, items), w)
 			if err != nil {
 				return err
 			}
@@ -234,7 +237,7 @@ func (st *keepState) view(l *kLog, plain bool) templ.Component {
 				}
 			}
 			if st.edit {
-				fmt.Fprintf(w, `<div%s>`, onAttrs(ctx, "edit-board", surf.Bind(surf.CUAKeys())))
+				fmt.Fprintf(w, `<div%s>`, onAttrs(ctx, "edit-board", surf.Bind(surfkey.CUAKeys())))
 			}
 			if plain {
 				b.Plain = true
@@ -251,7 +254,7 @@ func (st *keepState) view(l *kLog, plain bool) templ.Component {
 			_, err = io.WriteString(w, `</main>`)
 			return err
 		})
-		return ui.KeyScope(bindings).Render(templ.WithChildren(ctx, inner), w)
+		return surfui.KeyScope(bindings).Render(templ.WithChildren(ctx, inner), w)
 	})
 }
 
@@ -470,7 +473,7 @@ type kSide struct {
 	s      *surf.Surface
 	l      kLog
 	host   *surftest.Rig
-	screen *cells.Screen
+	screen *surftui.Screen
 	faults []string
 	// before is the handlers of the last frame, by id.
 	before map[string]*rt.Handlers
@@ -508,7 +511,7 @@ func startKSide(t *testing.T, st *keepState, plain, onScreen bool) *kSide {
 	}
 	k.s.CheckCompiled(true)
 	rt.Peek.KeepFaults(k.s)
-	k.screen = cells.New(kCols, kRows, func(e hotty.Event) {
+	k.screen = surftui.New(kCols, kRows, func(e hotty.Event) {
 		if err := k.s.Event(e); err != nil {
 			t.Errorf("event %s %s: %v", e.Kind, e.Target, err)
 		}

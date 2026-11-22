@@ -8,14 +8,15 @@ import (
 	"testing"
 
 	"github.com/a-h/templ"
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 type unbindFieldProps struct{ Label string }
 
 var unbindField = Compile(func(p unbindFieldProps) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		q := On(ctx, "q", Bind(ReadlineKeys(), Unbind("ctrl+k")))
+		q := On(ctx, "q", Bind(surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k")))
 		fmt.Fprintf(w, `<div><span>%s</span><input%s></div>`, p.Label, attrsOf(q))
 		return nil
 	})
@@ -28,7 +29,7 @@ var unbindField = Compile(func(p unbindFieldProps) templ.Component {
 func TestUnbindInAFilledInstance(t *testing.T) {
 	label := "a"
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div%s>`, attrsOf(On(ctx, "app", Bind(CUAKeys()))))
+		fmt.Fprintf(w, `<div%s>`, attrsOf(On(ctx, "app", Bind(surfkey.CUAKeys()))))
 		if err := unbindField.With("k", unbindFieldProps{Label: label}).Render(ctx, w); err != nil {
 			return err
 		}

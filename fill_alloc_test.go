@@ -10,7 +10,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 // No step of a compiled surface takes a whole slab of nodes: a fill
@@ -25,7 +25,7 @@ func TestFirstFillsAfterADocument(t *testing.T) {
 		}
 		t.Run(sc.name, func(t *testing.T) {
 			v, step := sc.view(true)
-			s := surf.New("z", v, ui.Stylesheet())
+			s := surf.New("z", v, surfui.Stylesheet())
 			s.Attach(io.Discard, hotty.Caps{})
 			if _, err := s.Document(); err != nil {
 				t.Fatal(err)

@@ -1,0 +1,35 @@
+// Package table is hotty-surf's self-contained Table component.
+package table
+
+import (
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers table's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Table container.
+type Props struct {
+	Attrs templ.Attributes
+	Class string
+}
+
+// View renders a scrollable Table, clearing any outer InputGroup context.
+func View(p Props) templ.Component {
+	return util.ScopedGroup(tableMarkup(p), false)
+}
+
+templ tableMarkup(p Props) {
+	<div
+		data-slot="table-container"
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		class="table-container"
+	>
+		<table data-slot="table" class={ util.JoinClass("table", p.Class) } { p.Attrs... }>
+			{ children... }
+		</table>
+	</div>
+}

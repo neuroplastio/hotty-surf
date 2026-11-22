@@ -1,0 +1,93 @@
+// Package checkbox is hotty-surf's self-contained Checkbox component, with
+// explicit renderers for Hotty, TUI (MDI glyphs), and ANSI/Plain ([ ] / [x]).
+package checkbox
+
+import (
+	"context"
+	_ "embed"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+//go:embed checkbox.css
+var css string
+
+// Register registers checkbox's assets with r.
+func Register(r *surfui.Registry) { r.CSS("checkbox", css) }
+
+// Props configures a Checkbox component.
+type Props struct {
+	ID       string
+	Checked  bool
+	Disabled bool
+	Invalid  bool
+	OnChange func(bool)
+	Attrs    templ.Attributes
+	Class    string
+}
+
+// View dispatches to Hotty, TUI, or ANSI/Plain according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p)
+	case surfui.ModeTUI:
+		@TUI(p)
+	default:
+		@Plain(p)
+	}
+}
+
+// Hotty renders Basecoat's native checkbox for a hotty host.
+templ Hotty(p Props) {
+	<input
+		data-slot="checkbox"
+		type="checkbox"
+		checked?={ p.Checked }
+		disabled?={ p.Disabled }
+		class={ util.JoinClass("input", p.Class) }
+		{ resolveAttrs(ctx, p)... }
+	/>
+}
+
+// TUI renders the checkbox for cells.Screen with MDI glyphs (󰄱 / 󰱖).
+templ TUI(p Props) {
+	<input
+		data-slot="checkbox"
+		data-mode="tui"
+		type="checkbox"
+		checked?={ p.Checked }
+		disabled?={ p.Disabled }
+		class={ util.JoinClass("input", p.Class) }
+		{ resolveAttrs(ctx, p)... }
+	/>
+}
+
+// Plain renders the checkbox for ANSI/Plain cells.Screen with ASCII [ ] / [x].
+templ Plain(p Props) {
+	<input
+		data-slot="checkbox"
+		type="checkbox"
+		checked?={ p.Checked }
+		disabled?={ p.Disabled }
+		class={ util.JoinClass("input", p.Class) }
+		{ resolveAttrs(ctx, p)... }
+	/>
+}
+
+func resolveAttrs(ctx context.Context, p Props) templ.Attributes {
+	var on templ.Attributes
+	if p.OnChange != nil && !p.Disabled {
+		on = surf.On(ctx, p.ID, surf.Check(p.OnChange))
+	} else if p.ID != "" {
+		on = surf.On(ctx, p.ID)
+	}
+	merged := util.MergeAttrs(
+		on,
+		util.OptAttr("aria-invalid", p.Invalid),
+		p.Attrs,
+	)
+	return util.ScopeNativeAttrs(ctx, merged, "checkbox")
+}

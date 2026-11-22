@@ -1,7 +1,6 @@
 package book
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -9,9 +8,9 @@ import (
 	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/internal/stories"
+	"neuroplast.io/hotty-surf/internal/book/stories"
 	"neuroplast.io/hotty-surf/surftest"
-	"neuroplast.io/hotty-surf/ui"
+	"neuroplast.io/hotty-surf/surfui"
 )
 
 func attrOf(as []html.Attribute, k string) string {
@@ -78,10 +77,10 @@ func TestFilterFromLaunch(t *testing.T) {
 	a := New()
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Key("/")
-	for _, k := range strings.Split("block", "") {
+	for _, k := range strings.Split("kbd", "") {
 		r.Key(k)
 	}
-	if a.ID != "input-group/block" {
+	if a.ID != "kbd/default" {
 		t.Fatalf("filter opened %q", a.ID)
 	}
 }
@@ -144,19 +143,19 @@ func TestRenditionsShareStoryState(t *testing.T) {
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	r.Click("#save")
 	r.Key("r")
-	if a.mode() != ui.ModeTUI || !strings.Contains(paneText(a), "Button") {
+	if a.mode() != surfui.ModeTUI || !strings.Contains(paneText(a), "Button") {
 		t.Fatalf("mode=%v; pane=%q", a.mode(), paneText(a))
 	}
 	r.Key("r")
-	if a.mode() != ui.ModeANSI || !strings.Contains(paneText(a), "Button") {
+	if a.mode() != surfui.ModeANSI || !strings.Contains(paneText(a), "Button") {
 		t.Fatalf("mode=%v; pane=%q", a.mode(), paneText(a))
 	}
 	r.Key("r")
-	if a.mode() != ui.ModePlain || !strings.Contains(paneText(a), "Button") {
+	if a.mode() != surfui.ModePlain || !strings.Contains(paneText(a), "Button") {
 		t.Fatalf("mode=%v; pane=%q", a.mode(), paneText(a))
 	}
 	r.Key("r")
-	if a.mode() != ui.ModeHotty || !strings.Contains(r.HTML(), "Button") {
+	if a.mode() != surfui.ModeHotty || !strings.Contains(r.HTML(), "Button") {
 		t.Fatal("hotty mode did not retain the story")
 	}
 	var clicks string
@@ -196,25 +195,8 @@ func TestBookSourceIncludesComponents(t *testing.T) {
 		names = append(names, src.Title)
 	}
 	joined := strings.Join(names, ", ")
-	if !strings.Contains(joined, "alert.View") || !strings.Contains(joined, "ui.Icon") {
+	if !strings.Contains(joined, "alert.View") || !strings.Contains(joined, "icon.View") {
 		t.Fatalf("component sources missing: %s", joined)
-	}
-}
-
-func TestBookBaseStoryBeforeVariants(t *testing.T) {
-	a := New()
-	visible := a.model.Visible()
-	base, variant := -1, -1
-	for i, st := range visible {
-		switch st.ID() {
-		case "radio/default":
-			base = i
-		case "radio/disabled":
-			variant = i
-		}
-	}
-	if base < 0 || variant <= base {
-		t.Fatalf("checkbox base index %d, variant index %d", base, variant)
 	}
 }
 
@@ -222,11 +204,11 @@ func TestBookBaseStoryBeforeVariants(t *testing.T) {
 // the empty elements round it, and out past its last.
 func TestTabThroughThePane(t *testing.T) {
 	a := New()
-	a.show("field/checkbox-group") // two check boxes
+	a.show("switch/default") // two enabled switches
 	before, after := a.Edge(true), a.Edge(false)
 
 	before(true) // Tab from the story onto the element before the pane
-	if !a.refocus || a.cur.focus != "disks" {
+	if !a.refocus || a.cur.focus != "airplane" {
 		t.Fatalf("entering: refocus %v, the Screen on %q", a.refocus, a.cur.focus)
 	}
 	a.takeRefocus()
@@ -234,11 +216,11 @@ func TestTabThroughThePane(t *testing.T) {
 	if !a.PaneKey("space") {
 		t.Fatal("space in the pane wasn't taken")
 	}
-	if !strings.Contains(paneText(a), "\U000f0c52 Hard disks") {
-		t.Fatalf("space didn't check the box:\n%s", paneText(a))
+	if !strings.Contains(paneText(a), "airplane mode: on") {
+		t.Fatalf("space didn't toggle the switch:\n%s", paneText(a))
 	}
 	after(true) // Tab in the pane
-	if !a.refocus || a.cur.focus != "servers" {
+	if !a.refocus || a.cur.focus != "notify" {
 		t.Fatalf("tab: refocus %v, the Screen on %q", a.refocus, a.cur.focus)
 	}
 	a.takeRefocus()
@@ -262,12 +244,12 @@ func TestTabThroughThePane(t *testing.T) {
 // element after the pane.
 func TestTabPastThePaneGoesToTheList(t *testing.T) {
 	a := New()
-	a.show("field/checkbox-group")
+	a.show("switch/default")
 	before, after := a.Edge(true), a.Edge(false)
 	before(true)
 	a.takeRefocus()
 	a.PaneFocus(true)
-	after(true) // to the second box
+	after(true) // to the second switch
 	a.takeRefocus()
 	after(true) // past it
 	if !a.takeToList() {
@@ -278,61 +260,21 @@ func TestTabPastThePaneGoesToTheList(t *testing.T) {
 // A story with nothing to focus takes no Tab in the pane.
 func TestNoControlsNoTab(t *testing.T) {
 	a := New()
-	a.show("chart/bar")
-	a.setMode(ui.ModeTUI)
+	a.show("chart/default")
+	a.setMode(surfui.ModeTUI)
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if a.cur.controls {
-		t.Fatal("chart/bar has controls")
+		t.Fatal("chart/default has controls")
 	}
 	for _, sel := range []string{"#book-pane-before", "#book-pane", "#book-pane-after"} {
 		if n := r.One(sel); attrOf(n.Attr, "tabindex") != "" {
 			t.Errorf("%s takes Tab in a story with nothing to focus", sel)
 		}
 	}
-	a.show("field/checkbox-group")
+	a.show("switch/default")
 	r.Update()
 	if n := r.One("#book-pane"); attrOf(n.Attr, "tabindex") != "0" {
 		t.Error("the pane of a story with controls takes no Tab")
-	}
-}
-
-// The list keeps the keyboard as it lands on a story whose dialog opens
-// as it shows, and Escape there closes the dialog.
-func TestListKeepsTheKeyboard(t *testing.T) {
-	a := New()
-	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
-	r.Click("button[aria-current=true]") // the list takes the keyboard
-	a.show("dialog/default")
-	r.Update()
-	if !r.Key("arrow_down") || a.ID != "dialog/open" {
-		t.Fatalf("arrow_down from dialog/default: on %s", a.ID)
-	}
-	if len(r.Find("dialog")) != 1 {
-		t.Fatal("dialog/open shows no dialog")
-	}
-	if !r.Key("arrow_down") || a.ID == "dialog/open" {
-		t.Fatalf("arrow_down on dialog/open went to its dialog: on %s", a.ID)
-	}
-	if !r.Key("arrow_up") || a.ID != "dialog/open" {
-		t.Fatalf("arrow_up: on %s", a.ID)
-	}
-	if !r.Key("escape") {
-		t.Fatal("escape on the list, with the story's dialog open: not taken")
-	}
-	if len(r.Find("dialog")) != 0 {
-		t.Fatal("escape didn't close the story's dialog")
-	}
-}
-
-// The pane's last line is there when it is an empty field: spaces with a
-// look are no blank line.
-func TestEmptyFieldLineKept(t *testing.T) {
-	a := New()
-	a.show("field/fieldset")
-	ls := a.lines().lines
-	last := ls[len(ls)-1]
-	if blank(last) || !strings.Contains(fmt.Sprint(last), "book-underline") {
-		t.Fatalf("the last line isn't City's empty field: %v", last)
 	}
 }
 
@@ -340,18 +282,18 @@ func TestEmptyFieldLineKept(t *testing.T) {
 // nothing focused is left for run, which gives the book the keyboard.
 func TestPaneKeysOnlyItsOwn(t *testing.T) {
 	a := New()
-	a.show("field/checkbox-group")
+	a.show("switch/default")
 	if a.PaneKey("tab") || a.PaneKey("space") {
 		t.Fatal("the pane took a key without the keyboard")
 	}
-	if strings.Contains(paneText(a), "[x]") {
+	if strings.Contains(paneText(a), "airplane mode: on") {
 		t.Fatal("space reached the pane without the keyboard")
 	}
 }
 
 func TestCodeStoryPropsChangePreview(t *testing.T) {
 	a := New()
-	a.show("code/go")
+	a.show("code/default")
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	if !a.model.Sel.Set("First", "120") {
 		t.Fatal("could not change the first line number")
@@ -366,18 +308,18 @@ func TestBookEventLogDemoClears(t *testing.T) {
 	a := New()
 	a.show("event-log/default")
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
-	if !strings.Contains(r.HTML(), "Popup.Open") {
+	if !strings.Contains(r.HTML(), "Clicks = 1") {
 		t.Fatal("event log demo did not show its entries")
 	}
 	r.Click("#demo-clear")
-	if strings.Contains(r.HTML(), "Popup.Open") || !strings.Contains(r.HTML(), "Nothing yet: add an event.") {
+	if strings.Contains(r.HTML(), "Clicks = 1") || !strings.Contains(r.HTML(), "Nothing yet: add an event.") {
 		t.Fatal("event log demo did not clear")
 	}
 }
 
 func TestBookDemonstrationsHaveSource(t *testing.T) {
 	a := New()
-	for _, id := range []string{"code/go", "nav-list/default", "controls/default", "event-log/default", "icons/default", "separator/default"} {
+	for _, id := range []string{"code/default", "nav-list/default", "event-log/default", "icons/default", "separator/default", "kbd/default"} {
 		a.show(id)
 		if src := a.model.Sel.Sources(); len(src) < 2 || !strings.HasPrefix(src[1].Title, "render:") {
 			t.Errorf("%s source: %+v", id, src)
@@ -385,19 +327,19 @@ func TestBookDemonstrationsHaveSource(t *testing.T) {
 	}
 }
 
-func TestTabsDemoSharesSelectionAndProps(t *testing.T) {
+func TestTabsStorySharesSelectionAndProps(t *testing.T) {
 	a := New()
-	a.show("tabs-demo/line")
+	a.show("tabs/default")
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
-	r.Click("#demo-tab-2")
-	if got := a.storyHTML(); !strings.Contains(got, "password panel") {
+	r.Click("#story-tabs-tab-2")
+	if got := a.storyHTML(); !strings.Contains(got, "Change your password") {
 		t.Fatalf("tab selection did not update demo: %s", got)
 	}
-	if !a.model.Sel.Set("Tabs.Active", "team") {
+	if !a.model.Sel.Set("Tab", "team") {
 		t.Fatal("could not edit the active tab prop")
 	}
 	r.Update()
-	if got := a.storyHTML(); !strings.Contains(got, "team panel") {
+	if got := a.storyHTML(); !strings.Contains(got, "Invite your team") {
 		t.Fatalf("active prop did not update demo: %s", got)
 	}
 }
@@ -427,26 +369,10 @@ func storyControl(a *App, path string) string {
 	return ""
 }
 
-// A component's variants are listed as the spike listed them: the order
-// their stories were added, not by name.
-func TestVariantOrder(t *testing.T) {
-	a := New()
-	var got []string
-	for _, s := range a.model.Stories {
-		if strings.HasPrefix(s.Name, "Switch") {
-			got = append(got, s.Name)
-		}
-	}
-	want := "Switch, Switch / small, Switch / disabled"
-	if strings.Join(got, ", ") != want {
-		t.Fatalf("Switch's stories: %s\nwant: %s", strings.Join(got, ", "), want)
-	}
-}
-
 func TestBookTUICUAKeys(t *testing.T) {
 	a := New()
 	a.show("textarea/default")
-	a.setMode(ui.ModeTUI)
+	a.setMode(surfui.ModeTUI)
 	r := surftest.Start(t, newSurface("book", View(a)), surftest.Size(120, 40))
 	// Focus #book-pane via the real surface (as clicking a TUI textarea does).
 	a.PaneTextDrag(2, 2, 36, 3, surf.DragEvent{Start: true, Drag: hotty.Drag{X: 2, Y: 0, HasX: true, HasY: true}})

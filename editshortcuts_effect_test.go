@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -12,11 +13,13 @@ import (
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf/internal/core/keybind"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 // editFieldPage is a page whose app, form and field (#f, a text input)
 // bind app, form and field.
-func editFieldPage(t *testing.T, caps hotty.Caps, app, form, field []BindOption) *Surface {
+func editFieldPage(t *testing.T, caps hotty.Caps, app, form, field []surfkey.Option) *Surface {
 	t.Helper()
 	return bindPageOn(t, caps, `<div%s><p id="p">text</p><form%s><input id="f"%s></form></div>`, func(ctx context.Context) []templ.Attributes {
 		return []templ.Attributes{On(ctx, "app", Bind(app...)), On(ctx, "form", Bind(form...)), On(ctx, "f", Bind(field...))}
@@ -28,23 +31,23 @@ func editFieldPage(t *testing.T, caps hotty.Caps, app, form, field []BindOption)
 // the same keys: their bindings to an edit action give way where the
 // group binds the key, as on the group's own element.
 func TestEditShortcutsInEffectAround(t *testing.T) {
-	sets := map[string][]BindOption{
-		"RC":  {ReadlineKeys(), CocoaKeys()},
-		"RU":  {ReadlineKeys(), CUAKeys()},
-		"UC":  {CUAKeys(), CocoaKeys()},
-		"RUC": {ReadlineKeys(), CUAKeys(), CocoaKeys()},
+	sets := map[string][]surfkey.Option{
+		"RC":  {surfkey.ReadlineKeys(), surfkey.CocoaKeys()},
+		"RU":  {surfkey.ReadlineKeys(), surfkey.CUAKeys()},
+		"UC":  {surfkey.CUAKeys(), surfkey.CocoaKeys()},
+		"RUC": {surfkey.ReadlineKeys(), surfkey.CUAKeys(), surfkey.CocoaKeys()},
 	}
 	for _, caps := range []hotty.Caps{ctrlHost, superHost} {
-		for gname, group := range map[string]BindOption{"CUAEdit": cuaEdit, "CocoaEdit": cocoaEdit} {
+		for gname, group := range map[string]surfkey.Option{"CUAEdit": cuaEdit, "CocoaEdit": cocoaEdit} {
 			for _, onField := range []bool{false, true} {
 				for name, set := range sets {
 					var seen []string
 					for _, order := range permutations(set) {
-						form, field := order, []BindOption(nil)
+						form, field := order, []surfkey.Option(nil)
 						if onField {
 							form, field = nil, order
 						}
-						s := editFieldPage(t, caps, []BindOption{group}, form, field)
+						s := editFieldPage(t, caps, []surfkey.Option{group}, form, field)
 						if len(s.faults) > 0 {
 							t.Fatalf("%s under %s: faults %q", name, gname, s.faults)
 						}
@@ -62,8 +65,8 @@ func TestEditShortcutsInEffectAround(t *testing.T) {
 	// CocoaEditShortcuts on a host whose mod is ctrl, ReadlineKeys and
 	// CocoaKeys on the form: ctrl+a goes to the line's start in either
 	// order.
-	for _, order := range permutations([]BindOption{ReadlineKeys(), CocoaKeys()}) {
-		s := editFieldPage(t, ctrlHost, []BindOption{cocoaEdit}, order, nil)
+	for _, order := range permutations([]surfkey.Option{surfkey.ReadlineKeys(), surfkey.CocoaKeys()}) {
+		s := editFieldPage(t, ctrlHost, []surfkey.Option{cocoaEdit}, order, nil)
 		if got := lookup(s, ctrlHost, "f", "ctrl+a"); got != hotty.LineStart {
 			t.Errorf("ctrl+a: %q (%q)", got, chain(s, "f"))
 		}
@@ -71,7 +74,7 @@ func TestEditShortcutsInEffectAround(t *testing.T) {
 	// A palette on a Mac host: CUAKeys and CUAEditShortcuts on the app,
 	// ReadlineKeys on the field. super+a is given back with the rest of
 	// the Mac's edit shortcuts, and ctrl+a selects all.
-	s := editFieldPage(t, superHost, []BindOption{CUAKeys(), cuaEdit}, nil, []BindOption{ReadlineKeys()})
+	s := editFieldPage(t, superHost, []surfkey.Option{surfkey.CUAKeys(), cuaEdit}, nil, []surfkey.Option{surfkey.ReadlineKeys()})
 	for _, k := range []string{"super+a", "super+c", "super+v", "super+z"} {
 		if got := lookup(s, superHost, "f", k); got != "" {
 			t.Errorf("%s: %q, want it given back (%q)", k, got, chain(s, "f"))
@@ -89,12 +92,12 @@ func TestEditShortcutsInEffectAround(t *testing.T) {
 // key only from an edit shortcut.
 func TestEditShortcutsUnbindChangesNothing(t *testing.T) {
 	for _, caps := range []hotty.Caps{ctrlHost, superHost} {
-		for gname, group := range map[string]BindOption{"CUAEdit": cuaEdit, "CocoaEdit": cocoaEdit} {
-			for _, app := range [][]BindOption{{group}, {ReadlineKeys(), group}} {
+		for gname, group := range map[string]surfkey.Option{"CUAEdit": cuaEdit, "CocoaEdit": cocoaEdit} {
+			for _, app := range [][]surfkey.Option{{group}, {surfkey.ReadlineKeys(), group}} {
 				was := editFieldPage(t, caps, app, nil, nil)
-				for _, k := range editShortcutTables().keys {
+				for _, k := range keybind.EditShortcutTables().Keys {
 					for _, onField := range []bool{false, true} {
-						form, field := []BindOption{Unbind(k)}, []BindOption(nil)
+						form, field := []surfkey.Option{surfkey.Unbind(k)}, []surfkey.Option(nil)
 						if onField {
 							form, field = nil, form
 						}
@@ -103,7 +106,7 @@ func TestEditShortcutsUnbindChangesNothing(t *testing.T) {
 							t.Fatalf("faults %q", s.faults)
 						}
 						if got, want := lookup(s, caps, "f", k), lookup(was, caps, "f", k); got != want {
-							t.Errorf("mod %q, %d groups under %s, Unbind(%q) on the field %v: %q, without it %q (%q)", caps.Mod, len(app), gname, k, onField, got, want, chain(s, "f"))
+							t.Errorf("mod %q, %d groups under %s, surfkey.Unbind(%q) on the field %v: %q, without it %q (%q)", caps.Mod, len(app), gname, k, onField, got, want, chain(s, "f"))
 						}
 					}
 				}
@@ -128,7 +131,7 @@ var editCocoaForm = Compile(func(p editCocoaFormProps) templ.Component {
 func TestEditShortcutsKeptInstanceUnderAnAction(t *testing.T) {
 	n := 0
 	s := New("t", templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-		fmt.Fprintf(w, `<div%s><p>%d</p>`, attrsOf(On(ctx, "app", Bind(Action(hotty.LineStart, "ctrl+a")))), n)
+		fmt.Fprintf(w, `<div%s><p>%d</p>`, attrsOf(On(ctx, "app", Bind(surfkey.Action(hotty.LineStart, "ctrl+a")))), n)
 		if err := editCocoaForm.With("k", editCocoaFormProps{Name: "a"}).Render(ctx, w); err != nil {
 			return err
 		}
@@ -165,25 +168,54 @@ func TestEditShortcutsKeptInstanceUnderAnAction(t *testing.T) {
 // ctrl+v: the binding is written, though no host here has a clipboard to
 // show the paste.
 func TestEditShortcutsPasswordPaste(t *testing.T) {
-	s := editPageOn(t, superHost, []BindOption{cuaEdit}, nil, `<input type="password" id="f"%s>`)
+	s := editPageOn(t, superHost, []surfkey.Option{cuaEdit}, nil, `<input type="password" id="f"%s>`)
 	if !slices.Contains(bindings(s, "f"), "ctrl+v=paste") || lookup(s, superHost, "f", "ctrl+v") != hotty.Paste {
 		t.Errorf("the password field: %q", chain(s, "f"))
 	}
 }
 
 // An app that binds no edit-shortcut group links none of their tables,
-// nor the editing keymaps': examples/hello, built, has none of the
+// nor the editing keymaps': a minimal app, built, has none of the
 // functions that make them, and does have the resolver every app links.
 func TestHelloLinksNoEditTable(t *testing.T) {
 	if testing.Short() {
-		t.Skip("builds examples/hello")
+		t.Skip("builds minimal app")
 	}
 	goBin, err := exec.LookPath("go")
 	if err != nil {
 		t.Skip("no go to build with")
 	}
-	bin := filepath.Join(t.TempDir(), "hello")
-	if out, err := exec.Command(goBin, "build", "-o", bin, "./examples/hello").CombinedOutput(); err != nil {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	goMod := "module example.com/minimal\n\ngo 1.24\n\nrequire neuroplast.io/hotty-surf v0.0.0\n\nreplace neuroplast.io/hotty-surf => " + cwd + "\n"
+	if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte(goMod), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	mainGo := `package main
+
+import (
+	"context"
+	"io"
+
+	"github.com/a-h/templ"
+	surf "neuroplast.io/hotty-surf"
+)
+
+func main() {
+	s := surf.New("hello", templ.ComponentFunc(func(context.Context, io.Writer) error { return nil }), "")
+	_, _ = s.Document()
+}
+`
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte(mainGo), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bin := filepath.Join(dir, "hello")
+	cmd := exec.Command(goBin, "build", "-mod=mod", "-o", bin, ".")
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}
 	syms, err := exec.Command(goBin, "tool", "nm", bin).Output()
@@ -193,8 +225,8 @@ func TestHelloLinksNoEditTable(t *testing.T) {
 	if !bytes.Contains(syms, []byte("hotty-surf.(*Surface).writeEdits")) {
 		t.Fatal("the build has no writeEdits: the symbols aren't what this test reads")
 	}
-	for _, name := range []string{"editShortcutTables", "cuaEditBinds", "cocoaEditBinds", "editingFor"} {
-		if bytes.Contains(syms, []byte("hotty-surf."+name)) {
+	for _, name := range []string{"EditShortcutTables", "CUAEditBinds", "CocoaEditBinds", "editingFor"} {
+		if bytes.Contains(syms, []byte("keybind."+name)) {
 			t.Errorf("hello links %s", name)
 		}
 	}

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // The keys a surface gives the program. A key is declared in Go, by the

@@ -1,0 +1,68 @@
+// Package story provides the storybook showcase for ui/inputgroup.
+package story
+
+import (
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/input"
+	"neuroplast.io/hotty-surf/surfui/inputgroup"
+	"neuroplast.io/hotty-surf/surfui/kbd"
+	"neuroplast.io/hotty-surf/surfui/textarea"
+)
+
+type state struct {
+	search  string
+	amount  string
+	comment string
+}
+
+// Register adds inputgroup's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "input-group/default",
+		Doc:          "Inputs and textareas with inline and block addons",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Keys:         []string{"tab", "g", "o"},
+		Want:         "search: go",
+	})
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-4 p-4 max-w-sm">
+		<div class="flex flex-col gap-1">
+			@inputgroup.View(inputgroup.Props{}) {
+				@input.View(input.Props{ID: "q", Type: "search", Value: s.search, Placeholder: "Search", OnInput: func(v string) { s.search = v }})
+				@inputgroup.Addon(inputgroup.AddonProps{Align: inputgroup.InlineStart}) {
+					@icon.View("search", "")
+				}
+				@inputgroup.Addon(inputgroup.AddonProps{Align: inputgroup.InlineEnd}) {
+					@kbd.View(kbd.Props{Keys: "mod+k"})
+				}
+			}
+			<p class="text-sm text-muted-foreground">search: { s.search }</p>
+		</div>
+		<div class="flex flex-col gap-1">
+			@inputgroup.View(inputgroup.Props{}) {
+				@input.View(input.Props{ID: "amount", Type: "number", Value: s.amount, Placeholder: "0", OnInput: func(v string) { s.amount = v }})
+				@inputgroup.Addon(inputgroup.AddonProps{Align: inputgroup.BlockStart}) {
+					Amount
+				}
+			}
+			<p class="text-sm text-muted-foreground">amount: { s.amount }</p>
+		</div>
+		<div class="flex flex-col gap-1">
+			@inputgroup.View(inputgroup.Props{}) {
+				@textarea.View(textarea.Props{ID: "comment", Value: s.comment, Placeholder: "Add a comment", OnInput: func(v string) { s.comment = v }})
+				@inputgroup.Addon(inputgroup.AddonProps{Align: inputgroup.BlockEnd}) {
+					@button.View(button.Props{ID: "post", Size: surfui.Small, OnClick: func() { s.comment = "" }}) {
+						Post
+					}
+				}
+			}
+			<p class="text-sm text-muted-foreground">comment: { s.comment }</p>
+		</div>
+	</div>
+}

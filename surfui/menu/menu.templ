@@ -1,0 +1,798 @@
+// Package menu is hotty-surf's self-contained DropdownMenu, Menu panel, and
+// ContextMenu component.
+package menu
+
+import (
+	"context"
+	_ "embed"
+	"fmt"
+	"io"
+	"slices"
+	"strconv"
+	"strings"
+
+	"golang.org/x/net/html"
+
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/internal/listgroup"
+	"neuroplast.io/hotty-surf/surfui/kbd"
+)
+
+//go:embed context_menu.css
+var contextCSS string
+
+// Register registers menu's CSS with r.
+func Register(r *surfui.Registry) { r.CSS("context-menu", contextCSS) }
+
+// Item is one entry in a dropdown, panel, or context menu.
+type Item struct {
+	Label           string
+	Icon            string
+	Keys            string
+	Group           string
+	Keywords        string
+	Variant         surfui.Variant
+	Disabled        bool
+	Role            string
+	Checked         bool
+	OnCheckedChange func(bool)
+	OnSelect        func()
+	Leading         templ.Component
+	Content         templ.Component
+	Trailing        templ.Component
+}
+
+// DropdownProps configures a Dropdown menu.
+type DropdownProps struct {
+	ID      string
+	Trigger templ.Component
+	Items   []Item
+	Align   string
+	Class   string
+}
+
+// DropdownState holds a Dropdown menu's open and highlight state.
+type DropdownState struct {
+	open    bool
+	active  int
+	pick    uint8
+	focus   bool
+	focusAt uint64
+}
+
+// PanelProps configures a standalone Menu panel.
+type PanelProps struct {
+	ID          string
+	Items       []Item
+	Highlight   int
+	OnHighlight func(i int)
+	Class       string
+}
+
+// ContextProps configures a ContextMenu wrapper around an area.
+type ContextProps struct {
+	ID    string
+	Items []Item
+	Class string
+}
+
+// ContextState holds a ContextMenu's open state and placement.
+type ContextState struct {
+	menu   DropdownState
+	at     hotty.Cell
+	placed bool
+	back   string
+	into   bool
+	intoAt uint64
+}
+
+const (
+	pickNone uint8 = iota
+	pickFirst
+	pickLast
+)
+
+// Open opens the dropdown menu with its first item highlighted.
+func (st *DropdownState) Open() {
+	st.open, st.active, st.pick = true, -1, pickFirst
+	st.focus, st.focusAt = true, 0
+}
+
+// Dropdown renders a button-triggered dropdown menu.
+func Dropdown(st *DropdownState, p DropdownProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return dropdownMarkup(newMenuView(st, p)).Render(ctx, w)
+	})
+}
+
+// Panel renders a standalone menu list with app-controlled highlight.
+func Panel(p PanelProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return panelMarkup(newPanelView(p)).Render(ctx, w)
+	})
+}
+
+// Context renders a right-click / Shift+F10 context menu around its children.
+func Context(st *ContextState, p ContextProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		id := p.ID
+		if id == "" {
+			id = "context-menu"
+		}
+		v := &contextView{st: st, p: p, id: id}
+		v.m = newMenuView(&st.menu, DropdownProps{ID: v.id, Items: p.Items, Class: p.Class})
+		return contextMarkup(v, templ.GetChildren(ctx)).Render(templ.ClearChildren(ctx), w)
+	})
+}
+
+type menuView struct {
+	st      *DropdownState
+	p       DropdownProps
+	id      string
+	entries []listgroup.Entry
+	opts    []listgroup.Item
+	items   []int
+	enabled []int
+	n       uint64
+	popups  *util.Popup
+	ctl     *PanelProps
+}
+
+func newMenuView(st *DropdownState, p DropdownProps) *menuView {
+	id := p.ID
+	if id == "" {
+		id = "dropdown-menu"
+	}
+	v := &menuView{st: st, p: p, id: id}
+	v.entries, v.opts = listgroup.Build(v.id+"-items", len(p.Items),
+		func(i int) string {
+			if p.Items[i].Role == "separator" && i > 0 {
+				return p.Items[i-1].Group
+			}
+			return p.Items[i].Group
+		},
+		func(i int, itemID string) listgroup.Item {
+			v.items = append(v.items, i)
+			it := p.Items[i]
+			return listgroup.Item{ID: itemID, Label: it.Label, Disabled: it.Disabled || it.Role == "separator"}
+		})
+	for i, o := range v.opts {
+		if !o.Disabled {
+			v.enabled = append(v.enabled, i)
+		}
+	}
+	if !st.open || st.active >= len(v.enabled) {
+		st.active = -1
+	}
+	if st.open && len(v.enabled) > 0 {
+		switch st.pick {
+		case pickFirst:
+			st.active = 0
+		case pickLast:
+			st.active = len(v.enabled) - 1
+		}
+	}
+	st.pick = pickNone
+	return v
+}
+
+func newPanelView(p PanelProps) *menuView {
+	id := p.ID
+	if id == "" {
+		id = "menu"
+	}
+	st := &DropdownState{open: true}
+	v := newMenuView(st, DropdownProps{ID: id, Items: p.Items, Class: p.Class})
+	v.ctl = &p
+	st.active = -1
+	for k, o := range v.enabled {
+		if v.items[o] == p.Highlight {
+			st.active = k
+		}
+	}
+	return v
+}
+
+func frameN(ctx context.Context) uint64 {
+	if f := rt.From(ctx); f != nil {
+		return f.N()
+	}
+	return 0
+}
+
+func oneShot(asked *bool, at, n uint64) bool {
+	ok := *asked && (at == 0 || at == n)
+	*asked = false
+	return ok
+}
+
+func (v *menuView) join(ctx context.Context) string {
+	v.n = frameN(ctx)
+	v.popups = util.Popups(ctx)
+	v.popups.Track(ctx, v.st, v.id, v.st.open, v.shut)
+	return ""
+}
+
+func (v *menuView) shut() { v.st.open, v.st.active = false, -1 }
+
+func (v *menuView) item(o int) Item { return v.p.Items[v.items[o]] }
+
+func (v *menuView) pos(o int) int {
+	for k, j := range v.enabled {
+		if j == o {
+			return k
+		}
+	}
+	return -1
+}
+
+func (v *menuView) activeOpt() int {
+	if !v.st.open || v.st.active < 0 {
+		return -1
+	}
+	return v.enabled[v.st.active]
+}
+
+func (v *menuView) open(initial uint8) {
+	v.st.open = true
+	v.popups.Opened(v.st, v.shut)
+	if n := len(v.enabled); n > 0 {
+		switch initial {
+		case pickFirst:
+			v.st.active = 0
+		case pickLast:
+			v.st.active = n - 1
+		}
+	}
+}
+
+func (v *menuView) close(focus bool) {
+	if !v.st.open {
+		return
+	}
+	v.st.open, v.st.active = false, -1
+	v.popups.Closed(v.st)
+	if focus {
+		v.ask()
+	}
+}
+
+func (v *menuView) toggle() {
+	if v.st.open {
+		v.close(true)
+	} else {
+		v.open(pickNone)
+	}
+}
+
+func (v *menuView) outside() { v.close(false) }
+
+func (v *menuView) choose(o int) {
+	it := v.item(o)
+	if it.Disabled || it.Role == "separator" {
+		return
+	}
+	if v.ctl != nil {
+		v.run(o, it)
+		return
+	}
+	v.run(o, it)
+	v.close(true)
+	v.ask()
+}
+
+func (v *menuView) run(o int, it Item) {
+	switch it.Role {
+	case "menuitemcheckbox":
+		if it.OnCheckedChange != nil {
+			it.OnCheckedChange(!it.Checked)
+		}
+	case "menuitemradio":
+		v.checkRadio(o)
+	}
+	if it.OnSelect != nil {
+		it.OnSelect()
+	}
+}
+
+func (v *menuView) checkRadio(chosen int) {
+	indices := make([]int, 0, len(v.opts))
+	for _, e := range v.entries {
+		if e.Kind == listgroup.Group && slices.Contains(e.Opts, chosen) {
+			indices = e.Opts
+			break
+		}
+	}
+	if len(indices) == 0 {
+		for i := range v.opts {
+			indices = append(indices, i)
+		}
+	}
+	for _, i := range indices {
+		it := v.item(i)
+		if it.Role != "menuitemradio" || it.Disabled || it.Checked == (i == chosen) {
+			continue
+		}
+		if it.OnCheckedChange != nil {
+			it.OnCheckedChange(i == chosen)
+		}
+	}
+}
+
+func (v *menuView) ask() { v.st.focus, v.st.focusAt = true, v.n+1 }
+
+func (v *menuView) triggerKeys() []string {
+	if v.st.open {
+		return []string{"arrow_down", "arrow_up", "home", "end", "enter", "space", "escape"}
+	}
+	return []string{"arrow_down", "arrow_up"}
+}
+
+func (v *menuView) triggerAttrs(ctx context.Context) templ.Attributes {
+	return util.ScopeAttrs(ctx, util.KitOn(ctx, v.id+"-trigger", surf.Click(v.toggle), surf.Key(v.key, v.triggerKeys()...)))
+}
+
+func (v *menuView) key(k string) bool {
+	if k == "escape" {
+		if !v.st.open {
+			return false
+		}
+		v.close(true)
+		return true
+	}
+	if !v.st.open {
+		switch k {
+		case "enter", "space":
+			v.open(pickNone)
+		case "arrow_down":
+			v.open(pickFirst)
+		case "arrow_up":
+			v.open(pickLast)
+		default:
+			return false
+		}
+		return true
+	}
+	n := len(v.enabled)
+	if n == 0 {
+		return false
+	}
+	cur := v.st.active
+	next := cur
+	switch k {
+	case "arrow_down":
+		if cur == -1 {
+			next = 0
+		} else {
+			next = min(cur+1, n-1)
+		}
+	case "arrow_up":
+		if cur == -1 {
+			next = n - 1
+		} else {
+			next = max(cur-1, 0)
+		}
+	case "home":
+		next = 0
+	case "end":
+		next = n - 1
+	case "enter", "space":
+		if o := v.activeOpt(); o >= 0 {
+			v.choose(o)
+		}
+		v.close(true)
+		return true
+	default:
+		return false
+	}
+	v.st.active = next
+	return true
+}
+
+func (v *menuView) hover(o int) func(bool) {
+	return func(over bool) {
+		if v.ctl != nil {
+			if over && v.ctl.OnHighlight != nil && v.items[o] != v.ctl.Highlight {
+				v.ctl.OnHighlight(v.items[o])
+			}
+			return
+		}
+		if over && v.st.open {
+			v.st.active = v.pos(o)
+		}
+	}
+}
+
+func (v *menuView) leave(over bool) {
+	if !over && v.st.open {
+		v.st.active = -1
+	}
+}
+
+func (v *menuView) refocus() bool {
+	return oneShot(&v.st.focus, v.st.focusAt, v.n)
+}
+
+func (v *menuView) rootAttrs(ctx context.Context) templ.Attributes {
+	if !v.st.open {
+		return util.KitOn(ctx, v.id)
+	}
+	return util.KitOn(ctx, v.id, surf.Outside(v.outside))
+}
+
+func (v *menuView) panelKey(k string) bool {
+	n := len(v.enabled)
+	if n == 0 {
+		return false
+	}
+	cur, next := v.st.active, -1
+	switch k {
+	case "arrow_down":
+		next = 0
+		if cur >= 0 {
+			next = min(cur+1, n-1)
+		}
+	case "arrow_up":
+		next = n - 1
+		if cur >= 0 {
+			next = max(cur-1, 0)
+		}
+	case "home":
+		next = 0
+	case "end":
+		next = n - 1
+	case "enter", "space":
+		if o := v.activeOpt(); o >= 0 {
+			v.choose(o)
+			return true
+		}
+		return false
+	default:
+		return false
+	}
+	if next != cur && v.ctl.OnHighlight != nil {
+		v.ctl.OnHighlight(v.items[v.enabled[next]])
+	}
+	return true
+}
+
+func (v *menuView) panelAttrs(ctx context.Context) templ.Attributes {
+	return util.KitOn(ctx, v.id+"-menu", surf.Key(v.panelKey))
+}
+
+func (v *menuView) panelFrame(ctx context.Context) string {
+	v.n = frameN(ctx)
+	return ""
+}
+
+func checkable(it Item) bool {
+	return it.Role == "menuitemcheckbox" || it.Role == "menuitemradio"
+}
+
+func itemRole(role string) string {
+	if role == "" {
+		return "menuitem"
+	}
+	return role
+}
+
+func menuSlot(name string, c templ.Component) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		var b strings.Builder
+		if err := util.Plain(c).Render(ctx, &b); err != nil {
+			return err
+		}
+		if what := slotControl(b.String()); what != "" {
+			rt.Fault(ctx, fmt.Sprintf("menu.Item: %s holds %s: a slot is a picture, the row takes the press and the keys", name, what))
+		}
+		_, err := io.WriteString(w, b.String())
+		return err
+	})
+}
+
+func slotControl(markup string) string {
+	z := html.NewTokenizer(strings.NewReader(markup))
+	for {
+		switch z.Next() {
+		case html.ErrorToken:
+			return ""
+		case html.StartTagToken, html.SelfClosingTagToken:
+			name, more := z.TagName()
+			tag := string(name)
+			switch tag {
+			case "input":
+				return "an input"
+			case "button", "select", "textarea":
+				return "a " + tag
+			}
+			for more {
+				var k, v []byte
+				k, v, more = z.TagAttr()
+				switch key := string(k); {
+				case tag == "a" && key == "href":
+					return "a link"
+				case key == "tabindex":
+					return "tabindex"
+				case key == "data-on" || strings.HasPrefix(key, "on"):
+					return "a handler (" + key + ")"
+				case key == "role" && (string(v) == "button" || string(v) == "link"):
+					return "role=" + string(v)
+				}
+			}
+		}
+	}
+}
+
+type contextView struct {
+	st      *ContextState
+	p       ContextProps
+	id      string
+	m       *menuView
+	focused string
+}
+
+func (v *contextView) join(ctx context.Context) string {
+	v.m.join(ctx)
+	if f := rt.From(ctx); f != nil {
+		v.focused = f.Focused()
+	}
+	return ""
+}
+
+func (v *contextView) press(at hotty.Cell, area hotty.Area) {
+	v.st.at, v.st.placed = hotty.Cell{}, false
+	if area != (hotty.Area{}) {
+		v.st.at = hotty.Cell{Col: max(0, at.Col-area.Col), Row: max(0, at.Row-area.Row)}
+		v.st.placed = true
+	}
+	v.open(pickNone)
+}
+
+func (v *contextView) open(initial uint8) {
+	if !v.st.menu.open {
+		v.st.back = v.focused
+	}
+	v.m.close(false)
+	v.m.open(initial)
+	v.st.into, v.st.intoAt = true, v.m.n+1
+}
+
+func (v *contextView) areaKey(k string) bool {
+	if k != "shift+f10" && k != "context_menu" {
+		return false
+	}
+	v.st.at, v.st.placed = hotty.Cell{}, false
+	v.open(pickFirst)
+	return true
+}
+
+func (v *contextView) menuKey(k string) bool {
+	if !v.st.menu.open {
+		return false
+	}
+	if k == "shift+f10" || k == "context_menu" {
+		v.m.close(true)
+		return true
+	}
+	return v.m.key(k)
+}
+
+func (v *contextView) outside() { v.m.close(false) }
+
+func (v *contextView) placement() templ.SafeCSS {
+	return templ.SafeCSS(fmt.Sprintf("top:calc(var(--hotty-cell-h) * %d);left:calc(var(--hotty-cell-w) * %d)", v.st.at.Row, v.st.at.Col))
+}
+
+func (v *contextView) areaAttrs(ctx context.Context) templ.Attributes {
+	return util.KitOn(ctx, v.id, surf.Secondary(v.press), surf.Key(v.areaKey))
+}
+
+func (v *contextView) menuAttrs(ctx context.Context) templ.Attributes {
+	hs := []surf.Handler{surf.Key(v.menuKey), surf.Hover(v.m.leave)}
+	if v.st.menu.open {
+		hs = append(hs, surf.Outside(v.outside))
+	}
+	return util.KitOn(ctx, v.id+"-menu", hs...)
+}
+
+func (v *contextView) into() bool { return oneShot(&v.st.into, v.st.intoAt, v.m.n) }
+
+func (v *contextView) backTo() string {
+	if v.m.refocus() && v.st.back != "" && v.st.back != v.id+"-menu" {
+		return v.st.back
+	}
+	return ""
+}
+
+templ dropdownMarkup(v *menuView) {
+	{{ v.join(ctx) }}
+	<div
+		class={ util.JoinClass("dropdown-menu", v.p.Class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		data-dropdown-menu-initialized="true"
+		{ v.rootAttrs(ctx)... }
+	>
+		<button
+			type="button"
+			aria-haspopup="menu"
+			aria-controls={ v.id + "-menu" }
+			aria-expanded={ strconv.FormatBool(v.st.open) }
+			if o := v.activeOpt(); o >= 0 {
+				aria-activedescendant={ v.opts[o].ID }
+			}
+			class="btn"
+			data-variant="outline"
+			{ v.triggerAttrs(ctx)... }
+		>
+			if v.p.Trigger != nil {
+				@util.Plain(v.p.Trigger)
+			}
+		</button>
+		<div
+			id={ v.id + "-popover" }
+			data-popover
+			aria-hidden={ strconv.FormatBool(!v.st.open) }
+			if v.p.Align != "" {
+				data-align={ v.p.Align }
+			}
+		>
+			<div role="menu" aria-labelledby={ v.id + "-trigger" } { surf.On(ctx, v.id+"-menu", surf.Hover(v.leave))... }>
+				@menuEntries(v)
+			</div>
+		</div>
+		if v.refocus() {
+			{{ surf.Autofocus(ctx, v.id+"-trigger") }}
+		}
+	</div>
+}
+
+templ panelMarkup(v *menuView) {
+	{{ v.panelFrame(ctx) }}
+	<div
+		class={ util.JoinClass("dropdown-menu menu-panel", v.p.Class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		id={ v.id }
+	>
+		<div id={ v.id + "-popover" } data-popover aria-hidden="false">
+			<div
+				role="menu"
+				tabindex="0"
+				if o := v.activeOpt(); o >= 0 {
+					aria-activedescendant={ v.opts[o].ID }
+				}
+				{ v.panelAttrs(ctx)... }
+			>
+				@menuEntries(v)
+			</div>
+		</div>
+	</div>
+}
+
+templ contextMarkup(v *contextView, area templ.Component) {
+	{{ v.join(ctx) }}
+	<div
+		class={ util.JoinClass("dropdown-menu context-menu", v.p.Class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		data-dropdown-menu-initialized="true"
+		{ v.areaAttrs(ctx)... }
+	>
+		if area != nil {
+			@area
+		}
+		<div
+			id={ v.id + "-popover" }
+			data-popover
+			aria-hidden={ strconv.FormatBool(!v.st.menu.open) }
+			if v.st.menu.open && v.st.placed {
+				data-at
+				style={ v.placement() }
+			}
+		>
+			<div
+				role="menu"
+				tabindex="0"
+				aria-label="Context menu"
+				if o := v.m.activeOpt(); o >= 0 {
+					aria-activedescendant={ v.m.opts[o].ID }
+				}
+				{ v.menuAttrs(ctx)... }
+			>
+				@menuEntries(v.m)
+			</div>
+		</div>
+		if v.into() {
+			{{ surf.Autofocus(ctx, v.id+"-menu") }}
+		} else if b := v.backTo(); b != "" {
+			{{ surf.Autofocus(ctx, b) }}
+		}
+	</div>
+}
+
+templ menuEntries(v *menuView) {
+	for _, e := range v.entries {
+		switch e.Kind {
+			case listgroup.Opt:
+				@menuItem(v, e.Opt)
+			case listgroup.Group:
+				<div role="group" aria-labelledby={ e.LabelID }>
+					<div role="heading" id={ e.LabelID }>{ e.Group }</div>
+					for _, o := range e.Opts {
+						@menuItem(v, o)
+					}
+				</div>
+			case listgroup.Separator:
+				<hr role="separator"/>
+		}
+	}
+}
+
+templ menuItem(v *menuView, o int) {
+	{{ it, id := v.item(o), v.opts[o].ID }}
+	if it.Role == "separator" {
+		<hr role="separator" id={ id }/>
+	} else {
+		<div
+			role={ itemRole(it.Role) }
+			if checkable(it) {
+				aria-checked={ strconv.FormatBool(it.Checked) }
+			}
+			if it.Disabled {
+				aria-disabled="true"
+			}
+			if it.Content != nil {
+				aria-label={ it.Label }
+			}
+			if it.Variant != surfui.Primary {
+				data-variant={ string(it.Variant) }
+			}
+			if o == v.activeOpt() {
+				class="active"
+			}
+			if it.Disabled {
+				id={ id }
+			} else {
+				{ surf.On(ctx, id, surf.Click(func() { v.choose(o) }), surf.Hover(v.hover(o)))... }
+			}
+		>
+			if it.Leading != nil {
+				<span data-leading aria-hidden="true">
+					@menuSlot("Leading", it.Leading)
+				</span>
+			} else if it.Icon != "" {
+				@icon.View(it.Icon, "")
+			}
+			if it.Content != nil {
+				@menuSlot("Content", it.Content)
+			} else {
+				{ it.Label }
+			}
+			if checkable(it) && it.Leading == nil {
+				<span data-indicator>
+					if it.Role == "menuitemcheckbox" {
+						@icon.View("check", "size-4")
+					} else {
+						@icon.View("circle", "size-2 fill-current")
+					}
+				</span>
+			}
+			if it.Trailing != nil {
+				<span data-shortcut>
+					@menuSlot("Trailing", it.Trailing)
+				</span>
+			} else if it.Keys != "" {
+				@kbd.View(kbd.Props{Keys: it.Keys})
+			}
+		</div>
+	}
+}

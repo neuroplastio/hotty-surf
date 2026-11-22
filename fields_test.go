@@ -10,7 +10,7 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottytest"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/internal/input"
+	"neuroplast.io/hotty-surf/internal/core/input"
 	"neuroplast.io/hotty-surf/surftest"
 )
 

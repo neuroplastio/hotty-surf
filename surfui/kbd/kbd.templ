@@ -1,0 +1,106 @@
+// Package kbd is hotty-surf's self-contained Kbd component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package kbd
+
+import (
+	"strings"
+	"unicode/utf8"
+
+	"neuroplast.io/hotty-go"
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/myelin/myelinkey"
+)
+
+// Register registers kbd's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Kbd shortcut keycap.
+type Props struct {
+	// Keys is a hotty key chord joined by "+" (e.g. "mod+shift+p", "escape").
+	Keys  string
+	Attrs templ.Attributes
+	Class string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's <kbd> keycap formatted with modifier glyphs.
+templ Hotty(p Props) {
+	<kbd data-slot="kbd" class={ util.JoinClass("kbd", p.Class) } { p.Attrs... }>
+		{ formatKeys(surf.Platform(ctx), p.Keys) }
+	</kbd>
+}
+
+// TUI renders the formatted keycap for cells.Screen.
+templ TUI(p Props) {
+	<kbd data-slot="kbd" data-mode="tui" class={ util.JoinClass("kbd bg-secondary text-muted-foreground", p.Class) } { p.Attrs... }>
+		{ formatKeys(surf.Platform(ctx), p.Keys) }
+	</kbd>
+}
+
+var keyGlyphs = map[string]string{
+	"arrow_left":  "←",
+	"arrow_right": "→",
+	"arrow_up":    "↑",
+	"arrow_down":  "↓",
+	"enter":       "↵",
+	"backspace":   "⌫",
+	"delete":      "⌦",
+	"escape":      "⎋",
+	"tab":         "⇥",
+	"page_up":     "⇞",
+	"page_down":   "⇟",
+	"home":        "↖",
+	"end":         "↘",
+	"space":       "␣",
+}
+
+func formatKeys(p hotty.Platform, keys string) string {
+	canon, ok := p.ReadKey(keys)
+	if !ok {
+		return keys
+	}
+	mods, value, _ := myelinkey.Split(myelinkey.Key(canon))
+	var parts []string
+	for _, m := range []struct {
+		m myelinkey.Mods
+		s string
+	}{
+		{myelinkey.Ctrl, "⌃"},
+		{myelinkey.Alt, "⌥"},
+		{myelinkey.Shift, "⇧"},
+		{myelinkey.Super, "⌘"},
+	} {
+		if mods&m.m != 0 {
+			parts = append(parts, m.s)
+		}
+	}
+	parts = append(parts, formatValue(value))
+	return strings.Join(parts, " ")
+}
+
+func formatValue(v string) string {
+	if g, ok := keyGlyphs[v]; ok {
+		return g
+	}
+	if utf8.RuneCountInString(v) == 1 {
+		return strings.ToUpper(v)
+	}
+	words := strings.Split(v, "_")
+	for i, w := range words {
+		if w != "" {
+			words[i] = strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}

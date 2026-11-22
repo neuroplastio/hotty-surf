@@ -10,7 +10,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/surftui"
 	"neuroplast.io/hotty-surf/surftest"
 )
 
@@ -35,7 +35,7 @@ func moveView(left map[string]bool, inner bool) templ.Component {
 }
 
 // rows are the screen's non-blank lines, trimmed.
-func rows(c *cells.Screen) string {
+func rows(c *surftui.Screen) string {
 	var out []string
 	for _, l := range c.Lines() {
 		if l = strings.TrimSpace(l); l != "" {
@@ -56,7 +56,7 @@ func TestMoveBetweenParents(t *testing.T) {
 			left := map[string]bool{"a": true}
 			s := surf.New("t", moveView(left, inner), "")
 			var cellsErr error
-			c := cells.New(40, 8, func(hotty.Event) {})
+			c := surftui.New(40, 8, func(hotty.Event) {})
 			s.Attach(writerFunc(func(p []byte) (int, error) {
 				n, err := c.Write(p)
 				if err != nil && cellsErr == nil {
@@ -147,7 +147,7 @@ func TestMoveNested(t *testing.T) {
 	})
 	s := surf.New("t", v, "")
 	var cellsErr error
-	c := cells.New(40, 8, func(hotty.Event) {})
+	c := surftui.New(40, 8, func(hotty.Event) {})
 	s.Attach(writerFunc(func(p []byte) (int, error) {
 		n, err := c.Write(p)
 		if err != nil && cellsErr == nil {

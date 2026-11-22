@@ -1,0 +1,90 @@
+// Package alertdialog is hotty-surf's self-contained modal AlertDialog component.
+package alertdialog
+
+import (
+	"context"
+	"io"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/internal/modal"
+)
+
+// Register registers alertdialog's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a modal AlertDialog.
+type Props struct {
+	ID                 string
+	Open               bool
+	Title, Description string
+	Size               surfui.Size
+	OnClose            func()
+	Class              string
+}
+
+// View renders a modal AlertDialog when Open is true.
+func View(p Props) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return alertDialogMarkup(p, templ.GetChildren(ctx)).Render(templ.ClearChildren(ctx), w)
+	})
+}
+
+func alertID(id string) string {
+	if id == "" {
+		return "alert-dialog"
+	}
+	return id
+}
+
+func checkTitle(ctx context.Context, p Props) string {
+	if p.Title == "" {
+		rt.Fault(ctx, "alertdialog.View: Title is required")
+	}
+	return ""
+}
+
+templ alertDialogMarkup(p Props, children templ.Component) {
+	{{ checkTitle(ctx, p) }}
+	{{ d := modal.New(ctx, alertID(p.ID), p.Open, p.OnClose) }}
+	if p.Open {
+		{{ body, err := d.Body(ctx, children) }}
+		if err != nil {
+			{{ return err }}
+		}
+		<dialog
+			class={ util.JoinClass("alert-dialog", p.Class) }
+			if surfui.ModeOf(ctx) != surfui.ModeHotty {
+				data-mode="tui"
+			}
+			role="alertdialog"
+			open
+			if p.Size != "" {
+				data-size={ string(p.Size) }
+			}
+			if p.Title != "" {
+				aria-labelledby={ d.ID + "-title" }
+			}
+			if p.Description != "" {
+				aria-describedby={ d.ID + "-description" }
+			}
+			{ util.KitOn(ctx, d.ID, surf.Key(d.Key))... }
+		>
+			<div { surf.On(ctx, d.ID+"-content", surf.Focus(d.Focus), surf.Outside(d.Outside))... }>
+				if p.Title != "" || p.Description != "" {
+					<header>
+						if p.Title != "" {
+							<h2 id={ d.ID + "-title" }>{ p.Title }</h2>
+						}
+						if p.Description != "" {
+							<p id={ d.ID + "-description" }>{ p.Description }</p>
+						}
+					</header>
+				}
+				@templ.Raw(body)
+			</div>
+		</dialog>
+	}
+}

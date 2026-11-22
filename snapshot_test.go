@@ -11,7 +11,7 @@ import (
 	"github.com/tinylib/msgp/msgp"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // TestAdopt: a surface that adopts another's snapshot sends a delta from

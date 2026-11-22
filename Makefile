@@ -68,7 +68,7 @@ lint:   ## staticcheck, pinned; from the module cache when it has it
 
 test:   ## the tests, with the race detector
 	$(GO) test -race ./...
-	$(GO) test -race -tags surfdev ./internal/devchild/...
+	$(GO) test -race -tags surfdev ./internal/dev/child/...
 	@for m in $(SUBMODULES); do $(GO) -C $$m test -race ./... || exit 1; done
 
 canary:   ## mods/ applied to each upstream's latest, and its tests (gov P-7; weekly in CI)
@@ -79,7 +79,7 @@ canary:   ## mods/ applied to each upstream's latest, and its tests (gov P-7; we
 TINYGO ?= $(CAP) mise x -- tinygo
 # A release wasm links no reload: the reload wire, its child and the
 # reloader stay behind surfdev, and the page's WebSocket with them.
-NO_RELOAD = internal/devwire internal/devchild internal/devhook reload/reloader
+NO_RELOAD = internal/dev/wire internal/dev/child internal/dev/hook surfdev/reloader
 tinygo:   ## the examples build for js/wasm under TinyGo, and link no reload
 	@mkdir -p bin
 	@for e in tasks nav hello todo settings dashboard logs explorer; do $(TINYGO) build -no-debug -target wasm -o bin/$$e.wasm ./examples/$$e || exit 1; done
@@ -136,26 +136,18 @@ pack: api-check
 	  $(API_DIRS)
 	@echo "pack: $(PACK)"
 
-# docs/coverage.md is written from ui/coverage.tsv, Basecoat's components
+# docs/coverage.md is written from surfui/coverage.tsv, Basecoat's components
 # one by one; it fails when the page is not what the table makes.
 coverage:
 	@t=$$(mktemp); trap 'rm -f "$$t"' EXIT; \
 	sh scripts/coverage-md.sh "$$t" || exit 1; \
 	if ! diff -q docs/coverage.md "$$t" >/dev/null; then \
-	  echo "docs/coverage.md is not what ui/coverage.tsv makes: sh scripts/coverage-md.sh"; exit 1; fi
+	  echo "docs/coverage.md is not what surfui/coverage.tsv makes: sh scripts/coverage-md.sh"; exit 1; fi
 
-# The oracle of ui's render tests: Basecoat's Jinja macros translated to templ
-# (internal/jinja), and jinja2's own render of its cases. Needs python3 with
-# jinja2; run it on a Basecoat bump, then make test.
-oracle:
-	cd internal/jinja && $(CAP) python3 -I gen/jinja2templ.py ../basecoat/jinja . && \
-	  $(CAP) mise x -- templ fmt . >/dev/null && $(CAP) mise x -- templ generate -path . >/dev/null && \
-	  $(CAP) python3 -I gen/jinja2templ.py --testdata ../basecoat/jinja .
-
-# The kit's stylesheet, ui/kit.css: Basecoat's CSS (internal/basecoat) and the
-# Tailwind utilities, built by ui/internal/style (node, npm install there first).
+# The kit's stylesheet, surfui/kit.css: Basecoat's CSS (internal/basecoat) and the
+# Tailwind utilities, built by surfui/internal/style (node, npm install there first).
 kit:
-	cd ui/internal/style && $(CAP) node build.mjs
+	cd surfui/internal/style && $(CAP) node build.mjs
 
 # The page build -wasm writes and serve serves, in Chromium through
 # Playwright (scripts/browser): not in check, since it needs a browser.
@@ -168,13 +160,6 @@ browser: scripts/browser/node_modules   ## build -wasm and serve, proven in Chro
 
 scripts/browser/node_modules: scripts/browser/package.json scripts/browser/package-lock.json
 	cd scripts/browser && $(CAP) $(NPM) ci --no-audit --no-fund && touch node_modules
-
-# The browser half of ui's differential tests: Basecoat's own scripts
-# driven in a headless Chromium, recorded in ui/testdata/differential.
-# Needs chromium and node; run it on a Basecoat bump or a new case, then
-# make test.
-differential:
-	$(CAP) sh scripts/differential.sh
 
 print-cap:   ## the CAP the steps run under, for a script that builds outside make
 	@echo '$(CAP)'

@@ -1,0 +1,74 @@
+// Package story provides the storybook showcase for ui/item.
+package story
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	uiicon "neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/button"
+	"neuroplast.io/hotty-surf/surfui/item"
+)
+
+type state struct {
+	page string
+}
+
+// Register adds item's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "item/default",
+		Doc:          "Items in default, outline, muted variants, sizes, and as a clickable group",
+		Consolidated: true,
+		View:         func() templ.Component { return showcase(&state{page: "none"}) },
+		Keys:         []string{"tab", "tab", "enter"},
+		Want:         "page: Ada Lovelace",
+	})
+}
+
+templ itemBody(icon, title, text string) {
+	<figure>
+		@uiicon.View(icon, "")
+	</figure>
+	<section>
+		<h3>{ title }</h3>
+		<p>{ text }</p>
+	</section>
+}
+
+templ showcase(s *state) {
+	<div class="p-4 max-w-md flex flex-col gap-4">
+		@item.View(item.Props{}) {
+			@itemBody("folder", "Reports", "Monthly reports for the team.")
+			<aside>
+				@button.View(button.Props{ID: "open", Variant: surfui.Outline, Size: surfui.Small}) {
+					Open
+				}
+			</aside>
+		}
+		<div class="flex flex-col gap-4">
+			@item.View(item.Props{Variant: surfui.Outline}) {
+				@itemBody("bell", "Outline", "A border.")
+			}
+			@item.View(item.Props{Muted: true}) {
+				@itemBody("bell", "Muted", "The muted background.")
+			}
+			@item.View(item.Props{Variant: surfui.Outline, Size: surfui.Small}) {
+				@itemBody("user", "Small size", "Compact item row.")
+			}
+		</div>
+		@item.Group(item.GroupProps{}) {
+			for i, n := range []string{"Ada Lovelace", "Grace Hopper", "Mary Kenneth Keller"} {
+				if i > 0 {
+					<hr/>
+				}
+				@item.View(item.Props{Attrs: surf.On(ctx, "person-"+strconv.Itoa(i), surf.Click(func() { s.page = n }))}) {
+					@itemBody("user", n, "Opens their page.")
+				}
+			}
+		}
+		<p class="text-sm text-muted-foreground">page: { s.page }</p>
+	</div>
+}

@@ -1,0 +1,347 @@
+// Package command is hotty-surf's self-contained Command and CommandDialog component.
+package command
+
+import (
+	"context"
+	"io"
+	"strconv"
+	"strings"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/internal/listgroup"
+	"neuroplast.io/hotty-surf/surfui/internal/modal"
+	"neuroplast.io/hotty-surf/surfui/kbd"
+	"neuroplast.io/hotty-surf/surfui/menu"
+)
+
+// Register registers command's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Item aliases menu.Item for command lists.
+type Item = menu.Item
+
+// Props configures a Command palette.
+type Props struct {
+	ID          string
+	Items       []Item
+	Placeholder string
+	Empty       string
+	Class       string
+}
+
+// DialogProps configures a modal CommandDialog.
+type DialogProps struct {
+	ID          string
+	Open        bool
+	Items       []Item
+	Placeholder string
+	Empty       string
+	OnClose     func()
+	Class       string
+}
+
+// State holds a Command's search query and active item across renders.
+type State struct {
+	query  string
+	active int
+	moved  bool
+}
+
+// Search sets the filter query and resets the highlight to the first match.
+func (st *State) Search(q string) { st.query, st.moved = q, false }
+
+// View renders an inline Command menu.
+func View(st *State, p Props) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		id := p.ID
+		if id == "" {
+			id = "command"
+		}
+		return commandMarkup(newView(st, id, p)).Render(ctx, w)
+	})
+}
+
+// Dialog renders a Command inside a modal dialog.
+func Dialog(st *State, p DialogProps) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		id := p.ID
+		if id == "" {
+			id = "command-dialog"
+		}
+		d := modal.New(ctx, id, p.Open, p.OnClose)
+		if !p.Open {
+			return nil
+		}
+		v := newView(st, id, Props{ID: id, Items: p.Items, Placeholder: p.Placeholder, Empty: p.Empty})
+		v.dialog = d
+		var b strings.Builder
+		if err := commandBody(v).Render(ctx, &b); err != nil {
+			return err
+		}
+		body, err := d.Body(ctx, templ.Raw(b.String()))
+		if err != nil {
+			return err
+		}
+		return commandDialogMarkup(v, d, p.Class, body).Render(ctx, w)
+	})
+}
+
+type view struct {
+	st      *State
+	p       Props
+	id      string
+	entries []listgroup.Entry
+	opts    []listgroup.Item
+	shown   []bool
+	visible []int
+	dialog  *modal.View
+}
+
+func newView(st *State, id string, p Props) *view {
+	v := &view{st: st, p: p, id: id}
+	v.entries, v.opts = listgroup.Build(id+"-items", len(p.Items),
+		func(i int) string { return p.Items[i].Group },
+		func(i int, itemID string) listgroup.Item {
+			return listgroup.Item{ID: itemID, Label: p.Items[i].Label, Disabled: p.Items[i].Disabled}
+		})
+	term := strings.ToLower(strings.TrimSpace(st.query))
+	v.shown = make([]bool, len(v.opts))
+	for o, it := range p.Items {
+		v.shown[o] = match(it, term)
+		if v.shown[o] && !it.Disabled {
+			v.visible = append(v.visible, o)
+		}
+	}
+	if st.moved && !v.isVisible(st.active) {
+		st.moved = false
+	}
+	return v
+}
+
+func match(it Item, term string) bool {
+	if strings.Contains(strings.ToLower(strings.TrimSpace(it.Label)), term) {
+		return true
+	}
+	for _, k := range strings.FieldsFunc(strings.ToLower(it.Keywords), func(r rune) bool {
+		return r == ',' || r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == '\f'
+	}) {
+		if strings.Contains(k, term) {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *view) isVisible(o int) bool {
+	for _, x := range v.visible {
+		if x == o {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *view) activeOpt() int {
+	if v.st.moved {
+		return v.st.active
+	}
+	if len(v.visible) > 0 {
+		return v.visible[0]
+	}
+	return -1
+}
+
+func (v *view) placeholder() string {
+	if v.p.Placeholder == "" {
+		return "Type a command or search..."
+	}
+	return v.p.Placeholder
+}
+
+func (v *view) empty() string {
+	if v.p.Empty == "" {
+		return "No results found."
+	}
+	return v.p.Empty
+}
+
+func (v *view) fieldKeys() []string {
+	if len(v.visible) == 0 {
+		return []string{"enter"}
+	}
+	return []string{"arrow_down", "arrow_up", "home", "end", "enter"}
+}
+
+func (v *view) input(s string) { v.st.query, v.st.moved = s, false }
+func (v *view) move(o int)     { v.st.active, v.st.moved = o, true }
+
+func (v *view) key(k string) bool {
+	if v.dialog != nil && v.dialog.Key(k) {
+		return true
+	}
+	switch k {
+	case "enter":
+		if o := v.activeOpt(); o >= 0 {
+			v.choose(o)
+		}
+		return true
+	case "arrow_down", "arrow_up", "home", "end":
+	default:
+		return false
+	}
+	n := len(v.visible)
+	if n == 0 {
+		return false
+	}
+	cur := -1
+	for i, o := range v.visible {
+		if o == v.activeOpt() {
+			cur = i
+		}
+	}
+	next := cur
+	switch k {
+	case "arrow_down":
+		if cur < n-1 {
+			next = cur + 1
+		}
+	case "arrow_up":
+		next = max(cur-1, 0)
+	case "home":
+		next = 0
+	case "end":
+		next = n - 1
+	}
+	if next != cur {
+		v.move(v.visible[next])
+	}
+	return true
+}
+
+func (v *view) choose(o int) {
+	if !v.isVisible(o) {
+		return
+	}
+	if f := v.p.Items[o].OnSelect; f != nil {
+		f()
+	}
+	if v.dialog != nil {
+		v.dialog.Dismiss()
+	}
+}
+
+func (v *view) hover(o int) func(bool) {
+	return func(over bool) {
+		if over && v.isVisible(o) && v.activeOpt() != o {
+			v.move(o)
+		}
+	}
+}
+
+func (v *view) itemAttrs(ctx context.Context, o int) templ.Attributes {
+	if v.p.Items[o].Disabled {
+		return templ.Attributes{"id": v.opts[o].ID}
+	}
+	return surf.On(ctx, v.opts[o].ID, surf.Click(func() { v.choose(o) }), surf.Hover(v.hover(o)))
+}
+
+templ commandMarkup(v *view) {
+	<div
+		class={ util.JoinClass("command", v.p.Class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		aria-label="Command menu"
+		data-command-initialized="true"
+		{ util.KitOn(ctx, v.id, surf.Key(v.key))... }
+	>
+		@commandBody(v)
+	</div>
+}
+
+templ commandDialogMarkup(v *view, d *modal.View, class string, body string) {
+	<dialog
+		class={ util.JoinClass("command-dialog", class) }
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		aria-label="Command menu"
+		open
+		{ util.KitOn(ctx, v.id, surf.Key(v.key))... }
+	>
+		<div class="command" data-command-initialized="true" { surf.On(ctx, v.id+"-content", surf.Focus(d.Focus), surf.Outside(d.Outside))... }>
+			@templ.Raw(body)
+		</div>
+	</dialog>
+}
+
+templ commandBody(v *view) {
+	<header>
+		@icon.View("search", "")
+		<input
+			type="text"
+			placeholder={ v.placeholder() }
+			autocomplete="off"
+			autocorrect="off"
+			spellcheck="false"
+			aria-autocomplete="list"
+			role="combobox"
+			aria-expanded="true"
+			aria-controls={ v.id + "-menu" }
+			if o := v.activeOpt(); o >= 0 {
+				aria-activedescendant={ v.opts[o].ID }
+			}
+			value={ v.st.query }
+			{ util.ScopeCompoundAttrs(ctx, util.KitOn(ctx, v.id+"-input", surf.Input(v.input), surf.Key(v.key, v.fieldKeys()...)))... }
+		/>
+	</header>
+	<div role="menu" id={ v.id + "-menu" } aria-orientation="vertical" data-empty={ v.empty() } class="">
+		for _, e := range v.entries {
+			switch e.Kind {
+				case listgroup.Opt:
+					@commandItem(v, e.Opt)
+				case listgroup.Group:
+					<div role="group" aria-labelledby={ e.LabelID }>
+						<span role="heading" id={ e.LabelID }>{ e.Group }</span>
+						for _, o := range e.Opts {
+							@commandItem(v, o)
+						}
+					</div>
+				case listgroup.Separator:
+					<hr role="separator"/>
+			}
+		}
+	</div>
+}
+
+templ commandItem(v *view, o int) {
+	{{ it := v.p.Items[o] }}
+	<div
+		role="menuitem"
+		if it.Keywords != "" {
+			data-keywords={ it.Keywords }
+		}
+		if it.Disabled {
+			aria-disabled="true"
+		}
+		if it.Variant != surfui.Primary {
+			data-variant={ string(it.Variant) }
+		}
+		aria-hidden={ strconv.FormatBool(!v.shown[o]) }
+		if o == v.activeOpt() {
+			class="active"
+		}
+		{ v.itemAttrs(ctx, o)... }
+	>
+		if it.Icon != "" {
+			@icon.View(it.Icon, "")
+		}
+		{ it.Label }
+		if it.Keys != "" {
+			@kbd.View(kbd.Props{Keys: it.Keys})
+		}
+	</div>
+}

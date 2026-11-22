@@ -10,7 +10,7 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // The tests of package surf read a surface's faults from its buffer.

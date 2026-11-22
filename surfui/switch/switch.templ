@@ -1,0 +1,87 @@
+// Package uiswitch is hotty-surf's self-contained Switch component, with
+// explicit renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package uiswitch
+
+import (
+	"context"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers switch's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Switch control.
+type Props struct {
+	ID       string
+	Checked  bool
+	Size     surfui.Size
+	Disabled bool
+	Invalid  bool
+	OnChange func(bool)
+	Attrs    templ.Attributes
+	Class    string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's switch input for a hotty host.
+templ Hotty(p Props) {
+	<input
+		data-slot="switch"
+		type="checkbox"
+		role="switch"
+		checked?={ p.Checked }
+		if p.Size != "" {
+			data-size={ string(p.Size) }
+		}
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ util.JoinClass("input", p.Class) }
+		{ util.ScopeNativeAttrs(ctx, switchAttrs(ctx, p), "switch")... }
+	/>
+}
+
+// TUI renders the switch input for cells.Screen.
+templ TUI(p Props) {
+	<input
+		data-slot="switch"
+		data-mode="tui"
+		type="checkbox"
+		role="switch"
+		checked?={ p.Checked }
+		if p.Size != "" {
+			data-size={ string(p.Size) }
+		}
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ util.JoinClass("input", p.Class) }
+		{ util.ScopeNativeAttrs(ctx, switchAttrs(ctx, p), "switch")... }
+	/>
+}
+
+func switchAttrs(ctx context.Context, p Props) templ.Attributes {
+	var base templ.Attributes
+	if p.ID != "" || p.OnChange != nil {
+		if p.OnChange != nil {
+			base = surf.On(ctx, p.ID, surf.Check(p.OnChange))
+		} else {
+			base = surf.On(ctx, p.ID)
+		}
+	}
+	return util.MergeAttrs(base, p.Attrs)
+}

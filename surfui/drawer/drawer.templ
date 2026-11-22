@@ -1,0 +1,118 @@
+// Package drawer is hotty-surf's self-contained modal Drawer component.
+package drawer
+
+import (
+	"context"
+	"io"
+	"time"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+	"neuroplast.io/hotty-surf/surfui/internal/modal"
+)
+
+// Register registers drawer's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a modal Drawer.
+type Props struct {
+	ID      string
+	Open    bool
+	Side    string
+	OnClose func()
+	Class   string
+}
+
+// State tracks a Drawer's closing transition between renders.
+type State struct {
+	shown      bool
+	closing    bool
+	generation uint64
+	timer      *time.Timer
+}
+
+// View renders a modal Drawer.
+func View(st *State, p Props) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		return drawerMarkup(st, p, templ.GetChildren(ctx)).Render(templ.ClearChildren(ctx), w)
+	})
+}
+
+func (st *State) sync(ctx context.Context, open bool) {
+	if open {
+		if st.closing {
+			st.generation++
+			if st.timer != nil {
+				st.timer.Stop()
+				st.timer = nil
+			}
+		}
+		st.shown, st.closing = true, false
+		return
+	}
+	if !st.shown || st.closing {
+		return
+	}
+	st.closing = true
+	st.generation++
+	generation := st.generation
+	if s := surf.Of(ctx); s != nil {
+		st.timer = time.AfterFunc(550*time.Millisecond, func() {
+			s.Do(func() {
+				if st.generation == generation && st.closing {
+					st.shown, st.closing, st.timer = false, false, nil
+				}
+			})
+		})
+	} else {
+		st.shown, st.closing = false, false
+	}
+}
+
+func (st *State) dismiss(p Props) {
+	if !st.closing && p.OnClose != nil {
+		p.OnClose()
+	}
+}
+
+func drawerID(id string) string {
+	if id == "" {
+		return "drawer"
+	}
+	return id
+}
+
+templ drawerMarkup(st *State, p Props, children templ.Component) {
+	{{ st.sync(ctx, p.Open) }}
+	{{ var onClose func() }}
+	if p.OnClose != nil {
+		{{ onClose = func() { st.dismiss(p) } }}
+	}
+	{{ d := modal.New(ctx, drawerID(p.ID), st.shown, onClose) }}
+	if st.shown {
+		{{ body, err := d.Body(ctx, children) }}
+		if err != nil {
+			{{ return err }}
+		}
+		<dialog
+			class={ util.JoinClass("drawer", p.Class) }
+			if surfui.ModeOf(ctx) != surfui.ModeHotty {
+				data-mode="tui"
+			}
+			open
+			data-drawer-initialized="true"
+			if p.Side != "" {
+				data-side={ p.Side }
+			}
+			if st.closing {
+				data-closing="true"
+			}
+			{ util.KitOn(ctx, d.ID, surf.Key(d.Key))... }
+		>
+			<div { surf.On(ctx, d.ID+"-content", surf.Focus(d.Focus), surf.Outside(d.Outside))... }>
+				@templ.Raw(body)
+			</div>
+		</dialog>
+	}
+}

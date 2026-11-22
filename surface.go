@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // A Surface shows a view on one hotty surface: it gives the program the

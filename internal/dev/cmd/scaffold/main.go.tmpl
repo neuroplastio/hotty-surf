@@ -1,0 +1,23 @@
+// Command APPNAME is a hotty-surf app: its state and handlers in Go
+// (app.go), its view in templ (page.templ), Basecoat's components from
+// neuroplast.io/hotty-surf/ui.
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"neuroplast.io/hotty-surf/surfapp"
+	"neuroplast.io/hotty-surf/surfdev"
+)
+
+func main() {
+	a := NewApp()
+	s := newSurface("APPNAME", Page(a))
+	surfdev.Keep(a.Save, a.Restore)
+	if err := surfapp.Run(context.Background(), s); err != nil {
+		fmt.Fprintln(os.Stderr, "APPNAME:", err)
+		os.Exit(1)
+	}
+}

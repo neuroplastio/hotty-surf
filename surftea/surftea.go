@@ -45,9 +45,9 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
-	"neuroplast.io/hotty-surf/internal/rt"
-	"neuroplast.io/hotty-surf/reload"
+	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfdev"
 )
 
 // A Host is a surf.Surface in a Bubble Tea program. Its methods run on the
@@ -68,7 +68,7 @@ type Host struct {
 
 	// scr is the surface in cells, where the terminal is no host: made at
 	// the first Place after detection found Text.
-	scr   *cells.Screen
+	scr   *surftui.Screen
 	stale bool  // the Screen refused a delta: it gets the document again
 	err   error // the first error an event the Screen sent led to
 }
@@ -262,11 +262,11 @@ func (h *Host) document() string {
 // program that sets the entry's Scroll sets it the same each time: a change
 // sends the document again. In cells, a change of r's size lays the surface
 // out again, and the Screen scrolls as it does whatever Scroll says. It
-// tells live reload the size (reload.Placed).
+// tells live reload the size (surfdev.Placed).
 func (h *Host) Place(r hottytea.Rect) hottytea.Surface {
 	resized := r.W != h.rect.W || r.H != h.rect.H
 	h.rect = r
-	reload.Placed(h.s, r.W, r.H)
+	surfdev.Placed(h.s, r.W, r.H)
 	if h.sess.Mode == hottytea.Text && r.W > 0 && r.H > 0 {
 		if h.scr == nil {
 			h.ready()
@@ -278,7 +278,7 @@ func (h *Host) Place(r hottytea.Rect) hottytea.Surface {
 	return hottytea.Surface{Name: h.name, Rect: r, Press: true, Hover: true, Scroll: scroll, Doc: h.document}
 }
 
-// cellsOut is the surface's writer in cells. The Screen's refusal is a
+// cellsOut is the surface's writer in surftui. The Screen's refusal is a
 // host's error reply, not the program's: a refused delta sends the
 // document again, and the rest change nothing.
 type cellsOut struct{ h *Host }
@@ -297,7 +297,7 @@ func (c cellsOut) Wrapped(rt.Seal) io.Writer { return c.h.scr }
 // startCells puts the surface on a Screen at the rectangle's size.
 func (h *Host) startCells() {
 	if h.scr == nil {
-		h.scr = cells.New(h.rect.W, h.rect.H, h.event)
+		h.scr = surftui.New(h.rect.W, h.rect.H, h.event)
 	}
 	h.s.Attach(cellsOut{h}, hotty.Caps{})
 	h.stale = false

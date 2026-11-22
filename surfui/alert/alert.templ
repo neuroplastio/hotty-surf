@@ -1,0 +1,57 @@
+// Package alert is hotty-surf's self-contained Alert component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package alert
+
+import (
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers alert's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures an Alert component.
+type Props struct {
+	Variant surfui.Variant
+	Attrs   templ.Attributes
+	Class   string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p) {
+			{ children... }
+		}
+	default:
+		@TUI(p) {
+			{ children... }
+		}
+	}
+}
+
+// Hotty renders Basecoat's alert for a hotty host.
+templ Hotty(p Props) {
+	<div
+		data-slot="alert"
+		role="alert"
+		class={ util.JoinClass("alert", p.Class) }
+		{ util.MergeAttrs(util.OptAttr("data-variant", p.Variant), p.Attrs)... }
+	>
+		{ children... }
+	</div>
+}
+
+// TUI renders the alert for cells.Screen.
+templ TUI(p Props) {
+	<div
+		data-slot="alert"
+		data-mode="tui"
+		role="alert"
+		class={ util.JoinClass("alert", p.Class) }
+		{ util.MergeAttrs(util.OptAttr("data-variant", p.Variant), p.Attrs)... }
+	>
+		{ children... }
+	</div>
+}

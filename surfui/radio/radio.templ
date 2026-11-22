@@ -1,0 +1,85 @@
+// Package radio is hotty-surf's self-contained Radio component, with explicit
+// renderers for Hotty and TUI modes (ANSI and Plain fall back to TUI).
+package radio
+
+import (
+	"context"
+
+	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers radio's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Props configures a Radio control.
+type Props struct {
+	ID       string
+	Name     string
+	Checked  bool
+	Disabled bool
+	Invalid  bool
+	OnChange func(bool)
+	Attrs    templ.Attributes
+	Class    string
+}
+
+// View dispatches to Hotty or TUI according to surfui.ModeOf(ctx).
+templ View(p Props) {
+	switch surfui.ModeOf(ctx) {
+	case surfui.ModeHotty:
+		@Hotty(p)
+	default:
+		@TUI(p)
+	}
+}
+
+// Hotty renders Basecoat's radio input for a hotty host.
+templ Hotty(p Props) {
+	<input
+		data-slot="radio"
+		type="radio"
+		if p.Name != "" {
+			name={ p.Name }
+		}
+		checked?={ p.Checked }
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ util.JoinClass("input", p.Class) }
+		{ util.ScopeNativeAttrs(ctx, radioAttrs(ctx, p), "radio")... }
+	/>
+}
+
+// TUI renders the radio input for cells.Screen.
+templ TUI(p Props) {
+	<input
+		data-slot="radio"
+		data-mode="tui"
+		type="radio"
+		if p.Name != "" {
+			name={ p.Name }
+		}
+		checked?={ p.Checked }
+		disabled?={ p.Disabled }
+		if p.Invalid {
+			aria-invalid="true"
+		}
+		class={ util.JoinClass("input", p.Class) }
+		{ util.ScopeNativeAttrs(ctx, radioAttrs(ctx, p), "radio")... }
+	/>
+}
+
+func radioAttrs(ctx context.Context, p Props) templ.Attributes {
+	var base templ.Attributes
+	if p.ID != "" || p.OnChange != nil {
+		if p.OnChange != nil {
+			base = surf.On(ctx, p.ID, surf.Check(p.OnChange))
+		} else {
+			base = surf.On(ctx, p.ID)
+		}
+	}
+	return util.MergeAttrs(base, p.Attrs)
+}

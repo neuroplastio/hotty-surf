@@ -1,0 +1,120 @@
+// Package story provides the storybook showcase for ui/button.
+package story
+
+import (
+	"strconv"
+
+	"neuroplast.io/hotty-surf/internal/book/story"
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/icon"
+	"neuroplast.io/hotty-surf/surfui/button"
+)
+
+// Props is the editable state for the Button storybook controls.
+type Props struct {
+	Label    string
+	Variant  string `enum:"primary,secondary,destructive,outline,ghost,link"`
+	Size     string `enum:"default,xs,sm,lg"`
+	Disabled bool
+	Icon     bool
+	Clicks   int
+}
+
+type state struct {
+	clicks int
+}
+
+func (s *state) click() { s.clicks++ }
+
+var (
+	allVariants = []surfui.Variant{surfui.Primary, surfui.Secondary, surfui.Destructive, surfui.Outline, surfui.Ghost, surfui.Link}
+	allSizes    = []surfui.Size{surfui.XSmall, surfui.Small, surfui.Medium, surfui.Large}
+)
+
+func variantName(v surfui.Variant) string {
+	if v == surfui.Primary {
+		return "primary"
+	}
+	return string(v)
+}
+
+func sizeName(z surfui.Size) string {
+	if z == surfui.Medium {
+		return "medium"
+	}
+	return string(z)
+}
+
+func toVariant(v string) surfui.Variant {
+	if v == "default" || v == "primary" {
+		return surfui.Primary
+	}
+	return surfui.Variant(v)
+}
+
+func toSize(v string) surfui.Size {
+	if v == "default" {
+		return surfui.Medium
+	}
+	return surfui.Size(v)
+}
+
+// Register adds button's stories to r.
+func Register(r *story.Registry) {
+	r.Add(story.Story{
+		ID:           "button/default",
+		Doc:          "Variants, sizes, icons, and disabled state",
+		Consolidated: true,
+		Score:        5,
+		View:         func() templ.Component { return showcase(&state{}) },
+		Props: func() (any, templ.Component) {
+			p := &Props{Label: "Button", Variant: "primary", Size: "default"}
+			return p, bookButtonShowcase(p, &state{})
+		},
+		Keys: []string{"tab", "enter", "space"},
+		Want: "clicks: 2",
+	})
+}
+
+templ bookButton(p *Props) {
+	<div class="flex flex-col gap-3">
+		<div>
+			@button.View(button.Props{ID: "save", Variant: toVariant(p.Variant), Size: toSize(p.Size), Disabled: p.Disabled, OnClick: func() { p.Clicks++ }}) {
+				if p.Icon {
+					@icon.View("circle-plus", "")
+				}
+				{ p.Label }
+			}
+		</div>
+	</div>
+}
+
+templ bookButtonShowcase(p *Props, s *state) {
+	<div class="flex flex-col gap-4 p-4">
+		@bookButton(p)
+		<hr role="separator" class="border-border"/>
+		@showcase(s)
+	</div>
+}
+
+templ showcase(s *state) {
+	<div class="flex flex-col gap-3 p-4">
+		for _, z := range allSizes {
+			<div class="flex flex-row flex-wrap items-center gap-2">
+				for _, v := range allVariants {
+					@button.View(button.Props{Size: z, Variant: v, OnClick: s.click}) {
+						{ variantName(v) }
+					}
+				}
+			</div>
+		}
+		<div class="flex flex-row flex-wrap items-center gap-2">
+			for _, z := range allSizes {
+				@button.View(button.Props{Size: z, IconOnly: true, Variant: surfui.Outline, Label: "Add (" + sizeName(z) + ")", OnClick: s.click}) {
+					@icon.View("plus", "")
+				}
+			}
+		</div>
+		<p class="text-sm text-muted-foreground">clicks: { strconv.Itoa(s.clicks) }</p>
+	</div>
+}

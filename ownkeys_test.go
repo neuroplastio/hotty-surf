@@ -10,7 +10,7 @@ import (
 
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
+	"neuroplast.io/hotty-surf/surftui"
 )
 
 // ownKeysPage's g is in an element whose Key handler takes arrow_up and
@@ -34,7 +34,7 @@ func ownKeysSurface() *surf.Surface {
 }
 
 // OwnKeys says each focused element's keys, on a host's surface and with
-// cells.Screen giving the focus.
+// surftui.Screen giving the focus.
 func TestOwnKeys(t *testing.T) {
 	has := func(keys []string, want ...string) bool {
 		for _, k := range want {
@@ -66,7 +66,7 @@ func TestOwnKeys(t *testing.T) {
 					t.Fatal(err)
 				}
 			} else {
-				c := cells.New(80, 20, func(e hotty.Event) {
+				c := surftui.New(80, 20, func(e hotty.Event) {
 					if err := s.Event(e); err != nil {
 						t.Fatal(err)
 					}

@@ -10,7 +10,7 @@ import (
 	"github.com/a-h/templ"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/internal/rt"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 	"neuroplast.io/hotty-surf/surftest"
 )
 

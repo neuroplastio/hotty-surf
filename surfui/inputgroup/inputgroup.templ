@@ -1,0 +1,78 @@
+// Package inputgroup is hotty-surf's self-contained InputGroup and Addon
+// component, with explicit renderers for Hotty and TUI modes.
+package inputgroup
+
+import (
+	"neuroplast.io/hotty-surf/surfui"
+	"neuroplast.io/hotty-surf/surfui/util"
+)
+
+// Register registers inputgroup's assets with r.
+func Register(r *surfui.Registry) {}
+
+// Align places an Addon relative to the group's control.
+type Align string
+
+const (
+	InlineStart Align = "inline-start"
+	InlineEnd   Align = "inline-end"
+	BlockStart  Align = "block-start"
+	BlockEnd    Align = "block-end"
+)
+
+// Props configures an InputGroup container.
+type Props struct {
+	Attrs templ.Attributes
+	Class string
+}
+
+// AddonProps configures an InputGroup Addon slot.
+type AddonProps struct {
+	Align Align
+	Attrs templ.Attributes
+	Class string
+}
+
+// View renders an InputGroup, marking its direct children as inside a group so
+// controls omit their own outer border class.
+func View(p Props) templ.Component {
+	return util.ScopedGroup(viewInner(p), true)
+}
+
+templ viewInner(p Props) {
+	<div
+		data-slot="input-group"
+		if surfui.ModeOf(ctx) != surfui.ModeHotty {
+			data-mode="tui"
+		}
+		class={ util.JoinClass("input-group", p.Class) }
+		{ p.Attrs... }
+	>
+		{ children... }
+	</div>
+}
+
+// Addon renders a slot inside an InputGroup, clearing the group mark for its own children.
+func Addon(p AddonProps) templ.Component {
+	return util.ScopedGroup(addonInner(p), false)
+}
+
+templ addonInner(p AddonProps) {
+	<span
+		data-slot="input-group-addon"
+		data-align={ addonAlign(p.Align) }
+		if p.Class != "" {
+			class={ p.Class }
+		}
+		{ p.Attrs... }
+	>
+		{ children... }
+	</span>
+}
+
+func addonAlign(a Align) string {
+	if a == "" {
+		return string(InlineStart)
+	}
+	return string(a)
+}

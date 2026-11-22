@@ -11,7 +11,7 @@
 // Screen's last control, where it stays on the empty element and the
 // next Tab leaves. Shift+Tab is the same, backwards.
 //
-// On a terminal that is no host, run draws the whole book in cells.
+// On a terminal that is no host, run draws the whole book in surftui.
 package book
 
 //go:generate msgp -marshal=false -tests=false
@@ -35,16 +35,18 @@ import (
 	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/cells"
-	"neuroplast.io/hotty-surf/internal/devhook"
+	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/internal/dev/hook"
 	storybook "neuroplast.io/hotty-surf/internal/book/model"
-	"neuroplast.io/hotty-surf/internal/rt"
-	"neuroplast.io/hotty-surf/internal/stories"
-	"neuroplast.io/hotty-surf/reload"
-	"neuroplast.io/hotty-surf/run"
-	"neuroplast.io/hotty-surf/ui"
-	bookcode "neuroplast.io/hotty-surf/ui/code"
-	uiselect "neuroplast.io/hotty-surf/ui/select"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/internal/book/stories"
+	"neuroplast.io/hotty-surf/surfdev"
+	"neuroplast.io/hotty-surf/surfapp"
+	"neuroplast.io/hotty-surf/surfui"
+	bookcode "neuroplast.io/hotty-surf/surfui/code"
+	"neuroplast.io/hotty-surf/surfui/eventlog"
+	"neuroplast.io/hotty-surf/surfui/navlist"
+	uiselect "neuroplast.io/hotty-surf/surfui/select"
 )
 
 var kit = stories.Registry()
@@ -63,7 +65,7 @@ const (
 	paneRows = 40
 )
 
-// State is what the book keeps across a live reload.
+// State is what the book keeps across a live surfdev.
 type State struct {
 	ID   string             `msg:"id"` // the story shown
 	Book storybook.DevState `msg:"book"`
@@ -76,7 +78,7 @@ type App struct {
 	all   []stories.Story
 	cur   *shown
 	model *storybook.Book
-	nav   ui.NavList
+	nav   navlist.NavList
 
 	// The pane's keyboard. inPane is set while the pane has it, and on the
 	// way between it and the elements round it; refocus asks the next
@@ -109,7 +111,7 @@ type shown struct {
 	st    stories.Story
 	view  templ.Component
 	pane  *surf.Surface
-	scr   *cells.Screen
+	scr   *surftui.Screen
 	focus string // the id the Screen's keyboard is on, "" for none
 	err   error  // what went wrong in the pane's last update, nil for nothing
 	// controls says whether the story has anything that takes the
@@ -156,7 +158,7 @@ func New() *App {
 		return 0
 	})
 	a.model = storybook.New(ss)
-	a.nav = ui.NavList{ID: "book-nav", Label: "Stories", FilterLabel: "Filter stories", Placeholder: "Filter stories  ( / )", Empty: "No story matches."}
+	a.nav = navlist.NavList{ID: "book-nav", Label: "Stories", FilterLabel: "Filter stories", Placeholder: "Filter stories  ( / )", Empty: "No story matches."}
 	a.nav.OnSelect = a.show
 	a.nav.OnFilter = a.model.SetFilter
 	a.model.SetRegion(storybook.RegionList)
@@ -171,11 +173,11 @@ func New() *App {
 func Main(ctx context.Context) error {
 	a := New()
 	s := newSurface("book", View(a))
-	reload.Keep(a.Save, a.Restore)
+	surfdev.Keep(a.Save, a.Restore)
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	go a.watchHost(runCtx, s)
-	return run.App(ctx, s)
+	return surfapp.Run(ctx, s)
 }
 
 func (a *App) paneWidth() int {
@@ -219,7 +221,7 @@ func (a *App) watchHost(ctx context.Context, s *surf.Surface) {
 		case <-tick.C:
 			s.Do(func() {
 				a.syncPlacedCols(s)
-				if a.mode() == ui.ModeHotty || a.cur == nil || a.cur.scr == nil {
+				if a.mode() == surfui.ModeHotty || a.cur == nil || a.cur.scr == nil {
 					return
 				}
 				if a.ID == "progress/default" {
@@ -312,7 +314,7 @@ var paneDone = func() chan struct{} {
 }()
 
 // paneKeys are CUA editing keys declared on #book-pane so the host forwards
-// them to PaneKey (and into cells.Screen) rather than intercepting them.
+// them to PaneKey (and into surftui.Screen) rather than intercepting them.
 var paneKeys = []string{
 	"ctrl+a", "ctrl+c", "ctrl+x", "ctrl+v",
 	"ctrl+backspace", "ctrl+delete",
@@ -324,14 +326,14 @@ var paneKeys = []string{
 // start puts the story on the pane's Screen, the first time the pane is
 // drawn or used: not before the book runs, whose live reload has to be
 // set up before a view renders.
-func (sh *shown) start(mode func() ui.Mode) {
+func (sh *shown) start(mode func() surfui.Mode) {
 	if sh.pane != nil {
 		return
 	}
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		m := mode()
-		ctx = ui.WithMode(ctx, m)
-		ctx = ui.WithKitty(ctx, m == ui.ModeTUI)
+		ctx = surfui.WithMode(ctx, m)
+		ctx = surfui.WithKitty(ctx, m == surfui.ModeTUI)
 		return paneRoot(sh.view).Render(ctx, w)
 	})
 	sh.pane = surf.New("book-pane", view, "")
@@ -340,7 +342,7 @@ func (sh *shown) start(mode func() ui.Mode) {
 	// handover never stalls 4s waiting on it.
 	devhook.Driver(sh.pane, paneDone)
 	sh.pane.Link(kit.Sheet())
-	sh.scr = cells.New(paneCols, paneRows, func(e hotty.Event) {
+	sh.scr = surftui.New(paneCols, paneRows, func(e hotty.Event) {
 		switch e.Kind {
 		case hotty.EventFocus:
 			sh.focus = e.Target
@@ -363,7 +365,7 @@ func (sh *shown) start(mode func() ui.Mode) {
 
 // pump sends the pane's surface what changed in the view: its own
 // handlers' changes, and the preview's.
-func (sh *shown) pump(mode func() ui.Mode) {
+func (sh *shown) pump(mode func() surfui.Mode) {
 	sh.start(mode)
 	err := sh.pane.Update()
 	if err != nil && strings.Contains(err.Error(), hotty.ENOTARGET) {
@@ -392,10 +394,10 @@ func (a *App) sync() {
 	for _, st := range a.model.Stories {
 		n := len(a.nav.Groups)
 		if n == 0 || a.nav.Groups[n-1].Name != st.Group {
-			a.nav.Groups = append(a.nav.Groups, ui.NavGroup{Name: st.Group})
+			a.nav.Groups = append(a.nav.Groups, navlist.Group{Name: st.Group})
 			n++
 		}
-		a.nav.Groups[n-1].Items = append(a.nav.Groups[n-1].Items, ui.NavItem{ID: st.ID(), Label: st.Name, Dot: st.Dot})
+		a.nav.Groups[n-1].Items = append(a.nav.Groups[n-1].Items, navlist.Item{ID: st.ID(), Label: st.Name, Dot: st.Dot})
 	}
 	a.nav.Current, a.nav.Filter = a.ID, a.model.Filter
 }
@@ -445,24 +447,24 @@ func (a *App) bookKey(k string) bool {
 	return true
 }
 
-func (a *App) mode() ui.Mode {
-	m := ui.Mode(a.Mode)
-	if int(m) >= len(ui.Modes) {
-		return ui.ModeHotty
+func (a *App) mode() surfui.Mode {
+	m := surfui.Mode(a.Mode)
+	if int(m) >= len(surfui.Modes) {
+		return surfui.ModeHotty
 	}
 	return m
 }
 
-// paneMode returns the ui.Mode the cell-grid pane renders in (ModeTUI when the
+// paneMode returns the surfui.Mode the cell-grid pane renders in (ModeTUI when the
 // book itself is on ModeHotty so tests inspecting paneText work directly).
-func (a *App) paneMode() ui.Mode {
-	if m := a.mode(); m != ui.ModeHotty {
+func (a *App) paneMode() surfui.Mode {
+	if m := a.mode(); m != surfui.ModeHotty {
 		return m
 	}
-	return ui.ModeTUI
+	return surfui.ModeTUI
 }
 
-func (a *App) setMode(m ui.Mode) {
+func (a *App) setMode(m surfui.Mode) {
 	if a.mode() != m && a.inPane {
 		a.PaneOutside()
 	}
@@ -470,10 +472,10 @@ func (a *App) setMode(m ui.Mode) {
 }
 
 func (a *App) stepMode(delta int) {
-	n := len(ui.Modes)
+	n := len(surfui.Modes)
 	cur := int(a.mode())
 	next := (cur + delta%n + n) % n
-	a.setMode(ui.Modes[next])
+	a.setMode(surfui.Modes[next])
 }
 
 func (a *App) modeKey(k string) bool {
@@ -485,10 +487,10 @@ func (a *App) modeKey(k string) bool {
 		a.stepMode(1)
 		return true
 	case "home":
-		a.setMode(ui.Modes[0])
+		a.setMode(surfui.Modes[0])
 		return true
 	case "end":
-		a.setMode(ui.Modes[len(ui.Modes)-1])
+		a.setMode(surfui.Modes[len(surfui.Modes)-1])
 		return true
 	}
 	return false
@@ -563,8 +565,8 @@ func propSelectItems(opts []string) []uiselect.Item {
 	return items
 }
 
-func (a *App) entries() []ui.LogEntry {
-	var out []ui.LogEntry
+func (a *App) entries() []eventlog.Entry {
+	var out []eventlog.Entry
 	for _, e := range a.model.Events(a.model.Sel) {
 		kind := ""
 		switch e.Kind {
@@ -575,9 +577,13 @@ func (a *App) entries() []ui.LogEntry {
 		case "control":
 			kind = "literal"
 		}
-		out = append(out, ui.LogEntry{At: e.At, Kind: e.Kind, Text: e.Text, KindClass: bookcode.TokenClass(kind)})
+		out = append(out, eventlog.Entry{At: e.At, Kind: e.Kind, Text: e.Text, KindClass: bookcode.TokenClass(kind)})
 	}
 	return out
+}
+
+func propControlID(path string) string {
+	return "book-ctl-" + strings.ReplaceAll(path, ".", "-")
 }
 
 func (a *App) storyHTML() string {
@@ -585,7 +591,7 @@ func (a *App) storyHTML() string {
 		return ""
 	}
 	var b strings.Builder
-	if err := a.model.Sel.HTML(nil).Render(ui.WithMode(context.Background(), a.mode()), &b); err != nil {
+	if err := a.model.Sel.HTML(nil).Render(surfui.WithMode(context.Background(), a.mode()), &b); err != nil {
 		return "<!-- " + err.Error() + " -->"
 	}
 	return prettyHTML(b.String())
@@ -601,7 +607,7 @@ func (a *App) PaneKey(k string) bool {
 		return false
 	}
 	sh.start(a.paneMode)
-	// surf.Key normalizes the platform modifier to "mod+"; cells.Screen
+	// surf.Key normalizes the platform modifier to "mod+"; surftui.Screen
 	// expects physical key names ("ctrl+").
 	ck := strings.Replace(k, "mod+", "ctrl+", 1)
 	taken := sh.scr.Key(ck)
@@ -916,7 +922,7 @@ func (a *App) lines() paneView {
 	grid := sh.scr.Cells()
 	out := make([][]seg, len(grid))
 	for i, row := range grid {
-		if mode == ui.ModePlain {
+		if mode == surfui.ModePlain {
 			out[i] = plainRowSegs(row)
 		} else {
 			out[i] = rowSegs(row, false)
@@ -967,10 +973,10 @@ func (a *App) lines() paneView {
 	}
 	for i := range out {
 		row := grid[trimTop+i][trimLeft:]
-		if mode == ui.ModePlain {
+		if mode == surfui.ModePlain {
 			out[i] = plainRowSegs(row)
 		} else {
-			out[i] = rowSegs(row, mode == ui.ModeTUI)
+			out[i] = rowSegs(row, mode == surfui.ModeTUI)
 		}
 	}
 	var pv paneView
@@ -996,7 +1002,7 @@ func (a *App) lines() paneView {
 		for c := trimLeft; c < len(grid[r]); c++ {
 			cell := grid[r][c]
 			rx := c - trimLeft
-			if cell.Attr&cells.Reverse != 0 && cell.Bg != "input/30" {
+			if cell.Attr&surftui.Reverse != 0 && cell.Bg != "input/30" {
 				if rx < minX {
 					minX = rx
 				}
@@ -1010,7 +1016,7 @@ func (a *App) lines() paneView {
 					maxY = ry
 				}
 			}
-			if cell.Attr&cells.Dim != 0 && cell.Bg != "input/30" {
+			if cell.Attr&surftui.Dim != 0 && cell.Bg != "input/30" {
 				continue
 			}
 			if id, _ := sh.scr.At(c, r); id != "" && id != "book-pane-cua" {
@@ -1039,7 +1045,7 @@ func (a *App) lines() paneView {
 				}
 				if idx, ok := byID[id]; ok {
 					hb := &pv.hits[idx]
-					if cell.Attr&cells.Dim != 0 {
+					if cell.Attr&surftui.Dim != 0 {
 						hb.disabled = true
 					}
 					if rx < hb.x {
@@ -1060,7 +1066,7 @@ func (a *App) lines() paneView {
 					byID[id] = len(pv.hits)
 					pv.hits = append(pv.hits, hitBox{
 						id: id, x: rx, y: ry, w: 1, h: 1, col: c, row: r,
-						disabled: cell.Attr&cells.Dim != 0,
+						disabled: cell.Attr&surftui.Dim != 0,
 					})
 				}
 			}
@@ -1239,7 +1245,7 @@ func hasControl(doc string) bool {
 
 // plainRowSegs extracts unstyled plain text from a row of Cells, trimmed of
 // trailing spaces.
-func plainRowSegs(row []cells.Cell) []seg {
+func plainRowSegs(row []surftui.Cell) []seg {
 	var b strings.Builder
 	for _, c := range row {
 		if c.Text == "" {
@@ -1259,7 +1265,7 @@ func plainRowSegs(row []cells.Cell) []seg {
 // and colour roles, trimmed of unstyled trailing spaces. When hideGrip is
 // true (interactive TUI preview), the raw ◢ cell glyph is blanked so the
 // pixel-aligned .book-grip SVG overlay renders cleanly in its place.
-func rowSegs(row []cells.Cell, hideGrip bool) []seg {
+func rowSegs(row []surftui.Cell, hideGrip bool) []seg {
 	end := len(row)
 	for end > 0 {
 		c := row[end-1]
@@ -1273,8 +1279,8 @@ func rowSegs(row []cells.Cell, hideGrip bool) []seg {
 	}
 	var out []seg
 	var buf strings.Builder
-	var curA cells.Attr
-	var curFg, curBg cells.Role
+	var curA surftui.Attr
+	var curFg, curBg surftui.Role
 	flush := func() {
 		if buf.Len() == 0 {
 			return
@@ -1307,37 +1313,37 @@ func rowSegs(row []cells.Cell, hideGrip bool) []seg {
 	return out
 }
 
-func cellClasses(a cells.Attr, fg, bg cells.Role) string {
+func cellClasses(a surftui.Attr, fg, bg surftui.Role) string {
 	var cs []string
-	if a&cells.Bold != 0 {
+	if a&surftui.Bold != 0 {
 		cs = append(cs, "font-semibold")
 	}
-	if a&cells.Dim != 0 {
+	if a&surftui.Dim != 0 {
 		cs = append(cs, "text-muted-foreground")
 	}
-	if a&cells.Italic != 0 {
+	if a&surftui.Italic != 0 {
 		cs = append(cs, "book-italic")
 	}
-	if a&cells.Underline != 0 {
+	if a&surftui.Underline != 0 {
 		cs = append(cs, "book-underline")
 	}
-	if a&cells.Strike != 0 {
+	if a&surftui.Strike != 0 {
 		cs = append(cs, "line-through")
 	}
 	return strings.Join(cs, " ")
 }
 
-func cellStyle(a cells.Attr, fg, bg cells.Role) string {
+func cellStyle(a surftui.Attr, fg, bg surftui.Role) string {
 	fgCSS := roleCSS(fg)
 	bgCSS := roleCSS(bg)
-	if a&cells.Reverse != 0 && bg == "input/30" {
+	if a&surftui.Reverse != 0 && bg == "input/30" {
 		fgCSS, bgCSS = bgCSS, fgCSS
 		if bgCSS == "" {
 			bgCSS = "var(--foreground)"
 		}
 	}
 	var parts []string
-	if a&cells.Dim != 0 {
+	if a&surftui.Dim != 0 {
 		base := fgCSS
 		if base == "" {
 			base = "var(--foreground)"
@@ -1352,7 +1358,7 @@ func cellStyle(a cells.Attr, fg, bg cells.Role) string {
 	return strings.Join(parts, ";")
 }
 
-func roleCSS(r cells.Role) string {
+func roleCSS(r surftui.Role) string {
 	if r == "" {
 		return ""
 	}
@@ -1393,7 +1399,7 @@ func itoa(i int) string {
 }
 
 // newSurface is one of the book's surfaces: view, styled by the kit's sheet,
-// linked rather than carried (ui.Sheet), then by CSS.
+// linked rather than carried (surfui.Sheet), then by CSS.
 func newSurface(name string, view templ.Component) *surf.Surface {
 	s := surf.New(name, view, CSS)
 	s.Link(kit.Sheet())
