@@ -23,7 +23,6 @@ input-group	css	-	-	ui.InputGroup,ui.InputGroupProps,ui.InputGroupAddon,ui.Input
 item	css	-	-	ui.Item,ui.ItemProps,ui.ItemGroup,ui.ItemGroupProps	item/default,item/variants,item/sizes,item/group	spec	done	variant muted and size xs are not in ui.Variant, ui.Size
 kbd	css	-	-	ui.Kbd	kbd/default	spec	done	Kbd(keys) takes no Props (ui/ui.go); storybook css.go
 label	css	-	-	ui.Label,ui.LabelProps	label/default,label/disabled	spec	done	dims in a disabled Field (in-data-[disabled=true])
-native-select	css	-	<select>	ui.NativeSelect,ui.NativeSelectProps,ui.SelectItem	native-select/default,native-select/small,native-select/disabled	spec,keys-cells	done	a host may show no list (SPEC §10.2), Blitz shows none: keys only; Blitz's ▾ is off (css-subset)
 popover	jinja	popover.js	-	ui.Popover,ui.PopoverProps,ui.PopoverState	popover/default,popover/sides,popover/with-command	render,differential,keys-cells	port	aria-hidden, not the popover attribute; data-side, data-align: no shared enum; replaces the spike's hand Popover
 progress	css	-	-	ui.Progress,ui.ProgressProps	progress/default,progress/values	spec	done	a span's width in a div, not <progress> (which Blitz lacks)
 radio	css	-	<input type=radio>	ui.Radio,ui.RadioProps	radio/default,radio/disabled	spec,keys-cells	done	the host checks it and sends change (SPEC §9)

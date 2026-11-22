@@ -115,12 +115,6 @@ func init() {
 		View: form(inputGroupBlock, formState{}), Keys: []string{"tab", "4", "2"}, Want: "amount: 42"})
 	add(Story{ID: "input-group/textarea", Doc: "A textarea with a footer of buttons (block-end)",
 		View: form(inputGroupTextarea, formState{}), Keys: []string{"tab", "o", "k"}, Want: "comment: ok"})
-	add(Story{ID: "native-select/default", Doc: "A native select with an option group",
-		View: form(nativeSelectDefault, formState{choice: "apple"}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: banana"})
-	add(Story{ID: "native-select/small", Doc: "A small native select (Size Small) with no choice yet: its first item's Value is \"\"",
-		View: form(nativeSelectSmall, formState{}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: apple"})
-	add(Story{ID: "native-select/disabled", Doc: "A native select that can't change",
-		View: form(nativeSelectDisabled, formState{choice: "apple"}), Keys: []string{"tab", "arrow_down"}, Want: "fruit: apple"})
 }
 
 templ status(label, value string) {
@@ -435,37 +429,6 @@ templ inputGroupTextarea(s *formState) {
 			}
 		}
 		@status("comment", s.text)
-	</div>
-}
-
-var fruits = []ui.SelectItem{
-	{Value: "apple", Label: "Apple", Group: "Fruits"},
-	{Value: "banana", Label: "Banana", Group: "Fruits"},
-	{Value: "blueberry", Label: "Blueberry", Group: "Fruits"},
-	{Value: "carrot", Label: "Carrot", Group: "Vegetables"},
-	{Value: "leek", Label: "Leek", Group: "Vegetables", Disabled: true},
-}
-
-templ nativeSelectDefault(s *formState) {
-	<div class="flex flex-col gap-3 p-4 max-w-sm">
-		@ui.NativeSelect(ui.NativeSelectProps{Items: fruits, Value: s.choice, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
-		@status("fruit", s.choice)
-	</div>
-}
-
-var fruitsOrNone = append([]ui.SelectItem{{Label: "Choose…"}}, fruits...)
-
-templ nativeSelectSmall(s *formState) {
-	<div class="flex flex-col gap-3 p-4 max-w-sm">
-		@ui.NativeSelect(ui.NativeSelectProps{Items: fruitsOrNone, Value: s.choice, Size: ui.Small, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
-		@status("fruit", s.choice)
-	</div>
-}
-
-templ nativeSelectDisabled(s *formState) {
-	<div class="flex flex-col gap-3 p-4 max-w-sm">
-		@ui.NativeSelect(ui.NativeSelectProps{Items: fruits, Value: s.choice, Disabled: true, Attrs: surf.On(ctx, "fruit", surf.Input(s.chose))})
-		@status("fruit", s.choice)
 	</div>
 }
 

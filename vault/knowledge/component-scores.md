@@ -30,7 +30,6 @@
 | item | — | no score | no score | no score | no score | |
 | kbd | — | no score | no score | no score | no score | |
 | label | — | no score | no score | no score | no score | |
-| native-select | — | no score | no score | no score | no score | |
 | popover | — | no score | no score | no score | no score | |
 | progress | — | no score | no score | no score | no score | |
 | radio | — | no score | no score | no score | no score | |
