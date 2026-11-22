@@ -1116,9 +1116,6 @@ func cellClasses(a cells.Attr, fg, bg cells.Role) string {
 	if a&cells.Strike != 0 {
 		cs = append(cs, "line-through")
 	}
-	if fg == "popover-foreground" && bg == "popover" {
-		cs = append(cs, "book-tip")
-	}
 	return strings.Join(cs, " ")
 }
 
@@ -1126,7 +1123,13 @@ func cellStyle(a cells.Attr, fg, bg cells.Role) string {
 	fgCSS := roleCSS(fg)
 	bgCSS := roleCSS(bg)
 	var parts []string
-	if fgCSS != "" {
+	if a&cells.Dim != 0 {
+		base := fgCSS
+		if base == "" {
+			base = "var(--foreground)"
+		}
+		parts = append(parts, "color:color-mix(in srgb, "+base+" 45%, transparent)")
+	} else if fgCSS != "" {
 		parts = append(parts, "color:"+fgCSS)
 	}
 	if bgCSS != "" {

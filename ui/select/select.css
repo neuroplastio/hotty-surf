@@ -1,0 +1,6 @@
+/* Keep the select wrapper sized to its trigger even inside flex-col (which
+   defaults to align-items: stretch), so the popover's min-width: max(100%, 9rem)
+   tracks the trigger width rather than stretching across the whole container. */
+:where(.select:not(select)) {
+  width: fit-content;
+}

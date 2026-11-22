@@ -421,11 +421,18 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	if fh, fu, ok := l.figure(n, st.fx.fig, cx, cy, cw, in); ok {
 		h = st.padT + fh + st.padB
 		used += st.padL + fu + st.padR
-		if isKitTextarea(n) {
-		l.done(n, rect{x, y, used, h})
-	} else {
-		l.done(n, rect{x, y, w, h})
+		if l.c.active && n == l.activeItem() && h > 0 && w > used && !l.measuring {
+		for j := y; j < y+h; j++ {
+			for i := x + used; i < x+w; i++ {
+				l.draw(i, j, " ", 1, in.look, n)
+			}
+		}
 	}
+	if isKitTextarea(n) || tokens(n, "class", "select") {
+			l.done(n, rect{x, y, used, h})
+		} else {
+			l.done(n, rect{x, y, w, h})
+		}
 		return h, used
 	}
 	limit, bounded := scrollLimit(st.maxHeight, l.screenRows(st.maxHeight))
@@ -502,7 +509,20 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 	if h == 0 && st.fx.marker != "" {
 		h = 1
 	}
-	if isKitTextarea(n) {
+	if l.c.active && n == l.activeItem() && h > 0 && w > used && !l.measuring {
+		for j := y; j < y+h; j++ {
+			for i := x + used; i < x+w; i++ {
+				l.draw(i, j, " ", 1, in.look, n)
+			}
+		}
+	}
+	if inTUIPopover(n) && attr(n, "role") == "option" {
+		if !l.measuring && h > 0 && w >= 3 && attr(n, "aria-selected") == "true" {
+			l.draw(x+w-2, y, "✓", 1, in.look, n)
+		}
+		used += 3 // space + ✓ + right pad
+	}
+	if isKitTextarea(n) || tokens(n, "class", "select") {
 		l.done(n, rect{x, y, used, h})
 	} else {
 		l.done(n, rect{x, y, w, h})
@@ -647,15 +667,67 @@ func (l *layout) drawOverlays() {
 	for len(l.overlays) > 0 {
 		o := l.overlays[0]
 		l.overlays = l.overlays[1:]
+		if attr(o.n, "data-mode") == "tui" && o.w >= 4 {
+			l.drawTUIPopover(o)
+			continue
+		}
 		h, pw := l.measurer(false).node(o.n, 0, 0, o.w, o.in)
 		pw = max(min(pw, o.w), 1)
-		for j := o.y; j < o.y+h; j++ {
-			for i := o.x; i < o.x+pw; i++ {
-				l.draw(i, j, " ", 1, 0, o.n)
-			}
-		}
+		l.cv.clear(o.x, o.y, pw, h)
 		l.node(o.n, o.x, o.y, pw, o.in)
 	}
+}
+
+// drawTUIPopover draws a TUI-mode popover in a rounded single-line box
+// (╭─╮ / │…│ / ╰─╯) sized at least to its trigger width and aligned by
+// data-align, with full-width interior rows for active/hover highlights.
+func (l *layout) drawTUIPopover(o overlay) {
+	maxInner := max(o.w-2, 1)
+	h, cw := l.measurer(false).node(o.n, 0, 0, maxInner, o.in)
+	var tb rect
+	if o.n.Parent != nil {
+		for ch := o.n.Parent.FirstChild; ch != nil; ch = ch.NextSibling {
+			if ch.Type == html.ElementNode && ch.DataAtom == atom.Button {
+				if r, ok := l.boxes[ch]; ok {
+					tb = r
+					break
+				}
+			}
+		}
+	}
+	iw := max(cw+1, 14)
+	if tb.w > 2 {
+		iw = max(iw, tb.w-2)
+	}
+	iw = max(min(iw, maxInner), 1)
+	fw, fh := iw+2, h+2
+	ox := o.x
+	if tb.w > 0 {
+		switch attr(o.n, "data-align") {
+		case "end":
+			ox = tb.x + tb.w - fw
+		case "center":
+			ox = tb.x + (tb.w-fw)/2
+		default:
+			ox = tb.x
+		}
+	}
+	ox = max(0, min(ox, l.c.cols-fw))
+	l.cv.clear(ox, o.y, fw, fh)
+	l.node(o.n, ox+1, o.y+1, iw, o.in)
+	l.draw(ox, o.y, "╭", 1, lRule, o.n)
+	l.draw(ox+fw-1, o.y, "╮", 1, lRule, o.n)
+	l.draw(ox, o.y+fh-1, "╰", 1, lRule, o.n)
+	l.draw(ox+fw-1, o.y+fh-1, "╯", 1, lRule, o.n)
+	for i := 1; i < fw-1; i++ {
+		l.draw(ox+i, o.y, "─", 1, lRule, o.n)
+		l.draw(ox+i, o.y+fh-1, "─", 1, lRule, o.n)
+	}
+	for j := 1; j < fh-1; j++ {
+		l.draw(ox, o.y+j, "│", 1, lRule, o.n)
+		l.draw(ox+fw-1, o.y+j, "│", 1, lRule, o.n)
+	}
+	l.done(o.n, rect{ox, o.y, fw, fh})
 }
 
 // drawTip draws the tooltip of the element the pointer is over
@@ -730,17 +802,34 @@ func (l *layout) done(n *html.Node, r rect) {
 	l.cv.own(r.x, r.y, r.w, r.h, n)
 }
 
+func inTUIPopover(n *html.Node) bool {
+	return closest(n, func(a *html.Node) bool {
+		return has(a, "data-popover") && attr(a, "data-mode") == "tui"
+	}) != nil
+}
+
 // marker is a list item's marker, where its list has one (list-disc,
 // list-decimal: Tailwind's lists have none).
 func marker(n *html.Node) string {
 	switch attr(n, "role") {
 	case "option":
-		// A popup list's option: its chosen one checked (Basecoat's ✓).
-		if closest(n, func(a *html.Node) bool { return has(a, "data-popover") }) != nil {
+		// A popup list's option: TUI mode draws ✓ on the right with 1-cell
+		// left padding; legacy popovers draw ✓ on the left.
+		if pop := closest(n, func(a *html.Node) bool { return has(a, "data-popover") }); pop != nil {
+			if attr(pop, "data-mode") == "tui" {
+				if n.Parent != nil && attr(n.Parent, "role") == "group" {
+					return "  "
+				}
+				return " "
+			}
 			if attr(n, "aria-selected") == "true" {
 				return "✓ "
 			}
 			return "  "
+		}
+	case "heading":
+		if inTUIPopover(n) {
+			return " "
 		}
 	case "menuitemcheckbox", "menuitemradio":
 		if attr(n, "aria-checked") == "true" {
@@ -1822,6 +1911,11 @@ func (l *layout) paintOutlineAtom(p piece, x, y, w int, stop *html.Node) {
 //   - default: 1-space padding, bold weight, 1 row.
 //   - lg / icon-lg: 3 rows tall, 2-space padding, bold weight.
 func btnPiece(n *html.Node, p piece, label string, hasPopup bool, text func(string) piece) piece {
+	if minW := attrPosInt(n, "data-min-w"); minW > 0 {
+		if w := displaywidth.String(label); w < minW {
+			label += strings.Repeat(" ", minW-w)
+		}
+	}
 	if hasPopup {
 		label += " ▾"
 	}

@@ -139,6 +139,21 @@ func (cv *canvas) putRun(x, y int, cs []cell) {
 	copy(r[x:end], cs)
 }
 
+// clear blanks the cells of a rectangle with own=nil so an overlay's
+// children can claim full row ownership before the overlay box claims
+// any remaining interior space.
+func (cv *canvas) clear(x, y, w, h int) {
+	for j := max(y, 0); j < y+h; j++ {
+		r := cv.row(j)
+		for i := max(x, 0); i < x+w && i < cv.w; i++ {
+			if r[i].own != nil {
+				cv.free[j]++
+			}
+			r[i] = cell{s: " "}
+		}
+	}
+}
+
 // own marks the cells of a rectangle as an element's where no element
 // inside it drew or marked them: a block's empty space is still the
 // block's to a click. Blocks are done after what is inside them, so each

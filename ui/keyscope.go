@@ -137,6 +137,16 @@ func KeyScope(bindings []KeyBinding) templ.Component {
 
 func scopeCanonical(p hotty.Platform, key string) (string, bool) { return p.ReadKey(key) }
 
+// KitOn registers handlers like surf.On and marks them as kit-owned keys for KeyScope.
+func KitOn(ctx context.Context, id string, handlers ...surf.Handler) templ.Attributes {
+	return kitOn(ctx, id, handlers...)
+}
+
+// ScopeAttrs attaches any enclosing KeyScope metadata to attrs without mutating it.
+func ScopeAttrs(ctx context.Context, attrs templ.Attributes) templ.Attributes {
+	return scopeAttrs(ctx, attrs)
+}
+
 func kitOn(ctx context.Context, id string, handlers ...surf.Handler) templ.Attributes {
 	f := rt.From(ctx)
 	wasRegistered := f != nil && f.Get(id) != nil

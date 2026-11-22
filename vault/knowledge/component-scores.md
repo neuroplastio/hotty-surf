@@ -36,7 +36,7 @@
 | radio | — | no score | no score | no score | no score | |
 | range | — | no score | no score | no score | no score | |
 | scrollbar | — | no score | no score | no score | no score | CSS utility class |
-| select | — | no score | no score | no score | no score | |
+| select | `ui/select` | no score | no score | no score | no score | |
 | sidebar | — | no score | no score | no score | no score | |
 | skeleton | — | no score | no score | no score | no score | |
 | switch | — | no score | no score | no score | no score | |

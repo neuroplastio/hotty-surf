@@ -8,6 +8,7 @@ import (
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 	"neuroplast.io/hotty-surf/ui/button"
+	uiselect "neuroplast.io/hotty-surf/ui/select"
 )
 
 // The stories of the components L1 made: Button, Badge, Card, Kbd, Select,
@@ -21,7 +22,7 @@ type kitState struct {
 	theme string
 	ran    string
 	open   bool
-	sel    ui.SelectState
+	sel    uiselect.State
 	menu   ui.DropdownMenuState
 	toasts ui.ToasterState
 }
@@ -392,13 +393,13 @@ templ kbdDefault(s *kitState) {
 	</div>
 }
 
-var sizeItems = []ui.SelectItem{
+var sizeItems = []uiselect.Item{
 	{Value: "s", Label: "Small"},
 	{Value: "m", Label: "Medium"},
 	{Value: "l", Label: "Large"},
 }
 
-var fruitItems = []ui.SelectItem{
+var fruitItems = []uiselect.Item{
 	{Value: "apple", Label: "Apple", Group: "Fruits"},
 	{Value: "banana", Label: "Banana", Group: "Fruits"},
 	{Value: "carrot", Label: "Carrot", Group: "Vegetables"},
@@ -407,21 +408,21 @@ var fruitItems = []ui.SelectItem{
 
 templ selectDefault(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Select(&s.sel, ui.SelectProps{ID: "size", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", OnChange: s.choose})
+		@uiselect.View(&s.sel, uiselect.Props{ID: "size", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", OnChange: s.choose})
 		<p class="text-sm text-muted-foreground">size: { s.value }</p>
 	</div>
 }
 
 templ selectGrouped(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Select(&s.sel, ui.SelectProps{ID: "fruit", Items: fruitItems, Value: s.value, OnChange: s.choose})
+		@uiselect.View(&s.sel, uiselect.Props{ID: "fruit", Items: fruitItems, Value: s.value, OnChange: s.choose})
 		<p class="text-sm text-muted-foreground">fruit: { s.value }</p>
 	</div>
 }
 
 templ selectMultiple(s *kitState) {
 	<div class="flex flex-col gap-3 p-4">
-		@ui.Select(&s.sel, ui.SelectProps{ID:"sizes", Items:sizeItems, Multiple:true, Values:s.values, Placeholder:"Pick sizes", OnValuesChange:func(v []string){s.values=v}})
+		@uiselect.View(&s.sel, uiselect.Props{ID: "sizes", Items: sizeItems, Multiple: true, Values: s.values, Placeholder: "Pick sizes", OnValuesChange: func(v []string) { s.values = v }})
 		<p>sizes: { strings.Join(s.values, ",") }</p>
 	</div>
 }
@@ -430,7 +431,7 @@ templ selectEndAligned(s *kitState) {
 	<div class="p-4">
 		<div class="flex flex-row justify-between">
 			<span></span>
-			@ui.Select(&s.sel, ui.SelectProps{ID:"edge", Items:sizeItems, Value:s.value, Placeholder:"Pick a size", Align:"end", OnChange:s.choose})
+			@uiselect.View(&s.sel, uiselect.Props{ID: "edge", Items: sizeItems, Value: s.value, Placeholder: "Pick a size", Align: uiselect.AlignEnd, OnChange: s.choose})
 		</div>
 		<p>size: { s.value }</p>
 	</div>

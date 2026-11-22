@@ -14,6 +14,23 @@ import (
 
 const popupKey = "ui.popup"
 
+// Popup tracks the surface's single open popup so opening one closes another.
+type Popup = popup
+
+// Popups returns the surface's open-popup record from a render's ctx, or nil.
+func Popups(ctx context.Context) *Popup { return popups(ctx) }
+
+// Opened marks owner's popup as open, closing any other open popup.
+func (p *popup) Opened(owner any, close func()) { p.opened(owner, close) }
+
+// Closed marks owner's popup as closed.
+func (p *popup) Closed(owner any) { p.closed(owner) }
+
+// Track synchronizes owner's open state with the surface's popup record.
+func (p *popup) Track(ctx context.Context, owner any, id string, open bool, shut func()) {
+	p.track(ctx, owner, id, open, shut)
+}
+
 type popup struct {
 	owner any    // the open popup's State
 	close func() // closes it, the keyboard staying where it is

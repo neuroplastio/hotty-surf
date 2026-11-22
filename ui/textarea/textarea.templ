@@ -4,12 +4,18 @@ package textarea
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"sync"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/ui"
 )
+
+// GripSVG is the corner resize-handle icon markup.
+//
+//go:embed grip.svg
+var GripSVG string
 
 // Class is the textarea's root CSS class.
 const Class = "textarea"
