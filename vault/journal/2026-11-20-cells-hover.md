@@ -104,7 +104,7 @@ maintainer's rule is CSS for hover.
     Focus(false);
   - CheckFresh's hold on the chain.
 - **What takes no pointer.** TestHoverTakesNoPointer holds every
-  `pointer-events:none` rule of ui's kit.css to a case, or to a reason
+  `pointer-events:none` rule of ui's kit.css and toast.css to a case, or to a reason
   it isn't read (an icon, a pseudo-element), and a modal's inert, the
   utilities and an inline style to theirs.
 - **The host.** surftest's host lays nothing out, so it can't show a
@@ -117,10 +117,10 @@ maintainer's rule is CSS for hover.
 
 ## Cost
 
-Test binaries were built once, and main (7d780aa) and the branch (with
-the review's fixes) ran alternately for six rounds, under the build
-cap, at a load of 10 to 15 (other builds). The figures are medians, per
-frame, with `-benchmem`:
+Test binaries were built once, and main (7d780aa) and the branch, as it
+lands, ran alternately for six rounds, under the build cap, at a load
+of 10 to 15 (other builds). The figures are medians, per frame, with
+`-benchmem`:
 
 | BenchmarkCompiled, hover scene, cells | main µs | branch µs | main B | branch B | main allocs | branch allocs |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -129,10 +129,9 @@ frame, with `-benchmem`:
 
 The scene lights its pill the way an app had to before: the program
 renders the strip again with the hovered pill's class, and never calls
-`Move`. The
-branch costs it the same, with the same bytes and allocations: the
-re-hit after each delta is a cell's lookup and a chain that is the
-same.
+`Move`. The branch costs it the same, with the same bytes and
+allocations: the re-hit after each delta is a cell's lookup and a chain
+that is the same.
 
 BenchmarkHoverMove (cells/hover_bench_test.go) is the same strip lit by
 `hover:` classes instead, with the pointer moved from pill to pill and
