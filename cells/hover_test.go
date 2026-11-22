@@ -97,6 +97,18 @@ func TestHoverChain(t *testing.T) {
 	if got := cellAt(t, c, "a"); got.Bg != "accent" {
 		t.Fatalf("released over #a: %+v", got)
 	}
+	// A press on #a and a release on #b with no move between, as from a
+	// terminal that reports no motion: the chain is #b's.
+	col, row = cellIn(t, c, "a")
+	c.Press(col, row, 0, 0)
+	col, row = cellIn(t, c, "b")
+	c.Release(col, row, 0)
+	if got := cellAt(t, c, "b"); got.Bg != "secondary" {
+		t.Fatalf("released over #b: %+v", got)
+	}
+	if got := cellAt(t, c, "a"); got.Bg != "" {
+		t.Fatalf("#a, released over #b: %+v", got)
+	}
 	c.Move(-1, 0, 0)
 	if got := cellAt(t, c, "a"); got.Bg != "" || len(c.hovered) != 0 {
 		t.Fatalf("the pointer off the Screen: %+v, %d hovered", got, len(c.hovered))
@@ -659,7 +671,8 @@ var pointerNotRead = map[string]string{
 	`.select:not(select) [role=option] svg`: "an icon",
 	`.tabs>[role=tablist]>[role=tab] svg`:   "an icon",
 	`:is(.field>input[type=checkbox][role=switch],.input[type=checkbox][role=switch]):before`: "a pseudo-element",
-	`[data-tooltip]:before`: "a pseudo-element: the tooltip's cells are what is under it",
+	`[data-tooltip]:before`:      "a pseudo-element: the tooltip's cells are what is under it",
+	`.toaster .toast>.toast-bar`: "toast.css's: the bar is an empty div, which draws no cells",
 }
 
 // fieldDisabledRule is the kit's rule for a disabled field's input, too
@@ -678,7 +691,7 @@ func pointerRules(sheet string) []string {
 		j += i
 		a := strings.LastIndexByte(sheet[:j], '}')
 		b := strings.IndexByte(sheet[a+1:], '{')
-		out = append(out, sheet[a+1:a+1+b])
+		out = append(out, strings.TrimSpace(sheet[a+1:a+1+b]))
 		i = j + 1
 	}
 }
@@ -688,22 +701,27 @@ func pointerRules(sheet string) []string {
 // takes it, as a host's hit test passes over it. Every pointer-events:none
 // rule of the sheet is mirrored or named as not read.
 func TestHoverTakesNoPointer(t *testing.T) {
-	b, err := os.ReadFile("../ui/kit.css")
-	if err != nil {
-		t.Fatal(err)
-	}
 	listed := map[string]bool{}
 	for _, pc := range pointerCases {
 		listed[pc.selector] = true
 	}
-	for _, sel := range pointerRules(string(b)) {
-		if !listed[sel] && pointerNotRead[sel] == "" && !strings.HasPrefix(sel, fieldDisabledRule) {
-			t.Errorf("pointer-events:none on %s: neither mirrored (pointerCases) nor named (pointerNotRead)", sel)
+	for _, f := range []string{"../ui/kit.css", "../ui/toast.css"} {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, sel := range pointerRules(regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(string(b), "")) {
+			if !listed[sel] && pointerNotRead[sel] == "" && !strings.HasPrefix(sel, fieldDisabledRule) {
+				t.Errorf("%s: pointer-events:none on %s: neither mirrored (pointerCases) nor named (pointerNotRead)", f, sel)
+			}
 		}
 	}
 	cases := append(pointerCases,
 		pointerCase{fieldDisabledRule, `<div class="field"><input id="h" type="text" disabled value="abc"></div>`, ""},
 		pointerCase{"a modal's inert", `<div data-hotty-modal-inert style="pointer-events:none!important"><p id="h" class="hover:bg-accent">behind</p></div>`, "p"},
+		pointerCase{"a modal's inert over its own auto", `<p id="h" data-hotty-modal-inert style="pointer-events:auto;pointer-events:none!important" class="hover:bg-accent">behind</p>`, "p"},
+		pointerCase{"the last inline declaration", `<p id="h" style="pointer-events:auto;pointer-events:none">through</p>`, "p"},
+		pointerCase{"an !important one over a later one", `<p id="h" style="pointer-events:none!important;pointer-events:auto">through</p>`, "p"},
 		pointerCase{"a class", `<div class="pointer-events-none"><p id="h">through</p></div>`, "p"},
 		pointerCase{"auto inside none", `<div style="pointer-events:none"><p id="h" class="pointer-events-auto">back</p></div>`, "h"},
 		pointerCase{"a toast in the toaster", `<div class="toaster"><div id="h" class="toast"><div class="toast-content">Saved</div></div></div>`, "h"},

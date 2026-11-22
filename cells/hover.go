@@ -383,18 +383,27 @@ func takesPointer(hit *html.Node) *html.Node {
 // inert (the runtime's pointer-events:none, by its mark too), its
 // pointer-events- class, else the kit's (kitPointer).
 func pointerOf(n *html.Node) pointerEvents {
+	// The inline declarations cascade: an !important one over a plain
+	// one, else the last.
+	inline, important := peInherit, false
 	for d := range strings.SplitSeq(attr(n, "style"), ";") {
 		k, v, ok := strings.Cut(d, ":")
 		if !ok || !strings.EqualFold(strings.TrimSpace(k), "pointer-events") {
 			continue
 		}
-		v, _ = strings.CutSuffix(strings.TrimSpace(strings.ToLower(v)), "!important")
+		v, imp := strings.CutSuffix(strings.TrimSpace(strings.ToLower(v)), "!important")
+		if important && !imp {
+			continue
+		}
 		switch strings.TrimSpace(v) {
 		case "none":
-			return peNone
+			inline, important = peNone, imp
 		case "auto":
-			return peAuto
+			inline, important = peAuto, imp
 		}
+	}
+	if inline != peInherit {
+		return inline
 	}
 	if has(n, "data-hotty-modal-inert") {
 		return peNone

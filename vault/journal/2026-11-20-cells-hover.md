@@ -7,11 +7,11 @@ change. What the Screen reads is in cells/SUBSET.md's Hover section.
 
 A Screen heard the pointer (`Move`), sent hovers and showed tooltips,
 but read no `:hover`: a class with `hover:` was left out, and the kit's
-`:hover` looks weren't mirrored. plx lit hover by adding the hovered
-element's `hover:` utilities to its rendered markup, by id. A compiled
-instance that isn't rendered again can't be lit that way, so hover
-stood in the way of compiling anything that lights up. The maintainer's
-rule is CSS for hover.
+`:hover` looks weren't mirrored. An app could light hover only by
+rendering its markup again with the hovered element's classes. A
+compiled instance that isn't rendered again can't be lit that way, so
+hover stood in the way of compiling anything that lights up. The
+maintainer's rule is CSS for hover.
 
 ## What changed
 
@@ -45,8 +45,8 @@ rule is CSS for hover.
   - its `:hover` look (kitHoverLook): a link button's underline, an
     accordion summary's.
 
-  `group-hover:` isn't read: neither the kit nor plx uses it, and plx's
-  `hover:` classes are all colours.
+  `group-hover:` isn't read: neither the kit nor plx uses it, and plx
+  needs only colours from `hover:`.
 - **What a change of the chain forgets** (hoverChanged): only the
   elements that came into it or left it, and of those only the ones
   with a hover rule. That is the same as a change of their attributes:
@@ -127,8 +127,9 @@ frame, with `-benchmem`:
 | compiled | 44.7 | 45.0 | 18,550 | 18,550 | 169 | 169 |
 | plain | 162 | 163 | 180,300 | 180,300 | 753 | 753 |
 
-The scene lights its pill the way plx does now: the program renders the
-strip again with the hovered pill's class, and never calls `Move`. The
+The scene lights its pill the way an app had to before: the program
+renders the strip again with the hovered pill's class, and never calls
+`Move`. The
 branch costs it the same, with the same bytes and allocations: the
 re-hit after each delta is a cell's lookup and a chain that is the
 same.
