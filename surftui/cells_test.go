@@ -388,7 +388,7 @@ func TestResizeAndWheel(t *testing.T) {
 	if !r.c.Wheel(0, 0, 100) || !strings.HasSuffix(r.text(), "the last words of all") {
 		t.Fatalf("at the end:\n%s", r.text())
 	}
-	if r.c.Wheel(0, 0, 1) {
+	if !r.c.Wheel(0, 0, 1) {
 		t.Fatal("scrolled past the end")
 	}
 	r.c.Wheel(0, 0, -100)

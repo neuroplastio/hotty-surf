@@ -232,7 +232,7 @@ func (c *Screen) Click(col, row int) (taken bool) {
 }
 
 // Wheel scrolls what is under the cell at col, row by lines, down for a
-// positive number; taken says whether anything scrolled.
+// positive number. It takes wheels along a scrolling axis even at its edge.
 func (c *Screen) Wheel(col, row, lines int) (taken bool) {
 	taken = c.wheel(col, row, lines)
 	c.rehit = true // what a still pointer is over scrolled
@@ -241,7 +241,7 @@ func (c *Screen) Wheel(col, row, lines int) (taken bool) {
 
 // wheel is Wheel's scroll.
 func (c *Screen) wheel(col, row, lines int) (taken bool) {
-	if c.body == nil || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
+	if c.body == nil || lines == 0 || col < 0 || row < 0 || col >= c.cols || row >= c.rows {
 		return false
 	}
 	l := c.layout()
@@ -261,6 +261,7 @@ func (c *Screen) wheel(col, row, lines int) (taken bool) {
 				f.ed.Width, f.ed.Rows = innerW, r.h
 				total := len(f.ed.Wrap())
 				if total > r.h {
+					taken = true
 					old := f.top
 					to := max(min(old+lines, total-r.h), 0)
 					if to != old {
@@ -272,7 +273,8 @@ func (c *Screen) wheel(col, row, lines int) (taken bool) {
 				}
 			}
 		}
-		if box, ok := l.scrolls[n]; ok {
+		if box, ok := l.scrolls[n]; ok && box.content > box.view.h {
+			taken = true
 			old := c.boxScroll[n]
 			to := max(min(old+lines, box.content-box.view.h), 0)
 			if to != old {
@@ -287,7 +289,7 @@ func (c *Screen) wheel(col, row, lines int) (taken bool) {
 	}
 	h := l.height
 	to := max(min(c.scroll+lines, h-c.rows), 0)
-	taken = to != c.scroll
+	taken = taken || h > c.rows
 	c.scroll = to
 	return taken
 }
