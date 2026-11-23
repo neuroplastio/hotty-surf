@@ -184,6 +184,14 @@ func (c *Screen) settle() {
 			delete(c.boxScroll, n)
 		}
 	}
+	if n := c.focused; n != nil {
+		switch {
+		case !c.attached(n):
+			c.focused, c.prefixed, c.lay = nil, false, nil
+		case !focusable(n) || hidden(n):
+			c.fixFocus()
+		}
+	}
 	for n, f := range c.fields {
 		if !c.attached(n) {
 			delete(c.fields, n)
@@ -204,12 +212,6 @@ func (c *Screen) settle() {
 				f.ed.Select(len(graphemesOf(d)), len(graphemesOf(d)))
 			}
 		}
-	}
-	if c.focused != nil && (!c.attached(c.focused) || !focusable(c.focused) || hidden(c.focused)) {
-		// An element that stops taking focus loses it, as a browser's
-		// does; the surface keeps the keyboard with nothing focused.
-		c.focused = nil
-		c.lay = nil
 	}
 	if c.remembered != nil && !c.attached(c.remembered) {
 		c.remembered = nil

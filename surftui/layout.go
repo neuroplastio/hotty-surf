@@ -183,6 +183,10 @@ func (c *Screen) layOut() *layout {
 	c.kept.canvas = l.cv
 	c.kept.boxes = len(l.boxes)
 	c.lay = l
+	if n := c.focused; n != nil && !l.drawn(n) && !has(n, "data-hotty-modal-guard") {
+		c.fixFocus()
+		return c.layOut()
+	}
 	if t := c.revealAfter; t != nil {
 		where := c.revealWhere
 		c.revealAfter, c.revealWhere = nil, ""
@@ -426,13 +430,13 @@ func (l *layout) box(n *html.Node, st box, x, y, w int, in inh) (h, used int) {
 		h = st.padT + fh + st.padB
 		used += st.padL + fu + st.padR
 		if l.c.active && n == l.activeItem() && h > 0 && w > used && !l.measuring {
-		for j := y; j < y+h; j++ {
-			for i := x + used; i < x+w; i++ {
-				l.draw(i, j, " ", 1, in.look, n)
+			for j := y; j < y+h; j++ {
+				for i := x + used; i < x+w; i++ {
+					l.draw(i, j, " ", 1, in.look, n)
+				}
 			}
 		}
-	}
-	if isKitTextarea(n) || tokens(n, "class", "select") {
+		if isKitTextarea(n) || tokens(n, "class", "select") {
 			l.done(n, rect{x, y, used, h})
 		} else {
 			l.done(n, rect{x, y, w, h})
@@ -1252,12 +1256,12 @@ func (l *layout) table(n *html.Node, x, y, w int, in inh) (h, used int) {
 
 // piece is a piece of a line: a word, a space, a control, a break.
 type piece struct {
-	kind  uint8
-	chars []char
-	w, h  int
-	look  look
-	own   *html.Node // the innermost element it is of
-	hard  bool       // a kept space, which a line may start with
+	kind    uint8
+	chars   []char
+	w, h    int
+	look    look
+	own     *html.Node // the innermost element it is of
+	hard    bool       // a kept space, which a line may start with
 	full    bool       // a field as wide as its line
 	boxed   bool       // drawn as a 3-row rounded box (╭─╮ / │…│ / ╰─╯)
 	tall    bool       // drawn as a 3-row filled block (lg filled buttons)

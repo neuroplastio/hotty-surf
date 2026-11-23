@@ -497,6 +497,23 @@ func TestRemovingTheFocusedElement(t *testing.T) {
 	}
 }
 
+func TestFocusFixupCommitsAndRestartsTab(t *testing.T) {
+	r := start(t, 20, 4, view(func(ctx context.Context, w io.Writer, on on) {
+		fmt.Fprintf(w, `<input%s/><button%s>First</button><button%s>Last</button>`, on("f"), on("first"), on("last"))
+	}))
+	r.key("tab", "x")
+	r.events = nil
+	disabled := ""
+	r.write(hotty.Delta("t", []hotty.Op{{Op: "attr", Target: "f", Name: "disabled", Value: &disabled}}))
+	if got := strings.Join(r.events, ","); got != "change f" {
+		t.Fatalf("fixup events: %s", got)
+	}
+	r.key("shift+tab")
+	if got := r.events[len(r.events)-1]; got != "focus last" {
+		t.Fatalf("reverse tab after fixup: %s", got)
+	}
+}
+
 func TestStaleFieldChangesNothing(t *testing.T) {
 	r := start(t, 20, 2, view(func(ctx context.Context, w io.Writer, on on) {
 		fmt.Fprintf(w, `<input%s value="x"/>`, on("f"))

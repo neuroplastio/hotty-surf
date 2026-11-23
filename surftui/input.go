@@ -129,14 +129,30 @@ func disabled(n *html.Node) bool {
 	default:
 		return false
 	}
-	return closest(n, func(m *html.Node) bool {
-		return has(m, "disabled") && (m == n || m.DataAtom == atom.Fieldset)
-	}) != nil
+	if has(n, "disabled") {
+		return true
+	}
+	for child, parent := n, n.Parent; parent != nil; child, parent = parent, parent.Parent {
+		if parent.DataAtom != atom.Fieldset || !has(parent, "disabled") {
+			continue
+		}
+		var legend *html.Node
+		for el := parent.FirstChild; el != nil; el = el.NextSibling {
+			if el.DataAtom == atom.Legend {
+				legend = el
+				break
+			}
+		}
+		if child != legend {
+			return true
+		}
+	}
+	return false
 }
 
 // focusable is an element a click focuses (SPEC §10.1).
 func focusable(n *html.Node) bool {
-	if n == nil || n.Type != html.ElementNode || disabled(n) {
+	if n == nil || n.Type != html.ElementNode || disabled(n) || closest(n, func(el *html.Node) bool { return has(el, "inert") }) != nil {
 		return false
 	}
 	switch n.DataAtom {
@@ -319,6 +335,12 @@ func (c *Screen) focusTo(n *html.Node, user bool) {
 		}
 		c.emit(e)
 	}
+}
+
+// fixFocus commits a field still in the document and clears element focus.
+func (c *Screen) fixFocus() {
+	c.commit(c.focused)
+	c.focused, c.prefixed, c.lay = nil, false, nil
 }
 
 // blur takes the keyboard from the focused element: it commits, and the
@@ -543,6 +565,9 @@ func splitKey(k string) (mods []string, name string) {
 func (c *Screen) key(key string) bool {
 	if c.body == nil || !c.active {
 		return false
+	}
+	if c.focused != nil {
+		c.layout()
 	}
 	k, ok := c.plat.ReadKey(key)
 	if !ok || c.prefixed {

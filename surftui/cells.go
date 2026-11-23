@@ -187,6 +187,10 @@ func (c *Screen) Write(p []byte) (int, error) {
 func (c *Screen) Resize(cols, rows int) {
 	c.cols, c.rows = max(cols, 1), max(rows, 1)
 	c.lay, c.rehit = nil, true
+	if c.focused != nil {
+		c.layout()
+		c.flush()
+	}
 }
 
 // Key presses a key on the Screen, named as hotty names keys. The focused
@@ -516,7 +520,9 @@ func (c *Screen) apply(m hotty.Message) error {
 			c.remembered = n
 			return nil
 		}
-		c.focusTo(n, false)
+		if focusable(n) && (c.layout().drawn(n) || has(n, "data-hotty-modal-guard")) {
+			c.focusTo(n, false)
+		}
 	case "blur":
 		c.prefixed = false
 		// The program's blur holds while the Screen hasn't the keyboard
