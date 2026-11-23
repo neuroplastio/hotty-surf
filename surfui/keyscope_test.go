@@ -379,6 +379,48 @@ func TestSharedKeyScopeYieldsOnWire(t *testing.T) {
 	}
 }
 
+func TestYieldKeepsEditForPrintableKeyOnWire(t *testing.T) {
+	for _, mode := range []string{"nested scope", "unrelated scope key", "same root", "inherited prefix"} {
+		t.Run(mode, func(t *testing.T) {
+			view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				field := input.View(input.Props{Attrs: templ.Attributes{"id": "field"}})
+				other := uibutton.View(uibutton.Props{ID: "other", Label: "Other"})
+				edit := surf.Bind(surfkey.Action(hotty.LineEnd, "z"), surfkey.Yield())
+				if mode == "inherited prefix" {
+					outer := surf.On(ctx, "outer", surf.Bind(surfkey.Action(hotty.Prefix, "z")))
+					return wrap(outer, wrap(surf.On(ctx, "edit", edit), field)).Render(ctx, w)
+				}
+				children := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					attrs := surf.On(ctx, "edit", edit)
+					if mode == "same root" {
+						attrs["tabindex"] = "0"
+						return wrap(attrs, templ.Join(field, other)).Render(ctx, w)
+					}
+					return wrap(templ.Attributes{"id": "shared"}, templ.Join(wrap(attrs, field), other)).Render(ctx, w)
+				})
+				key := "z"
+				if mode == "unrelated scope key" {
+					key = "ctrl+y"
+				}
+				scope := surfui.KeyScope([]surfui.KeyBinding{{Key: key, Run: func() bool { return true }}})
+				return with(scope, children).Render(ctx, w)
+			})
+			r := surftest.Start(t, surf.New("printable-yield", view, ""))
+			r.Click("#field")
+			km := rt.ResolveKeys(hotty.Platform{}, r.One("#field"), nil, hotty.ReaderInput, false)
+			if got := km.Lookup("z"); got != hotty.LineEnd {
+				t.Errorf("field z = %q, want %s", got, hotty.LineEnd)
+			}
+			if mode == "same root" || mode == "nested scope" {
+				buttonMap := rt.ResolveKeys(hotty.Platform{}, r.One("#other"), nil, hotty.ReaderButton, false)
+				if !buttonMap.Program("z") {
+					t.Error("z should still reach the program from the scoped button")
+				}
+			}
+		})
+	}
+}
+
 func TestInterleavedKeyScopeOnWire(t *testing.T) {
 	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		child := templ.Join(

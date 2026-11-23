@@ -381,7 +381,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	}
 	writtenKeys := binds
 	if !s.legacy {
-		writtenKeys = uniqueKeys(slices.Clone(inner[scopeInnerLen:]))
+		writtenKeys = uniqueKeys(slices.Clone(inner[scopeInnerLen:]), true)
 	}
 	// Carry a shared scope's winning key at the yielding edit root as
 	// well. Its other branches still inherit the shared map. Resolve the
@@ -409,8 +409,8 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 			}
 		}
 	}
-	inner = uniqueKeys(inner)
-	binds = uniqueKeys(binds)
+	inner = uniqueKeys(inner, true)
+	binds = uniqueKeys(binds, false)
 	t.given = t.given[:givenBefore]
 	t.edit = slices.Delete(t.edit, editBefore, editBefore+scopeEdits)
 	given := 0
@@ -454,16 +454,34 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	return keyPush{printable: pushed, given: given, base: base, edit: edits + written, editN: edits}
 }
 
+// fieldAction reports whether a binding is for a text field's reader.
+func fieldAction(a hotty.Action) bool {
+	return a != hotty.Program && a != hotty.Prefix && a != hotty.Default && !a.Scrolls()
+}
+
+// fieldTypesKey uses the same test as the host's text readers.
+func fieldTypesKey(key string) bool {
+	_, ok := hotty.KeyText(key)
+	return ok
+}
+
 // uniqueKeys keeps the first binding for each key, with a prefix winning
-// over a program binding of the same key.
-func uniqueKeys(binds []string) []string {
+// over a program binding of the same key. An inner map can give a typed
+// key to the program for other readers and to an edit for text readers.
+func uniqueKeys(binds []string, inner bool) []string {
 	if len(binds) < 2 {
 		return binds
 	}
-	index := make(map[string]int, len(binds))
+	type slot struct {
+		key   string
+		field bool
+	}
+	index := make(map[slot]int, len(binds))
 	out := binds[:0]
 	for _, b := range binds {
-		k := b[:strings.LastIndexByte(b, '=')]
+		i := strings.LastIndexByte(b, '=')
+		key, action := b[:i], hotty.Action(b[i+1:])
+		k := slot{key, inner && fieldAction(action) && fieldTypesKey(key)}
 		if i, seen := index[k]; seen {
 			if strings.HasSuffix(b, "=prefix") && strings.HasSuffix(out[i], "=program") {
 				out[i] = b
@@ -549,6 +567,7 @@ func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree, inn
 			continue
 		}
 		e, between := t.edit[at], false
+		readsProgram := s.legacy || !fieldTypesKey(k)
 		if !s.legacy {
 			program := e.action == string(hotty.Program)
 			if inner && program {
@@ -557,7 +576,7 @@ func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree, inn
 			if !inner && !program && !local {
 				// Ordinarily the inherited group already supplies this
 				// action. An Override must also win over a nearer program key.
-				if e.yield || !slices.ContainsFunc(t.edit[at+1:], func(x keyAt) bool {
+				if e.yield || !readsProgram || !slices.ContainsFunc(t.edit[at+1:], func(x keyAt) bool {
 					return x.key == k && x.given
 				}) {
 					continue
@@ -565,12 +584,13 @@ func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree, inn
 			}
 		}
 		for _, x := range t.edit[at+1:] {
-			if x.key == k && !x.edit && x.action != e.action && !hotty.Action(x.action).Scrolls() && (!x.given || e.yield) {
+			if x.key == k && !x.edit && x.action != e.action && !hotty.Action(x.action).Scrolls() &&
+				(readsProgram || x.action != string(hotty.Program) && x.action != string(hotty.Prefix)) && (!x.given || e.yield) {
 				between = true
 				break
 			}
 		}
-		if between || e.yield && slices.Contains(t.given, k) {
+		if between || e.yield && readsProgram && slices.Contains(t.given, k) {
 			continue
 		}
 		have := defs[k]
@@ -582,6 +602,9 @@ func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree, inn
 			switch hotty.Action(x.action) {
 			case hotty.Default:
 			case hotty.Program, hotty.Prefix:
+				if !readsProgram {
+					continue
+				}
 				have = ""
 			default:
 				have = x.action
@@ -690,7 +713,10 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind
 		}
 		a := hotty.Action(b.Action)
 		if b.Yield && slices.Contains(t.given, b.Key) {
-			continue
+			forField := kind == "text" || kind == "" && fieldAction(a)
+			if s.legacy || !forField || !fieldTypesKey(b.Key) {
+				continue
+			}
 		}
 		switch {
 		case resolved, a == hotty.Prefix, a == hotty.Default:
@@ -716,7 +742,11 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind
 			if a == hotty.Prefix {
 				binds[i] = b.Key + "=prefix"
 			}
-			continue
+			// A printable program binding at a shared root is for its
+			// other readers. The editing action goes on the inner map.
+			if s.legacy || kind != "" || !fieldAction(a) || !fieldTypesKey(b.Key) {
+				continue
+			}
 		}
 		if s.legacy && a == hotty.Prefix && rt.Printable(b.Key) {
 			t.printable = append(t.printable, b.Key)
