@@ -1,21 +1,15 @@
 pkg neuroplast.io/hotty-surf, const CharsBound Chars = 0
 pkg neuroplast.io/hotty-surf, const CharsPick Chars = 1
 pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
-pkg neuroplast.io/hotty-surf, func Action(hotty.Action, ...string) BindOption
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
-pkg neuroplast.io/hotty-surf, func Bind(...BindOption) Handler
-pkg neuroplast.io/hotty-surf, func CUAEditShortcuts() BindOption
-pkg neuroplast.io/hotty-surf, func CUAKeys() BindOption
+pkg neuroplast.io/hotty-surf, func Bind(...surfkey.Option) Handler
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
 pkg neuroplast.io/hotty-surf, func Clicks(func(int)) Handler
-pkg neuroplast.io/hotty-surf, func CocoaEditShortcuts() BindOption
-pkg neuroplast.io/hotty-surf, func CocoaKeys() BindOption
 pkg neuroplast.io/hotty-surf, func Compile[P comparable](func(P) templ.Component) *Compiled[P]
 pkg neuroplast.io/hotty-surf, func Drag(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Drop(func(DragEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Focus(func(bool)) Handler
-pkg neuroplast.io/hotty-surf, func Group(...BindOption) BindOption
 pkg neuroplast.io/hotty-surf, func Hover(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Input(func(string)) Handler
 pkg neuroplast.io/hotty-surf, func Key(func(string) bool, ...string) Handler
@@ -23,14 +17,10 @@ pkg neuroplast.io/hotty-surf, func New(string, templ.Component, string) *Surface
 pkg neuroplast.io/hotty-surf, func Of(context.Context) *Surface
 pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ.Attributes
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
-pkg neuroplast.io/hotty-surf, func Override() BindOption
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
-pkg neuroplast.io/hotty-surf, func ReadlineKeys() BindOption
 pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
-pkg neuroplast.io/hotty-surf, func Unbind(...string) BindOption
-pkg neuroplast.io/hotty-surf, func Yield() BindOption
 pkg neuroplast.io/hotty-surf, method (*Compiled) With(string, P) templ.Component
 pkg neuroplast.io/hotty-surf, method (*Surface) Attach(io.Writer, hotty.Caps)
 pkg neuroplast.io/hotty-surf, method (*Surface) Blur() (bool, error)
@@ -49,12 +39,12 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) OwnKeys() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
-pkg neuroplast.io/hotty-surf, type BindOption interface {  }
 pkg neuroplast.io/hotty-surf, type Chars uint8
 pkg neuroplast.io/hotty-surf, type Compiled[P comparable] struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct, End bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, ID string
+pkg neuroplast.io/hotty-surf, type DragEvent struct, Mods int
 pkg neuroplast.io/hotty-surf, type DragEvent struct, Over string
 pkg neuroplast.io/hotty-surf, type DragEvent struct, Start bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, embedded hotty.Drag
@@ -63,79 +53,56 @@ pkg neuroplast.io/hotty-surf, type Sheet struct
 pkg neuroplast.io/hotty-surf, type Sheet struct, CSS string
 pkg neuroplast.io/hotty-surf, type Sheet struct, ID string
 pkg neuroplast.io/hotty-surf, type Surface struct
-pkg neuroplast.io/hotty-surf/cells, const Bold Attr = 1
-pkg neuroplast.io/hotty-surf/cells, const Dim Attr = 2
-pkg neuroplast.io/hotty-surf/cells, const Italic Attr = 4
-pkg neuroplast.io/hotty-surf/cells, const Reverse Attr = 16
-pkg neuroplast.io/hotty-surf/cells, const Strike Attr = 32
-pkg neuroplast.io/hotty-surf/cells, const Underline Attr = 8
-pkg neuroplast.io/hotty-surf/cells, func New(int, int, func(hotty.Event)) *Screen
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) At(int, int) (string, hotty.Area)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cells() [][]Cell
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Click(int, int) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cursor() (int, int, bool)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Cut() string
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Dirty() bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Draw([][]Cell, int, int)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Focus(bool)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Key(string) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Lines() []string
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Move(int, int, int) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Paste(string) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Press(int, int, int, int) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Release(int, int, int) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Resize(int, int)
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Selection() string
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Wheel(int, int, int) bool
-pkg neuroplast.io/hotty-surf/cells, method (*Screen) Write([]byte) (int, error)
-pkg neuroplast.io/hotty-surf/cells, type Attr uint8
-pkg neuroplast.io/hotty-surf/cells, type Cell struct
-pkg neuroplast.io/hotty-surf/cells, type Cell struct, Attr Attr
-pkg neuroplast.io/hotty-surf/cells, type Cell struct, Bg Role
-pkg neuroplast.io/hotty-surf/cells, type Cell struct, Fg Role
-pkg neuroplast.io/hotty-surf/cells, type Cell struct, Text string
-pkg neuroplast.io/hotty-surf/cells, type Role string
-pkg neuroplast.io/hotty-surf/cells, type Screen struct
-pkg neuroplast.io/hotty-surf/lint, func Dir(string) ([]Finding, error)
-pkg neuroplast.io/hotty-surf/lint, method (*Finding) DecodeMsg(*msgp.Reader) error
-pkg neuroplast.io/hotty-surf/lint, method (*Finding) EncodeMsg(*msgp.Writer) error
-pkg neuroplast.io/hotty-surf/lint, method (*Finding) Msgsize() int
-pkg neuroplast.io/hotty-surf/lint, type Finding struct
-pkg neuroplast.io/hotty-surf/lint, type Finding struct, Col int
-pkg neuroplast.io/hotty-surf/lint, type Finding struct, File string
-pkg neuroplast.io/hotty-surf/lint, type Finding struct, Line int
-pkg neuroplast.io/hotty-surf/lint, type Finding struct, Rule string
-pkg neuroplast.io/hotty-surf/lint, type Finding struct, Text string
-pkg neuroplast.io/hotty-surf/reload, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](func() P, func(P))
-pkg neuroplast.io/hotty-surf/reload, func Placed(*surf.Surface, int, int)
-pkg neuroplast.io/hotty-surf/reload, func Serve(context.Context, io.ReadWriter, string) error
-pkg neuroplast.io/hotty-surf/reload/reloader, func Env(...string) Option
-pkg neuroplast.io/hotty-surf/reload/reloader, func New(string, func(context.Context, string) error, func(Report), ...Option) *Reloader
-pkg neuroplast.io/hotty-surf/reload/reloader, func Output(string) Option
-pkg neuroplast.io/hotty-surf/reload/reloader, func Tags(...string) Option
-pkg neuroplast.io/hotty-surf/reload/reloader, func Text(*Report) string
-pkg neuroplast.io/hotty-surf/reload/reloader, func View(*Report) templ.Component
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Document(context.Context, string, string) (string, error)
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Instances() map[string][]Placed
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Reload(context.Context) (Report, error)
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Run(context.Context) error
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Report) DecodeMsg(*msgp.Reader) error
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Report) EncodeMsg(*msgp.Writer) error
-pkg neuroplast.io/hotty-surf/reload/reloader, method (*Report) Msgsize() int
-pkg neuroplast.io/hotty-surf/reload/reloader, type Option struct
-pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct
-pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Cols int
-pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Name string
-pkg neuroplast.io/hotty-surf/reload/reloader, type Placed struct, Rows int
-pkg neuroplast.io/hotty-surf/reload/reloader, type Reloader struct
-pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct
-pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Build string
-pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Failed map[string]string
-pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Lint []lint.Finding
-pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Tier string
-pkg neuroplast.io/hotty-surf/reload/reloader, type Report struct, Took time.Duration
-pkg neuroplast.io/hotty-surf/run, func App(context.Context, *surf.Surface) error
+pkg neuroplast.io/hotty-surf/surfapp, func Run(context.Context, *surf.Surface) error
+pkg neuroplast.io/hotty-surf/surfdev, func Keep[T any, P interface{*T; msgp.Encodable; msgp.Decodable}](func() P, func(P))
+pkg neuroplast.io/hotty-surf/surfdev, func Placed(*surf.Surface, int, int)
+pkg neuroplast.io/hotty-surf/surfdev, func Serve(context.Context, io.ReadWriter, string) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, func Env(...string) Option
+pkg neuroplast.io/hotty-surf/surfdev/reloader, func New(string, func(context.Context, string) error, func(Report), ...Option) *Reloader
+pkg neuroplast.io/hotty-surf/surfdev/reloader, func Output(string) Option
+pkg neuroplast.io/hotty-surf/surfdev/reloader, func Tags(...string) Option
+pkg neuroplast.io/hotty-surf/surfdev/reloader, func Text(*Report) string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, func View(*Report) templ.Component
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Finding) DecodeMsg(*msgp.Reader) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Finding) EncodeMsg(*msgp.Writer) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Finding) Msgsize() int
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Reloader) Document(context.Context, string, string) (string, error)
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Reloader) Instances() map[string][]Placed
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Reloader) Reload(context.Context) (Report, error)
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Reloader) Run(context.Context) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Reloader) Serve(context.Context, io.ReadWriteCloser) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Report) DecodeMsg(*msgp.Reader) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Report) EncodeMsg(*msgp.Writer) error
+pkg neuroplast.io/hotty-surf/surfdev/reloader, method (*Report) Msgsize() int
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Finding struct
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Finding struct, Col int
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Finding struct, File string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Finding struct, Line int
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Finding struct, Rule string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Finding struct, Text string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Option struct
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Placed struct
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Placed struct, Cols int
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Placed struct, Name string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Placed struct, Rows int
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Reloader struct
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Report struct
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Report struct, Build string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Report struct, Failed map[string]string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Report struct, Lint []Finding
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Report struct, Tier string
+pkg neuroplast.io/hotty-surf/surfdev/reloader, type Report struct, Took time.Duration
+pkg neuroplast.io/hotty-surf/surfkey, func Action(hotty.Action, ...string) Option
+pkg neuroplast.io/hotty-surf/surfkey, func CUAEditShortcuts() Option
+pkg neuroplast.io/hotty-surf/surfkey, func CUAKeys() Option
+pkg neuroplast.io/hotty-surf/surfkey, func CocoaEditShortcuts() Option
+pkg neuroplast.io/hotty-surf/surfkey, func CocoaKeys() Option
+pkg neuroplast.io/hotty-surf/surfkey, func Group(...Option) Option
+pkg neuroplast.io/hotty-surf/surfkey, func Override() Option
+pkg neuroplast.io/hotty-surf/surfkey, func ReadlineKeys() Option
+pkg neuroplast.io/hotty-surf/surfkey, func Unbind(...string) Option
+pkg neuroplast.io/hotty-surf/surfkey, func Yield() Option
+pkg neuroplast.io/hotty-surf/surfkey, type Option = keybind.Option
 pkg neuroplast.io/hotty-surf/surftea, func New(*surf.Surface, *hottytea.Session) *Host
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Blur()
 pkg neuroplast.io/hotty-surf/surftea, method (*Host) Cells() string
@@ -164,480 +131,834 @@ pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Update()
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Value(string) string
 pkg neuroplast.io/hotty-surf/surftest, type Option struct
 pkg neuroplast.io/hotty-surf/surftest, type Rig struct
-pkg neuroplast.io/hotty-surf/ui, const Destructive Variant = "destructive"
-pkg neuroplast.io/hotty-surf/ui, const Ghost Variant = "ghost"
-pkg neuroplast.io/hotty-surf/ui, const Large Size = "lg"
-pkg neuroplast.io/hotty-surf/ui, const Link Variant = "link"
-pkg neuroplast.io/hotty-surf/ui, const Medium Size = ""
-pkg neuroplast.io/hotty-surf/ui, const Outline Variant = "outline"
-pkg neuroplast.io/hotty-surf/ui, const Primary Variant = ""
-pkg neuroplast.io/hotty-surf/ui, const Secondary Variant = "secondary"
-pkg neuroplast.io/hotty-surf/ui, const ShapeAccountTree Shape = "M15 21v-3h-4V8H9v3H2V3h7v3h6V3h7v8h-7V8h-2v8h2v-3h7v8z"
-pkg neuroplast.io/hotty-surf/ui, const ShapeDesktopWindows Shape = "M8 21v-2h2v-2H2V3h20v14h-8v2h2v2zm-4-6h16V5H4zm0 0V5z"
-pkg neuroplast.io/hotty-surf/ui, const ShapeGridView Shape = "M3 11V3h8v8zm0 10v-8h8v8zm10-10V3h8v8zm0 10v-8h8v8zM5 9h4V5H5zm10 0h4V5h-4zm0 10h4v-4h-4zM5 19h4v-4H5zM9 9"
-pkg neuroplast.io/hotty-surf/ui, const ShapeMoreHoriz Shape = "M6 14q-.825 0-1.412-.587T4 12t.588-1.412T6 10t1.413.588T8 12t-.587 1.413T6 14m6 0q-.825 0-1.412-.587T10 12t.588-1.412T12 10t1.413.588T14 12t-.587 1.413T12 14m6 0q-.825 0-1.412-.587T16 12t.588-1.412T18 10t1.413.588T20 12t-.587 1.413T18 14"
-pkg neuroplast.io/hotty-surf/ui, const ShapePublic Shape = "M8.1 21.213q-1.825-.788-3.175-2.138T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22t-3.9-.788M11 19.95V18q-.825 0-1.412-.587T9 16v-1l-4.8-4.8q-.075.45-.137.9T4 12q0 3.025 1.988 5.3T11 19.95m6.9-2.55q1.025-1.125 1.563-2.512T20 12q0-2.45-1.362-4.475T15 4.6V5q0 .825-.587 1.413T13 7h-2v2q0 .425-.288.713T10 10H8v2h6q.425 0 .713.288T15 13v3h1q.65 0 1.175.388T17.9 17.4"
-pkg neuroplast.io/hotty-surf/ui, const ShapeRemove Shape = "M5 13v-2h14v2z"
-pkg neuroplast.io/hotty-surf/ui, const ShapeTerminal Shape = "M2 20V4h20v16zm2-2h16V8H4zm3.5-1l-1.4-1.4L8.675 13l-2.6-2.6L7.5 9l4 4zm4.5 0v-2h6v2z"
-pkg neuroplast.io/hotty-surf/ui, const Small Size = "sm"
-pkg neuroplast.io/hotty-surf/ui, const XSmall Size = "xs"
-pkg neuroplast.io/hotty-surf/ui, func Alert(AlertProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func AlertDialog(AlertDialogProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Avatar(AvatarProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func AvatarGroup(AvatarGroupProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Badge(BadgeProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Bindings(*surf.Surface) []KeyBinding
-pkg neuroplast.io/hotty-surf/ui, func Breadcrumb(BreadcrumbProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Button(ButtonProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Card(CardProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Chart(ChartProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Checkbox(CheckboxProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Combobox(*ComboboxState, ComboboxProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Command(*CommandState, CommandProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func CommandDialog(*CommandState, CommandDialogProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ContextMenu(*ContextMenuState, ContextMenuProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ControlID(string, string) string
-pkg neuroplast.io/hotty-surf/ui, func Controls(ControlsProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Dialog(DialogProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Drawer(*DrawerState, DrawerProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func DropdownMenu(*DropdownMenuState, DropdownMenuProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Empty(EmptyProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func EventLog(EventLogProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Field(FieldProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func FieldSeparator(FieldSeparatorProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func FieldSet(FieldSetProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Fuzzy(string, string) bool
-pkg neuroplast.io/hotty-surf/ui, func HostMenu(*surf.Surface, string) *hotty.MenuTree
-pkg neuroplast.io/hotty-surf/ui, func Icon(string, string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func IconButton(IconButtonProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Input(InputProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func InputGroup(InputGroupProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func InputGroupAddon(InputGroupAddonProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Item(ItemProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemDetail(ItemDetailProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemGroup(ItemGroupProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemSubtitle(ItemSubtitleProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ItemTitle(ItemTitleProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Kbd(string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func KeyScope([]KeyBinding) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Label(LabelProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func List(ListProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func ListItem(ListItemProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Menu(MenuProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func NativeSelect(NativeSelectProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Pick(*surf.Surface, string) bool
-pkg neuroplast.io/hotty-surf/ui, func Popover(*PopoverState, PopoverProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Progress(ProgressProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Radio(RadioProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func RangeSlider(RangeSliderProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Select(*SelectState, SelectProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Sheet() surf.Sheet
-pkg neuroplast.io/hotty-surf/ui, func Skeleton(SkeletonProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Slider(SliderProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Stylesheet() string
-pkg neuroplast.io/hotty-surf/ui, func Switch(SwitchProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Symbol(Shape, string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Symbols() []NamedShape
-pkg neuroplast.io/hotty-surf/ui, func Table(TableProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Tabs(TabsProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Textarea(TextareaProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Toaster(*ToasterState, ToasterProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, func Tooltip(TooltipProps) templ.Component
-pkg neuroplast.io/hotty-surf/ui, method (*CommandState) Search(string)
-pkg neuroplast.io/hotty-surf/ui, method (*DropdownMenuState) Open()
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) FilterID() string
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) FilterInput(string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) FocusFilter(context.Context)
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) FocusList(context.Context)
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) ItemID(string) string
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) Keys(string) bool
-pkg neuroplast.io/hotty-surf/ui, method (*NavList) List(string) templ.Component
-pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Close()
-pkg neuroplast.io/hotty-surf/ui, method (*PopoverState) Open()
-pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Remove(string)
-pkg neuroplast.io/hotty-surf/ui, method (*ToasterState) Show(Toast)
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Description string
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, OnClose func()
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Open bool
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type AlertDialogProps struct, Title string
-pkg neuroplast.io/hotty-surf/ui, type AlertProps struct
-pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type AlertProps struct, Variant Variant
-pkg neuroplast.io/hotty-surf/ui, type AvatarGroupProps struct
-pkg neuroplast.io/hotty-surf/ui, type AvatarGroupProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type AvatarGroupProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type AvatarProps struct
-pkg neuroplast.io/hotty-surf/ui, type AvatarProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type AvatarProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type AvatarProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct
-pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type BadgeProps struct, Variant Variant
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbItem struct
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbItem struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbItem struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbProps struct
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type BreadcrumbProps struct, Items []BreadcrumbItem
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, IconOnly bool
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type ButtonProps struct, Variant Variant
-pkg neuroplast.io/hotty-surf/ui, type CardProps struct
-pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type CardProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Aspect float64
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Labels []string
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Legend bool
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Series []ChartSeries
-pkg neuroplast.io/hotty-surf/ui, type ChartProps struct, Type string
-pkg neuroplast.io/hotty-surf/ui, type ChartSeries struct
-pkg neuroplast.io/hotty-surf/ui, type ChartSeries struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type ChartSeries struct, Values []float64
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Checked bool
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type CheckboxProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, AutoHighlight bool
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Clear bool
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, CloseOnSelect bool
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, InputAttrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Items []SelectItem
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Multiple bool
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, OnChange func(string)
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, OnValuesChange func([]string)
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type ComboboxProps struct, Values []string
-pkg neuroplast.io/hotty-surf/ui, type ComboboxState struct
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Empty string
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Items []MenuItem
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, OnClose func()
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Open bool
-pkg neuroplast.io/hotty-surf/ui, type CommandDialogProps struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type CommandProps struct
-pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Empty string
-pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Items []MenuItem
-pkg neuroplast.io/hotty-surf/ui, type CommandProps struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type CommandState struct
-pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct
-pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type ContextMenuProps struct, Items []MenuItem
-pkg neuroplast.io/hotty-surf/ui, type ContextMenuState struct
-pkg neuroplast.io/hotty-surf/ui, type Control struct
-pkg neuroplast.io/hotty-surf/ui, type Control struct, Kind string
-pkg neuroplast.io/hotty-surf/ui, type Control struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type Control struct, Options []string
-pkg neuroplast.io/hotty-surf/ui, type Control struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type ControlsProps struct
-pkg neuroplast.io/hotty-surf/ui, type ControlsProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ControlsProps struct, Controls []Control
-pkg neuroplast.io/hotty-surf/ui, type ControlsProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type ControlsProps struct, OnChange func(string, string)
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Description string
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, HideCloseButton bool
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, OnClose func()
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Open bool
-pkg neuroplast.io/hotty-surf/ui, type DialogProps struct, Title string
-pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct
-pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, OnClose func()
-pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, Open bool
-pkg neuroplast.io/hotty-surf/ui, type DrawerProps struct, Side string
-pkg neuroplast.io/hotty-surf/ui, type DrawerState struct
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, Align string
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, Items []MenuItem
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuProps struct, Trigger templ.Component
-pkg neuroplast.io/hotty-surf/ui, type DropdownMenuState struct
-pkg neuroplast.io/hotty-surf/ui, type EmptyProps struct
-pkg neuroplast.io/hotty-surf/ui, type EmptyProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type EmptyProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type EventLogProps struct
-pkg neuroplast.io/hotty-surf/ui, type EventLogProps struct, Empty string
-pkg neuroplast.io/hotty-surf/ui, type EventLogProps struct, Entries []LogEntry
-pkg neuroplast.io/hotty-surf/ui, type EventLogProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type EventLogProps struct, OnClear func()
-pkg neuroplast.io/hotty-surf/ui, type FieldProps struct
-pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type FieldProps struct, Orientation string
-pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct
-pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type FieldSeparatorProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct
-pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type FieldSetProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct
-pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type IconButtonProps struct, Shape Shape
-pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct
-pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct, Align string
-pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type InputGroupAddonProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type InputGroupProps struct
-pkg neuroplast.io/hotty-surf/ui, type InputGroupProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type InputGroupProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Type string
-pkg neuroplast.io/hotty-surf/ui, type InputProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type ItemDetailProps struct
-pkg neuroplast.io/hotty-surf/ui, type ItemDetailProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ItemDetailProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ItemGroupProps struct
-pkg neuroplast.io/hotty-surf/ui, type ItemGroupProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ItemGroupProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ItemProps struct
-pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Muted bool
-pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type ItemProps struct, Variant Variant
-pkg neuroplast.io/hotty-surf/ui, type ItemSubtitleProps struct
-pkg neuroplast.io/hotty-surf/ui, type ItemSubtitleProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ItemSubtitleProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ItemTitleProps struct
-pkg neuroplast.io/hotty-surf/ui, type ItemTitleProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ItemTitleProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct
-pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Key string
-pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type KeyBinding struct, Run func() bool
-pkg neuroplast.io/hotty-surf/ui, type LabelProps struct
-pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type LabelProps struct, For string
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Active bool
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Leading templ.Component
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Selected bool
-pkg neuroplast.io/hotty-surf/ui, type ListItemProps struct, Trailing templ.Component
-pkg neuroplast.io/hotty-surf/ui, type ListProps struct
-pkg neuroplast.io/hotty-surf/ui, type ListProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ListProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ListProps struct, OnChange func(int)
-pkg neuroplast.io/hotty-surf/ui, type LogEntry struct
-pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, At time.Time
-pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, Kind string
-pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, KindClass string
-pkg neuroplast.io/hotty-surf/ui, type LogEntry struct, Text string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Checked bool
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Content templ.Component
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Group string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Icon string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keys string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Keywords string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Leading templ.Component
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnCheckedChange func(bool)
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, OnSelect func()
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Role string
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Trailing templ.Component
-pkg neuroplast.io/hotty-surf/ui, type MenuItem struct, Variant Variant
-pkg neuroplast.io/hotty-surf/ui, type MenuProps struct
-pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Highlight int
-pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, Items []MenuItem
-pkg neuroplast.io/hotty-surf/ui, type MenuProps struct, OnHighlight func(int)
-pkg neuroplast.io/hotty-surf/ui, type NamedShape struct
-pkg neuroplast.io/hotty-surf/ui, type NamedShape struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type NamedShape struct, Shape Shape
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Items []SelectItem
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type NativeSelectProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type NavGroup struct
-pkg neuroplast.io/hotty-surf/ui, type NavGroup struct, Items []NavItem
-pkg neuroplast.io/hotty-surf/ui, type NavGroup struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type NavItem struct
-pkg neuroplast.io/hotty-surf/ui, type NavItem struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type NavItem struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, Current string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, Empty string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, Filter string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, FilterLabel string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, Groups []NavGroup
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, OnFilter func(string)
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, OnSelect func(string)
-pkg neuroplast.io/hotty-surf/ui, type NavList struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct
-pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Align string
-pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Side string
-pkg neuroplast.io/hotty-surf/ui, type PopoverProps struct, Trigger templ.Component
-pkg neuroplast.io/hotty-surf/ui, type PopoverState struct
-pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct
-pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ProgressProps struct, Value float64
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Checked bool
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type RadioProps struct, Name string
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, End float64
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, EndAttrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Max float64
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Min float64
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, OnChange func(float64, float64)
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Start float64
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, StartAttrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type RangeSliderProps struct, Step float64
-pkg neuroplast.io/hotty-surf/ui, type SelectItem struct
-pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Group string
-pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Keywords string
-pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type SelectItem struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Align string
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, CloseOnSelect bool
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Items []SelectItem
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Multiple bool
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, OnChange func(string)
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, OnValuesChange func([]string)
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type SelectProps struct, Values []string
-pkg neuroplast.io/hotty-surf/ui, type SelectState struct
-pkg neuroplast.io/hotty-surf/ui, type Shape string
-pkg neuroplast.io/hotty-surf/ui, type Size string
-pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct
-pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type SkeletonProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Max float64
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Min float64
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, OnChange func(float64)
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Step float64
-pkg neuroplast.io/hotty-surf/ui, type SliderProps struct, Value float64
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct, Checked bool
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type SwitchProps struct, Size Size
-pkg neuroplast.io/hotty-surf/ui, type Tab struct
-pkg neuroplast.io/hotty-surf/ui, type Tab struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type Tab struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type Tab struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type TableProps struct
-pkg neuroplast.io/hotty-surf/ui, type TableProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type TableProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Line bool
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, ListClass string
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, OnChange func(string)
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, PanelClass string
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Tabs []Tab
-pkg neuroplast.io/hotty-surf/ui, type TabsProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Disabled bool
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Invalid bool
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Placeholder string
-pkg neuroplast.io/hotty-surf/ui, type TextareaProps struct, Value string
-pkg neuroplast.io/hotty-surf/ui, type Toast struct
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Actions []ToastAction
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Category string
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Countdown time.Time
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Description string
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Duration time.Duration
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Focused bool
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, ID string
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, OnClick func()
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, OnClose func()
-pkg neuroplast.io/hotty-surf/ui, type Toast struct, Title string
-pkg neuroplast.io/hotty-surf/ui, type ToastAction struct
-pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Label string
-pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, OnSelect func()
-pkg neuroplast.io/hotty-surf/ui, type ToastAction struct, Variant Variant
-pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct
-pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type ToasterProps struct, OnLeave func()
-pkg neuroplast.io/hotty-surf/ui, type ToasterState struct
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Align string
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Arrow bool
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Attrs templ.Attributes
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Class string
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Side string
-pkg neuroplast.io/hotty-surf/ui, type TooltipProps struct, Text string
-pkg neuroplast.io/hotty-surf/ui, type Variant string
-pkg neuroplast.io/hotty-surf/ui/code, func Block(string, string, int) templ.Component
-pkg neuroplast.io/hotty-surf/ui/code, func Stylesheet() string
-pkg neuroplast.io/hotty-surf/ui/code, func TokenClass(string) string
-pkg neuroplast.io/hotty-surf/ui/code, func View(string, string, int) templ.Component
+pkg neuroplast.io/hotty-surf/surftui, const Bold Attr = 1
+pkg neuroplast.io/hotty-surf/surftui, const Dim Attr = 2
+pkg neuroplast.io/hotty-surf/surftui, const Italic Attr = 4
+pkg neuroplast.io/hotty-surf/surftui, const Reverse Attr = 16
+pkg neuroplast.io/hotty-surf/surftui, const Strike Attr = 32
+pkg neuroplast.io/hotty-surf/surftui, const Underline Attr = 8
+pkg neuroplast.io/hotty-surf/surftui, func New(int, int, func(hotty.Event)) *Screen
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) At(int, int) (string, hotty.Area)
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Cells() [][]Cell
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Click(int, int) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Cursor() (int, int, bool)
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Cut() string
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Dirty() bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Draw([][]Cell, int, int)
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Focus(bool)
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Key(string) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Lines() []string
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Move(int, int, int) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Paste(string) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Press(int, int, int, int) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Release(int, int, int) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Resize(int, int)
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) ResizeMode(int, int) string
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Selection() string
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Wheel(int, int, int) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Write([]byte) (int, error)
+pkg neuroplast.io/hotty-surf/surftui, type Attr uint8
+pkg neuroplast.io/hotty-surf/surftui, type Cell struct
+pkg neuroplast.io/hotty-surf/surftui, type Cell struct, Attr Attr
+pkg neuroplast.io/hotty-surf/surftui, type Cell struct, Bg Role
+pkg neuroplast.io/hotty-surf/surftui, type Cell struct, Fg Role
+pkg neuroplast.io/hotty-surf/surftui, type Cell struct, Text string
+pkg neuroplast.io/hotty-surf/surftui, type Role string
+pkg neuroplast.io/hotty-surf/surftui, type Screen struct
+pkg neuroplast.io/hotty-surf/surfui, const ActCancel Action = "cancel"
+pkg neuroplast.io/hotty-surf/surfui, const ActConfirm Action = "confirm"
+pkg neuroplast.io/hotty-surf/surfui, const ActDown Action = "down"
+pkg neuroplast.io/hotty-surf/surfui, const ActFirst Action = "first"
+pkg neuroplast.io/hotty-surf/surfui, const ActLast Action = "last"
+pkg neuroplast.io/hotty-surf/surfui, const ActLeft Action = "left"
+pkg neuroplast.io/hotty-surf/surfui, const ActOpen Action = "open"
+pkg neuroplast.io/hotty-surf/surfui, const ActPageDown Action = "page_down"
+pkg neuroplast.io/hotty-surf/surfui, const ActPageUp Action = "page_up"
+pkg neuroplast.io/hotty-surf/surfui, const ActRight Action = "right"
+pkg neuroplast.io/hotty-surf/surfui, const ActToggle Action = "toggle"
+pkg neuroplast.io/hotty-surf/surfui, const ActUp Action = "up"
+pkg neuroplast.io/hotty-surf/surfui, const Destructive Variant = "destructive"
+pkg neuroplast.io/hotty-surf/surfui, const Ghost Variant = "ghost"
+pkg neuroplast.io/hotty-surf/surfui, const Large Size = "lg"
+pkg neuroplast.io/hotty-surf/surfui, const Link Variant = "link"
+pkg neuroplast.io/hotty-surf/surfui, const Medium Size = ""
+pkg neuroplast.io/hotty-surf/surfui, const ModeANSI Mode = 2
+pkg neuroplast.io/hotty-surf/surfui, const ModeHotty Mode = 0
+pkg neuroplast.io/hotty-surf/surfui, const ModePlain Mode = 3
+pkg neuroplast.io/hotty-surf/surfui, const ModeTUI Mode = 1
+pkg neuroplast.io/hotty-surf/surfui, const Outline Variant = "outline"
+pkg neuroplast.io/hotty-surf/surfui, const Primary Variant = ""
+pkg neuroplast.io/hotty-surf/surfui, const Secondary Variant = "secondary"
+pkg neuroplast.io/hotty-surf/surfui, const Small Size = "sm"
+pkg neuroplast.io/hotty-surf/surfui, const XSmall Size = "xs"
+pkg neuroplast.io/hotty-surf/surfui, func BindKeys(context.Context, KeyMap) (surf.Handler, bool)
+pkg neuroplast.io/hotty-surf/surfui, func Bindings(*surf.Surface) []KeyBinding
+pkg neuroplast.io/hotty-surf/surfui, func DefaultKeys() KeyMap
+pkg neuroplast.io/hotty-surf/surfui, func EmacsKeys() KeyMap
+pkg neuroplast.io/hotty-surf/surfui, func HostMenu(*surf.Surface, string) *hotty.MenuTree
+pkg neuroplast.io/hotty-surf/surfui, func InMode(Mode, templ.Component) templ.Component
+pkg neuroplast.io/hotty-surf/surfui, func KeyScope([]KeyBinding) templ.Component
+pkg neuroplast.io/hotty-surf/surfui, func KeysOf(context.Context) KeyMap
+pkg neuroplast.io/hotty-surf/surfui, func ModeOf(context.Context) Mode
+pkg neuroplast.io/hotty-surf/surfui, func NewRegistry() *Registry
+pkg neuroplast.io/hotty-surf/surfui, func Pick(*surf.Surface, string) bool
+pkg neuroplast.io/hotty-surf/surfui, func ResolveKeys(context.Context, KeyMap, ...Action) ResolvedKeys
+pkg neuroplast.io/hotty-surf/surfui, func ResolveTextKeys(context.Context, KeyMap, ...Action) ResolvedKeys
+pkg neuroplast.io/hotty-surf/surfui, func SetKittyDefault(bool)
+pkg neuroplast.io/hotty-surf/surfui, func Sheet() surf.Sheet
+pkg neuroplast.io/hotty-surf/surfui, func Stylesheet() string
+pkg neuroplast.io/hotty-surf/surfui, func SupportsKitty(context.Context) bool
+pkg neuroplast.io/hotty-surf/surfui, func VimKeys() KeyMap
+pkg neuroplast.io/hotty-surf/surfui, func WithKeys(context.Context, KeyMap) context.Context
+pkg neuroplast.io/hotty-surf/surfui, func WithKitty(context.Context, bool) context.Context
+pkg neuroplast.io/hotty-surf/surfui, func WithMode(context.Context, Mode) context.Context
+pkg neuroplast.io/hotty-surf/surfui, method (*Registry) CSS(string, string)
+pkg neuroplast.io/hotty-surf/surfui, method (*Registry) Register(...func(*Registry)) *Registry
+pkg neuroplast.io/hotty-surf/surfui, method (*Registry) Sheet() surf.Sheet
+pkg neuroplast.io/hotty-surf/surfui, method (*Registry) Stylesheet() string
+pkg neuroplast.io/hotty-surf/surfui, method (Mode) Interactive() bool
+pkg neuroplast.io/hotty-surf/surfui, method (Mode) String() string
+pkg neuroplast.io/hotty-surf/surfui, method (ResolvedKeys) Declare(...Action) []string
+pkg neuroplast.io/hotty-surf/surfui, method (ResolvedKeys) Match(string) (Action, bool)
+pkg neuroplast.io/hotty-surf/surfui, type Action string
+pkg neuroplast.io/hotty-surf/surfui, type KeyBinding struct
+pkg neuroplast.io/hotty-surf/surfui, type KeyBinding struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui, type KeyBinding struct, Key string
+pkg neuroplast.io/hotty-surf/surfui, type KeyBinding struct, Label string
+pkg neuroplast.io/hotty-surf/surfui, type KeyBinding struct, Name string
+pkg neuroplast.io/hotty-surf/surfui, type KeyBinding struct, Run func() bool
+pkg neuroplast.io/hotty-surf/surfui, type KeyMap map[Action][]string
+pkg neuroplast.io/hotty-surf/surfui, type Mode uint8
+pkg neuroplast.io/hotty-surf/surfui, type Registry struct
+pkg neuroplast.io/hotty-surf/surfui, type ResolvedKeys struct
+pkg neuroplast.io/hotty-surf/surfui, type Size string
+pkg neuroplast.io/hotty-surf/surfui, type Variant string
+pkg neuroplast.io/hotty-surf/surfui, var DefaultRegistry *Registry
+pkg neuroplast.io/hotty-surf/surfui, var Modes []Mode
+pkg neuroplast.io/hotty-surf/surfui/alert, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/alert, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/alert, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/alert, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/alert, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/alert, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/alert, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/alert, type Props struct, Variant surfui.Variant
+pkg neuroplast.io/hotty-surf/surfui/alert/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/alert/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/alert/story, type Props struct, Icon bool
+pkg neuroplast.io/hotty-surf/surfui/alert/story, type Props struct, Text string
+pkg neuroplast.io/hotty-surf/surfui/alert/story, type Props struct, Title string
+pkg neuroplast.io/hotty-surf/surfui/alert/story, type Props struct, Variant string
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, Description string
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, OnClose func()
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, Open bool
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, Size surfui.Size
+pkg neuroplast.io/hotty-surf/surfui/alertdialog, type Props struct, Title string
+pkg neuroplast.io/hotty-surf/surfui/alertdialog/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueAmber Hue = "amber"
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueBlue Hue = "chart-3"
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueCoral Hue = "chart-1"
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueDefault Hue = ""
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueGold Hue = "chart-4"
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueTeal Hue = "chart-2"
+pkg neuroplast.io/hotty-surf/surfui/avatar, const HueViolet Hue = "chart-5"
+pkg neuroplast.io/hotty-surf/surfui/avatar, func Group(GroupProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/avatar, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/avatar, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/avatar, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/avatar, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/avatar, type GroupProps struct
+pkg neuroplast.io/hotty-surf/surfui/avatar, type GroupProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/avatar, type GroupProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Hue string
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Alt string
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Hue Hue
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Online bool
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Size surfui.Size
+pkg neuroplast.io/hotty-surf/surfui/avatar, type Props struct, Src string
+pkg neuroplast.io/hotty-surf/surfui/avatar/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/badge, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/badge, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/badge, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/badge, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/badge, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/badge, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/badge, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/badge, type Props struct, Variant surfui.Variant
+pkg neuroplast.io/hotty-surf/surfui/badge/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/badge/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/badge/story, type Props struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/badge/story, type Props struct, Variant string
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Item struct
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Item struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Item struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb, type Props struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/breadcrumb/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/button, const Class untyped string = "btn"
+pkg neuroplast.io/hotty-surf/surfui/button, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/button, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/button, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/button, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, IconOnly bool
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, OnClick func()
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, Size surfui.Size
+pkg neuroplast.io/hotty-surf/surfui/button, type Props struct, Variant surfui.Variant
+pkg neuroplast.io/hotty-surf/surfui/button/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct, Clicks int
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct, Icon bool
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct, Size string
+pkg neuroplast.io/hotty-surf/surfui/button/story, type Props struct, Variant string
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, const Horizontal Orientation = ""
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, const Vertical Orientation = "vertical"
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, func Separator() templ.Component
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, type Orientation string
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/buttongroup, type Props struct, Orientation Orientation
+pkg neuroplast.io/hotty-surf/surfui/buttongroup/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/card, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/card, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/card, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/card, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/card, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/card, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/card, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/card, type Props struct, Size surfui.Size
+pkg neuroplast.io/hotty-surf/surfui/card/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/card/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/card/story, type Props struct, Description string
+pkg neuroplast.io/hotty-surf/surfui/card/story, type Props struct, Footer bool
+pkg neuroplast.io/hotty-surf/surfui/card/story, type Props struct, Size string
+pkg neuroplast.io/hotty-surf/surfui/card/story, type Props struct, Title string
+pkg neuroplast.io/hotty-surf/surfui/chart, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/chart, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Aspect float64
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Labels []string
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Legend bool
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Series []Series
+pkg neuroplast.io/hotty-surf/surfui/chart, type Props struct, Type string
+pkg neuroplast.io/hotty-surf/surfui/chart, type Series struct
+pkg neuroplast.io/hotty-surf/surfui/chart, type Series struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/chart, type Series struct, Values []float64
+pkg neuroplast.io/hotty-surf/surfui/chart/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/checkbox, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/checkbox, func Plain(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/checkbox, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/checkbox, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/checkbox, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, Checked bool
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/checkbox, type Props struct, OnChange func(bool)
+pkg neuroplast.io/hotty-surf/surfui/checkbox/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/checkbox/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/checkbox/story, type Props struct, Checked bool
+pkg neuroplast.io/hotty-surf/surfui/checkbox/story, type Props struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/checkbox/story, type Props struct, Mixed bool
+pkg neuroplast.io/hotty-surf/surfui/code, func Block(string, string, int) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/code, func Stylesheet() string
+pkg neuroplast.io/hotty-surf/surfui/code, func TokenClass(string) string
+pkg neuroplast.io/hotty-surf/surfui/code, func View(string, string, int) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/code/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/code/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/code/story, type Props struct, First int
+pkg neuroplast.io/hotty-surf/surfui/code/story, type Props struct, Lang string
+pkg neuroplast.io/hotty-surf/surfui/code/story, type Props struct, Src string
+pkg neuroplast.io/hotty-surf/surfui/combobox, func Hotty(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/combobox, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/combobox, func TUI(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/combobox, func View(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Item struct
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Item struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Item struct, Group string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Item struct, Keywords string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Item struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Item struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, AutoHighlight bool
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Clear bool
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, CloseOnSelect bool
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, InputAttrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Keys surfui.KeyMap
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Multiple bool
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, OnChange func(string)
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, OnValuesChange func([]string)
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type Props struct, Values []string
+pkg neuroplast.io/hotty-surf/surfui/combobox, type State struct
+pkg neuroplast.io/hotty-surf/surfui/combobox/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/command, func Dialog(*State, DialogProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/command, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/command, func View(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/command, method (*State) Search(string)
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, Empty string
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, OnClose func()
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, Open bool
+pkg neuroplast.io/hotty-surf/surfui/command, type DialogProps struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/command, type Item = menu.Item
+pkg neuroplast.io/hotty-surf/surfui/command, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/command, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/command, type Props struct, Empty string
+pkg neuroplast.io/hotty-surf/surfui/command, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/command, type Props struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/command, type Props struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/command, type State struct
+pkg neuroplast.io/hotty-surf/surfui/command/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/dialog, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/dialog, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, Description string
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, HideCloseButton bool
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, OnClose func()
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, Open bool
+pkg neuroplast.io/hotty-surf/surfui/dialog, type Props struct, Title string
+pkg neuroplast.io/hotty-surf/surfui/dialog/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/drawer, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/drawer, func View(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/drawer, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/drawer, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/drawer, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/drawer, type Props struct, OnClose func()
+pkg neuroplast.io/hotty-surf/surfui/drawer, type Props struct, Open bool
+pkg neuroplast.io/hotty-surf/surfui/drawer, type Props struct, Side string
+pkg neuroplast.io/hotty-surf/surfui/drawer, type State struct
+pkg neuroplast.io/hotty-surf/surfui/drawer/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/empty, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/empty, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/empty, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/empty, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/empty, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/empty, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/empty, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/empty/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/eventlog, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/eventlog, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Entry struct
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Entry struct, At time.Time
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Entry struct, Kind string
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Entry struct, KindClass string
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Entry struct, Text string
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Props struct, Empty string
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Props struct, Entries []Entry
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/eventlog, type Props struct, OnClear func()
+pkg neuroplast.io/hotty-surf/surfui/eventlog/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/field, const Horizontal Orientation = "horizontal"
+pkg neuroplast.io/hotty-surf/surfui/field, const Responsive Orientation = "responsive"
+pkg neuroplast.io/hotty-surf/surfui/field, const Vertical Orientation = ""
+pkg neuroplast.io/hotty-surf/surfui/field, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/field, func Separator(SeparatorProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/field, func Set(SetProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/field, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/field, type Orientation string
+pkg neuroplast.io/hotty-surf/surfui/field, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/field, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/field, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/field, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/field, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/field, type Props struct, Orientation Orientation
+pkg neuroplast.io/hotty-surf/surfui/field, type SeparatorProps struct
+pkg neuroplast.io/hotty-surf/surfui/field, type SeparatorProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/field, type SeparatorProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/field, type SetProps struct
+pkg neuroplast.io/hotty-surf/surfui/field, type SetProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/field, type SetProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/field/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/icon, func Names() []string
+pkg neuroplast.io/hotty-surf/surfui/icon, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/icon, func View(string, string) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/icon/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/icon/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/icon/story, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/iconbutton, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/iconbutton, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/iconbutton, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/iconbutton, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/iconbutton, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/iconbutton, type Props struct, Shape symbol.Shape
+pkg neuroplast.io/hotty-surf/surfui/iconbutton/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/iconbutton/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/iconbutton/story, type Props struct, Accent string
+pkg neuroplast.io/hotty-surf/surfui/input, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/input, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/input, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/input, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, OnInput func(string)
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Type string
+pkg neuroplast.io/hotty-surf/surfui/input, type Props struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/input/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct, Type string
+pkg neuroplast.io/hotty-surf/surfui/input/story, type Props struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, const BlockEnd Align = "block-end"
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, const BlockStart Align = "block-start"
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, const InlineEnd Align = "inline-end"
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, const InlineStart Align = "inline-start"
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, func Addon(AddonProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type AddonProps struct
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type AddonProps struct, Align Align
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type AddonProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type AddonProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type Align string
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/inputgroup, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/inputgroup/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/item, func Group(GroupProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/item, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/item, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/item, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/item, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/item, type GroupProps struct
+pkg neuroplast.io/hotty-surf/surfui/item, type GroupProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/item, type GroupProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/item, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/item, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/item, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/item, type Props struct, Muted bool
+pkg neuroplast.io/hotty-surf/surfui/item, type Props struct, Size surfui.Size
+pkg neuroplast.io/hotty-surf/surfui/item, type Props struct, Variant surfui.Variant
+pkg neuroplast.io/hotty-surf/surfui/item/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/kbd, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/kbd, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/kbd, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/kbd, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/kbd, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/kbd, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/kbd, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/kbd, type Props struct, Keys string
+pkg neuroplast.io/hotty-surf/surfui/kbd/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/kbd/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/kbd/story, type Props struct, Keys string
+pkg neuroplast.io/hotty-surf/surfui/label, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/label, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/label, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/label, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/label, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/label, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/label, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/label, type Props struct, For string
+pkg neuroplast.io/hotty-surf/surfui/label/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/listitem, func Detail(TextProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, func List(ListProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/listitem, func Subtitle(TextProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, func Title(TextProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, type ListProps struct
+pkg neuroplast.io/hotty-surf/surfui/listitem, type ListProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/listitem, type ListProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/listitem, type ListProps struct, OnChange func(int)
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct, Active bool
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct, Leading templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct, Selected bool
+pkg neuroplast.io/hotty-surf/surfui/listitem, type Props struct, Trailing templ.Component
+pkg neuroplast.io/hotty-surf/surfui/listitem, type TextProps struct
+pkg neuroplast.io/hotty-surf/surfui/listitem, type TextProps struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/listitem, type TextProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/listitem/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/listitem/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/listitem/story, type Props struct, Active int
+pkg neuroplast.io/hotty-surf/surfui/listitem/story, type Props struct, Selected int
+pkg neuroplast.io/hotty-surf/surfui/menu, func Context(*ContextState, ContextProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, func Dropdown(*DropdownState, DropdownProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, func Panel(PanelProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/menu, method (*DropdownState) Open()
+pkg neuroplast.io/hotty-surf/surfui/menu, type ContextProps struct
+pkg neuroplast.io/hotty-surf/surfui/menu, type ContextProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/menu, type ContextProps struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/menu, type ContextProps struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/menu, type ContextState struct
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownProps struct
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownProps struct, Align string
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownProps struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownProps struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownProps struct, Trigger templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, type DropdownState struct
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Checked bool
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Content templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Group string
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Icon string
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Keys string
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Keywords string
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Leading templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, OnCheckedChange func(bool)
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, OnSelect func()
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Role string
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Trailing templ.Component
+pkg neuroplast.io/hotty-surf/surfui/menu, type Item struct, Variant surfui.Variant
+pkg neuroplast.io/hotty-surf/surfui/menu, type PanelProps struct
+pkg neuroplast.io/hotty-surf/surfui/menu, type PanelProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/menu, type PanelProps struct, Highlight int
+pkg neuroplast.io/hotty-surf/surfui/menu, type PanelProps struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/menu, type PanelProps struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/menu, type PanelProps struct, OnHighlight func(int)
+pkg neuroplast.io/hotty-surf/surfui/menu/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/navlist, func Fuzzy(string, string) bool
+pkg neuroplast.io/hotty-surf/surfui/navlist, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) FilterID() string
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) FilterInput(string) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) FocusFilter(context.Context)
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) FocusList(context.Context)
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) ItemID(string) string
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) Keys(string) bool
+pkg neuroplast.io/hotty-surf/surfui/navlist, method (*NavList) List(string) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Group struct
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Group struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Group struct, Name string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Item struct
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Item struct, Dot string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Item struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type Item struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, Current string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, Empty string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, Filter string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, FilterLabel string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, Groups []Group
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, OnFilter func(string)
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, OnSelect func(string)
+pkg neuroplast.io/hotty-surf/surfui/navlist, type NavList struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/navlist/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/popover, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/popover, func View(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/popover, method (*State) Close()
+pkg neuroplast.io/hotty-surf/surfui/popover, method (*State) Open()
+pkg neuroplast.io/hotty-surf/surfui/popover, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/popover, type Props struct, Align string
+pkg neuroplast.io/hotty-surf/surfui/popover, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/popover, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/popover, type Props struct, Side string
+pkg neuroplast.io/hotty-surf/surfui/popover, type Props struct, Trigger templ.Component
+pkg neuroplast.io/hotty-surf/surfui/popover, type State struct
+pkg neuroplast.io/hotty-surf/surfui/popover/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/popover/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/popover/story, type Props struct, Trigger string
+pkg neuroplast.io/hotty-surf/surfui/popover/story, type Props struct, Width string
+pkg neuroplast.io/hotty-surf/surfui/progress, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/progress, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/progress, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/progress, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/progress, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/progress, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/progress, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/progress, type Props struct, Indeterminate bool
+pkg neuroplast.io/hotty-surf/surfui/progress, type Props struct, ShowValue bool
+pkg neuroplast.io/hotty-surf/surfui/progress, type Props struct, Value float64
+pkg neuroplast.io/hotty-surf/surfui/progress/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/radio, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/radio, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/radio, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/radio, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, Checked bool
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, Name string
+pkg neuroplast.io/hotty-surf/surfui/radio, type Props struct, OnChange func(bool)
+pkg neuroplast.io/hotty-surf/surfui/radio/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/select, const AlignCenter Align = "center"
+pkg neuroplast.io/hotty-surf/surfui/select, const AlignEnd Align = "end"
+pkg neuroplast.io/hotty-surf/surfui/select, const AlignStart Align = ""
+pkg neuroplast.io/hotty-surf/surfui/select, func Hotty(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/select, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/select, func TUI(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/select, func View(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/select, type Align string
+pkg neuroplast.io/hotty-surf/surfui/select, type Item struct
+pkg neuroplast.io/hotty-surf/surfui/select, type Item struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/select, type Item struct, Group string
+pkg neuroplast.io/hotty-surf/surfui/select, type Item struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/select, type Item struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Align Align
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, CloseOnSelect bool
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Items []Item
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Keys surfui.KeyMap
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Multiple bool
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, OnChange func(string)
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, OnValuesChange func([]string)
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/select, type Props struct, Values []string
+pkg neuroplast.io/hotty-surf/surfui/select, type State struct
+pkg neuroplast.io/hotty-surf/surfui/select/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/separator, const Horizontal Orientation = "horizontal"
+pkg neuroplast.io/hotty-surf/surfui/separator, const Vertical Orientation = "vertical"
+pkg neuroplast.io/hotty-surf/surfui/separator, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/separator, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/separator, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/separator, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/separator, type Orientation string
+pkg neuroplast.io/hotty-surf/surfui/separator, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/separator, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/separator, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/separator, type Props struct, Decorative bool
+pkg neuroplast.io/hotty-surf/surfui/separator, type Props struct, Orientation Orientation
+pkg neuroplast.io/hotty-surf/surfui/separator/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/separator/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/separator/story, type Props struct, Orientation string
+pkg neuroplast.io/hotty-surf/surfui/skeleton, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/skeleton, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/skeleton, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/skeleton, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/skeleton, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/skeleton, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/skeleton, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/skeleton/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/slider, func Range(RangeProps) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/slider, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/slider, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Max float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Min float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, OnChange func(float64)
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Step float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type Props struct, Value float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, End float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, EndAttrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, Max float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, Min float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, OnChange func(float64, float64)
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, Start float64
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, StartAttrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/slider, type RangeProps struct, Step float64
+pkg neuroplast.io/hotty-surf/surfui/slider/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/switch, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/switch, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/switch, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/switch, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, Checked bool
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, OnChange func(bool)
+pkg neuroplast.io/hotty-surf/surfui/switch, type Props struct, Size surfui.Size
+pkg neuroplast.io/hotty-surf/surfui/switch/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapeAccountTree Shape = "M15 21v-3h-4V8H9v3H2V3h7v3h6V3h7v8h-7V8h-2v8h2v-3h7v8z"
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapeDesktopWindows Shape = "M8 21v-2h2v-2H2V3h20v14h-8v2h2v2zm-4-6h16V5H4zm0 0V5z"
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapeGridView Shape = "M3 11V3h8v8zm0 10v-8h8v8zm10-10V3h8v8zm0 10v-8h8v8zM5 9h4V5H5zm10 0h4V5h-4zm0 10h4v-4h-4zM5 19h4v-4H5zM9 9"
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapeMoreHoriz Shape = "M6 14q-.825 0-1.412-.587T4 12t.588-1.412T6 10t1.413.588T8 12t-.587 1.413T6 14m6 0q-.825 0-1.412-.587T10 12t.588-1.412T12 10t1.413.588T14 12t-.587 1.413T12 14m6 0q-.825 0-1.412-.587T16 12t.588-1.412T18 10t1.413.588T20 12t-.587 1.413T18 14"
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapePublic Shape = "M8.1 21.213q-1.825-.788-3.175-2.138T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22t-3.9-.788M11 19.95V18q-.825 0-1.412-.587T9 16v-1l-4.8-4.8q-.075.45-.137.9T4 12q0 3.025 1.988 5.3T11 19.95m6.9-2.55q1.025-1.125 1.563-2.512T20 12q0-2.45-1.362-4.475T15 4.6V5q0 .825-.587 1.413T13 7h-2v2q0 .425-.288.713T10 10H8v2h6q.425 0 .713.288T15 13v3h1q.65 0 1.175.388T17.9 17.4"
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapeRemove Shape = "M5 13v-2h14v2z"
+pkg neuroplast.io/hotty-surf/surfui/symbol, const ShapeTerminal Shape = "M2 20V4h20v16zm2-2h16V8H4zm3.5-1l-1.4-1.4L8.675 13l-2.6-2.6L7.5 9l4 4zm4.5 0v-2h6v2z"
+pkg neuroplast.io/hotty-surf/surfui/symbol, func All() []NamedShape
+pkg neuroplast.io/hotty-surf/surfui/symbol, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/symbol, func View(Shape, string) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/symbol, type NamedShape struct
+pkg neuroplast.io/hotty-surf/surfui/symbol, type NamedShape struct, Name string
+pkg neuroplast.io/hotty-surf/surfui/symbol, type NamedShape struct, Shape Shape
+pkg neuroplast.io/hotty-surf/surfui/symbol, type Shape string
+pkg neuroplast.io/hotty-surf/surfui/symbol/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/symbol/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/symbol/story, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/table, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/table, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/table, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/table, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/table, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/table/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/table/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/table/story, type Props struct, Caption bool
+pkg neuroplast.io/hotty-surf/surfui/table/story, type Props struct, Sort string
+pkg neuroplast.io/hotty-surf/surfui/tabs, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/tabs, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, Line bool
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, ListClass string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, OnChange func(string)
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, PanelClass string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, Tabs []Tab
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Props struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Tab struct
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Tab struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Tab struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/tabs, type Tab struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/tabs/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/tabs/story, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/tabs/story, type Props struct, Line bool
+pkg neuroplast.io/hotty-surf/surfui/tabs/story, type Props struct, Tab string
+pkg neuroplast.io/hotty-surf/surfui/textarea, const Class untyped string = "textarea"
+pkg neuroplast.io/hotty-surf/surfui/textarea, const ResizeBoth Resize = ""
+pkg neuroplast.io/hotty-surf/surfui/textarea, const ResizeHorizontal Resize = "horizontal"
+pkg neuroplast.io/hotty-surf/surfui/textarea, const ResizeNone Resize = "none"
+pkg neuroplast.io/hotty-surf/surfui/textarea, const ResizeVertical Resize = "vertical"
+pkg neuroplast.io/hotty-surf/surfui/textarea, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/textarea, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/textarea, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/textarea, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, AutoGrow bool
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Cols int
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Disabled bool
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Invalid bool
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Keys surfui.KeyMap
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, MaxCols int
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, MaxRows int
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, MinCols int
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, MinRows int
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, OnInput func(string)
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Placeholder string
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Resize Resize
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Rows int
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Props struct, Value string
+pkg neuroplast.io/hotty-surf/surfui/textarea, type Resize string
+pkg neuroplast.io/hotty-surf/surfui/textarea, var GripSVG string
+pkg neuroplast.io/hotty-surf/surfui/textarea/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/toast, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/toast, func View(*State, Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/toast, method (*State) Remove(string)
+pkg neuroplast.io/hotty-surf/surfui/toast, method (*State) Show(Toast)
+pkg neuroplast.io/hotty-surf/surfui/toast, type Action struct
+pkg neuroplast.io/hotty-surf/surfui/toast, type Action struct, Label string
+pkg neuroplast.io/hotty-surf/surfui/toast, type Action struct, OnSelect func()
+pkg neuroplast.io/hotty-surf/surfui/toast, type Action struct, Variant surfui.Variant
+pkg neuroplast.io/hotty-surf/surfui/toast, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/toast, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/toast, type Props struct, OnLeave func()
+pkg neuroplast.io/hotty-surf/surfui/toast, type State struct
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Actions []Action
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Category string
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Countdown time.Time
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Description string
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Duration time.Duration
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Focused bool
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, ID string
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, OnClick func()
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, OnClose func()
+pkg neuroplast.io/hotty-surf/surfui/toast, type Toast struct, Title string
+pkg neuroplast.io/hotty-surf/surfui/toast/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const Bottom Side = "bottom"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const Center Align = "center"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const End Align = "end"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const InlineEnd Side = "inline-end"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const InlineStart Side = "inline-start"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const Left Side = "left"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const Right Side = "right"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const Start Align = "start"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, const Top Side = "top"
+pkg neuroplast.io/hotty-surf/surfui/tooltip, func Hotty(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/tooltip, func Register(*surfui.Registry)
+pkg neuroplast.io/hotty-surf/surfui/tooltip, func TUI(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/tooltip, func View(Props) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Align string
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct, Align Align
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct, Arrow bool
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct, Attrs templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct, Class string
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct, Side Side
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Props struct, Text string
+pkg neuroplast.io/hotty-surf/surfui/tooltip, type Side string
+pkg neuroplast.io/hotty-surf/surfui/tooltip/story, func Register(*story.Registry)
+pkg neuroplast.io/hotty-surf/surfui/util, func BareClass(context.Context, string) string
+pkg neuroplast.io/hotty-surf/surfui/util, func InGroup(context.Context) bool
+pkg neuroplast.io/hotty-surf/surfui/util, func JoinClass(...string) string
+pkg neuroplast.io/hotty-surf/surfui/util, func KitOn(context.Context, string, ...surf.Handler) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func KittyImageSequence([]byte, int, int) string
+pkg neuroplast.io/hotty-surf/surfui/util, func MergeAttrs(...templ.Attributes) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func OptAttr[T comparable](string, T) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func OutOfGroup(context.Context) context.Context
+pkg neuroplast.io/hotty-surf/surfui/util, func Plain(templ.Component) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/util, func Popups(context.Context) *Popup
+pkg neuroplast.io/hotty-surf/surfui/util, func ScopeAttrs(context.Context, templ.Attributes) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func ScopeCompoundAttrs(context.Context, templ.Attributes) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func ScopeNativeAttrs(context.Context, templ.Attributes, string) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func ScopeTextAttrs(context.Context, templ.Attributes) templ.Attributes
+pkg neuroplast.io/hotty-surf/surfui/util, func ScopedGroup(templ.Component, bool) templ.Component
+pkg neuroplast.io/hotty-surf/surfui/util, type Popup = popup
