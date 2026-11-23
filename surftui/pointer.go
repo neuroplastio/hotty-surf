@@ -43,7 +43,7 @@ import (
 // Other buttons go to contextmenu, aux or rightbutton subscriptions.
 // A second button pressed during a gesture follows the first one's route.
 func (c *Screen) Press(col, row, mods, button int) (taken bool) {
-	if button < 0 {
+	if button < 0 || button == 5 {
 		return false
 	}
 	if c.pressing && button == c.button && len(c.otherButtons) > 0 {
@@ -707,7 +707,7 @@ func (c *Screen) auxTarget(col, row, button int) *html.Node {
 }
 
 func (c *Screen) pressOther(col, row, mods, button int) bool {
-	if mods&hotty.ModAlt != 0 {
+	if mods&(hotty.ModShift|hotty.ModAlt) != 0 {
 		return false
 	}
 	hit := c.hitAt(col, row)
@@ -719,9 +719,6 @@ func (c *Screen) pressOther(col, row, mods, button int) bool {
 		return false
 	}
 	if button == hotty.ButtonSecondary && !tokens(t, "data-on", "rightbutton") {
-		if mods&hotty.ModShift != 0 {
-			return false
-		}
 		e := hotty.Event{Kind: hotty.EventContextMenu, Target: attr(t, "id"),
 			At: &hotty.Cell{Col: col, Row: row}, Mods: mods}
 		if e.Target != "" {

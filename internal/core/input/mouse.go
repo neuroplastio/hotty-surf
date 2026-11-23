@@ -10,8 +10,13 @@ func MouseButton(button uv.MouseButton) (int, bool) {
 	switch {
 	case button >= uv.MouseLeft && button <= uv.MouseRight:
 		return int(button - uv.MouseLeft), true
-	case button >= uv.MouseBackward && button <= uv.MouseButton11:
-		return int(button-uv.MouseBackward) + hotty.ButtonBack, true
+	case button == uv.MouseBackward:
+		return hotty.ButtonBack, true
+	case button == uv.MouseForward:
+		return hotty.ButtonForward, true
+	case button == uv.MouseButton10 || button == uv.MouseButton11:
+		// DOM button 5 is reserved for a pen eraser.
+		return 6 + int(button-uv.MouseButton10), true
 	default:
 		return 0, false
 	}

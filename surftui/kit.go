@@ -9,6 +9,8 @@ import (
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
+
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // The kit's components (ui's Basecoat stylesheet) lay some things out by
@@ -200,10 +202,7 @@ func horizontal(field *html.Node) bool {
 // their data-align (block-start, inline-start, the control, inline-end,
 // block-end), anything else's as written.
 func kids(n *html.Node, st box) []*html.Node {
-	var ks []*html.Node
-	for k := n.FirstChild; k != nil; k = k.NextSibling {
-		ks = append(ks, k)
-	}
+	ks := scopeChildren(nil, n)
 	if n.Type == html.ElementNode {
 		if st.reverse && st.display == dFlex {
 			// flex-col-reverse, flex-row-reverse: the items the other way.
@@ -246,6 +245,18 @@ func kids(n *html.Node, st box) []*html.Node {
 		slices.SortStableFunc(ks, func(a, b *html.Node) int { return rank(a) - rank(b) })
 	}
 	return ks
+}
+
+// scopeChildren keeps the screen's flow through runtime scope boundaries.
+func scopeChildren(out []*html.Node, n *html.Node) []*html.Node {
+	for k := n.FirstChild; k != nil; k = k.NextSibling {
+		if has(k, rt.KeyScopeBoundary) {
+			out = scopeChildren(out, k)
+		} else {
+			out = append(out, k)
+		}
+	}
+	return out
 }
 
 // figure draws what the kit draws with its stylesheet or an svg: a

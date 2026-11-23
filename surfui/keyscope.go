@@ -69,8 +69,10 @@ type KeyBinding struct {
 // controls do not receive keys; a scope enclosing it applies to its
 // focused kit control.
 //
-// Its children are rendered without adding an HTML wrapper; a scope with
-// no children still offers its bindings to a menu and a palette. Run runs
+// The surface places a shared scope on an enclosing element. When nested
+// scopes exhaust the available ancestors, the surface uses a transparent
+// boundary under the document root. A scope with no children still offers
+// its bindings to a menu and a palette. Run runs
 // on the surface driver's goroutine, as other handlers do. A host's open
 // native select list can keep keys until it closes (SPEC §10.2).
 func KeyScope(bindings []KeyBinding) templ.Component {
@@ -150,7 +152,17 @@ func scopeCanonical(p hotty.Platform, key string) (string, bool) { return p.Read
 // off and places the scope's own or inner keymap.
 func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
 	scope, f := rt.KeyScopeFrom(ctx), rt.From(ctx)
-	if scope == nil || f == nil || len(rt.Forwarded(scope)) == 0 {
+	if f == nil {
+		return attrs
+	}
+	keyed := false
+	for enclosing := scope; enclosing != nil; enclosing = enclosing.Parent {
+		if rt.HasKeyBindings(enclosing) {
+			keyed = true
+			break
+		}
+	}
+	if !keyed {
 		return attrs
 	}
 	f.KeyScopes = append(f.KeyScopes, scope)

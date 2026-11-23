@@ -53,7 +53,7 @@ type Handlers struct {
 	// type is surf's (rt can't import surf). Secondary is surf.Secondary's.
 	Aux        any
 	Drag, Drop any
-	Secondary  func(hotty.Cell, hotty.Area)
+	Secondary  func(*hotty.Cell, hotty.Area)
 }
 
 // A Bind is one key bound to one of SPEC §10.2's actions: a field's edit

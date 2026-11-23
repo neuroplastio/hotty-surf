@@ -5,6 +5,13 @@ to work, not look good: it reads the markup, a handful of classes and the
 inline `style`, never the stylesheet, and knows what the kit's stylesheet
 does for a few of its components. This is the subset (v0.7, L1 and L3).
 
+## Selection and copy
+
+The cells renderer exposes selection and copy for the focused text field.
+Document-wide selection and its SPEC §11 root and body keymap are deferred
+until the cells renderer supports selecting text outside fields. Field
+selections continue to use the focused field's keymap.
+
 ## Layout
 
 - **Blocks** stack, as wide as their container. Inline content (text,

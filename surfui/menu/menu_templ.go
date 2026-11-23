@@ -555,7 +555,11 @@ func (v *contextView) join(ctx context.Context) string {
 	return ""
 }
 
-func (v *contextView) press(at hotty.Cell, area hotty.Area) {
+func (v *contextView) contextMenu(at *hotty.Cell, area hotty.Area) {
+	if at == nil {
+		v.openFromKeyboard()
+		return
+	}
 	v.st.at, v.st.placed = hotty.Cell{}, false
 	if area != (hotty.Area{}) {
 		v.st.at = hotty.Cell{Col: max(0, at.Col-area.Col), Row: max(0, at.Row-area.Row)}
@@ -577,9 +581,13 @@ func (v *contextView) areaKey(k string) bool {
 	if k != "shift+f10" && k != "context_menu" {
 		return false
 	}
+	v.openFromKeyboard()
+	return true
+}
+
+func (v *contextView) openFromKeyboard() {
 	v.st.at, v.st.placed = hotty.Cell{}, false
 	v.open(pickFirst)
-	return true
 }
 
 func (v *contextView) menuKey(k string) bool {
@@ -600,7 +608,15 @@ func (v *contextView) placement() templ.SafeCSS {
 }
 
 func (v *contextView) areaAttrs(ctx context.Context) templ.Attributes {
-	return util.KitOn(ctx, v.id, surf.Secondary(v.press), surf.Key(v.areaKey))
+	f := rt.From(ctx)
+	wasRegistered := f != nil && f.Get(v.id) != nil
+	attrs := util.KitOn(ctx, v.id, surf.Secondary(func(at hotty.Cell, area hotty.Area) {
+		v.contextMenu(&at, area)
+	}), surf.Key(v.areaKey))
+	if f != nil && !wasRegistered {
+		f.Get(v.id).Secondary = v.contextMenu
+	}
+	return attrs
 }
 
 func (v *contextView) menuAttrs(ctx context.Context) templ.Attributes {
@@ -654,7 +670,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.CSSClasses(templ_7745c5c3_Var2).String()).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
@@ -703,7 +719,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.id + "-menu").Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 625, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 641, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
@@ -716,7 +732,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templruntime.NewAttributeExpression(strconv.FormatBool(v.st.open)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 626, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 642, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
@@ -734,7 +750,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.opts[o].ID).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 628, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 644, Col: 40}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 				if templ_7745c5c3_Err != nil {
@@ -780,7 +796,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.id + "-popover").Resolve(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 639, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 655, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -793,7 +809,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.NewAttributeExpression(strconv.FormatBool(!v.st.open)).Resolve(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 641, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 657, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -811,7 +827,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.p.Align).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 643, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 659, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 			if templ_7745c5c3_Err != nil {
@@ -837,7 +853,7 @@ func dropdownMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.id + "-trigger").Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 646, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 662, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 			if templ_7745c5c3_Err != nil {
@@ -918,7 +934,7 @@ func panelMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.CSSClasses(templ_7745c5c3_Var12).String()).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 			if templ_7745c5c3_Err != nil {
@@ -941,7 +957,7 @@ func panelMarkup(v *menuView) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.id).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 663, Col: 11}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 679, Col: 11}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 			if templ_7745c5c3_Err != nil {
@@ -968,7 +984,7 @@ func panelMarkup(v *menuView) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.id + "-popover").Resolve(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 665, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 681, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
@@ -994,7 +1010,7 @@ func panelMarkup(v *menuView) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.opts[o].ID).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 670, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 686, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 				if templ_7745c5c3_Err != nil {
@@ -1069,7 +1085,7 @@ func contextMarkup(v *contextView, area templ.Component) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.NewAttributeExpression(templ.CSSClasses(templ_7745c5c3_Var18).String()).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 			if templ_7745c5c3_Err != nil {
@@ -1120,7 +1136,7 @@ func contextMarkup(v *contextView, area templ.Component) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.id + "-popover").Resolve(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 694, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 710, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 		if templ_7745c5c3_Err != nil {
@@ -1133,7 +1149,7 @@ func contextMarkup(v *contextView, area templ.Component) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templruntime.NewAttributeExpression(strconv.FormatBool(!v.st.menu.open)).Resolve(ctx)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 696, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 712, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
 		if templ_7745c5c3_Err != nil {
@@ -1151,7 +1167,7 @@ func contextMarkup(v *contextView, area templ.Component) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(v.placement())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 699, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 715, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -1182,7 +1198,7 @@ func contextMarkup(v *contextView, area templ.Component) templ.Component {
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templruntime.NewAttributeExpression(v.m.opts[o].ID).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 707, Col: 43}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 723, Col: 43}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 				if templ_7745c5c3_Err != nil {
@@ -1264,7 +1280,7 @@ func menuEntries(v *menuView) templ.Component {
 				var templ_7745c5c3_Var25 string
 				templ_7745c5c3_Var25, templ_7745c5c3_Err = templruntime.NewAttributeExpression(e.LabelID).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 728, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 744, Col: 49}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 				if templ_7745c5c3_Err != nil {
@@ -1277,7 +1293,7 @@ func menuEntries(v *menuView) templ.Component {
 				var templ_7745c5c3_Var26 string
 				templ_7745c5c3_Var26, templ_7745c5c3_Err = templruntime.NewAttributeExpression(e.LabelID).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 729, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 745, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
 				if templ_7745c5c3_Err != nil {
@@ -1290,7 +1306,7 @@ func menuEntries(v *menuView) templ.Component {
 				var templ_7745c5c3_Var27 string
 				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(e.Group)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 729, Col: 51}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 745, Col: 51}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 				if templ_7745c5c3_Err != nil {
@@ -1347,7 +1363,7 @@ func menuItem(v *menuView, o int) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templruntime.NewAttributeExpression(id).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 743, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 759, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var29)
 			if templ_7745c5c3_Err != nil {
@@ -1369,7 +1385,7 @@ func menuItem(v *menuView, o int) templ.Component {
 				var templ_7745c5c3_Var30 string
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templruntime.NewAttributeExpression(itemRole(it.Role)).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 746, Col: 27}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 762, Col: 27}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
 				if templ_7745c5c3_Err != nil {
@@ -1387,7 +1403,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var31 string
 					templ_7745c5c3_Var31, templ_7745c5c3_Err = templruntime.NewAttributeExpression(strconv.FormatBool(it.Checked)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 748, Col: 49}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 764, Col: 49}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 					if templ_7745c5c3_Err != nil {
@@ -1412,7 +1428,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var32 string
 					templ_7745c5c3_Var32, templ_7745c5c3_Err = templruntime.NewAttributeExpression(it.Label).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 754, Col: 25}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 770, Col: 25}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var32)
 					if templ_7745c5c3_Err != nil {
@@ -1431,7 +1447,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var33 string
 					templ_7745c5c3_Var33, templ_7745c5c3_Err = templruntime.NewAttributeExpression(string(it.Variant)).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 757, Col: 37}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 773, Col: 37}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var33)
 					if templ_7745c5c3_Err != nil {
@@ -1456,7 +1472,7 @@ func menuItem(v *menuView, o int) templ.Component {
 					var templ_7745c5c3_Var34 string
 					templ_7745c5c3_Var34, templ_7745c5c3_Err = templruntime.NewAttributeExpression(id).Resolve(ctx)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 763, Col: 11}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 779, Col: 11}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
 					if templ_7745c5c3_Err != nil {
@@ -1514,7 +1530,7 @@ func menuItem(v *menuView, o int) templ.Component {
 				var templ_7745c5c3_Var35 string
 				templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(it.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu/menu.templ`, Line: 778, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `menu.templ`, Line: 794, Col: 14}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 				if templ_7745c5c3_Err != nil {

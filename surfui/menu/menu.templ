@@ -544,7 +544,11 @@ func (v *contextView) join(ctx context.Context) string {
 	return ""
 }
 
-func (v *contextView) press(at hotty.Cell, area hotty.Area) {
+func (v *contextView) contextMenu(at *hotty.Cell, area hotty.Area) {
+	if at == nil {
+		v.openFromKeyboard()
+		return
+	}
 	v.st.at, v.st.placed = hotty.Cell{}, false
 	if area != (hotty.Area{}) {
 		v.st.at = hotty.Cell{Col: max(0, at.Col-area.Col), Row: max(0, at.Row-area.Row)}
@@ -566,9 +570,13 @@ func (v *contextView) areaKey(k string) bool {
 	if k != "shift+f10" && k != "context_menu" {
 		return false
 	}
+	v.openFromKeyboard()
+	return true
+}
+
+func (v *contextView) openFromKeyboard() {
 	v.st.at, v.st.placed = hotty.Cell{}, false
 	v.open(pickFirst)
-	return true
 }
 
 func (v *contextView) menuKey(k string) bool {
@@ -589,7 +597,15 @@ func (v *contextView) placement() templ.SafeCSS {
 }
 
 func (v *contextView) areaAttrs(ctx context.Context) templ.Attributes {
-	return util.KitOn(ctx, v.id, surf.Secondary(v.press), surf.Key(v.areaKey))
+	f := rt.From(ctx)
+	wasRegistered := f != nil && f.Get(v.id) != nil
+	attrs := util.KitOn(ctx, v.id, surf.Secondary(func(at hotty.Cell, area hotty.Area) {
+		v.contextMenu(&at, area)
+	}), surf.Key(v.areaKey))
+	if f != nil && !wasRegistered {
+		f.Get(v.id).Secondary = v.contextMenu
+	}
+	return attrs
 }
 
 func (v *contextView) menuAttrs(ctx context.Context) templ.Attributes {

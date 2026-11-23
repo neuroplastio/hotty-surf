@@ -289,12 +289,11 @@ func (s *Surface) scopeSig(sc *rt.KeyScope) string {
 	}
 	if sc != s.c.sigOf {
 		s.c.sigOf = sc
-		var keys strings.Builder
+		var keys []byte
 		for enclosing := sc; enclosing != nil; enclosing = enclosing.Parent {
-			keys.WriteString(strings.Join(rt.ScopeKeys(enclosing), " "))
-			keys.WriteByte('|')
+			keys = appendScopeSignature(keys, enclosing)
 		}
-		s.c.sig = keys.String()
+		s.c.sig = string(keys)
 	}
 	return s.c.sig
 }

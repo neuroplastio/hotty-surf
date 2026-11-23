@@ -138,7 +138,14 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		case kindDrop:
 			e.Drop = h.fn
 		case kindSecondary:
-			e.Secondary = h.fn.(func(hotty.Cell, hotty.Area))
+			fn := h.fn.(func(hotty.Cell, hotty.Area))
+			e.Secondary = func(at *hotty.Cell, area hotty.Area) {
+				var cell hotty.Cell
+				if at != nil {
+					cell = *at
+				}
+				fn(cell, area)
+			}
 		case kindAuxClick:
 			e.Aux = h.fn
 		}

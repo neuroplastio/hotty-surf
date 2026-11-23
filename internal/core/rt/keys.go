@@ -91,6 +91,15 @@ func KeyScopeFrom(ctx context.Context) *KeyScope {
 	return s
 }
 
+// KeyScopeBoundary marks a display-contents wrapper made for a shared scope
+// after the surface runs out of authored ancestors.
+const KeyScopeBoundary = "data-hotty-scope-boundary"
+
+// HasKeyBindings reports whether the scope declares a physical key.
+func HasKeyBindings(scope *KeyScope) bool {
+	return slices.ContainsFunc(scope.Bindings, func(b Binding) bool { return b.Physical != "" })
+}
+
 // ScopeKeys returns the enabled keys of one scope in wire order.
 func ScopeKeys(scope *KeyScope) []string {
 	var out []string

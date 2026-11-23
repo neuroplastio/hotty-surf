@@ -328,7 +328,7 @@ func (c *Screen) focusTo(n *html.Node, user bool) {
 // fixFocus commits a field still in the document and clears element focus.
 func (c *Screen) fixFocus() {
 	c.commit(c.focused)
-	c.focused, c.prefixed, c.lay = nil, false, nil
+	c.focused, c.lay = nil, nil
 }
 
 // blur takes the keyboard from the focused element: it commits, and the
@@ -730,7 +730,12 @@ func (c *Screen) tab(back bool) bool {
 		}
 	})
 	if len(order) == 0 {
-		return false
+		if c.focused != nil {
+			c.blur()
+		} else {
+			c.emit(hotty.Event{Kind: hotty.EventBlur})
+		}
+		return true
 	}
 	in := at >= 0 && at < len(order) && order[at] == c.focused
 	i := at

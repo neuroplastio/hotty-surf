@@ -418,15 +418,11 @@ func (s *Surface) secondary(e hotty.Event) bool {
 	if h == nil || h.Secondary == nil {
 		return false
 	}
-	var at hotty.Cell
 	var area hotty.Area
-	if e.At != nil {
-		at = *e.At
-	}
 	if e.Area != nil {
 		area = *e.Area
 	}
-	h.Secondary(at, area)
+	h.Secondary(e.At, area)
 	return true
 }
 

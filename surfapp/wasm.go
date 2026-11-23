@@ -169,10 +169,12 @@ func (w writer) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// capsOf reads the capabilities the page gives: the mod key, for now,
-// which is what a surface needs of them (surf.Platform).
+// capsOf reads the negotiated protocol version and mod key from the page.
 func capsOf(c js.Value) hotty.Caps {
 	var caps hotty.Caps
+	if v := c.Get("v"); v.Type() == js.TypeString {
+		caps.V = v.String()
+	}
 	if m := c.Get("mod"); m.Type() == js.TypeString {
 		caps.Mod = m.String()
 	}

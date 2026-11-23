@@ -220,7 +220,7 @@ func (c *Screen) settle() {
 	if n := c.focused; n != nil {
 		switch {
 		case !c.attached(n):
-			c.focused, c.prefixed, c.lay = nil, false, nil
+			c.focused, c.lay = nil, nil
 		case !focusable(n) || hidden(n):
 			c.fixFocus()
 		}

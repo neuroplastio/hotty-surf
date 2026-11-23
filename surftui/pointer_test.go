@@ -147,7 +147,7 @@ func TestSecondaryInCells(t *testing.T) {
 
 func TestAuxiliaryButtonsInCells(t *testing.T) {
 	c, got := pointerScreen(t, `<div id="row" data-on="aux drag rightbutton">one</div><div id="other" data-on="aux">two</div>`)
-	for _, button := range []int{hotty.ButtonMiddle, hotty.ButtonSecondary, hotty.ButtonBack, hotty.ButtonForward, 5} {
+	for _, button := range []int{hotty.ButtonMiddle, hotty.ButtonSecondary, hotty.ButtonBack, hotty.ButtonForward, 6, 7} {
 		if !c.Press(1, 0, 0, button) {
 			t.Fatalf("button %d press escaped", button)
 		}
@@ -166,6 +166,24 @@ func TestAuxiliaryButtonsInCells(t *testing.T) {
 	c.Move(1, 1, 0)
 	c.ReleaseButton(1, 1, 0, hotty.ButtonMiddle)
 	wantEvents(t, got, "dragstart row button=1 c=1,0", "drag  c=1,1", "dragend  c=1,1")
+}
+
+func TestShiftAuxiliaryPressesAndReservedButton(t *testing.T) {
+	c, got := pointerScreen(t, `<button id="row" data-on="aux drag rightbutton">one</button><div id="menu" data-on="contextmenu">two</div>`)
+	c.Key("tab")
+	wantEvents(t, got, "focus row")
+	for _, button := range []int{1, 2, 3, 4, 6, 7} {
+		if c.Press(1, 0, hotty.ModShift, button) || c.ReleaseButton(1, 0, 0, button) {
+			t.Errorf("Shift+button %d was taken", button)
+		}
+	}
+	if c.Press(1, 0, 0, 5) || c.ReleaseButton(1, 0, 0, 5) {
+		t.Error("reserved button 5 was taken")
+	}
+	wantEvents(t, got)
+	if c.focused != c.byID("row") {
+		t.Fatal("auxiliary presses moved the keyboard")
+	}
 }
 
 func TestDoubleClickAndMods(t *testing.T) {
@@ -293,5 +311,43 @@ func TestClickOnDragHandle(t *testing.T) {
 		if strings.HasPrefix(e, "drag") {
 			t.Errorf("a move after Click on a drag handle sent %q", e)
 		}
+	}
+}
+
+func TestPrefixSurvivesFocusFixup(t *testing.T) {
+	for _, op := range []hotty.Op{hotty.OpAttr("f", "disabled", ""), hotty.OpRemove("f")} {
+		t.Run(op.Op, func(t *testing.T) {
+			c, got := pointerScreen(t, `<input id="f" data-keys="ctrl+k=prefix"><button id="b">Go</button>`)
+			write := func(cmd string) {
+				t.Helper()
+				if _, err := c.Write([]byte(cmd)); err != nil {
+					t.Fatal(err)
+				}
+			}
+			write(hotty.Focus("s", "f"))
+			if c.Key("ctrl+k") {
+				t.Fatal("prefix should reach the program")
+			}
+			write(hotty.Delta("s", []hotty.Op{op}))
+			if c.Key("tab") || c.Key("shift+tab") {
+				t.Fatal("focus fixup ended the prefix")
+			}
+			wantEvents(t, got)
+			write(hotty.Focus("s", "b"))
+			if !c.Key("tab") {
+				t.Fatal("program focus did not end the prefix")
+			}
+			wantEvents(t, got, "blur ")
+		})
+	}
+}
+
+func TestTabWithNoFocusStopsBlurs(t *testing.T) {
+	for _, key := range []string{"tab", "shift+tab"} {
+		c, got := pointerScreen(t, `<button disabled>Go</button>`)
+		if !c.Key(key) {
+			t.Fatalf("%s escaped to the program", key)
+		}
+		wantEvents(t, got, "blur ")
 	}
 }

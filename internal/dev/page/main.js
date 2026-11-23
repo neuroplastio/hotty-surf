@@ -26,7 +26,8 @@ const term = new Terminal({
 });
 const fit = new FitAddon();
 term.loadAddon(fit);
-term.loadAddon(new HottyAddon());
+const hotty = new HottyAddon();
+term.loadAddon(hotty);
 term.open(el);
 fit.fit();
 new ResizeObserver(() => fit.fit()).observe(el);
@@ -43,7 +44,7 @@ const glue = {
   },
   cols: term.cols,
   rows: term.rows,
-  caps: { mod: mac ? "super" : "ctrl" },
+  caps: { v: hotty.version, mod: mac ? "super" : "ctrl" },
 };
 globalThis.hottySurf = glue;
 const encoder = new TextEncoder();

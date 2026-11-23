@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/a-h/templ"
+	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf"
 	"neuroplast.io/hotty-surf/surftest"
@@ -105,5 +106,41 @@ func TestSurfaceOverlaysFirstDocument(t *testing.T) {
 	}
 	if got := s.Overlays(); !slices.Equal(got, []string{"p"}) {
 		t.Fatalf("Overlays() = %q, want the popover", got)
+	}
+}
+
+func TestKeyboardContextMenuEvent(t *testing.T) {
+	a := &openApp{}
+	s := surf.New("open", a.view(), surfui.Stylesheet())
+	r := surftest.Start(t, s)
+	r.Click("#row")
+	r.Key("shift+f10")
+	want := attr(r.One("#cm-menu"), "aria-activedescendant")
+	if want == "" {
+		t.Fatal("the raw keyboard shortcut did not highlight an item")
+	}
+	r.Key("escape")
+	menu := func(at *hotty.Cell) {
+		t.Helper()
+		if err := s.Event(hotty.Event{Surface: "open", Kind: hotty.EventContextMenu, Target: "cm",
+			Area: &hotty.Area{W: 4, H: 2}, At: at}); err != nil {
+			t.Fatal(err)
+		}
+		r.Update()
+	}
+	menu(nil)
+	if got := attr(r.One("#cm-menu"), "aria-activedescendant"); got != want {
+		t.Errorf("keyboard event highlighted %q, want %q", got, want)
+	}
+	if hasAttr(r.One("#cm-popover"), "data-at") {
+		t.Error("keyboard event used pointer positioning")
+	}
+	r.Key("escape")
+	menu(&hotty.Cell{})
+	if !hasAttr(r.One("#cm-popover"), "data-at") {
+		t.Error("pointer at (0,0) lost pointer positioning")
+	}
+	if got := attr(r.One("#cm-menu"), "aria-activedescendant"); got != "" {
+		t.Errorf("pointer opening highlighted %q", got)
 	}
 }
