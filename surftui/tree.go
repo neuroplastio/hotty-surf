@@ -27,6 +27,28 @@ func (c *Screen) load(name, doc string) error {
 		}
 	}
 	body := &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
+	// A fragment parser ignores attributes on the document elements.
+	// Preserve those from explicit tags for the keyboard's document map.
+	if markup := strings.ToLower(doc); strings.Contains(markup, "<html") || strings.Contains(markup, "<body") {
+		tree, err := html.Parse(strings.NewReader(doc))
+		if err != nil {
+			return err
+		}
+		for root := tree.FirstChild; root != nil; root = root.NextSibling {
+			if root.DataAtom != atom.Html {
+				continue
+			}
+			for el := root.FirstChild; el != nil; el = el.NextSibling {
+				if el.DataAtom == atom.Body {
+					body.Attr = el.Attr
+					break
+				}
+			}
+			htmlRoot := &html.Node{Type: html.ElementNode, DataAtom: atom.Html, Data: "html", Attr: root.Attr}
+			htmlRoot.AppendChild(body)
+			break
+		}
+	}
 	nodes, err := html.ParseFragment(strings.NewReader(doc), body)
 	if err != nil {
 		return err
@@ -51,6 +73,13 @@ func (c *Screen) loadBody(name string, body *html.Node) error {
 			// descendants' and siblings' attributes too (kit, filtered,
 			// barLabels): any change, and none of them holds.
 			c.kept.forgetStyles()
+		}
+		if c.body.Parent != nil {
+			c.body.Parent.RemoveChild(c.body)
+		}
+		if root := body.Parent; root != nil {
+			root.RemoveChild(body)
+			root.AppendChild(c.body)
 		}
 		c.fields = map[*html.Node]*field{}
 		c.focused, c.remembered = nil, nil
@@ -122,7 +151,11 @@ func (c *Screen) byID(id string) *html.Node {
 	}
 	if c.ids == nil {
 		c.ids = map[string]*html.Node{}
-		walk(c.body, func(n *html.Node) {
+		root := c.body
+		if root.Parent != nil {
+			root = root.Parent
+		}
+		walk(root, func(n *html.Node) {
 			if n.Type == html.ElementNode {
 				if v, ok := get(n, "id"); ok {
 					if _, dup := c.ids[v]; !dup {

@@ -13,11 +13,10 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/tinylib/msgp v1.6.5
 	golang.org/x/net v0.62.0
-	golang.org/x/sys v0.50.0
-	neuroplast.io/hotty-go v0.8.3
-	neuroplast.io/hotty-go/hottyedit v0.8.3
-	neuroplast.io/hotty-go/hottyterm v0.8.3
-	neuroplast.io/hotty-go/hottytest v0.8.3
+	neuroplast.io/hotty-go v0.9.0
+	neuroplast.io/hotty-go/hottyedit v0.9.0
+	neuroplast.io/hotty-go/hottyterm v0.9.0
+	neuroplast.io/hotty-go/hottytest v0.9.0
 	neuroplast.io/myelin/myelinkey v0.2.0
 )
 
@@ -36,5 +35,6 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 )

@@ -273,7 +273,7 @@ func (r *Rig) drag(from, to string, tx, ty int) {
 func (r *Rig) Secondary(sel string) {
 	r.t.Helper()
 	id := attr(r.One(sel), "id")
-	if err := r.host.SecondaryPress(r.s.Name(), id, 0, 0); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
+	if err := r.host.ContextMenu(r.s.Name(), id, 0, 0); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
 		r.t.Fatalf("surftest: secondary press on %s: %v", sel, err)
 	}
 	r.settle()

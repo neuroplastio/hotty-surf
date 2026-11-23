@@ -105,7 +105,11 @@ func NativeKeyDefault(e *KeyEnvironment, key string, fallback func(KeyDefault) K
 		for p := n; p != nil; p = p.Parent {
 			if h := e.On.Get(attr(p, "id")); h != nil {
 				if v := EditKeys(h, !e.Declined); v != "" {
-					in.Keymaps = append(in.Keymaps, v)
+					if p == n {
+						in.OwnKeys = v
+					} else {
+						in.Keymaps = append(in.Keymaps, v)
+					}
 				}
 			}
 		}

@@ -11,16 +11,12 @@ import (
 	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
-// The keys a surface gives the program. A key is declared in Go, by the
-// code that takes it: surf.Key's keys, and a ui.KeyScope's bindings
-// around a kit control. SPEC §10.2's data-keys is how a host learns of
-// them, so the surface writes it, here and nowhere else, after the view
-// has rendered: a template carries no key binds. A data-keys the view
-// wrote is a fault and is dropped, as a runtime id is; so are the kit's
-// private markers, when they aren't the ones the kit gave.
-
-// keysAttr is SPEC §10.2's attribute, which only writeKeys writes.
-const keysAttr = "data-keys"
+// Keymap attributes are written after rendering from the Go handlers
+// and scopes. Templates may not provide either attribute.
+const (
+	keysAttr      = "data-keys"
+	keysInnerAttr = "data-keys-inner"
+)
 
 // scopeAttr is the kit's private marker on a control under a
 // ui.KeyScope: the frame's secret (rt.Frame.KeyMark), then which of the
@@ -35,49 +31,138 @@ const (
 	kindAttr  = "data-hotty-keykind"
 )
 
-// writeKeys takes what the view wrote of keys off n, an element of t with
-// the id id, and writes its data-keys, sorted by key:
-//   - its Key handlers' keys, each the program's; escape, which a host
-//     ignores (it reaches the program anyway), only OwnKeys lists; tab
-//     only on a text field, the one place SPEC lets it go;
-//   - the keys the KeyScopes around a kit control forward;
-//   - its surf.Bind bindings, key=action, but for a key
-//     the two above give the program, an Unbind under CUAKeys or CocoaKeys
-//     written as that keymap's binding;
-//   - on an element that types, each printable key an element around it
-//     declares, given back (key=default), so a field types it (K27).
-//
-// It says how many printable keys n declares, how many keys it gives
-// the program (CUAKeys' and CocoaKeys' give-backs aren't: a binding inside
-// still takes them), and how many of CUAKeys' and CocoaKeys' bindings n holds
-// (layout's base), which it pushed on t's stacks for n's insides; number
-// pops them after.
+func (s *Surface) readScope(t *tree, value string) (int, keyMark) {
+	if t.f == nil || t.f.KeyMark == "" {
+		return 0, keyMark{}
+	}
+	rest, ok := strings.CutPrefix(value, t.f.KeyMark)
+	if !ok {
+		return 0, keyMark{}
+	}
+	var rec *record
+	if id, local, ok := strings.Cut(rest, "."); ok {
+		rec = s.c.byID[id]
+		if rec == nil {
+			return 0, keyMark{}
+		}
+		rest = local
+	}
+	local, err := strconv.Atoi(rest)
+	if err != nil || local <= 0 {
+		return 0, keyMark{}
+	}
+	index := local + scopeBase(rec)
+	if index > len(t.f.KeyScopes) {
+		return 0, keyMark{}
+	}
+	return index, keyMark{rec: rec, local: local, kind: t.f.KeyKinds[index-1]}
+}
+
+func focusableKeys(n *html.Node) bool {
+	kind, _ := rt.NativeKind(n)
+	return kind != "" || hasAttr(n, "tabindex") || n.Data == "input" && attr(n, "type") != "hidden" || n.Data == "select"
+}
+
+// placeScopes finds the shared element of each scope's marked controls.
+func (s *Surface) placeScopes(root *html.Node, t *tree) {
+	if s.legacy || len(t.f.KeyScopes) == 0 {
+		return
+	}
+	controls := map[*rt.KeyScope][]*html.Node{}
+	marked := map[*html.Node]*rt.KeyScope{}
+	walkEls(root, func(n *html.Node) {
+		if i, _ := s.readScope(t, attr(n, scopeAttr)); i > 0 {
+			scope := t.f.KeyScopes[i-1]
+			marked[n] = scope
+			for ; scope != nil; scope = scope.Parent {
+				controls[scope] = append(controls[scope], n)
+			}
+		}
+	})
+	t.scopeKeys = map[*html.Node][]string{}
+	t.scopeInner = map[*html.Node][]string{}
+	for i, scope := range t.f.Scopes {
+		nodes := controls[scope]
+		if len(nodes) == 0 {
+			continue
+		}
+		root := nodes[0]
+		for _, n := range nodes[1:] {
+			for !within(n, root) {
+				root = root.Parent
+			}
+		}
+		keys := rt.ScopeKeys(scope)
+		applies := func(n *html.Node) bool {
+			for sc := marked[n]; sc != nil; sc = sc.Parent {
+				if sc == scope {
+					return true
+				}
+			}
+			return false
+		}
+		var place func(*html.Node)
+		place = func(n *html.Node) {
+			if applies(n) {
+				t.scopeKeys[n] = append(t.scopeKeys[n], keys...)
+			}
+			if n.FirstChild == nil {
+				return
+			}
+			safe, descendants := true, false
+			walkEls(n, func(el *html.Node) {
+				if el != n {
+					inside := applies(el)
+					descendants = descendants || inside
+					safe = safe && (!focusableKeys(el) || inside)
+				}
+			})
+			if safe && descendants {
+				t.scopeInner[n] = append(t.scopeInner[n], keys...)
+				if !applies(n) && focusableKeys(n) {
+					t.scopeKeys[n] = append(t.scopeKeys[n], keys...)
+					if t.scopeRoots == nil {
+						t.scopeRoots = map[*html.Node]int{}
+					}
+					t.scopeRoots[n] = i + 1
+				}
+			} else if descendants {
+				for el := n.FirstChild; el != nil; el = el.NextSibling {
+					if el.Type == html.ElementNode {
+						place(el)
+					}
+				}
+			}
+		}
+		place(root)
+	}
+}
+
+func within(n, ancestor *html.Node) bool {
+	for ; n != nil; n = n.Parent {
+		if n == ancestor {
+			return true
+		}
+	}
+	return false
+}
+
+// writeKeys removes private markers and writes the element's keymaps.
+// It reports what it pushed onto the inherited binding stacks for number.
 func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
-	scope, kind := 0, ""
+	scope := 0
 	var mark keyMark
 	for i := 0; i < len(n.Attr); i++ {
 		a := n.Attr[i]
 		switch a.Key {
-		case keysAttr, "data-hotty-default-keys":
+		case keysAttr, keysInnerAttr, "data-hotty-default-keys":
 			s.fault("surf: " + a.Key + " on " + strconv.Quote(id) + " is the runtime's: declare keys in Go, with surf.Key(fn, keys...) or a ui.KeyScope")
 		case kindAttr:
 			s.fault("surf: " + kindAttr + " on " + strconv.Quote(id) + " is the kit's")
 		case scopeAttr:
 			// The frame's secret, then the scope: in a compiled instance,
 			// its id, a dot, and the scope among the instance's own.
-			k, local := -1, 0
-			var rec *record
-			if t.f != nil && t.f.KeyMark != "" {
-				if rest, ok := strings.CutPrefix(a.Val, t.f.KeyMark); ok {
-					if i := strings.IndexByte(rest, '.'); i >= 0 {
-						rec = s.c.byID[rest[:i]]
-						rest = rest[i+1:]
-					}
-					if v, err := strconv.Atoi(rest); err == nil && v > 0 && (rec != nil || !strings.Contains(a.Val[len(t.f.KeyMark):], ".")) {
-						k, local = v+scopeBase(rec), v
-					}
-				}
-			}
+			k, placement := s.readScope(t, a.Val)
 			if k <= 0 || k > len(t.f.KeyScopes) || t.marks[k] {
 				s.fault("surf: " + scopeAttr + " on " + strconv.Quote(id) + " is the kit's")
 				break
@@ -85,15 +170,16 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 			if t.marks == nil {
 				t.marks = map[int]bool{}
 			}
-			t.marks[k], scope, kind = true, k, t.f.KeyKinds[k-1]
-			mark = keyMark{rec: rec, local: local, kind: kind}
+			t.marks[k], scope = true, k
+			mark = placement
 		default:
 			continue
 		}
 		n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
 		i--
 	}
-	if scope > 0 {
+	mark.anchor = t.scopeRoots[n]
+	if scope > 0 || mark.anchor > 0 {
 		if t.scopes == nil {
 			t.scopes = map[string]keyMark{}
 		}
@@ -108,7 +194,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		own = h.Keys
 	}
 	var binds []string
-	text, multiline := nativeKind(n)
+	text, multiline := rt.NativeKind(n)
 	pushed := 0
 	// The element's bindings, laid out under the edit shortcuts in effect
 	// here, into the tree's scratch: nothing keeps them past this element.
@@ -118,7 +204,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 			t.lb, t.lbase, t.ledits = layout(s, id, h.Keys, h.Flat, t, t.lb[:0], t.lbase[:0], t.ledits[:0])
 			lb, lbase, ledits = t.lb, t.lbase, t.ledits
 		}
-		if len(lb) > 0 || t.f.EditKeys != nil && text == "text" {
+		if len(h.Flat) > 0 || t.f.EditKeys != nil && text == "text" {
 			h.Written = h.Written[:0]
 		}
 	}
@@ -131,16 +217,40 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 			continue
 		}
 		binds = append(binds, k+"=program")
-		if rt.Printable(k) {
+		if s.legacy && rt.Printable(k) {
 			t.printable = append(t.printable, k)
 			pushed++
 		}
 	}
-	if scope > 0 {
-		for _, k := range rt.Forwarded(t.f.KeyScopes[scope-1], kind) {
-			if !contains(own, k) {
+	scopeKeys := t.scopeKeys[n]
+	if s.legacy && scope > 0 {
+		scopeKeys = rt.Forwarded(t.f.KeyScopes[scope-1])
+	}
+	if s.legacy {
+		for _, k := range scopeKeys {
+			if k != "escape" && (!rt.Types(n) || !rt.Printable(k)) {
 				binds = append(binds, k+"=program")
 			}
+		}
+	} else if text == "text" && len(scopeKeys) > 0 {
+		// A scope directly around a field still leaves typing to the host.
+		km := hotty.Resolve(t.f.Platform, rt.KeyReader(n), "", rt.ProgramKeys(scopeKeys))
+		for _, k := range scopeKeys {
+			if km.Program(k) {
+				binds = append(binds, k+"=program")
+			}
+		}
+	} else {
+		for _, k := range scopeKeys {
+			if k != "escape" {
+				binds = append(binds, k+"=program")
+			}
+		}
+	}
+	var inner []string
+	for _, k := range t.scopeInner[n] {
+		if k != "escape" {
+			inner = append(inner, k+"=program")
 		}
 	}
 	var bound []string
@@ -167,28 +277,39 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	}
 	t.editN += edits
 	if text == "text" && t.editN > 0 {
-		binds, bound = s.writeEdits(h, binds, bound, t)
+		binds, bound = s.writeEdits(h, binds, bound, t, false, edits > 0)
 	}
-	if rt.Types(n) {
+	if !s.legacy && edits > 0 && text == "" {
+		inner, _ = s.writeEdits(h, inner, nil, t, true, true)
+	}
+	if s.legacy && rt.Types(n) {
 		for _, k := range t.printable[:len(t.printable)-pushed] {
 			if !contains(own, k) && !contains(bound, k) && !slices.Contains(binds, k+"=default") {
 				binds = append(binds, k+"=default")
 			}
 		}
 	}
-	// One binding per key, the first: a host reads a key's last binding,
-	// and sorting orders two of one key by action.
-	seen := make(map[string]bool, len(binds))
-	binds = slices.DeleteFunc(binds, func(b string) bool {
-		k := b[:strings.LastIndexByte(b, '=')]
-		if seen[k] {
-			return true
+	if !s.legacy && text == "" && n.FirstChild != nil {
+		focusable := focusableKeys(n)
+		for _, binding := range binds {
+			i := strings.LastIndexByte(binding, '=')
+			key, action := binding[:i], binding[i+1:]
+			if action != "default" && !(focusable && action == "program" && contains(own, key)) {
+				inner = append(inner, binding)
+			}
 		}
-		seen[k] = true
-		return false
-	})
+		if !focusable {
+			binds = nil
+		}
+	}
+	inner = uniqueKeys(inner)
+	binds = uniqueKeys(binds)
+	writtenKeys := binds
+	if !s.legacy {
+		writtenKeys = inner
+	}
 	given := 0
-	for _, b := range binds {
+	for _, b := range writtenKeys {
 		// A program binding writeBinds wrote is a give-back (only CUAKeys' and
 		// CocoaKeys' bindings are program there): not a key given.
 		if k, ok := strings.CutSuffix(b, "=program"); ok && !contains(bound, k) {
@@ -203,11 +324,15 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		slices.Sort(binds)
 		n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
 	}
+	if len(inner) > 0 {
+		slices.Sort(inner)
+		n.Attr = append(n.Attr, html.Attribute{Key: keysInnerAttr, Val: strings.Join(inner, " ")})
+	}
 	// What the element writes of the edit shortcuts' keys, for the fields
 	// inside to resolve them against.
 	written := 0
 	if t.f.EditKeys != nil {
-		for _, b := range binds {
+		for _, b := range writtenKeys {
 			i := strings.LastIndexByte(b, '=')
 			if k, a := b[:i], b[i+1:]; slices.Contains(t.f.EditKeys, k) {
 				given := a == string(hotty.Prefix) || a == string(hotty.Program) && !contains(bound, k)
@@ -222,6 +347,28 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		base = len(lbase)
 	}
 	return keyPush{printable: pushed, given: given, base: base, edit: edits + written, editN: edits}
+}
+
+// uniqueKeys keeps the first binding for each key, with a prefix winning
+// over a program binding of the same key.
+func uniqueKeys(binds []string) []string {
+	if len(binds) < 2 {
+		return binds
+	}
+	index := make(map[string]int, len(binds))
+	out := binds[:0]
+	for _, b := range binds {
+		k := b[:strings.LastIndexByte(b, '=')]
+		if i, seen := index[k]; seen {
+			if strings.HasSuffix(b, "=prefix") && strings.HasSuffix(out[i], "=program") {
+				out[i] = b
+			}
+			continue
+		}
+		index[k] = len(out)
+		out = append(out, b)
+	}
+	return out
 }
 
 // keyPush is what writeKeys pushed on a tree's stacks for an element's
@@ -280,7 +427,7 @@ func (t *tree) editedAround(key string) bool {
 // no edit action: a give-back takes a key only from an edit shortcut. It
 // returns binds and the keys written (bound), and records them in
 // h.Written.
-func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree) ([]string, []string) {
+func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree, inner, local bool) ([]string, []string) {
 	defs := editDefaults(t.f)
 	for _, k := range t.f.EditKeys {
 		if slices.ContainsFunc(binds, func(b string) bool { return b[:strings.LastIndexByte(b, '=')] == k }) {
@@ -297,8 +444,23 @@ func (s *Surface) writeEdits(h *rt.Handlers, binds, bound []string, t *tree) ([]
 			continue
 		}
 		e, between := t.edit[at], false
+		if !s.legacy {
+			program := e.action == string(hotty.Program)
+			if inner && program {
+				continue
+			}
+			if !inner && !program && !local {
+				// Ordinarily the inherited group already supplies this
+				// action. An Override must also win over a nearer program key.
+				if e.yield || !slices.ContainsFunc(t.edit[at+1:], func(x keyAt) bool {
+					return x.key == k && x.given
+				}) {
+					continue
+				}
+			}
+		}
 		for _, x := range t.edit[at+1:] {
-			if x.key == k && !x.edit && !hotty.Action(x.action).Scrolls() && (!x.given || e.yield) {
+			if x.key == k && !x.edit && x.action != e.action && !hotty.Action(x.action).Scrolls() && (!x.given || e.yield) {
 				between = true
 				break
 			}
@@ -348,7 +510,7 @@ func editDefaults(f *rt.Frame) map[string]string {
 		f.Editing = new(rt.Editing)
 	}
 	if f.Editing.Defaults == nil {
-		m := hotty.Resolve(f.Platform, true)
+		m := hotty.Resolve(f.Platform, hotty.ReaderMultiline, "")
 		f.Editing.Defaults = make(map[string]string, len(f.EditKeys))
 		for _, k := range f.EditKeys {
 			f.Editing.Defaults[k] = string(m.Lookup(k))
@@ -451,7 +613,7 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind
 			}
 			continue
 		}
-		if a == hotty.Prefix && rt.Printable(b.Key) {
+		if s.legacy && a == hotty.Prefix && rt.Printable(b.Key) {
 			t.printable = append(t.printable, b.Key)
 			pushed++
 		}
@@ -465,9 +627,10 @@ func (s *Surface) writeBinds(id string, h *rt.Handlers, lb, base []rt.Bind, kind
 // is in (one-based), of the frame's or, in a compiled instance, of the
 // instance's (rec), and its kind, as ui marked it.
 type keyMark struct {
-	rec   *record
-	local int
-	kind  string
+	rec    *record
+	local  int
+	anchor int // position in Frame.Scopes of a focusable shared scope root
+	kind   string
 }
 
 // markScope is m's scope in the last frame's KeyScopes (one-based), 0 for
@@ -532,14 +695,9 @@ func keysig(b []byte, f *rt.Frame) []byte {
 			b = append(b, '\n')
 		}
 	})
-	for i, sc := range f.KeyScopes {
+	for _, sc := range f.Scopes {
 		b = append(b, '|')
-		if i > 0 && sc == f.KeyScopes[i-1] {
-			// The scope before's again, which forwards what it did.
-			b = append(b, '=')
-			continue
-		}
-		for _, k := range rt.Forwarded(sc, "") {
+		for _, k := range rt.ScopeKeys(sc) {
 			b = append(b, ' ')
 			b = append(b, k...)
 		}

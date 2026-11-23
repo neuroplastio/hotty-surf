@@ -109,14 +109,14 @@ func TestEditingKeymapsResolve(t *testing.T) {
 				if len(s.faults) > 0 {
 					t.Fatalf("faults %q", s.faults)
 				}
-				wire := attr(s.byID["app"], "data-keys")
+				wire := attr(s.byID["app"], keysInnerAttr)
 				own := strings.Fields(rt.EditKeys(s.frame.Get("app"), true))
 				if got := strings.Fields(wire); !slices.Equal(got, slices.Sorted(slices.Values(own))) {
 					t.Errorf("the wire %q, the surface's own %q", got, own)
 				}
-				on := hotty.Resolve(host, true, wire)
-				theirs := hotty.Resolve(hotty.Platform{Mod: km.mod, Edit: none}, true)
-				base := hotty.Resolve(host, true)
+				on := rt.ResolveKeys(host, s.byID["f"], nil, hotty.ReaderMultiline, false)
+				theirs := hotty.Resolve(hotty.Platform{Mod: km.mod, Edit: none}, hotty.ReaderMultiline, "")
+				base := hotty.Resolve(host, hotty.ReaderMultiline, "")
 				for _, b := range keybind.EditingTables()[i] {
 					want := theirs.Lookup(b.Key)
 					if held(b.Key) {
@@ -240,7 +240,7 @@ func TestEditingKeymapsOutsideAField(t *testing.T) {
 	if len(s.faults) > 0 {
 		t.Fatalf("faults %q", s.faults)
 	}
-	km := hotty.ParseKeymap(hotty.PlatformOf(superHost), attr(s.byID["app"], "data-keys"))
+	km := rt.ResolveKeys(hotty.PlatformOf(superHost), s.byID["b"], nil, hotty.ReaderButton, false)
 	if !km.Program("super+arrow_up") || km.Scroll("super+arrow_up") != "" {
 		t.Errorf("super+arrow_up on the button: program %v", km.Program("super+arrow_up"))
 	}
@@ -386,7 +386,7 @@ func TestEditingKeymapsFill(t *testing.T) {
 					if len(s.faults) > 0 {
 						t.Fatalf("faults %q", s.faults)
 					}
-					on := hotty.Resolve(host, true, attr(s.byID["app"], "data-keys"))
+					on := rt.ResolveKeys(host, s.byID["f"], nil, hotty.ReaderMultiline, false)
 					for _, k := range keys {
 						w := hotty.Action(want[k])
 						if w == hotty.Program {

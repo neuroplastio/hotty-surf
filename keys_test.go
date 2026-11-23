@@ -23,7 +23,7 @@ func TestKeysAreDeclared(t *testing.T) {
 	if len(s.faults) > 0 {
 		t.Fatalf("faults: %q", s.faults)
 	}
-	if got := attr(s.byID["l"], "data-keys"); got != "arrow_up=program ctrl+s=program" {
+	if got := attr(s.byID["l"], keysInnerAttr); got != "arrow_up=program ctrl+s=program" {
 		t.Errorf("l's data-keys %q", got)
 	}
 	if hasAttr(s.byID["m"], "data-keys") {
@@ -36,6 +36,7 @@ func TestKeysAreDeclared(t *testing.T) {
 func TestWrittenKeysAreFaults(t *testing.T) {
 	for _, markup := range []string{
 		`<div id="x" data-keys="arrow_up=program">x</div>`,
+		`<div id="x" data-keys-inner="arrow_up=program">x</div>`,
 		`<div id="x" data-hotty-default-keys="arrow_up=program">x</div>`,
 		`<div id="x" data-hotty-keyscope="1">x</div>`,
 		`<div id="x" data-hotty-keykind="text">x</div>`,

@@ -281,17 +281,20 @@ type instances struct {
 	sig   string
 }
 
-// scopeSig is what the ui.KeyScopes from sc outward forward to a kit
-// control (rt.Forwarded), to one that types and to one that doesn't:
-// what a kit control in an instance reads of the scopes around it, its
-// marker and its data-keys.
+// scopeSig records each enclosing scope's keys for the instance's
+// interception markers and their placement in the document.
 func (s *Surface) scopeSig(sc *rt.KeyScope) string {
 	if sc == nil {
 		return ""
 	}
 	if sc != s.c.sigOf {
 		s.c.sigOf = sc
-		s.c.sig = strings.Join(rt.Forwarded(sc, ""), " ") + "|" + strings.Join(rt.Forwarded(sc, "text"), " ")
+		var keys strings.Builder
+		for enclosing := sc; enclosing != nil; enclosing = enclosing.Parent {
+			keys.WriteString(strings.Join(rt.ScopeKeys(enclosing), " "))
+			keys.WriteByte('|')
+		}
+		s.c.sig = keys.String()
 	}
 	return s.c.sig
 }
@@ -856,7 +859,7 @@ func (s *Surface) instancesOf() []string {
 // whether it could; where it couldn't, nothing changed, and the caller
 // diffs the tree whole.
 func (s *Surface) fill(d *differ, f *rt.Frame) bool {
-	if activeModal(f) != "" || s.frame == nil {
+	if activeModal(f) != "" || s.frame == nil || !s.legacy && (len(f.KeyScopes) > 0 || len(s.frame.KeyScopes) > 0) {
 		return false
 	}
 	type job struct {

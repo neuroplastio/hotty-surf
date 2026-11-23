@@ -169,7 +169,7 @@ func TestEditShortcutsKeptInstanceUnderAnAction(t *testing.T) {
 // show the paste.
 func TestEditShortcutsPasswordPaste(t *testing.T) {
 	s := editPageOn(t, superHost, []surfkey.Option{cuaEdit}, nil, `<input type="password" id="f"%s>`)
-	if !slices.Contains(bindings(s, "f"), "ctrl+v=paste") || lookup(s, superHost, "f", "ctrl+v") != hotty.Paste {
+	if !slices.Contains(bindings(s, "app"), "ctrl+v=paste") || lookup(s, superHost, "f", "ctrl+v") != hotty.Paste {
 		t.Errorf("the password field: %q", chain(s, "f"))
 	}
 }
@@ -215,6 +215,7 @@ func main() {
 	bin := filepath.Join(dir, "hello")
 	cmd := exec.Command(goBin, "build", "-mod=mod", "-o", bin, ".")
 	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GOWORK=off")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}

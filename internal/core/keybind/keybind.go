@@ -127,8 +127,7 @@ func ReadlineBinds(f *rt.Frame) []rt.Bind {
 	}
 	if f.Editing.Keymaps[2] == nil {
 		out := []rt.Bind{}
-		m := hotty.ParseKeymap(f.Platform, hotty.TerminalKeys)
-		for _, b := range strings.Fields(m.Format()) {
+		for _, b := range strings.Fields(hotty.ParseKeymap(f.Platform, hotty.TerminalKeys).Format()) {
 			k, a, _ := strings.Cut(b, "=")
 			if c, ok := f.Platform.ReadKey(k); ok {
 				out = append(out, rt.Bind{Key: c, Action: a})
@@ -185,7 +184,7 @@ func EditingTables() *[2][]rt.Bind {
 		var acts [2]map[string]string
 		for i, mod := range [2]string{"ctrl", "super"} {
 			acts[i] = map[string]string{}
-			for _, b := range strings.Fields(hotty.Resolve(hotty.Platform{Mod: mod, Edit: none}, true).Format()) {
+			for _, b := range strings.Fields(hotty.Resolve(hotty.Platform{Mod: mod, Edit: none}, hotty.ReaderMultiline, "").Format()) {
 				j := strings.LastIndexByte(b, '=')
 				if !slices.Contains(keys, b[:j]) {
 					keys = append(keys, b[:j])

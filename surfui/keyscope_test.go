@@ -9,8 +9,8 @@ import (
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/surftui"
 	"neuroplast.io/hotty-surf/surftest"
+	"neuroplast.io/hotty-surf/surftui"
 	"neuroplast.io/hotty-surf/surfui"
 	uibutton "neuroplast.io/hotty-surf/surfui/button"
 	"neuroplast.io/hotty-surf/surfui/checkbox"
@@ -217,17 +217,28 @@ func TestKeyScopeMultipleControlsAndPlainHTML(t *testing.T) {
 				children := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					one := with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "one", surf.Click(func() { kit++ }))}), templ.Raw("One"))
 					two := with(uibutton.View(uibutton.Props{Attrs: surf.On(ctx, "two", surf.Click(func() { kit++ }))}), templ.Raw("Two"))
-					return templ.Join(one, two, button("plain", "Plain", func() { plain++ })).Render(ctx, w)
+					return templ.Join(templ.Raw(`<div id="controls">`), one, two, templ.Raw(`</div>`)).Render(ctx, w)
 				})
 				scope := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-					return surfui.KeyScope([]surfui.KeyBinding{{Key: "enter", Run: func() bool { taken++; return true }}}).Render(templ.WithChildren(ctx, children), w)
+					return surfui.KeyScope([]surfui.KeyBinding{
+						{Key: "enter", Run: func() bool { taken += 100; return true }},
+						{Key: "mod+s", Run: func() bool { taken++; return true }},
+					}).Render(templ.WithChildren(ctx, children), w)
 				})
-				return templ.Join(templ.Raw(`<p id="outside" tabindex="0">Outside</p>`), scope).Render(ctx, w)
+				return templ.Join(templ.Raw(`<p id="outside" tabindex="0">Outside</p>`), scope, button("plain", "Plain", func() { plain++ })).Render(ctx, w)
 			})
 			s := surf.New("multi", view, surfui.Stylesheet())
 			var key func(string)
 			if mode == "host" {
 				r := surftest.Start(t, s)
+				if got := attr(r.One("#controls"), "data-keys-inner"); got != "ctrl+s=program enter=program" {
+					t.Fatalf("shared keymap: %q", got)
+				}
+				for _, sel := range []string{"#one", "#two", "#plain"} {
+					if got := attr(r.One(sel), "data-keys"); got != "" {
+						t.Fatalf("%s own keys: %q", sel, got)
+					}
+				}
 				r.Click("#outside")
 				key = func(k string) { r.Key(k) }
 			} else {
@@ -256,8 +267,9 @@ func TestKeyScopeMultipleControlsAndPlainHTML(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				key("tab")
 				key("enter")
+				key("ctrl+s")
 			}
-			if taken != 2 || kit != 0 || plain != 1 {
+			if taken != 2 || kit != 2 || plain != 1 {
 				t.Fatalf("scope=%d kit=%d plain=%d", taken, kit, plain)
 			}
 		})

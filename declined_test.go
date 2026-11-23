@@ -28,7 +28,7 @@ func TestDeclinedKeyIsTheElements(t *testing.T) {
 	if got := attrOf(r.One("#b"), "data-keys"); got != "" {
 		t.Fatalf("the button's data-keys %q", got)
 	}
-	if got := attrOf(r.One("#list"), "data-keys"); got != "arrow_left=program space=program" {
+	if got := attrOf(r.One("#list"), "data-keys-inner"); got != "arrow_left=program space=program" {
 		t.Fatalf("the list's data-keys %q", got)
 	}
 	r.Click("#b")
@@ -42,13 +42,13 @@ func TestDeclinedKeyIsTheElements(t *testing.T) {
 	if value != "axb" {
 		t.Errorf("the field after arrow_left and x: %q (heard %v)", value, heard)
 	}
-	if len(heard) < 2 {
+	if len(heard) != 1 || heard[0] != "arrow_left" {
 		t.Errorf("the list's handler heard %v", heard)
 	}
 }
 
 // A printable key declared around a field is the field's: it types it
-// (K27), and the field's data-keys gives it back.
+// because the field ignores an inherited binding for a printable key.
 func TestDeclaredCharacterTypes(t *testing.T) {
 	value, took := "", 0
 	view := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
@@ -57,7 +57,7 @@ func TestDeclaredCharacterTypes(t *testing.T) {
 			on("f", surf.Input(func(v string) { value = v })), value)
 	})
 	r := surftest.Start(t, surf.New("t", view, ""))
-	if got := attrOf(r.One("#f"), "data-keys"); got != "j=default shift+g=default" {
+	if got := attrOf(r.One("#f"), "data-keys"); got != "" {
 		t.Fatalf("the field's data-keys %q", got)
 	}
 	r.Type("#f", "jG")

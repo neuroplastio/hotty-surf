@@ -2,7 +2,6 @@ package surftui
 
 import (
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottyedit"
 	"neuroplast.io/hotty-surf/internal/core/keydefault"
+	"neuroplast.io/hotty-surf/internal/core/rt"
 )
 
 // What the user does, as a host has it done (SPEC §9, §10): focus, keys,
@@ -218,18 +218,6 @@ func clickable(n *html.Node) bool {
 		}
 	}
 	return tokens(n, "data-on", "click")
-}
-
-// keymaps are the data-keys values from the root down to el (SPEC §10.2).
-func keymaps(el *html.Node) []string {
-	var vs []string
-	for n := el; n != nil; n = n.Parent {
-		if v, ok := get(n, "data-keys"); ok {
-			vs = append(vs, v)
-		}
-	}
-	slices.Reverse(vs)
-	return vs
 }
 
 type option struct {
@@ -575,7 +563,10 @@ func (c *Screen) key(key string) bool {
 		// until it ends the sequence (SPEC §10.5).
 		return false
 	}
-	if c.focused != nil && hotty.ParseKeymap(c.plat, strings.Join(keymaps(c.focused), " ")).Prefix(key) {
+	el := c.focused
+	reader := rt.KeyReader(el)
+	km := rt.ResolveKeys(c.plat, el, c.body, reader, false)
+	if km.Program(key) && km.Prefix(key) {
 		c.prefixed = true
 		return false
 	}
@@ -586,23 +577,28 @@ func (c *Screen) key(key string) bool {
 			shiftOnly = false
 		}
 	}
-	el := c.focused
 	if name == "tab" && shiftOnly {
-		if len(mods) == 0 && isTextField(el) && c.fieldKeymap(el).Program(key) {
+		if len(mods) == 0 && isTextField(el) && km.Program(key) {
 			return false
 		}
 		return c.tab(len(mods) > 0)
 	}
 	if el == nil {
-		// No element focused, no keymap: every key is the program's.
+		if a := km.Scroll(key); a != "" {
+			c.scrollBy(a)
+			return true
+		}
+		return false
+	}
+	if km.Program(key) {
 		return false
 	}
 	if isTextField(el) {
-		return c.fieldKey(el, key)
-	}
-	km := hotty.ParseKeymap(c.plat, strings.Join(keymaps(el), " "))
-	if km.Program(key) {
-		return false
+		if reader == hotty.ReaderDate {
+			// Cells edits the textual value of date and time controls.
+			km = hotty.Resolve(c.plat, hotty.ReaderInput, "")
+		}
+		return c.fieldKey(el, key, km)
 	}
 	if shiftOnly {
 		switch {
@@ -635,22 +631,17 @@ func (c *Screen) key(key string) bool {
 	return false
 }
 
-func (c *Screen) fieldKeymap(el *html.Node) *hotty.Keymap {
-	return hotty.Resolve(c.plat, el.DataAtom == atom.Textarea, keymaps(el)...)
-}
-
 // fieldKey gives a key to a text field, which does what its keymap says.
 // The Screen has no clipboard: copy, cut and paste are the program's (it
 // pastes with Paste, and copies and cuts with Selection and Cut).
 //
 // A readonly field takes the keys that would edit it, and does nothing
 // with them; it moves its caret and selects. A disabled one takes nothing.
-func (c *Screen) fieldKey(el *html.Node, key string) bool {
+func (c *Screen) fieldKey(el *html.Node, key string, km *hotty.Keymap) bool {
 	if disabled(el) {
 		return false
 	}
 	f := c.field(el)
-	km := c.fieldKeymap(el)
 	if has(el, "readonly") {
 		switch a := km.Lookup(key); {
 		case a == "":

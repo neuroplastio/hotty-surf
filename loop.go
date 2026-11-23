@@ -705,13 +705,9 @@ func (s *Surface) route(k string, held bool) (bool, error) {
 // the surface wrote, binds key to prefix (SPEC §10.5).
 func (s *Surface) prefixAt(n *html.Node, key string) bool {
 	if n == nil {
-		return false
+		n = s.prev
 	}
-	vs := keymapsOf(n)
-	if len(vs) == 0 {
-		return false
-	}
-	return hotty.ParseKeymap(s.platform, strings.Join(vs, " ")).Prefix(key)
+	return rt.ResolveKeys(s.platform, n, nil, rt.KeyReader(n), s.legacy).Prefix(key)
 }
 
 // declared says whether a Key handler of the focused element or of one
@@ -734,7 +730,7 @@ func (s *Surface) declared(key string) bool {
 // element whose use the surface can't do (a date field's, the host's
 // scrolling): that key is lost, as a host's would be.
 func useKind(n *html.Node) string {
-	kind, _ := nativeKind(n)
+	kind, _ := rt.NativeKind(n)
 	switch kind {
 	case "text", "select":
 		return kind
@@ -765,7 +761,11 @@ func (s *Surface) reached() []*rt.KeyScope {
 	var out []*rt.KeyScope
 	if n := s.byID[s.focused]; n != nil {
 		var sc *rt.KeyScope
-		if i := s.markScope(s.keyMarks[s.focused]); i > 0 && i <= len(s.frame.KeyScopes) {
+		mark := s.keyMarks[s.focused]
+		if mark.anchor > 0 && mark.anchor <= len(s.frame.Scopes) {
+			sc = s.frame.Scopes[mark.anchor-1]
+		}
+		if i := s.markScope(mark); i > 0 && i <= len(s.frame.KeyScopes) {
 			sc = s.frame.KeyScopes[i-1]
 		}
 		for _, id := range s.chain(s.focused) {

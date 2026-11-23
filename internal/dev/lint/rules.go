@@ -350,9 +350,9 @@ func (f *checker) css() {
 	}
 }
 
-var keysRe = regexp.MustCompile(`(?i)\bdata-keys\b`)
+var keysRe = regexp.MustCompile(`(?i)\bdata-keys(?:-inner)?\b`)
 
-// keys finds data-keys written in a .templ or a .go file, as an attribute
+// keys finds data-keys or data-keys-inner in a .templ or .go file, as an attribute
 // or an attrs map's key: the surface writes it from the Key handlers'
 // keys, and drops one a view writes.
 func (f *checker) keys() {
@@ -361,7 +361,7 @@ func (f *checker) keys() {
 			continue
 		}
 		for _, m := range keysRe.FindAllStringIndex(l, -1) {
-			f.add(i+1, m[0]+1, "data-keys", "a key bind in markup: data-keys is the runtime's, written from the keys declared in Go; on the element write surf.Key(fn, \"arrow_down\", …) for the program's keys, surf.Bind(surf.Action(hotty.ScrollDown, \"j\")) for an edit, prefix or scroll action, or surf.Bind(surf.ReadlineKeys()) for readline's keys")
+			f.add(i+1, m[0]+1, "data-keys", "a key bind in markup: data-keys and data-keys-inner are the runtime's, written from the keys declared in Go; on the element write surf.Key(fn, \"arrow_down\", …) for the program's keys, surf.Bind(surfkey.Action(hotty.ScrollDown, \"j\")) for an edit, prefix or scroll action, or surf.Bind(surfkey.ReadlineKeys()) for readline's keys")
 		}
 	}
 }

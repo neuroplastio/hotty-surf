@@ -389,7 +389,7 @@ func TestResizeAndWheel(t *testing.T) {
 		t.Fatalf("at the end:\n%s", r.text())
 	}
 	if !r.c.Wheel(0, 0, 1) {
-		t.Fatal("scrolled past the end")
+		t.Fatal("wheel escaped the scrolling document")
 	}
 	r.c.Wheel(0, 0, -100)
 	r.c.Resize(10, 4)
@@ -503,8 +503,7 @@ func TestFocusFixupCommitsAndRestartsTab(t *testing.T) {
 	}))
 	r.key("tab", "x")
 	r.events = nil
-	disabled := ""
-	r.write(hotty.Delta("t", []hotty.Op{{Op: "attr", Target: "f", Name: "disabled", Value: &disabled}}))
+	r.write(hotty.Delta("t", []hotty.Op{hotty.OpAttr("f", "disabled", "")}))
 	if got := strings.Join(r.events, ","); got != "change f" {
 		t.Fatalf("fixup events: %s", got)
 	}
@@ -545,5 +544,25 @@ func TestChosenTab(t *testing.T) {
 	}
 	if strings.Contains(l, "1;4m All") {
 		t.Errorf("a tab not chosen looks chosen: %q", l)
+	}
+}
+
+func TestDocumentKeymapsWithoutFocus(t *testing.T) {
+	c := surftui.New(20, 4, nil)
+	doc := `<html data-keys-inner="ctrl+k=prefix"><body id="body" data-keys-inner="ctrl+k=program" data-keys="ctrl+k=prefix"><button id="b">Go</button></body></html>`
+	write := func(cmd string) {
+		t.Helper()
+		if _, err := c.Write([]byte(cmd)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(hotty.Doc("t", doc))
+	if c.Key("ctrl+k") || c.Key("tab") {
+		t.Fatal("the body's own prefix should precede Tab traversal")
+	}
+	write(hotty.Delta("t", []hotty.Op{hotty.OpUnattr("body", "data-keys")}))
+	write(hotty.Blur("t"))
+	if c.Key("ctrl+k") || !c.Key("tab") {
+		t.Fatal("the body's inner program binding should mask the html prefix")
 	}
 }

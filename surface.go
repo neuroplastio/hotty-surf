@@ -38,6 +38,7 @@ type Surface struct {
 
 	out      io.Writer
 	platform hotty.Platform
+	legacy   bool
 	// editing are the editing keymaps' bindings for platform, each made
 	// the first time a render binds it and kept until Attach: every frame
 	// shares them (rt.Frame.Editing).
@@ -93,30 +94,30 @@ type Surface struct {
 	focused string
 	// lastFocus is the element that had the keyboard last, which Focus
 	// gives it back to.
-	lastFocus    string
-	focusIn      []string
-	hoverIn      []string
-	hoverAt      string          // the element under the pointer, as the host last said
-	pressed      bool            // the last event was a primary press on the surface (see event)
-	drag         string          // the element a drag under way began on, "" for none
-	lifted       bool            // that drag has moved: the element has the class dragging
-	modalPressed bool            // the last press was inside the active modal's scope
-	modalFocus   string          // first or last modal control to focus after an event
-	asked        string          // the element the last frame's Autofocus asked for
-	askDue       bool            // a Document's Autofocus, sent at the next Update
+	lastFocus        string
+	focusIn          []string
+	hoverIn          []string
+	hoverAt          string          // the element under the pointer, as the host last said
+	pressed          bool            // the last event was a primary press on the surface (see event)
+	drag             string          // the element a drag under way began on, "" for none
+	lifted           bool            // that drag has moved: the element has the class dragging
+	modalPressed     bool            // the last press was inside the active modal's scope
+	modalFocus       string          // first or last modal control to focus after an event
+	asked            string          // the element the last frame's Autofocus asked for
+	askDue           bool            // a Document's Autofocus, sent at the next Update
 	cssDue           bool            // the stylesheet changed (a dev reload): sent at the next Update
 	sheets           []Sheet         // the stylesheets documents link (Link)
 	sheetSent        map[string]bool // the sheets sent on the writer since Attach, by ID
 	adoptedSheets    []string        // linked sheet IDs from an adopted dev-reload snapshot
 	hasAdoptedSheets bool            // true after Adopt until the next reset/Document
-	limits       map[string]int  // the host's limits, from Attach's caps (SPEC §13)
-	blurAsked    bool            // Blur ran the blur: the host's blur that follows is its echo
-	prefixed     bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)
-	prefixTaken  bool            // a Key handler took that key: the surface ends the sequence after the next key
-	focusSent    uint64          // a=focus and a=blur the surface has written: a prefix whose key's handling wrote one has ended
-	textFaulted  bool            // the fault that the kit's text editing isn't linked was recorded
-	sending      bool
-	deferred     []hotty.Event
+	limits           map[string]int  // the host's limits, from Attach's caps (SPEC §13)
+	blurAsked        bool            // Blur ran the blur: the host's blur that follows is its echo
+	prefixed         bool            // a key the focused element's keymap binds to prefix passed through Key: the host gives the program every key (SPEC §10.5)
+	prefixTaken      bool            // a Key handler took that key: the surface ends the sequence after the next key
+	focusSent        uint64          // a=focus and a=blur the surface has written: a prefix whose key's handling wrote one has ended
+	textFaulted      bool            // the fault that the kit's text editing isn't linked was recorded
+	sending          bool
+	deferred         []hotty.Event
 	// host is the in-process host the writer reaches (rt.HostOf), which
 	// Document offers its tree, nil for none.
 	host rt.Host
@@ -170,6 +171,7 @@ func (s *Surface) Attach(w io.Writer, caps hotty.Caps) {
 		s.host = rt.HostOf(w)
 	}
 	s.platform = hotty.PlatformOf(caps)
+	s.legacy = caps.V == "0.8"
 	s.editing = rt.Editing{}
 	// A compiled instance's keys are its platform's.
 	s.forgetInstances()
@@ -357,7 +359,7 @@ func (s *Surface) OwnKeys() []string {
 	if s.out == nil || s.frame == nil {
 		return nil
 	}
-	return ownKeys(s.byID[s.focused], s.frame, s.platform)
+	return ownKeys(s.byID[s.focused], s.frame, s.platform, s.legacy)
 }
 
 // Chars is what a focused element does with a key that types a character.

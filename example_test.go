@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/a-h/templ"
 	"neuroplast.io/hotty-go"
@@ -374,11 +375,11 @@ func ExampleBind() {
 	if err != nil {
 		return
 	}
-	for _, b := range []string{`data-keys="ctrl+k=prefix"`, `data-keys="j=scroll-down k=scroll-up"`} {
+	for _, b := range []string{`data-keys-inner="ctrl+k=prefix"`, `data-keys="j=scroll-down k=scroll-up"`} {
 		fmt.Println(b, bytes.Contains([]byte(doc), []byte(b)))
 	}
 	// Output:
-	// data-keys="ctrl+k=prefix" true
+	// data-keys-inner="ctrl+k=prefix" true
 	// data-keys="j=scroll-down k=scroll-up" true
 }
 
@@ -441,7 +442,7 @@ func ExampleCUAEditShortcuts() {
 			surfkey.CUAEditShortcuts()))
 		return `<div` + attrList(app) + `><input id="query"></div>`
 	}, "query")
-	// Output: query: ctrl+a=select-all ctrl+c=copy ctrl+shift+z=redo ctrl+v=paste ctrl+x=cut ctrl+y=redo ctrl+z=undo super+a=program super+c=program super+shift+z=program super+v=program super+x=program super+z=program
+	// Output: query: super+a=program super+c=program super+shift+z=program super+v=program super+x=program super+z=program
 }
 
 // CocoaEditShortcuts with CocoaKeys, on a host whose mod is ctrl: on the
@@ -453,7 +454,7 @@ func ExampleCocoaEditShortcuts() {
 		app := surf.On(ctx, "app", surf.Bind(surfkey.CocoaKeys(), surfkey.CocoaEditShortcuts()))
 		return `<div` + attrList(app) + `><input id="query"></div>`
 	}, "query")
-	// Output: query: ctrl+c=program ctrl+shift+z=program ctrl+v=program ctrl+x=program ctrl+y=program ctrl+z=program super+a=select-all super+c=copy super+shift+z=redo super+v=paste super+x=cut super+z=undo
+	// Output: query: ctrl+c=program ctrl+shift+z=program ctrl+v=program ctrl+x=program ctrl+y=program ctrl+z=program
 }
 
 // keysOf renders view on a surface and prints the data-keys the surface
@@ -478,9 +479,11 @@ func keysOn(caps hotty.Caps, view func(ctx context.Context) string, ids ...strin
 		rest := doc[at:]
 		end := bytes.IndexByte([]byte(rest), '>')
 		keys := ""
-		if i := bytes.Index([]byte(rest[:end]), []byte(`data-keys="`)); i >= 0 {
-			keys = rest[i+len(`data-keys="`):]
-			keys = keys[:bytes.IndexByte([]byte(keys), '"')]
+		for _, name := range []string{`data-keys="`, `data-keys-inner="`} {
+			if i := strings.Index(rest[:end], name); i >= 0 {
+				keys, _, _ = strings.Cut(rest[i+len(name):], `"`)
+				break
+			}
 		}
 		fmt.Printf("%s: %s\n", id, keys)
 	}

@@ -3,6 +3,7 @@ package rt
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
@@ -62,6 +63,7 @@ type KeyDefault struct {
 	Checked, Readonly, HasSelection bool
 	Selection                       [2]int
 	Platform                        hotty.Platform
+	OwnKeys                         string
 	Keymaps                         []string
 	Options                         []KeyOption
 }
@@ -89,20 +91,107 @@ func KeyScopeFrom(ctx context.Context) *KeyScope {
 	return s
 }
 
-// Forwarded are the keys the scopes from s outward give the program on a
-// kit control of kind (ui's kinds: "text" and "compound-text" type), so
-// that their bindings hear them: every enabled key they bind, sorted,
-// but a printable one on a control that types, which keeps it (K27).
-func Forwarded(s *KeyScope, kind string) []string {
-	text := kind == "text" || kind == "compound-text"
+// ScopeKeys returns the enabled keys of one scope in wire order.
+func ScopeKeys(scope *KeyScope) []string {
+	var out []string
+	for key := range scope.Keys {
+		out = append(out, key)
+	}
+	slices.Sort(out)
+	return out
+}
+
+// Forwarded returns the enabled keys of the scope and its ancestors.
+func Forwarded(s *KeyScope) []string {
 	var out []string
 	for ; s != nil; s = s.Parent {
 		for k := range s.Keys {
-			if (!text || !Printable(k)) && !slices.Contains(out, k) {
+			if !slices.Contains(out, k) {
 				out = append(out, k)
 			}
 		}
 	}
 	slices.Sort(out)
 	return out
+}
+
+// NativeKind is the row of SPEC §10.2's table n is in: "text" (multiline
+// for a textarea or an editing host), "select", "date", "activate", or ""
+// for an element that uses no keys itself.
+func NativeKind(n *html.Node) (kind string, multiline bool) {
+	if hasAttr(n, "contenteditable") && !strings.EqualFold(attr(n, "contenteditable"), "false") {
+		return "text", true
+	}
+	switch n.Data {
+	case "textarea":
+		return "text", true
+	case "select":
+		return "select", false
+	case "button", "summary":
+		return "activate", false
+	case "a":
+		if hasAttr(n, "href") {
+			return "activate", false
+		}
+	case "input":
+		switch t := strings.ToLower(attr(n, "type")); t {
+		case "hidden", "file", "color", "range", "image":
+			return "", false
+		case "checkbox", "radio", "submit", "reset", "button":
+			return "activate", false
+		case "date", "time", "datetime-local", "month", "week":
+			return "date", false
+		}
+		return "text", false
+	}
+	return "", false
+}
+
+// KeyReader identifies the protocol reader of an element.
+func KeyReader(n *html.Node) hotty.Reader {
+	if n == nil {
+		return hotty.ReaderElement
+	}
+	kind, multiline := NativeKind(n)
+	switch kind {
+	case "text":
+		if multiline {
+			return hotty.ReaderMultiline
+		}
+		return hotty.ReaderInput
+	case "select":
+		return hotty.ReaderSelect
+	case "date":
+		return hotty.ReaderDate
+	case "activate":
+		return hotty.ReaderButton
+	default:
+		return hotty.ReaderElement
+	}
+}
+
+// ResolveKeys resolves the focused element's own and inherited attributes.
+// With nothing focused, or for document selection, body stands for the document.
+func ResolveKeys(p hotty.Platform, n, body *html.Node, reader hotty.Reader, legacy bool) *hotty.Keymap {
+	var inner []string
+	name := "data-keys-inner"
+	if legacy {
+		name = "data-keys"
+	}
+	if n == nil || reader == hotty.ReaderSelection {
+		n = body
+		if n != nil {
+			inner = append(inner, attr(n, name))
+		}
+	}
+	if n == nil {
+		return hotty.Resolve(p, reader, "")
+	}
+	for parent := n.Parent; parent != nil; parent = parent.Parent {
+		if v := attr(parent, name); v != "" {
+			inner = append(inner, v)
+		}
+	}
+	slices.Reverse(inner)
+	return hotty.Resolve(p, reader, attr(n, "data-keys"), inner...)
 }

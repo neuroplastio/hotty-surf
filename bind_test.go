@@ -13,8 +13,8 @@ import (
 	"neuroplast.io/hotty-go"
 
 	"neuroplast.io/hotty-surf/internal/core/keydefault"
-	"neuroplast.io/hotty-surf/surfkey"
 	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfkey"
 )
 
 // bindPage renders markup with each %s an On's attributes, in order.
@@ -31,7 +31,11 @@ func bindPage(t *testing.T, markup string, ons func(ctx context.Context) []templ
 }
 
 func bindings(s *Surface, id string) []string {
-	return strings.Fields(attr(s.byID[id], "data-keys"))
+	n := s.byID[id]
+	if v := attr(n, keysAttr); v != "" {
+		return strings.Fields(v)
+	}
+	return strings.Fields(attr(n, keysInnerAttr))
 }
 
 // Bind's bindings are the element's data-keys, key=action, sorted with
@@ -164,8 +168,8 @@ func TestPrintablePrefixTypes(t *testing.T) {
 	if len(s.faults) > 0 {
 		t.Fatalf("faults: %q", s.faults)
 	}
-	if got := attr(s.byID["f"], "data-keys"); got != "g=default" {
-		t.Errorf("f's data-keys %q, want g=default", got)
+	if got := attr(s.byID["f"], "data-keys"); got != "" {
+		t.Errorf("f's data-keys %q, want no give-back", got)
 	}
 }
 

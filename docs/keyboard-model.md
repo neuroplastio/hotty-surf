@@ -45,7 +45,7 @@ component values and applies the changes its callbacks report.
 | Command dialog | Command's keys; Escape closes the dialog and choosing an item also closes it. |
 | Dialog | Escape closes; Tab and Shift+Tab cycle its controls. On close, focus returns to the opener where available. |
 | Drawer | As Dialog: focus stays inside, Tab wraps, and Escape requests a close. The closing transition retains the modal until it finishes. |
-| Context menu | Shift+F10 or the Menu key on an element in its area opens it under the area, its first enabled item highlighted; a secondary press opens it at the pointer with none. Open, it has the keyboard and a Dropdown menu's keys; Escape, the opening keys or a choice close it and give the keyboard back. |
+| Context menu | Shift+F10 or the Menu key on an element in its area opens it under the area, its first enabled item highlighted; a context-menu gesture opens it at the pointer with none. Open, it has the keyboard and a Dropdown menu's keys; Escape, the opening keys or a choice close it and give the keyboard back. |
 | Menu | The panel alone, the app's highlight: Down, Up, Home and End ask for another enabled item (OnHighlight); Enter and Space run the highlighted one. Nothing closes it: the app takes it away. |
 | Dropdown menu | Enter or Space opens the trigger; Down opens at the first enabled item and Up at the last. In the open menu, Up and Down move, Home and End go to the ends, Enter or Space chooses, and Escape closes. Choosing a checkbox toggles it; choosing a radio selects it within its group. |
 | Empty | None of its own. |
@@ -130,19 +130,20 @@ the keys fn takes ahead of the element:
   declared key to the program, so fn hears it before the element uses it
   (a button's Space, a field's arrows, the surface's scroll). Without
   keys, fn hears only what reaches the program anyway.
-- The surface writes SPEC §10.2's `data-keys` from the declarations,
-  after each render, sorted: `key=program` for each. A `data-keys` a
-  template or an Attrs map writes is a fault and is dropped, and the
-  lint rule `data-keys` finds it in an app's sources. The kit's private
-  markers under a KeyScope stay in the surface and don't reach the wire.
+- The surface writes each declaration as a sorted `key=program` binding.
+  A focusable control's declarations go in its own `data-keys`.
+  A container can offer bindings to its descendants through
+  `data-keys-inner`. The `data-keys` lint rule covers both attributes in
+  app sources. KeyScope markers are internal to the surface.
 - A declared key fn declines goes to the enclosing handlers, then to the
   element's own use, which the surface does as the host would have: a
   button's activation, a field's edit, a check box's toggle, a select's
   pick. That is what `key=default` did in markup. A use the surface can't
   do (the host's scrolling, a date field's) is lost, and a declined `tab`
   on a field doesn't move focus.
-- A declared printable key is never taken from an element inside that
-  types: the surface writes `key=default` on it (K27).
+- A field keeps printable keys from an inherited binding, and buttons
+  keep Space and Enter. A focused control can intercept its native keys
+  with an explicit declaration on that control.
 - `escape` reaches the program anyway and isn't written; it is declared
   for OwnKeys. `tab` is a text field's own to declare (a completion), a
   fault elsewhere.
@@ -222,7 +223,8 @@ var pager = surfkey.Group(surfkey.Action(hotty.ScrollDown, "j"),
   doesn't use scrolls the nearest element that scrolls. A field's keymap
   leaves them out, so a field under `j=scroll-down` types `j`; on a field
   itself they are a fault.
-- **Cells** read the same `data-keys`, as a host does: a field's edit
+- **Cells** resolve the ancestor `data-keys-inner` maps and the focused
+  element's own `data-keys`, as a host does. This includes a field's edit
   actions through `hotty.Resolve`, the scroll actions, and a prefix,
   after which the Screen gives the program every key until the
   program's `a=focus` or `a=blur`, the Screen's losing the keyboard, or a
@@ -318,8 +320,8 @@ surf.Bind(surfkey.ReadlineKeys(), surfkey.CUAKeys())
   `surf.Bind(surfkey.ReadlineKeys(), surfkey.Unbind("ctrl+k"))` gives `ctrl+k` to
   the program, as on Linux, where the host's default on macOS would
   delete to the line's end.
-- **On a host and in cells** they are the same `data-keys`, about 450
-  bytes on the element, written once. A cells Screen's `mod` is always
+- **On a host and in cells** a container's editing map is written once
+  in `data-keys-inner`. A cells Screen's `mod` is always
   `ctrl`, so there CUAKeys changes nothing in a field and CocoaKeys is what
   makes `ctrl+k` delete.
 
@@ -359,15 +361,12 @@ surf.On(ctx, "app", surf.Bind(surfkey.ReadlineKeys(), caret, edit))
   program. A give-back takes a key only from an edit shortcut, so under
   CocoaEditShortcuts on a Mac host `ctrl+a` still goes to the line's
   start.
-- **Fields only.** The bindings are written on each text field inside
-  the element that binds them, readonly ones included, never on that
-  element. Text elsewhere in the surface, and the terminal's own text,
-  keep the host's copy keys (SPEC §11). On a button nothing changes.
-- **Only what changes is written:** a binding the field would do
-  anyway, from the host's default keymap (its edit shortcuts as it
-  reports them) and the `data-keys` above it, is left out. On a Linux
-  host with its default shortcuts, CUAEditShortcuts writes nothing; on
-  a Mac host it writes about 200 bytes a field.
+- **Fields only.** Editing actions are written once in the editing
+  container's `data-keys-inner`. Fields read them, including readonly
+  fields. The other platform's `program` bindings go on the affected
+  fields. A document selection and a button keep the host's copy keys.
+- **Only what changes is written.** CUAEditShortcuts leaves a Linux host
+  using its default shortcuts alone.
 - **Nothing selected:** copy and cut reach the program, as in a
   password field, so `ctrl+c` in an empty field still interrupts.
 - **A separate category.** Wherever the group is in effect it decides
@@ -430,8 +429,10 @@ A scope inside no other scope also has the keyboard while nothing on the
 surface has it. For every focus the order is the same: the scopes around
 it, nearest first, then a kit control's default, then the `surf.Key`
 handlers of the focused element and its ancestors, then the program.
-- On a kit control, a scope takes its named keys from the control's
-  native editing (the kit forwards them).
+- A scope around one kit control writes that control's own keymap. A
+  shared scope writes an inherited keymap on an enclosing element, so
+  a button still activates on Space and Enter and a select keeps its
+  native navigation.
 - An element that types (a kit Input, Textarea or Combobox's input, a
   plain text input, textarea or editing host) keeps its printable keys,
   with or without Shift: no scope takes one from it, so a scope may bind a

@@ -14,7 +14,11 @@ import (
 // links (rt.LinkText): ui's text components, ui.KeyScope and
 // surf.Bind; an app without them doesn't carry hottyedit.
 func Text(in rt.KeyDefault) rt.KeyResult {
-	km := hotty.Resolve(in.Platform, in.Type == "textarea", in.Keymaps...)
+	reader := hotty.ReaderInput
+	if in.Type == "textarea" {
+		reader = hotty.ReaderMultiline
+	}
+	km := hotty.Resolve(in.Platform, reader, in.OwnKeys, in.Keymaps...)
 	f := hottyedit.Field{Value: in.Value, Multiline: in.Type == "textarea", Password: in.Type == "password"}
 	positions := []int{0}
 	for g := graphemes.FromString(in.Value); g.Next(); {

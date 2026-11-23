@@ -51,10 +51,10 @@ type KeyBinding struct {
 // on an element inside one of those; and a scope inside no other scope
 // has it while nothing on the surface does. Scopes nest: the scope nearest
 // the keyboard is asked first, before the kit control's default and any
-// surf.Key handler. On a kit control, a scope takes its named keys from
-// the control's native editing; on a plain element, it hears only keys
-// the element doesn't use itself, as a surf.Key that declares no keys
-// does. An element that types
+// surf.Key handler. A scope around one kit control can intercept that
+// control's native keys. A shared scope inherits into its kit controls,
+// which keep the native keys protected by SPEC §10.2. On a plain element,
+// it hears the keys the element gives the program. An element that types
 // (a kit Input, Textarea or Combobox input, a plain text input, textarea
 // or editing host) keeps its printable keys, with or without shift: no
 // scope takes one from it. A scope around one component overrides that
@@ -147,10 +147,10 @@ func scopeCanonical(p hotty.Platform, key string) (string, bool) { return p.Read
 // link the map, sorting and attribute construction used for interception.
 // It marks a kit control with the scope it is in, under the frame's
 // secret, and keeps its kind in the frame; the surface takes the marker
-// off and writes the keys the scopes forward to it (its data-keys).
+// off and places the scope's own or inner keymap.
 func attachScope(ctx context.Context, attrs templ.Attributes, kind string) templ.Attributes {
 	scope, f := rt.KeyScopeFrom(ctx), rt.From(ctx)
-	if scope == nil || f == nil || len(rt.Forwarded(scope, kind)) == 0 {
+	if scope == nil || f == nil || len(rt.Forwarded(scope)) == 0 {
 		return attrs
 	}
 	f.KeyScopes = append(f.KeyScopes, scope)

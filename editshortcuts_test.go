@@ -45,7 +45,7 @@ func TestEditingKeymapsWithoutEditShortcuts(t *testing.T) {
 		s := bindPageOn(t, hotty.Caps{Mod: c.mod}, `<div%s><input id="f"></div>`, func(ctx context.Context) []templ.Attributes {
 			return []templ.Attributes{On(ctx, "app", Bind(opts...))}
 		})
-		if got := attr(s.byID["app"], "data-keys"); got != c.want {
+		if got := attr(s.byID["app"], keysInnerAttr); got != c.want {
 			t.Errorf("%s where mod is %q:\n got %s\nwant %s", c.combo, c.mod, got, c.want)
 		}
 		if got := attr(s.byID["f"], "data-keys"); got != "" {
@@ -68,7 +68,7 @@ func chain(s *Surface, id string) []string {
 
 // lookup is what the field id does with key, on a host of caps.
 func lookup(s *Surface, caps hotty.Caps, id, key string) hotty.Action {
-	return hotty.Resolve(hotty.PlatformOf(caps), true, chain(s, id)...).Lookup(key)
+	return rt.ResolveKeys(hotty.PlatformOf(caps), s.byID[id], nil, hotty.ReaderInput, s.legacy).Lookup(key)
 }
 
 // The tables are SPEC §10.2's edit shortcuts, in its order of the actions,
@@ -198,12 +198,12 @@ func TestEditShortcutsFieldsOnly(t *testing.T) {
 			t.Errorf("%s has %q", id, attr(s.byID[id], "data-keys"))
 		}
 	}
-	want := "ctrl+a=select-all ctrl+c=copy ctrl+shift+z=redo ctrl+v=paste ctrl+x=cut ctrl+y=redo ctrl+z=undo super+a=program super+c=program super+shift+z=program super+v=program super+x=program super+z=program"
+	want := "super+a=program super+c=program super+shift+z=program super+v=program super+x=program super+z=program"
 	if got := attr(s.byID["f"], "data-keys"); got != want {
 		t.Errorf("the field:\n got %s\nwant %s", got, want)
 	}
-	if n := len(attr(s.byID["f"], "data-keys")); n < 180 || n > 220 {
-		t.Errorf("%d bytes on the field", n)
+	if got := attr(s.byID["app"], keysInnerAttr); got != "ctrl+a=select-all ctrl+c=copy ctrl+shift+z=redo ctrl+v=paste ctrl+x=cut ctrl+y=redo ctrl+z=undo" {
+		t.Errorf("the editing root: %q", got)
 	}
 	// On a Linux host it changes nothing: nothing written.
 	s = editPageOn(t, ctrlHost, []surfkey.Option{cuaEdit}, nil, "")
@@ -212,7 +212,7 @@ func TestEditShortcutsFieldsOnly(t *testing.T) {
 	}
 	// CocoaEditShortcuts there: the paragraph's copy key stays ctrl+c.
 	s = editPageOn(t, ctrlHost, []surfkey.Option{cocoaEdit}, nil, "")
-	p := hotty.Resolve(hotty.PlatformOf(ctrlHost), false, chain(s, "p")...)
+	p := hotty.Resolve(hotty.PlatformOf(ctrlHost), hotty.ReaderSelection, "")
 	if p.Lookup("ctrl+c") != hotty.Copy || p.Lookup("super+c") == hotty.Copy {
 		t.Errorf("the paragraph's copy key: ctrl+c %q, super+c %q", p.Lookup("ctrl+c"), p.Lookup("super+c"))
 	}
@@ -278,7 +278,7 @@ func TestEditShortcutsUnbindNotOnAContainer(t *testing.T) {
 	if got := lookup(s, superHost, "f", "ctrl+c"); got != hotty.Copy {
 		t.Errorf("the field's ctrl+c: %q (%q)", got, chain(s, "f"))
 	}
-	p := hotty.Resolve(hotty.PlatformOf(superHost), false, chain(s, "p")...)
+	p := hotty.Resolve(hotty.PlatformOf(superHost), hotty.ReaderSelection, "")
 	if p.Lookup("ctrl+c") == hotty.Copy || p.Lookup("super+c") != hotty.Copy {
 		t.Errorf("the paragraph's copy key: ctrl+c %q, super+c %q", p.Lookup("ctrl+c"), p.Lookup("super+c"))
 	}
@@ -350,7 +350,7 @@ func TestEditShortcutsYieldOverride(t *testing.T) {
 			if len(s.faults) > 0 {
 				t.Fatalf("faults %q", s.faults)
 			}
-			km := hotty.ParseKeymap(hotty.PlatformOf(superHost), strings.Join(chain(s, "f"), " "))
+			km := rt.ResolveKeys(hotty.PlatformOf(superHost), s.byID["f"], nil, hotty.ReaderInput, s.legacy)
 			got := "ctrl+c=copy"
 			if km.Program("ctrl+c") {
 				got = "ctrl+c=program"
@@ -370,7 +370,7 @@ func TestEditShortcutsOverAHostsOwn(t *testing.T) {
 	edit[string(hotty.Copy)] = []string{"ctrl+shift+c"}
 	caps := hotty.Caps{Edit: edit}
 	s := editPageOn(t, caps, []surfkey.Option{cuaEdit}, nil, "")
-	got := attr(s.byID["f"], "data-keys")
+	got := attr(s.byID["app"], keysInnerAttr)
 	if got != "ctrl+c=copy" {
 		t.Errorf("the field: %q", got)
 	}
@@ -416,7 +416,7 @@ func TestEditShortcutsInAnInstance(t *testing.T) {
 	if _, err := s.Document(); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Contains(bindings(s, "q"), "ctrl+c=copy") {
+	if lookup(s, superHost, "q", "ctrl+c") != hotty.Copy {
 		t.Fatalf("first render: %q", bindings(s, "q"))
 	}
 	label = "b"
@@ -425,11 +425,8 @@ func TestEditShortcutsInAnInstance(t *testing.T) {
 	if err := s.Update(); err != nil {
 		t.Fatal(err)
 	}
-	if s.c.fills == fills || !slices.Contains(bindings(s, "q"), "ctrl+c=copy") {
+	if s.c.fills == fills || lookup(s, superHost, "q", "ctrl+c") != hotty.Copy {
 		t.Errorf("filled alone (%d fills): %q", s.c.fills-fills, bindings(s, "q"))
-	}
-	if w := s.frame.Get("q").Written; !slices.ContainsFunc(w, func(b rt.Bind) bool { return b.Key == "ctrl+c" && b.Edit }) {
-		t.Errorf("Written: %v", w)
 	}
 	group = cocoaEdit
 	s.Do(func() {})
@@ -468,7 +465,7 @@ func TestEditShortcutsInAKeptInstance(t *testing.T) {
 		t.Fatal(err)
 	}
 	for range 2 {
-		if !slices.Contains(bindings(s, "q"), "ctrl+c=copy") || len(s.faults) > 0 {
+		if lookup(s, superHost, "q", "ctrl+c") != hotty.Copy || len(s.faults) > 0 {
 			t.Fatalf("render %d: %q, faults %q", n, bindings(s, "q"), s.faults)
 		}
 		n++

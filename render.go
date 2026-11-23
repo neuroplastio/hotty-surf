@@ -161,6 +161,8 @@ func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 		f.ModalOps.Prepare(t.root, activeModal(f))
 	}
 	t.byID["root"] = t.root
+	s.placeScopes(t.root, t)
+	s.writeKeys(t.root, "root", t)
 	s.number(t.root, "root", t, false)
 	return t, nil
 }
@@ -191,7 +193,9 @@ type tree struct {
 	marks  map[int]bool          // the KeyScope markers seen (writeKeys)
 	// scopes are the kit controls under a KeyScope, by id, as their
 	// markers said before writeKeys took them off.
-	scopes map[string]keyMark
+	scopes                map[string]keyMark
+	scopeKeys, scopeInner map[*html.Node][]string
+	scopeRoots            map[*html.Node]int
 	// printable are the printable keys the elements around the one being
 	// numbered declare (writeKeys).
 	printable []string
