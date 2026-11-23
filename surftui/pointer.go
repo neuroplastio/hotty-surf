@@ -18,7 +18,7 @@ import (
 // The pointer in cells (for plx). A Screen hears the
 // terminal's mouse as the program decodes it, at its own cells, and sends
 // the surface the events a hotty host sends for the same gestures (SPEC
-// §9): a press, a click with its count and mods, a secondary press, a
+// §9): a press, a click with its count and mods, context menu and auxiliary clicks, a
 // drag with its steps and its drop, and a hover. The surface's handlers
 // (surf.Click, surf.Secondary, surf.Drag, surf.Drop, surf.Hover) hear
 // them as they do on a host. Click stays: it is Press and Release at one
@@ -40,16 +40,28 @@ import (
 // the surface, and a drag's start on an element with data-on drag
 // (surf.Drag) unless Alt is held. Its click comes with the Release.
 //
-// The secondary press goes to the nearest element with data-on secondary
-// (surf.Secondary) at or around the cell: a press event with Button 2,
-// the cell as At and that element's cells as Area, and nothing else: no
-// focus, no click, no drag. With Shift or Alt held, or on no such
-// element, it is the program's, as is any other button.
-//
-// A Press while a drag is under way ends it first, with no drop and no
-// click, as the terminal lost its release.
+// Other buttons go to contextmenu, aux or rightbutton subscriptions.
+// A second button pressed during a gesture follows the first one's route.
 func (c *Screen) Press(col, row, mods, button int) (taken bool) {
+	if button < 0 {
+		return false
+	}
+	if c.pressing && button == c.button && len(c.otherButtons) > 0 {
+		return c.held
+	}
+	if c.pressing && button != c.button || len(c.otherButtons) > 0 {
+		taken = c.held
+		for _, routed := range c.otherButtons {
+			taken = taken || routed
+		}
+		if c.otherButtons == nil {
+			c.otherButtons = map[int]bool{}
+		}
+		c.otherButtons[button] = taken
+		return taken
+	}
 	c.cutDrag()
+	c.button = button
 	c.resizing = nil
 	c.textSel = nil
 	c.point(col, row)
@@ -63,8 +75,8 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 		} else {
 			taken = c.pressAt(col, row, mods)
 		}
-	case 2:
-		taken = c.secondary(col, row, mods)
+	default:
+		taken = c.pressOther(col, row, mods, button)
 	}
 	c.held = taken
 	c.rehit = true // what the press did (the focus, a reveal) may move what is under it
@@ -76,8 +88,7 @@ func (c *Screen) Press(col, row, mods, button int) (taken bool) {
 // down or none. During a drag it sends the drag events a host sends
 // (SPEC §9.1): one where the element under the pointer, or its step in
 // the dragged element or in the drop target (data-steps), changed, not
-// one for every cell; a drag only moves with the primary button. With
-// no button down, or another one, it sends a hover where the element
+// one for every cell. With no button down, it sends a hover where the element
 // under the pointer changed (SPEC §9.4), on a placement made with Hover,
 // as surf's driver makes it (surf.Surface.Attach); a cell outside the
 // Screen (a negative col or row, or one past its size) is the pointer
@@ -105,10 +116,16 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 	switch {
 	case c.drag != nil:
 		c.dragTo(hotty.EventDrag, col, row, mods)
-	case c.down == nil:
+	case c.aux != nil:
+		c.moveAux(col, row, mods)
+	case !c.pressing && len(c.otherButtons) == 0:
 		c.hoverAt(col, row)
 	}
-	taken = c.held || !c.pressing && c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
+	taken = c.held
+	for _, routed := range c.otherButtons {
+		taken = taken || routed
+	}
+	taken = taken || !c.pressing && len(c.otherButtons) == 0 && c.body != nil && col >= 0 && row >= 0 && col < c.cols && row < c.rows
 	c.flush()
 	return taken
 }
@@ -121,8 +138,21 @@ func (c *Screen) Move(col, row, mods int) (taken bool) {
 // counted as the platform counts them, within half a second) and mods.
 // A drag also ends, with no drop and no click, when the Screen loses
 // focus (Focus(false)), takes a new document, loses the dragged element,
-// or hears a Press before this Release.
+// or hears another press of the same button before this Release.
 func (c *Screen) Release(col, row, mods int) (taken bool) {
+	return c.ReleaseButton(col, row, mods, c.button)
+}
+
+// ReleaseButton is like [Screen.Release], and identifies the released DOM
+// button so a second button's release leaves the active gesture held.
+func (c *Screen) ReleaseButton(col, row, mods, button int) (taken bool) {
+	if taken, ok := c.otherButtons[button]; ok {
+		delete(c.otherButtons, button)
+		return taken
+	}
+	if button != c.button {
+		return false
+	}
 	if c.resizing != nil {
 		c.point(col, row)
 		c.resizeTo(col, row)
@@ -154,6 +184,27 @@ func (c *Screen) Release(col, row, mods int) (taken bool) {
 	// What the release does (a click's focus, a reveal) may move what is
 	// under it.
 	c.rehit = true
+	if button != hotty.ButtonPrimary {
+		if c.drag != nil {
+			c.dragTo(hotty.EventDragEnd, col, row, mods)
+			c.drag = nil
+		} else if a := c.aux; a != nil && c.auxTarget(col, row, button) == a.target {
+			t := a.target
+			e := hotty.Event{Kind: hotty.EventAuxClick, Target: attr(t, "id"), Button: button,
+				At: &hotty.Cell{Col: col, Row: row}, Mods: mods, Value: attr(t, "value")}
+			if e.Target != "" {
+				e.Area = c.area(t)
+			}
+			if t.DataAtom == atom.A && has(t, "href") {
+				e.Link = &hotty.Link{Href: attr(t, "href")}
+				e.Area = c.area(t)
+			}
+			c.emit(e)
+		}
+		c.aux = nil
+		c.flush()
+		return taken
+	}
 	if d := c.drag; d != nil {
 		c.dragTo(hotty.EventDragEnd, col, row, mods)
 		c.drag = nil
@@ -210,7 +261,7 @@ func (c *Screen) At(col, row int) (id string, area hotty.Area) {
 // cutDrag ends a drag under way short (SPEC §9.1): a dragend with no
 // target, the steps as they last were, no drop and no click.
 func (c *Screen) cutDrag() {
-	c.resizing, c.textSel = nil, nil
+	c.resizing, c.textSel, c.aux = nil, nil, nil
 	d := c.drag
 	if d == nil {
 		return
@@ -638,24 +689,63 @@ func within(n, a *html.Node) bool {
 	return false
 }
 
-// secondary is a secondary press at col, row (SPEC §9): to the nearest
-// element with data-on secondary there, unless Shift or Alt makes it the
-// terminal's or the program's.
-func (c *Screen) secondary(col, row, mods int) bool {
-	if mods&(hotty.ModShift|hotty.ModAlt) != 0 {
+// auxPress is held until release or until it moves into a drag.
+type auxPress struct {
+	target *html.Node
+	drag   *dragging
+	mods   int
+}
+
+func (c *Screen) auxTarget(col, row, button int) *html.Node {
+	hit := takesPointer(c.hitAt(col, row))
+	return closest(hit, func(n *html.Node) bool {
+		if button == hotty.ButtonSecondary {
+			return tokens(n, "data-on", "rightbutton") || tokens(n, "data-on", "contextmenu")
+		}
+		return tokens(n, "data-on", "aux") && !(n.DataAtom == atom.A && attr(n, "target") == "_blank")
+	})
+}
+
+func (c *Screen) pressOther(col, row, mods, button int) bool {
+	if mods&hotty.ModAlt != 0 {
 		return false
 	}
 	hit := c.hitAt(col, row)
 	if closest(hit, func(n *html.Node) bool { return has(n, "data-hotty-modal-inert") }) != nil {
 		return true
 	}
-	t := closest(hit, func(n *html.Node) bool { return has(n, "id") && tokens(n, "data-on", "secondary") })
+	t := c.auxTarget(col, row, button)
 	if t == nil {
 		return false
 	}
-	c.emit(hotty.Event{Kind: hotty.EventPress, Button: 2, Target: attr(t, "id"),
-		At: &hotty.Cell{Col: col, Row: row}, Area: c.area(t), Mods: mods})
+	if button == hotty.ButtonSecondary && !tokens(t, "data-on", "rightbutton") {
+		if mods&hotty.ModShift != 0 {
+			return false
+		}
+		e := hotty.Event{Kind: hotty.EventContextMenu, Target: attr(t, "id"),
+			At: &hotty.Cell{Col: col, Row: row}, Mods: mods}
+		if e.Target != "" {
+			e.Area = c.area(t)
+		}
+		c.emit(e)
+		return true
+	}
+	c.aux = &auxPress{target: t, mods: mods}
+	if has(t, "id") && tokens(t, "data-on", "drag") {
+		c.aux.drag = c.dragFrom(t, col, row)
+	}
 	return true
+}
+
+func (c *Screen) moveAux(col, row, mods int) {
+	a := c.aux
+	d := a.drag
+	if d == nil || !c.attached(a.target) || d.c == col && d.r == row {
+		return
+	}
+	c.beginDrag(d, a.mods, c.button)
+	c.aux = nil
+	c.dragTo(hotty.EventDrag, col, row, mods)
 }
 
 // startDrag starts a drag where a primary press at col, row on hit is on
@@ -667,17 +757,25 @@ func (c *Screen) startDrag(hit *html.Node, col, row, mods int) {
 	if h == nil || !has(h, "id") || mods&hotty.ModAlt != 0 {
 		return
 	}
+	c.beginDrag(c.dragFrom(h, col, row), mods, hotty.ButtonPrimary)
+}
+
+func (c *Screen) dragFrom(h *html.Node, col, row int) *dragging {
 	d := &dragging{from: attr(h, "id"), t: attr(h, "id"), c: col, r: row}
 	if r, ok := c.layout().boxes[h]; ok {
 		d.box = rect{r.x, r.y - c.scroll, r.w, r.h}
 	}
 	d.sx, d.sy = stepsOf(h)
-	g := hotty.Drag{Col: col, Row: row}
-	g.X, g.HasX = dragStep(col, d.box.x, d.box.w, d.sx)
-	g.Y, g.HasY = dragStep(row, d.box.y, d.box.h, d.sy)
+	return d
+}
+
+func (c *Screen) beginDrag(d *dragging, mods, button int) {
+	g := hotty.Drag{Col: d.c, Row: d.r}
+	g.X, g.HasX = dragStep(d.c, d.box.x, d.box.w, d.sx)
+	g.Y, g.HasY = dragStep(d.r, d.box.y, d.box.h, d.sy)
 	d.x, d.y = g.X, g.Y
 	c.drag = d
-	c.emit(hotty.Event{Kind: hotty.EventDragStart, Target: d.from, Mods: mods &^ hotty.ModAlt, Drag: &g})
+	c.emit(hotty.Event{Kind: hotty.EventDragStart, Target: d.from, Mods: mods &^ hotty.ModAlt, Button: button, Drag: &g})
 }
 
 // dragTo is the pointer at col, row during the drag: a drag (or the

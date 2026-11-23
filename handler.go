@@ -39,6 +39,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 	if id != "" {
 		a["id"] = id
 	}
+	legacy := f != nil && f.Owner().(*Surface).legacy
 	var on []string
 	for _, h := range hs {
 		switch h.kind {
@@ -51,7 +52,19 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 		case kindDrop:
 			on = append(on, "drop")
 		case kindSecondary:
-			on = append(on, "secondary")
+			if legacy {
+				on = append(on, "secondary")
+			} else {
+				on = append(on, "contextmenu")
+			}
+		case kindAuxClick:
+			if !legacy {
+				on = append(on, "aux")
+			}
+		case kindRightButton:
+			if !legacy {
+				on = append(on, "rightbutton")
+			}
 		}
 	}
 	if len(on) > 0 {
@@ -126,6 +139,8 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 			e.Drop = h.fn
 		case kindSecondary:
 			e.Secondary = h.fn.(func(hotty.Cell, hotty.Area))
+		case kindAuxClick:
+			e.Aux = h.fn
 		}
 	}
 	e.Flat = binds
@@ -136,7 +151,7 @@ func On(ctx context.Context, id string, hs ...Handler) templ.Attributes {
 
 // A Handler is one of an element's handlers, for [On]. Click, Clicks,
 // Input, Check, Key, Focus, Outside, Hover, Submit, Drag, Drop and
-// Secondary make them.
+// Secondary, AuxClick and RightButton make them.
 type Handler struct {
 	kind kind
 	fn   any      // the func the kind takes; nil is no handler
@@ -160,6 +175,8 @@ const (
 	kindSecondary
 	kindClicks
 	kindBind
+	kindAuxClick
+	kindRightButton
 )
 
 // handler is fn as a Handler of kind k, or no handler when absent (a nil
@@ -253,9 +270,9 @@ func Check(fn func(checked bool)) Handler {
 //     other element, it would take Tab from every field inside, and it
 //     is a fault. shift+tab, and a key that doesn't parse, are faults.
 //
-// The surface writes the declaration as the element's data-keys (SPEC
-// §10.2, key=program): a template that writes data-keys itself is a
-// fault, and the attribute is dropped. A declared key wins over the
+// The surface writes the declaration as key=program in the focused
+// control's data-keys or a container's data-keys-inner (SPEC §10.2).
+// Either attribute in a template is a fault and is dropped. A declared key wins over the
 // element's Bind bindings of it, and over a yielding binding (a group's,
 // an Unbind) on the elements inside. The keys that aren't the program's
 // (a field's edit actions, a prefix, the scroll actions) are [Bind]'s.
@@ -340,6 +357,8 @@ type DragEvent struct {
 	Over string
 	// Mods is the modifier keys held during the drag (hotty.ModShift, etc.).
 	Mods int
+	// Button is the DOM button that began the drag, 0 for primary.
+	Button int
 	// Drag is where the pointer is, as hotty-go reads the host's detail:
 	// its cell (Col, Row, counted from the surface's top left and going
 	// on past its edges), its step in ID's box (X, Y) and its step in
@@ -403,21 +422,37 @@ func Drop(fn func(d DragEvent)) Handler {
 	return handler(kindDrop, fn, fn == nil)
 }
 
-// Secondary calls fn when the user makes a secondary press on the element
-// or inside it (data-on secondary): a mouse's secondary button, Control
-// and the primary button on macOS, a pen's barrel button, or a long press
-// of a touch, as the user's platform makes one (SPEC §9). at is the cell
-// the pointer was on, from the surface's top left, where a context menu
-// opens; area is the element's cells. Either is zero when the host
-// doesn't say it (surftest's host lays nothing out). The press does
-// nothing else: no click, no focus, no drag, and the terminal's own menu
-// doesn't open. It tells Outside handlers first, as a primary press
-// does, so a menu opened elsewhere closes before fn runs. Shift with it makes it
-// the terminal's, and Alt the program's (SPEC §9.2), and a host with no
-// secondary gesture sends none, so whatever it opens can also be opened
-// another way (a key, a button).
+// Secondary calls fn for a context-menu gesture on or inside the element
+// (SPEC §9). At is the pointer's cell and Area is the element's cells.
+// Either is zero if the host omits it. Outside handlers run first. An
+// 0.8 session uses the secondary press subscription for the same handler.
 func Secondary(fn func(at hotty.Cell, area hotty.Area)) Handler {
 	return handler(kindSecondary, fn, fn == nil)
+}
+
+// AuxEvent is an auxiliary button click (SPEC §9).
+type AuxEvent struct {
+	// Button is the DOM button number, such as 1 for middle.
+	Button int
+	// At is the pointer's cell at release, from the surface's top left.
+	At hotty.Cell
+	// Area is the element's cells, or zero if the host omitted it.
+	Area hotty.Area
+	// Mods is the modifier key bit mask at release (hotty.ModShift, etc.).
+	Mods int
+}
+
+// AuxClick calls fn when another button is pressed and released on the
+// element without dragging. Add [RightButton] to take the secondary button.
+func AuxClick(fn func(AuxEvent)) Handler {
+	return handler(kindAuxClick, fn, fn == nil)
+}
+
+// RightButton takes the mouse's secondary button for an auxiliary click,
+// or a drag when the element also has [Drag]. Other context-menu gestures
+// can still reach [Secondary] (SPEC §9).
+func RightButton() Handler {
+	return handler(kindRightButton, nil, false)
 }
 
 // Autofocus asks for the keyboard to go to the element id once this frame

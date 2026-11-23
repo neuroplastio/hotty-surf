@@ -37,7 +37,7 @@ a user can't do without the name, or why a simpler shape won't do.
 - `surf.DragEvent.ID`: the element dragged, which the host's events don't name after dragstart; Drop's handler needs it to know what landed.
 - `surf.DragEvent.Over`: the element under the pointer (the host's t), "" over none: where it would land.
 - `surf.DragEvent.embedded`: hotty.Drag embedded, so its cell and steps (Col, Row, X, Y, TX, TY and their Has…) read as d.X, d.TY with hotty-go's own docs, as SDKs in other languages name them: ported, not restated in a second set of names.
-- `surf.Secondary`: SPEC §9's secondary press (data-on secondary): a right click, a long press, for a context menu at the pointer, which the kit's context menu opens on. The cell is where the menu opens, and the element's area for a menu placed by the element instead; both are hotty-go's types, as Platform's and Event's are.
+- `surf.Secondary`: SPEC §9's context-menu gesture: a right click, a long press, or another platform gesture that opens the kit's context menu. The cell is where the menu opens, and the element's area for a menu placed by the element instead; both are hotty-go's types, as Platform's and Event's are.
 - `surf.Submit`: a form submitted (SPEC §9 `submit`): Enter in a text field, or its submit button. A text field keeps Enter, which the host turns into a commit and a submit, so without it no app could act on Enter in a field: the L4 trial's todo, "type and press Enter", had no way to.
 - `surf.Autofocus`: moving the keyboard after a frame (a dialog opens, a menu closes back to its trigger); edge-triggered, so a view can ask on every render.
 
@@ -782,3 +782,17 @@ The maintainer: an app chooses a field's copy, cut, paste, undo, redo and select
 
 - `surf.Surface.CheckCompiled`: plx wants the check of compiled instances in its dev builds and its gate, which have no surfdev tag. The check is in every build already and only its switch was private. A method, on the surface: no process state, no change to New. An app's own call wins over a surfdev build's default.
 - `surf.Surface.OnFault`: plx wants to log, toast or fail its gate on what the check finds. The faults were collected in every build and read only by surftest. OnFault carries every fault, since they share one path and are all the app's bugs, and each once until the next Document, since a fault repeats every render. OnFault, not OnError: the calls that render return errors for what they couldn't do; a fault is the app's bug the surface survived, as the package and surftest name it.
+
+## Auxiliary pointer buttons
+
+- `surf.AuxClick`: subscribes an element to releases of auxiliary mouse buttons on the element where they were pressed.
+- `surf.AuxEvent`: carries the released button and enough pointer context for a handler to act on it.
+- `surf.AuxEvent.Button`: identifies the auxiliary button by its DOM number.
+- `surf.AuxEvent.At`: places an action at the pointer's cell at release.
+- `surf.AuxEvent.Area`: lets a handler position an action relative to the subscribed element.
+- `surf.AuxEvent.Mods`: lets a handler distinguish gestures by the modifiers held at release.
+- `surf.RightButton`: lets an element use the secondary mouse button as a plain auxiliary button or a drag.
+- `surf.DragEvent.Button`: tells the drag and drop handlers which button began the gesture.
+- `surftest.Rig.AuxClick`: exercises an element's auxiliary-button subscription through the test host.
+- `surftest.Rig.ContextMenu`: exercises the context-menu gesture without tying it to a specific button.
+- `surftui.Screen.ReleaseButton`: identifies the released button so cells hosts can preserve an active gesture through a second button's release.

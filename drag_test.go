@@ -127,7 +127,7 @@ func TestSecondary(t *testing.T) {
 			surf.Secondary(func(c hotty.Cell, _ hotty.Area) { menus++; at = c })))
 	})
 	r := surftest.Start(t, surf.New("t", v, ""))
-	if on := attrOf(r.One("#row"), "data-on"); on != "click secondary" {
+	if on := attrOf(r.One("#row"), "data-on"); on != "click contextmenu" {
 		t.Fatalf("data-on %q", on)
 	}
 	r.Secondary("#row")
@@ -153,5 +153,66 @@ func TestSecondaryAfterOutside(t *testing.T) {
 	r.Secondary("#row-b")
 	if !open || row != "b" {
 		t.Fatalf("open %v at row %q, want the menu open at b", open, row)
+	}
+}
+
+func TestAuxiliaryHandlers(t *testing.T) {
+	var clicks []surf.AuxEvent
+	var drags []surf.DragEvent
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div%s>row</div>`, on("row",
+			surf.AuxClick(func(e surf.AuxEvent) { clicks = append(clicks, e) }),
+			surf.RightButton(),
+			surf.Drag(func(e surf.DragEvent) { drags = append(drags, e) })))
+	})
+	s := surf.New("t", v, "")
+	r := surftest.Start(t, s)
+	if got := attrOf(r.One("#row"), "data-on"); got != "aux rightbutton drag" {
+		t.Fatalf("subscriptions: %q", got)
+	}
+	for _, button := range []int{hotty.ButtonMiddle, hotty.ButtonSecondary, hotty.ButtonBack, hotty.ButtonForward} {
+		r.AuxClick("#row", button)
+		if len(clicks) == 0 || clicks[len(clicks)-1].Button != button {
+			t.Fatalf("button %d: %+v", button, clicks)
+		}
+	}
+	for _, kind := range []string{hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd} {
+		e := hotty.Event{Surface: "t", Target: "row", Kind: kind}
+		if kind == hotty.EventDragStart {
+			e.Button = hotty.ButtonMiddle
+		}
+		if err := s.Event(e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(drags) != 3 {
+		t.Fatalf("drag events: %+v", drags)
+	}
+	for _, e := range drags {
+		if e.Button != hotty.ButtonMiddle {
+			t.Fatalf("drag lost its button: %+v", e)
+		}
+	}
+}
+
+func TestSecondaryInLegacySession(t *testing.T) {
+	var menus int
+	v := view(func(ctx context.Context, w io.Writer, on func(string, ...surf.Handler) string) {
+		fmt.Fprintf(w, `<div%s>row</div>`, on("row", surf.Secondary(func(hotty.Cell, hotty.Area) { menus++ })))
+	})
+	s := surf.New("t", v, "")
+	s.Attach(io.Discard, hotty.Caps{V: "0.8"})
+	doc, err := s.Document()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(doc, `data-on="secondary"`) {
+		t.Fatalf("0.8 subscriptions: %s", doc)
+	}
+	if err := s.Event(hotty.Event{Surface: "t", Target: "row", Kind: hotty.EventPress, Button: hotty.ButtonSecondary}); err != nil {
+		t.Fatal(err)
+	}
+	if menus != 1 {
+		t.Fatalf("0.8 secondary invoked %d menu handlers", menus)
 	}
 }

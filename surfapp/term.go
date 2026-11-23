@@ -13,6 +13,7 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottyterm"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/input"
 	"neuroplast.io/hotty-surf/surfui"
 )
 
@@ -183,9 +184,15 @@ func inCells(ctx context.Context, t *hottyterm.Term, s *surf.Surface, winch <-ch
 			case uv.PasteEvent:
 				c.scr.Paste(ev.Content)
 			case uv.MouseClickEvent:
-				if ev.Button == uv.MouseLeft {
-					c.scr.Click(ev.X, ev.Y)
+				if button, ok := input.MouseButton(ev.Button); ok {
+					c.scr.Press(ev.X, ev.Y, input.MouseMods(ev.Mod), button)
 				}
+			case uv.MouseReleaseEvent:
+				if button, ok := input.MouseButton(ev.Button); ok {
+					c.scr.ReleaseButton(ev.X, ev.Y, input.MouseMods(ev.Mod), button)
+				}
+			case uv.MouseMotionEvent:
+				c.scr.Move(ev.X, ev.Y, input.MouseMods(ev.Mod))
 			case uv.MouseWheelEvent:
 				switch ev.Button {
 				case uv.MouseWheelDown:

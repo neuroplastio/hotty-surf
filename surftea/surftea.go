@@ -45,9 +45,10 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottytea"
 	"neuroplast.io/hotty-surf"
-	"neuroplast.io/hotty-surf/surftui"
+	"neuroplast.io/hotty-surf/internal/core/input"
 	"neuroplast.io/hotty-surf/internal/core/rt"
 	"neuroplast.io/hotty-surf/surfdev"
+	"neuroplast.io/hotty-surf/surftui"
 )
 
 // A Host is a surf.Surface in a Bubble Tea program. Its methods run on the
@@ -180,17 +181,36 @@ func (h *Host) Update(msg tea.Msg) (tea.Msg, tea.Cmd) {
 			return msg, nil
 		}
 		x, y, in := h.at(m.X, m.Y)
+		button, ok := input.MouseButton(m.Button)
+		if !ok {
+			return msg, nil
+		}
 		if !in {
-			if h.focused {
+			if h.focused && button == hotty.ButtonPrimary {
 				// A click elsewhere gives the keyboard back, as on a host.
 				h.Blur()
 			}
 			return msg, nil
 		}
-		if m.Button == tea.MouseLeft {
-			h.scr.Click(x, y)
-			h.settle()
+		if !h.scr.Press(x, y, input.MouseMods(m.Mod), button) {
+			return msg, nil
 		}
+		h.settle()
+		return nil, nil
+	case tea.MouseReleaseMsg:
+		button, ok := input.MouseButton(m.Button)
+		x, y, _ := h.at(m.X, m.Y)
+		if h.scr == nil || !ok || !h.scr.ReleaseButton(x, y, input.MouseMods(m.Mod), button) {
+			return msg, nil
+		}
+		h.settle()
+		return nil, nil
+	case tea.MouseMotionMsg:
+		x, y, _ := h.at(m.X, m.Y)
+		if h.scr == nil || !h.scr.Move(x, y, input.MouseMods(m.Mod)) {
+			return msg, nil
+		}
+		h.settle()
 		return nil, nil
 	case tea.MouseWheelMsg:
 		if h.scr == nil {

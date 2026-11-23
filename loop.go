@@ -294,7 +294,7 @@ func (s *Surface) event(e hotty.Event) error {
 	}
 	if modal != "" && s.modalApplies(s.frame, modal, e.Target) && !inside {
 		switch e.Kind {
-		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress, hotty.EventDragStart:
+		case hotty.EventClick, hotty.EventInput, hotty.EventChange, hotty.EventSubmit, hotty.EventPress, hotty.EventContextMenu, hotty.EventAuxClick, hotty.EventDragStart:
 			return nil
 		case hotty.EventFocus:
 			s.modalFocus = "first"
@@ -350,8 +350,25 @@ func (s *Surface) event(e hotty.Event) error {
 		// click elsewhere closes an open menu, then the Secondary it lands on
 		// may open one there.
 		ran = s.outside(e.Target)
-		if e.Button == 2 {
+		if s.legacy && e.Button == hotty.ButtonSecondary {
 			ran = s.secondary(e) || ran
+		}
+	case hotty.EventContextMenu:
+		ran = s.outside(e.Target)
+		ran = s.secondary(e) || ran
+	case hotty.EventAuxClick:
+		if h := on.Get(e.Target); h != nil {
+			if fn, ok := h.Aux.(func(AuxEvent)); ok {
+				event := AuxEvent{Button: e.Button, Mods: e.Mods}
+				if e.At != nil {
+					event.At = *e.At
+				}
+				if e.Area != nil {
+					event.Area = *e.Area
+				}
+				fn(event)
+				ran = true
+			}
 		}
 	case hotty.EventDragStart, hotty.EventDrag, hotty.EventDragEnd:
 		ran = s.dragged(e)
@@ -435,7 +452,7 @@ func (s *Surface) dragged(e hotty.Event) bool {
 	}
 	switch e.Kind {
 	case hotty.EventDragStart:
-		s.drag, s.lifted = e.Target, false
+		s.drag, s.dragButton, s.lifted = e.Target, e.Button, false
 		d.Start = true
 	case hotty.EventDrag:
 		if s.drag != "" && !s.lifted && !behind(s.drag) {
@@ -447,10 +464,10 @@ func (s *Surface) dragged(e hotty.Event) bool {
 			s.r.valid, ran = false, true
 		}
 	}
-	d.ID = s.drag
+	d.ID, d.Button = s.drag, s.dragButton
 	if e.Kind != hotty.EventDragStart && behind(s.drag) {
 		if d.End {
-			s.drag, s.lifted = "", false
+			s.drag, s.dragButton, s.lifted = "", 0, false
 		}
 		return ran
 	}
@@ -467,7 +484,7 @@ func (s *Surface) dragged(e hotty.Event) bool {
 				ran = true
 			}
 		}
-		s.drag, s.lifted = "", false
+		s.drag, s.dragButton, s.lifted = "", 0, false
 	}
 	return ran
 }

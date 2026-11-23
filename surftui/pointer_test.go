@@ -126,26 +126,46 @@ func TestDragCutShort(t *testing.T) {
 }
 
 func TestSecondaryInCells(t *testing.T) {
-	c, got := pointerScreen(t, `<p>plain</p><div id="row" data-on="secondary"><span>menu here</span></div>`)
-	if !c.Press(2, 1, 0, 2) {
-		t.Fatal("secondary press on a data-on secondary element not taken")
+	c, got := pointerScreen(t, `<p>plain</p><div id="row" data-on="contextmenu"><span>menu here</span></div>`)
+	if !c.Press(2, 1, 0, hotty.ButtonSecondary) {
+		t.Fatal("context menu press was not taken")
 	}
-	wantEvents(t, got, "press row button=2 at=2,1")
-	if c.Press(2, 0, 0, 2) {
-		t.Error("secondary press on nothing that takes one is taken")
-	}
-	if c.Press(2, 1, hotty.ModShift, 2) {
-		t.Error("shift+secondary press is taken")
-	}
-	if c.Press(2, 1, 0, 1) {
-		t.Error("the middle button is taken")
+	wantEvents(t, got, "contextmenu row at=2,1")
+	c.Move(2, 1, 0)
+	wantEvents(t, got)
+	c.Release(2, 1, 0)
+	for _, p := range []struct{ row, mods, button int }{
+		{0, 0, hotty.ButtonSecondary}, {1, hotty.ModShift, hotty.ButtonSecondary}, {1, 0, hotty.ButtonMiddle},
+	} {
+		if c.Press(2, p.row, p.mods, p.button) {
+			t.Errorf("unexpectedly took %+v", p)
+		}
+		c.Release(2, p.row, p.mods)
 	}
 	wantEvents(t, got)
-	// A Move with the secondary button down is a hover.
-	c.Press(2, 1, 0, 2)
-	*got = nil
-	c.Move(2, 1, 0)
-	wantEvents(t, got, "hover row")
+}
+
+func TestAuxiliaryButtonsInCells(t *testing.T) {
+	c, got := pointerScreen(t, `<div id="row" data-on="aux drag rightbutton">one</div><div id="other" data-on="aux">two</div>`)
+	for _, button := range []int{hotty.ButtonMiddle, hotty.ButtonSecondary, hotty.ButtonBack, hotty.ButtonForward, 5} {
+		if !c.Press(1, 0, 0, button) {
+			t.Fatalf("button %d press escaped", button)
+		}
+		wantEvents(t, got)
+		if !c.ReleaseButton(2, 0, hotty.ModShift, button) {
+			t.Fatalf("button %d release escaped", button)
+		}
+		wantEvents(t, got, fmt.Sprintf("auxclick row button=%d mods=1 at=2,0", button))
+	}
+	c.Press(1, 0, 0, hotty.ButtonMiddle)
+	c.Release(1, 1, 0)
+	wantEvents(t, got)
+	c.Press(1, 0, 0, hotty.ButtonMiddle)
+	c.Press(1, 0, 0, hotty.ButtonPrimary)
+	c.ReleaseButton(1, 0, 0, hotty.ButtonPrimary)
+	c.Move(1, 1, 0)
+	c.ReleaseButton(1, 1, 0, hotty.ButtonMiddle)
+	wantEvents(t, got, "dragstart row button=1 c=1,0", "drag  c=1,1", "dragend  c=1,1")
 }
 
 func TestDoubleClickAndMods(t *testing.T) {
@@ -238,20 +258,17 @@ func TestMoveOfUntakenPress(t *testing.T) {
 	}
 }
 
-// A press of another button after a primary press whose release was lost
-// clicks nothing: the old press's click is no longer due.
-func TestPressAfterLostRelease(t *testing.T) {
-	for _, button := range []int{1, 2} {
+func TestSecondButtonLeavesPrimaryReleaseIntact(t *testing.T) {
+	for _, button := range []int{hotty.ButtonMiddle, hotty.ButtonSecondary} {
 		c, got := pointerScreen(t, `<button id="b">go</button>`)
-		c.Press(1, 0, 0, 0) // its release lost
+		c.Press(1, 0, 0, hotty.ButtonPrimary)
 		*got = nil
-		c.Press(1, 0, 0, button)
-		c.Release(1, 0, 0)
-		for _, e := range *got {
-			if strings.HasPrefix(e, "click") {
-				t.Errorf("button %d after a lost release clicked: %q", button, e)
-			}
+		if !c.Press(1, 0, 0, button) || !c.ReleaseButton(1, 0, 0, button) {
+			t.Errorf("button %d escaped the primary gesture", button)
 		}
+		wantEvents(t, got)
+		c.ReleaseButton(1, 0, 0, hotty.ButtonPrimary)
+		wantEvents(t, got, "click b count=1")
 	}
 }
 

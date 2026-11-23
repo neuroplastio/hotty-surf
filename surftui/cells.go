@@ -63,14 +63,17 @@ type Screen struct {
 	// The pointer (pointer.go): the press whose release may click, a
 	// drag in progress, the element the last hover named, and the run of
 	// clicks a double click counts.
-	down     *pressed
-	held     bool // a press the Screen took is down
-	pressing bool // a press of any button is down, the Screen's or not
-	drag     *dragging
-	resizing *fieldResize
-	textSel  *fieldSelect
-	hoverID  string
-	hoverOut bool
+	down         *pressed
+	held         bool // a press the Screen took is down
+	pressing     bool // a press of any button is down, the Screen's or not
+	drag         *dragging
+	aux          *auxPress
+	button       int
+	otherButtons map[int]bool
+	resizing     *fieldResize
+	textSel      *fieldSelect
+	hoverID      string
+	hoverOut     bool
 	// hovered is the hovered chain (hover.go), the innermost element
 	// first, and hoverSpare the array of the one before.
 	hovered, hoverSpare []*html.Node
@@ -230,8 +233,8 @@ func (c *Screen) Paste(text string) (taken bool) {
 func (c *Screen) Click(col, row int) (taken bool) {
 	// The release always follows, taken or not: it ends the press (a
 	// release with nothing of the surface's pressed sends nothing).
-	taken = c.Press(col, row, 0, 0)
-	c.Release(col, row, 0)
+	taken = c.Press(col, row, 0, hotty.ButtonPrimary)
+	c.ReleaseButton(col, row, 0, hotty.ButtonPrimary)
 	return taken
 }
 

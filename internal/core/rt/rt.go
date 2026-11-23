@@ -51,6 +51,7 @@ type Handlers struct {
 	Submit  func()
 	// Drag and Drop are surf.Drag's and surf.Drop's, as any: the event's
 	// type is surf's (rt can't import surf). Secondary is surf.Secondary's.
+	Aux        any
 	Drag, Drop any
 	Secondary  func(hotty.Cell, hotty.Area)
 }

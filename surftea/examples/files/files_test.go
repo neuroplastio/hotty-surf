@@ -196,6 +196,7 @@ func TestInCells(t *testing.T) {
 		t.Fatalf("no Star in\n%s", h.Screen())
 	}
 	m.p.Send(tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft})
+	m.p.Send(tea.MouseReleaseMsg{X: x, Y: y, Button: tea.MouseLeft})
 	eventually(t, "a star", func() bool { return strings.Contains(h.Screen(), "Starred 1 times") })
 
 	// From the button, Tab goes past the last element: the list's again.

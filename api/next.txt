@@ -2,6 +2,7 @@ pkg neuroplast.io/hotty-surf, const CharsBound Chars = 0
 pkg neuroplast.io/hotty-surf, const CharsPick Chars = 1
 pkg neuroplast.io/hotty-surf, const CharsText Chars = 2
 pkg neuroplast.io/hotty-surf, func Autofocus(context.Context, string)
+pkg neuroplast.io/hotty-surf, func AuxClick(func(AuxEvent)) Handler
 pkg neuroplast.io/hotty-surf, func Bind(...surfkey.Option) Handler
 pkg neuroplast.io/hotty-surf, func Check(func(bool)) Handler
 pkg neuroplast.io/hotty-surf, func Click(func()) Handler
@@ -19,6 +20,7 @@ pkg neuroplast.io/hotty-surf, func On(context.Context, string, ...Handler) templ
 pkg neuroplast.io/hotty-surf, func Outside(func()) Handler
 pkg neuroplast.io/hotty-surf, func Platform(context.Context) hotty.Platform
 pkg neuroplast.io/hotty-surf, func Refocus(context.Context, string)
+pkg neuroplast.io/hotty-surf, func RightButton() Handler
 pkg neuroplast.io/hotty-surf, func Secondary(func(hotty.Cell, hotty.Area)) Handler
 pkg neuroplast.io/hotty-surf, func Submit(func()) Handler
 pkg neuroplast.io/hotty-surf, method (*Compiled) With(string, P) templ.Component
@@ -39,9 +41,15 @@ pkg neuroplast.io/hotty-surf, method (*Surface) Overlays() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) OwnKeys() []string
 pkg neuroplast.io/hotty-surf, method (*Surface) Pending() <-chan struct{}
 pkg neuroplast.io/hotty-surf, method (*Surface) Update() error
+pkg neuroplast.io/hotty-surf, type AuxEvent struct
+pkg neuroplast.io/hotty-surf, type AuxEvent struct, Area hotty.Area
+pkg neuroplast.io/hotty-surf, type AuxEvent struct, At hotty.Cell
+pkg neuroplast.io/hotty-surf, type AuxEvent struct, Button int
+pkg neuroplast.io/hotty-surf, type AuxEvent struct, Mods int
 pkg neuroplast.io/hotty-surf, type Chars uint8
 pkg neuroplast.io/hotty-surf, type Compiled[P comparable] struct
 pkg neuroplast.io/hotty-surf, type DragEvent struct
+pkg neuroplast.io/hotty-surf, type DragEvent struct, Button int
 pkg neuroplast.io/hotty-surf, type DragEvent struct, End bool
 pkg neuroplast.io/hotty-surf, type DragEvent struct, ID string
 pkg neuroplast.io/hotty-surf, type DragEvent struct, Mods int
@@ -116,8 +124,10 @@ pkg neuroplast.io/hotty-surf/surftea, type Host struct
 pkg neuroplast.io/hotty-surf/surftest, func Lint(testing.TB, string)
 pkg neuroplast.io/hotty-surf/surftest, func Size(int, int) Option
 pkg neuroplast.io/hotty-surf/surftest, func Start(testing.TB, *surf.Surface, ...Option) *Rig
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) AuxClick(string, int)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Checked(string) bool
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Click(string)
+pkg neuroplast.io/hotty-surf/surftest, method (*Rig) ContextMenu(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DoubleClick(string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) Drag(string, string)
 pkg neuroplast.io/hotty-surf/surftest, method (*Rig) DragStep(string, string, int, int)
@@ -152,6 +162,7 @@ pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Move(int, int, int) bool
 pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Paste(string) bool
 pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Press(int, int, int, int) bool
 pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Release(int, int, int) bool
+pkg neuroplast.io/hotty-surf/surftui, method (*Screen) ReleaseButton(int, int, int, int) bool
 pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Resize(int, int)
 pkg neuroplast.io/hotty-surf/surftui, method (*Screen) ResizeMode(int, int) string
 pkg neuroplast.io/hotty-surf/surftui, method (*Screen) Selection() string

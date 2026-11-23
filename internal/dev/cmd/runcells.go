@@ -9,9 +9,10 @@ import (
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-go/hottyterm"
 
-	"neuroplast.io/hotty-surf/surftui"
-	"neuroplast.io/hotty-surf/internal/dev/wire"
+	"neuroplast.io/hotty-surf/internal/core/input"
 	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/internal/dev/wire"
+	"neuroplast.io/hotty-surf/surftui"
 )
 
 // cellsView is `hotty-surf run` in a terminal that is no hotty host: the
@@ -27,9 +28,11 @@ type cellsView struct {
 	dev  *surftui.Screen
 	outs chan []byte
 
-	cols, rows int
-	devRows    int // the report's rows at the bottom; 0 while it is hidden
-	devStale   bool
+	cols, rows   int
+	devRows      int // the report's rows at the bottom; 0 while it is hidden
+	devStale     bool
+	mouse        *surftui.Screen
+	mouseButtons map[int]bool
 }
 
 func newCellsView(h *host, cols, rows int) *cellsView {
@@ -115,16 +118,34 @@ func (c *cellsView) input(ev hottyterm.Event) (quit bool) {
 	case uv.PasteEvent:
 		c.app.Paste(ev.Content)
 	case uv.MouseClickEvent:
-		if ev.Button != uv.MouseLeft {
+		button, ok := input.MouseButton(ev.Button)
+		if !ok {
 			return false
 		}
-		if c.devRows > 0 && ev.Y >= c.top() {
-			c.app.Focus(false)
-			c.dev.Click(ev.X, ev.Y-c.top())
-			return false
+		if c.mouse == nil {
+			c.mouse = c.app
+			if c.devRows > 0 && ev.Y >= c.top() {
+				c.mouse = c.dev
+			}
+			if button == hotty.ButtonPrimary {
+				c.app.Focus(c.mouse == c.app)
+			}
+			c.mouseButtons = map[int]bool{}
 		}
-		c.app.Focus(true)
-		c.app.Click(ev.X, ev.Y)
+		c.mouseButtons[button] = true
+		c.mouse.Press(ev.X, c.mouseRow(ev.Y), input.MouseMods(ev.Mod), button)
+	case uv.MouseReleaseEvent:
+		if button, ok := input.MouseButton(ev.Button); ok && c.mouse != nil {
+			c.mouse.ReleaseButton(ev.X, c.mouseRow(ev.Y), input.MouseMods(ev.Mod), button)
+			delete(c.mouseButtons, button)
+			if len(c.mouseButtons) == 0 {
+				c.mouse = nil
+			}
+		}
+	case uv.MouseMotionEvent:
+		if c.mouse != nil {
+			c.mouse.Move(ev.X, c.mouseRow(ev.Y), input.MouseMods(ev.Mod))
+		}
 	case uv.MouseWheelEvent:
 		n := 3
 		if ev.Button == uv.MouseWheelUp {
@@ -139,6 +160,16 @@ func (c *cellsView) input(ev hottyterm.Event) (quit bool) {
 		}
 	}
 	return false
+}
+
+func (c *cellsView) mouseRow(row int) int {
+	if c.mouse == c.dev {
+		return row - c.top()
+	}
+	if c.devRows > 0 && row >= c.top() {
+		return c.rows
+	}
+	return row
 }
 
 // frame is both Screens' lines as one write: the app's, the report's over

@@ -265,16 +265,28 @@ func (r *Rig) drag(from, to string, tx, ty int) {
 	r.settle()
 }
 
-// Secondary makes a secondary press (a right click) on the one element
-// matching sel, as a user's does (SPEC §9): the surf.Secondary handler of
-// the nearest element from it outward that has one hears it, at cell 0, 0
-// (the test host lays nothing out). It fails the test if no element or
-// more than one matches.
+// Secondary opens a context menu on the one element matching sel.
 func (r *Rig) Secondary(sel string) {
+	r.t.Helper()
+	r.ContextMenu(sel)
+}
+
+// ContextMenu performs a context-menu gesture on the one element matching sel.
+func (r *Rig) ContextMenu(sel string) {
 	r.t.Helper()
 	id := attr(r.One(sel), "id")
 	if err := r.host.ContextMenu(r.s.Name(), id, 0, 0); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
-		r.t.Fatalf("surftest: secondary press on %s: %v", sel, err)
+		r.t.Fatalf("surftest: context menu on %s: %v", sel, err)
+	}
+	r.settle()
+}
+
+// AuxClick presses and releases button on the one element matching sel.
+func (r *Rig) AuxClick(sel string, button int) {
+	r.t.Helper()
+	id := attr(r.One(sel), "id")
+	if err := r.host.AuxClick(r.s.Name(), id, button, 0, 0); err != nil && !errors.Is(err, hottytest.ErrNoReport) {
+		r.t.Fatalf("surftest: auxiliary click on %s: %v", sel, err)
 	}
 	r.settle()
 }
