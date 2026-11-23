@@ -69,10 +69,12 @@ type KeyBinding struct {
 // controls do not receive keys; a scope enclosing it applies to its
 // focused kit control.
 //
-// The surface places a shared scope on an enclosing element. When nested
-// scopes exhaust the available ancestors, the surface uses a transparent
-// boundary under the document root. A scope with no children still offers
-// its bindings to a menu and a palette. Run runs
+// The surface places a shared scope on an enclosing element where the
+// authored tree allows it. Interleaved controls use separate placements
+// to preserve the keys of unrelated controls. When nested scopes exhaust
+// the available ancestors at the document root, the surface uses a
+// transparent boundary there. A scope with no children still offers its
+// bindings to a menu and a palette. Run runs
 // on the surface driver's goroutine, as other handlers do. A host's open
 // native select list can keep keys until it closes (SPEC §10.2).
 func KeyScope(bindings []KeyBinding) templ.Component {

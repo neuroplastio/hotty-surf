@@ -403,10 +403,14 @@ each a key, a label, a name, whether it is disabled, and the `Run` that
 does it, as a menu item carries its `OnSelect`. A binding that takes a key
 prevents its default. If it declines, the next enclosing scope is tried,
 then the kit default. The scope nearest the keyboard goes first. Keys not
-named keep their existing defaults. Shared scopes use distinct enclosing
-elements. If nesting exhausts the available ancestors, the surface adds
-a layout-transparent boundary under its document root. Scopes apply only
-within their own surface.
+named keep their existing defaults. Each shared scope uses a distinct
+enclosing element where the authored tree allows it. If nesting exhausts
+the available ancestors at the document root, the surface adds a
+layout-transparent boundary there. Interleaved controls use the
+enclosing elements and individual controls within their scope, so
+unrelated controls keep their normal keymaps and focus order. A yielding
+editing map lets the scope's forwarded key win at the editing element.
+Scopes apply only within their own surface.
 
 ```templ
 @surfui.KeyScope([]surfui.KeyBinding{

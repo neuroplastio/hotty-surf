@@ -5,12 +5,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/a-h/templ"
 	"golang.org/x/net/html"
 	"neuroplast.io/hotty-go"
 	"neuroplast.io/hotty-surf"
+	"neuroplast.io/hotty-surf/internal/core/rt"
+	"neuroplast.io/hotty-surf/surfkey"
 	"neuroplast.io/hotty-surf/surftest"
 	"neuroplast.io/hotty-surf/surftui"
 	"neuroplast.io/hotty-surf/surfui"
@@ -321,102 +325,184 @@ func TestKeyScopeDeclineWithoutValueCallback(t *testing.T) {
 	}
 }
 
-func TestSharedKeyScopePlacementDeltas(t *testing.T) {
-	for _, mode := range []string{"nested", "interleaved"} {
+func TestSharedKeyScopeYieldsOnWire(t *testing.T) {
+	for _, mode := range []string{"nested edit root", "same root", "interleaved edit root"} {
 		t.Run(mode, func(t *testing.T) {
 			disabled := false
-			scope := func(key string, off bool, child templ.Component) templ.Component {
-				return with(surfui.KeyScope([]surfui.KeyBinding{{Key: key, Disabled: off, Run: func() bool { return true }}}), child)
-			}
-			v := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
-				var parts []templ.Component
-				parts = append(parts, templ.Raw(`<main id="controls" tabindex="0">`))
-				parts = append(parts, uibutton.View(uibutton.Props{ID: "one", Label: "One"}))
-				if mode == "interleaved" {
-					parts = append(parts, templ.Raw(`<input id="outside">`))
-				}
-				parts = append(parts, uibutton.View(uibutton.Props{ID: "two", Label: "Two"}), templ.Raw(`</main>`))
-				view := templ.Join(parts...)
-				if mode == "nested" {
-					// Three scopes on the same controls exhaust the authored ancestors.
-					view = scope("ctrl+j", false, scope("ctrl+k", false, view))
-				}
-				return scope("ctrl+s", disabled, view).Render(ctx, w)
-			})
-			s := surf.New("scopes", v, "")
-			var out bytes.Buffer
-			s.Attach(&out, hotty.Caps{})
-			doc, err := s.Document()
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := html.Parse(bytes.NewBufferString(doc))
-			if err != nil {
-				t.Fatal(err)
-			}
-			placements := map[string]string{}
-			var walk func(*html.Node)
-			walk = func(n *html.Node) {
-				if v := attr(n, "data-keys-inner"); v != "" {
-					if _, exists := placements[v]; exists {
-						t.Fatalf("keymap written twice: %q", v)
+			view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				children := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					field := input.View(input.Props{Attrs: templ.Attributes{"id": "field"}})
+					other := uibutton.View(uibutton.Props{ID: "other", Label: "Other"})
+					edit := surf.On(ctx, "edit", surf.Bind(surfkey.ReadlineKeys(), surfkey.Yield()))
+					if mode == "same root" {
+						return wrap(edit, templ.Join(field, other)).Render(ctx, w)
 					}
-					placements[v] = attr(n, "id")
-				}
-				if attr(n, "id") == "outside" && attr(n, "data-keys") != "ctrl+s=default" {
-					t.Errorf("outside field keymap: %q", attr(n, "data-keys"))
-				}
-				for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
-					walk(ch)
-				}
+					var edits templ.Component = field
+					if mode == "interleaved edit root" {
+						edits = templ.Join(field, templ.Raw(`<input id="unscoped">`))
+					}
+					return wrap(templ.Attributes{"id": "shared"}, templ.Join(wrap(edit, edits), other)).Render(ctx, w)
+				})
+				scope := surfui.KeyScope([]surfui.KeyBinding{
+					{Key: "ctrl+b", Disabled: disabled, Run: func() bool { return true }},
+				})
+				return with(scope, children).Render(ctx, w)
+			})
+			s := surf.New("scope-yield", view, "")
+			r := surftest.Start(t, s)
+			read := func() *hotty.Keymap {
+				return rt.ResolveKeys(hotty.Platform{}, r.One("#field"), nil, hotty.ReaderInput, false)
 			}
-			walk(root)
-			if mode == "nested" {
-				if len(placements) != 3 || placements["ctrl+k=program"] != "controls" || placements["ctrl+j=program"] == "" {
-					t.Fatalf("nested scope placements: %v", placements)
-				}
-			} else if len(placements) != 1 || placements["ctrl+s=program"] != "controls" {
-				t.Fatalf("interleaved scope placements: %v", placements)
+			if km := read(); !km.Program("ctrl+b") || km.Lookup("ctrl+f") != hotty.CharForward {
+				t.Fatalf("field Ctrl+B program=%v, Ctrl+F=%q", km.Program("ctrl+b"), km.Lookup("ctrl+f"))
 			}
-			anchor := placements["ctrl+s=program"]
-			if anchor == "" {
-				t.Fatal("outer scope has no anchor")
+			if mode == "interleaved edit root" {
+				unscoped := rt.ResolveKeys(hotty.Platform{}, r.One("#unscoped"), nil, hotty.ReaderInput, false)
+				if unscoped.Program("ctrl+b") || unscoped.Lookup("ctrl+b") != hotty.CharBackward {
+					t.Fatalf("unscoped field Ctrl+B program=%v, action=%q", unscoped.Program("ctrl+b"), unscoped.Lookup("ctrl+b"))
+				}
+				if keys := attr(r.One("#field"), "data-keys"); keys != "ctrl+b=program" {
+					t.Fatalf("scoped field own keys: %q", keys)
+				}
+			} else {
+				bindings := strings.Fields(attr(r.One("#edit"), "data-keys-inner"))
+				if !slices.Contains(bindings, "ctrl+b=program") || slices.Contains(bindings, "ctrl+b=char-backward") {
+					t.Fatalf("edit root keys: %v", bindings)
+				}
 			}
 			s.Do(func() { disabled = true })
-			out.Reset()
-			if err := s.Update(); err != nil {
-				t.Fatal(err)
-			}
-			var sc hotty.Scanner
-			var dec hotty.Decoder
-			var ops []hotty.Op
-			for _, seg := range sc.Feed(out.Bytes()) {
-				msg, state := dec.Feed(string(seg.Data))
-				if state == hotty.Complete && hotty.Get(msg.Control, "a") == "delta" {
-					delta, err := hotty.DeltaOf(msg)
-					if err != nil {
-						t.Fatal(err)
-					}
-					ops = append(ops, delta...)
-				}
-			}
-			want := []hotty.Op{hotty.OpUnattr(anchor, "data-keys-inner")}
-			if mode == "interleaved" {
-				// A focusable shared anchor has both the own and inner map.
-				want = append(want, hotty.OpUnattr(anchor, "data-keys"))
-			}
-			if len(ops) != len(want) {
-				t.Fatalf("scope update: %+v, want %+v", ops, want)
-			}
-			for _, op := range want {
-				found := false
-				for _, got := range ops {
-					found = found || op == got
-				}
-				if !found {
-					t.Errorf("scope update missing %+v: %+v", op, ops)
-				}
+			r.Update()
+			if km := read(); km.Program("ctrl+b") || km.Lookup("ctrl+b") != hotty.CharBackward {
+				t.Fatalf("disabled scope Ctrl+B program=%v, action=%q", km.Program("ctrl+b"), km.Lookup("ctrl+b"))
 			}
 		})
+	}
+}
+
+func TestInterleavedKeyScopeOnWire(t *testing.T) {
+	view := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		child := templ.Join(
+			templ.Raw(`<main id="controls"><section id="scoped">`),
+			uibutton.View(uibutton.Props{ID: "one", Label: "One"}),
+			uibutton.View(uibutton.Props{ID: "two", Label: "Two"}),
+			templ.Raw(`</section><button id="outside-button">Outside</button>
+				<select id="outside-select"><option>Outside</option></select>`),
+			uibutton.View(uibutton.Props{ID: "three", Label: "Three"}),
+			templ.Raw(`</main>`),
+		)
+		scope := surfui.KeyScope([]surfui.KeyBinding{
+			{Key: "arrow_up", Run: func() bool { return true }},
+			{Key: "ctrl+b", Run: func() bool { return true }},
+		})
+		return with(scope, child).Render(ctx, w)
+	})
+	r := surftest.Start(t, surf.New("interleaved-scope", view, ""))
+	for _, c := range []struct {
+		id     string
+		reader hotty.Reader
+		scoped bool
+	}{
+		{"one", hotty.ReaderButton, true},
+		{"two", hotty.ReaderButton, true},
+		{"outside-button", hotty.ReaderButton, false},
+		{"outside-select", hotty.ReaderSelect, false},
+		{"three", hotty.ReaderButton, true},
+	} {
+		n := r.One("#" + c.id)
+		if !c.scoped {
+			for p := n; p != nil; p = p.Parent {
+				name := "data-keys-inner"
+				if p == n {
+					name = "data-keys"
+				}
+				if keys := attr(p, name); keys != "" {
+					t.Errorf("%s sees %s=%q on %s", c.id, name, keys, attr(p, "id"))
+				}
+			}
+		}
+		km := rt.ResolveKeys(hotty.Platform{}, n, nil, c.reader, false)
+		for _, key := range []string{"arrow_up", "ctrl+b"} {
+			if got := km.Program(key); got != c.scoped {
+				t.Errorf("%s %s program=%t, want %t", c.id, key, got, c.scoped)
+			}
+		}
+	}
+	if keys := attr(r.One("#scoped"), "data-keys-inner"); keys != "arrow_up=program ctrl+b=program" {
+		t.Errorf("scoped branch keys: %q", keys)
+	}
+	for _, id := range []string{"one", "two"} {
+		if keys := attr(r.One("#"+id), "data-keys"); keys != "" {
+			t.Errorf("%s own keys: %q", id, keys)
+		}
+	}
+}
+
+func TestSharedKeyScopePlacementDeltas(t *testing.T) {
+	disabled := false
+	scope := func(key string, off bool, child templ.Component) templ.Component {
+		return with(surfui.KeyScope([]surfui.KeyBinding{{Key: key, Disabled: off, Run: func() bool { return true }}}), child)
+	}
+	v := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		view := templ.Join(templ.Raw(`<main id="controls" tabindex="0">`),
+			uibutton.View(uibutton.Props{ID: "one", Label: "One"}),
+			uibutton.View(uibutton.Props{ID: "two", Label: "Two"}),
+			templ.Raw(`</main>`))
+		// Three scopes on the same controls exhaust the authored ancestors.
+		view = scope("ctrl+j", false, scope("ctrl+k", false, view))
+		return scope("ctrl+s", disabled, view).Render(ctx, w)
+	})
+	s := surf.New("scopes", v, "")
+	var out bytes.Buffer
+	s.Attach(&out, hotty.Caps{})
+	doc, err := s.Document()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := html.Parse(bytes.NewBufferString(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	placements := map[string]string{}
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if v := attr(n, "data-keys-inner"); v != "" {
+			if _, exists := placements[v]; exists {
+				t.Fatalf("keymap written twice: %q", v)
+			}
+			placements[v] = attr(n, "id")
+		}
+		for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
+			walk(ch)
+		}
+	}
+	walk(root)
+	if len(placements) != 3 || placements["ctrl+k=program"] != "controls" || placements["ctrl+j=program"] == "" {
+		t.Fatalf("nested scope placements: %v", placements)
+	}
+	anchor := placements["ctrl+s=program"]
+	if anchor == "" {
+		t.Fatal("outer scope has no anchor")
+	}
+	s.Do(func() { disabled = true })
+	out.Reset()
+	if err := s.Update(); err != nil {
+		t.Fatal(err)
+	}
+	var sc hotty.Scanner
+	var dec hotty.Decoder
+	var ops []hotty.Op
+	for _, seg := range sc.Feed(out.Bytes()) {
+		msg, state := dec.Feed(string(seg.Data))
+		if state == hotty.Complete && hotty.Get(msg.Control, "a") == "delta" {
+			delta, err := hotty.DeltaOf(msg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ops = append(ops, delta...)
+		}
+	}
+	want := hotty.OpUnattr(anchor, "data-keys-inner")
+	if len(ops) != 1 || ops[0] != want {
+		t.Fatalf("scope update: %+v, want %+v", ops, want)
 	}
 }

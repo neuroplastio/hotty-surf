@@ -64,28 +64,31 @@ func focusableKeys(n *html.Node) bool {
 	return kind != "" || hasAttr(n, "tabindex") || n.Data == "input" && attr(n, "type") != "hidden" || n.Data == "select"
 }
 
-// placeScopes gives each shared scope one enclosing element. Inner scopes
-// get first choice of the nearest ancestor. Outer scopes can use a
-// farther ancestor, with own-key exceptions for any unrelated controls.
+// placeScopes gives a shared scope the nearest available enclosing element
+// whose inner map reaches only its controls. An interleaved scope uses the
+// same rule on each covered branch, preserving the authored focus order.
 func (s *Surface) placeScopes(root *html.Node, t *tree) {
 	if s.legacy || len(t.f.KeyScopes) == 0 {
 		return
 	}
 	controls := map[*rt.KeyScope][]*html.Node{}
-	t.scopeControls = map[*html.Node]*rt.KeyScope{}
+	focusCount := map[*html.Node]int{}
 	walkEls(root, func(n *html.Node) {
+		if focusableKeys(n) {
+			for p := n; p != nil; p = p.Parent {
+				focusCount[p]++
+			}
+		}
 		if i, _ := s.readScope(t, attr(n, scopeAttr)); i > 0 {
-			scope := t.f.KeyScopes[i-1]
-			t.scopeControls[n] = scope
-			for ; scope != nil; scope = scope.Parent {
+			for scope := t.f.KeyScopes[i-1]; scope != nil; scope = scope.Parent {
 				controls[scope] = append(controls[scope], n)
 			}
 		}
 	})
 	t.scopeKeys = map[*html.Node][]string{}
 	t.scopeInner = map[*html.Node][]string{}
-	t.scopeRoots = map[*html.Node]int{}
-	t.scopeBaseInner = map[*html.Node]string{}
+	roots := map[*html.Node]bool{}
+	t.scopeFocus = map[*html.Node]int{}
 	for i := len(t.f.Scopes) - 1; i >= 0; i-- {
 		scope := t.f.Scopes[i]
 		nodes := controls[scope]
@@ -97,136 +100,97 @@ func (s *Surface) placeScopes(root *html.Node, t *tree) {
 			t.scopeKeys[nodes[0]] = append(t.scopeKeys[nodes[0]], keys...)
 			continue
 		}
+		members := make(map[*html.Node]bool, len(nodes))
+		covered := map[*html.Node]int{}
+		scopedFocus := map[*html.Node]int{}
 		anchor := nodes[0]
-		for _, n := range nodes[1:] {
+		for _, n := range nodes {
+			if members[n] {
+				continue
+			}
+			members[n] = true
 			for !within(n, anchor) {
 				anchor = anchor.Parent
 			}
-		}
-		for t.scopeRoots[anchor] != 0 && anchor != root {
-			anchor = anchor.Parent
-		}
-		if t.scopeRoots[anchor] != 0 {
-			// Several scopes can exhaust the authored ancestors. Only the
-			// runtime's document root needs a synthetic boundary.
-			wrapper := &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []html.Attribute{
-				{Key: rt.KeyScopeBoundary, Val: ""},
-				{Key: "style", Val: "display:contents"},
-			}}
-			for root.FirstChild != nil {
-				n := root.FirstChild
-				root.RemoveChild(n)
-				wrapper.AppendChild(n)
+			focusable := focusableKeys(n)
+			for p := n; p != nil; p = p.Parent {
+				covered[p]++
+				if focusable {
+					scopedFocus[p]++
+				}
 			}
-			root.AppendChild(wrapper)
-			t.scopeRoots[wrapper], t.scopeInner[wrapper] = t.scopeRoots[root], t.scopeInner[root]
 		}
-		t.scopeRoots[anchor], t.scopeInner[anchor] = i+1, keys
-		if focusableKeys(anchor) {
-			t.scopeKeys[anchor] = append(t.scopeKeys[anchor], keys...)
+		common := anchor
+		safe := func(n *html.Node) bool {
+			count := focusCount[n] - scopedFocus[n]
+			// The inner map does not apply to the anchor itself.
+			if !members[n] && focusableKeys(n) {
+				count--
+			}
+			return count == 0
 		}
-	}
-}
-
-func (t *tree) inScope(n *html.Node, scope *rt.KeyScope) bool {
-	active := t.scopeControls[n]
-	if i := t.scopeRoots[n]; i != 0 && active == nil {
-		active = t.f.Scopes[i-1]
-	}
-	for ; active != nil; active = active.Parent {
-		if active == scope {
-			return true
+		for p := anchor; p != nil && safe(p); p = p.Parent {
+			if !roots[p] {
+				anchor = p
+				break
+			}
+			if p == root {
+				// Only the runtime's root needs a synthetic boundary.
+				wrapper := &html.Node{Type: html.ElementNode, Data: "div", DataAtom: atom.Div, Attr: []html.Attribute{
+					{Key: rt.KeyScopeBoundary, Val: ""},
+					{Key: "style", Val: "display:contents"},
+				}}
+				for root.FirstChild != nil {
+					n := root.FirstChild
+					root.RemoveChild(n)
+					wrapper.AppendChild(n)
+				}
+				root.AppendChild(wrapper)
+				focusCount[wrapper] = focusCount[root]
+				roots[wrapper], t.scopeInner[wrapper] = roots[root], t.scopeInner[root]
+				delete(roots, root)
+				anchor = root
+				break
+			}
 		}
-	}
-	return false
-}
-
-// shieldScopes restores the bindings of controls that a shared scope's
-// ancestor covers in HTML but that are outside the scope. Native keys
-// protected by the reader need no exception. Use the scope's declared keys
-// here so toggling a binding does not also change outside controls.
-func (s *Surface) shieldScopes(t *tree) {
-	if len(t.scopeRoots) == 0 {
-		return
-	}
-	walkEls(t.root, func(n *html.Node) {
-		if !focusableKeys(n) {
-			return
-		}
-		var wanted, possible []string
-		var keys []string
-		for p := n.Parent; p != nil; p = p.Parent {
-			value := attr(p, keysInnerAttr)
-			want, could := value, value
-			if index := t.scopeRoots[p]; index != 0 {
-				scope := t.f.Scopes[index-1]
-				if !t.inScope(n, scope) {
-					want = t.scopeBaseInner[p]
-					var declared []string
-					for _, b := range scope.Bindings {
-						if b.Physical != "" && b.Physical != "escape" {
-							declared = append(declared, b.Physical)
-						}
+		inherited := rt.ProgramKeys(keys)
+		var place func(*html.Node)
+		place = func(n *html.Node) {
+			if covered[n] == 0 {
+				return
+			}
+			if covered[n] > 1 && safe(n) && !roots[n] {
+				roots[n], t.scopeInner[n] = true, keys
+				// A focusable container can act as the scope's anchor.
+				kind, _ := rt.NativeKind(n)
+				if !members[n] && n == common && kind == "" && focusableKeys(n) {
+					t.scopeFocus[n] = i + 1
+					members[n] = true
+					for parent := scope.Parent; parent != nil; parent = parent.Parent {
+						controls[parent] = append(controls[parent], n)
 					}
-					keys = append(keys, declared...)
-					could = strings.Join(uniqueKeys(append(strings.Fields(rt.ProgramKeys(declared)), strings.Fields(want)...)), " ")
+				}
+				if members[n] {
+					t.scopeKeys[n] = append(t.scopeKeys[n], keys...)
+				}
+				return
+			}
+			if members[n] {
+				// A branch containing only one covered control still uses
+				// the reader's inherited-key protections.
+				km := hotty.Resolve(t.f.Platform, rt.KeyReader(n), "", inherited)
+				for _, key := range keys {
+					if km.Program(key) {
+						t.scopeKeys[n] = append(t.scopeKeys[n], key)
+					}
 				}
 			}
-			if want != "" {
-				wanted = append(wanted, want)
-			}
-			if could != "" {
-				possible = append(possible, could)
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				place(c)
 			}
 		}
-		if len(keys) == 0 {
-			return
-		}
-		slices.Reverse(wanted)
-		slices.Reverse(possible)
-		p := t.f.Platform
-		reader := rt.KeyReader(n)
-		own := attr(n, keysAttr)
-		wantedMap := hotty.Resolve(p, reader, own, wanted...)
-		possibleMap := hotty.Resolve(p, reader, own, possible...)
-		defaults := hotty.Resolve(p, reader, "")
-		slices.Sort(keys)
-		binds := strings.Fields(own)
-		before := len(binds)
-		for _, key := range slices.Compact(keys) {
-			want := scopeAction(wantedMap, key)
-			if !possibleMap.Program(key) || want == scopeAction(possibleMap, key) {
-				continue
-			}
-			if want == "" || want == scopeAction(defaults, key) {
-				want = hotty.Default
-			}
-			binds = append(binds, key+"="+string(want))
-		}
-		if len(binds) > before {
-			slices.Sort(binds)
-			for i := range n.Attr {
-				if n.Attr[i].Key == keysAttr {
-					n.Attr[i].Val = strings.Join(binds, " ")
-					return
-				}
-			}
-			n.Attr = append(n.Attr, html.Attribute{Key: keysAttr, Val: strings.Join(binds, " ")})
-		}
-	})
-}
-
-func scopeAction(km *hotty.Keymap, key string) hotty.Action {
-	if km.Prefix(key) {
-		return hotty.Prefix
+		place(anchor)
 	}
-	if km.Program(key) {
-		return hotty.Program
-	}
-	if action := km.Scroll(key); action != "" {
-		return action
-	}
-	return km.Lookup(key)
 }
 
 func within(n, ancestor *html.Node) bool {
@@ -269,7 +233,7 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 		n.Attr = append(n.Attr[:i], n.Attr[i+1:]...)
 		i--
 	}
-	mark.anchor = t.scopeRoots[n]
+	mark.anchor = t.scopeFocus[n]
 	if scope > 0 || mark.anchor > 0 {
 		if t.scopes == nil {
 			t.scopes = map[string]keyMark{}
@@ -347,13 +311,20 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	scopeInnerLen := len(inner)
 	givenBefore := len(t.given)
 	editBefore := len(t.edit)
-	for p := n.Parent; p != nil; p = p.Parent {
-		if index := t.scopeRoots[p]; index != 0 && t.inScope(n, t.f.Scopes[index-1]) {
-			for _, k := range t.scopeInner[p] {
-				t.given = append(t.given, k)
-				if slices.Contains(t.f.EditKeys, k) {
-					t.edit = append(t.edit, keyAt{key: k, action: string(hotty.Program), given: true})
-				}
+	// Yield is resolved on the editing element itself, including an
+	// unmarked wrapper inside a shared scope.
+	var inheritedScopeKeys []string
+	for p := n; p != nil; p = p.Parent {
+		keys := t.scopeInner[p]
+		if p == n {
+			keys = slices.Concat(keys, t.scopeKeys[n])
+		} else {
+			inheritedScopeKeys = append(inheritedScopeKeys, keys...)
+		}
+		for _, k := range keys {
+			t.given = append(t.given, k)
+			if slices.Contains(t.f.EditKeys, k) {
+				t.edit = append(t.edit, keyAt{key: k, action: string(hotty.Program), given: true})
 			}
 		}
 	}
@@ -411,8 +382,31 @@ func (s *Surface) writeKeys(n *html.Node, id string, t *tree) keyPush {
 	writtenKeys := binds
 	if !s.legacy {
 		writtenKeys = uniqueKeys(slices.Clone(inner[scopeInnerLen:]))
-		if t.scopeRoots[n] != 0 {
-			t.scopeBaseInner[n] = strings.Join(writtenKeys, " ")
+	}
+	// Carry a shared scope's winning key at the yielding edit root as
+	// well. Its other branches still inherit the shared map. Resolve the
+	// actual outer map so this cannot mask a nearer authored prefix.
+	if len(inheritedScopeKeys) > 0 && (text == "text" || text == "" && n.FirstChild != nil) {
+		var inherited *hotty.Keymap
+		for _, b := range slices.Concat(lb, ledits, unbound) {
+			if !b.Yield || !slices.Contains(inheritedScopeKeys, b.Key) {
+				continue
+			}
+			if inherited == nil {
+				reader := rt.KeyReader(n)
+				if text == "" {
+					reader = hotty.ReaderMultiline
+				}
+				inherited = rt.ResolveKeys(t.f.Platform, n, nil, reader, false)
+			}
+			if inherited.Program(b.Key) && !inherited.Prefix(b.Key) {
+				binding := b.Key + "=program"
+				if text == "text" {
+					binds = append(binds, binding)
+				} else {
+					inner = append(inner, binding)
+				}
+			}
 		}
 	}
 	inner = uniqueKeys(inner)

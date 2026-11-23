@@ -164,7 +164,6 @@ func (s *Surface) tree(f *rt.Frame) (*tree, error) {
 	s.placeScopes(t.root, t)
 	s.writeKeys(t.root, "root", t)
 	s.number(t.root, "root", t, false)
-	s.shieldScopes(t)
 	return t, nil
 }
 
@@ -196,9 +195,7 @@ type tree struct {
 	// markers said before writeKeys took them off.
 	scopes                map[string]keyMark
 	scopeKeys, scopeInner map[*html.Node][]string
-	scopeRoots            map[*html.Node]int
-	scopeControls         map[*html.Node]*rt.KeyScope
-	scopeBaseInner        map[*html.Node]string
+	scopeFocus            map[*html.Node]int
 	// printable are the printable keys the elements around the one being
 	// numbered declare (writeKeys).
 	printable []string
